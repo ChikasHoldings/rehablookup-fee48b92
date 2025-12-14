@@ -6,12 +6,6 @@ import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import heroImage from "@/assets/hero-recovery.jpg";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { 
   Shield, 
   Phone, 
   CheckCircle, 
@@ -31,8 +25,7 @@ import {
   Quote,
   BookOpen,
   Calendar,
-  Search,
-  HelpCircle
+  Search
 } from "lucide-react";
 
 const blogArticles = [
@@ -559,112 +552,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-20 md:py-24 bg-muted/30">
-        <div className="container">
-          <div className="mx-auto max-w-3xl">
-            {/* Section Header */}
-            <div className="mb-12 text-center">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                <HelpCircle className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">FAQ</span>
-              </div>
-              <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
-                Frequently Asked Questions
-              </h2>
-              <p className="text-muted-foreground">
-                Get answers to common questions about addiction treatment and recovery.
-              </p>
-            </div>
-
-            {/* FAQ Accordion */}
-            <Accordion type="single" collapsible className="space-y-4">
-              {[
-                {
-                  question: "How do I know if I or my loved one needs rehab?",
-                  answer: "Signs that treatment may be needed include inability to control substance use, withdrawal symptoms when not using, neglecting responsibilities, and continued use despite negative consequences. If substance use is affecting health, relationships, or daily life, it may be time to seek professional help.",
-                },
-                {
-                  question: "What is the difference between inpatient and outpatient treatment?",
-                  answer: "Inpatient (residential) treatment requires living at the facility 24/7 and provides intensive, structured care. Outpatient treatment allows you to live at home while attending scheduled therapy sessions. The best option depends on the severity of addiction, support system, and personal circumstances.",
-                },
-                {
-                  question: "Does insurance cover addiction treatment?",
-                  answer: "Most health insurance plans cover some form of addiction treatment under mental health benefits. Coverage varies by provider and plan. Many treatment centers offer insurance verification and can help you understand your benefits. Some facilities also offer sliding scale fees or payment plans.",
-                },
-                {
-                  question: "How long does rehab typically last?",
-                  answer: "Treatment duration varies based on individual needs. Short-term programs typically last 28-30 days, while long-term programs can be 60-90 days or longer. Research shows that longer treatment periods often lead to better outcomes. Your treatment team will help determine the appropriate length of stay.",
-                },
-                {
-                  question: "What happens after completing a treatment program?",
-                  answer: "Aftercare is a crucial part of long-term recovery. This may include ongoing therapy, support groups like AA or NA, sober living arrangements, and regular check-ins with counselors. Most treatment centers help create a comprehensive aftercare plan before discharge to support continued sobriety.",
-                },
-              ].map((faq, index) => (
-                <AccordionItem 
-                  key={index} 
-                  value={`item-${index}`} 
-                  className="group rounded-2xl border border-border bg-card px-0 shadow-card overflow-hidden transition-all duration-300 hover:border-accent/30 hover:shadow-elevated data-[state=open]:border-accent/40 data-[state=open]:shadow-elevated"
-                >
-                  <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5 px-6 gap-4 [&[data-state=open]>div]:bg-accent/20 [&>svg]:hidden">
-                    <div className="flex items-start gap-4 w-full">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors duration-300">
-                        <HelpCircle className="h-4 w-4" />
-                      </div>
-                      <span className="flex-1 pt-0.5">{faq.question}</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground pb-6 px-6 pl-[4.5rem] leading-relaxed">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-
-            {/* Help CTA */}
-            <div className="mt-10 text-center">
-              <p className="text-muted-foreground mb-4">
-                Still have questions? We're here to help.
-              </p>
-              <a href="tel:1-800-555-0199">
-                <Button variant="outline" className="gap-2">
-                  <Phone className="h-4 w-4" />
-                  Call 1-800-555-0199
-                </Button>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Banner */}
-      <section className="py-16 md:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
-              Ready to Take the First Step?
-            </h2>
-            <p className="mb-8 text-muted-foreground max-w-xl mx-auto">
-              Recovery is possible. Find the right treatment center for you or your loved one today.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link to="/rehab-centers">
-                <Button size="lg" className="gap-2 min-w-[200px]">
-                  Find Rehab Now
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <a href="tel:1-800-555-0199">
-                <Button variant="outline" size="lg" className="gap-2 min-w-[200px]">
-                  <Phone className="h-4 w-4" />
-                  Call 1-800-555-0199
-                </Button>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Resources / Blog Section */}
       <section className="py-20 md:py-24">
         <div className="container">
@@ -741,6 +628,34 @@ const Index = () => {
                 </div>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Banner */}
+      <section className="py-16 md:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
+            <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+              Ready to Take the First Step?
+            </h2>
+            <p className="mb-8 text-muted-foreground max-w-xl mx-auto">
+              Recovery is possible. Find the right treatment center for you or your loved one today.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link to="/rehab-centers">
+                <Button size="lg" className="gap-2 min-w-[200px]">
+                  Find Rehab Now
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <a href="tel:1-800-555-0199">
+                <Button variant="outline" size="lg" className="gap-2 min-w-[200px]">
+                  <Phone className="h-4 w-4" />
+                  Call 1-800-555-0199
+                </Button>
+              </a>
+            </div>
           </div>
         </div>
       </section>
