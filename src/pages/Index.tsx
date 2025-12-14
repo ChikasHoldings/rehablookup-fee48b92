@@ -4,6 +4,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
+import heroBg from "@/assets/hero-bg.jpg";
 import { 
   Shield, 
   Phone, 
@@ -28,45 +29,58 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden gradient-hero">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
+      <section className="relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={heroBg} 
+            alt="" 
+            className="h-full w-full object-cover"
+          />
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-accent/70" />
+          {/* Additional dark overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-primary/20" />
+        </div>
+
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }} />
         </div>
 
-        <div className="container relative py-20 md:py-28 lg:py-36">
+        <div className="container relative py-24 md:py-32 lg:py-40">
           <div className="mx-auto max-w-4xl text-center">
             {/* Trust Badge */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary-foreground/15 px-4 py-2 backdrop-blur-sm animate-fade-in">
+            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-5 py-2.5 backdrop-blur-md animate-fade-in shadow-lg">
               <Star className="h-4 w-4 fill-primary-foreground text-primary-foreground" />
-              <span className="text-sm font-medium text-primary-foreground">
+              <span className="text-sm font-semibold text-primary-foreground tracking-wide">
                 Trusted by families nationwide
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="mb-6 font-display text-4xl font-bold leading-tight text-primary-foreground md:text-5xl lg:text-6xl animate-fade-in" style={{ animationDelay: "100ms" }}>
+            <h1 className="mb-6 font-display text-4xl font-bold leading-tight text-primary-foreground drop-shadow-lg md:text-5xl lg:text-6xl animate-fade-in" style={{ animationDelay: "100ms" }}>
               Find Trusted Addiction Treatment Centers Near You
             </h1>
 
             {/* Subheadline */}
-            <p className="mb-10 text-lg text-primary-foreground/85 md:text-xl animate-fade-in" style={{ animationDelay: "200ms" }}>
+            <p className="mb-12 text-lg text-primary-foreground/90 md:text-xl lg:text-2xl animate-fade-in max-w-3xl mx-auto leading-relaxed" style={{ animationDelay: "200ms" }}>
               Compare verified rehab programs, treatment options, and insurance acceptance. 
               Take the first step toward recovery today.
             </p>
 
             {/* CTA Buttons */}
-            <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row animate-fade-in" style={{ animationDelay: "300ms" }}>
+            <div className="mb-14 flex flex-col items-center justify-center gap-4 sm:flex-row animate-fade-in" style={{ animationDelay: "300ms" }}>
               <Link to="/rehab-centers">
-                <Button variant="hero" size="xl" className="gap-2">
+                <Button variant="hero" size="xl" className="gap-2 shadow-xl">
                   Find Rehab Now
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
               <a href="tel:1-800-555-0199">
-                <Button variant="hero-secondary" size="xl" className="gap-2">
+                <Button variant="hero-secondary" size="xl" className="gap-2 shadow-lg">
                   <Phone className="h-5 w-5" />
                   Get Help Now
                 </Button>
@@ -74,11 +88,13 @@ const Index = () => {
             </div>
 
             {/* Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-6 animate-fade-in" style={{ animationDelay: "400ms" }}>
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 animate-fade-in" style={{ animationDelay: "400ms" }}>
               {trustBadges.map((badge) => (
-                <div key={badge.label} className="flex items-center gap-2 text-primary-foreground/80">
-                  <badge.icon className="h-5 w-5" />
-                  <span className="text-sm font-medium">{badge.label}</span>
+                <div key={badge.label} className="flex items-center gap-2.5 text-primary-foreground/90">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground/15 backdrop-blur-sm">
+                    <badge.icon className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-semibold tracking-wide">{badge.label}</span>
                 </div>
               ))}
             </div>
