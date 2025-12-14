@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, memo } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback, memo, useRef } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ProviderHeader } from "./ProviderHeader";
 import { ProviderSidebar } from "./ProviderSidebar";
@@ -19,11 +19,20 @@ const MemoizedStatsBar = memo(StatsBar);
 export function ProviderShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const mainContentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: providerData, isLoading, error } = useProviderData();
+
+  // Scroll content area to top on route change
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
 
   // Auth check effect
   useEffect(() => {
@@ -164,7 +173,7 @@ export function ProviderShell() {
         </Sheet>
 
         {/* Scrollable Main Content Area - Outlet renders child routes */}
-        <main className="flex-1 overflow-y-auto bg-muted/30">
+        <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-muted/30">
           <div className="p-4 md:p-6 lg:p-8">
             <Outlet />
           </div>
