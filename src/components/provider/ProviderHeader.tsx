@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import logo from "@/assets/logo.png";
 
 interface ProviderHeaderProps {
   facilityName?: string;
@@ -32,14 +33,13 @@ export function ProviderHeader({ facilityName, userName, onLogout }: ProviderHea
         <div className="flex items-center gap-3">
           <Link 
             to="/" 
-            className="flex items-center gap-2.5 group"
+            className="flex items-center gap-2 group"
           >
-            <div className="h-8 w-8 rounded-lg bg-primary-foreground/15 flex items-center justify-center transition-colors group-hover:bg-primary-foreground/25">
-              <Building2 className="h-4.5 w-4.5 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-lg text-primary-foreground hidden sm:inline">
-              RehabLookup
-            </span>
+            <img 
+              src={logo} 
+              alt="RehabLookup" 
+              className="h-7 w-auto brightness-0 invert transition-transform group-hover:scale-105"
+            />
           </Link>
           
           <div className="hidden md:flex items-center gap-3">

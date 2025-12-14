@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Heart, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 export function Footer() {
   return (
@@ -9,13 +10,12 @@ export function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
           {/* Brand & Social */}
           <div className="space-y-6 sm:col-span-2">
-            <Link to="/" className="inline-flex items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-foreground/15">
-                <Heart className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="font-display text-xl font-semibold text-primary-foreground">
-                RehabLookup
-              </span>
+            <Link to="/" className="inline-block">
+              <img 
+                src={logo} 
+                alt="RehabLookup" 
+                className="h-8 w-auto brightness-0 invert"
+              />
             </Link>
             
             <p className="max-w-xs text-sm leading-relaxed text-primary-foreground/60">
