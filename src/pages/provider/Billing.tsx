@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { 
   CreditCard, 
   Check, 
   ArrowRight, 
+  ArrowDown,
   Clock, 
   FileText, 
   Loader2, 
@@ -13,7 +14,10 @@ import {
   Users,
   Crown,
   Zap,
-  RefreshCw
+  RefreshCw,
+  Wallet,
+  Receipt,
+  Settings
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,18 +29,10 @@ import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 
 export default function ProviderBillingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: subscription, isLoading: subscriptionLoading, refetch, isFetching } = useSubscription();
@@ -52,10 +48,9 @@ export default function ProviderBillingPage() {
     
     if (success === "true") {
       toast({
-        title: "Subscription Activated!",
-        description: "Your plan has been upgraded successfully. Welcome aboard!",
+        title: "Subscription Updated!",
+        description: "Your plan has been changed successfully.",
       });
-      // Clear URL params and refetch
       setSearchParams({});
       refetch();
       refetchProvider();
@@ -76,10 +71,20 @@ export default function ProviderBillingPage() {
       if (document.visibilityState === "visible") {
         refetch();
       }
-    }, 60000); // Every minute
+    }, 30000); // Every 30 seconds for real-time feel
     
     return () => clearInterval(interval);
   }, [refetch]);
+
+  // Refetch on window focus
+  useEffect(() => {
+    const handleFocus = () => {
+      refetch();
+      refetchProvider();
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [refetch, refetchProvider]);
 
   // Manual refresh handler
   const handleRefreshStatus = useCallback(async () => {
@@ -152,21 +157,24 @@ export default function ProviderBillingPage() {
       ...PLAN_DETAILS.basic, 
       current: currentPlan === "basic", 
       icon: Users,
-      highlight: false 
+      canUpgrade: false,
+      canDowngrade: currentPlan !== "basic"
     },
     { 
       key: "professional" as const, 
       ...PLAN_DETAILS.professional, 
       current: currentPlan === "professional", 
       icon: TrendingUp,
-      highlight: currentPlan === "basic"
+      canUpgrade: currentPlan === "basic",
+      canDowngrade: currentPlan === "featured"
     },
     { 
       key: "featured" as const, 
       ...PLAN_DETAILS.featured, 
       current: currentPlan === "featured", 
       icon: Crown,
-      highlight: currentPlan === "professional"
+      canUpgrade: currentPlan !== "featured",
+      canDowngrade: false
     },
   ];
 
@@ -175,6 +183,87 @@ export default function ProviderBillingPage() {
       return <Badge variant="secondary" className="bg-muted text-muted-foreground">Free Plan</Badge>;
     }
     return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Active</Badge>;
+  };
+
+  const getPlanAction = (plan: typeof plans[0]) => {
+    if (plan.current) {
+      return (
+        <Button variant="secondary" className="w-full" disabled>
+          <Check className="h-4 w-4 mr-2" />
+          Current Plan
+        </Button>
+      );
+    }
+    
+    if (plan.key === "basic") {
+      // Downgrade to basic via portal
+      if (isSubscribed) {
+        return (
+          <Button 
+            variant="outline" 
+            className="w-full text-muted-foreground"
+            onClick={handleManageSubscription}
+            disabled={portalLoading}
+          >
+            {portalLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <ArrowDown className="h-4 w-4 mr-2" />
+            )}
+            Downgrade
+          </Button>
+        );
+      }
+      return (
+        <Button variant="outline" className="w-full" disabled>
+          Free Tier
+        </Button>
+      );
+    }
+
+    // Check if this is an upgrade or downgrade
+    const planOrder = { basic: 0, professional: 1, featured: 2 };
+    const isUpgrade = planOrder[plan.key] > planOrder[currentPlan];
+
+    if (isUpgrade) {
+      return (
+        <Button 
+          variant={plan.key === "featured" ? "default" : "outline"} 
+          className={`w-full group ${
+            plan.key === "featured" 
+              ? "bg-amber-500 hover:bg-amber-600 text-white" 
+              : ""
+          }`}
+          onClick={() => handleCheckout(plan.key)}
+          disabled={checkoutLoading === plan.key}
+        >
+          {checkoutLoading === plan.key ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <Zap className="h-4 w-4 mr-2" />
+          )}
+          Upgrade
+          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </Button>
+      );
+    } else {
+      // Downgrade - use customer portal
+      return (
+        <Button 
+          variant="outline" 
+          className="w-full text-muted-foreground"
+          onClick={handleManageSubscription}
+          disabled={portalLoading}
+        >
+          {portalLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <ArrowDown className="h-4 w-4 mr-2" />
+          )}
+          Switch Plan
+        </Button>
+      );
+    }
   };
 
   return (
@@ -187,12 +276,18 @@ export default function ProviderBillingPage() {
         </p>
       </div>
 
-      {/* Current Plan Summary */}
-      <Card className="overflow-hidden border-0 shadow-lg">
-        <div className="bg-gradient-to-br from-primary via-primary to-primary/80 p-6 md:p-8 text-primary-foreground">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center">
+      {/* Current Plan Summary - Updated design without solid blue */}
+      <Card className="overflow-hidden shadow-md">
+        <CardHeader className="border-b border-border bg-muted/30 pb-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${
+                currentPlan === "featured" 
+                  ? "bg-amber-100 text-amber-600" 
+                  : currentPlan === "professional"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
+              }`}>
                 {currentPlan === "featured" ? (
                   <Crown className="h-7 w-7" />
                 ) : currentPlan === "professional" ? (
@@ -203,12 +298,15 @@ export default function ProviderBillingPage() {
               </div>
               <div>
                 <div className="flex items-center gap-3">
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-2xl font-bold text-foreground">
                     {subscriptionLoading ? "Loading..." : subscription?.plan_name || "Basic Listing"}
                   </h2>
                   {getStatusBadge()}
+                  {isFetching && !subscriptionLoading && (
+                    <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
                 </div>
-                <div className="flex items-center gap-2 mt-2 text-primary-foreground/80">
+                <div className="flex items-center gap-2 mt-1 text-muted-foreground">
                   <Clock className="h-4 w-4" />
                   {isSubscribed && subscription?.subscription_end ? (
                     <span>Renews {format(new Date(subscription.subscription_end), "MMMM d, yyyy")}</span>
@@ -219,36 +317,19 @@ export default function ProviderBillingPage() {
               </div>
             </div>
             
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               <Button
-                variant="secondary"
+                variant="outline"
                 size="sm"
-                className="bg-white/10 hover:bg-white/20 text-primary-foreground border-white/20"
                 onClick={handleRefreshStatus}
                 disabled={isRefreshing || isFetching}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing || isFetching ? "animate-spin" : ""}`} />
-                Refresh Status
+                Refresh
               </Button>
-              {isSubscribed && (
-                <Button 
-                  variant="secondary"
-                  className="bg-white/10 hover:bg-white/20 text-primary-foreground border-white/20"
-                  onClick={handleManageSubscription}
-                  disabled={portalLoading}
-                >
-                  {portalLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                  )}
-                  Manage Billing
-                </Button>
-              )}
               {currentPlan !== "featured" && (
                 <Button 
-                  variant="secondary"
-                  className="bg-white text-primary hover:bg-white/90"
+                  size="sm"
                   onClick={() => handleCheckout(currentPlan === "basic" ? "professional" : "featured")}
                   disabled={checkoutLoading !== null}
                 >
@@ -262,40 +343,84 @@ export default function ProviderBillingPage() {
               )}
             </div>
           </div>
-
+        </CardHeader>
+        
+        <CardContent className="p-6">
           {/* Lead Usage */}
-          {leadLimit > 0 && (
-            <div className="mt-6 p-4 bg-white/10 backdrop-blur rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Monthly Lead Usage</span>
-                <span className="text-sm">
-                  <span className="font-bold">{usedLeads}</span> / {leadLimit} leads
+          {leadLimit > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">Monthly Lead Usage</span>
+                <span className="text-sm text-muted-foreground">
+                  <span className="font-bold text-foreground">{usedLeads}</span> / {leadLimit} leads
                 </span>
               </div>
-              <Progress value={leadUsagePercent} className="h-2 bg-white/20" />
+              <Progress value={leadUsagePercent} className="h-2" />
               {leadUsagePercent >= 80 && leadUsagePercent < 100 && (
-                <p className="text-xs mt-2 text-amber-200">
+                <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
                   You're approaching your monthly lead limit. Consider upgrading for more leads.
                 </p>
               )}
               {leadUsagePercent >= 100 && (
-                <p className="text-xs mt-2 text-red-200 font-medium">
+                <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg font-medium">
                   Monthly lead limit reached. Upgrade to continue receiving leads.
                 </p>
               )}
             </div>
-          )}
-
-          {leadLimit === 0 && (
-            <div className="mt-6 p-4 bg-white/10 backdrop-blur rounded-xl">
-              <p className="text-sm text-primary-foreground/80">
-                <Star className="h-4 w-4 inline mr-1.5" />
+          ) : (
+            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
+              <Star className="h-5 w-5 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
                 Your listing is live but you're not receiving leads. Upgrade to start getting qualified leads.
               </p>
             </div>
           )}
-        </div>
+        </CardContent>
       </Card>
+
+      {/* Quick Actions for Subscribed Users */}
+      {isSubscribed && (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleManageSubscription}>
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Wallet className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">Payment Methods</h3>
+                <p className="text-sm text-muted-foreground">Add or update cards</p>
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleManageSubscription}>
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Receipt className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">Billing History</h3>
+                <p className="text-sm text-muted-foreground">View all invoices</p>
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleManageSubscription}>
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Settings className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">Manage Subscription</h3>
+                <p className="text-sm text-muted-foreground">Cancel or modify</p>
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Plans Grid */}
       <div>
@@ -311,8 +436,8 @@ export default function ProviderBillingPage() {
                 className={`relative overflow-hidden transition-all duration-300 ${
                   plan.current 
                     ? "border-primary ring-2 ring-primary shadow-lg"
-                    : plan.highlight 
-                      ? "border-primary/50 shadow-md hover:shadow-lg hover:border-primary" 
+                    : plan.key === "featured"
+                      ? "border-amber-300 shadow-md hover:shadow-lg hover:border-amber-400" 
                       : "hover:shadow-md hover:border-border"
                 }`}
               >
@@ -393,34 +518,7 @@ export default function ProviderBillingPage() {
                     ))}
                   </ul>
                   
-                  {plan.current ? (
-                    <Button variant="secondary" className="w-full" disabled>
-                      Current Plan
-                    </Button>
-                  ) : plan.key === "basic" ? (
-                    <Button variant="outline" className="w-full" disabled>
-                      Free Tier
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant={plan.key === "featured" ? "default" : "outline"} 
-                      className={`w-full group ${
-                        plan.key === "featured" 
-                          ? "bg-amber-500 hover:bg-amber-600 text-white" 
-                          : ""
-                      }`}
-                      onClick={() => handleCheckout(plan.key)}
-                      disabled={checkoutLoading === plan.key}
-                    >
-                      {checkoutLoading === plan.key ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
-                      {currentPlan === "basic" ? "Get Started" : "Upgrade"}
-                      {!checkoutLoading && (
-                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      )}
-                    </Button>
-                  )}
+                  {getPlanAction(plan)}
                 </CardContent>
               </Card>
             );
@@ -428,36 +526,64 @@ export default function ProviderBillingPage() {
         </div>
       </div>
 
-      {/* Billing History */}
+      {/* Billing Portal Section */}
       <Card className="shadow-sm">
         <CardHeader className="border-b border-border bg-muted/30">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <FileText className="h-5 w-5 text-primary" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Billing Portal</CardTitle>
+                <CardDescription>Manage payments, invoices, and subscription</CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle>Billing History</CardTitle>
-              <CardDescription>View invoices and payment history</CardDescription>
-            </div>
+            {isSubscribed && (
+              <Button onClick={handleManageSubscription} disabled={portalLoading}>
+                {portalLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                )}
+                Open Portal
+              </Button>
+            )}
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-6">
           {isSubscribed ? (
-            <div className="text-center py-10">
-              <p className="text-muted-foreground mb-4">Access your invoices and payment history in the billing portal.</p>
-              <Button variant="outline" onClick={handleManageSubscription} disabled={portalLoading}>
-                {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
-                View Billing Portal
-              </Button>
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Access the billing portal to:
+              </p>
+              <ul className="grid gap-3 md:grid-cols-2">
+                <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  View and download invoices
+                </li>
+                <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Update payment methods
+                </li>
+                <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Change or cancel subscription
+                </li>
+                <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Check className="h-4 w-4 text-primary" />
+                  Update billing information
+                </li>
+              </ul>
             </div>
           ) : (
-            <div className="text-center py-14">
+            <div className="text-center py-8">
               <div className="h-12 w-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
                 <FileText className="h-6 w-6 text-muted-foreground/40" />
               </div>
               <p className="text-muted-foreground">No billing history yet</p>
               <p className="text-sm text-muted-foreground/70 mt-1">
-                Invoices will appear here after your first payment
+                Subscribe to a plan to access billing features
               </p>
             </div>
           )}
