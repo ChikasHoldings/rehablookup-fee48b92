@@ -394,6 +394,16 @@ const Index = () => {
                 </div>
               ))}
             </div>
+
+            {/* CTA */}
+            <div className="mt-12 text-center">
+              <Link to="/rehab-centers">
+                <Button size="lg" className="gap-2 group">
+                  Start Your Search
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
