@@ -14,6 +14,7 @@ import ProviderResources from "./pages/ProviderResources";
 import ProviderLogin from "./pages/ProviderLogin";
 import ProviderSupport from "./pages/ProviderSupport";
 import ProviderSignup from "./pages/ProviderSignup";
+import { ProviderShell } from "./components/provider/ProviderShell";
 import ProviderDashboardPage from "./pages/provider/Dashboard";
 import ProviderListingPage from "./pages/provider/Listing";
 import ProviderLeadsPage from "./pages/provider/Leads";
@@ -28,7 +29,14 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -49,13 +57,15 @@ const App = () => (
           <Route path="/provider-support" element={<ProviderSupport />} />
           <Route path="/provider-signup" element={<ProviderSignup />} />
           
-          {/* Provider Panel Routes */}
+          {/* Provider Panel Routes - Nested under persistent shell */}
           <Route path="/provider-dashboard" element={<Navigate to="/provider/dashboard" replace />} />
-          <Route path="/provider/dashboard" element={<ProviderDashboardPage />} />
-          <Route path="/provider/listing" element={<ProviderListingPage />} />
-          <Route path="/provider/leads" element={<ProviderLeadsPage />} />
-          <Route path="/provider/billing" element={<ProviderBillingPage />} />
-          <Route path="/provider/settings" element={<ProviderSettingsPage />} />
+          <Route path="/provider" element={<ProviderShell />}>
+            <Route path="dashboard" element={<ProviderDashboardPage />} />
+            <Route path="listing" element={<ProviderListingPage />} />
+            <Route path="leads" element={<ProviderLeadsPage />} />
+            <Route path="billing" element={<ProviderBillingPage />} />
+            <Route path="settings" element={<ProviderSettingsPage />} />
+          </Route>
           
           <Route path="/resources" element={<Resources />} />
           <Route path="/resources/:id" element={<ArticleDetail />} />

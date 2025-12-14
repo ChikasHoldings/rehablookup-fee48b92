@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ProviderLayout } from "@/components/provider/ProviderLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Save, 
@@ -34,6 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useProviderData } from "@/hooks/useProviderData";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Facility {
   id: string;
@@ -184,33 +186,29 @@ export default function ProviderListingPage() {
 
   if (isLoading) {
     return (
-      <ProviderLayout>
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
-            <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
-          </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
+          <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
         </div>
-      </ProviderLayout>
+      </div>
     );
   }
 
   if (!facility) {
     return (
-      <ProviderLayout>
-        <div className="max-w-md mx-auto text-center py-20">
-          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-            <Building2 className="h-8 w-8 text-primary" />
-          </div>
-          <h2 className="text-xl font-semibold text-foreground">No Listing Found</h2>
-          <p className="mt-2 text-muted-foreground">
-            Create your facility listing to start receiving inquiries from families.
-          </p>
-          <Button asChild className="mt-6" size="lg">
-            <Link to="/provider-signup">Create Your Listing</Link>
-          </Button>
+      <div className="max-w-md mx-auto text-center py-20">
+        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+          <Building2 className="h-8 w-8 text-primary" />
         </div>
-      </ProviderLayout>
+        <h2 className="text-xl font-semibold text-foreground">No Listing Found</h2>
+        <p className="mt-2 text-muted-foreground">
+          Create your facility listing to start receiving inquiries from families.
+        </p>
+        <Button asChild className="mt-6" size="lg">
+          <Link to="/provider-signup">Create Your Listing</Link>
+        </Button>
+      </div>
     );
   }
 
@@ -218,8 +216,7 @@ export default function ProviderListingPage() {
   const StatusIcon = statusConfig.icon;
 
   return (
-    <ProviderLayout>
-      <div className="max-w-5xl mx-auto space-y-6 pb-6">
+    <div className="max-w-5xl mx-auto space-y-6 pb-6">
         {/* Header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">
@@ -639,10 +636,8 @@ export default function ProviderListingPage() {
                 {isSaving ? "Saving..." : "Save Changes"}
               </>
             )}
-          </Button>
-        </div>
-
+        </Button>
       </div>
-    </ProviderLayout>
+    </div>
   );
 }
