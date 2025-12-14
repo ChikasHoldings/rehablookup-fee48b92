@@ -59,6 +59,7 @@ interface Facility {
   gender_served: string | null;
   bed_count: string | null;
   status: string;
+  featured: boolean;
 }
 
 const facilityTypes = [
@@ -646,17 +647,30 @@ export default function ProviderListingPage() {
 
         {/* Preview Modal */}
         <Dialog open={showPreview} onOpenChange={setShowPreview}>
-          <DialogContent className="max-w-lg p-0 overflow-hidden">
-            <DialogHeader className="p-6 pb-0">
-              <DialogTitle className="text-lg font-semibold">Listing Preview</DialogTitle>
-              <p className="text-sm text-muted-foreground">
-                This is how your listing appears on the public rehab centers page
-              </p>
+          <DialogContent className="max-w-md p-0 overflow-hidden gap-0">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle className="text-lg font-semibold">Listing Preview</DialogTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    How your listing appears on the public search page
+                  </p>
+                </div>
+              </div>
             </DialogHeader>
             
-            <div className="p-6">
-              {/* Preview Card - Mimics TreatmentCenterCard */}
-              <article className="relative overflow-hidden rounded-2xl border bg-card shadow-card">
+            <div className="p-6 bg-muted/30">
+              {/* Preview Card - Exact replica of TreatmentCenterCard */}
+              <article className="group relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-border shadow-card">
+                {facility.featured && (
+                  <div className="absolute right-4 top-4 z-10">
+                    <Badge className="gap-1.5 bg-accent text-accent-foreground border-0 shadow-md px-3 py-1">
+                      <Star className="h-3 w-3 fill-current" />
+                      Featured
+                    </Badge>
+                  </div>
+                )}
+
                 {/* Image/Header Area */}
                 <div className="relative h-40 overflow-hidden bg-gradient-to-br from-primary/10 via-secondary to-accent/10">
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -666,6 +680,7 @@ export default function ProviderListingPage() {
                       </span>
                     </div>
                   </div>
+                  {/* Decorative elements */}
                   <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
                   <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-accent/10 blur-2xl" />
                 </div>
@@ -674,7 +689,7 @@ export default function ProviderListingPage() {
                 <div className="p-5">
                   {/* Header */}
                   <div className="mb-3">
-                    <h3 className="font-display text-lg font-semibold text-foreground line-clamp-1">
+                    <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {facility.name}
                     </h3>
                     <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -683,16 +698,18 @@ export default function ProviderListingPage() {
                     </p>
                   </div>
 
-                  {/* Rating Placeholder */}
+                  {/* Rating */}
                   <div className="mb-4 flex items-center gap-3">
                     <div className="flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1">
                       <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                       <span className="text-sm font-semibold text-primary">5.0</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">New listing</span>
+                    <span className="text-xs text-muted-foreground">
+                      New listing
+                    </span>
                   </div>
 
-                  {/* Treatment Type */}
+                  {/* Treatment Types */}
                   <div className="mb-4 flex flex-wrap gap-1.5">
                     <Badge variant="secondary" className="text-xs font-normal px-2 py-0.5">
                       {facility.facility_type}
@@ -702,11 +719,16 @@ export default function ProviderListingPage() {
                         {facility.gender_served === "male" ? "Men Only" : "Women Only"}
                       </Badge>
                     )}
+                    {facility.bed_count && (
+                      <Badge variant="secondary" className="text-xs font-normal px-2 py-0.5">
+                        {facility.bed_count} Beds
+                      </Badge>
+                    )}
                   </div>
 
                   {/* Description */}
                   <p className="mb-4 line-clamp-2 text-sm text-muted-foreground leading-relaxed">
-                    {facility.description || "No description provided yet."}
+                    {facility.description || "Add a description to help visitors understand your facility and services."}
                   </p>
 
                   {/* Verified Badge */}
@@ -717,32 +739,45 @@ export default function ProviderListingPage() {
 
                   {/* Actions */}
                   <div className="flex gap-2">
-                    <Button variant="default" className="flex-1 gap-2" disabled>
+                    <Button variant="default" className="flex-1 gap-2">
                       <Phone className="h-4 w-4" />
                       Call Now
                     </Button>
-                    <Button variant="outline" className="flex-1 gap-1" disabled>
+                    <Button variant="outline" className="flex-1 gap-1 group/btn">
                       Details
-                      <ArrowRight className="h-3.5 w-3.5" />
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" />
                     </Button>
                   </div>
                 </div>
               </article>
+            </div>
 
-              {facility.status === "approved" && (
-                <div className="mt-4 text-center">
-                  <Button variant="outline" size="sm" asChild>
-                    <a 
-                      href={`/rehab-centers/${facility.id}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="gap-2"
-                    >
-                      View Live Listing
-                      <ArrowUpRight className="h-3 w-3" />
-                    </a>
-                  </Button>
-                </div>
+            {/* Footer Actions */}
+            <div className="px-6 py-4 border-t border-border bg-background flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {facility.status === "approved" 
+                  ? "Your listing is live and visible to the public" 
+                  : facility.status === "pending"
+                  ? "Your listing is pending approval"
+                  : "Your listing needs updates before going live"
+                }
+              </p>
+              {facility.status === "approved" ? (
+                <Button variant="outline" size="sm" asChild>
+                  <a 
+                    href={`/rehab-centers/${facility.id}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="gap-2"
+                  >
+                    View Live
+                    <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>
+                  Close
+                </Button>
               )}
             </div>
           </DialogContent>
