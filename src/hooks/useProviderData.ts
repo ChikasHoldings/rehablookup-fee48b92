@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 interface Profile {
   first_name: string;
@@ -28,6 +29,54 @@ interface ProviderData {
 }
 
 export function useProviderData(facilityId?: string) {
+  const queryClient = useQueryClient();
+
+  // Set up realtime subscriptions for stats updates
+  useEffect(() => {
+    if (!facilityId) return;
+
+    // Subscribe to facility_views changes
+    const viewsChannel = supabase
+      .channel(`facility-views-${facilityId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'facility_views',
+          filter: `facility_id=eq.${facilityId}`
+        },
+        () => {
+          // Invalidate query to refetch updated stats
+          queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to leads changes
+    const leadsChannel = supabase
+      .channel(`leads-${facilityId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leads',
+          filter: `facility_id=eq.${facilityId}`
+        },
+        () => {
+          // Invalidate query to refetch updated stats
+          queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(viewsChannel);
+      supabase.removeChannel(leadsChannel);
+    };
+  }, [facilityId, queryClient]);
+
   return useQuery({
     queryKey: ["provider-data", facilityId],
     queryFn: async (): Promise<ProviderData> => {
