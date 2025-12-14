@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Input } from "@/components/ui/input";
@@ -209,6 +209,40 @@ const faqCategories: FAQCategory[] = [
 const FAQ = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Add JSON-LD structured data for SEO
+  useEffect(() => {
+    const allFaqs = faqCategories.flatMap(category => category.faqs);
+    
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": allFaqs.map(faq => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.answer
+        }
+      }))
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(jsonLd);
+    script.id = 'faq-jsonld';
+    
+    // Remove existing script if present
+    const existing = document.getElementById('faq-jsonld');
+    if (existing) existing.remove();
+    
+    document.head.appendChild(script);
+
+    return () => {
+      const scriptToRemove = document.getElementById('faq-jsonld');
+      if (scriptToRemove) scriptToRemove.remove();
+    };
+  }, []);
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery && !selectedCategory) return faqCategories;
