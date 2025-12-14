@@ -5,7 +5,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
-import { Phone, MapPin, Filter, Search, ArrowRight, Shield, Clock, CheckCircle, Grid3X3, List, X, ArrowUpDown } from "lucide-react";
+import { Phone, MapPin, Search, ArrowRight, Shield, Clock, CheckCircle, Grid3X3, List, X, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -181,55 +181,34 @@ const RehabCenters = () => {
 
   return (
     <Layout>
-      {/* Header */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-12 md:py-16">
-        {/* Background decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-        </div>
-
+      {/* Hero Header */}
+      <section className="relative overflow-hidden bg-primary py-8 md:py-10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/5 via-transparent to-transparent" />
+        
         <div className="container relative">
-          <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-2xl">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-primary-foreground/90 backdrop-blur-sm">
-                <CheckCircle className="h-4 w-4" />
-                Verified Treatment Centers
-              </div>
-              <h1 className="font-display text-2xl font-bold tracking-tight text-primary-foreground md:text-3xl lg:text-4xl">
-                Find Your Path to Recovery
-              </h1>
-              <p className="mt-3 text-base text-primary-foreground/80">
-                {hasFilters ? (
-                  <>
-                    Showing <span className="font-semibold text-primary-foreground">{filteredCenters.length}</span> results
-                    {activeTypeFilter && ` for ${activeTypeFilter}`}
-                    {location && ` near "${location}"`}
-                  </>
-                ) : (
-                  "Browse verified treatment centers and start your recovery journey today"
-                )}
-              </p>
+          <div className="mb-6 max-w-xl">
+            <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-primary-foreground/70">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Verified Treatment Centers
             </div>
-            <a href="tel:1-800-555-0199" className="shrink-0">
-              <Button 
-                variant="secondary" 
-                size="lg" 
-                className="gap-2 bg-white text-primary shadow-xl hover:bg-white/90"
-              >
-                <Phone className="h-4 w-4" />
-                <span className="hidden sm:inline">Call for Immediate Help</span>
-                <span className="sm:hidden">Get Help Now</span>
-              </Button>
-            </a>
+            <h1 className="font-display text-xl font-bold tracking-tight text-primary-foreground md:text-2xl lg:text-3xl">
+              Find Your Path to Recovery
+            </h1>
+            <p className="mt-2 text-sm text-primary-foreground/70">
+              {hasFilters ? (
+                <>
+                  <span className="font-medium text-primary-foreground">{filteredCenters.length}</span> results
+                  {activeTypeFilter && ` for ${activeTypeFilter}`}
+                  {location && ` near "${location}"`}
+                </>
+              ) : (
+                "Search verified treatment centers and find the right care for you"
+              )}
+            </p>
           </div>
 
-          {/* Search Form */}
-          <div className="rounded-2xl border border-white/10 bg-card p-5 shadow-2xl md:p-6">
-            <div className="mb-4 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Filter className="h-4 w-4 text-primary" />
-              Refine Your Search
-            </div>
+          {/* Compact Search Form */}
+          <div className="rounded-xl border border-white/10 bg-card p-4 shadow-lg">
             <SearchForm
               variant="compact"
               initialLocation={location}
@@ -475,38 +454,28 @@ const RehabCenters = () => {
         </div>
       </section>
 
-      {/* Help Banner */}
-      <section className="relative overflow-hidden bg-primary py-16 md:py-20">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-        </div>
-        <div className="container relative">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Need Help Finding the Right Center?
-            </h2>
-            <p className="mb-8 text-lg text-primary-foreground/80">
-              Our specialists can help you navigate treatment options and insurance coverage. 
-              Get free, confidential guidance today.
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+      {/* CTA Banner */}
+      <section className="border-t border-border bg-card py-12 md:py-14">
+        <div className="container">
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center md:flex-row md:text-left">
+            <div className="flex-1">
+              <h2 className="mb-2 font-display text-lg font-semibold text-foreground md:text-xl">
+                Need Help Finding the Right Center?
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Our specialists provide free, confidential guidance on treatment options and insurance.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
               <a href="tel:1-800-555-0199">
-                <Button 
-                  size="lg" 
-                  className="w-full gap-2 bg-white text-primary shadow-xl hover:bg-white/90 sm:w-auto"
-                >
+                <Button className="w-full gap-2 sm:w-auto">
                   <Phone className="h-4 w-4" />
-                  Speak With a Specialist
+                  Call Now
                 </Button>
               </a>
               <Link to="/contact">
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="w-full gap-2 border-white/30 bg-white/10 text-primary-foreground backdrop-blur-sm hover:bg-white/20 sm:w-auto"
-                >
-                  Request a Callback
+                <Button variant="outline" className="w-full gap-2 sm:w-auto">
+                  Request Callback
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
