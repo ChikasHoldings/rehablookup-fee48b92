@@ -5,7 +5,7 @@ import { Search, MapPin, Stethoscope, Shield } from "lucide-react";
 import { treatmentTypes, insuranceProviders } from "@/data/treatmentCenters";
 
 interface SearchFormProps {
-  variant?: "hero" | "compact";
+  variant?: "hero" | "compact" | "compact-hero";
   initialLocation?: string;
   initialTreatmentType?: string;
   initialInsurance?: string;
@@ -31,6 +31,65 @@ export function SearchForm({
     navigate(`/rehab-centers?${params.toString()}`);
   };
 
+  // Compact hero variant - inline search in hero
+  if (variant === "compact-hero") {
+    return (
+      <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
+        <div className="flex flex-col gap-2 rounded-xl bg-card/95 p-3 shadow-xl backdrop-blur-sm sm:flex-row sm:items-center sm:gap-2 sm:p-2">
+          {/* Location */}
+          <div className="relative flex-1">
+            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="City, State, or ZIP"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="h-10 w-full rounded-lg border-0 bg-secondary/50 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          
+          {/* Treatment Type */}
+          <div className="relative flex-1 sm:max-w-[180px]">
+            <Stethoscope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <select
+              value={treatmentType}
+              onChange={(e) => setTreatmentType(e.target.value)}
+              className="h-10 w-full appearance-none rounded-lg border-0 bg-secondary/50 pl-9 pr-8 text-sm text-foreground focus:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">Treatment Type</option>
+              {treatmentTypes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Insurance - Hidden on mobile for space */}
+          <div className="relative hidden flex-1 sm:block sm:max-w-[180px]">
+            <Shield className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <select
+              value={insurance}
+              onChange={(e) => setInsurance(e.target.value)}
+              className="h-10 w-full appearance-none rounded-lg border-0 bg-secondary/50 pl-9 pr-8 text-sm text-foreground focus:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">Insurance</option>
+              {insuranceProviders.map((provider) => (
+                <option key={provider} value={provider}>{provider}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Submit */}
+          <Button type="submit" variant="success" className="h-10 gap-2 px-6">
+            <Search className="h-4 w-4" />
+            <span className="hidden sm:inline">Find Rehab</span>
+            <span className="sm:hidden">Search</span>
+          </Button>
+        </div>
+      </form>
+    );
+  }
+
+  // Compact variant for search results page
   if (variant === "compact") {
     return (
       <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
