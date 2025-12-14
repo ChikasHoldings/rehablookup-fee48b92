@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_verification_codes: {
+        Row: {
+          attempts: number | null
+          code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          verified: boolean | null
+        }
+        Insert: {
+          attempts?: number | null
+          code: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          verified?: boolean | null
+        }
+        Update: {
+          attempts?: number | null
+          code?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       facilities: {
         Row: {
           address: string
@@ -334,46 +364,82 @@ export type Database = {
       }
       leads: {
         Row: {
+          budget_preference: string | null
           created_at: string
+          dual_diagnosis: string | null
           email: string
-          facility_id: string
+          email_verified: boolean | null
+          facility_id: string | null
           id: string
+          insurance_provider: string | null
+          insurance_type: string | null
           ip_hash: string | null
+          level_of_care: string | null
+          location_city_state: string | null
+          location_zip: string | null
           message: string | null
           name: string
           phone: string
           preferred_contact: string
+          primary_substance: string[] | null
           quality_flag: string | null
+          source: string | null
           status: string
+          urgency: string | null
           validation_status: string | null
+          who_seeking_help: string | null
         }
         Insert: {
+          budget_preference?: string | null
           created_at?: string
+          dual_diagnosis?: string | null
           email: string
-          facility_id: string
+          email_verified?: boolean | null
+          facility_id?: string | null
           id?: string
+          insurance_provider?: string | null
+          insurance_type?: string | null
           ip_hash?: string | null
+          level_of_care?: string | null
+          location_city_state?: string | null
+          location_zip?: string | null
           message?: string | null
           name: string
           phone: string
           preferred_contact?: string
+          primary_substance?: string[] | null
           quality_flag?: string | null
+          source?: string | null
           status?: string
+          urgency?: string | null
           validation_status?: string | null
+          who_seeking_help?: string | null
         }
         Update: {
+          budget_preference?: string | null
           created_at?: string
+          dual_diagnosis?: string | null
           email?: string
-          facility_id?: string
+          email_verified?: boolean | null
+          facility_id?: string | null
           id?: string
+          insurance_provider?: string | null
+          insurance_type?: string | null
           ip_hash?: string | null
+          level_of_care?: string | null
+          location_city_state?: string | null
+          location_zip?: string | null
           message?: string | null
           name?: string
           phone?: string
           preferred_contact?: string
+          primary_substance?: string[] | null
           quality_flag?: string | null
+          source?: string | null
           status?: string
+          urgency?: string | null
           validation_status?: string | null
+          who_seeking_help?: string | null
         }
         Relationships: [
           {
