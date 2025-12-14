@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Users, 
@@ -11,7 +11,11 @@ import {
   Copy,
   Check,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  Search,
+  X,
+  CalendarIcon,
+  Filter
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -29,13 +33,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, isToday } from "date-fns";
+import { format, startOfMonth, isToday, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 
@@ -51,6 +64,11 @@ interface Lead {
   facility_id: string;
 }
 
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
 // Placeholder subscription limits - in production this would come from billing system
 const LEAD_LIMIT_PER_MONTH = 50;
 
@@ -58,6 +76,12 @@ export default function ProviderLeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: providerData } = useProviderData();
@@ -80,6 +104,45 @@ export default function ProviderLeadsPage() {
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 2,
   });
+
+  // Filtered leads based on search, status, and date range
+  const filteredLeads = useMemo(() => {
+    return leads.filter(lead => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          lead.name.toLowerCase().includes(query) ||
+          lead.email.toLowerCase().includes(query) ||
+          lead.phone.includes(query);
+        if (!matchesSearch) return false;
+      }
+
+      // Status filter
+      if (statusFilter !== "all" && lead.status !== statusFilter) {
+        return false;
+      }
+
+      // Date range filter
+      if (dateRange.from || dateRange.to) {
+        const leadDate = new Date(lead.created_at);
+        if (dateRange.from && dateRange.to) {
+          if (!isWithinInterval(leadDate, { 
+            start: startOfDay(dateRange.from), 
+            end: endOfDay(dateRange.to) 
+          })) {
+            return false;
+          }
+        } else if (dateRange.from) {
+          if (leadDate < startOfDay(dateRange.from)) return false;
+        } else if (dateRange.to) {
+          if (leadDate > endOfDay(dateRange.to)) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [leads, searchQuery, statusFilter, dateRange]);
 
   // Update status mutation
   const updateStatus = useMutation({
@@ -120,6 +183,13 @@ export default function ProviderLeadsPage() {
     toast({ title: "Contact info copied" });
   };
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setDateRange({ from: undefined, to: undefined });
+  };
+
+  const hasActiveFilters = searchQuery || statusFilter !== "all" || dateRange.from || dateRange.to;
   const leadsAtLimit = thisMonthLeads.length >= LEAD_LIMIT_PER_MONTH;
 
   return (
@@ -224,14 +294,137 @@ export default function ProviderLeadsPage() {
       {/* Leads Table */}
       <Card className="shadow-sm">
         <CardHeader className="border-b border-border bg-muted/30">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Users className="h-5 w-5 text-primary" />
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>All Leads</CardTitle>
+                <p className="text-sm text-muted-foreground">Click a row to view details and add notes</p>
+              </div>
             </div>
-            <div>
-              <CardTitle>All Leads</CardTitle>
-              <p className="text-sm text-muted-foreground">Click a row to view details and add notes</p>
+
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search */}
+              <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, email, or phone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {getStatusOptions().map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Date Range */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "justify-start text-left font-normal min-w-[200px]",
+                      !dateRange.from && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
+                        </>
+                      ) : (
+                        format(dateRange.from, "MMM d, yyyy")
+                      )
+                    ) : (
+                      <span>Date range</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="range"
+                    selected={{ from: dateRange.from, to: dateRange.to }}
+                    onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                    numberOfMonths={2}
+                    className="p-3 pointer-events-auto"
+                  />
+                  {(dateRange.from || dateRange.to) && (
+                    <div className="border-t p-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setDateRange({ from: undefined, to: undefined })}
+                      >
+                        Clear dates
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
+                  <X className="h-4 w-4" />
+                  Clear filters
+                </Button>
+              )}
             </div>
+
+            {/* Active Filters Summary */}
+            {hasActiveFilters && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Filter className="h-3.5 w-3.5" />
+                  Showing {filteredLeads.length} of {leads.length} leads
+                </span>
+                {statusFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Status: {getStatusOptions().find(o => o.value === statusFilter)?.label}
+                    <button onClick={() => setStatusFilter("all")}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {dateRange.from && (
+                  <Badge variant="secondary" className="gap-1">
+                    {dateRange.to 
+                      ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}`
+                      : `From ${format(dateRange.from, "MMM d")}`
+                    }
+                    <button onClick={() => setDateRange({ from: undefined, to: undefined })}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -260,6 +453,19 @@ export default function ProviderLeadsPage() {
                 Make sure your listing is complete to attract more inquiries.
               </p>
             </div>
+          ) : filteredLeads.length === 0 ? (
+            <div className="text-center py-16 px-4">
+              <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <Search className="h-8 w-8 text-muted-foreground/30" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">No matching leads</h3>
+              <p className="mt-2 text-muted-foreground max-w-md mx-auto">
+                Try adjusting your filters to find what you're looking for.
+              </p>
+              <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                Clear all filters
+              </Button>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -275,7 +481,7 @@ export default function ProviderLeadsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leads.map((lead) => (
+                  {filteredLeads.map((lead) => (
                     <TableRow 
                       key={lead.id} 
                       className="hover:bg-muted/30 cursor-pointer group"
