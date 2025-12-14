@@ -187,9 +187,11 @@ const CenterProfile = () => {
               Call Now
             </Button>
           </a>
-          <Button variant="outline" size="sm" className="flex-1" onClick={scrollToContact}>
-            Contact
-          </Button>
+          <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}`} className="flex-1">
+            <Button variant="outline" size="sm" className="w-full">
+              Contact
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -273,9 +275,11 @@ const CenterProfile = () => {
                       </Button>
                     </a>
                   )}
-                  <Button variant="outline" size="sm" onClick={scrollToContact}>
-                    Contact
-                  </Button>
+                  <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}`}>
+                    <Button variant="outline" size="sm">
+                      Contact
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -529,7 +533,7 @@ const CenterProfile = () => {
               </div>
             </div>
 
-            {/* Right Column - Contact Form */}
+            {/* Right Column - Contact CTA */}
             <div className="lg:col-span-1">
               <div ref={contactFormRef} className="sticky top-20 rounded-xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
@@ -550,15 +554,22 @@ const CenterProfile = () => {
                     <span className="text-xs font-medium text-foreground">Quick Response</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    A specialist will contact you within 24 hours.
+                    Complete our intake form and a specialist will contact you within 24 hours.
                   </p>
                 </div>
 
-                <LeadSubmissionForm 
-                  facilityId={facility.id} 
-                  facilityName={facility.name}
-                  facilityEmail={facility.email}
-                />
+                <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}`}>
+                  <Button className="w-full" size="lg">
+                    Request Information
+                  </Button>
+                </Link>
+                
+                <div className="mt-4 pt-4 border-t border-border text-center">
+                  <p className="text-xs text-muted-foreground mb-2">Or call directly:</p>
+                  <a href={`tel:${facility.phone}`} className="text-sm font-semibold text-primary hover:underline">
+                    {facility.phone}
+                  </a>
+                </div>
               </div>
             </div>
           </div>
