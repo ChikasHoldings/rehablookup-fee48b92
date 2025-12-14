@@ -35,26 +35,26 @@ export function SearchForm({
   if (variant === "compact-hero") {
     return (
       <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-lg sm:flex-row sm:items-center sm:gap-2 sm:p-2">
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xl sm:flex-row sm:items-center sm:gap-3 sm:p-3">
           {/* Location */}
           <div className="relative flex-1">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="City, State, or ZIP"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           
           {/* Treatment Type */}
-          <div className="relative flex-1 sm:max-w-[180px]">
-            <Stethoscope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative flex-1 sm:max-w-[200px]">
+            <Stethoscope className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <select
               value={treatmentType}
               onChange={(e) => setTreatmentType(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-input bg-background pl-9 pr-8 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-12 w-full appearance-none rounded-xl border border-input bg-background pl-11 pr-8 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Treatment Type</option>
               {treatmentTypes.map((type) => (
@@ -64,12 +64,12 @@ export function SearchForm({
           </div>
 
           {/* Insurance - Hidden on mobile for space */}
-          <div className="relative hidden flex-1 sm:block sm:max-w-[180px]">
-            <Shield className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative hidden flex-1 sm:block sm:max-w-[200px]">
+            <Shield className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <select
               value={insurance}
               onChange={(e) => setInsurance(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-input bg-background pl-9 pr-8 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-12 w-full appearance-none rounded-xl border border-input bg-background pl-11 pr-8 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Insurance</option>
               {insuranceProviders.map((provider) => (
@@ -79,8 +79,8 @@ export function SearchForm({
           </div>
 
           {/* Submit */}
-          <Button type="submit" variant="default" className="h-10 gap-2 px-6">
-            <Search className="h-4 w-4" />
+          <Button type="submit" variant="default" size="lg" className="h-12 gap-2 px-8 text-base">
+            <Search className="h-5 w-5" />
             <span className="hidden sm:inline">Find Rehab</span>
             <span className="sm:hidden">Search</span>
           </Button>
