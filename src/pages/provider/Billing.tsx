@@ -297,17 +297,31 @@ export default function ProviderBillingPage() {
                 </CardHeader>
                 
                 <CardContent className="space-y-5">
-                  <div className={`text-sm font-semibold px-3 py-2 rounded-lg ${
-                    plan.key === "featured"
-                      ? "bg-amber-50 text-amber-700 border border-amber-200"
-                      : plan.key === "professional"
-                        ? "bg-primary/5 text-primary border border-primary/20"
-                        : "bg-muted text-muted-foreground"
-                  }`}>
-                    {plan.lead_limit === 0 
-                      ? "No leads included" 
-                      : `Up to ${plan.lead_limit} leads/month`
-                    }
+                  <div className="space-y-2">
+                    <div className={`text-sm font-semibold px-3 py-2 rounded-lg ${
+                      plan.key === "featured"
+                        ? "bg-amber-50 text-amber-700 border border-amber-200"
+                        : plan.key === "professional"
+                          ? "bg-primary/5 text-primary border border-primary/20"
+                          : "bg-muted text-muted-foreground"
+                    }`}>
+                      {plan.lead_limit === 0 
+                        ? "No leads included" 
+                        : `Up to ${plan.lead_limit} leads/month`
+                      }
+                    </div>
+                    <div className={`text-xs font-medium px-3 py-1.5 rounded-lg ${
+                      plan.key === "featured"
+                        ? "bg-amber-50/50 text-amber-600 border border-amber-100"
+                        : plan.key === "professional"
+                          ? "bg-primary/5 text-primary/80 border border-primary/10"
+                          : "bg-muted/50 text-muted-foreground/80"
+                    }`}>
+                      {plan.location_limit === 1 
+                        ? "1 facility location" 
+                        : `Up to ${plan.location_limit} locations`
+                      }
+                    </div>
                   </div>
                   
                   <ul className="space-y-2.5">

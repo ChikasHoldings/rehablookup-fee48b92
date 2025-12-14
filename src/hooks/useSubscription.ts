@@ -50,8 +50,10 @@ export const PLAN_DETAILS = {
     period: "/month",
     description: "Public profile with no lead delivery",
     lead_limit: 0,
+    location_limit: 1,
     featured: false,
     features: [
+      "1 facility location",
       "Public profile listing",
       "Logo and gallery upload",
       "Basic search visibility",
@@ -64,8 +66,10 @@ export const PLAN_DETAILS = {
     period: "/month",
     description: "Start receiving qualified leads",
     lead_limit: 25,
+    location_limit: 3,
     featured: false,
     features: [
+      "Up to 3 facility locations",
       "Up to 25 leads/month",
       "Standard search placement",
       "Email lead notifications",
@@ -81,8 +85,10 @@ export const PLAN_DETAILS = {
     period: "/month",
     description: "Maximum visibility & lead volume",
     lead_limit: 75,
+    location_limit: 5,
     featured: true,
     features: [
+      "Up to 5 facility locations",
       "Up to 75 leads/month",
       "Homepage featured section",
       "Priority search placement",
