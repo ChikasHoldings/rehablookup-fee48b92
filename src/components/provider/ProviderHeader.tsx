@@ -26,7 +26,7 @@ export function ProviderHeader({ facilityName, userName, onLogout }: ProviderHea
     .slice(0, 2) || "P";
 
   return (
-    <header className="sticky top-0 z-40 h-14 bg-primary shadow-md">
+    <header className="h-14 bg-primary shadow-md">
       <div className="h-full px-4 md:px-6 flex items-center justify-between">
         {/* Left - Logo & Label */}
         <div className="flex items-center gap-3">
