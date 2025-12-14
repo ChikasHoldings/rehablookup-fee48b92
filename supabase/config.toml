@@ -17,4 +17,12 @@ verify_jwt = true
 
 [functions.customer-portal]
 verify_jwt = true
+
+[functions.send-verification-code]
+verify_jwt = false
+
+[functions.verify-code]
+verify_jwt = false
+
+[functions.submit-qualified-lead]
 verify_jwt = false
