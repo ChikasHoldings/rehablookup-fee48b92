@@ -206,8 +206,9 @@ const Resources = () => {
 
           <div className="grid gap-6 md:grid-cols-3">
             {featuredArticles.map((article, index) => (
-              <article
+              <Link
                 key={article.id}
+                to={`/resources/${article.id}`}
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
@@ -241,7 +242,7 @@ const Resources = () => {
                     </div>
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </div>
@@ -292,8 +293,9 @@ const Resources = () => {
 
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredArticles.map((article, index) => (
-                  <article
+                  <Link
                     key={article.id}
+                    to={`/resources/${article.id}`}
                     className="group animate-fade-in"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -328,7 +330,7 @@ const Resources = () => {
                         </div>
                       </div>
                     </div>
-                  </article>
+                  </Link>
                 ))}
               </div>
             </>
