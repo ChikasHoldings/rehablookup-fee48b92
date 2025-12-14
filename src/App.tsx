@@ -13,6 +13,7 @@ import ProviderResources from "./pages/ProviderResources";
 import ProviderLogin from "./pages/ProviderLogin";
 import ProviderSupport from "./pages/ProviderSupport";
 import ProviderSignup from "./pages/ProviderSignup";
+import ProviderDashboard from "./pages/ProviderDashboard";
 import Resources from "./pages/Resources";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/provider-login" element={<ProviderLogin />} />
           <Route path="/provider-support" element={<ProviderSupport />} />
           <Route path="/provider-signup" element={<ProviderSignup />} />
+          <Route path="/provider-dashboard" element={<ProviderDashboard />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/resources/:id" element={<ArticleDetail />} />
           <Route path="/faq" element={<FAQ />} />

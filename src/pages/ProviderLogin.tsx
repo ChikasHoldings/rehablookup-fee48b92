@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Mail, ArrowRight } from "lucide-react";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
@@ -18,26 +20,73 @@ export default function ProviderLogin() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          navigate("/provider-dashboard");
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/provider-dashboard");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    setTimeout(() => {
-      toast({
-        title: "Coming Soon",
-        description: "Provider login functionality will be available soon. Please contact us for assistance.",
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
+
+      if (error) {
+        if (error.message === "Invalid login credentials") {
+          toast({
+            title: "Login Failed",
+            description: "Invalid email or password. Please try again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Login Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You've been successfully logged in.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header 
         navLinks={providerNavLinks} 
-        ctaLink="/for-providers" 
-        ctaLabel="List Your Facility"
+        ctaLink="/provider-signup" 
+        ctaLabel="Get Started"
         variant="provider"
       />
       
@@ -112,13 +161,15 @@ export default function ProviderLogin() {
             </p>
             <p className="text-center text-xs text-muted-foreground">
               Need help?{" "}
-              <Link to="/contact" className="text-primary hover:underline">
+              <Link to="/provider-support" className="text-primary hover:underline">
                 Contact support
               </Link>
             </p>
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 }
