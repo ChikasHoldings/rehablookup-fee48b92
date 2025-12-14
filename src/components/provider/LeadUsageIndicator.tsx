@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, TrendingUp, Zap } from "lucide-react";
+import { AlertCircle, TrendingUp, Zap, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -102,18 +103,28 @@ interface LeadLimitBannerProps {
 }
 
 export function LeadLimitWarningBanner({ usedLeads, leadLimit }: LeadLimitBannerProps) {
+  const storageKey = `lead_warning_dismissed_${leadLimit}`;
+  const [isDismissed, setIsDismissed] = useState(() => {
+    return sessionStorage.getItem(storageKey) === "true";
+  });
+
   // Don't show warning for 0-limit plans or when not near limit
   if (leadLimit === 0) return null;
   
   const usagePercent = (usedLeads / leadLimit) * 100;
   const isNearLimit = usagePercent >= 80 && usagePercent < 100;
 
-  if (!isNearLimit) return null;
+  if (!isNearLimit || isDismissed) return null;
+
+  const handleDismiss = () => {
+    sessionStorage.setItem(storageKey, "true");
+    setIsDismissed(true);
+  };
 
   return (
-    <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+    <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 relative">
       <TrendingUp className="h-4 w-4 text-amber-600" />
-      <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8">
         <span className="text-amber-800 dark:text-amber-200">
           You're nearing your monthly lead limit ({usedLeads}/{leadLimit}). Upgrade to keep receiving inquiries.
         </span>
@@ -124,22 +135,39 @@ export function LeadLimitWarningBanner({ usedLeads, leadLimit }: LeadLimitBanner
           </Link>
         </Button>
       </AlertDescription>
+      <button
+        onClick={handleDismiss}
+        className="absolute top-3 right-3 text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 transition-colors"
+        aria-label="Dismiss warning"
+      >
+        <X className="h-4 w-4" />
+      </button>
     </Alert>
   );
 }
 
 export function LeadLimitReachedBanner({ usedLeads, leadLimit }: LeadLimitBannerProps) {
+  const storageKey = `lead_reached_dismissed_${leadLimit}`;
+  const [isDismissed, setIsDismissed] = useState(() => {
+    return sessionStorage.getItem(storageKey) === "true";
+  });
+
   // Don't show for 0-limit plans (they have their own messaging)
   if (leadLimit === 0) return null;
   
   const isAtLimit = usedLeads >= leadLimit;
 
-  if (!isAtLimit) return null;
+  if (!isAtLimit || isDismissed) return null;
+
+  const handleDismiss = () => {
+    sessionStorage.setItem(storageKey, "true");
+    setIsDismissed(true);
+  };
 
   return (
-    <Alert variant="destructive" className="bg-destructive/5 border-destructive/30">
+    <Alert variant="destructive" className="bg-destructive/5 border-destructive/30 relative">
       <AlertCircle className="h-4 w-4" />
-      <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8">
         <span>
           You've reached your monthly lead limit ({leadLimit} leads). New leads are paused until you upgrade.
         </span>
@@ -150,6 +178,13 @@ export function LeadLimitReachedBanner({ usedLeads, leadLimit }: LeadLimitBanner
           </Link>
         </Button>
       </AlertDescription>
+      <button
+        onClick={handleDismiss}
+        className="absolute top-3 right-3 text-destructive/70 hover:text-destructive transition-colors"
+        aria-label="Dismiss warning"
+      >
+        <X className="h-4 w-4" />
+      </button>
     </Alert>
   );
 }
