@@ -6,12 +6,12 @@
 
 @layer base {
   :root {
-    /* Blue & Gold Healthcare Theme - Refined */
-    /* Primary Blue: #1F4FD8 */
-    --primary: 224 75% 48%;
+    /* Navy Blue & Gold Healthcare Theme */
+    /* Primary Navy: #1B365D */
+    --primary: 216 55% 24%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 224 80% 95%;
-    --primary-glow: 224 75% 60%;
+    --primary-light: 216 50% 95%;
+    --primary-glow: 216 55% 35%;
 
     /* Accent Gold: #C9A227 */
     --accent: 45 71% 47%;
@@ -52,7 +52,7 @@
     /* Borders - refined with slight blue tint */
     --border: 220 20% 88%;
     --input: 220 20% 88%;
-    --ring: 224 75% 48%;
+    --ring: 216 55% 24%;
 
     --radius: 0.75rem;
 
@@ -67,16 +67,16 @@
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 224 75% 48%;
+    --sidebar-primary: 216 55% 24%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 224 75% 48%;
+    --sidebar-ring: 216 55% 24%;
   }
 
   .dark {
-    --primary: 224 70% 55%;
+    --primary: 216 50% 35%;
     --primary-foreground: 0 0% 100%;
 
     --accent: 45 65% 52%;
@@ -108,7 +108,7 @@
 
     --border: 220 15% 22%;
     --input: 220 15% 22%;
-    --ring: 224 70% 55%;
+    --ring: 216 50% 35%;
 
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.2);
@@ -118,12 +118,12 @@
 
     --sidebar-background: 220 18% 10%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 224 70% 55%;
+    --sidebar-primary: 216 50% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 15% 15%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 224 70% 55%;
+    --sidebar-ring: 216 50% 35%;
   }
 }
 
