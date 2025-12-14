@@ -1,0 +1,386 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { 
+  Phone, 
+  Mail, 
+  Calendar, 
+  MessageSquare, 
+  Copy, 
+  ExternalLink,
+  Check,
+  Send,
+  Plus,
+  Trash2,
+  Loader2
+} from "lucide-react";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
+
+interface Lead {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  message: string | null;
+  preferred_contact: string;
+  created_at: string;
+  status: string;
+  facility_id: string;
+}
+
+interface LeadNote {
+  id: string;
+  lead_id: string;
+  user_id: string;
+  note: string;
+  created_at: string;
+}
+
+interface LeadDetailDrawerProps {
+  lead: Lead | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerProps) {
+  const [newNote, setNewNote] = useState("");
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch notes for this lead
+  const { data: notes = [], isLoading: notesLoading } = useQuery({
+    queryKey: ["lead-notes", lead?.id],
+    queryFn: async (): Promise<LeadNote[]> => {
+      if (!lead?.id) return [];
+      const { data, error } = await supabase
+        .from("lead_notes")
+        .select("*")
+        .eq("lead_id", lead.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!lead?.id && open,
+  });
+
+  // Update status mutation
+  const updateStatus = useMutation({
+    mutationFn: async (newStatus: LeadStatus) => {
+      if (!lead) return;
+      const { error } = await supabase
+        .from("leads")
+        .update({ status: newStatus })
+        .eq("id", lead.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
+      toast({ title: "Status updated" });
+    },
+    onError: () => {
+      toast({ title: "Failed to update status", variant: "destructive" });
+    },
+  });
+
+  // Add note mutation
+  const addNote = useMutation({
+    mutationFn: async (note: string) => {
+      if (!lead) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      
+      const { error } = await supabase
+        .from("lead_notes")
+        .insert({ lead_id: lead.id, user_id: user.id, note });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead-notes", lead?.id] });
+      setNewNote("");
+      toast({ title: "Note added" });
+    },
+    onError: () => {
+      toast({ title: "Failed to add note", variant: "destructive" });
+    },
+  });
+
+  // Delete note mutation
+  const deleteNote = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from("lead_notes")
+        .delete()
+        .eq("id", noteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lead-notes", lead?.id] });
+      toast({ title: "Note deleted" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete note", variant: "destructive" });
+    },
+  });
+
+  const handleCopy = async (text: string, field: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+    toast({ title: "Copied to clipboard" });
+  };
+
+  const handleAddNote = () => {
+    if (newNote.trim()) {
+      addNote.mutate(newNote.trim());
+    }
+  };
+
+  if (!lead) return null;
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="max-h-[90vh]">
+        <div className="mx-auto w-full max-w-2xl overflow-y-auto">
+          <DrawerHeader className="text-left pb-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <DrawerTitle className="text-xl">{lead.name}</DrawerTitle>
+                <DrawerDescription className="flex items-center gap-2 mt-1">
+                  <Calendar className="h-3.5 w-3.5" />
+                  {format(new Date(lead.created_at), "MMMM d, yyyy 'at' h:mm a")}
+                </DrawerDescription>
+              </div>
+              <LeadStatusBadge status={lead.status as LeadStatus} />
+            </div>
+          </DrawerHeader>
+
+          <div className="px-4 pb-8 space-y-6">
+            {/* Status Selector */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Update Status</label>
+              <Select
+                value={lead.status}
+                onValueChange={(value) => updateStatus.mutate(value as LeadStatus)}
+                disabled={updateStatus.isPending}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {getStatusOptions().map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            {/* Contact Info */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                      <Phone className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{lead.phone}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {lead.preferred_contact === "call" ? "Preferred contact" : "Phone"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleCopy(lead.phone, "phone")}
+                    >
+                      {copiedField === "phone" ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      asChild
+                    >
+                      <a href={`tel:${lead.phone}`}>
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <Mail className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{lead.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {lead.preferred_contact === "email" ? "Preferred contact" : "Email"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleCopy(lead.email, "email")}
+                    >
+                      {copiedField === "email" ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      asChild
+                    >
+                      <a href={`mailto:${lead.email}`}>
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Message */}
+            {lead.message && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Message from Lead
+                  </h3>
+                  <div className="p-4 rounded-lg bg-muted/50 text-sm">
+                    {lead.message}
+                  </div>
+                </div>
+              </>
+            )}
+
+            <Separator />
+
+            {/* Notes */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-muted-foreground">Internal Notes</h3>
+              
+              {/* Add Note */}
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Add a note about this lead..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  className="min-h-[80px] resize-none"
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={handleAddNote}
+                disabled={!newNote.trim() || addNote.isPending}
+                className="gap-2"
+              >
+                {addNote.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                Add Note
+              </Button>
+
+              {/* Notes List */}
+              <div className="space-y-2 mt-4">
+                {notesLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : notes.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No notes yet. Add one above to track your follow-ups.
+                  </p>
+                ) : (
+                  notes.map((note) => (
+                    <div
+                      key={note.id}
+                      className="p-3 rounded-lg bg-muted/30 border border-border/50 group"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm flex-1">{note.note}</p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          onClick={() => deleteNote.mutate(note.id)}
+                          disabled={deleteNote.isPending}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {format(new Date(note.created_at), "MMM d, yyyy 'at' h:mm a")}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <Separator />
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="gap-2" asChild>
+                <a href={`tel:${lead.phone}`}>
+                  <Phone className="h-4 w-4" />
+                  Call Lead
+                </a>
+              </Button>
+              <Button variant="outline" className="gap-2" asChild>
+                <a href={`mailto:${lead.email}`}>
+                  <Mail className="h-4 w-4" />
+                  Email Lead
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
