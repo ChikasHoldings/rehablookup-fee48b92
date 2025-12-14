@@ -463,31 +463,31 @@ const Index = () => {
             </div>
 
             {/* Image with Stats Overlay */}
-            <div className="relative animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <div className="relative animate-fade-in lg:max-w-lg xl:max-w-xl mx-auto" style={{ animationDelay: "0.1s" }}>
               <div className="relative overflow-hidden rounded-2xl shadow-xl">
                 <img 
                   src={whyChooseUsImage} 
                   alt="Healthcare professional consulting with a family about treatment options"
-                  className="h-full w-full object-cover aspect-square"
+                  className="w-full object-cover aspect-[4/3]"
                 />
                 {/* Stats Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary via-primary/95 to-transparent p-6 pt-16">
-                  <div className="grid grid-cols-4 gap-4">
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary via-primary/95 to-transparent p-5 pt-12">
+                  <div className="grid grid-cols-4 gap-3">
                     <div className="text-center">
-                      <div className="font-display text-2xl font-bold text-accent md:text-3xl">10K+</div>
-                      <p className="text-xs text-primary-foreground/70">Families</p>
+                      <div className="font-display text-xl font-bold text-accent sm:text-2xl">10K+</div>
+                      <p className="text-[10px] sm:text-xs text-primary-foreground/70">Families</p>
                     </div>
                     <div className="text-center">
-                      <div className="font-display text-2xl font-bold text-accent md:text-3xl">500+</div>
-                      <p className="text-xs text-primary-foreground/70">Centers</p>
+                      <div className="font-display text-xl font-bold text-accent sm:text-2xl">500+</div>
+                      <p className="text-[10px] sm:text-xs text-primary-foreground/70">Centers</p>
                     </div>
                     <div className="text-center">
-                      <div className="font-display text-2xl font-bold text-accent md:text-3xl">50</div>
-                      <p className="text-xs text-primary-foreground/70">States</p>
+                      <div className="font-display text-xl font-bold text-accent sm:text-2xl">50</div>
+                      <p className="text-[10px] sm:text-xs text-primary-foreground/70">States</p>
                     </div>
                     <div className="text-center">
-                      <div className="font-display text-2xl font-bold text-primary-foreground md:text-3xl">24/7</div>
-                      <p className="text-xs text-primary-foreground/70">Support</p>
+                      <div className="font-display text-xl font-bold text-primary-foreground sm:text-2xl">24/7</div>
+                      <p className="text-[10px] sm:text-xs text-primary-foreground/70">Support</p>
                     </div>
                   </div>
                 </div>
