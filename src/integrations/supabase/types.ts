@@ -24,8 +24,10 @@ export type Database = {
           email: string | null
           facility_type: string
           featured: boolean
+          gallery_urls: string[] | null
           gender_served: string | null
           id: string
+          logo_url: string | null
           name: string
           phone: string
           slug: string | null
@@ -45,8 +47,10 @@ export type Database = {
           email?: string | null
           facility_type: string
           featured?: boolean
+          gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string
+          logo_url?: string | null
           name: string
           phone: string
           slug?: string | null
@@ -66,8 +70,10 @@ export type Database = {
           email?: string | null
           facility_type?: string
           featured?: boolean
+          gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string
+          logo_url?: string | null
           name?: string
           phone?: string
           slug?: string | null

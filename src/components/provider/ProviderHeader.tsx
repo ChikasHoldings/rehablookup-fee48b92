@@ -30,6 +30,7 @@ interface ProviderHeaderProps {
   facilityName?: string;
   facilityId?: string;
   facilitySlug?: string | null;
+  facilityLogo?: string | null;
   userName?: string;
   onLogout: () => void;
 }
@@ -41,7 +42,7 @@ const notifications = [
   { id: 3, title: "Welcome to RehabLookup", message: "Complete your profile to get started", time: "1 day ago", unread: false },
 ];
 
-export function ProviderHeader({ facilityName, facilityId, facilitySlug, userName, onLogout }: ProviderHeaderProps) {
+export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -81,8 +82,12 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, userNam
                 variant="ghost" 
                 className="gap-2 text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 h-9 px-2.5 rounded-lg min-w-0"
               >
-                <div className="flex items-center justify-center h-6 w-6 rounded-md bg-primary-foreground/15 shrink-0">
-                  <Building2 className="h-3.5 w-3.5" />
+                <div className="flex items-center justify-center h-6 w-6 rounded-md bg-primary-foreground/15 shrink-0 overflow-hidden">
+                  {facilityLogo ? (
+                    <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <Building2 className="h-3.5 w-3.5" />
+                  )}
                 </div>
                 <span className="font-medium text-sm truncate max-w-[140px] md:max-w-[200px]">
                   {facilityName || "Select Facility"}
@@ -98,8 +103,12 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, userNam
               {facilityName && (
                 <DropdownMenuItem className="flex items-center justify-between cursor-pointer py-2.5">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <Building2 className="h-4 w-4 text-primary" />
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                      {facilityLogo ? (
+                        <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Building2 className="h-4 w-4 text-primary" />
+                      )}
                     </div>
                     <span className="truncate font-medium">{facilityName}</span>
                   </div>
@@ -234,8 +243,12 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, userNam
                 variant="ghost" 
                 className="gap-2 text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 h-9 pl-1.5 pr-2.5 rounded-lg"
               >
-                <div className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs font-semibold">
-                  {initials}
+                <div className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs font-semibold overflow-hidden">
+                  {facilityLogo ? (
+                    <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    initials
+                  )}
                 </div>
                 <ChevronDown className="h-3.5 w-3.5 opacity-50 hidden sm:block" />
               </Button>
@@ -243,8 +256,12 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, userNam
             <DropdownMenuContent align="end" className="w-56 bg-card" sideOffset={8}>
               <DropdownMenuLabel className="font-normal py-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
-                    {initials}
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden">
+                    {facilityLogo ? (
+                      <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      initials
+                    )}
                   </div>
                   <div className="flex flex-col min-w-0">
                     <p className="text-sm font-semibold truncate">{userName || "Provider"}</p>

@@ -21,6 +21,9 @@ import {
   BadgeCheck,
   ExternalLink,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useRef, useState } from "react";
@@ -41,6 +44,8 @@ interface FacilityData {
   gender_served: string | null;
   bed_count: string | null;
   featured: boolean;
+  logo_url: string | null;
+  gallery_urls: string[] | null;
   facility_services: { service_name: string }[];
   facility_insurance: { insurance_name: string }[];
   facility_age_groups: { age_group: string }[];
@@ -52,6 +57,7 @@ const CenterProfile = () => {
   const location = useLocation();
   const contactFormRef = useRef<HTMLDivElement>(null);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
+  const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const fromSearch = location.state?.fromSearch;
 
   // Fetch facility data by slug
@@ -76,6 +82,8 @@ const CenterProfile = () => {
           gender_served,
           bed_count,
           featured,
+          logo_url,
+          gallery_urls,
           facility_services (service_name),
           facility_insurance (insurance_name),
           facility_age_groups (age_group),
@@ -152,6 +160,7 @@ const CenterProfile = () => {
   const insuranceList = facility.facility_insurance.map((i) => i.insurance_name);
   const ageGroups = facility.facility_age_groups.map((a) => a.age_group);
   const credentials = facility.facility_credentials[0];
+  const galleryImages = facility.gallery_urls?.filter(Boolean) || [];
 
   return (
     <Layout>
@@ -186,11 +195,15 @@ const CenterProfile = () => {
 
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="flex items-start gap-4">
-              {/* Logo Placeholder */}
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-card shadow-lg md:h-20 md:w-20">
-                <span className="font-display text-2xl font-bold text-primary md:text-3xl">
-                  {facility.name.charAt(0)}
-                </span>
+              {/* Logo */}
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-card shadow-lg md:h-20 md:w-20 overflow-hidden">
+                {facility.logo_url ? (
+                  <img src={facility.logo_url} alt={facility.name} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="font-display text-2xl font-bold text-primary md:text-3xl">
+                    {facility.name.charAt(0)}
+                  </span>
+                )}
               </div>
               
               <div>
@@ -265,6 +278,59 @@ const CenterProfile = () => {
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Left Column - Main Content */}
             <div className="lg:col-span-2 space-y-8">
+              {/* Gallery Section */}
+              {galleryImages.length > 0 && (
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                      <ImageIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <h2 className="font-display text-xl font-semibold text-foreground">
+                      Facility Photos
+                    </h2>
+                  </div>
+                  <div className="relative">
+                    <div className="aspect-video rounded-xl overflow-hidden bg-muted">
+                      <img 
+                        src={galleryImages[activeGalleryIndex]} 
+                        alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    {galleryImages.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => setActiveGalleryIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-card/90 flex items-center justify-center shadow-lg hover:bg-card transition-colors"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => setActiveGalleryIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1))}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-card/90 flex items-center justify-center shadow-lg hover:bg-card transition-colors"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {galleryImages.length > 1 && (
+                    <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+                      {galleryImages.map((img, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setActiveGalleryIndex(idx)}
+                          className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${idx === activeGalleryIndex ? 'border-primary' : 'border-transparent'}`}
+                        >
+                          <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* About Section */}
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">

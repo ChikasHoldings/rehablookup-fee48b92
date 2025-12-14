@@ -13,6 +13,8 @@ interface Facility {
   slug: string | null;
   status: string;
   email: string | null;
+  logo_url: string | null;
+  gallery_urls: string[] | null;
 }
 
 interface ProviderData {
@@ -42,7 +44,7 @@ export function useProviderData() {
       // Fetch facility
       const { data: facilityData } = await supabase
         .from("facilities")
-        .select("id, name, slug, status, email")
+        .select("id, name, slug, status, email, logo_url, gallery_urls")
         .eq("user_id", session.user.id)
         .limit(1)
         .maybeSingle();
