@@ -1,5 +1,16 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, LogOut, Settings, CreditCard, Building2, ExternalLink } from "lucide-react";
+import { 
+  ChevronDown, 
+  LogOut, 
+  Settings, 
+  CreditCard, 
+  Building2, 
+  ExternalLink,
+  Bell,
+  Search,
+  X
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import logo from "@/assets/logo.png";
 
 interface ProviderHeaderProps {
@@ -18,7 +30,17 @@ interface ProviderHeaderProps {
   onLogout: () => void;
 }
 
+// Mock notifications - would come from database
+const notifications = [
+  { id: 1, title: "New lead received", message: "A family is interested in your facility", time: "2 min ago", unread: true },
+  { id: 2, title: "Listing approved", message: "Your facility listing is now live", time: "1 hour ago", unread: true },
+  { id: 3, title: "Welcome to RehabLookup", message: "Complete your profile to get started", time: "1 day ago", unread: false },
+];
+
 export function ProviderHeader({ facilityName, userName, onLogout }: ProviderHeaderProps) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const initials = userName
     ?.split(" ")
     .map((n) => n.charAt(0))
@@ -26,69 +48,163 @@ export function ProviderHeader({ facilityName, userName, onLogout }: ProviderHea
     .toUpperCase()
     .slice(0, 2) || "P";
 
+  const unreadCount = notifications.filter(n => n.unread).length;
+
   return (
-    <header className="h-14 bg-primary shadow-md">
-      <div className="h-full px-4 md:px-6 flex items-center justify-between">
+    <header className="h-16 bg-gradient-to-r from-primary to-primary/95 shadow-lg">
+      <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
         {/* Left - Logo & Label */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Link 
             to="/" 
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-2 group shrink-0"
           >
             <img 
               src={logo} 
               alt="RehabLookup" 
-              className="h-7 w-auto brightness-0 invert transition-transform group-hover:scale-105"
+              className="h-8 w-auto brightness-0 invert transition-transform group-hover:scale-105"
             />
           </Link>
           
           <div className="hidden md:flex items-center gap-3">
-            <div className="h-5 w-px bg-primary-foreground/20" />
+            <div className="h-6 w-px bg-primary-foreground/20" />
             <Badge 
               variant="secondary" 
-              className="bg-primary-foreground/15 text-primary-foreground border-0 font-medium text-xs"
+              className="bg-primary-foreground/15 text-primary-foreground border-0 font-semibold text-xs px-3 py-1"
             >
               Provider Panel
             </Badge>
           </div>
         </div>
 
-        {/* Right - Clinic & Account */}
-        <div className="flex items-center gap-3">
+        {/* Center - Search Bar (Desktop) */}
+        <div className="hidden lg:flex flex-1 max-w-md mx-4">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/50" />
+            <Input
+              type="text"
+              placeholder="Search leads, settings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-10 pl-10 pr-4 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:bg-primary-foreground/15 focus:border-primary-foreground/30 rounded-xl"
+            />
+          </div>
+        </div>
+
+        {/* Right - Actions */}
+        <div className="flex items-center gap-2">
+          {/* Mobile Search Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden h-10 w-10 text-primary-foreground hover:bg-primary-foreground/10"
+            onClick={() => setSearchOpen(!searchOpen)}
+          >
+            {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+          </Button>
+
+          {/* Facility Badge */}
           {facilityName && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-foreground/10">
-              <Building2 className="h-3.5 w-3.5 text-primary-foreground/70" />
-              <span className="text-sm text-primary-foreground/90 max-w-[180px] truncate font-medium">
+            <div className="hidden xl:flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-foreground/10 border border-primary-foreground/10">
+              <Building2 className="h-4 w-4 text-primary-foreground/70" />
+              <span className="text-sm text-primary-foreground/90 max-w-[160px] truncate font-medium">
                 {facilityName}
               </span>
             </div>
           )}
 
+          {/* View Site Link */}
           <Link
             to="/"
-            className="hidden md:flex items-center gap-1.5 text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+            className="hidden md:flex items-center gap-1.5 px-3 py-2 text-sm text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 rounded-lg transition-colors"
           >
             <span>View Site</span>
             <ExternalLink className="h-3.5 w-3.5" />
           </Link>
 
+          {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground h-9 pl-1.5 pr-2"
+                size="icon"
+                className="relative h-10 w-10 text-primary-foreground hover:bg-primary-foreground/10"
               >
-                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary-foreground/30 to-primary-foreground/10 flex items-center justify-center text-xs font-semibold ring-2 ring-primary-foreground/20">
-                  {initials}
-                </div>
-                <span className="hidden sm:inline text-sm font-medium">{userName || "Account"}</span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                    {unreadCount}
+                  </span>
+                )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56" sideOffset={8}>
+            <DropdownMenuContent align="end" className="w-80 bg-card" sideOffset={8}>
+              <DropdownMenuLabel className="flex items-center justify-between">
+                <span className="font-semibold">Notifications</span>
+                {unreadCount > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {unreadCount} new
+                  </Badge>
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifications.length === 0 ? (
+                <div className="py-8 text-center">
+                  <Bell className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No notifications</p>
+                </div>
+              ) : (
+                <div className="max-h-[300px] overflow-y-auto">
+                  {notifications.map((notification) => (
+                    <DropdownMenuItem 
+                      key={notification.id} 
+                      className="flex flex-col items-start gap-1 p-3 cursor-pointer focus:bg-muted"
+                    >
+                      <div className="flex items-start justify-between w-full gap-2">
+                        <span className={`text-sm font-medium ${notification.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          {notification.title}
+                        </span>
+                        {notification.unread && (
+                          <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground line-clamp-1">
+                        {notification.message}
+                      </span>
+                      <span className="text-xs text-muted-foreground/70">
+                        {notification.time}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="justify-center text-primary cursor-pointer">
+                View all notifications
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Account Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="gap-2 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground h-10 pl-2 pr-3 rounded-xl"
+              >
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary-foreground/40 to-primary-foreground/20 flex items-center justify-center text-xs font-bold ring-2 ring-primary-foreground/30">
+                  {initials}
+                </div>
+                <span className="hidden sm:inline text-sm font-medium max-w-[100px] truncate">
+                  {userName || "Account"}
+                </span>
+                <ChevronDown className="h-4 w-4 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-card" sideOffset={8}>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{userName || "Provider"}</p>
+                  <p className="text-sm font-semibold leading-none">{userName || "Provider"}</p>
                   <p className="text-xs text-muted-foreground">Manage your account</p>
                 </div>
               </DropdownMenuLabel>
@@ -117,6 +233,23 @@ export function ProviderHeader({ facilityName, userName, onLogout }: ProviderHea
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Mobile Search Bar */}
+      {searchOpen && (
+        <div className="lg:hidden px-4 pb-3 bg-primary animate-fade-in">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/50" />
+            <Input
+              type="text"
+              placeholder="Search leads, settings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-10 pl-10 pr-4 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:bg-primary-foreground/15 rounded-xl"
+              autoFocus
+            />
+          </div>
+        </div>
+      )}
     </header>
   );
 }
