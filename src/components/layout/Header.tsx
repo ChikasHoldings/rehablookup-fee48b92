@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { href: "/rehab-centers", label: "Find Rehab" },
   { href: "/treatment-types", label: "Treatment Types" },
-  { href: "/insurance", label: "Insurance" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/for-providers", label: "For Providers" },
 ];

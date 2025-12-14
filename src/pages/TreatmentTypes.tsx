@@ -140,27 +140,29 @@ const TreatmentTypes = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="bg-primary py-12 md:py-16">
-        <div className="container text-center">
-          <h2 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
-            Not Sure Which Treatment Is Right?
-          </h2>
-          <p className="mb-6 text-primary-foreground/80 max-w-xl mx-auto">
-            Our specialists can help you understand your options and find the best program for your situation.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href="tel:1-800-555-0199">
-              <Button variant="hero-light" size="lg" className="gap-2">
-                <Phone className="h-4 w-4" />
-                Call 1-800-555-0199
-              </Button>
-            </a>
-            <Link to="/rehab-centers">
-              <Button variant="hero-light" size="lg" className="gap-2">
-                Browse All Centers
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+      <section className="py-16 md:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
+            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+              Not Sure Which Treatment Is Right?
+            </h2>
+            <p className="mb-6 text-muted-foreground max-w-xl mx-auto">
+              Our specialists can help you understand your options and find the best program for your situation.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a href="tel:1-800-555-0199">
+                <Button size="lg" className="gap-2">
+                  <Phone className="h-4 w-4" />
+                  Call 1-800-555-0199
+                </Button>
+              </a>
+              <Link to="/rehab-centers">
+                <Button variant="outline" size="lg" className="gap-2">
+                  Browse All Centers
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
