@@ -229,7 +229,7 @@ const Index = () => {
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link to="/rehab-centers">
-              <Button variant="hero" size="lg" className="gap-2 bg-card text-primary hover:bg-card/90">
+              <Button variant="hero-light" size="lg" className="gap-2">
                 Find Rehab Now
                 <ArrowRight className="h-4 w-4" />
               </Button>
