@@ -5,6 +5,12 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import heroImage from "@/assets/hero-recovery.jpg";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { 
   Shield, 
   Phone, 
@@ -434,6 +440,86 @@ const Index = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 md:py-24 bg-secondary/30">
+        <div className="container">
+          <div className="mx-auto max-w-3xl">
+            {/* Section Header */}
+            <div className="mb-12 text-center">
+              <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-muted-foreground">
+                Get answers to common questions about addiction treatment and recovery.
+              </p>
+            </div>
+
+            {/* FAQ Accordion */}
+            <Accordion type="single" collapsible className="space-y-3">
+              <AccordionItem value="item-1" className="rounded-xl border border-border bg-card px-6 shadow-card">
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
+                  How do I know if I or my loved one needs rehab?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  Signs that treatment may be needed include inability to control substance use, 
+                  withdrawal symptoms when not using, neglecting responsibilities, and continued use 
+                  despite negative consequences. If substance use is affecting health, relationships, 
+                  or daily life, it may be time to seek professional help.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-2" className="rounded-xl border border-border bg-card px-6 shadow-card">
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
+                  What is the difference between inpatient and outpatient treatment?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  Inpatient (residential) treatment requires living at the facility 24/7 and provides 
+                  intensive, structured care. Outpatient treatment allows you to live at home while 
+                  attending scheduled therapy sessions. The best option depends on the severity of 
+                  addiction, support system, and personal circumstances.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-3" className="rounded-xl border border-border bg-card px-6 shadow-card">
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
+                  Does insurance cover addiction treatment?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  Most health insurance plans cover some form of addiction treatment under mental health 
+                  benefits. Coverage varies by provider and plan. Many treatment centers offer insurance 
+                  verification and can help you understand your benefits. Some facilities also offer 
+                  sliding scale fees or payment plans.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-4" className="rounded-xl border border-border bg-card px-6 shadow-card">
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
+                  How long does rehab typically last?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  Treatment duration varies based on individual needs. Short-term programs typically last 
+                  28-30 days, while long-term programs can be 60-90 days or longer. Research shows that 
+                  longer treatment periods often lead to better outcomes. Your treatment team will help 
+                  determine the appropriate length of stay.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-5" className="rounded-xl border border-border bg-card px-6 shadow-card">
+                <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
+                  What happens after completing a treatment program?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  Aftercare is a crucial part of long-term recovery. This may include ongoing therapy, 
+                  support groups like AA or NA, sober living arrangements, and regular check-ins with 
+                  counselors. Most treatment centers help create a comprehensive aftercare plan before 
+                  discharge to support continued sobriety.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </div>
       </section>
