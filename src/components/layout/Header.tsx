@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Heart, LogOut } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/logo.png";
 
 export interface NavLink {
   href: string;
@@ -60,16 +61,15 @@ export function Header({
     <header className="z-50 w-full border-b border-border bg-card shadow-sm">
       <div className="container flex h-16 items-center justify-between md:h-18">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary transition-transform group-hover:scale-105">
-            <Heart className="h-4.5 w-4.5 text-primary-foreground" />
-          </div>
-          <span className="font-display text-lg font-semibold text-foreground">
-            RehabLookup
-            {variant === "provider" && (
-              <span className="ml-1.5 text-xs font-normal text-muted-foreground">Providers</span>
-            )}
-          </span>
+        <Link to="/" className="flex items-center gap-2 group">
+          <img 
+            src={logo} 
+            alt="RehabLookup" 
+            className="h-8 w-auto transition-transform group-hover:scale-105"
+          />
+          {variant === "provider" && (
+            <span className="text-xs font-medium text-muted-foreground">Providers</span>
+          )}
         </Link>
 
         {/* Desktop Navigation */}
