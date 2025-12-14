@@ -36,7 +36,7 @@ export function Header({
     <header className="z-50 w-full border-b border-border bg-card shadow-sm">
       <div className="container flex h-16 items-center justify-between md:h-18">
         {/* Logo */}
-        <Link to={variant === "provider" ? "/provider-login" : "/"} className="flex items-center gap-2.5 group">
+        <Link to="/" className="flex items-center gap-2.5 group">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary transition-transform group-hover:scale-105">
             <Heart className="h-4.5 w-4.5 text-primary-foreground" />
           </div>

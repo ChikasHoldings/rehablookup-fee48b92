@@ -11,6 +11,7 @@ import HowItWorks from "./pages/HowItWorks";
 import ForProviders from "./pages/ForProviders";
 import ProviderResources from "./pages/ProviderResources";
 import ProviderLogin from "./pages/ProviderLogin";
+import ProviderSupport from "./pages/ProviderSupport";
 import Resources from "./pages/Resources";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/for-providers" element={<ForProviders />} />
           <Route path="/provider-resources" element={<ProviderResources />} />
           <Route path="/provider-login" element={<ProviderLogin />} />
+          <Route path="/provider-support" element={<ProviderSupport />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/resources/:id" element={<ArticleDetail />} />
           <Route path="/faq" element={<FAQ />} />
