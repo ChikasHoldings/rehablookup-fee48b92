@@ -19,6 +19,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useProviderData } from "@/hooks/useProviderData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  LeadUsageIndicator, 
+  LeadLimitWarningBanner, 
+  LeadLimitReachedBanner 
+} from "@/components/provider/LeadUsageIndicator";
+
+// Plan limits - in production this would come from billing system
+const PLAN_LEAD_LIMITS = {
+  free: 5,
+  professional: 75,
+  enterprise: 999999,
+};
 
 export default function ProviderDashboardPage() {
   const { data: providerData, isLoading } = useProviderData();
@@ -27,7 +39,12 @@ export default function ProviderDashboardPage() {
   const profile = providerData?.profile;
   const viewsCount = providerData?.viewsCount ?? 0;
   const leadsCount = providerData?.leadsCount ?? 0;
+  const monthlyLeadsCount = providerData?.monthlyLeadsCount ?? 0;
   const userName = profile?.first_name || "";
+  
+  // Current plan - in production this would come from billing system
+  const currentPlan = "free";
+  const leadLimit = PLAN_LEAD_LIMITS[currentPlan as keyof typeof PLAN_LEAD_LIMITS];
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -128,6 +145,10 @@ export default function ProviderDashboardPage() {
         )}
       </div>
 
+      {/* Lead Limit Banners */}
+      <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
+      <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
+
       {/* Status Banner */}
       <Card className="border-l-4" style={{ borderLeftColor: statusConfig.dotClass === 'bg-green-500' ? '#22c55e' : statusConfig.dotClass === 'bg-amber-500' ? '#f59e0b' : '#71717a' }}>
         <CardContent className="py-4">
@@ -180,11 +201,11 @@ export default function ProviderDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Total Leads */}
+        {/* Monthly Leads with Usage */}
         <Card className="group hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Contact Requests</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Leads This Month</CardTitle>
               <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
                 <Users className="h-4 w-4 text-green-600" />
               </div>
@@ -194,14 +215,11 @@ export default function ProviderDashboardPage() {
             {isLoading ? (
               <Skeleton className="h-9 w-16" />
             ) : (
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-foreground">{leadsCount}</span>
-              </div>
+              <LeadUsageIndicator 
+                usedLeads={monthlyLeadsCount} 
+                leadLimit={leadLimit}
+              />
             )}
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              All time
-            </p>
           </CardContent>
         </Card>
 
