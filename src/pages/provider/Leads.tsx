@@ -72,6 +72,17 @@ interface Lead {
   facility_id: string;
   source: string | null;
   email_verified: boolean | null;
+  // Qualified intake fields
+  who_seeking_help: string | null;
+  location_zip: string | null;
+  location_city_state: string | null;
+  urgency: string | null;
+  primary_substance: string[] | null;
+  level_of_care: string | null;
+  dual_diagnosis: string | null;
+  insurance_type: string | null;
+  insurance_provider: string | null;
+  budget_preference: string | null;
 }
 
 interface DateRange {
