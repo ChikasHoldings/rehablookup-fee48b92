@@ -4,6 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
+import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { Phone, MapPin, Filter, Search, ArrowRight, Shield, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +14,13 @@ const RehabCenters = () => {
   const treatment = searchParams.get("treatment") || "";
   const insurance = searchParams.get("insurance") || "";
   const type = searchParams.get("type") || "";
+
+  const { data: approvedFacilities = [] } = useApprovedFacilities();
+
+  // Combine static data with approved facilities from database
+  const allCenters = useMemo(() => {
+    return [...treatmentCenters, ...approvedFacilities];
+  }, [approvedFacilities]);
 
   // Map type query param to treatment types
   const typeFilterMap: Record<string, string[]> = {
@@ -34,7 +42,7 @@ const RehabCenters = () => {
   };
 
   const filteredCenters = useMemo(() => {
-    let results = [...treatmentCenters];
+    let results = [...allCenters];
 
     // Sort featured first
     results.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
@@ -74,7 +82,7 @@ const RehabCenters = () => {
     }
 
     return results;
-  }, [location, treatment, insurance, type]);
+  }, [allCenters, location, treatment, insurance, type]);
 
   const hasFilters = location || treatment || insurance || type;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
