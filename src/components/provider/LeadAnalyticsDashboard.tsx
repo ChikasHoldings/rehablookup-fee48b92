@@ -34,9 +34,11 @@ import { useLeadAnalytics } from "@/hooks/useLeadAnalytics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { type DateRange } from "@/hooks/useLeadAnalytics";
 
 interface LeadAnalyticsDashboardProps {
   facilityId: string | undefined;
+  dateRange?: DateRange;
 }
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
@@ -57,8 +59,8 @@ const STATUS_BG_COLORS: Record<string, string> = {
   Lost: "bg-red-500/10 text-red-600 border-red-200",
 };
 
-export function LeadAnalyticsDashboard({ facilityId }: LeadAnalyticsDashboardProps) {
-  const { data: analytics, isLoading } = useLeadAnalytics(facilityId);
+export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsDashboardProps) {
+  const { data: analytics, isLoading } = useLeadAnalytics(facilityId, dateRange);
 
   if (isLoading) {
     return <AnalyticsSkeleton />;

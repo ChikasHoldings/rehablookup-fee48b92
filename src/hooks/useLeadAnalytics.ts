@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, subMonths, format, differenceInHours } from "date-fns";
+import { startOfMonth, subMonths, format, startOfDay, endOfDay, isWithinInterval, subDays, subWeeks } from "date-fns";
 
 interface Lead {
   id: string;
@@ -12,7 +12,12 @@ interface Lead {
   preferred_contact: string;
 }
 
-interface LeadAnalytics {
+export interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
+export interface LeadAnalytics {
   // Monthly trend data
   monthlyTrends: { month: string; leads: number }[];
   
@@ -43,11 +48,14 @@ interface LeadAnalytics {
   thisMonthLeads: number;
   lastMonthLeads: number;
   growthRate: number;
+  
+  // Date range info
+  dateRangeLabel?: string;
 }
 
-export function useLeadAnalytics(facilityId: string | undefined) {
+export function useLeadAnalytics(facilityId: string | undefined, dateRange?: DateRange) {
   return useQuery({
-    queryKey: ["lead-analytics", facilityId],
+    queryKey: ["lead-analytics", facilityId, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()],
     queryFn: async (): Promise<LeadAnalytics> => {
       if (!facilityId) {
         return getEmptyAnalytics();
@@ -62,9 +70,27 @@ export function useLeadAnalytics(facilityId: string | undefined) {
 
       if (error) throw error;
 
-      const allLeads = (leads || []) as Lead[];
+      let allLeads = (leads || []) as Lead[];
       
-      return calculateAnalytics(allLeads);
+      // Filter by date range if provided
+      if (dateRange?.from || dateRange?.to) {
+        allLeads = allLeads.filter(lead => {
+          const leadDate = new Date(lead.created_at);
+          if (dateRange.from && dateRange.to) {
+            return isWithinInterval(leadDate, {
+              start: startOfDay(dateRange.from),
+              end: endOfDay(dateRange.to),
+            });
+          } else if (dateRange.from) {
+            return leadDate >= startOfDay(dateRange.from);
+          } else if (dateRange.to) {
+            return leadDate <= endOfDay(dateRange.to);
+          }
+          return true;
+        });
+      }
+      
+      return calculateAnalytics(allLeads, leads as Lead[], dateRange);
     },
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -90,13 +116,13 @@ function getEmptyAnalytics(): LeadAnalytics {
   };
 }
 
-function calculateAnalytics(leads: Lead[]): LeadAnalytics {
+function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: DateRange): LeadAnalytics {
   const now = new Date();
   const thisMonthStart = startOfMonth(now);
   const lastMonthStart = startOfMonth(subMonths(now, 1));
   const lastMonthEnd = startOfMonth(now);
 
-  // Monthly trends (last 6 months)
+  // Monthly trends (last 6 months or based on date range)
   const monthlyTrends: { month: string; leads: number }[] = [];
   for (let i = 5; i >= 0; i--) {
     const monthStart = startOfMonth(subMonths(now, i));
@@ -153,7 +179,7 @@ function calculateAnalytics(leads: Lead[]): LeadAnalytics {
     count,
   }));
 
-  // Summary stats
+  // Summary stats - use filtered leads for current stats but all leads for comparison
   const thisMonthLeads = leads.filter(l => new Date(l.created_at) >= thisMonthStart).length;
   const lastMonthLeads = leads.filter(l => {
     const date = new Date(l.created_at);
@@ -163,6 +189,16 @@ function calculateAnalytics(leads: Lead[]): LeadAnalytics {
   const growthRate = lastMonthLeads > 0 
     ? Math.round(((thisMonthLeads - lastMonthLeads) / lastMonthLeads) * 100)
     : thisMonthLeads > 0 ? 100 : 0;
+
+  // Generate date range label
+  let dateRangeLabel: string | undefined;
+  if (dateRange?.from && dateRange?.to) {
+    dateRangeLabel = `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`;
+  } else if (dateRange?.from) {
+    dateRangeLabel = `From ${format(dateRange.from, "MMM d, yyyy")}`;
+  } else if (dateRange?.to) {
+    dateRangeLabel = `Until ${format(dateRange.to, "MMM d, yyyy")}`;
+  }
 
   return {
     monthlyTrends,
@@ -174,6 +210,7 @@ function calculateAnalytics(leads: Lead[]): LeadAnalytics {
     thisMonthLeads,
     lastMonthLeads,
     growthRate,
+    dateRangeLabel,
   };
 }
 
@@ -187,3 +224,14 @@ function formatStatus(status: string): string {
   };
   return statusMap[status] || status;
 }
+
+// Preset date ranges
+export const DATE_RANGE_PRESETS = [
+  { label: "All Time", value: "all", getRange: () => ({ from: undefined, to: undefined }) },
+  { label: "Last 7 Days", value: "7d", getRange: () => ({ from: subDays(new Date(), 7), to: new Date() }) },
+  { label: "Last 14 Days", value: "14d", getRange: () => ({ from: subDays(new Date(), 14), to: new Date() }) },
+  { label: "Last 30 Days", value: "30d", getRange: () => ({ from: subDays(new Date(), 30), to: new Date() }) },
+  { label: "Last 90 Days", value: "90d", getRange: () => ({ from: subDays(new Date(), 90), to: new Date() }) },
+  { label: "This Month", value: "this_month", getRange: () => ({ from: startOfMonth(new Date()), to: new Date() }) },
+  { label: "Last Month", value: "last_month", getRange: () => ({ from: startOfMonth(subMonths(new Date(), 1)), to: startOfMonth(new Date()) }) },
+] as const;

@@ -1,14 +1,36 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, CalendarIcon, X, ChevronDown } from "lucide-react";
 import { LeadAnalyticsDashboard } from "@/components/provider/LeadAnalyticsDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export default function ProviderAnalyticsPage() {
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
+  
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [selectedPreset, setSelectedPreset] = useState<string>("all");
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Real-time subscription for analytics updates
   useEffect(() => {
@@ -35,25 +57,155 @@ export default function ProviderAnalyticsPage() {
     };
   }, [facilityId, queryClient]);
 
+  const handlePresetSelect = (preset: typeof DATE_RANGE_PRESETS[number]) => {
+    const range = preset.getRange();
+    setDateRange(range);
+    setSelectedPreset(preset.value);
+  };
+
+  const handleCustomDateSelect = (range: { from?: Date; to?: Date } | undefined) => {
+    if (range) {
+      setDateRange({ from: range.from, to: range.to });
+      setSelectedPreset("custom");
+    }
+  };
+
+  const clearDateFilter = () => {
+    setDateRange({ from: undefined, to: undefined });
+    setSelectedPreset("all");
+  };
+
+  const getSelectedLabel = () => {
+    if (selectedPreset === "custom" && dateRange.from) {
+      if (dateRange.to) {
+        return `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`;
+      }
+      return `From ${format(dateRange.from, "MMM d, yyyy")}`;
+    }
+    const preset = DATE_RANGE_PRESETS.find(p => p.value === selectedPreset);
+    return preset?.label || "All Time";
+  };
+
+  const hasActiveFilter = selectedPreset !== "all";
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Page Header */}
-      <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <BarChart3 className="h-5 w-5 text-primary" />
           </div>
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Analytics</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Track your lead performance and conversion metrics
             </p>
           </div>
         </div>
+
+        {/* Date Range Filter */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Quick Presets Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 h-9">
+                <CalendarIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">{getSelectedLabel()}</span>
+                <span className="sm:hidden">
+                  {selectedPreset === "all" ? "All Time" : "Filtered"}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {DATE_RANGE_PRESETS.map((preset) => (
+                <DropdownMenuItem
+                  key={preset.value}
+                  onClick={() => handlePresetSelect(preset)}
+                  className={cn(
+                    "cursor-pointer",
+                    selectedPreset === preset.value && "bg-primary/5 font-medium"
+                  )}
+                >
+                  {preset.label}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    className={cn(
+                      "cursor-pointer",
+                      selectedPreset === "custom" && "bg-primary/5 font-medium"
+                    )}
+                  >
+                    Custom Range...
+                  </DropdownMenuItem>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end" side="left">
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateRange.from, to: dateRange.to }}
+                    onSelect={(range) => {
+                      handleCustomDateSelect(range);
+                      if (range?.from && range?.to) {
+                        setIsCalendarOpen(false);
+                      }
+                    }}
+                    numberOfMonths={2}
+                    className={cn("p-3 pointer-events-auto")}
+                    disabled={(date) => date > new Date()}
+                  />
+                  {(dateRange.from || dateRange.to) && (
+                    <div className="border-t p-2 flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setIsCalendarOpen(false);
+                        }}
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Clear Filter Button */}
+          {hasActiveFilter && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearDateFilter}
+              className="h-9 px-2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
+      {/* Active Filter Badge */}
+      {hasActiveFilter && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Showing data for:</span>
+          <Badge variant="secondary" className="gap-1.5">
+            <CalendarIcon className="h-3 w-3" />
+            {getSelectedLabel()}
+            <button onClick={clearDateFilter} className="ml-1 hover:text-destructive">
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        </div>
+      )}
+
       {/* Analytics Dashboard */}
-      <LeadAnalyticsDashboard facilityId={facilityId} />
+      <LeadAnalyticsDashboard facilityId={facilityId} dateRange={dateRange} />
     </div>
   );
 }
