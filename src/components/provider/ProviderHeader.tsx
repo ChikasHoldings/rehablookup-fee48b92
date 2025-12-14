@@ -54,101 +54,106 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
-    <header className="h-16 bg-gradient-to-r from-primary to-primary/95 shadow-lg">
-      <div className="h-full px-4 md:px-6 flex items-center justify-between gap-4">
-        {/* Left - Logo & Label */}
-        <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-50 h-16 bg-primary border-b border-primary-foreground/10 shadow-sm">
+      <div className="h-full max-w-[1800px] mx-auto px-4 md:px-6 flex items-center justify-between gap-3">
+        {/* Left - Logo & Facility Selector */}
+        <div className="flex items-center gap-3 min-w-0">
           <Link 
             to="/" 
-            className="flex items-center gap-2 group shrink-0"
+            className="flex items-center shrink-0 group"
+            title="Back to RehabLookup"
           >
             <img 
               src={logo} 
               alt="RehabLookup" 
-              className="h-8 w-auto brightness-0 invert transition-transform group-hover:scale-105"
+              className="h-7 w-auto brightness-0 invert opacity-90 group-hover:opacity-100 transition-opacity"
             />
           </Link>
           
-          {/* Facility Selector Dropdown */}
-          <div className="hidden md:flex items-center gap-3">
-            <div className="h-6 w-px bg-primary-foreground/20" />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="gap-2 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground h-9 px-3 rounded-lg"
-                >
-                  <Building2 className="h-4 w-4" />
-                  <span className="font-medium text-sm max-w-[180px] truncate">
-                    {facilityName || "No Facility"}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 bg-card" sideOffset={8}>
-                <DropdownMenuLabel>Your Facilities</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {facilityName && (
-                  <DropdownMenuItem className="flex items-center justify-between cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="truncate max-w-[180px]">{facilityName}</span>
+          {/* Facility Selector */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="gap-2 text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 h-9 px-2.5 rounded-lg min-w-0"
+              >
+                <div className="flex items-center justify-center h-6 w-6 rounded-md bg-primary-foreground/15 shrink-0">
+                  <Building2 className="h-3.5 w-3.5" />
+                </div>
+                <span className="font-medium text-sm truncate max-w-[140px] md:max-w-[200px]">
+                  {facilityName || "Select Facility"}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64 bg-card" sideOffset={8}>
+              <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wide">
+                Your Facilities
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {facilityName && (
+                <DropdownMenuItem className="flex items-center justify-between cursor-pointer py-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Building2 className="h-4 w-4 text-primary" />
                     </div>
-                    <Check className="h-4 w-4 text-primary" />
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link 
-                    to="/provider-signup" 
-                    className="flex items-center gap-2 cursor-pointer text-primary"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add New Facility
-                  </Link>
+                    <span className="truncate font-medium">{facilityName}</span>
+                  </div>
+                  <Check className="h-4 w-4 text-primary shrink-0" />
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link 
+                  to="/provider-signup" 
+                  className="flex items-center gap-2.5 cursor-pointer text-primary py-2.5"
+                >
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                  <span className="font-medium">Add New Facility</span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        {/* Center - Search Bar (Desktop) */}
-        <div className="hidden lg:flex flex-1 max-w-md mx-4">
+        {/* Center - Search (Desktop) */}
+        <div className="hidden lg:flex flex-1 max-w-sm">
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/50" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/40" />
             <Input
               type="text"
-              placeholder="Search leads, settings..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:bg-primary-foreground/15 focus:border-primary-foreground/30 rounded-xl"
+              className="w-full h-9 pl-9 pr-4 bg-primary-foreground/5 border-primary-foreground/10 text-primary-foreground text-sm placeholder:text-primary-foreground/40 focus:bg-primary-foreground/10 focus:border-primary-foreground/20 rounded-lg"
             />
           </div>
         </div>
 
         {/* Right - Actions */}
-        <div className="flex items-center gap-2">
-          {/* Mobile Search Toggle */}
+        <div className="flex items-center gap-1">
+          {/* Mobile Search */}
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-10 w-10 text-primary-foreground hover:bg-primary-foreground/10"
+            className="lg:hidden h-9 w-9 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
             onClick={() => setSearchOpen(!searchOpen)}
           >
-            {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+            {searchOpen ? <X className="h-4.5 w-4.5" /> : <Search className="h-4.5 w-4.5" />}
           </Button>
 
-
-          {/* View Public Profile */}
+          {/* View Listing */}
           {facilityId && (
             <a
               href={`/rehab-centers/${facilityId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:flex items-center gap-1.5 px-3 py-2 text-sm text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 rounded-lg transition-colors"
+              className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 rounded-lg transition-colors"
             >
-              <span>View Listing</span>
               <ExternalLink className="h-3.5 w-3.5" />
+              <span>View Listing</span>
             </a>
           )}
 
@@ -158,21 +163,21 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="relative h-10 w-10 text-primary-foreground hover:bg-primary-foreground/10"
+                className="relative h-9 w-9 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
               >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-4.5 w-4.5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground ring-2 ring-primary">
                     {unreadCount}
                   </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 bg-card" sideOffset={8}>
-              <DropdownMenuLabel className="flex items-center justify-between">
+              <DropdownMenuLabel className="flex items-center justify-between py-3">
                 <span className="font-semibold">Notifications</span>
                 {unreadCount > 0 && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs h-5 px-2">
                     {unreadCount} new
                   </Badge>
                 )}
@@ -184,11 +189,11 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
                   <p className="text-sm text-muted-foreground">No notifications</p>
                 </div>
               ) : (
-                <div className="max-h-[300px] overflow-y-auto">
+                <div className="max-h-[280px] overflow-y-auto">
                   {notifications.map((notification) => (
                     <DropdownMenuItem 
                       key={notification.id} 
-                      className="flex flex-col items-start gap-1 p-3 cursor-pointer focus:bg-muted"
+                      className="flex flex-col items-start gap-1 p-3 cursor-pointer"
                     >
                       <div className="flex items-start justify-between w-full gap-2">
                         <span className={`text-sm font-medium ${notification.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
@@ -201,7 +206,7 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
                       <span className="text-xs text-muted-foreground line-clamp-1">
                         {notification.message}
                       </span>
-                      <span className="text-xs text-muted-foreground/70">
+                      <span className="text-[11px] text-muted-foreground/60">
                         {notification.time}
                       </span>
                     </DropdownMenuItem>
@@ -209,52 +214,57 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
                 </div>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="justify-center text-primary cursor-pointer">
+              <DropdownMenuItem className="justify-center text-primary text-sm cursor-pointer py-2.5">
                 View all notifications
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Account Dropdown */}
+          {/* Divider */}
+          <div className="hidden sm:block h-6 w-px bg-primary-foreground/15 mx-1" />
+
+          {/* Account */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground h-10 pl-2 pr-3 rounded-xl"
+                className="gap-2 text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 h-9 pl-1.5 pr-2.5 rounded-lg"
               >
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary-foreground/40 to-primary-foreground/20 flex items-center justify-center text-xs font-bold ring-2 ring-primary-foreground/30">
+                <div className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs font-semibold">
                   {initials}
                 </div>
-                <span className="hidden sm:inline text-sm font-medium max-w-[100px] truncate">
-                  {userName || "Account"}
-                </span>
-                <ChevronDown className="h-4 w-4 opacity-60" />
+                <ChevronDown className="h-3.5 w-3.5 opacity-50 hidden sm:block" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-card" sideOffset={8}>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-semibold leading-none">{userName || "Provider"}</p>
-                  <p className="text-xs text-muted-foreground">Manage your account</p>
+              <DropdownMenuLabel className="font-normal py-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
+                    {initials}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <p className="text-sm font-semibold truncate">{userName || "Provider"}</p>
+                    <p className="text-xs text-muted-foreground">Manage account</p>
+                  </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to="/provider/settings" className="flex items-center gap-2 cursor-pointer">
-                  <Settings className="h-4 w-4" />
+                <Link to="/provider/settings" className="flex items-center gap-2.5 cursor-pointer py-2">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
                   Account Settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/provider/billing" className="flex items-center gap-2 cursor-pointer">
-                  <CreditCard className="h-4 w-4" />
+                <Link to="/provider/billing" className="flex items-center gap-2.5 cursor-pointer py-2">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
                   Billing & Plans
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={onLogout}
-                className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                className="flex items-center gap-2.5 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 py-2"
               >
                 <LogOut className="h-4 w-4" />
                 Sign Out
@@ -264,17 +274,17 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
         </div>
       </div>
 
-      {/* Mobile Search Bar */}
+      {/* Mobile Search Expanded */}
       {searchOpen && (
-        <div className="lg:hidden px-4 pb-3 bg-primary animate-fade-in">
+        <div className="lg:hidden px-4 pb-3 bg-primary border-t border-primary-foreground/10 animate-fade-in">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/50" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/40" />
             <Input
               type="text"
-              placeholder="Search leads, settings..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:bg-primary-foreground/15 rounded-xl"
+              className="w-full h-9 pl-9 pr-4 bg-primary-foreground/5 border-primary-foreground/10 text-primary-foreground text-sm placeholder:text-primary-foreground/40 rounded-lg"
               autoFocus
             />
           </div>
