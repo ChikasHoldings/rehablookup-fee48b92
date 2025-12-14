@@ -1,0 +1,321 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { format, formatDistanceToNow } from "date-fns";
+import {
+  Bell,
+  BellOff,
+  Check,
+  CheckCheck,
+  Trash2,
+  UserPlus,
+  Shield,
+  CreditCard,
+  AlertTriangle,
+  Settings,
+  MessageSquare,
+  Filter,
+  MoreHorizontal,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useProviderNotifications, ProviderNotification } from "@/hooks/useProviderNotifications";
+import { cn } from "@/lib/utils";
+
+const notificationTypeIcons: Record<string, React.ReactNode> = {
+  lead_received: <UserPlus className="h-5 w-5 text-primary" />,
+  lead_status_changed: <MessageSquare className="h-5 w-5 text-blue-500" />,
+  listing_approved: <Shield className="h-5 w-5 text-green-500" />,
+  subscription_updated: <CreditCard className="h-5 w-5 text-purple-500" />,
+  lead_limit_warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+  system: <Settings className="h-5 w-5 text-muted-foreground" />,
+};
+
+const notificationTypeLabels: Record<string, string> = {
+  lead_received: "New Lead",
+  lead_status_changed: "Lead Update",
+  listing_approved: "Listing",
+  subscription_updated: "Subscription",
+  lead_limit_warning: "Limit Warning",
+  system: "System",
+};
+
+function NotificationItem({
+  notification,
+  onMarkAsRead,
+  onDelete,
+}: {
+  notification: ProviderNotification;
+  onMarkAsRead: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const navigate = useNavigate();
+  const icon = notificationTypeIcons[notification.type] || notificationTypeIcons.system;
+  const label = notificationTypeLabels[notification.type] || "Notification";
+
+  const handleClick = () => {
+    if (!notification.read) {
+      onMarkAsRead(notification.id);
+    }
+    
+    // Navigate based on notification type
+    if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
+      navigate("/provider/leads");
+    } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
+      navigate("/provider/billing");
+    } else if (notification.type === "listing_approved") {
+      navigate("/provider/listing");
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-4 p-4 border-b last:border-b-0 cursor-pointer transition-colors hover:bg-muted/50",
+        !notification.read && "bg-primary/5"
+      )}
+      onClick={handleClick}
+    >
+      <div className="flex-shrink-0 mt-0.5">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h4 className={cn("text-sm font-medium", !notification.read && "text-foreground")}>
+              {notification.title}
+            </h4>
+            {!notification.read && (
+              <span className="h-2 w-2 rounded-full bg-primary" />
+            )}
+          </div>
+          <Badge variant="outline" className="text-[10px] shrink-0">
+            {label}
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+          {notification.message}
+        </p>
+        <p className="text-xs text-muted-foreground/60 mt-2">
+          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+        </p>
+      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {!notification.read && (
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onMarkAsRead(notification.id); }}>
+              <Check className="h-4 w-4 mr-2" />
+              Mark as read
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            onClick={(e) => { e.stopPropagation(); onDelete(notification.id); }}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+export default function ProviderNotificationsPage() {
+  const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    deleteAll,
+  } = useProviderNotifications();
+
+  const filteredNotifications = activeTab === "unread"
+    ? notifications.filter((n) => !n.read)
+    : notifications;
+
+  const groupedNotifications = filteredNotifications.reduce((groups, notification) => {
+    const date = format(new Date(notification.created_at), "yyyy-MM-dd");
+    const today = format(new Date(), "yyyy-MM-dd");
+    const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+    
+    let groupLabel: string;
+    if (date === today) {
+      groupLabel = "Today";
+    } else if (date === yesterday) {
+      groupLabel = "Yesterday";
+    } else {
+      groupLabel = format(new Date(notification.created_at), "MMMM d, yyyy");
+    }
+
+    if (!groups[groupLabel]) {
+      groups[groupLabel] = [];
+    }
+    groups[groupLabel].push(notification);
+    return groups;
+  }, {} as Record<string, ProviderNotification[]>);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-9 w-32" />
+        </div>
+        <Card>
+          <CardContent className="p-0">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-start gap-4 p-4 border-b">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Notifications</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Stay updated with your leads and account activity
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <Button variant="outline" size="sm" onClick={() => markAllAsRead()}>
+              <CheckCheck className="h-4 w-4 mr-2" />
+              Mark all read
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Clear all
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear all notifications?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all your notifications. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => deleteAll()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Clear all
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "unread")}>
+        <TabsList>
+          <TabsTrigger value="all" className="gap-2">
+            <Bell className="h-4 w-4" />
+            All
+            {notifications.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {notifications.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="unread" className="gap-2">
+            <Filter className="h-4 w-4" />
+            Unread
+            {unreadCount > 0 && (
+              <Badge className="ml-1 h-5 px-1.5 text-xs">
+                {unreadCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab} className="mt-4">
+          <Card>
+            {filteredNotifications.length === 0 ? (
+              <CardContent className="py-16 text-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                    <BellOff className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-lg">
+                      {activeTab === "unread" ? "No unread notifications" : "No notifications yet"}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {activeTab === "unread"
+                        ? "You're all caught up!"
+                        : "When you receive leads or updates, they'll appear here."}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            ) : (
+              <CardContent className="p-0">
+                {Object.entries(groupedNotifications).map(([date, items]) => (
+                  <div key={date}>
+                    <div className="px-4 py-2 bg-muted/50 border-b">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        {date}
+                      </span>
+                    </div>
+                    {items.map((notification) => (
+                      <NotificationItem
+                        key={notification.id}
+                        notification={notification}
+                        onMarkAsRead={markAsRead}
+                        onDelete={deleteNotification}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </CardContent>
+            )}
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
