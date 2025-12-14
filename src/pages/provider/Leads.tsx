@@ -15,7 +15,9 @@ import {
   Search,
   X,
   CalendarIcon,
-  Filter
+  Filter,
+  Sparkles,
+  FileText
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -68,6 +70,8 @@ interface Lead {
   created_at: string;
   status: string;
   facility_id: string;
+  source: string | null;
+  email_verified: boolean | null;
 }
 
 interface DateRange {
@@ -475,6 +479,7 @@ export default function ProviderLeadsPage() {
                 <TableHeader>
                   <TableRow className="bg-muted/30">
                     <TableHead className="font-semibold">Name</TableHead>
+                    <TableHead className="font-semibold">Source</TableHead>
                     <TableHead className="font-semibold">Contact Method</TableHead>
                     <TableHead className="font-semibold">Phone</TableHead>
                     <TableHead className="font-semibold">Email</TableHead>
@@ -497,6 +502,19 @@ export default function ProviderLeadsPage() {
                             <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {lead.source === "Request Help Page" ? (
+                          <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-0">
+                            <Sparkles className="h-3 w-3" />
+                            Qualified
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="gap-1 text-xs">
+                            <FileText className="h-3 w-3" />
+                            Direct
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
