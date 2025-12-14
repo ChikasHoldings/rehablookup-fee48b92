@@ -28,6 +28,7 @@ export type Database = {
           id: string
           name: string
           phone: string
+          slug: string | null
           state: string
           status: string
           updated_at: string
@@ -48,6 +49,7 @@ export type Database = {
           id?: string
           name: string
           phone: string
+          slug?: string | null
           state: string
           status?: string
           updated_at?: string
@@ -68,6 +70,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string
+          slug?: string | null
           state?: string
           status?: string
           updated_at?: string
@@ -224,6 +227,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "facility_views_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          created_at: string
+          email: string
+          facility_id: string
+          id: string
+          message: string | null
+          name: string
+          phone: string
+          preferred_contact: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          facility_id: string
+          id?: string
+          message?: string | null
+          name: string
+          phone: string
+          preferred_contact?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          facility_id?: string
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string
+          preferred_contact?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
