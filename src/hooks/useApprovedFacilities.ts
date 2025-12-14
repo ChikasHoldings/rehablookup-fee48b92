@@ -5,6 +5,7 @@ import type { TreatmentCenter } from "@/data/treatmentCenters";
 interface FacilityWithRelations {
   id: string;
   name: string;
+  slug: string | null;
   city: string;
   state: string;
   zip_code: string;
@@ -16,15 +17,21 @@ interface FacilityWithRelations {
   facility_insurance: { insurance_name: string }[];
 }
 
+export interface ApprovedFacility extends TreatmentCenter {
+  slug: string | null;
+  isFromDatabase: boolean;
+}
+
 export const useApprovedFacilities = () => {
   return useQuery({
     queryKey: ["approved-facilities"],
-    queryFn: async (): Promise<TreatmentCenter[]> => {
+    queryFn: async (): Promise<ApprovedFacility[]> => {
       const { data, error } = await supabase
         .from("facilities")
         .select(`
           id,
           name,
+          slug,
           city,
           state,
           zip_code,
@@ -43,6 +50,7 @@ export const useApprovedFacilities = () => {
       return (data as FacilityWithRelations[]).map((facility) => ({
         id: facility.id,
         name: facility.name,
+        slug: facility.slug,
         city: facility.city,
         state: facility.state,
         zipCode: facility.zip_code,
@@ -57,6 +65,7 @@ export const useApprovedFacilities = () => {
         reviewCount: 0,
         amenities: [],
         image: "/placeholder.svg",
+        isFromDatabase: true,
       }));
     },
   });

@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { ProviderLayout } from "@/components/provider/ProviderLayout";
 import { Users, Mail, Phone, Calendar, MessageSquare, TrendingUp, Inbox } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +10,57 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
+import { format, startOfMonth, isToday } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const mockLeads: any[] = [];
+interface Lead {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  message: string | null;
+  preferred_contact: string;
+  created_at: string;
+  facility_id: string;
+}
 
 export default function ProviderLeadsPage() {
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ["provider-leads"],
+    queryFn: async (): Promise<Lead[]> => {
+      // First get user's facilities
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data: facilities } = await supabase
+        .from("facilities")
+        .select("id")
+        .eq("user_id", user.id);
+
+      if (!facilities || facilities.length === 0) return [];
+
+      const facilityIds = facilities.map(f => f.id);
+
+      // Get leads for user's facilities
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .in("facility_id", facilityIds)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const thisMonthLeads = leads.filter(lead => {
+    const leadDate = new Date(lead.created_at);
+    return leadDate >= startOfMonth(new Date());
+  });
+
+  const todayLeads = leads.filter(lead => isToday(new Date(lead.created_at)));
+
   return (
     <ProviderLayout>
       <div className="max-w-6xl mx-auto space-y-6">
@@ -35,7 +83,11 @@ export default function ProviderLeadsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="relative">
-              <p className="text-3xl font-bold text-foreground">{mockLeads.length}</p>
+              {isLoading ? (
+                <Skeleton className="h-9 w-16" />
+              ) : (
+                <p className="text-3xl font-bold text-foreground">{leads.length}</p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">All time</p>
             </CardContent>
           </Card>
@@ -49,8 +101,12 @@ export default function ProviderLeadsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="relative">
-              <p className="text-3xl font-bold text-foreground">0</p>
-              <p className="text-xs text-muted-foreground mt-1">December 2024</p>
+              {isLoading ? (
+                <Skeleton className="h-9 w-16" />
+              ) : (
+                <p className="text-3xl font-bold text-foreground">{thisMonthLeads.length}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">{format(new Date(), "MMMM yyyy")}</p>
             </CardContent>
           </Card>
 
@@ -63,7 +119,11 @@ export default function ProviderLeadsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="relative">
-              <p className="text-3xl font-bold text-foreground">0</p>
+              {isLoading ? (
+                <Skeleton className="h-9 w-16" />
+              ) : (
+                <p className="text-3xl font-bold text-foreground">{todayLeads.length}</p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">Fresh inquiries</p>
             </CardContent>
           </Card>
@@ -83,7 +143,18 @@ export default function ProviderLeadsPage() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {mockLeads.length === 0 ? (
+            {isLoading ? (
+              <div className="p-6 space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-4">
+                    <Skeleton className="h-12 w-32" />
+                    <Skeleton className="h-12 w-48" />
+                    <Skeleton className="h-12 w-24" />
+                    <Skeleton className="h-12 flex-1" />
+                  </div>
+                ))}
+              </div>
+            ) : leads.length === 0 ? (
               <div className="text-center py-20 px-4">
                 <div className="h-20 w-20 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-5">
                   <Users className="h-10 w-10 text-muted-foreground/30" />
@@ -100,18 +171,37 @@ export default function ProviderLeadsPage() {
                   <TableHeader>
                     <TableRow className="bg-muted/30">
                       <TableHead className="font-semibold">Name</TableHead>
-                      <TableHead className="font-semibold">Contact Method</TableHead>
+                      <TableHead className="font-semibold">Contact</TableHead>
+                      <TableHead className="font-semibold">Preferred</TableHead>
                       <TableHead className="font-semibold">Date</TableHead>
-                      <TableHead className="font-semibold">Message Preview</TableHead>
+                      <TableHead className="font-semibold">Message</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockLeads.map((lead) => (
+                    {leads.map((lead) => (
                       <TableRow key={lead.id} className="hover:bg-muted/30">
                         <TableCell className="font-medium">{lead.name}</TableCell>
                         <TableCell>
+                          <div className="space-y-1">
+                            <a 
+                              href={`tel:${lead.phone}`} 
+                              className="flex items-center gap-2 text-sm text-primary hover:underline"
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                              {lead.phone}
+                            </a>
+                            <a 
+                              href={`mailto:${lead.email}`} 
+                              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+                            >
+                              <Mail className="h-3.5 w-3.5" />
+                              {lead.email}
+                            </a>
+                          </div>
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-2">
-                            {lead.contact_method === "email" ? (
+                            {lead.preferred_contact === "email" ? (
                               <div className="h-7 w-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
                                 <Mail className="h-3.5 w-3.5 text-blue-600" />
                               </div>
@@ -120,22 +210,26 @@ export default function ProviderLeadsPage() {
                                 <Phone className="h-3.5 w-3.5 text-green-600" />
                               </div>
                             )}
-                            <span className="text-sm">{lead.contact}</span>
+                            <span className="text-sm capitalize">{lead.preferred_contact}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Calendar className="h-4 w-4" />
-                            {lead.date}
+                            {format(new Date(lead.created_at), "MMM d, yyyy")}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2 max-w-[300px]">
-                            <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="text-sm text-muted-foreground truncate">
-                              {lead.message}
-                            </span>
-                          </div>
+                          {lead.message ? (
+                            <div className="flex items-center gap-2 max-w-[300px]">
+                              <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <span className="text-sm text-muted-foreground truncate">
+                                {lead.message}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground/50 italic">No message</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

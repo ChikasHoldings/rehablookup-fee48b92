@@ -6,11 +6,16 @@ import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 
 interface TreatmentCenterCardProps {
-  center: TreatmentCenter;
+  center: TreatmentCenter & { slug?: string | null; isFromDatabase?: boolean };
   featured?: boolean;
 }
 
 export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardProps) {
+  // Use slug-based URL for database facilities, id-based for static data
+  const detailsUrl = center.isFromDatabase && center.slug 
+    ? `/center/${center.slug}` 
+    : `/rehab-centers/${center.id}`;
+
   return (
     <article
       className={cn(
@@ -93,7 +98,11 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
               Call Now
             </Button>
           </a>
-          <Link to={`/rehab-centers/${center.id}`} className="flex-1">
+          <Link 
+            to={detailsUrl} 
+            state={{ fromSearch: true }}
+            className="flex-1"
+          >
             <Button variant="outline" className="w-full gap-1 group/btn">
               Details
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" />
