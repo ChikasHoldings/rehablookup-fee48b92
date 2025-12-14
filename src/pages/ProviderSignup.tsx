@@ -360,116 +360,63 @@ export default function ProviderSignup() {
         variant="provider"
       />
 
-      <main className="flex-1">
-        {/* Header */}
-        <section className="relative bg-primary py-10 md:py-14 overflow-hidden">
-          {/* Decorative elements */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary-glow opacity-90" />
-          <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary-foreground/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
-          
-          <div className="container relative text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-1.5 text-sm text-primary-foreground/90 mb-4">
-              <Building2 className="h-4 w-4" />
-              Provider Registration
-            </div>
-            <h1 className="font-display text-3xl font-bold text-primary-foreground md:text-4xl">
-              List Your Facility
-            </h1>
-            <p className="mx-auto mt-3 max-w-xl text-primary-foreground/80">
-              Join our trusted network and connect with families actively seeking treatment.
-            </p>
-            
-            {/* Trust indicators */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-primary-foreground/70">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-accent" />
-                <span>Free to list</span>
+      <main className="flex-1 py-8 md:py-12">
+        <div className="container">
+          <div className="mx-auto max-w-2xl">
+            {/* Header & Progress */}
+            <div className="mb-8">
+              <div className="text-center mb-6">
+                <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+                  List Your Facility
+                </h1>
+                <p className="mt-2 text-muted-foreground">
+                  Step {currentStep} of {steps.length}: {steps[currentStep - 1].name}
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-accent" />
-                <span>24-hour approval</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-accent" />
-                <span>No commitments</span>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Progress Steps */}
-        <section className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-sm py-4 shadow-sm">
-          <div className="container">
-            <div className="flex items-center justify-center">
-              <div className="flex items-center gap-1 md:gap-2 overflow-x-auto pb-2 px-2 -mx-2">
-                {steps.map((step, index) => (
-                  <div key={step.id} className="flex items-center">
-                    <button
-                      onClick={() => step.id < currentStep && setCurrentStep(step.id)}
-                      disabled={step.id > currentStep}
-                      className={cn(
-                        "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 md:px-4",
-                        currentStep === step.id
-                          ? "bg-primary text-primary-foreground shadow-md"
-                          : step.id < currentStep
-                          ? "bg-accent/15 text-accent hover:bg-accent/25 cursor-pointer"
-                          : "bg-muted text-muted-foreground cursor-not-allowed"
-                      )}
-                    >
+              {/* Progress bar */}
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <div 
+                  className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${(currentStep / steps.length) * 100}%` }}
+                />
+              </div>
+
+              {/* Step indicators */}
+              <div className="mt-4 flex justify-between">
+                {steps.map((step) => (
+                  <button
+                    key={step.id}
+                    onClick={() => step.id < currentStep && setCurrentStep(step.id)}
+                    disabled={step.id > currentStep}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 text-xs transition-colors",
+                      currentStep === step.id
+                        ? "text-primary font-medium"
+                        : step.id < currentStep
+                        ? "text-accent cursor-pointer hover:text-accent/80"
+                        : "text-muted-foreground cursor-not-allowed"
+                    )}
+                  >
+                    <div className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full transition-all",
+                      currentStep === step.id
+                        ? "bg-primary text-primary-foreground"
+                        : step.id < currentStep
+                        ? "bg-accent/15 text-accent"
+                        : "bg-muted text-muted-foreground"
+                    )}>
                       {step.id < currentStep ? (
                         <CheckCircle className="h-4 w-4" />
                       ) : (
                         <step.icon className="h-4 w-4" />
                       )}
-                      <span className="hidden sm:inline">{step.name}</span>
-                      <span className="sm:hidden">{step.id}</span>
-                    </button>
-                    {index < steps.length - 1 && (
-                      <div
-                        className={cn(
-                          "mx-1.5 h-0.5 w-4 md:w-8 rounded-full transition-colors duration-200",
-                          step.id < currentStep ? "bg-accent" : "bg-border"
-                        )}
-                      />
-                    )}
-                  </div>
+                    </div>
+                    <span className="hidden sm:block">{step.name}</span>
+                  </button>
                 ))}
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* Form Content */}
-        <section className="py-10 md:py-14">
-          <div className="container">
-            <div className="mx-auto max-w-2xl">
-              {/* Step indicator card */}
-              <div className="mb-8 rounded-xl border border-border bg-card p-6 shadow-card">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Step {currentStep} of {steps.length}
-                    </p>
-                    <h2 className="font-display text-xl font-bold text-foreground mt-1">
-                      {steps[currentStep - 1].name}
-                    </h2>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    {(() => {
-                      const StepIcon = steps[currentStep - 1].icon;
-                      return <StepIcon className="h-6 w-6 text-primary" />;
-                    })()}
-                  </div>
-                </div>
-                {/* Progress bar */}
-                <div className="mt-4 h-2 rounded-full bg-muted overflow-hidden">
-                  <div 
-                    className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
-                    style={{ width: `${(currentStep / steps.length) * 100}%` }}
-                  />
-                </div>
-              </div>
 
               {/* Step 1: Account Info */}
               {currentStep === 1 && (
@@ -1015,7 +962,6 @@ export default function ProviderSignup() {
               </div>
             </div>
           </div>
-        </section>
       </main>
 
       <Footer />
