@@ -42,6 +42,7 @@ interface Facility {
   id: string;
   user_id: string;
   name: string;
+  slug: string | null;
   address: string;
   city: string;
   state: string;
@@ -260,22 +261,24 @@ export default function ProviderListingPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              asChild
-            >
-              <a 
-                href={`/rehab-centers/${facility.id}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="gap-2"
+            {facility.slug && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                asChild
               >
-                <Eye className="h-4 w-4" />
-                View Public Profile
-                <ArrowUpRight className="h-3 w-3" />
-              </a>
-            </Button>
+                <a 
+                  href={`/center/${facility.slug}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  View Public Profile
+                  <ArrowUpRight className="h-3 w-3" />
+                </a>
+              </Button>
+            )}
             <Button 
               onClick={handleSave} 
               disabled={isSaving || !hasChanges} 
