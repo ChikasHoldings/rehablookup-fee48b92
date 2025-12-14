@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProviderHeader } from "./ProviderHeader";
 import { ProviderSidebar } from "./ProviderSidebar";
 import { useToast } from "@/hooks/use-toast";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -40,7 +40,6 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
         return;
       }
 
-      // Fetch profile
       const { data: profileData } = await supabase
         .from("profiles")
         .select("first_name, last_name, email")
@@ -51,7 +50,6 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
         setProfile(profileData);
       }
 
-      // Fetch first facility for display
       const { data: facilityData } = await supabase
         .from("facilities")
         .select("id, name")
@@ -90,17 +88,21 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center animate-fade-in">
+          <div className="relative">
+            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <ProviderHeader
         facilityName={facility?.name}
@@ -110,31 +112,59 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
 
       <div className="flex">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 min-h-[calc(100vh-56px)] border-r border-border bg-card">
+        <aside className="hidden lg:flex flex-col w-64 min-h-[calc(100vh-56px)] border-r border-border bg-card/50 backdrop-blur-sm">
           <ProviderSidebar />
+          
+          {/* Sidebar Footer */}
+          <div className="mt-auto p-4 border-t border-border">
+            <div className="rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 p-4">
+              <p className="text-xs font-medium text-foreground">Need Help?</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Contact our support team for assistance.
+              </p>
+              <Button variant="link" className="h-auto p-0 mt-2 text-xs" asChild>
+                <a href="/provider-support">Get Support →</a>
+              </Button>
+            </div>
+          </div>
         </aside>
 
         {/* Mobile Sidebar */}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetTrigger asChild>
             <Button 
-              variant="ghost" 
+              variant="default" 
               size="icon" 
-              className="lg:hidden fixed bottom-4 right-4 z-50 h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
+              className="lg:hidden fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
-              <Menu className="h-5 w-5" />
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            <div className="pt-4">
-              <ProviderSidebar onNavigate={() => setSidebarOpen(false)} />
+          <SheetContent side="left" className="w-72 p-0 border-r-0">
+            <div className="flex flex-col h-full bg-card">
+              <div className="p-4 border-b border-border">
+                <p className="font-display font-semibold text-foreground">Navigation</p>
+              </div>
+              <div className="flex-1 overflow-auto">
+                <ProviderSidebar onNavigate={() => setSidebarOpen(false)} />
+              </div>
+              <div className="p-4 border-t border-border">
+                <div className="rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 p-4">
+                  <p className="text-xs font-medium text-foreground">Need Help?</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Contact support for assistance.
+                  </p>
+                </div>
+              </div>
             </div>
           </SheetContent>
         </Sheet>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
-          {children}
+        <main className="flex-1 min-h-[calc(100vh-56px)] bg-muted/30">
+          <div className="p-4 md:p-6 lg:p-8 animate-fade-in">
+            {children}
+          </div>
         </main>
       </div>
     </div>
