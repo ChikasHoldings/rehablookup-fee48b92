@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ProviderHeader } from "./ProviderHeader";
 import { ProviderSidebar } from "./ProviderSidebar";
+import { StatsBar } from "./StatsBar";
 import { useToast } from "@/hooks/use-toast";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ interface Profile {
 interface Facility {
   id: string;
   name: string;
+  status: string;
 }
 
 interface ProviderLayoutProps {
@@ -52,7 +54,7 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
 
       const { data: facilityData } = await supabase
         .from("facilities")
-        .select("id, name")
+        .select("id, name, status")
         .eq("user_id", session.user.id)
         .limit(1)
         .maybeSingle();
@@ -110,6 +112,12 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
           facilityId={facility?.id}
           userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
           onLogout={handleLogout}
+        />
+        {/* Stats Bar */}
+        <StatsBar 
+          status={facility?.status || "inactive"} 
+          leadsCount={0} 
+          viewsCount={0} 
         />
       </div>
 
