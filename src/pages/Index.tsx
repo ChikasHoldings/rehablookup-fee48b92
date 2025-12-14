@@ -418,11 +418,11 @@ const Index = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-20 md:py-24 bg-muted/30">
+      <section className="py-20 md:py-24 bg-muted/30 overflow-hidden">
         <div className="container">
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-20">
             {/* Content */}
-            <div className="animate-fade-in">
+            <div className="animate-fade-in order-2 lg:order-1">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
                 <Heart className="h-4 w-4 text-accent" />
                 <span className="text-sm font-medium text-accent">Why Choose Us</span>
@@ -430,12 +430,12 @@ const Index = () => {
               <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                 Trusted by Families Across America
               </h2>
-              <p className="mb-8 text-muted-foreground leading-relaxed">
+              <p className="mb-8 text-muted-foreground leading-relaxed max-w-lg">
                 We understand that finding addiction treatment is one of the most important decisions 
                 your family will make. That's why we're committed to transparency, accuracy, and compassion.
               </p>
 
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 {[
                   "Every facility verified for licensing & accreditation",
                   "Transparent program and cost information",
@@ -444,10 +444,10 @@ const Index = () => {
                   "24/7 support for urgent situations",
                 ].map((item, index) => (
                   <li key={item} className="flex items-start gap-3 group animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/15 ring-1 ring-accent/25 transition-all group-hover:ring-accent/40">
-                      <CheckCircle className="h-3.5 w-3.5 text-accent" />
+                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 ring-1 ring-accent/25 transition-all group-hover:ring-accent/40 group-hover:bg-accent/25">
+                      <CheckCircle className="h-3 w-3 text-accent" />
                     </div>
-                    <span className="text-foreground">{item}</span>
+                    <span className="text-foreground text-sm md:text-base">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -463,34 +463,45 @@ const Index = () => {
             </div>
 
             {/* Image with Stats Overlay */}
-            <div className="relative animate-fade-in lg:max-w-lg xl:max-w-xl mx-auto" style={{ animationDelay: "0.1s" }}>
-              <div className="relative overflow-hidden rounded-2xl shadow-xl">
-                <img 
-                  src={whyChooseUsImage} 
-                  alt="Healthcare professional consulting with a family about treatment options"
-                  className="w-full object-cover aspect-[4/3]"
-                />
-                {/* Stats Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary via-primary/95 to-transparent p-5 pt-12">
-                  <div className="grid grid-cols-4 gap-3">
-                    <div className="text-center">
-                      <div className="font-display text-xl font-bold text-accent sm:text-2xl">10K+</div>
-                      <p className="text-[10px] sm:text-xs text-primary-foreground/70">Families</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-display text-xl font-bold text-accent sm:text-2xl">500+</div>
-                      <p className="text-[10px] sm:text-xs text-primary-foreground/70">Centers</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-display text-xl font-bold text-accent sm:text-2xl">50</div>
-                      <p className="text-[10px] sm:text-xs text-primary-foreground/70">States</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-display text-xl font-bold text-primary-foreground sm:text-2xl">24/7</div>
-                      <p className="text-[10px] sm:text-xs text-primary-foreground/70">Support</p>
+            <div className="relative animate-fade-in order-1 lg:order-2" style={{ animationDelay: "0.1s" }}>
+              {/* Decorative background element */}
+              <div className="absolute -inset-4 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent rounded-3xl blur-2xl opacity-60" />
+              
+              <div className="relative">
+                {/* Main image container */}
+                <div className="relative overflow-hidden rounded-2xl shadow-elevated ring-1 ring-border/50">
+                  <img 
+                    src={whyChooseUsImage} 
+                    alt="Healthcare professional consulting with a family about treatment options"
+                    className="w-full object-cover aspect-[4/3] transition-transform duration-500 hover:scale-[1.02]"
+                  />
+                  
+                  {/* Subtle overlay for depth */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent" />
+                  
+                  {/* Stats Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                    <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                      {[
+                        { value: "10K+", label: "Families", accent: true },
+                        { value: "500+", label: "Centers", accent: true },
+                        { value: "50", label: "States", accent: true },
+                        { value: "24/7", label: "Support", accent: false },
+                      ].map((stat, index) => (
+                        <div key={stat.label} className="text-center group" style={{ animationDelay: `${index * 50}ms` }}>
+                          <div className={`font-display text-lg sm:text-xl md:text-2xl font-bold transition-transform group-hover:scale-110 ${stat.accent ? 'text-accent' : 'text-primary-foreground'}`}>
+                            {stat.value}
+                          </div>
+                          <p className="text-[10px] sm:text-xs text-primary-foreground/80 font-medium">{stat.label}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
+                
+                {/* Decorative accent corner */}
+                <div className="absolute -bottom-3 -right-3 h-24 w-24 rounded-2xl bg-accent/20 -z-10" />
+                <div className="absolute -top-3 -left-3 h-16 w-16 rounded-xl bg-primary/10 -z-10" />
               </div>
             </div>
           </div>
