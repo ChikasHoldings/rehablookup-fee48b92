@@ -147,10 +147,6 @@ const Index = () => {
         <div className="container relative">
           {/* Section Header */}
           <div className="mb-12 flex flex-col items-center text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-light px-4 py-1.5 shadow-sm">
-              <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-accent">Featured</span>
-            </div>
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               Top-Rated Treatment Centers
             </h2>
@@ -194,10 +190,6 @@ const Index = () => {
         <div className="container relative">
           {/* Section Header */}
           <div className="mb-12 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light px-4 py-1.5 shadow-sm">
-              <Heart className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary">Treatment Options</span>
-            </div>
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               Comprehensive Care for Every Need
             </h2>
@@ -259,10 +251,6 @@ const Index = () => {
         <div className="container relative">
           {/* Section Header */}
           <div className="mb-14 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light px-4 py-1.5 shadow-sm">
-              <Clock className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary">Simple Process</span>
-            </div>
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               How It Works
             </h2>
@@ -333,10 +321,6 @@ const Index = () => {
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Content */}
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light px-4 py-1.5 shadow-sm">
-                <Heart className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-primary">Why RehabLookup</span>
-              </div>
               <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                 Trusted by Families Across America
               </h2>
