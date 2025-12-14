@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -30,15 +30,30 @@ import {
 } from "@/components/provider/LeadUsageIndicator";
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 
 interface Lead {
   id: string;
   name: string;
   phone: string;
   email: string;
+  message: string | null;
   status: string;
   created_at: string;
   preferred_contact: string;
+  facility_id: string;
+  source: string | null;
+  email_verified: boolean | null;
+  who_seeking_help: string | null;
+  location_zip: string | null;
+  location_city_state: string | null;
+  urgency: string | null;
+  primary_substance: string[] | null;
+  level_of_care: string | null;
+  dual_diagnosis: string | null;
+  insurance_type: string | null;
+  insurance_provider: string | null;
+  budget_preference: string | null;
 }
 
 export default function ProviderDashboardPage() {
@@ -58,6 +73,10 @@ export default function ProviderDashboardPage() {
   // Get lead limit from subscription data
   const leadLimit = subscription?.lead_limit ?? 5;
 
+  // State for lead detail drawer
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   // Fetch recent leads for dashboard
   const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ["recent-leads", facilityId],
@@ -65,7 +84,7 @@ export default function ProviderDashboardPage() {
       if (!facilityId) return [];
       const { data, error } = await supabase
         .from("leads")
-        .select("id, name, phone, email, status, created_at, preferred_contact")
+        .select("*")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(5);
@@ -76,11 +95,11 @@ export default function ProviderDashboardPage() {
     staleTime: 1000 * 60,
   });
 
-  // Real-time subscription for leads
+  // Real-time subscription for leads and views
   useEffect(() => {
     if (!facilityId) return;
     
-    const channel = supabase
+    const leadsChannel = supabase
       .channel("dashboard-leads")
       .on(
         "postgres_changes",
@@ -92,15 +111,37 @@ export default function ProviderDashboardPage() {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+          queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
+        }
+      )
+      .subscribe();
+
+    const viewsChannel = supabase
+      .channel("dashboard-views")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_views",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(leadsChannel);
+      supabase.removeChannel(viewsChannel);
     };
   }, [facilityId, queryClient]);
+
+  const handleLeadClick = (lead: Lead) => {
+    setSelectedLead(lead);
+    setDrawerOpen(true);
+  };
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -330,10 +371,10 @@ export default function ProviderDashboardPage() {
           ) : (
             <div className="space-y-2">
               {recentLeads.map((lead) => (
-                <Link
+                <button
                   key={lead.id}
-                  to="/provider/leads"
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors group"
+                  onClick={() => handleLeadClick(lead)}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors group text-left"
                 >
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                     <span className="text-sm font-semibold text-primary">
@@ -359,7 +400,7 @@ export default function ProviderDashboardPage() {
                     </div>
                   </div>
                   <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
+                </button>
               ))}
             </div>
           )}
@@ -392,6 +433,13 @@ export default function ProviderDashboardPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Lead Detail Drawer */}
+      <LeadDetailDrawer
+        lead={selectedLead}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+      />
     </div>
   );
 }
