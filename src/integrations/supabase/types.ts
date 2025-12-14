@@ -338,33 +338,42 @@ export type Database = {
           email: string
           facility_id: string
           id: string
+          ip_hash: string | null
           message: string | null
           name: string
           phone: string
           preferred_contact: string
+          quality_flag: string | null
           status: string
+          validation_status: string | null
         }
         Insert: {
           created_at?: string
           email: string
           facility_id: string
           id?: string
+          ip_hash?: string | null
           message?: string | null
           name: string
           phone: string
           preferred_contact?: string
+          quality_flag?: string | null
           status?: string
+          validation_status?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           facility_id?: string
           id?: string
+          ip_hash?: string | null
           message?: string | null
           name?: string
           phone?: string
           preferred_contact?: string
+          quality_flag?: string | null
           status?: string
+          validation_status?: string | null
         }
         Relationships: [
           {

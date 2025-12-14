@@ -11,10 +11,20 @@ interface LeadSubmissionFormProps {
   facilityEmail?: string | null;
 }
 
+// Phone validation: must have 10-15 digits after removing formatting
+const phoneRegex = /^[\d\s\-\(\)\+\.]{10,20}$/;
+const phoneDigitsRegex = /^\d{10,15}$/;
+
 const leadSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
-  phone: z.string().trim().min(1, "Phone is required").max(20, "Phone must be less than 20 characters"),
-  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
+  phone: z.string().trim()
+    .min(10, "Phone number is too short")
+    .max(20, "Phone number is too long")
+    .refine((val) => {
+      const digits = val.replace(/[\s\-\(\)\+\.]/g, "");
+      return phoneDigitsRegex.test(digits);
+    }, "Please enter a valid phone number"),
+  email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
   message: z.string().trim().max(1000, "Message must be less than 1000 characters").optional(),
   preferredContact: z.enum(["call", "email"]),
   consent: z.literal(true, { errorMap: () => ({ message: "You must agree to the terms" }) }),
@@ -87,7 +97,41 @@ export function LeadSubmissionForm({ facilityId, facilityName, facilityEmail }: 
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error codes from the edge function
+        const errorData = error as { message?: string };
+        const errorMessage = errorData.message || "";
+        
+        if (errorMessage.includes("DUPLICATE") || errorMessage.includes("already submitted")) {
+          toast({
+            title: "Already Submitted",
+            description: "You've already sent a request to this facility. They will contact you soon.",
+          });
+          setIsSubmitted(true);
+          return;
+        }
+        
+        if (errorMessage.includes("RATE_LIMITED")) {
+          toast({
+            variant: "destructive",
+            title: "Too Many Requests",
+            description: "Please wait a while before submitting another request.",
+          });
+          return;
+        }
+        
+        if (errorMessage.includes("INVALID_EMAIL")) {
+          setErrors({ email: "Please enter a valid email address" });
+          return;
+        }
+        
+        if (errorMessage.includes("INVALID_PHONE")) {
+          setErrors({ phone: "Please enter a valid phone number" });
+          return;
+        }
+        
+        throw error;
+      }
 
       setLastSubmitTime(now);
       setIsSubmitted(true);
