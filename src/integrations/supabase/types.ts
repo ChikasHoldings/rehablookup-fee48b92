@@ -588,6 +588,30 @@ export type Database = {
           },
         ]
       }
+      subscription_alerts: {
+        Row: {
+          alert_key: string
+          alert_type: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          alert_key: string
+          alert_type: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          alert_key?: string
+          alert_type?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
