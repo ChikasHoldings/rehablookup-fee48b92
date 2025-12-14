@@ -30,7 +30,8 @@ import {
   Sparkles,
   Quote,
   BookOpen,
-  Calendar
+  Calendar,
+  Search
 } from "lucide-react";
 
 const blogArticles = [
@@ -340,54 +341,59 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Steps */}
-          <div className="grid gap-6 md:grid-cols-3 md:gap-8">
-            {[
-              {
-                step: 1,
-                title: "Search",
-                description: "Enter your location to find verified treatment centers near you.",
-                icon: "🔍",
-              },
-              {
-                step: 2,
-                title: "Compare",
-                description: "Review programs, insurance options, and facility details.",
-                icon: "📋",
-              },
-              {
-                step: 3,
-                title: "Connect",
-                description: "Contact centers directly or request a callback from our team.",
-                icon: "📞",
-              },
-            ].map((item, index) => (
-              <div
-                key={item.step}
-                className="group relative animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                {/* Connector line */}
-                {index < 2 && (
-                  <div className="absolute top-10 left-1/2 hidden h-0.5 w-full bg-gradient-to-r from-accent/30 to-accent/10 md:block" />
-                )}
-                
-                <div className="relative rounded-2xl border border-border bg-card p-8 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
-                  {/* Step number */}
-                  <div className="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-sm font-bold text-accent-foreground shadow-lg ring-4 ring-background">
-                    {item.step}
+          {/* Steps - Horizontal Timeline */}
+          <div className="relative max-w-4xl mx-auto">
+            {/* Connector line */}
+            <div className="absolute top-12 left-0 right-0 hidden h-0.5 bg-gradient-to-r from-transparent via-accent/30 to-transparent md:block" />
+            
+            <div className="grid gap-8 md:grid-cols-3 md:gap-6">
+              {[
+                {
+                  step: 1,
+                  title: "Search",
+                  description: "Enter your location to find verified treatment centers near you.",
+                  icon: Search,
+                },
+                {
+                  step: 2,
+                  title: "Compare",
+                  description: "Review programs, insurance options, and facility details.",
+                  icon: Users,
+                },
+                {
+                  step: 3,
+                  title: "Connect",
+                  description: "Contact centers directly or request a callback from our team.",
+                  icon: Phone,
+                },
+              ].map((item, index) => (
+                <div
+                  key={item.step}
+                  className="group relative text-center animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {/* Step circle */}
+                  <div className="relative mx-auto mb-6">
+                    <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-accent/20 bg-card shadow-lg transition-all duration-300 group-hover:border-accent/50 group-hover:shadow-xl">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent/10 to-accent/20">
+                        <item.icon className="h-7 w-7 text-accent" />
+                      </div>
+                    </div>
+                    {/* Step number badge */}
+                    <div className="absolute -top-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-xs font-bold text-accent-foreground shadow-md">
+                      {item.step}
+                    </div>
                   </div>
                   
-                  <div className="mb-4 mt-2 text-4xl">{item.icon}</div>
                   <h3 className="mb-2 font-display text-xl font-semibold text-foreground">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
                     {item.description}
                   </p>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
