@@ -34,6 +34,16 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/resources" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                  Resources & Guides
+                </Link>
+              </li>
+              <li>
+                <Link to="/faq" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                  FAQ
+                </Link>
+              </li>
+              <li>
                 <Link to="/about" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
                   About Us
                 </Link>
