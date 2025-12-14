@@ -1,10 +1,11 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
+import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import heroImage from "@/assets/hero-recovery.jpg";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
@@ -122,7 +123,37 @@ const trustBadges = [
 ];
 
 const Index = () => {
-  const featuredCenters = treatmentCenters.filter((c) => c.featured).slice(0, 3);
+  const { data: approvedFacilities = [] } = useApprovedFacilities();
+  
+  // Combine static featured centers with Featured subscription facilities
+  const featuredCenters = useMemo(() => {
+    // Get facilities with Featured subscription (from database)
+    const featuredSubscriptionFacilities = approvedFacilities
+      .filter((f) => f.hasFeaturedSubscription)
+      .slice(0, 3);
+    
+    // Get static featured centers as fallback (add missing properties for type compatibility)
+    const staticFeatured = treatmentCenters
+      .filter((c) => c.featured)
+      .map((c) => ({
+        ...c,
+        slug: null,
+        isFromDatabase: false,
+        logo_url: null,
+        gallery_urls: null,
+        hasFeaturedSubscription: false,
+      }));
+    
+    // Combine: prioritize Featured subscription holders, fill remaining slots with static
+    const combined = [...featuredSubscriptionFacilities];
+    const remainingSlots = 3 - combined.length;
+    
+    if (remainingSlots > 0) {
+      combined.push(...staticFeatured.slice(0, remainingSlots));
+    }
+    
+    return combined.slice(0, 3);
+  }, [approvedFacilities]);
   
   // Parallax effect for Why Choose Us image
   const parallaxRef = useRef<HTMLDivElement>(null);
