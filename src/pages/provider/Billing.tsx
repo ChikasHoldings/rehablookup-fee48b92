@@ -1,5 +1,5 @@
 import { ProviderLayout } from "@/components/provider/ProviderLayout";
-import { CreditCard, Check, ArrowRight } from "lucide-react";
+import { CreditCard, Check, ArrowRight, Sparkles, Clock, FileText, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +50,7 @@ const plans = [
 export default function ProviderBillingPage() {
   return (
     <ProviderLayout>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-8">
         {/* Page Header */}
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Billing</h1>
@@ -60,64 +60,78 @@ export default function ProviderBillingPage() {
         </div>
 
         {/* Current Plan */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Current Plan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-semibold text-foreground">Free Trial</h3>
-                  <Badge variant="secondary">Active</Badge>
+        <Card className="shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-6 md:p-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-primary" />
                 </div>
-                <p className="text-muted-foreground mt-1">
-                  30 days remaining in your trial
-                </p>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-foreground">Free Trial</h3>
+                    <Badge className="bg-green-100 text-green-700 border-green-200">Active</Badge>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1.5 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>30 days remaining in your trial</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button variant="outline">Cancel Subscription</Button>
-                <Button>Upgrade Plan</Button>
+                <Button className="gap-2">
+                  <Zap className="h-4 w-4" />
+                  Upgrade Plan
+                </Button>
               </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
 
         {/* Plans */}
         <div>
-          <h2 className="font-display text-xl font-semibold text-foreground mb-4">
-            Available Plans
-          </h2>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="flex items-center gap-2 mb-5">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h2 className="font-display text-xl font-semibold text-foreground">
+              Available Plans
+            </h2>
+          </div>
+          <div className="grid gap-5 md:grid-cols-3">
             {plans.map((plan) => (
               <Card 
                 key={plan.name} 
-                className={plan.recommended ? "border-primary ring-1 ring-primary" : ""}
+                className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
+                  plan.recommended 
+                    ? "border-primary ring-1 ring-primary shadow-md" 
+                    : "hover:border-primary/30"
+                }`}
               >
-                <CardHeader>
-                  {plan.recommended && (
-                    <Badge className="w-fit mb-2">Recommended</Badge>
-                  )}
+                {plan.recommended && (
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-bl-lg">
+                    Recommended
+                  </div>
+                )}
+                <CardHeader className="pb-4">
                   <CardTitle className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold">{plan.price}</span>
-                    <span className="text-sm font-normal text-muted-foreground">
+                    <span className="text-3xl font-bold">{plan.price}</span>
+                    <span className="text-base font-normal text-muted-foreground">
                       {plan.period}
                     </span>
                   </CardTitle>
-                  <CardDescription>
-                    <span className="font-semibold text-foreground">{plan.name}</span>
+                  <CardDescription className="pt-2">
+                    <span className="font-semibold text-foreground text-lg">{plan.name}</span>
                     <br />
-                    {plan.description}
+                    <span className="text-sm">{plan.description}</span>
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2">
+                <CardContent className="space-y-5">
+                  <ul className="space-y-3">
                     {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-primary" />
+                      <li key={feature} className="flex items-center gap-3 text-sm">
+                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Check className="h-3 w-3 text-primary" />
+                        </div>
                         {feature}
                       </li>
                     ))}
@@ -129,10 +143,10 @@ export default function ProviderBillingPage() {
                   ) : (
                     <Button 
                       variant={plan.recommended ? "default" : "outline"} 
-                      className="w-full"
+                      className="w-full group"
                     >
-                      {plan.recommended ? "Upgrade" : "Select"}
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      {plan.recommended ? "Upgrade Now" : "Select Plan"}
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Button>
                   )}
                 </CardContent>
@@ -142,14 +156,27 @@ export default function ProviderBillingPage() {
         </div>
 
         {/* Billing History */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Billing History</CardTitle>
-            <CardDescription>View your past invoices and payments</CardDescription>
+        <Card className="shadow-sm">
+          <CardHeader className="border-b border-border bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Billing History</CardTitle>
+                <CardDescription>View your past invoices and payments</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
+          <CardContent className="p-0">
+            <div className="text-center py-16">
+              <div className="h-14 w-14 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <FileText className="h-7 w-7 text-muted-foreground/40" />
+              </div>
               <p className="text-muted-foreground">No billing history yet</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">
+                Your invoices will appear here after your first payment
+              </p>
             </div>
           </CardContent>
         </Card>

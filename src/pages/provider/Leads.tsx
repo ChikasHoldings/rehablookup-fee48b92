@@ -1,5 +1,5 @@
 import { ProviderLayout } from "@/components/provider/ProviderLayout";
-import { Users, Mail, Phone, Calendar, MessageSquare } from "lucide-react";
+import { Users, Mail, Phone, Calendar, MessageSquare, TrendingUp, Inbox } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -9,9 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
-// Placeholder data - will be replaced with actual leads table
 const mockLeads: any[] = [];
 
 export default function ProviderLeadsPage() {
@@ -27,74 +25,100 @@ export default function ProviderLeadsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-primary/5" />
+            <CardHeader className="pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Users className="h-4 w-4" />
                 Total Leads
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-foreground">{mockLeads.length}</p>
+            <CardContent className="relative">
+              <p className="text-3xl font-bold text-foreground">{mockLeads.length}</p>
+              <p className="text-xs text-muted-foreground mt-1">All time</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-blue-500/5" />
+            <CardHeader className="pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
                 This Month
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-foreground">0</p>
+            <CardContent className="relative">
+              <p className="text-3xl font-bold text-foreground">0</p>
+              <p className="text-xs text-muted-foreground mt-1">December 2024</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-green-500/5" />
+            <CardHeader className="pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Inbox className="h-4 w-4" />
                 New Today
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-foreground">0</p>
+            <CardContent className="relative">
+              <p className="text-3xl font-bold text-foreground">0</p>
+              <p className="text-xs text-muted-foreground mt-1">Fresh inquiries</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Leads Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Leads</CardTitle>
+        <Card className="shadow-sm">
+          <CardHeader className="border-b border-border bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>All Leads</CardTitle>
+                <p className="text-sm text-muted-foreground">Contact requests for your facility</p>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {mockLeads.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-muted-foreground/40 mx-auto" />
-                <h3 className="mt-4 text-lg font-medium text-foreground">No leads yet</h3>
-                <p className="mt-2 text-muted-foreground max-w-sm mx-auto">
-                  When families submit contact requests for your facility, they'll appear here.
+              <div className="text-center py-20 px-4">
+                <div className="h-20 w-20 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-5">
+                  <Users className="h-10 w-10 text-muted-foreground/30" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">No leads yet</h3>
+                <p className="mt-2 text-muted-foreground max-w-md mx-auto">
+                  When families submit contact requests for your facility, they'll appear here. 
+                  Make sure your listing is complete to attract more inquiries.
                 </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Contact Method</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Message Preview</TableHead>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="font-semibold">Name</TableHead>
+                      <TableHead className="font-semibold">Contact Method</TableHead>
+                      <TableHead className="font-semibold">Date</TableHead>
+                      <TableHead className="font-semibold">Message Preview</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {mockLeads.map((lead) => (
-                      <TableRow key={lead.id}>
+                      <TableRow key={lead.id} className="hover:bg-muted/30">
                         <TableCell className="font-medium">{lead.name}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {lead.contact_method === "email" ? (
-                              <Mail className="h-4 w-4 text-muted-foreground" />
+                              <div className="h-7 w-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                                <Mail className="h-3.5 w-3.5 text-blue-600" />
+                              </div>
                             ) : (
-                              <Phone className="h-4 w-4 text-muted-foreground" />
+                              <div className="h-7 w-7 rounded-lg bg-green-500/10 flex items-center justify-center">
+                                <Phone className="h-3.5 w-3.5 text-green-600" />
+                              </div>
                             )}
                             <span className="text-sm">{lead.contact}</span>
                           </div>
