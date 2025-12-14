@@ -30,6 +30,8 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          light: "hsl(var(--primary-light))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -46,6 +48,8 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          light: "hsl(var(--accent-light))",
+          muted: "hsl(var(--accent-muted))",
         },
         success: {
           DEFAULT: "hsl(var(--success))",
@@ -85,6 +89,8 @@ export default {
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
         card: "var(--shadow-card)",
+        glow: "var(--shadow-glow)",
+        "accent-glow": "var(--shadow-accent-glow)",
       },
       keyframes: {
         "accordion-down": {
