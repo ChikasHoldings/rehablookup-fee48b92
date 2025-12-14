@@ -5,7 +5,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
-import { Phone, MapPin, Filter, Search, ArrowRight, Shield, Clock, CheckCircle, Grid3X3, List, X, ArrowUpDown, Star, Sparkles } from "lucide-react";
+import { Phone, MapPin, Filter, Search, ArrowRight, Shield, Clock, CheckCircle, Grid3X3, List, X, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -27,9 +27,9 @@ const ITEMS_PER_PAGE = 9;
 
 type SortOption = "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc" | "reviews";
 
-const sortOptions: { value: SortOption; label: string; icon?: React.ReactNode }[] = [
-  { value: "featured", label: "Featured First", icon: <Sparkles className="h-4 w-4" /> },
-  { value: "rating-high", label: "Highest Rated", icon: <Star className="h-4 w-4" /> },
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: "featured", label: "Featured First" },
+  { value: "rating-high", label: "Highest Rated" },
   { value: "rating-low", label: "Lowest Rated" },
   { value: "reviews", label: "Most Reviews" },
   { value: "name-asc", label: "Name (A-Z)" },
@@ -332,10 +332,7 @@ const RehabCenters = () => {
                 <SelectContent>
                   {sortOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      <span className="flex items-center gap-2">
-                        {option.icon}
-                        {option.label}
-                      </span>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
