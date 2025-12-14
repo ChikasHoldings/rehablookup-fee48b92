@@ -1,10 +1,18 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Plan configuration matching check-subscription
+const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number }> = {
+  basic: { product_id: null, lead_limit: 0 },
+  professional: { product_id: "prod_TbalLOPujTIoUe", lead_limit: 25 },
+  featured: { product_id: "prod_TbalOeJZA2ZoJl", lead_limit: 75 },
 };
 
 interface LeadRequest {
@@ -25,7 +33,6 @@ function isValidEmail(email: string): boolean {
 }
 
 function isValidPhone(phone: string): boolean {
-  // Remove common formatting characters and check if it has 10-15 digits
   const digits = phone.replace(/[\s\-\(\)\+\.]/g, "");
   return /^\d{10,15}$/.test(digits);
 }
@@ -41,6 +48,98 @@ async function hashIP(ip: string): Promise<string> {
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Check provider's subscription and lead cap
+async function checkProviderLeadCap(
+  supabase: any,
+  facilityUserId: string,
+  providerEmail: string
+): Promise<{ canReceiveLeads: boolean; reason?: string; leadLimit: number; usedLeads: number }> {
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  
+  if (!stripeKey) {
+    console.error("STRIPE_SECRET_KEY not set - defaulting to basic plan");
+    return { canReceiveLeads: false, reason: "Provider on Basic plan (0 leads)", leadLimit: 0, usedLeads: 0 };
+  }
+
+  try {
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    
+    // Find Stripe customer by email
+    const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
+    
+    let leadLimit = PLAN_CONFIG.basic.lead_limit; // Default to 0
+    
+    if (customers.data.length > 0) {
+      const customerId = customers.data[0].id;
+      
+      // Check for active subscription
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
+      
+      if (subscriptions.data.length > 0) {
+        const subscription = subscriptions.data[0];
+        const productId = subscription.items.data[0].price.product as string;
+        
+        // Determine lead limit based on product
+        if (productId === PLAN_CONFIG.professional.product_id) {
+          leadLimit = PLAN_CONFIG.professional.lead_limit;
+        } else if (productId === PLAN_CONFIG.featured.product_id) {
+          leadLimit = PLAN_CONFIG.featured.lead_limit;
+        }
+      }
+    }
+    
+    // If no paid plan, they can't receive leads
+    if (leadLimit === 0) {
+      return { canReceiveLeads: false, reason: "Provider on Basic plan (0 leads)", leadLimit: 0, usedLeads: 0 };
+    }
+    
+    // Count leads this month for all facilities owned by this provider
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    
+    // Get all facility IDs for this user
+    const { data: userFacilities } = await supabase
+      .from("facilities")
+      .select("id")
+      .eq("user_id", facilityUserId);
+    
+    const facilityIds = (userFacilities as { id: string }[] || []).map(f => f.id);
+    
+    if (facilityIds.length === 0) {
+      return { canReceiveLeads: true, leadLimit, usedLeads: 0 };
+    }
+    
+    // Count all leads this month across all provider's facilities
+    const { count: monthlyLeadCount } = await supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .in("facility_id", facilityIds)
+      .gte("created_at", startOfMonth.toISOString());
+    
+    const usedLeads = monthlyLeadCount || 0;
+    
+    if (usedLeads >= leadLimit) {
+      return { 
+        canReceiveLeads: false, 
+        reason: `Provider has reached monthly lead limit (${usedLeads}/${leadLimit})`,
+        leadLimit,
+        usedLeads
+      };
+    }
+    
+    return { canReceiveLeads: true, leadLimit, usedLeads };
+  } catch (error) {
+    console.error("Error checking lead cap:", error);
+    // On error, allow the lead through but log it
+    return { canReceiveLeads: true, leadLimit: 999, usedLeads: 0 };
+  }
 }
 
 // Rate limiting constants
@@ -197,6 +296,26 @@ const handler = async (req: Request): Promise<Response> => {
       providerEmail = profile?.email || null;
     }
 
+    // ============ LEAD CAP ENFORCEMENT ============
+    if (providerEmail && facility.user_id) {
+      const capCheck = await checkProviderLeadCap(supabase, facility.user_id, providerEmail);
+      
+      if (!capCheck.canReceiveLeads) {
+        console.log(`Lead cap reached for facility ${body.facilityId}: ${capCheck.reason}`);
+        
+        // Return a user-friendly message - don't expose internal details
+        return new Response(
+          JSON.stringify({ 
+            error: "This facility is not currently accepting new inquiries. Please try another facility or contact us directly.",
+            code: "FACILITY_UNAVAILABLE"
+          }),
+          { status: 503, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      
+      console.log(`Lead cap check passed: ${capCheck.usedLeads}/${capCheck.leadLimit} leads used`);
+    }
+
     // ============ CREATE LEAD ============
     
     const { data: lead, error: leadError } = await supabase
@@ -210,6 +329,7 @@ const handler = async (req: Request): Promise<Response> => {
         preferred_contact: body.preferredContact,
         ip_hash: ipHash,
         validation_status: "valid",
+        source: "Direct",
       })
       .select()
       .single();
