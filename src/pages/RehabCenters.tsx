@@ -12,6 +12,26 @@ const RehabCenters = () => {
   const location = searchParams.get("location") || "";
   const treatment = searchParams.get("treatment") || "";
   const insurance = searchParams.get("insurance") || "";
+  const type = searchParams.get("type") || "";
+
+  // Map type query param to treatment types
+  const typeFilterMap: Record<string, string[]> = {
+    drug: ["Detox", "Inpatient", "Outpatient"],
+    alcohol: ["Detox", "Inpatient", "Outpatient"],
+    "mental-health": ["Dual Diagnosis"],
+    residential: ["Inpatient"],
+    outpatient: ["Outpatient"],
+    holistic: ["Inpatient", "Outpatient"],
+  };
+
+  const typeDisplayNames: Record<string, string> = {
+    drug: "Drug Addiction",
+    alcohol: "Alcohol Treatment",
+    "mental-health": "Mental Health",
+    residential: "Residential Rehab",
+    outpatient: "Outpatient Programs",
+    holistic: "Holistic Therapy",
+  };
 
   const filteredCenters = useMemo(() => {
     let results = [...treatmentCenters];
@@ -30,10 +50,17 @@ const RehabCenters = () => {
       );
     }
 
-    // Filter by treatment type
+    // Filter by treatment type (from search form)
     if (treatment) {
       results = results.filter((c) =>
         c.treatmentTypes.some((t) => t.toLowerCase() === treatment.toLowerCase())
+      );
+    }
+
+    // Filter by type (from homepage cards)
+    if (type && typeFilterMap[type]) {
+      results = results.filter((c) =>
+        c.treatmentTypes.some((t) => typeFilterMap[type].includes(t))
       );
     }
 
@@ -47,9 +74,10 @@ const RehabCenters = () => {
     }
 
     return results;
-  }, [location, treatment, insurance]);
+  }, [location, treatment, insurance, type]);
 
-  const hasFilters = location || treatment || insurance;
+  const hasFilters = location || treatment || insurance || type;
+  const activeTypeFilter = type ? typeDisplayNames[type] : null;
 
   return (
     <Layout>
@@ -66,6 +94,7 @@ const RehabCenters = () => {
                 {hasFilters ? (
                   <span>
                     Showing {filteredCenters.length} results
+                    {activeTypeFilter && ` for ${activeTypeFilter}`}
                     {location && ` near "${location}"`}
                   </span>
                 ) : (
@@ -122,11 +151,23 @@ const RehabCenters = () => {
         <div className="container">
           {filteredCenters.length > 0 ? (
             <>
-              {/* Results count */}
-              <div className="mb-6 flex items-center justify-between">
+              {/* Results count and active filters */}
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground">
                   <span className="font-semibold text-foreground">{filteredCenters.length}</span> treatment centers found
                 </p>
+                {activeTypeFilter && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Filtered by:</span>
+                    <Link 
+                      to="/rehab-centers" 
+                      className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      {activeTypeFilter}
+                      <span className="text-primary/60">×</span>
+                    </Link>
+                  </div>
+                )}
               </div>
               
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
