@@ -120,28 +120,29 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative flex min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-hidden">
-        {/* Background Image */}
+      {/* Hero Section - Navy Background */}
+      <section className="relative min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-hidden bg-primary">
+        {/* Background Image with dark overlay */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
         
-        {/* Light overlay to maintain current colors */}
-        <div className="absolute inset-0 bg-card/85" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary/90" />
         
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-accent/5 blur-3xl" />
+          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute top-1/2 left-1/4 h-64 w-64 rounded-full bg-accent/5 blur-3xl" />
         </div>
 
         {/* Content Container */}
-        <div className="container relative flex flex-1 flex-col justify-center py-8 md:py-10">
+        <div className="container relative flex h-full min-h-[calc(100vh-5rem)] flex-col justify-center py-12 md:py-16">
           <div className="mx-auto w-full max-w-4xl text-center">
             {/* Trust Badge */}
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 animate-fade-in">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 animate-fade-in backdrop-blur-sm">
               <Star className="h-4 w-4 fill-accent text-accent" />
               <span className="text-sm font-semibold text-accent">
                 Trusted by 10,000+ families nationwide
@@ -149,27 +150,27 @@ const Index = () => {
             </div>
 
             {/* Headline */}
-            <h1 className="mb-4 font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in drop-shadow-sm" style={{ animationDelay: "50ms" }}>
+            <h1 className="mb-5 font-display text-4xl font-bold leading-tight text-primary-foreground sm:text-5xl md:text-6xl lg:text-7xl animate-fade-in" style={{ animationDelay: "50ms" }}>
               Find the Right Path to{" "}
-              <span className="text-primary">Recovery</span>
+              <span className="text-accent">Recovery</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="mb-8 text-base text-foreground/80 sm:text-lg md:text-xl animate-fade-in max-w-2xl mx-auto font-medium" style={{ animationDelay: "100ms" }}>
+            <p className="mb-10 text-lg text-primary-foreground/80 sm:text-xl animate-fade-in max-w-2xl mx-auto" style={{ animationDelay: "100ms" }}>
               Search verified addiction treatment centers and take the first step toward a healthier future.
             </p>
 
             {/* Search Form */}
-            <div className="mb-8 animate-fade-in" style={{ animationDelay: "150ms" }}>
+            <div className="mb-10 animate-fade-in" style={{ animationDelay: "150ms" }}>
               <SearchForm variant="compact-hero" />
             </div>
 
             {/* Trust Badges */}
             <div className="flex flex-wrap items-center justify-center gap-6 animate-fade-in md:gap-8" style={{ animationDelay: "200ms" }}>
               {trustBadges.map((badge) => (
-                <div key={badge.label} className="flex items-center gap-2 text-foreground/70 transition-colors hover:text-primary">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
-                    <badge.icon className="h-4 w-4 text-primary" />
+                <div key={badge.label} className="flex items-center gap-2 text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
+                    <badge.icon className="h-4 w-4 text-accent" />
                   </div>
                   <span className="text-sm font-medium">{badge.label}</span>
                 </div>
@@ -177,10 +178,10 @@ const Index = () => {
             </div>
 
             {/* Quick Call CTA */}
-            <div className="mt-8 animate-fade-in" style={{ animationDelay: "250ms" }}>
-              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-primary transition-colors">
-                <Phone className="h-4 w-4" />
-                <span>Need help now? Call <strong className="text-foreground">1-800-555-0199</strong></span>
+            <div className="mt-10 animate-fade-in" style={{ animationDelay: "250ms" }}>
+              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm text-primary-foreground/90 hover:bg-white/15 transition-colors backdrop-blur-sm">
+                <Phone className="h-4 w-4 text-accent" />
+                <span>Need help now? Call <strong className="text-primary-foreground">1-800-555-0199</strong></span>
               </a>
             </div>
           </div>
@@ -190,11 +191,39 @@ const Index = () => {
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
       </section>
 
+      {/* Trust Bar */}
+      <section className="border-b border-border bg-card py-4">
+        <div className="container">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm md:gap-12">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Shield className="h-4 w-4 text-accent" />
+              <span>Licensed & Accredited</span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Clock className="h-4 w-4 text-accent" />
+              <span>24/7 Confidential Support</span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Heart className="h-4 w-4 text-accent" />
+              <span>Free Assessment</span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <CheckCircle className="h-4 w-4 text-accent" />
+              <span>Insurance Verified</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Featured Centers */}
       <section className="py-20 md:py-24">
         <div className="container">
           {/* Section Header */}
           <div className="mb-12 flex flex-col items-center text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+              <Star className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-accent">Featured Facilities</span>
+            </div>
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               Top-Rated Treatment Centers
             </h2>
@@ -219,7 +248,7 @@ const Index = () => {
           {/* View All Link */}
           <div className="mt-12 text-center">
             <Link to="/rehab-centers">
-              <Button variant="outline" size="lg" className="gap-2 group border-primary/20 hover:border-primary/40 hover:bg-primary-light">
+              <Button variant="outline" size="lg" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
                 View All Centers
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -229,14 +258,18 @@ const Index = () => {
       </section>
 
       {/* Treatment Options */}
-      <section className="py-20 md:py-24 bg-secondary/30">
+      <section className="py-20 md:py-24 bg-primary">
         <div className="container">
           {/* Section Header */}
           <div className="mb-12 text-center">
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
+              <Sparkles className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-primary-foreground">Treatment Programs</span>
+            </div>
+            <h2 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               Comprehensive Care for Every Need
             </h2>
-            <p className="mx-auto max-w-xl text-muted-foreground">
+            <p className="mx-auto max-w-xl text-primary-foreground/70">
               Find specialized treatment programs tailored to your unique situation and recovery goals.
             </p>
           </div>
@@ -249,21 +282,21 @@ const Index = () => {
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 75}ms` }}
               >
-                <div className="relative h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30">
-                  {/* Icon with gradient background */}
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10 transition-all group-hover:ring-primary/20">
-                    <option.icon className="h-6 w-6 text-primary" />
+                <div className="relative h-full rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-300 hover:bg-white/10 hover:border-accent/30">
+                  {/* Icon */}
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20 ring-1 ring-accent/30 transition-all group-hover:bg-accent/30">
+                    <option.icon className="h-6 w-6 text-accent" />
                   </div>
                   
-                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
+                  <h3 className="mb-2 font-display text-lg font-semibold text-primary-foreground">
                     {option.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-primary-foreground/70 leading-relaxed">
                     {option.description}
                   </p>
                   
                   {/* Hover arrow */}
-                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-1">
+                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-accent opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-1">
                     Learn more <ArrowRight className="h-3.5 w-3.5" />
                   </div>
                 </div>
@@ -274,7 +307,7 @@ const Index = () => {
           {/* CTA */}
           <div className="mt-12 text-center">
             <Link to="/rehab-centers">
-              <Button variant="default" size="lg" className="gap-2 group shadow-lg hover:shadow-xl transition-shadow">
+              <Button variant="hero-light" size="lg" className="gap-2 group shadow-lg hover:shadow-xl transition-shadow">
                 Explore All Treatment Options
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -288,6 +321,10 @@ const Index = () => {
         <div className="container">
           {/* Section Header */}
           <div className="mb-14 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+              <CheckCircle className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-accent">Simple Process</span>
+            </div>
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               How It Works
             </h2>
@@ -325,12 +362,12 @@ const Index = () => {
               >
                 {/* Connector line */}
                 {index < 2 && (
-                  <div className="absolute top-10 left-1/2 hidden h-0.5 w-full bg-gradient-to-r from-primary/20 to-primary/5 md:block" />
+                  <div className="absolute top-10 left-1/2 hidden h-0.5 w-full bg-gradient-to-r from-accent/30 to-accent/10 md:block" />
                 )}
                 
-                <div className="relative rounded-2xl border border-border bg-card p-8 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
+                <div className="relative rounded-2xl border border-border bg-card p-8 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
                   {/* Step number */}
-                  <div className="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-sm font-bold text-primary-foreground shadow-lg ring-4 ring-background">
+                  <div className="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-sm font-bold text-accent-foreground shadow-lg ring-4 ring-background">
                     {item.step}
                   </div>
                   
@@ -349,11 +386,15 @@ const Index = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-20 md:py-24 bg-secondary/30">
+      <section className="py-20 md:py-24 bg-muted/30">
         <div className="container">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Content */}
-            <div>
+            <div className="animate-fade-in">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <Heart className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">Why Choose Us</span>
+              </div>
               <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                 Trusted by Families Across America
               </h2>
@@ -371,7 +412,7 @@ const Index = () => {
                   "24/7 support for urgent situations",
                 ].map((item, index) => (
                   <li key={item} className="flex items-start gap-3 group animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/25 to-accent/10 ring-1 ring-accent/20 transition-all group-hover:ring-accent/40">
+                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/15 ring-1 ring-accent/25 transition-all group-hover:ring-accent/40">
                       <CheckCircle className="h-3.5 w-3.5 text-accent" />
                     </div>
                     <span className="text-foreground">{item}</span>
@@ -381,7 +422,7 @@ const Index = () => {
 
               <div className="mt-8">
                 <Link to="/about">
-                  <Button variant="secondary" className="gap-2 group border border-border hover:border-primary/20 hover:bg-primary-light">
+                  <Button variant="outline" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
                     Learn More About Us
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
@@ -390,24 +431,24 @@ const Index = () => {
             </div>
 
             {/* Stats Card */}
-            <div className="relative">
-              <div className="rounded-2xl border border-border bg-card p-10 shadow-lg">
+            <div className="relative animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <div className="rounded-2xl border border-accent/20 bg-gradient-to-br from-primary to-primary/90 p-10 shadow-xl">
                 <div className="grid gap-8 sm:grid-cols-2">
                   <div className="text-center group">
-                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl transition-transform group-hover:scale-105">10K+</div>
-                    <p className="text-sm text-muted-foreground">Families Helped</p>
+                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl transition-transform group-hover:scale-105">10K+</div>
+                    <p className="text-sm text-primary-foreground/70">Families Helped</p>
                   </div>
                   <div className="text-center group">
-                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl transition-transform group-hover:scale-105">500+</div>
-                    <p className="text-sm text-muted-foreground">Verified Centers</p>
+                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl transition-transform group-hover:scale-105">500+</div>
+                    <p className="text-sm text-primary-foreground/70">Verified Centers</p>
                   </div>
                   <div className="text-center group">
-                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl transition-transform group-hover:scale-105">50</div>
-                    <p className="text-sm text-muted-foreground">States Covered</p>
+                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl transition-transform group-hover:scale-105">50</div>
+                    <p className="text-sm text-primary-foreground/70">States Covered</p>
                   </div>
                   <div className="text-center group">
-                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl transition-transform group-hover:scale-105">24/7</div>
-                    <p className="text-sm text-muted-foreground">Support Available</p>
+                    <div className="mb-2 font-display text-4xl font-bold text-primary-foreground md:text-5xl transition-transform group-hover:scale-105">24/7</div>
+                    <p className="text-sm text-primary-foreground/70">Support Available</p>
                   </div>
                 </div>
               </div>
@@ -421,6 +462,10 @@ const Index = () => {
         <div className="container">
           {/* Section Header */}
           <div className="mb-12 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+              <Quote className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-accent">Testimonials</span>
+            </div>
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               Stories of Hope and Recovery
             </h2>
@@ -437,10 +482,10 @@ const Index = () => {
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
                   {/* Quote Icon */}
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <Quote className="h-5 w-5 text-primary" />
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                    <Quote className="h-5 w-5 text-accent" />
                   </div>
                   
                   {/* Rating */}
@@ -468,11 +513,15 @@ const Index = () => {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20 md:py-24 bg-secondary/30">
+      <section className="py-20 md:py-24 bg-muted/30">
         <div className="container">
           <div className="mx-auto max-w-3xl">
             {/* Section Header */}
             <div className="mb-12 text-center">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <CheckCircle className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">FAQ</span>
+              </div>
               <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                 Frequently Asked Questions
               </h2>
@@ -483,7 +532,7 @@ const Index = () => {
 
             {/* FAQ Accordion */}
             <Accordion type="single" collapsible className="space-y-3">
-              <AccordionItem value="item-1" className="rounded-xl border border-border bg-card px-6 shadow-card">
+              <AccordionItem value="item-1" className="rounded-xl border border-border bg-card px-6 shadow-card hover:border-accent/30 transition-colors">
                 <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
                   How do I know if I or my loved one needs rehab?
                 </AccordionTrigger>
@@ -495,7 +544,7 @@ const Index = () => {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="item-2" className="rounded-xl border border-border bg-card px-6 shadow-card">
+              <AccordionItem value="item-2" className="rounded-xl border border-border bg-card px-6 shadow-card hover:border-accent/30 transition-colors">
                 <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
                   What is the difference between inpatient and outpatient treatment?
                 </AccordionTrigger>
@@ -507,7 +556,7 @@ const Index = () => {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="item-3" className="rounded-xl border border-border bg-card px-6 shadow-card">
+              <AccordionItem value="item-3" className="rounded-xl border border-border bg-card px-6 shadow-card hover:border-accent/30 transition-colors">
                 <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
                   Does insurance cover addiction treatment?
                 </AccordionTrigger>
@@ -519,7 +568,7 @@ const Index = () => {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="item-4" className="rounded-xl border border-border bg-card px-6 shadow-card">
+              <AccordionItem value="item-4" className="rounded-xl border border-border bg-card px-6 shadow-card hover:border-accent/30 transition-colors">
                 <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
                   How long does rehab typically last?
                 </AccordionTrigger>
@@ -531,7 +580,7 @@ const Index = () => {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="item-5" className="rounded-xl border border-border bg-card px-6 shadow-card">
+              <AccordionItem value="item-5" className="rounded-xl border border-border bg-card px-6 shadow-card hover:border-accent/30 transition-colors">
                 <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5">
                   What happens after completing a treatment program?
                 </AccordionTrigger>
@@ -553,7 +602,7 @@ const Index = () => {
           <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             Ready to Take the First Step?
           </h2>
-          <p className="mb-8 text-lg text-primary-foreground/90 max-w-xl mx-auto">
+          <p className="mb-8 text-lg text-primary-foreground/80 max-w-xl mx-auto">
             Recovery is possible. Find the right treatment center for you or your loved one today.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -564,10 +613,7 @@ const Index = () => {
               </Button>
             </Link>
             <a href="tel:1-800-555-0199">
-              <Button 
-                size="lg" 
-                className="gap-2 min-w-[200px] bg-primary-foreground/10 border-2 border-primary-foreground/25 text-primary-foreground backdrop-blur-sm hover:bg-primary-foreground/20 hover:border-primary-foreground/40 transition-all"
-              >
+              <Button variant="hero-light" size="lg" className="gap-2 min-w-[200px]">
                 <Phone className="h-4 w-4" />
                 Call 1-800-555-0199
               </Button>
@@ -582,6 +628,10 @@ const Index = () => {
           {/* Section Header */}
           <div className="mb-12 flex flex-col items-center text-center md:flex-row md:items-end md:justify-between md:text-left">
             <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <BookOpen className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">Resources</span>
+              </div>
               <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                 Resources & Guides
               </h2>
@@ -590,7 +640,7 @@ const Index = () => {
               </p>
             </div>
             <Link to="/resources" className="mt-4 md:mt-0">
-              <Button variant="outline" className="gap-2 group">
+              <Button variant="outline" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
                 View All Articles
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -605,10 +655,10 @@ const Index = () => {
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
+                <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
                   {/* Category & Read Time */}
                   <div className="mb-4 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
                       <BookOpen className="h-3 w-3" />
                       {article.category}
                     </span>
@@ -629,7 +679,7 @@ const Index = () => {
                   </p>
                   
                   {/* Read More Link */}
-                  <div className="flex items-center gap-1 text-sm font-medium text-primary">
+                  <div className="flex items-center gap-1 text-sm font-medium text-accent">
                     Read article
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                   </div>
