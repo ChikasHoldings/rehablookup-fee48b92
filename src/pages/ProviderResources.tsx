@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { FileText, BookOpen, Video, Download, HelpCircle, Users, TrendingUp, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -178,6 +179,7 @@ export default function ProviderResources() {
       </section>
       </main>
       
+      <Footer />
       <BackToTop />
     </div>
   );
