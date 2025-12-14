@@ -23,6 +23,7 @@ import ProviderLeadsPage from "./pages/provider/Leads";
 import ProviderAnalyticsPage from "./pages/provider/Analytics";
 import ProviderBillingPage from "./pages/provider/Billing";
 import ProviderSettingsPage from "./pages/provider/Settings";
+import ProviderNotificationsPage from "./pages/provider/Notifications";
 import Resources from "./pages/Resources";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="analytics" element={<ProviderAnalyticsPage />} />
             <Route path="billing" element={<ProviderBillingPage />} />
             <Route path="settings" element={<ProviderSettingsPage />} />
+            <Route path="notifications" element={<ProviderNotificationsPage />} />
           </Route>
           
           <Route path="/resources" element={<Resources />} />

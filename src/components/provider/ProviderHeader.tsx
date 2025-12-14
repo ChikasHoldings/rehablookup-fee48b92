@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
 import { 
   ChevronDown, 
   LogOut, 
@@ -11,7 +12,12 @@ import {
   Search,
   X,
   Plus,
-  Check
+  Check,
+  UserPlus,
+  MessageSquare,
+  Shield,
+  AlertTriangle,
+  BellOff,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -25,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import logo from "@/assets/logo.png";
+import { useProviderNotifications } from "@/hooks/useProviderNotifications";
 
 interface ProviderHeaderProps {
   facilityName?: string;
@@ -35,16 +42,22 @@ interface ProviderHeaderProps {
   onLogout: () => void;
 }
 
-// Mock notifications - would come from database
-const notifications = [
-  { id: 1, title: "New lead received", message: "A family is interested in your facility", time: "2 min ago", unread: true },
-  { id: 2, title: "Listing approved", message: "Your facility listing is now live", time: "1 hour ago", unread: true },
-  { id: 3, title: "Welcome to RehabLookup", message: "Complete your profile to get started", time: "1 day ago", unread: false },
-];
+const notificationIcons: Record<string, React.ReactNode> = {
+  lead_received: <UserPlus className="h-4 w-4 text-primary" />,
+  lead_status_changed: <MessageSquare className="h-4 w-4 text-blue-500" />,
+  listing_approved: <Shield className="h-4 w-4 text-green-500" />,
+  subscription_updated: <CreditCard className="h-4 w-4 text-purple-500" />,
+  lead_limit_warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+  system: <Settings className="h-4 w-4 text-muted-foreground" />,
+};
 
 export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+  
+  const { notifications, unreadCount, markAsRead, isLoading } = useProviderNotifications();
+  const recentNotifications = notifications.slice(0, 5);
   
   const initials = userName
     ?.split(" ")
@@ -53,7 +66,20 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     .toUpperCase()
     .slice(0, 2) || "P";
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const handleNotificationClick = (notification: typeof notifications[0]) => {
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+    
+    // Navigate based on notification type
+    if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
+      navigate("/provider/leads");
+    } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
+      navigate("/provider/billing");
+    } else if (notification.type === "listing_approved") {
+      navigate("/provider/listing");
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 h-16 bg-primary border-b border-primary-foreground/10 shadow-sm">
@@ -181,7 +207,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                 <Bell className="h-4.5 w-4.5" />
                 {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground ring-2 ring-primary">
-                    {unreadCount}
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </Button>
@@ -196,39 +222,54 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                 )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {notifications.length === 0 ? (
+              {isLoading ? (
                 <div className="py-8 text-center">
-                  <Bell className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : recentNotifications.length === 0 ? (
+                <div className="py-8 text-center">
+                  <BellOff className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">No notifications</p>
                 </div>
               ) : (
-                <div className="max-h-[280px] overflow-y-auto">
-                  {notifications.map((notification) => (
+                <div className="max-h-[320px] overflow-y-auto">
+                  {recentNotifications.map((notification) => (
                     <DropdownMenuItem 
                       key={notification.id} 
-                      className="flex flex-col items-start gap-1 p-3 cursor-pointer"
+                      className="flex items-start gap-3 p-3 cursor-pointer"
+                      onClick={() => handleNotificationClick(notification)}
                     >
-                      <div className="flex items-start justify-between w-full gap-2">
-                        <span className={`text-sm font-medium ${notification.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
-                          {notification.title}
-                        </span>
-                        {notification.unread && (
-                          <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />
-                        )}
+                      <div className="mt-0.5 shrink-0">
+                        {notificationIcons[notification.type] || notificationIcons.system}
                       </div>
-                      <span className="text-xs text-muted-foreground line-clamp-1">
-                        {notification.message}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground/60">
-                        {notification.time}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between w-full gap-2">
+                          <span className={`text-sm font-medium line-clamp-1 ${notification.read ? 'text-muted-foreground' : 'text-foreground'}`}>
+                            {notification.title}
+                          </span>
+                          {!notification.read && (
+                            <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                          {notification.message}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground/60 mt-1 block">
+                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                        </span>
+                      </div>
                     </DropdownMenuItem>
                   ))}
                 </div>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="justify-center text-primary text-sm cursor-pointer py-2.5">
-                View all notifications
+              <DropdownMenuItem asChild>
+                <Link 
+                  to="/provider/notifications" 
+                  className="justify-center text-primary text-sm cursor-pointer py-2.5 w-full"
+                >
+                  View all notifications
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

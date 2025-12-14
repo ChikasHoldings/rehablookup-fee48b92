@@ -561,7 +561,32 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Email notification skipped - no recipients or API key");
     }
 
-    // ============ LEAD LIMIT WARNING EMAIL ============
+    // ============ IN-APP NOTIFICATION ============
+    if (facility.user_id) {
+      try {
+        await supabase
+          .from("provider_notifications")
+          .insert({
+            user_id: facility.user_id,
+            facility_id: body.facilityId,
+            type: "lead_received",
+            title: `New lead from ${sanitizedName}`,
+            message: `${sanitizedName} is interested in ${body.facilityName}. They prefer to be contacted via ${body.preferredContact}.`,
+            metadata: {
+              lead_id: lead.id,
+              lead_name: sanitizedName,
+              lead_email: sanitizedEmail,
+              lead_phone: sanitizedPhone,
+              preferred_contact: body.preferredContact,
+            },
+          });
+        console.log("In-app notification created for user:", facility.user_id);
+      } catch (notifError) {
+        console.error("Failed to create in-app notification:", notifError);
+      }
+    }
+
+    // ============ LEAD LIMIT WARNING EMAIL & NOTIFICATION ============
     // Send warning email if provider is at or above 80% of their lead limit
     if (capCheckResult && providerEmail && capCheckResult.leadLimit > 0) {
       const newUsedLeads = capCheckResult.usedLeads + 1; // Account for the lead we just created
@@ -575,6 +600,29 @@ const handler = async (req: Request): Promise<Response> => {
           capCheckResult.leadLimit,
           capCheckResult.planName
         );
+        
+        // Also create in-app notification for lead limit warning
+        if (facility.user_id) {
+          try {
+            await supabase
+              .from("provider_notifications")
+              .insert({
+                user_id: facility.user_id,
+                facility_id: body.facilityId,
+                type: "lead_limit_warning",
+                title: `${Math.round(usagePercentage)}% of monthly leads used`,
+                message: `You've used ${newUsedLeads} of ${capCheckResult.leadLimit} leads this month. Consider upgrading to receive more leads.`,
+                metadata: {
+                  used_leads: newUsedLeads,
+                  lead_limit: capCheckResult.leadLimit,
+                  plan_name: capCheckResult.planName,
+                  percentage: usagePercentage,
+                },
+              });
+          } catch (notifError) {
+            console.error("Failed to create lead limit warning notification:", notifError);
+          }
+        }
       }
     }
 
