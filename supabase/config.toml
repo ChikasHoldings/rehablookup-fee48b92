@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.submit-qualified-lead]
 verify_jwt = false
+
+[functions.get-featured-facilities]
+verify_jwt = false
+
+[functions.send-weekly-digest]
+verify_jwt = false
