@@ -285,30 +285,35 @@ const Index = () => {
           {/* Options Grid */}
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {treatmentOptions.map((option, index) => (
-              <div
+              <Link
                 key={option.title}
+                to="/treatment-types"
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 75}ms` }}
               >
-                <div className="relative h-full rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-300 hover:bg-white/10 hover:border-accent/30">
+                <div className="relative h-full rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-300 hover:bg-white/15 hover:border-accent/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/10">
+                  {/* Decorative glow */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  
                   {/* Icon */}
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20 ring-1 ring-accent/30 transition-all group-hover:bg-accent/30">
-                    <option.icon className="h-6 w-6 text-accent" />
+                  <div className="relative mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-accent/15 ring-1 ring-accent/20 transition-all duration-300 group-hover:bg-accent/25 group-hover:ring-accent/40 group-hover:scale-110">
+                    <option.icon className="h-7 w-7 text-accent transition-transform duration-300 group-hover:scale-105" />
                   </div>
                   
-                  <h3 className="mb-2 font-display text-lg font-semibold text-primary-foreground">
+                  <h3 className="relative mb-2 font-display text-lg font-semibold text-primary-foreground">
                     {option.title}
                   </h3>
-                  <p className="text-sm text-primary-foreground/70 leading-relaxed">
+                  <p className="relative text-sm text-primary-foreground/70 leading-relaxed">
                     {option.description}
                   </p>
                   
                   {/* Hover arrow */}
-                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-accent opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-1">
-                    Learn more <ArrowRight className="h-3.5 w-3.5" />
+                  <div className="relative mt-4 flex items-center gap-1.5 text-sm font-medium text-accent opacity-0 transition-all duration-300 group-hover:opacity-100">
+                    <span>Learn more</span>
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
