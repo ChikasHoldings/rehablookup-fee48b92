@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Star, ArrowRight, Shield } from "lucide-react";
+import { MapPin, Phone, Star, ArrowRight, Shield, Crown } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -11,6 +11,7 @@ interface TreatmentCenterCardProps {
     slug?: string | null; 
     isFromDatabase?: boolean; 
     logo_url?: string | null;
+    hasFeaturedSubscription?: boolean;
   };
   featured?: boolean;
 }
@@ -34,22 +35,25 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
 
   const initials = getInitials(center.name);
   const hasValidLogo = center.logo_url && !logoError;
+  
+  // Show featured badge if they have a Featured subscription
+  const showFeaturedBadge = center.hasFeaturedSubscription || featured;
 
   return (
     <article
       className={cn(
         "group relative flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-all duration-300",
         "hover:shadow-xl hover:-translate-y-0.5",
-        featured 
-          ? "border-accent/40 shadow-lg" 
+        showFeaturedBadge 
+          ? "border-accent/40 shadow-lg ring-1 ring-accent/20" 
           : "border-border shadow-sm"
       )}
     >
-      {/* Featured Badge */}
-      {featured && (
+      {/* Featured Badge - Gold for subscription-based featured */}
+      {showFeaturedBadge && (
         <div className="absolute right-3 top-3 z-20">
-          <Badge className="gap-1 bg-accent text-accent-foreground border-0 shadow-md px-2 py-1 text-xs font-medium">
-            <Star className="h-3 w-3 fill-current" />
+          <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-md px-2.5 py-1 text-xs font-semibold">
+            <Crown className="h-3 w-3" />
             Featured
           </Badge>
         </div>
@@ -61,7 +65,7 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
         <div 
           className={cn(
             "relative h-14 w-14 shrink-0 overflow-hidden rounded-lg",
-            featured ? "ring-2 ring-accent/30" : "ring-1 ring-border"
+            showFeaturedBadge ? "ring-2 ring-accent/30" : "ring-1 ring-border"
           )}
         >
           {hasValidLogo ? (

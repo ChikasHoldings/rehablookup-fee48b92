@@ -113,8 +113,17 @@ const RehabCenters = () => {
     // Apply sorting
     switch (sortParam) {
       case "featured":
+        // Sort by Featured subscription first, then by legacy featured flag, then by rating
         results.sort((a, b) => {
+          // First: Featured subscription holders
+          const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
+          const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
+          if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
+          
+          // Second: Legacy featured flag
           if (b.featured !== a.featured) return b.featured ? 1 : -1;
+          
+          // Third: Rating
           return b.rating - a.rating;
         });
         break;
