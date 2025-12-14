@@ -35,7 +35,7 @@ export function SearchForm({
   if (variant === "compact-hero") {
     return (
       <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
-        <div className="flex flex-col gap-2 rounded-xl bg-card/95 p-3 shadow-xl backdrop-blur-sm sm:flex-row sm:items-center sm:gap-2 sm:p-2">
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-lg sm:flex-row sm:items-center sm:gap-2 sm:p-2">
           {/* Location */}
           <div className="relative flex-1">
             <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -44,7 +44,7 @@ export function SearchForm({
               placeholder="City, State, or ZIP"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="h-10 w-full rounded-lg border-0 bg-secondary/50 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           
@@ -54,7 +54,7 @@ export function SearchForm({
             <select
               value={treatmentType}
               onChange={(e) => setTreatmentType(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border-0 bg-secondary/50 pl-9 pr-8 text-sm text-foreground focus:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full appearance-none rounded-lg border border-input bg-background pl-9 pr-8 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Treatment Type</option>
               {treatmentTypes.map((type) => (
@@ -69,7 +69,7 @@ export function SearchForm({
             <select
               value={insurance}
               onChange={(e) => setInsurance(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border-0 bg-secondary/50 pl-9 pr-8 text-sm text-foreground focus:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full appearance-none rounded-lg border border-input bg-background pl-9 pr-8 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Insurance</option>
               {insuranceProviders.map((provider) => (
@@ -79,7 +79,7 @@ export function SearchForm({
           </div>
 
           {/* Submit */}
-          <Button type="submit" variant="success" className="h-10 gap-2 px-6">
+          <Button type="submit" variant="default" className="h-10 gap-2 px-6">
             <Search className="h-4 w-4" />
             <span className="hidden sm:inline">Find Rehab</span>
             <span className="sm:hidden">Search</span>
@@ -154,10 +154,10 @@ export function SearchForm({
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
-      <div className="overflow-hidden rounded-2xl bg-card shadow-xl">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-lg">
         <div className="grid gap-0 md:grid-cols-4">
           {/* Location */}
-          <div className="border-b border-border p-4 md:border-b-0 md:border-r md:p-5">
+          <div className="border-b border-border p-4 md:border-b-0 md:border-r">
             <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <MapPin className="h-4 w-4 text-primary" />
               Location
@@ -167,12 +167,12 @@ export function SearchForm({
               placeholder="ZIP, City, or State"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full bg-transparent text-lg font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
+              className="w-full bg-transparent text-base font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
           </div>
 
           {/* Treatment Type */}
-          <div className="border-b border-border p-4 md:border-b-0 md:border-r md:p-5">
+          <div className="border-b border-border p-4 md:border-b-0 md:border-r">
             <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <Stethoscope className="h-4 w-4 text-primary" />
               Treatment Type
@@ -180,7 +180,7 @@ export function SearchForm({
             <select
               value={treatmentType}
               onChange={(e) => setTreatmentType(e.target.value)}
-              className="w-full appearance-none bg-transparent text-lg font-medium text-foreground focus:outline-none"
+              className="w-full appearance-none bg-transparent text-base font-medium text-foreground focus:outline-none"
             >
               <option value="">All Treatment Types</option>
               {treatmentTypes.map((type) => (
@@ -190,7 +190,7 @@ export function SearchForm({
           </div>
 
           {/* Insurance */}
-          <div className="border-b border-border p-4 md:border-b-0 md:border-r md:p-5">
+          <div className="border-b border-border p-4 md:border-b-0 md:border-r">
             <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <Shield className="h-4 w-4 text-primary" />
               Insurance
@@ -198,7 +198,7 @@ export function SearchForm({
             <select
               value={insurance}
               onChange={(e) => setInsurance(e.target.value)}
-              className="w-full appearance-none bg-transparent text-lg font-medium text-foreground focus:outline-none"
+              className="w-full appearance-none bg-transparent text-base font-medium text-foreground focus:outline-none"
             >
               <option value="">Any Insurance</option>
               {insuranceProviders.map((provider) => (
@@ -208,8 +208,8 @@ export function SearchForm({
           </div>
 
           {/* Submit */}
-          <div className="flex items-center justify-center p-4 md:p-5">
-            <Button type="submit" variant="success" size="xl" className="w-full gap-2">
+          <div className="flex items-center justify-center p-4">
+            <Button type="submit" size="lg" className="w-full gap-2">
               <Search className="h-5 w-5" />
               Find Rehab Now
             </Button>

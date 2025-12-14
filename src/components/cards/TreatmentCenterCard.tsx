@@ -15,12 +15,12 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
     <article
       className={cn(
         "group relative overflow-hidden rounded-xl border bg-card transition-all duration-300 hover:shadow-lg",
-        featured ? "border-primary/30 shadow-card" : "border-border"
+        featured ? "border-accent/40" : "border-border"
       )}
     >
       {featured && (
         <div className="absolute right-3 top-3 z-10">
-          <Badge className="gap-1 bg-primary text-primary-foreground">
+          <Badge className="gap-1 bg-accent text-accent-foreground border-0">
             <Star className="h-3 w-3 fill-current" />
             Featured
           </Badge>
@@ -28,11 +28,11 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
       )}
 
       {/* Image */}
-      <div className="relative h-48 overflow-hidden bg-secondary">
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
+      <div className="relative h-44 overflow-hidden bg-secondary">
+        <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-              <span className="font-display text-2xl font-bold text-primary">
+            <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <span className="font-display text-xl font-bold text-primary">
                 {center.name.charAt(0)}
               </span>
             </div>
@@ -52,16 +52,16 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
               {center.city}, {center.state}
             </p>
           </div>
-          <div className="flex items-center gap-1 rounded-md bg-success/10 px-2 py-1">
-            <Star className="h-3.5 w-3.5 fill-success text-success" />
-            <span className="text-sm font-semibold text-success">{center.rating}</span>
+          <div className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1">
+            <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+            <span className="text-sm font-semibold text-primary">{center.rating}</span>
           </div>
         </div>
 
         {/* Treatment Types */}
         <div className="mb-4 flex flex-wrap gap-1.5">
           {center.treatmentTypes.slice(0, 3).map((type) => (
-            <Badge key={type} variant="secondary" className="text-xs">
+            <Badge key={type} variant="secondary" className="text-xs font-normal">
               {type}
             </Badge>
           ))}
@@ -73,15 +73,15 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
         </p>
 
         {/* Verified Badge */}
-        <div className="mb-4 flex items-center gap-2 text-xs text-success">
-          <CheckCircle className="h-4 w-4" />
-          <span className="font-medium">Verified Facility</span>
+        <div className="mb-4 flex items-center gap-2 text-xs">
+          <CheckCircle className="h-4 w-4 text-accent" />
+          <span className="font-medium text-accent">Verified Facility</span>
         </div>
 
         {/* Actions */}
         <div className="flex gap-2">
           <a href={`tel:${center.phone}`} className="flex-1">
-            <Button variant="success" className="w-full gap-2">
+            <Button variant="default" className="w-full gap-2">
               <Phone className="h-4 w-4" />
               Call Now
             </Button>
