@@ -373,14 +373,14 @@ const Index = () => {
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {/* Step circle */}
-                  <div className="relative mx-auto mb-6">
+                  <div className="relative mx-auto mb-6 h-24 w-24">
                     <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-accent/20 bg-card shadow-lg transition-all duration-300 group-hover:border-accent/50 group-hover:shadow-xl">
                       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent/10 to-accent/20">
                         <item.icon className="h-7 w-7 text-accent" />
                       </div>
                     </div>
                     {/* Step number badge */}
-                    <div className="absolute -top-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-xs font-bold text-accent-foreground shadow-md">
+                    <div className="absolute top-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-xs font-bold text-accent-foreground shadow-md ring-2 ring-background">
                       {item.step}
                     </div>
                   </div>
