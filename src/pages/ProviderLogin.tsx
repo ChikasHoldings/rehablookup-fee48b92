@@ -26,14 +26,14 @@ export default function ProviderLogin() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (session) {
-          navigate("/provider-dashboard");
+          navigate("/provider/dashboard");
         }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/provider-dashboard");
+        navigate("/provider/dashboard");
       }
     });
 
