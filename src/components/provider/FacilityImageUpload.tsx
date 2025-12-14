@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { compressImage, validateImageFile } from "@/lib/imageUtils";
 
 interface FacilityImageUploadProps {
   type: "logo" | "gallery";
@@ -15,7 +16,6 @@ interface FacilityImageUploadProps {
   className?: string;
 }
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function FacilityImageUpload({
@@ -28,50 +28,58 @@ export function FacilityImageUpload({
   className,
 }: FacilityImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const { toast } = useToast();
 
   const uploadFile = async (file: File): Promise<string | null> => {
     // Validate file
-    if (!ACCEPTED_TYPES.includes(file.type)) {
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
       toast({
-        title: "Invalid file type",
-        description: "Please upload a PNG, JPG, or WebP image.",
+        title: "Invalid file",
+        description: validation.error,
         variant: "destructive",
       });
       return null;
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    try {
+      // Compress the image
+      setUploadProgress("Compressing...");
+      const compressedFile = await compressImage(file, type);
+
+      // Upload to storage
+      setUploadProgress("Uploading...");
+      const fileName = `${userId}/${facilityId}/${type}/${Date.now()}.webp`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("facility-images")
+        .upload(fileName, compressedFile, { upsert: true });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        toast({
+          title: "Upload failed",
+          description: uploadError.message,
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("facility-images")
+        .getPublicUrl(fileName);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error("Processing error:", error);
       toast({
-        title: "File too large",
-        description: "Please upload an image under 5MB.",
+        title: "Processing failed",
+        description: "Failed to process image. Please try again.",
         variant: "destructive",
       });
       return null;
     }
-
-    const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const fileName = `${userId}/${facilityId}/${type}/${Date.now()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("facility-images")
-      .upload(fileName, file, { upsert: true });
-
-    if (uploadError) {
-      console.error("Upload error:", uploadError);
-      toast({
-        title: "Upload failed",
-        description: uploadError.message,
-        variant: "destructive",
-      });
-      return null;
-    }
-
-    const { data: urlData } = supabase.storage
-      .from("facility-images")
-      .getPublicUrl(fileName);
-
-    return urlData.publicUrl;
   };
 
   const handleFileSelect = useCallback(
@@ -202,7 +210,7 @@ export function FacilityImageUpload({
             {isUploading ? (
               <>
                 <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
-                <span className="text-sm text-muted-foreground">Uploading...</span>
+                <span className="text-sm text-muted-foreground">{uploadProgress || "Processing..."}</span>
               </>
             ) : (
               <>
