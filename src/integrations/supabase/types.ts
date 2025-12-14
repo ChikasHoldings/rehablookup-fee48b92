@@ -240,6 +240,66 @@ export type Database = {
           },
         ]
       }
+      lead_emails: {
+        Row: {
+          created_at: string
+          custom_note: string | null
+          facility_id: string
+          id: string
+          lead_id: string
+          recipient_email: string
+          resend_id: string | null
+          sender_name: string
+          sender_user_id: string
+          status: string
+          template_id: string
+          template_name: string
+        }
+        Insert: {
+          created_at?: string
+          custom_note?: string | null
+          facility_id: string
+          id?: string
+          lead_id: string
+          recipient_email: string
+          resend_id?: string | null
+          sender_name: string
+          sender_user_id: string
+          status?: string
+          template_id: string
+          template_name: string
+        }
+        Update: {
+          created_at?: string
+          custom_note?: string | null
+          facility_id?: string
+          id?: string
+          lead_id?: string
+          recipient_email?: string
+          resend_id?: string | null
+          sender_name?: string
+          sender_user_id?: string
+          status?: string
+          template_id?: string
+          template_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_emails_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_emails_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_notes: {
         Row: {
           created_at: string

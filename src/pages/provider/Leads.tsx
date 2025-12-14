@@ -51,6 +51,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
+import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 
 interface Lead {
   id: string;
@@ -75,6 +76,8 @@ const LEAD_LIMIT_PER_MONTH = 50;
 export default function ProviderLeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailLead, setEmailLead] = useState<Lead | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
   // Filter states
@@ -560,6 +563,20 @@ export default function ProviderLeadsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
+                            title="Email lead"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEmailLead(lead);
+                              setEmailDialogOpen(true);
+                            }}
+                          >
+                            <Mail className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            title="Copy contact"
                             onClick={(e) => handleCopyContact(lead, e)}
                           >
                             {copiedId === lead.id ? (
@@ -572,6 +589,7 @@ export default function ProviderLeadsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
+                            title="View details"
                             onClick={() => handleOpenLead(lead)}
                           >
                             <ChevronRight className="h-4 w-4" />
@@ -592,6 +610,13 @@ export default function ProviderLeadsPage() {
         lead={selectedLead}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
+      />
+
+      {/* Email Dialog */}
+      <EmailLeadDialog
+        lead={emailLead}
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
       />
     </div>
   );
