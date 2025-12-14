@@ -73,8 +73,8 @@ const ForProviders = () => {
     <div className="flex min-h-screen flex-col bg-background">
       <Header
         navLinks={providerNavLinks}
-        ctaLink="/provider-login"
-        ctaLabel="Provider Login"
+        ctaLink="/provider-signup"
+        ctaLabel="Get Started"
         variant="provider"
       />
       
@@ -93,7 +93,7 @@ const ForProviders = () => {
             Join our network of verified treatment centers and connect with families seeking quality addiction care.
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to="/contact">
+            <Link to="/provider-signup">
               <Button variant="hero-light" size="lg" className="gap-2">
                 List Your Facility
                 <ArrowRight className="h-4 w-4" />
