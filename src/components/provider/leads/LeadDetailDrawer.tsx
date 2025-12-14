@@ -9,18 +9,18 @@ import {
   Copy, 
   ExternalLink,
   Check,
-  Send,
   Plus,
   Trash2,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-} from "@/components/ui/drawer";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -31,6 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
@@ -158,23 +159,23 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   if (!lead) return null;
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh]">
-        <div className="mx-auto w-full max-w-2xl overflow-y-auto">
-          <DrawerHeader className="text-left pb-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <DrawerTitle className="text-xl">{lead.name}</DrawerTitle>
-                <DrawerDescription className="flex items-center gap-2 mt-1">
-                  <Calendar className="h-3.5 w-3.5" />
-                  {format(new Date(lead.created_at), "MMMM d, yyyy 'at' h:mm a")}
-                </DrawerDescription>
-              </div>
-              <LeadStatusBadge status={lead.status as LeadStatus} />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0">
+        <DialogHeader className="p-6 pb-4 border-b">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <DialogTitle className="text-xl">{lead.name}</DialogTitle>
+              <DialogDescription className="flex items-center gap-2 mt-1">
+                <Calendar className="h-3.5 w-3.5" />
+                {format(new Date(lead.created_at), "MMMM d, yyyy 'at' h:mm a")}
+              </DialogDescription>
             </div>
-          </DrawerHeader>
+            <LeadStatusBadge status={lead.status as LeadStatus} />
+          </div>
+        </DialogHeader>
 
-          <div className="px-4 pb-8 space-y-6">
+        <ScrollArea className="max-h-[calc(90vh-120px)]">
+          <div className="p-6 space-y-6">
             {/* Status Selector */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground">Update Status</label>
@@ -379,8 +380,8 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
               </Button>
             </div>
           </div>
-        </div>
-      </DrawerContent>
-    </Drawer>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 }
