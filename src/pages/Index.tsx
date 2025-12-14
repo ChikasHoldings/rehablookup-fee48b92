@@ -12,13 +12,15 @@ import {
   Heart, 
   Clock,
   ArrowRight,
-  Star
+  Star,
+  BadgeCheck,
+  Headphones
 } from "lucide-react";
 
 const trustBadges = [
-  { icon: Shield, label: "Verified Centers" },
-  { icon: CheckCircle, label: "Insurance Accepted" },
-  { icon: Clock, label: "24/7 Support" },
+  { icon: BadgeCheck, label: "Verified Centers" },
+  { icon: Shield, label: "Insurance Accepted" },
+  { icon: Headphones, label: "24/7 Support" },
   { icon: Users, label: "10,000+ Helped" },
 ];
 
@@ -27,87 +29,103 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Section - Light Background */}
+      {/* Hero Section */}
       <section className="relative flex min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-hidden bg-card">
-        {/* Subtle background pattern */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231F4FD8' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-accent/5 blur-3xl" />
         </div>
 
         {/* Content Container */}
-        <div className="container relative flex flex-1 flex-col justify-center py-6 md:py-8">
-          <div className="mx-auto w-full max-w-5xl text-center">
+        <div className="container relative flex flex-1 flex-col justify-center py-8 md:py-10">
+          <div className="mx-auto w-full max-w-4xl text-center">
             {/* Trust Badge */}
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 animate-fade-in">
-              <Star className="h-3.5 w-3.5 fill-primary text-primary" />
-              <span className="text-xs font-semibold text-primary">
-                Trusted by families nationwide
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 animate-fade-in">
+              <Star className="h-4 w-4 fill-accent text-accent" />
+              <span className="text-sm font-semibold text-accent">
+                Trusted by 10,000+ families nationwide
               </span>
             </div>
 
-            {/* Headline - Dark text */}
-            <h1 className="mb-3 font-display text-2xl font-bold leading-tight text-foreground sm:text-3xl md:text-4xl lg:text-5xl animate-fade-in" style={{ animationDelay: "50ms" }}>
-              Find Trusted Addiction Treatment Centers
+            {/* Headline */}
+            <h1 className="mb-4 font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in" style={{ animationDelay: "50ms" }}>
+              Find the Right Path to{" "}
+              <span className="text-primary">Recovery</span>
             </h1>
 
-            {/* Subheadline - Muted text */}
-            <p className="mb-6 text-sm text-muted-foreground sm:text-base md:text-lg animate-fade-in" style={{ animationDelay: "100ms" }}>
-              Compare verified rehab programs and take the first step toward recovery.
+            {/* Subheadline */}
+            <p className="mb-8 text-base text-muted-foreground sm:text-lg md:text-xl animate-fade-in max-w-2xl mx-auto" style={{ animationDelay: "100ms" }}>
+              Search verified addiction treatment centers and take the first step toward a healthier future.
             </p>
 
             {/* Search Form */}
-            <div className="mb-6 animate-fade-in" style={{ animationDelay: "150ms" }}>
+            <div className="mb-8 animate-fade-in" style={{ animationDelay: "150ms" }}>
               <SearchForm variant="compact-hero" />
             </div>
 
-            {/* CTAs */}
-            <div className="mb-6 flex flex-col items-center justify-center gap-3 sm:flex-row animate-fade-in" style={{ animationDelay: "200ms" }}>
-              <a href="tel:1-800-555-0199" className="group">
-                <Button variant="hero-secondary" size="default" className="gap-2 text-sm">
-                  <Phone className="h-4 w-4" />
-                  Call Now: 1-800-555-0199
-                </Button>
-              </a>
-            </div>
-
             {/* Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in md:gap-x-6" style={{ animationDelay: "250ms" }}>
+            <div className="flex flex-wrap items-center justify-center gap-6 animate-fade-in md:gap-8" style={{ animationDelay: "200ms" }}>
               {trustBadges.map((badge) => (
-                <div key={badge.label} className="flex items-center gap-1.5 text-muted-foreground">
-                  <badge.icon className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-medium">{badge.label}</span>
+                <div key={badge.label} className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                    <badge.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium">{badge.label}</span>
                 </div>
               ))}
             </div>
+
+            {/* Quick Call CTA */}
+            <div className="mt-8 animate-fade-in" style={{ animationDelay: "250ms" }}>
+              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Phone className="h-4 w-4" />
+                <span>Need help now? Call <strong className="text-foreground">1-800-555-0199</strong></span>
+              </a>
+            </div>
           </div>
         </div>
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
       </section>
 
       {/* Featured Centers */}
-      <section className="py-16 md:py-20">
+      <section className="py-20 md:py-24">
         <div className="container">
-          <div className="mb-10 text-center">
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
-              Featured Treatment Centers
+          {/* Section Header */}
+          <div className="mb-12 flex flex-col items-center text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1">
+              <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-accent">Featured</span>
+            </div>
+            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+              Top-Rated Treatment Centers
             </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
-              Hand-selected facilities known for exceptional care and verified outcomes.
+            <p className="max-w-xl text-muted-foreground">
+              Hand-selected facilities known for exceptional care, verified outcomes, and compassionate treatment.
             </p>
           </div>
 
+          {/* Cards Grid */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {featuredCenters.map((center) => (
-              <TreatmentCenterCard key={center.id} center={center} featured />
+            {featuredCenters.map((center, index) => (
+              <div 
+                key={center.id} 
+                className="animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <TreatmentCenterCard center={center} featured />
+              </div>
             ))}
           </div>
 
-          <div className="mt-8 text-center">
+          {/* View All Link */}
+          <div className="mt-10 text-center">
             <Link to="/rehab-centers">
-              <Button variant="outline" size="lg" className="gap-2">
+              <Button variant="outline" size="lg" className="gap-2 group">
                 View All Centers
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </div>
@@ -115,50 +133,74 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="border-y border-border bg-secondary/50 py-16 md:py-20">
-        <div className="container">
-          <div className="mb-10 text-center">
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+      <section className="relative py-20 md:py-24 overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 bg-secondary/50" />
+        <div className="absolute inset-0 opacity-50">
+          <div className="absolute top-0 left-1/4 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-accent/5 blur-3xl" />
+        </div>
+
+        <div className="container relative">
+          {/* Section Header */}
+          <div className="mb-14 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary">Simple Process</span>
+            </div>
+            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               How It Works
             </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
-              Finding the right treatment center is simple and confidential.
+            <p className="mx-auto max-w-xl text-muted-foreground">
+              Finding the right treatment is simple, confidential, and free.
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          {/* Steps */}
+          <div className="grid gap-8 md:grid-cols-3">
             {[
               {
-                step: "01",
-                title: "Search & Compare",
-                description: "Enter your location and preferences to find verified treatment centers.",
+                step: 1,
+                title: "Search",
+                description: "Enter your location to find verified treatment centers near you.",
                 icon: "🔍",
               },
               {
-                step: "02",
-                title: "Review Options",
-                description: "Compare programs, treatment types, and insurance acceptance.",
+                step: 2,
+                title: "Compare",
+                description: "Review programs, insurance options, and facility details.",
                 icon: "📋",
               },
               {
-                step: "03",
-                title: "Connect & Start",
-                description: "Contact centers directly or request more information.",
+                step: 3,
+                title: "Connect",
+                description: "Contact centers directly or request a callback from our team.",
                 icon: "📞",
               },
             ].map((item, index) => (
               <div
                 key={item.step}
-                className="relative rounded-xl border border-border bg-card p-6 shadow-card"
+                className="group relative animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="absolute -top-3 left-5 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                  {index + 1}
+                {/* Connector line */}
+                {index < 2 && (
+                  <div className="absolute top-8 left-1/2 hidden h-0.5 w-full bg-border md:block" />
+                )}
+                
+                <div className="relative rounded-2xl border border-border bg-card p-8 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                  {/* Step number */}
+                  <div className="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md">
+                    {item.step}
+                  </div>
+                  
+                  <div className="mb-4 text-4xl">{item.icon}</div>
+                  <h3 className="mb-2 font-display text-xl font-semibold text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {item.description}
+                  </p>
                 </div>
-                <div className="mb-3 text-3xl">{item.icon}</div>
-                <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
               </div>
             ))}
           </div>
@@ -166,51 +208,74 @@ const Index = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-16 md:py-20">
+      <section className="py-20 md:py-24">
         <div className="container">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+            {/* Content */}
             <div>
-              <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl">
-                Why Families Trust RehabLookup
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+                <Heart className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-primary">Why RehabLookup</span>
+              </div>
+              <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+                Trusted by Families Across America
               </h2>
-              <p className="mb-6 text-muted-foreground">
-                We provide transparent, accurate information to help families 
-                find the right care—without pressure or hidden fees.
+              <p className="mb-8 text-muted-foreground leading-relaxed">
+                We understand that finding addiction treatment is one of the most important decisions 
+                your family will make. That's why we're committed to transparency, accuracy, and compassion.
               </p>
 
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {[
-                  "Every facility is verified for licensing and accreditation",
-                  "Transparent information about treatment programs",
-                  "No hidden fees or surprise referral practices",
-                  "Confidential and secure communication",
-                  "Support available 24/7 for urgent situations",
+                  "Every facility verified for licensing & accreditation",
+                  "Transparent program and cost information",
+                  "No hidden fees or surprise referrals",
+                  "Confidential, secure communication",
+                  "24/7 support for urgent situations",
                 ].map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                    <span className="text-sm text-foreground">{item}</span>
+                  <li key={item} className="flex items-start gap-3 group">
+                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/20 transition-colors group-hover:bg-accent/30">
+                      <CheckCircle className="h-3.5 w-3.5 text-accent" />
+                    </div>
+                    <span className="text-foreground">{item}</span>
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-6">
+              <div className="mt-8">
                 <Link to="/about">
-                  <Button variant="secondary" size="default" className="gap-2">
+                  <Button variant="secondary" className="gap-2 group">
                     Learn More About Us
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>
               </div>
             </div>
 
+            {/* Stats Card */}
             <div className="relative">
-              <div className="aspect-square rounded-xl border border-border bg-card p-8 shadow-card">
-                <div className="flex h-full flex-col items-center justify-center text-center">
-                  <Heart className="mb-4 h-14 w-14 text-primary" />
-                  <div className="mb-2 font-display text-4xl font-bold text-primary">10,000+</div>
-                  <p className="text-muted-foreground">
-                    Families helped find treatment
-                  </p>
+              {/* Decorative elements */}
+              <div className="absolute -top-6 -left-6 h-24 w-24 rounded-2xl border border-accent/20 bg-accent/5" />
+              <div className="absolute -bottom-6 -right-6 h-24 w-24 rounded-2xl border border-primary/20 bg-primary/5" />
+              
+              <div className="relative rounded-2xl border border-border bg-card p-10 shadow-lg">
+                <div className="grid gap-8 sm:grid-cols-2">
+                  <div className="text-center">
+                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl">10K+</div>
+                    <p className="text-sm text-muted-foreground">Families Helped</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl">500+</div>
+                    <p className="text-sm text-muted-foreground">Verified Centers</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl">50</div>
+                    <p className="text-sm text-muted-foreground">States Covered</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl">24/7</div>
+                    <p className="text-sm text-muted-foreground">Support Available</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -219,23 +284,33 @@ const Index = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="border-t border-border bg-primary py-12 md:py-16">
-        <div className="container text-center">
-          <h2 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
+      <section className="relative py-16 md:py-20 overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 bg-primary" />
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-white blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-white blur-3xl" />
+        </div>
+
+        <div className="container relative text-center">
+          <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             Ready to Take the First Step?
           </h2>
-          <p className="mb-6 text-primary-foreground/85">
-            Recovery is possible. Find the right treatment center today.
+          <p className="mb-8 text-lg text-primary-foreground/85 max-w-xl mx-auto">
+            Recovery is possible. Find the right treatment center for you or your loved one today.
           </p>
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link to="/rehab-centers">
-              <Button variant="hero-light" size="lg" className="gap-2">
+              <Button variant="hero-light" size="lg" className="gap-2 min-w-[200px]">
                 Find Rehab Now
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <a href="tel:1-800-555-0199">
-              <Button variant="hero-secondary" size="lg" className="gap-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+              <Button 
+                size="lg" 
+                className="gap-2 min-w-[200px] bg-transparent border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+              >
                 <Phone className="h-4 w-4" />
                 Call 1-800-555-0199
               </Button>
