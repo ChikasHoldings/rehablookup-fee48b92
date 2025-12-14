@@ -9,13 +9,15 @@ interface SearchFormProps {
   initialLocation?: string;
   initialTreatmentType?: string;
   initialInsurance?: string;
+  onSearchComplete?: () => void;
 }
 
 export function SearchForm({ 
   variant = "hero",
   initialLocation = "",
   initialTreatmentType = "",
-  initialInsurance = ""
+  initialInsurance = "",
+  onSearchComplete
 }: SearchFormProps) {
   const navigate = useNavigate();
   const [location, setLocation] = useState(initialLocation);
@@ -29,6 +31,13 @@ export function SearchForm({
     if (treatmentType) params.set("treatment", treatmentType);
     if (insurance) params.set("insurance", insurance);
     navigate(`/rehab-centers?${params.toString()}`);
+    
+    // Delay scroll to allow navigation/render
+    if (onSearchComplete) {
+      setTimeout(() => {
+        onSearchComplete();
+      }, 100);
+    }
   };
 
   // Compact hero variant - inline search in hero
