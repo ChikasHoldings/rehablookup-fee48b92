@@ -9,7 +9,7 @@ import {
   MapPin,
   Phone,
   Globe,
-  Star,
+  Crown,
   CheckCircle,
   Shield,
   ArrowLeft,
@@ -107,6 +107,19 @@ const CenterProfile = () => {
       return data as FacilityData | null;
     },
     enabled: !!slug,
+  });
+
+  // Check if facility has Featured subscription
+  const { data: hasFeaturedSubscription } = useQuery({
+    queryKey: ["featured-subscription-check", facility?.id],
+    queryFn: async (): Promise<boolean> => {
+      if (!facility?.id) return false;
+      const { data } = await supabase.functions.invoke("get-featured-facilities");
+      const featuredIds: string[] = data?.featured_facility_ids || [];
+      return featuredIds.includes(facility.id);
+    },
+    enabled: !!facility?.id,
+    staleTime: 1000 * 60 * 5,
   });
 
   // Track view
@@ -235,9 +248,9 @@ const CenterProfile = () => {
                 <div className="flex-1">
                   {/* Badges */}
                   <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                    {facility.featured && (
+                    {hasFeaturedSubscription && (
                       <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-xs px-2 py-0.5">
-                        <Star className="h-3 w-3 fill-current" />
+                        <Crown className="h-3 w-3" />
                         Featured
                       </Badge>
                     )}
