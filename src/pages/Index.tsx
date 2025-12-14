@@ -121,7 +121,7 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section - Light Background with Image */}
-      <section className="relative flex min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-hidden">
+      <section className="relative flex min-h-[70vh] md:min-h-[75vh] lg:min-h-[80vh] overflow-hidden">
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -138,48 +138,48 @@ const Index = () => {
         </div>
 
         {/* Content Container */}
-        <div className="container relative flex flex-1 flex-col justify-center py-8 md:py-10">
+        <div className="container relative flex flex-1 flex-col justify-center py-6 md:py-8">
           <div className="mx-auto w-full max-w-4xl text-center">
             {/* Trust Badge */}
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 animate-fade-in">
-              <Star className="h-4 w-4 fill-accent text-accent" />
-              <span className="text-sm font-semibold text-accent">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 animate-fade-in">
+              <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+              <span className="text-xs sm:text-sm font-semibold text-accent">
                 Trusted by 10,000+ families nationwide
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="mb-4 font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in drop-shadow-sm" style={{ animationDelay: "50ms" }}>
+            <h1 className="mb-3 font-display text-2xl font-bold leading-tight text-foreground sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl animate-fade-in drop-shadow-sm" style={{ animationDelay: "50ms" }}>
               Find the Right Path to{" "}
               <span className="text-primary">Recovery</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="mb-8 text-base text-foreground/80 sm:text-lg md:text-xl animate-fade-in max-w-2xl mx-auto font-medium" style={{ animationDelay: "100ms" }}>
+            <p className="mb-6 text-sm text-foreground/80 sm:text-base md:text-lg animate-fade-in max-w-2xl mx-auto font-medium" style={{ animationDelay: "100ms" }}>
               Search verified addiction treatment centers and take the first step toward a healthier future.
             </p>
 
             {/* Search Form */}
-            <div className="mb-8 animate-fade-in" style={{ animationDelay: "150ms" }}>
+            <div className="mb-6 animate-fade-in" style={{ animationDelay: "150ms" }}>
               <SearchForm variant="compact-hero" />
             </div>
 
             {/* Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-6 animate-fade-in md:gap-8" style={{ animationDelay: "200ms" }}>
+            <div className="flex flex-wrap items-center justify-center gap-4 animate-fade-in md:gap-6" style={{ animationDelay: "200ms" }}>
               {trustBadges.map((badge) => (
-                <div key={badge.label} className="flex items-center gap-2 text-foreground/70 transition-colors hover:text-primary">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
-                    <badge.icon className="h-4 w-4 text-primary" />
+                <div key={badge.label} className="flex items-center gap-1.5 text-foreground/70 transition-colors hover:text-primary">
+                  <div className="flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-primary/15">
+                    <badge.icon className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
                   </div>
-                  <span className="text-sm font-medium">{badge.label}</span>
+                  <span className="text-xs md:text-sm font-medium">{badge.label}</span>
                 </div>
               ))}
             </div>
 
             {/* Quick Call CTA */}
-            <div className="mt-8 animate-fade-in" style={{ animationDelay: "250ms" }}>
-              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-primary transition-colors">
-                <Phone className="h-4 w-4" />
+            <div className="mt-5 animate-fade-in" style={{ animationDelay: "250ms" }}>
+              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 text-xs sm:text-sm text-foreground/70 hover:text-primary transition-colors">
+                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Need help now? Call <strong className="text-foreground">1-800-555-0199</strong></span>
               </a>
             </div>
@@ -187,28 +187,36 @@ const Index = () => {
         </div>
 
         {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
       </section>
 
-      {/* Trust Bar */}
-      <section className="border-b border-border bg-card py-4">
+      {/* Trust Bar - Enhanced Design */}
+      <section className="relative border-y border-border bg-primary py-4 md:py-5">
         <div className="container">
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm md:gap-12">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Shield className="h-4 w-4 text-accent" />
-              <span>Licensed & Accredited</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:gap-x-12 lg:gap-x-16">
+            <div className="flex items-center gap-2.5 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
+                <Shield className="h-4 w-4 text-accent" />
+              </div>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Licensed & Accredited</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4 text-accent" />
-              <span>24/7 Confidential Support</span>
+            <div className="flex items-center gap-2.5 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
+                <Clock className="h-4 w-4 text-accent" />
+              </div>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">24/7 Confidential Support</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Heart className="h-4 w-4 text-accent" />
-              <span>Free Assessment</span>
+            <div className="flex items-center gap-2.5 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
+                <Heart className="h-4 w-4 text-accent" />
+              </div>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Free Assessment</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <CheckCircle className="h-4 w-4 text-accent" />
-              <span>Insurance Verified</span>
+            <div className="flex items-center gap-2.5 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
+                <CheckCircle className="h-4 w-4 text-accent" />
+              </div>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Insurance Verified</span>
             </div>
           </div>
         </div>
