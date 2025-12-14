@@ -196,6 +196,41 @@ export type Database = {
           },
         ]
       }
+      facility_views: {
+        Row: {
+          created_at: string
+          facility_id: string
+          id: string
+          updated_at: string
+          view_count: number
+          view_date: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          id?: string
+          updated_at?: string
+          view_count?: number
+          view_date?: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          id?: string
+          updated_at?: string
+          view_count?: number
+          view_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_views_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
