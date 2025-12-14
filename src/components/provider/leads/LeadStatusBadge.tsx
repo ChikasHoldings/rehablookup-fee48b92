@@ -4,6 +4,7 @@ export type LeadStatus = "new" | "contacted" | "in_progress" | "closed";
 
 interface LeadStatusBadgeProps {
   status: LeadStatus;
+  size?: "sm" | "default";
 }
 
 const statusConfig: Record<LeadStatus, { label: string; className: string }> = {
@@ -25,11 +26,14 @@ const statusConfig: Record<LeadStatus, { label: string; className: string }> = {
   },
 };
 
-export function LeadStatusBadge({ status }: LeadStatusBadgeProps) {
+export function LeadStatusBadge({ status, size = "default" }: LeadStatusBadgeProps) {
   const config = statusConfig[status] || statusConfig.new;
   
   return (
-    <Badge variant="outline" className={`font-medium ${config.className}`}>
+    <Badge 
+      variant="outline" 
+      className={`font-medium ${config.className} ${size === "sm" ? "text-[10px] px-1.5 py-0" : ""}`}
+    >
       {config.label}
     </Badge>
   );

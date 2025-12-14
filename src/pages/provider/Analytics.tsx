@@ -1,10 +1,39 @@
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { BarChart3 } from "lucide-react";
 import { useProviderData } from "@/hooks/useProviderData";
 import { LeadAnalyticsDashboard } from "@/components/provider/LeadAnalyticsDashboard";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ProviderAnalyticsPage() {
+  const queryClient = useQueryClient();
   const { data: providerData } = useProviderData();
   const facilityId = providerData?.facility?.id;
+
+  // Real-time subscription for analytics updates
+  useEffect(() => {
+    if (!facilityId) return;
+    
+    const channel = supabase
+      .channel("analytics-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "leads",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["lead-analytics", facilityId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [facilityId, queryClient]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">

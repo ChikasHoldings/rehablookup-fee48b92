@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   CheckCircle, 
   Clock, 
@@ -13,20 +15,37 @@ import {
   Settings,
   TrendingUp,
   Calendar,
-  BarChart3
+  BarChart3,
+  Phone,
+  Mail
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { format, formatDistanceToNow } from "date-fns";
 import { 
   LeadUsageIndicator, 
   LeadLimitWarningBanner, 
   LeadLimitReachedBanner 
 } from "@/components/provider/LeadUsageIndicator";
+import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
+
+interface Lead {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  status: string;
+  created_at: string;
+  preferred_contact: string;
+}
 
 export default function ProviderDashboardPage() {
+  const queryClient = useQueryClient();
   const { data: providerData, isLoading } = useProviderData();
   const { data: subscription } = useSubscription();
   
@@ -36,9 +55,54 @@ export default function ProviderDashboardPage() {
   const leadsCount = providerData?.leadsCount ?? 0;
   const monthlyLeadsCount = providerData?.monthlyLeadsCount ?? 0;
   const userName = profile?.first_name || "";
+  const facilityId = facility?.id;
   
   // Get lead limit from subscription data
   const leadLimit = subscription?.lead_limit ?? 5;
+
+  // Fetch recent leads for dashboard
+  const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
+    queryKey: ["recent-leads", facilityId],
+    queryFn: async (): Promise<Lead[]> => {
+      if (!facilityId) return [];
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id, name, phone, email, status, created_at, preferred_contact")
+        .eq("facility_id", facilityId)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return (data || []) as Lead[];
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60,
+  });
+
+  // Real-time subscription for leads
+  useEffect(() => {
+    if (!facilityId) return;
+    
+    const channel = supabase
+      .channel("dashboard-leads")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "leads",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
+          queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [facilityId, queryClient]);
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -288,7 +352,19 @@ export default function ProviderDashboardPage() {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          {leadsCount === 0 ? (
+          {leadsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-32 mb-1" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : recentLeads.length === 0 ? (
             <div className="text-center py-12 border border-dashed border-border rounded-lg bg-muted/20">
               <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
                 <Users className="h-6 w-6 text-muted-foreground/50" />
@@ -299,8 +375,39 @@ export default function ProviderDashboardPage() {
               </p>
             </div>
           ) : (
-            <div className="text-center py-6 text-muted-foreground text-sm">
-              Contact requests will be displayed here
+            <div className="space-y-2">
+              {recentLeads.map((lead) => (
+                <Link
+                  key={lead.id}
+                  to="/provider/leads"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors group"
+                >
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-semibold text-primary">
+                      {lead.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-foreground text-sm truncate">{lead.name}</p>
+                      <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                      <span className="flex items-center gap-1">
+                        {lead.preferred_contact === "call" ? (
+                          <Phone className="h-3 w-3" />
+                        ) : (
+                          <Mail className="h-3 w-3" />
+                        )}
+                        {lead.preferred_contact === "call" ? lead.phone : lead.email}
+                      </span>
+                      <span>•</span>
+                      <span>{formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}</span>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              ))}
             </div>
           )}
         </CardContent>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Users, 
@@ -130,6 +130,31 @@ export default function ProviderLeadsPage() {
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 2,
   });
+
+  // Real-time subscription for leads
+  useEffect(() => {
+    if (!facilityId) return;
+    
+    const channel = supabase
+      .channel("leads-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "leads",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["provider-leads", facilityId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [facilityId, queryClient]);
 
   // Filtered leads based on search, status, and date range
   const filteredLeads = useMemo(() => {
