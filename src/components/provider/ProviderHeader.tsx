@@ -29,6 +29,7 @@ import logo from "@/assets/logo.png";
 interface ProviderHeaderProps {
   facilityName?: string;
   facilityId?: string;
+  facilitySlug?: string | null;
   userName?: string;
   onLogout: () => void;
 }
@@ -40,7 +41,7 @@ const notifications = [
   { id: 3, title: "Welcome to RehabLookup", message: "Complete your profile to get started", time: "1 day ago", unread: false },
 ];
 
-export function ProviderHeader({ facilityName, facilityId, userName, onLogout }: ProviderHeaderProps) {
+export function ProviderHeader({ facilityName, facilityId, facilitySlug, userName, onLogout }: ProviderHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -150,7 +151,7 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
           {/* View Listing */}
           {facilityId && (
             <a
-              href={`/rehab-centers/${facilityId}`}
+              href={facilitySlug ? `/center/${facilitySlug}` : `/rehab-centers/${facilityId}`}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 rounded-lg transition-colors"
