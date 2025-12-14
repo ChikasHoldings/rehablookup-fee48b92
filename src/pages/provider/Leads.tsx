@@ -89,6 +89,7 @@ export default function ProviderLeadsPage() {
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   
   const { toast } = useToast();
@@ -136,6 +137,13 @@ export default function ProviderLeadsPage() {
         return false;
       }
 
+      // Source filter
+      if (sourceFilter !== "all") {
+        const isQualified = lead.source === "Request Help Page";
+        if (sourceFilter === "qualified" && !isQualified) return false;
+        if (sourceFilter === "direct" && isQualified) return false;
+      }
+
       // Date range filter
       if (dateRange.from || dateRange.to) {
         const leadDate = new Date(lead.created_at);
@@ -155,7 +163,7 @@ export default function ProviderLeadsPage() {
 
       return true;
     });
-  }, [leads, searchQuery, statusFilter, dateRange]);
+  }, [leads, searchQuery, statusFilter, sourceFilter, dateRange]);
 
   // Update status mutation
   const updateStatus = useMutation({
@@ -199,10 +207,11 @@ export default function ProviderLeadsPage() {
   const clearFilters = () => {
     setSearchQuery("");
     setStatusFilter("all");
+    setSourceFilter("all");
     setDateRange({ from: undefined, to: undefined });
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== "all" || dateRange.from || dateRange.to;
+  const hasActiveFilters = searchQuery || statusFilter !== "all" || sourceFilter !== "all" || dateRange.from || dateRange.to;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -348,6 +357,28 @@ export default function ProviderLeadsPage() {
                 </SelectContent>
               </Select>
 
+              {/* Source Filter */}
+              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="All Sources" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="qualified">
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      Qualified
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="direct">
+                    <span className="flex items-center gap-2">
+                      <FileText className="h-3.5 w-3.5" />
+                      Direct
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
               {/* Date Range */}
               <Popover>
                 <PopoverTrigger asChild>
@@ -415,6 +446,14 @@ export default function ProviderLeadsPage() {
                   <Badge variant="secondary" className="gap-1">
                     Status: {getStatusOptions().find(o => o.value === statusFilter)?.label}
                     <button onClick={() => setStatusFilter("all")}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {sourceFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Source: {sourceFilter === "qualified" ? "Qualified" : "Direct"}
+                    <button onClick={() => setSourceFilter("all")}>
                       <X className="h-3 w-3" />
                     </button>
                   </Badge>
