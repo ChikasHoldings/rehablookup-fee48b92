@@ -55,12 +55,12 @@ async function checkProviderLeadCap(
   supabase: any,
   facilityUserId: string,
   providerEmail: string
-): Promise<{ canReceiveLeads: boolean; reason?: string; leadLimit: number; usedLeads: number }> {
+): Promise<{ canReceiveLeads: boolean; reason?: string; leadLimit: number; usedLeads: number; planName: string }> {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   
   if (!stripeKey) {
     console.error("STRIPE_SECRET_KEY not set - defaulting to basic plan");
-    return { canReceiveLeads: false, reason: "Provider on Basic plan (0 leads)", leadLimit: 0, usedLeads: 0 };
+    return { canReceiveLeads: false, reason: "Provider on Basic plan (0 leads)", leadLimit: 0, usedLeads: 0, planName: "basic" };
   }
 
   try {
@@ -70,6 +70,7 @@ async function checkProviderLeadCap(
     const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
     
     let leadLimit = PLAN_CONFIG.basic.lead_limit; // Default to 0
+    let planName = "basic";
     
     if (customers.data.length > 0) {
       const customerId = customers.data[0].id;
@@ -88,15 +89,17 @@ async function checkProviderLeadCap(
         // Determine lead limit based on product
         if (productId === PLAN_CONFIG.professional.product_id) {
           leadLimit = PLAN_CONFIG.professional.lead_limit;
+          planName = "professional";
         } else if (productId === PLAN_CONFIG.featured.product_id) {
           leadLimit = PLAN_CONFIG.featured.lead_limit;
+          planName = "featured";
         }
       }
     }
     
     // If no paid plan, they can't receive leads
     if (leadLimit === 0) {
-      return { canReceiveLeads: false, reason: "Provider on Basic plan (0 leads)", leadLimit: 0, usedLeads: 0 };
+      return { canReceiveLeads: false, reason: "Provider on Basic plan (0 leads)", leadLimit: 0, usedLeads: 0, planName };
     }
     
     // Count leads this month for all facilities owned by this provider
@@ -113,7 +116,7 @@ async function checkProviderLeadCap(
     const facilityIds = (userFacilities as { id: string }[] || []).map(f => f.id);
     
     if (facilityIds.length === 0) {
-      return { canReceiveLeads: true, leadLimit, usedLeads: 0 };
+      return { canReceiveLeads: true, leadLimit, usedLeads: 0, planName };
     }
     
     // Count all leads this month across all provider's facilities
@@ -130,15 +133,105 @@ async function checkProviderLeadCap(
         canReceiveLeads: false, 
         reason: `Provider has reached monthly lead limit (${usedLeads}/${leadLimit})`,
         leadLimit,
-        usedLeads
+        usedLeads,
+        planName
       };
     }
     
-    return { canReceiveLeads: true, leadLimit, usedLeads };
+    return { canReceiveLeads: true, leadLimit, usedLeads, planName };
   } catch (error) {
     console.error("Error checking lead cap:", error);
     // On error, allow the lead through but log it
-    return { canReceiveLeads: true, leadLimit: 999, usedLeads: 0 };
+    return { canReceiveLeads: true, leadLimit: 999, usedLeads: 0, planName: "unknown" };
+  }
+}
+
+// Send lead limit warning email
+async function sendLeadLimitWarningEmail(
+  providerEmail: string,
+  facilityName: string,
+  usedLeads: number,
+  leadLimit: number,
+  planName: string
+): Promise<void> {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  if (!resendApiKey) return;
+
+  const resend = new Resend(resendApiKey);
+  const percentage = Math.round((usedLeads / leadLimit) * 100);
+  const remainingLeads = leadLimit - usedLeads;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+
+  const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+  <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 12px 12px 0 0;">
+    <h1 style="color: #fff; margin: 0; font-size: 24px;">⚠️ Lead Limit Warning</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You're approaching your monthly lead limit</p>
+  </div>
+  
+  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
+    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="margin: 0 0 8px 0; font-size: 48px; font-weight: bold; color: #92400e;">${percentage}%</p>
+      <p style="margin: 0; color: #92400e; font-size: 16px;">of your monthly lead limit used</p>
+    </div>
+    
+    <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Leads Used:</td>
+          <td style="padding: 8px 0; font-weight: 600; text-align: right;">${usedLeads} of ${leadLimit}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Leads Remaining:</td>
+          <td style="padding: 8px 0; font-weight: 600; text-align: right; color: ${remainingLeads <= 5 ? '#dc2626' : '#16a34a'};">${remainingLeads}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Current Plan:</td>
+          <td style="padding: 8px 0; font-weight: 600; text-align: right; text-transform: capitalize;">${planName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Facility:</td>
+          <td style="padding: 8px 0; font-weight: 600; text-align: right;">${facilityName}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <p style="color: #4b5563; font-size: 15px; margin-bottom: 24px;">
+      Once you reach your limit, new leads will be paused until next month. <strong>Upgrade your plan now</strong> to continue receiving valuable patient inquiries without interruption.
+    </p>
+    
+    <div style="text-align: center; margin-top: 28px;">
+      <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/billing" style="display: inline-block; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(27, 54, 93, 0.3);">
+        🚀 Upgrade Your Plan
+      </a>
+    </div>
+    
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+    
+    <p style="font-size: 13px; color: #9ca3af; text-align: center; margin: 0;">
+      This is an automated notification from <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a>
+    </p>
+  </div>
+</body>
+</html>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: "RehabLookup <noreply@resend.dev>",
+      to: [providerEmail],
+      subject: `⚠️ Lead Limit Warning: ${percentage}% used (${remainingLeads} leads remaining)`,
+      html: emailHtml,
+    });
+    console.log(`Lead limit warning email sent to ${providerEmail} (${usedLeads}/${leadLimit})`);
+  } catch (error) {
+    console.error("Failed to send lead limit warning email:", error);
   }
 }
 
@@ -297,11 +390,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // ============ LEAD CAP ENFORCEMENT ============
+    let capCheckResult: { canReceiveLeads: boolean; reason?: string; leadLimit: number; usedLeads: number; planName: string } | null = null;
+    
     if (providerEmail && facility.user_id) {
-      const capCheck = await checkProviderLeadCap(supabase, facility.user_id, providerEmail);
+      capCheckResult = await checkProviderLeadCap(supabase, facility.user_id, providerEmail);
       
-      if (!capCheck.canReceiveLeads) {
-        console.log(`Lead cap reached for facility ${body.facilityId}: ${capCheck.reason}`);
+      if (!capCheckResult.canReceiveLeads) {
+        console.log(`Lead cap reached for facility ${body.facilityId}: ${capCheckResult.reason}`);
         
         // Return a user-friendly message - don't expose internal details
         return new Response(
@@ -313,7 +408,7 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
       
-      console.log(`Lead cap check passed: ${capCheck.usedLeads}/${capCheck.leadLimit} leads used`);
+      console.log(`Lead cap check passed: ${capCheckResult.usedLeads}/${capCheckResult.leadLimit} leads used`);
     }
 
     // ============ CREATE LEAD ============
@@ -464,6 +559,23 @@ const handler = async (req: Request): Promise<Response> => {
       }
     } else {
       console.log("Email notification skipped - no recipients or API key");
+    }
+
+    // ============ LEAD LIMIT WARNING EMAIL ============
+    // Send warning email if provider is at or above 80% of their lead limit
+    if (capCheckResult && providerEmail && capCheckResult.leadLimit > 0) {
+      const newUsedLeads = capCheckResult.usedLeads + 1; // Account for the lead we just created
+      const usagePercentage = (newUsedLeads / capCheckResult.leadLimit) * 100;
+      
+      if (usagePercentage >= 80) {
+        await sendLeadLimitWarningEmail(
+          providerEmail,
+          body.facilityName,
+          newUsedLeads,
+          capCheckResult.leadLimit,
+          capCheckResult.planName
+        );
+      }
     }
 
     return new Response(
