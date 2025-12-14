@@ -547,6 +547,35 @@ const Index = () => {
         </div>
       </section>
 
+      {/* CTA Banner */}
+      <section className="py-16 md:py-20 bg-primary">
+        <div className="container text-center">
+          <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
+            Ready to Take the First Step?
+          </h2>
+          <p className="mb-8 text-lg text-primary-foreground/90 max-w-xl mx-auto">
+            Recovery is possible. Find the right treatment center for you or your loved one today.
+          </p>
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link to="/rehab-centers">
+              <Button variant="hero-light" size="lg" className="gap-2 min-w-[200px] shadow-xl hover:shadow-2xl transition-shadow">
+                Find Rehab Now
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <a href="tel:1-800-555-0199">
+              <Button 
+                size="lg" 
+                className="gap-2 min-w-[200px] bg-primary-foreground/10 border-2 border-primary-foreground/25 text-primary-foreground backdrop-blur-sm hover:bg-primary-foreground/20 hover:border-primary-foreground/40 transition-all"
+              >
+                <Phone className="h-4 w-4" />
+                Call 1-800-555-0199
+              </Button>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Resources / Blog Section */}
       <section className="py-20 md:py-24">
         <div className="container">
@@ -607,35 +636,6 @@ const Index = () => {
                 </div>
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Banner */}
-      <section className="py-16 md:py-20 bg-primary">
-        <div className="container text-center">
-          <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-            Ready to Take the First Step?
-          </h2>
-          <p className="mb-8 text-lg text-primary-foreground/90 max-w-xl mx-auto">
-            Recovery is possible. Find the right treatment center for you or your loved one today.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link to="/rehab-centers">
-              <Button variant="hero-light" size="lg" className="gap-2 min-w-[200px] shadow-xl hover:shadow-2xl transition-shadow">
-                Find Rehab Now
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <a href="tel:1-800-555-0199">
-              <Button 
-                size="lg" 
-                className="gap-2 min-w-[200px] bg-primary-foreground/10 border-2 border-primary-foreground/25 text-primary-foreground backdrop-blur-sm hover:bg-primary-foreground/20 hover:border-primary-foreground/40 transition-all"
-              >
-                <Phone className="h-4 w-4" />
-                Call 1-800-555-0199
-              </Button>
-            </a>
           </div>
         </div>
       </section>
