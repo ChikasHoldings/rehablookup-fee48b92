@@ -138,15 +138,6 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
             {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
           </Button>
 
-          {/* Facility Badge */}
-          {facilityName && (
-            <div className="hidden xl:flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-foreground/10 border border-primary-foreground/10">
-              <Building2 className="h-4 w-4 text-primary-foreground/70" />
-              <span className="text-sm text-primary-foreground/90 max-w-[160px] truncate font-medium">
-                {facilityName}
-              </span>
-            </div>
-          )}
 
           {/* View Public Profile */}
           {facilityId && (
