@@ -1,3 +1,4 @@
+import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SearchForm } from "@/components/search/SearchForm";
@@ -122,6 +123,36 @@ const trustBadges = [
 
 const Index = () => {
   const featuredCenters = treatmentCenters.filter((c) => c.featured).slice(0, 3);
+  
+  // Parallax effect for Why Choose Us image
+  const parallaxRef = useRef<HTMLDivElement>(null);
+  const [parallaxOffset, setParallaxOffset] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!parallaxRef.current) return;
+      
+      const rect = parallaxRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      
+      // Calculate how far the element is from the center of the viewport
+      const elementCenter = rect.top + rect.height / 2;
+      const viewportCenter = windowHeight / 2;
+      const distance = elementCenter - viewportCenter;
+      
+      // Only apply parallax when element is in view
+      if (rect.top < windowHeight && rect.bottom > 0) {
+        // Subtle parallax: move image slightly opposite to scroll direction
+        const offset = distance * 0.08;
+        setParallaxOffset(offset);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial call
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <Layout>
@@ -462,19 +493,25 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Image with Stats Overlay */}
-            <div className="relative animate-fade-in order-1 lg:order-2" style={{ animationDelay: "0.1s" }}>
+            {/* Image with Stats Overlay + Parallax */}
+            <div ref={parallaxRef} className="relative animate-fade-in order-1 lg:order-2" style={{ animationDelay: "0.1s" }}>
               {/* Decorative background element */}
               <div className="absolute -inset-4 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent rounded-3xl blur-2xl opacity-60" />
               
               <div className="relative">
-                {/* Main image container */}
+                {/* Main image container with parallax */}
                 <div className="relative overflow-hidden rounded-2xl shadow-elevated ring-1 ring-border/50">
-                  <img 
-                    src={whyChooseUsImage} 
-                    alt="Healthcare professional consulting with a family about treatment options"
-                    className="w-full object-cover aspect-[4/3] transition-transform duration-500 hover:scale-[1.02]"
-                  />
+                  <div 
+                    className="w-full aspect-[4/3] overflow-hidden"
+                    style={{ transform: `translateY(${parallaxOffset}px)` }}
+                  >
+                    <img 
+                      src={whyChooseUsImage} 
+                      alt="Healthcare professional consulting with a family about treatment options"
+                      className="w-full h-[120%] object-cover transition-transform duration-100 ease-out"
+                      style={{ transform: `translateY(-10%)` }}
+                    />
+                  </div>
                   
                   {/* Subtle overlay for depth */}
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent" />
