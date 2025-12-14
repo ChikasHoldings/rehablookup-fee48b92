@@ -536,7 +536,7 @@ export default function ProviderListingPage() {
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
             {/* Status Card */}
-            <Card className="sticky top-4">
+            <Card className="lg:sticky lg:top-4">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium">Listing Status</CardTitle>
               </CardHeader>
@@ -617,8 +617,9 @@ export default function ProviderListingPage() {
           </div>
         </div>
 
-        {/* Mobile Save Button */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border z-40">
+        {/* Mobile Save Button - add padding to main content to prevent overlap */}
+        <div className="lg:hidden h-20" /> {/* Spacer for fixed button */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border z-30">
           <Button 
             onClick={handleSave} 
             disabled={isSaving || !hasChanges} 
