@@ -11,6 +11,7 @@ import {
   Eye,
   Target,
   Lightbulb,
+  Clock,
 } from "lucide-react";
 
 const values = [
@@ -43,17 +44,41 @@ const values = [
 const About = () => {
   return (
     <Layout>
-      {/* Hero - Light background */}
-      <section className="border-b border-border bg-card py-16 md:py-20">
+      {/* Hero - Navy background */}
+      <section className="bg-primary py-16 md:py-20">
         <div className="container">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="mb-4 font-display text-3xl font-bold text-foreground md:text-4xl">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
+              <Heart className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-primary-foreground">Our Story</span>
+            </div>
+            <h1 className="mb-4 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
               About RehabLookup
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-primary-foreground/80">
               We're on a mission to connect families with trusted addiction treatment 
               centers through transparency, compassion, and verified information.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Bar */}
+      <section className="border-b border-border bg-card py-4">
+        <div className="container">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm md:gap-10">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Shield className="h-4 w-4 text-accent" />
+              <span>Verified Facilities</span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Clock className="h-4 w-4 text-accent" />
+              <span>24/7 Support</span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Users className="h-4 w-4 text-accent" />
+              <span>10,000+ Families Helped</span>
+            </div>
           </div>
         </div>
       </section>
@@ -62,10 +87,10 @@ const About = () => {
       <section className="py-16 md:py-20">
         <div className="container">
           <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div>
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5">
-                <Eye className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Who We Are</span>
+            <div className="animate-fade-in">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <Eye className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">Who We Are</span>
               </div>
               <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl">
                 A Directory You Can Trust
@@ -86,12 +111,17 @@ const About = () => {
                 </p>
               </div>
             </div>
-            <div className="relative">
-              <div className="aspect-square rounded-xl border border-border bg-card p-8 shadow-card">
+            <div className="relative animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <div className="aspect-square rounded-xl border border-accent/20 bg-gradient-to-br from-primary to-primary/80 p-8 shadow-card">
                 <div className="flex h-full flex-col items-center justify-center text-center">
-                  <Heart className="mb-4 h-16 w-16 text-primary" />
-                  <p className="font-display text-xl font-semibold text-foreground">
+                  <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/10">
+                    <Heart className="h-10 w-10 text-accent" />
+                  </div>
+                  <p className="font-display text-xl font-semibold text-primary-foreground">
                     Helping families find hope
+                  </p>
+                  <p className="mt-2 text-sm text-primary-foreground/70">
+                    Every journey begins with a single step
                   </p>
                 </div>
               </div>
@@ -101,17 +131,17 @@ const About = () => {
       </section>
 
       {/* Our Mission */}
-      <section className="border-y border-border bg-secondary/50 py-16 md:py-20">
+      <section className="bg-primary py-16 md:py-20">
         <div className="container">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5">
-              <Target className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Our Mission</span>
+          <div className="mx-auto max-w-3xl text-center animate-fade-in">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
+              <Target className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-primary-foreground">Our Mission</span>
             </div>
-            <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl">
+            <h2 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
               Making Treatment Accessible
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-primary-foreground/80">
               We believe that everyone deserves access to quality addiction treatment information. 
               Our mission is to eliminate confusion, reduce barriers, and provide families with 
               the resources they need to find the right care—without pressure, hidden fees, or 
@@ -124,10 +154,10 @@ const About = () => {
       {/* Our Values */}
       <section className="py-16 md:py-20">
         <div className="container">
-          <div className="mb-10 text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5">
-              <Lightbulb className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Our Values</span>
+          <div className="mb-10 text-center animate-fade-in">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+              <Lightbulb className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-accent">Our Values</span>
             </div>
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
               What Guides Us
@@ -138,13 +168,14 @@ const About = () => {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            {values.map((value) => (
+            {values.map((value, index) => (
               <div
                 key={value.title}
-                className="rounded-xl border border-border bg-card p-6 shadow-card"
+                className="group rounded-xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:border-accent/30 hover:shadow-elevated animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <value.icon className="h-5 w-5 text-primary" />
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 transition-colors duration-300 group-hover:bg-accent/20">
+                  <value.icon className="h-6 w-6 text-accent" />
                 </div>
                 <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
                   {value.title}
@@ -157,43 +188,50 @@ const About = () => {
       </section>
 
       {/* Important Notice */}
-      <section className="border-y border-border bg-secondary/30 py-10">
+      <section className="border-y border-border bg-muted/30 py-10">
         <div className="container">
-          <div className="mx-auto max-w-3xl rounded-xl border border-warning/30 bg-warning/5 p-6">
-            <h3 className="mb-3 font-display text-lg font-semibold text-foreground">
-              Important Notice
-            </h3>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>
-                RehabLookup is a directory and referral service. We are <strong className="text-foreground">not</strong> a 
-                treatment provider, medical facility, or substitute for professional medical advice.
-              </p>
-              <p>
-                If you or someone you know is experiencing a medical emergency, please call 911 immediately.
-              </p>
+          <div className="mx-auto max-w-3xl rounded-xl border border-accent/30 bg-accent/5 p-6 animate-fade-in">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10">
+                <Shield className="h-5 w-5 text-accent" />
+              </div>
+              <div>
+                <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
+                  Important Notice
+                </h3>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>
+                    RehabLookup is a directory and referral service. We are <strong className="text-foreground">not</strong> a 
+                    treatment provider, medical facility, or substitute for professional medical advice.
+                  </p>
+                  <p>
+                    If you or someone you know is experiencing a medical emergency, please call 911 immediately.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16">
+      {/* CTA - Navy background */}
+      <section className="bg-primary py-16">
         <div className="container text-center">
-          <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+          <h2 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
             Ready to Find Treatment?
           </h2>
-          <p className="mb-6 text-muted-foreground">
+          <p className="mb-6 text-primary-foreground/80">
             Search our directory or speak with a specialist today.
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link to="/rehab-centers">
-              <Button variant="default" size="lg" className="gap-2">
+              <Button variant="hero-light" size="lg" className="gap-2">
                 Find Treatment Centers
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <a href="tel:1-800-555-0199">
-              <Button variant="outline" size="lg" className="gap-2">
+              <Button variant="hero-light" size="lg" className="gap-2">
                 <Phone className="h-4 w-4" />
                 Call 1-800-555-0199
               </Button>
