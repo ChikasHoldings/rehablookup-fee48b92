@@ -240,6 +240,38 @@ export type Database = {
           },
         ]
       }
+      lead_notes: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          note: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          note: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          note?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string
@@ -250,6 +282,7 @@ export type Database = {
           name: string
           phone: string
           preferred_contact: string
+          status: string
         }
         Insert: {
           created_at?: string
@@ -260,6 +293,7 @@ export type Database = {
           name: string
           phone: string
           preferred_contact?: string
+          status?: string
         }
         Update: {
           created_at?: string
@@ -270,6 +304,7 @@ export type Database = {
           name?: string
           phone?: string
           preferred_contact?: string
+          status?: string
         }
         Relationships: [
           {
