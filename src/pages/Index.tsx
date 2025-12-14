@@ -14,8 +14,47 @@ import {
   ArrowRight,
   Star,
   BadgeCheck,
-  Headphones
+  Headphones,
+  Pill,
+  Brain,
+  Home,
+  Activity,
+  Stethoscope,
+  Sparkles
 } from "lucide-react";
+
+const treatmentOptions = [
+  {
+    icon: Pill,
+    title: "Drug Addiction",
+    description: "Evidence-based programs for substance abuse including opioids, stimulants, and more.",
+  },
+  {
+    icon: Activity,
+    title: "Alcohol Treatment",
+    description: "Medically supervised detox and long-term recovery programs for alcohol dependence.",
+  },
+  {
+    icon: Brain,
+    title: "Mental Health",
+    description: "Dual diagnosis treatment addressing addiction alongside anxiety, depression, and PTSD.",
+  },
+  {
+    icon: Home,
+    title: "Residential Rehab",
+    description: "24/7 inpatient care in a structured, supportive environment for focused recovery.",
+  },
+  {
+    icon: Stethoscope,
+    title: "Outpatient Programs",
+    description: "Flexible treatment options that allow you to maintain work and family commitments.",
+  },
+  {
+    icon: Sparkles,
+    title: "Holistic Therapy",
+    description: "Complementary approaches including yoga, meditation, art therapy, and nutrition.",
+  },
+];
 
 const trustBadges = [
   { icon: BadgeCheck, label: "Verified Centers" },
@@ -125,6 +164,67 @@ const Index = () => {
             <Link to="/rehab-centers">
               <Button variant="outline" size="lg" className="gap-2 group">
                 View All Centers
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Treatment Options */}
+      <section className="relative py-20 md:py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-secondary/30" />
+        
+        <div className="container relative">
+          {/* Section Header */}
+          <div className="mb-12 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+              <Heart className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary">Treatment Options</span>
+            </div>
+            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+              Comprehensive Care for Every Need
+            </h2>
+            <p className="mx-auto max-w-xl text-muted-foreground">
+              Find specialized treatment programs tailored to your unique situation and recovery goals.
+            </p>
+          </div>
+
+          {/* Options Grid */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {treatmentOptions.map((option, index) => (
+              <div
+                key={option.title}
+                className="group animate-fade-in"
+                style={{ animationDelay: `${index * 75}ms` }}
+              >
+                <div className="relative h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
+                  {/* Icon */}
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/15">
+                    <option.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
+                    {option.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {option.description}
+                  </p>
+                  
+                  {/* Hover arrow */}
+                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                    Learn more <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className="mt-10 text-center">
+            <Link to="/rehab-centers">
+              <Button variant="default" size="lg" className="gap-2 group">
+                Explore All Treatment Options
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
