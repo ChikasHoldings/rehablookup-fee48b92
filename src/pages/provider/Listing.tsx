@@ -617,18 +617,18 @@ export default function ProviderListingPage() {
           </div>
         </div>
 
-        {/* Mobile Save Button - positioned to not overlap with navigation FAB */}
-        <div className="lg:hidden h-24" /> {/* Spacer for fixed button */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-20 p-4 bg-background/95 backdrop-blur-sm border-t border-border z-30">
+        {/* Save Button at the end of the page */}
+        <div className="flex justify-end pt-4 border-t border-border">
           <Button 
             onClick={handleSave} 
             disabled={isSaving || !hasChanges} 
-            className="w-full h-11 gap-2"
+            size="lg"
+            className="gap-2 min-w-[160px]"
           >
             {showSaved ? (
               <>
                 <CheckCircle className="h-4 w-4" />
-                Saved
+                Saved Successfully
               </>
             ) : (
               <>
