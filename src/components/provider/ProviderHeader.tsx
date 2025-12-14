@@ -26,6 +26,7 @@ import logo from "@/assets/logo.png";
 
 interface ProviderHeaderProps {
   facilityName?: string;
+  facilityId?: string;
   userName?: string;
   onLogout: () => void;
 }
@@ -37,7 +38,7 @@ const notifications = [
   { id: 3, title: "Welcome to RehabLookup", message: "Complete your profile to get started", time: "1 day ago", unread: false },
 ];
 
-export function ProviderHeader({ facilityName, userName, onLogout }: ProviderHeaderProps) {
+export function ProviderHeader({ facilityName, facilityId, userName, onLogout }: ProviderHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -113,14 +114,18 @@ export function ProviderHeader({ facilityName, userName, onLogout }: ProviderHea
             </div>
           )}
 
-          {/* View Site Link */}
-          <Link
-            to="/"
-            className="hidden md:flex items-center gap-1.5 px-3 py-2 text-sm text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 rounded-lg transition-colors"
-          >
-            <span>View Site</span>
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
+          {/* View Public Profile */}
+          {facilityId && (
+            <a
+              href={`/rehab-centers/${facilityId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 text-sm text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10 rounded-lg transition-colors"
+            >
+              <span>View Listing</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
 
           {/* Notifications */}
           <DropdownMenu>
