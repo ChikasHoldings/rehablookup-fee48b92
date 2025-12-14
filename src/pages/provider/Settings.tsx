@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   Eye,
   EyeOff,
-  Lock
+  Lock,
+  Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useProviderData } from "@/hooks/useProviderData";
+
+interface NotificationPreferences {
+  email_lead_alerts: boolean;
+  email_weekly_digest: boolean;
+  email_product_updates: boolean;
+  sms_lead_alerts: boolean;
+  browser_notifications: boolean;
+}
 
 export default function ProviderSettingsPage() {
   const { data: providerData, isLoading } = useProviderData();
@@ -66,9 +75,112 @@ export default function ProviderSettingsPage() {
   const [emailProductUpdates, setEmailProductUpdates] = useState(false);
   const [smsLeadAlerts, setSmsLeadAlerts] = useState(false);
   const [browserNotifications, setBrowserNotifications] = useState(false);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [notificationsSaved, setNotificationsSaved] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch notification preferences
+  const { data: notificationPrefs, isLoading: isLoadingNotifications } = useQuery({
+    queryKey: ["notification-preferences"],
+    queryFn: async (): Promise<NotificationPreferences | null> => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      const { data, error } = await supabase
+        .from("notification_preferences")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching notification preferences:", error);
+        return null;
+      }
+
+      return data;
+    },
+  });
+
+  // Sync notification preferences state when data loads
+  useEffect(() => {
+    if (notificationPrefs) {
+      setEmailLeadAlerts(notificationPrefs.email_lead_alerts);
+      setEmailWeeklyDigest(notificationPrefs.email_weekly_digest);
+      setEmailProductUpdates(notificationPrefs.email_product_updates);
+      setSmsLeadAlerts(notificationPrefs.sms_lead_alerts);
+      setBrowserNotifications(notificationPrefs.browser_notifications);
+    }
+  }, [notificationPrefs]);
+
+  // Save notification preferences
+  const handleSaveNotifications = async () => {
+    setIsSavingNotifications(true);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setIsSavingNotifications(false);
+      return;
+    }
+
+    const preferences = {
+      user_id: session.user.id,
+      email_lead_alerts: emailLeadAlerts,
+      email_weekly_digest: emailWeeklyDigest,
+      email_product_updates: emailProductUpdates,
+      sms_lead_alerts: smsLeadAlerts,
+      browser_notifications: browserNotifications,
+    };
+
+    // Check if preferences exist
+    const { data: existing } = await supabase
+      .from("notification_preferences")
+      .select("id")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    let error;
+    if (existing) {
+      // Update existing
+      const result = await supabase
+        .from("notification_preferences")
+        .update({
+          email_lead_alerts: emailLeadAlerts,
+          email_weekly_digest: emailWeeklyDigest,
+          email_product_updates: emailProductUpdates,
+          sms_lead_alerts: smsLeadAlerts,
+          browser_notifications: browserNotifications,
+        })
+        .eq("user_id", session.user.id);
+      error = result.error;
+    } else {
+      // Insert new
+      const result = await supabase
+        .from("notification_preferences")
+        .insert(preferences);
+      error = result.error;
+    }
+
+    setIsSavingNotifications(false);
+
+    if (error) {
+      console.error("Error saving notification preferences:", error);
+      toast({
+        title: "Error saving preferences",
+        description: "Failed to save notification preferences. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      setNotificationsSaved(true);
+      setTimeout(() => setNotificationsSaved(false), 2000);
+      queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
+      toast({
+        title: "Preferences saved",
+        description: "Your notification preferences have been updated.",
+      });
+    }
+  };
 
   // Use local state for edits, fall back to cached data
   const profile = localProfile || (providerData?.profile ? {
@@ -694,9 +806,28 @@ export default function ProviderSettingsPage() {
 
           {/* Save Notification Preferences */}
           <div className="flex justify-end">
-            <Button size="sm" className="gap-2">
-              <Save className="h-4 w-4" />
-              Save Preferences
+            <Button 
+              size="sm" 
+              className="gap-2"
+              onClick={handleSaveNotifications}
+              disabled={isSavingNotifications}
+            >
+              {isSavingNotifications ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : notificationsSaved ? (
+                <>
+                  <CheckCircle className="h-4 w-4" />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Preferences
+                </>
+              )}
             </Button>
           </div>
         </TabsContent>

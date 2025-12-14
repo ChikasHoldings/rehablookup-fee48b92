@@ -281,6 +281,42 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          browser_notifications: boolean
+          created_at: string
+          email_lead_alerts: boolean
+          email_product_updates: boolean
+          email_weekly_digest: boolean
+          id: string
+          sms_lead_alerts: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          browser_notifications?: boolean
+          created_at?: string
+          email_lead_alerts?: boolean
+          email_product_updates?: boolean
+          email_weekly_digest?: boolean
+          id?: string
+          sms_lead_alerts?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          browser_notifications?: boolean
+          created_at?: string
+          email_lead_alerts?: boolean
+          email_product_updates?: boolean
+          email_weekly_digest?: boolean
+          id?: string
+          sms_lead_alerts?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
