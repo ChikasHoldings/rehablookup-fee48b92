@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Heart } from "lucide-react";
+import { Menu, X, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -49,12 +49,6 @@ export function Header() {
 
         {/* CTA & Mobile Toggle */}
         <div className="flex items-center gap-2">
-          <a href="tel:1-800-555-0199" className="hidden lg:block">
-            <Button variant="ghost" size="sm" className="gap-2 text-foreground/70 hover:text-foreground">
-              <Phone className="h-4 w-4" />
-              1-800-555-0199
-            </Button>
-          </a>
           <Link to="/rehab-centers" className="hidden sm:block">
             <Button size="sm" className="shadow-sm">
               Get Help Now
@@ -89,13 +83,7 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-            <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-              <a href="tel:1-800-555-0199">
-                <Button variant="outline" className="w-full gap-2">
-                  <Phone className="h-4 w-4" />
-                  1-800-555-0199
-                </Button>
-              </a>
+            <div className="mt-4 border-t border-border pt-4">
               <Link to="/rehab-centers" onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full">
                   Get Help Now
