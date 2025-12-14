@@ -55,9 +55,9 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
 
   return (
     <header className="sticky top-0 z-50 h-16 bg-primary border-b border-primary-foreground/10 shadow-sm">
-      <div className="h-full max-w-[1800px] mx-auto px-4 md:px-6 flex items-center justify-between gap-3">
+      <div className="h-full max-w-[1800px] mx-auto px-4 md:px-6 flex items-center justify-between gap-4">
         {/* Left - Logo & Facility Selector */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-6 min-w-0">
           <Link 
             to="/" 
             className="flex items-center shrink-0 group"
@@ -66,9 +66,12 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
             <img 
               src={logo} 
               alt="RehabLookup" 
-              className="h-7 w-auto brightness-0 invert opacity-90 group-hover:opacity-100 transition-opacity"
+              className="h-9 w-auto brightness-0 invert opacity-90 group-hover:opacity-100 transition-opacity"
             />
           </Link>
+          
+          {/* Divider */}
+          <div className="hidden md:block h-8 w-px bg-primary-foreground/20" />
           
           {/* Facility Selector */}
           <DropdownMenu>
