@@ -27,9 +27,9 @@ interface ProviderData {
   monthlyLeadsCount: number;
 }
 
-export function useProviderData() {
+export function useProviderData(facilityId?: string) {
   return useQuery({
-    queryKey: ["provider-data"],
+    queryKey: ["provider-data", facilityId],
     queryFn: async (): Promise<ProviderData> => {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -44,13 +44,26 @@ export function useProviderData() {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      // Fetch facility
-      const { data: facilityData } = await supabase
-        .from("facilities")
-        .select("id, name, slug, status, email, logo_url, gallery_urls")
-        .eq("user_id", session.user.id)
-        .limit(1)
-        .maybeSingle();
+      // Fetch facility - either specific one or first one
+      let facilityData: Facility | null = null;
+      
+      if (facilityId) {
+        const { data } = await supabase
+          .from("facilities")
+          .select("id, name, slug, status, email, logo_url, gallery_urls")
+          .eq("id", facilityId)
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        facilityData = data;
+      } else {
+        const { data } = await supabase
+          .from("facilities")
+          .select("id, name, slug, status, email, logo_url, gallery_urls")
+          .eq("user_id", session.user.id)
+          .limit(1)
+          .maybeSingle();
+        facilityData = data;
+      }
 
       let viewsCount = 0;
       let leadsCount = 0;

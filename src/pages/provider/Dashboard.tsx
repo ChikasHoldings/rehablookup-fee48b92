@@ -13,7 +13,6 @@ import {
   Eye,
   FileEdit,
   Settings,
-  TrendingUp,
   Calendar,
   BarChart3,
   Phone,
@@ -21,18 +20,18 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { 
   LeadUsageIndicator, 
   LeadLimitWarningBanner, 
   LeadLimitReachedBanner 
 } from "@/components/provider/LeadUsageIndicator";
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
+import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 
 interface Lead {
   id: string;
@@ -46,16 +45,17 @@ interface Lead {
 
 export default function ProviderDashboardPage() {
   const queryClient = useQueryClient();
-  const { data: providerData, isLoading } = useProviderData();
+  const { selectedFacility } = useSelectedFacility();
+  const facilityId = selectedFacility?.id;
+  
+  const { data: providerData, isLoading } = useProviderData(facilityId);
   const { data: subscription } = useSubscription();
   
-  const facility = providerData?.facility;
+  const facility = selectedFacility || providerData?.facility;
   const profile = providerData?.profile;
   const viewsCount = providerData?.viewsCount ?? 0;
-  const leadsCount = providerData?.leadsCount ?? 0;
   const monthlyLeadsCount = providerData?.monthlyLeadsCount ?? 0;
   const userName = profile?.first_name || "";
-  const facilityId = facility?.id;
   
   // Get lead limit from subscription data
   const leadLimit = subscription?.lead_limit ?? 5;

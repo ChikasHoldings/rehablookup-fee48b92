@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BarChart3 } from "lucide-react";
-import { useProviderData } from "@/hooks/useProviderData";
 import { LeadAnalyticsDashboard } from "@/components/provider/LeadAnalyticsDashboard";
 import { supabase } from "@/integrations/supabase/client";
+import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 
 export default function ProviderAnalyticsPage() {
   const queryClient = useQueryClient();
-  const { data: providerData } = useProviderData();
-  const facilityId = providerData?.facility?.id;
+  const { selectedFacility } = useSelectedFacility();
+  const facilityId = selectedFacility?.id;
 
   // Real-time subscription for analytics updates
   useEffect(() => {

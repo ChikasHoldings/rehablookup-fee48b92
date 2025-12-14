@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Save, 
@@ -35,9 +34,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useProviderData } from "@/hooks/useProviderData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FacilityImageUpload } from "@/components/provider/FacilityImageUpload";
+import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 
 interface Facility {
   id: string;
@@ -90,17 +89,23 @@ export default function ProviderListingPage() {
   const [hasChanges, setHasChanges] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const { toast } = useToast();
+  const { selectedFacility } = useSelectedFacility();
 
   useEffect(() => {
     const fetchFacility = async () => {
+      if (!selectedFacility?.id) {
+        setIsLoading(false);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
       const { data } = await supabase
         .from("facilities")
         .select("*")
+        .eq("id", selectedFacility.id)
         .eq("user_id", session.user.id)
-        .limit(1)
         .maybeSingle();
 
       if (data) {
@@ -109,8 +114,9 @@ export default function ProviderListingPage() {
       setIsLoading(false);
     };
 
+    setIsLoading(true);
     fetchFacility();
-  }, []);
+  }, [selectedFacility?.id]);
 
   const handleSave = async () => {
     if (!facility) return;

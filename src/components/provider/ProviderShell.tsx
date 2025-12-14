@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
+import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 
 // Memoized sidebar to prevent re-renders
 const MemoizedSidebar = memo(ProviderSidebar);
 const MemoizedHeader = memo(ProviderHeader);
 const MemoizedStatsBar = memo(StatsBar);
 
-export function ProviderShell() {
+function ProviderShellContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const mainContentRef = useRef<HTMLElement>(null);
@@ -24,8 +25,9 @@ export function ProviderShell() {
   const location = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { selectedFacility, isLoading: facilityLoading } = useSelectedFacility();
 
-  const { data: providerData, isLoading, error } = useProviderData();
+  const { data: providerData, isLoading, error } = useProviderData(selectedFacility?.id);
 
   // Scroll content area to top on route change
   useEffect(() => {
@@ -76,7 +78,7 @@ export function ProviderShell() {
   }, []);
 
   // Show loading only on initial auth check
-  if (!isAuthChecked || (isLoading && !providerData)) {
+  if (!isAuthChecked || facilityLoading || (isLoading && !providerData)) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center animate-fade-in">
@@ -97,7 +99,7 @@ export function ProviderShell() {
   }
 
   const profile = providerData?.profile;
-  const facility = providerData?.facility;
+  const facility = selectedFacility || providerData?.facility;
   const viewsCount = providerData?.viewsCount ?? 0;
   const leadsCount = providerData?.leadsCount ?? 0;
 
@@ -181,5 +183,14 @@ export function ProviderShell() {
         </main>
       </div>
     </div>
+  );
+}
+
+// Wrap with provider
+export function ProviderShell() {
+  return (
+    <SelectedFacilityProvider>
+      <ProviderShellContent />
+    </SelectedFacilityProvider>
   );
 }
