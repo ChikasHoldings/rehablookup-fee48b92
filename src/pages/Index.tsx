@@ -492,10 +492,10 @@ const Index = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 md:py-24">
+      <section className="py-20 md:py-24 bg-gradient-to-b from-background to-muted/20">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-12 text-center">
+          <div className="mb-14 text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
               <Quote className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-accent">Testimonials</span>
@@ -509,35 +509,44 @@ const Index = () => {
           </div>
 
           {/* Testimonials Grid */}
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-3">
             {testimonials.map((testimonial, index) => (
               <div
                 key={testimonial.name}
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
-                  {/* Quote Icon */}
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
-                    <Quote className="h-5 w-5 text-accent" />
+                <div className="relative h-full rounded-2xl border border-border bg-card p-8 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
+                  {/* Large decorative quote */}
+                  <div className="absolute -top-4 left-6">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 shadow-lg ring-4 ring-background">
+                      <Quote className="h-5 w-5 text-accent-foreground" />
+                    </div>
                   </div>
                   
                   {/* Rating */}
-                  <div className="mb-4 flex gap-1">
+                  <div className="mt-4 mb-5 flex gap-0.5">
                     {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-accent text-accent" />
+                      <Star key={i} className="h-5 w-5 fill-accent text-accent" />
                     ))}
                   </div>
                   
                   {/* Quote */}
-                  <p className="mb-6 text-foreground leading-relaxed">
-                    "{testimonial.quote}"
-                  </p>
+                  <blockquote className="mb-6">
+                    <p className="text-foreground leading-relaxed italic">
+                      "{testimonial.quote}"
+                    </p>
+                  </blockquote>
                   
                   {/* Author */}
-                  <div className="mt-auto">
-                    <p className="font-semibold text-foreground">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.location}</p>
+                  <div className="flex items-center gap-3 pt-4 border-t border-border">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      {testimonial.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">{testimonial.name}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.location}</p>
+                    </div>
                   </div>
                 </div>
               </div>
