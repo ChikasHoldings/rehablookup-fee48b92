@@ -5,6 +5,8 @@ interface Profile {
   first_name: string;
   last_name: string;
   email: string;
+  phone: string | null;
+  job_title: string | null;
 }
 
 interface Facility {
@@ -37,7 +39,7 @@ export function useProviderData() {
       // Fetch profile
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("first_name, last_name, email")
+        .select("first_name, last_name, email, phone, job_title")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
