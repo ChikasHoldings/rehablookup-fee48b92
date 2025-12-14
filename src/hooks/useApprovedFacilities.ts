@@ -13,6 +13,8 @@ interface FacilityWithRelations {
   phone: string;
   description: string | null;
   featured: boolean;
+  logo_url: string | null;
+  gallery_urls: string[] | null;
   facility_services: { service_name: string }[];
   facility_insurance: { insurance_name: string }[];
 }
@@ -20,6 +22,8 @@ interface FacilityWithRelations {
 export interface ApprovedFacility extends TreatmentCenter {
   slug: string | null;
   isFromDatabase: boolean;
+  logo_url: string | null;
+  gallery_urls: string[] | null;
 }
 
 export const useApprovedFacilities = () => {
@@ -39,6 +43,8 @@ export const useApprovedFacilities = () => {
           phone,
           description,
           featured,
+          logo_url,
+          gallery_urls,
           facility_services (service_name),
           facility_insurance (insurance_name)
         `)
@@ -66,6 +72,8 @@ export const useApprovedFacilities = () => {
         amenities: [],
         image: "/placeholder.svg",
         isFromDatabase: true,
+        logo_url: facility.logo_url,
+        gallery_urls: facility.gallery_urls,
       }));
     },
   });
