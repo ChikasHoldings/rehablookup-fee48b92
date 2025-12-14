@@ -1,78 +1,9 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { Heart, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 
 export function Footer() {
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    // Simulate API call - replace with actual backend integration
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Subscribed!",
-      description: "Thank you for subscribing to our newsletter.",
-    });
-    
-    setEmail("");
-    setIsSubmitting(false);
-  };
-
   return (
     <footer className="border-t border-border bg-primary text-primary-foreground">
-      {/* Newsletter Section */}
-      <div className="border-b border-primary-foreground/10">
-        <div className="container py-10">
-          <div className="mx-auto max-w-2xl text-center">
-            <h3 className="mb-2 font-display text-xl font-semibold text-primary-foreground">
-              Stay Informed
-            </h3>
-            <p className="mb-6 text-sm text-primary-foreground/70">
-              Get the latest resources, guides, and updates on addiction recovery delivered to your inbox.
-            </p>
-            <form onSubmit={handleNewsletterSubmit} className="flex flex-col gap-3 sm:flex-row sm:gap-2">
-              <Input
-                type="email"
-                placeholder="Enter your email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-11 flex-1 border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/50 focus-visible:ring-accent"
-                required
-              />
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="h-11 gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                {isSubmitting ? "Subscribing..." : "Subscribe"}
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-            <p className="mt-3 text-xs text-primary-foreground/50">
-              We respect your privacy. Unsubscribe at any time.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="container py-12 md:py-16">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand & Social */}
