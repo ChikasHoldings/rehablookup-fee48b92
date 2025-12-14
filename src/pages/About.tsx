@@ -52,10 +52,10 @@ const About = () => {
               <Heart className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Our Story</span>
             </div>
-            <h1 className="mb-4 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               About RehabLookup
             </h1>
-            <p className="text-lg text-primary-foreground/80">
+            <p className="text-base text-primary-foreground/80">
               We're on a mission to connect families with trusted addiction treatment 
               centers through transparency, compassion, and verified information.
             </p>
@@ -92,7 +92,7 @@ const About = () => {
                 <Eye className="h-4 w-4 text-accent" />
                 <span className="text-sm font-medium text-accent">Who We Are</span>
               </div>
-              <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl">
+              <h2 className="mb-5 font-display text-xl font-bold text-foreground md:text-2xl">
                 A Directory You Can Trust
               </h2>
               <div className="space-y-4 text-muted-foreground">
@@ -138,7 +138,7 @@ const About = () => {
               <Target className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Our Mission</span>
             </div>
-            <h2 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
+            <h2 className="mb-5 font-display text-xl font-bold text-primary-foreground md:text-2xl">
               Making Treatment Accessible
             </h2>
             <p className="text-primary-foreground/80">
@@ -159,7 +159,7 @@ const About = () => {
               <Lightbulb className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-accent">Our Values</span>
             </div>
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
               What Guides Us
             </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
@@ -217,7 +217,7 @@ const About = () => {
       {/* CTA - Navy background */}
       <section className="bg-primary py-16">
         <div className="container text-center">
-          <h2 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
+          <h2 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl">
             Ready to Find Treatment?
           </h2>
           <p className="mb-6 text-primary-foreground/80">

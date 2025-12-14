@@ -196,10 +196,10 @@ const RehabCenters = () => {
                 <CheckCircle className="h-4 w-4" />
                 Verified Treatment Centers
               </div>
-              <h1 className="font-display text-3xl font-bold tracking-tight text-primary-foreground md:text-4xl lg:text-5xl">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-primary-foreground md:text-3xl lg:text-4xl">
                 Find Your Path to Recovery
               </h1>
-              <p className="mt-3 text-lg text-primary-foreground/80">
+              <p className="mt-3 text-base text-primary-foreground/80">
                 {hasFilters ? (
                   <>
                     Showing <span className="font-semibold text-primary-foreground">{filteredCenters.length}</span> results

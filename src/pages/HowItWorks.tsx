@@ -87,10 +87,10 @@ const HowItWorks = () => {
             <CheckCircle className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium text-primary-foreground">Simple Process</span>
           </div>
-          <h1 className="mb-3 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+          <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             How It Works
           </h1>
-          <p className="text-primary-foreground/80 max-w-2xl mx-auto">
+          <p className="text-base text-primary-foreground/80 max-w-2xl mx-auto">
             Finding the right addiction treatment center is simple, confidential, and free. Here's how we help.
           </p>
         </div>
@@ -135,7 +135,7 @@ const HowItWorks = () => {
                     </div>
                     <span className="text-sm font-medium text-accent uppercase tracking-wide">Step {step.step}</span>
                   </div>
-                  <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
+                  <h2 className="mb-4 font-display text-xl font-bold text-foreground md:text-2xl">
                     {step.title}
                   </h2>
                   <p className="mb-6 text-muted-foreground leading-relaxed">
@@ -173,7 +173,7 @@ const HowItWorks = () => {
               <Star className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Why Choose Us</span>
             </div>
-            <h2 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl">
               The RehabLookup Difference
             </h2>
             <p className="text-primary-foreground/80 max-w-xl mx-auto">
@@ -207,7 +207,7 @@ const HowItWorks = () => {
       <section className="py-16 md:py-20">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
               Ready to Get Started?
             </h2>
             <p className="mb-6 text-muted-foreground max-w-xl mx-auto">
