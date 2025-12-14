@@ -7,22 +7,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration with lead limits
-const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number; name: string }> = {
-  free: {
+// Plan configuration with lead limits - matches new pricing structure
+const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number; name: string; featured: boolean }> = {
+  basic: {
     product_id: null,
-    lead_limit: 5,
-    name: "Free Trial",
+    lead_limit: 0,
+    name: "Basic Listing",
+    featured: false,
   },
   professional: {
-    product_id: "prod_TbaMy3tA8gNlTk",
-    lead_limit: 75,
+    product_id: "prod_TbalLOPujTIoUe",
+    lead_limit: 25,
     name: "Professional",
+    featured: false,
   },
-  enterprise: {
-    product_id: "prod_TbaN67Fyjmfhgo",
-    lead_limit: 999999, // Unlimited
-    name: "Enterprise",
+  featured: {
+    product_id: "prod_TbalOeJZA2ZoJl",
+    lead_limit: 75,
+    name: "Featured",
+    featured: true,
   },
 };
 
@@ -64,14 +67,15 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
     if (customers.data.length === 0) {
-      logStep("No Stripe customer found, returning free plan");
+      logStep("No Stripe customer found, returning basic plan");
       return new Response(
         JSON.stringify({
           subscribed: false,
-          plan: "free",
-          plan_name: PLAN_CONFIG.free.name,
-          lead_limit: PLAN_CONFIG.free.lead_limit,
+          plan: "basic",
+          plan_name: PLAN_CONFIG.basic.name,
+          lead_limit: PLAN_CONFIG.basic.lead_limit,
           subscription_end: null,
+          is_featured: false,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -90,14 +94,15 @@ serve(async (req) => {
     });
 
     if (subscriptions.data.length === 0) {
-      logStep("No active subscription found, returning free plan");
+      logStep("No active subscription found, returning basic plan");
       return new Response(
         JSON.stringify({
           subscribed: false,
-          plan: "free",
-          plan_name: PLAN_CONFIG.free.name,
-          lead_limit: PLAN_CONFIG.free.lead_limit,
+          plan: "basic",
+          plan_name: PLAN_CONFIG.basic.name,
+          lead_limit: PLAN_CONFIG.basic.lead_limit,
           subscription_end: null,
+          is_featured: false,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -112,18 +117,18 @@ serve(async (req) => {
     logStep("Active subscription found", { subscriptionId: subscription.id, productId, endDate: subscriptionEnd });
 
     // Determine plan based on product ID
-    let plan = "free";
-    let planConfig = PLAN_CONFIG.free;
+    let plan = "basic";
+    let planConfig = PLAN_CONFIG.basic;
 
     if (productId === PLAN_CONFIG.professional.product_id) {
       plan = "professional";
       planConfig = PLAN_CONFIG.professional;
-    } else if (productId === PLAN_CONFIG.enterprise.product_id) {
-      plan = "enterprise";
-      planConfig = PLAN_CONFIG.enterprise;
+    } else if (productId === PLAN_CONFIG.featured.product_id) {
+      plan = "featured";
+      planConfig = PLAN_CONFIG.featured;
     }
 
-    logStep("Determined plan", { plan, leadLimit: planConfig.lead_limit });
+    logStep("Determined plan", { plan, leadLimit: planConfig.lead_limit, featured: planConfig.featured });
 
     return new Response(
       JSON.stringify({
@@ -133,6 +138,7 @@ serve(async (req) => {
         lead_limit: planConfig.lead_limit,
         subscription_end: subscriptionEnd,
         product_id: productId,
+        is_featured: planConfig.featured,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

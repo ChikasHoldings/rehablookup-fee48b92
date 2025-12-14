@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface SubscriptionData {
   subscribed: boolean;
-  plan: "free" | "professional" | "enterprise";
+  plan: "basic" | "professional" | "featured";
   plan_name: string;
   lead_limit: number;
   subscription_end: string | null;
@@ -12,9 +12,9 @@ export interface SubscriptionData {
 
 const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   subscribed: false,
-  plan: "free",
-  plan_name: "Free Trial",
-  lead_limit: 5,
+  plan: "basic",
+  plan_name: "Basic Listing",
+  lead_limit: 0,
   subscription_end: null,
 };
 
@@ -44,49 +44,53 @@ export function useSubscription() {
 }
 
 export const PLAN_DETAILS = {
-  free: {
-    name: "Free Trial",
+  basic: {
+    name: "Basic Listing",
     price: "$0",
     period: "/month",
-    description: "Get started with basic features",
-    lead_limit: 5,
+    description: "Public profile with no lead delivery",
+    lead_limit: 0,
+    featured: false,
     features: [
-      "Basic listing",
-      "Up to 5 leads/month",
-      "Email support",
+      "Public profile listing",
+      "Logo and gallery upload",
+      "Basic search visibility",
+      "0 leads/month",
     ],
   },
   professional: {
     name: "Professional",
-    price: "$99",
+    price: "$349",
     period: "/month",
-    description: "Everything you need to grow",
-    lead_limit: 75,
+    description: "Start receiving qualified leads",
+    lead_limit: 25,
+    featured: false,
     features: [
-      "Featured listing",
-      "Up to 75 leads/month",
-      "Priority support",
-      "Analytics dashboard",
-      "Lead notifications",
+      "Up to 25 leads/month",
+      "Standard search placement",
+      "Email lead notifications",
+      "Lead management dashboard",
+      "Analytics & insights",
     ],
-    price_id: "price_1SeNBt9fxdThyiakUrYBFpFE",
-    product_id: "prod_TbaMy3tA8gNlTk",
+    price_id: "price_1SeNZz9fxdThyiakUJKysCFz",
+    product_id: "prod_TbalLOPujTIoUe",
   },
-  enterprise: {
-    name: "Enterprise",
-    price: "$249",
+  featured: {
+    name: "Featured",
+    price: "$899",
     period: "/month",
-    description: "For large treatment centers",
-    lead_limit: 999999,
+    description: "Maximum visibility & lead volume",
+    lead_limit: 75,
+    featured: true,
     features: [
-      "Multiple listings",
-      "Unlimited leads",
-      "Dedicated support",
-      "Advanced analytics",
-      "API access",
-      "Custom integrations",
+      "Up to 75 leads/month",
+      "Homepage featured section",
+      "Priority search placement",
+      "Gold Featured badge",
+      "Priority email support",
+      "All Professional features",
     ],
-    price_id: "price_1SeND19fxdThyiaktubejVtz",
-    product_id: "prod_TbaN67Fyjmfhgo",
+    price_id: "price_1SeNaD9fxdThyiakNFokIAVC",
+    product_id: "prod_TbalOeJZA2ZoJl",
   },
 };

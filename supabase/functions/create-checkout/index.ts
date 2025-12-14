@@ -7,10 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Price IDs for subscription plans
+// Price IDs for subscription plans - new pricing structure
 const PRICE_IDS = {
-  professional: "price_1SeNBt9fxdThyiakUrYBFpFE",
-  enterprise: "price_1SeND19fxdThyiaktubejVtz",
+  professional: "price_1SeNZz9fxdThyiakUJKysCFz", // $349/mo, 25 leads
+  featured: "price_1SeNaD9fxdThyiakNFokIAVC", // $899/mo, 75 leads
 };
 
 const logStep = (step: string, details?: unknown) => {
@@ -35,7 +35,7 @@ serve(async (req) => {
     logStep("Requested plan", { plan });
 
     if (!plan || !PRICE_IDS[plan as keyof typeof PRICE_IDS]) {
-      throw new Error("Invalid plan selected");
+      throw new Error("Invalid plan selected. Available plans: professional, featured");
     }
 
     const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
@@ -80,6 +80,12 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         plan: plan,
+      },
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          plan: plan,
+        },
       },
     });
 

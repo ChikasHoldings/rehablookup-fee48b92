@@ -1,20 +1,36 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CreditCard, Check, ArrowRight, Sparkles, Clock, FileText, Zap, Loader2, ExternalLink } from "lucide-react";
+import { 
+  CreditCard, 
+  Check, 
+  ArrowRight, 
+  Clock, 
+  FileText, 
+  Loader2, 
+  ExternalLink,
+  Star,
+  TrendingUp,
+  Users,
+  Crown,
+  Zap
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { Progress } from "@/components/ui/progress";
 
 export default function ProviderBillingPage() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: subscription, isLoading: subscriptionLoading, refetch } = useSubscription();
+  const { data: providerData } = useProviderData();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
 
@@ -23,9 +39,8 @@ export default function ProviderBillingPage() {
     if (searchParams.get("success") === "true") {
       toast({
         title: "Subscription Activated!",
-        description: "Your plan has been upgraded successfully. Welcome to the team!",
+        description: "Your plan has been upgraded successfully. Welcome aboard!",
       });
-      // Refresh subscription status
       refetch();
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
     } else if (searchParams.get("canceled") === "true") {
@@ -37,7 +52,7 @@ export default function ProviderBillingPage() {
     }
   }, [searchParams, toast, refetch, queryClient]);
 
-  const handleCheckout = async (plan: "professional" | "enterprise") => {
+  const handleCheckout = async (plan: "professional" | "featured") => {
     setCheckoutLoading(plan);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
@@ -81,63 +96,90 @@ export default function ProviderBillingPage() {
     }
   };
 
-  const currentPlan = subscription?.plan || "free";
+  const currentPlan = subscription?.plan || "basic";
   const isSubscribed = subscription?.subscribed || false;
+  const leadLimit = subscription?.lead_limit || 0;
+  const usedLeads = providerData?.monthlyLeadsCount || 0;
+  const leadUsagePercent = leadLimit > 0 ? Math.min((usedLeads / leadLimit) * 100, 100) : 0;
 
   const plans = [
-    { key: "free" as const, ...PLAN_DETAILS.free, current: currentPlan === "free", recommended: false },
-    { key: "professional" as const, ...PLAN_DETAILS.professional, current: currentPlan === "professional", recommended: true },
-    { key: "enterprise" as const, ...PLAN_DETAILS.enterprise, current: currentPlan === "enterprise", recommended: false },
+    { 
+      key: "basic" as const, 
+      ...PLAN_DETAILS.basic, 
+      current: currentPlan === "basic", 
+      icon: Users,
+      highlight: false 
+    },
+    { 
+      key: "professional" as const, 
+      ...PLAN_DETAILS.professional, 
+      current: currentPlan === "professional", 
+      icon: TrendingUp,
+      highlight: currentPlan === "basic"
+    },
+    { 
+      key: "featured" as const, 
+      ...PLAN_DETAILS.featured, 
+      current: currentPlan === "featured", 
+      icon: Crown,
+      highlight: currentPlan === "professional"
+    },
   ];
+
+  const getStatusBadge = () => {
+    if (!isSubscribed) {
+      return <Badge variant="secondary" className="bg-muted text-muted-foreground">Free Plan</Badge>;
+    }
+    return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Active</Badge>;
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Page Header */}
       <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Billing</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">Billing & Subscription</h1>
         <p className="text-muted-foreground mt-1">
-          Manage your subscription and billing information
+          Manage your subscription plan and billing
         </p>
       </div>
 
-      {/* Current Plan */}
-      <Card className="shadow-sm overflow-hidden">
-        <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-6 md:p-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      {/* Current Plan Summary */}
+      <Card className="overflow-hidden border-0 shadow-lg">
+        <div className="bg-gradient-to-br from-primary via-primary to-primary/80 p-6 md:p-8 text-primary-foreground">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <CreditCard className="h-6 w-6 text-primary" />
+              <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center">
+                {currentPlan === "featured" ? (
+                  <Crown className="h-7 w-7" />
+                ) : currentPlan === "professional" ? (
+                  <TrendingUp className="h-7 w-7" />
+                ) : (
+                  <CreditCard className="h-7 w-7" />
+                )}
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-bold text-foreground">
-                    {subscriptionLoading ? "Loading..." : subscription?.plan_name || "Free Trial"}
-                  </h3>
-                  <Badge className={isSubscribed ? "bg-green-100 text-green-700 border-green-200" : "bg-amber-100 text-amber-700 border-amber-200"}>
-                    {isSubscribed ? "Active" : "Trial"}
-                  </Badge>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-bold">
+                    {subscriptionLoading ? "Loading..." : subscription?.plan_name || "Basic Listing"}
+                  </h2>
+                  {getStatusBadge()}
                 </div>
-                <div className="flex items-center gap-2 mt-1.5 text-muted-foreground">
+                <div className="flex items-center gap-2 mt-2 text-primary-foreground/80">
                   <Clock className="h-4 w-4" />
                   {isSubscribed && subscription?.subscription_end ? (
-                    <span>Renews on {format(new Date(subscription.subscription_end), "MMMM d, yyyy")}</span>
+                    <span>Renews {format(new Date(subscription.subscription_end), "MMMM d, yyyy")}</span>
                   ) : (
-                    <span>Upgrade to unlock more leads</span>
+                    <span>Upgrade to start receiving leads</span>
                   )}
-                </div>
-                <div className="mt-2">
-                  <span className="text-sm text-muted-foreground">
-                    Lead limit: <span className="font-semibold text-foreground">
-                      {subscription?.lead_limit === 999999 ? "Unlimited" : `${subscription?.lead_limit || 5} / month`}
-                    </span>
-                  </span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-3">
+            
+            <div className="flex flex-wrap gap-3">
               {isSubscribed && (
                 <Button 
-                  variant="outline" 
+                  variant="secondary"
+                  className="bg-white/10 hover:bg-white/20 text-primary-foreground border-white/20"
                   onClick={handleManageSubscription}
                   disabled={portalLoading}
                 >
@@ -146,109 +188,175 @@ export default function ProviderBillingPage() {
                   ) : (
                     <ExternalLink className="h-4 w-4 mr-2" />
                   )}
-                  Manage Subscription
+                  Manage Billing
                 </Button>
               )}
-              {!isSubscribed && (
+              {currentPlan !== "featured" && (
                 <Button 
-                  className="gap-2"
-                  onClick={() => handleCheckout("professional")}
-                  disabled={checkoutLoading === "professional"}
+                  variant="secondary"
+                  className="bg-white text-primary hover:bg-white/90"
+                  onClick={() => handleCheckout(currentPlan === "basic" ? "professional" : "featured")}
+                  disabled={checkoutLoading !== null}
                 >
-                  {checkoutLoading === "professional" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                  {checkoutLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
-                    <Zap className="h-4 w-4" />
+                    <Zap className="h-4 w-4 mr-2" />
                   )}
                   Upgrade Plan
                 </Button>
               )}
             </div>
           </div>
+
+          {/* Lead Usage */}
+          {leadLimit > 0 && (
+            <div className="mt-6 p-4 bg-white/10 backdrop-blur rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Monthly Lead Usage</span>
+                <span className="text-sm">
+                  <span className="font-bold">{usedLeads}</span> / {leadLimit} leads
+                </span>
+              </div>
+              <Progress value={leadUsagePercent} className="h-2 bg-white/20" />
+              {leadUsagePercent >= 80 && leadUsagePercent < 100 && (
+                <p className="text-xs mt-2 text-amber-200">
+                  You're approaching your monthly lead limit. Consider upgrading for more leads.
+                </p>
+              )}
+              {leadUsagePercent >= 100 && (
+                <p className="text-xs mt-2 text-red-200 font-medium">
+                  Monthly lead limit reached. Upgrade to continue receiving leads.
+                </p>
+              )}
+            </div>
+          )}
+
+          {leadLimit === 0 && (
+            <div className="mt-6 p-4 bg-white/10 backdrop-blur rounded-xl">
+              <p className="text-sm text-primary-foreground/80">
+                <Star className="h-4 w-4 inline mr-1.5" />
+                Your listing is live but you're not receiving leads. Upgrade to start getting qualified leads.
+              </p>
+            </div>
+          )}
         </div>
       </Card>
 
-      {/* Plans */}
+      {/* Plans Grid */}
       <div>
-        <div className="flex items-center gap-2 mb-5">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-xl font-semibold text-foreground">
-            Available Plans
-          </h2>
-        </div>
+        <h2 className="font-display text-xl font-semibold text-foreground mb-5">
+          Choose Your Plan
+        </h2>
         <div className="grid gap-5 md:grid-cols-3">
-          {plans.map((plan) => (
-            <Card 
-              key={plan.key} 
-              className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
-                plan.current 
-                  ? "border-green-500 ring-1 ring-green-500 shadow-md"
-                  : plan.recommended 
-                    ? "border-primary ring-1 ring-primary shadow-md" 
-                    : "hover:border-primary/30"
-              }`}
-            >
-              {plan.current && (
-                <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-medium px-3 py-1 rounded-bl-lg">
-                  Your Plan
-                </div>
-              )}
-              {!plan.current && plan.recommended && (
-                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-bl-lg">
-                  Recommended
-                </div>
-              )}
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold">{plan.price}</span>
-                  <span className="text-base font-normal text-muted-foreground">
-                    {plan.period}
-                  </span>
-                </CardTitle>
-                <CardDescription className="pt-2">
-                  <span className="font-semibold text-foreground text-lg">{plan.name}</span>
-                  <br />
-                  <span className="text-sm">{plan.description}</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                <ul className="space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-sm">
-                      <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <Check className="h-3 w-3 text-primary" />
-                      </div>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                {plan.current ? (
-                  <Button variant="secondary" className="w-full" disabled>
+          {plans.map((plan) => {
+            const Icon = plan.icon;
+            return (
+              <Card 
+                key={plan.key} 
+                className={`relative overflow-hidden transition-all duration-300 ${
+                  plan.current 
+                    ? "border-primary ring-2 ring-primary shadow-lg"
+                    : plan.highlight 
+                      ? "border-primary/50 shadow-md hover:shadow-lg hover:border-primary" 
+                      : "hover:shadow-md hover:border-border"
+                }`}
+              >
+                {plan.current && (
+                  <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-xs font-semibold text-center py-1.5">
                     Current Plan
-                  </Button>
-                ) : plan.key === "free" ? (
-                  <Button variant="outline" className="w-full" disabled>
-                    Free Tier
-                  </Button>
-                ) : (
-                  <Button 
-                    variant={plan.recommended ? "default" : "outline"} 
-                    className="w-full group"
-                    onClick={() => handleCheckout(plan.key)}
-                    disabled={checkoutLoading === plan.key}
-                  >
-                    {checkoutLoading === plan.key ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    {plan.recommended ? "Upgrade Now" : "Select Plan"}
-                    {!checkoutLoading && (
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    )}
-                  </Button>
+                  </div>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+                {!plan.current && plan.key === "featured" && (
+                  <div className="absolute top-0 left-0 right-0 bg-amber-500 text-white text-xs font-semibold text-center py-1.5">
+                    <Star className="h-3 w-3 inline mr-1" />
+                    Most Popular
+                  </div>
+                )}
+                
+                <CardHeader className={`pb-4 ${plan.current || plan.key === "featured" ? "pt-10" : ""}`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                      plan.key === "featured" 
+                        ? "bg-amber-100 text-amber-600" 
+                        : plan.key === "professional"
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground"
+                    }`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-lg">{plan.name}</CardTitle>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                    <span className="text-muted-foreground">{plan.period}</span>
+                  </div>
+                  <CardDescription className="mt-2">
+                    {plan.description}
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent className="space-y-5">
+                  <div className={`text-sm font-semibold px-3 py-2 rounded-lg ${
+                    plan.key === "featured"
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : plan.key === "professional"
+                        ? "bg-primary/5 text-primary border border-primary/20"
+                        : "bg-muted text-muted-foreground"
+                  }`}>
+                    {plan.lead_limit === 0 
+                      ? "No leads included" 
+                      : `Up to ${plan.lead_limit} leads/month`
+                    }
+                  </div>
+                  
+                  <ul className="space-y-2.5">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2.5 text-sm">
+                        <div className={`h-5 w-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                          plan.key === "featured"
+                            ? "bg-amber-100 text-amber-600"
+                            : "bg-primary/10 text-primary"
+                        }`}>
+                          <Check className="h-3 w-3" />
+                        </div>
+                        <span className="text-muted-foreground">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  {plan.current ? (
+                    <Button variant="secondary" className="w-full" disabled>
+                      Current Plan
+                    </Button>
+                  ) : plan.key === "basic" ? (
+                    <Button variant="outline" className="w-full" disabled>
+                      Free Tier
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant={plan.key === "featured" ? "default" : "outline"} 
+                      className={`w-full group ${
+                        plan.key === "featured" 
+                          ? "bg-amber-500 hover:bg-amber-600 text-white" 
+                          : ""
+                      }`}
+                      onClick={() => handleCheckout(plan.key)}
+                      disabled={checkoutLoading === plan.key}
+                    >
+                      {checkoutLoading === plan.key ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      {currentPlan === "basic" ? "Get Started" : "Upgrade"}
+                      {!checkoutLoading && (
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      )}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
@@ -261,27 +369,27 @@ export default function ProviderBillingPage() {
             </div>
             <div>
               <CardTitle>Billing History</CardTitle>
-              <CardDescription>View your past invoices and payments</CardDescription>
+              <CardDescription>View invoices and payment history</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {isSubscribed ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">Manage your invoices and payment history in the billing portal.</p>
+            <div className="text-center py-10">
+              <p className="text-muted-foreground mb-4">Access your invoices and payment history in the billing portal.</p>
               <Button variant="outline" onClick={handleManageSubscription} disabled={portalLoading}>
-                {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                View Billing History
+                {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
+                View Billing Portal
               </Button>
             </div>
           ) : (
-            <div className="text-center py-16">
-              <div className="h-14 w-14 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-                <FileText className="h-7 w-7 text-muted-foreground/40" />
+            <div className="text-center py-14">
+              <div className="h-12 w-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <FileText className="h-6 w-6 text-muted-foreground/40" />
               </div>
               <p className="text-muted-foreground">No billing history yet</p>
               <p className="text-sm text-muted-foreground/70 mt-1">
-                Your invoices will appear here after your first payment
+                Invoices will appear here after your first payment
               </p>
             </div>
           )}
