@@ -106,7 +106,7 @@ export default function ProviderLogin() {
           <div className="space-y-4 pt-4 border-t border-border">
             <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <Link to="/for-providers" className="text-primary hover:underline font-medium">
+              <Link to="/provider-signup" className="text-primary hover:underline font-medium">
                 List your facility
               </Link>
             </p>
