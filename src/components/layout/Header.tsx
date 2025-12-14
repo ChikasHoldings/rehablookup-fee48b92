@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Heart } from "lucide-react";
+import { Menu, X, Heart, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface NavLink {
   href: string;
@@ -30,7 +31,30 @@ export function Header({
   variant = "default"
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (variant === "provider") {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setIsLoggedIn(!!session);
+      });
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          setIsLoggedIn(!!session);
+        }
+      );
+
+      return () => subscription.unsubscribe();
+    }
+  }, [variant]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/provider-login");
+  };
 
   return (
     <header className="z-50 w-full border-b border-border bg-card shadow-sm">
@@ -68,11 +92,41 @@ export function Header({
 
         {/* CTA & Mobile Toggle */}
         <div className="flex items-center gap-2">
-          <Link to={ctaLink} className="hidden sm:block">
-            <Button size="sm" className="shadow-sm">
-              {ctaLabel}
-            </Button>
-          </Link>
+          {variant === "provider" ? (
+            <>
+              {/* Provider CTAs - both List Facility and Login/Logout */}
+              <Link to="/provider-signup" className="hidden sm:block">
+                <Button size="sm" variant="outline" className="shadow-sm">
+                  List Your Facility
+                </Button>
+              </Link>
+              {isLoggedIn ? (
+                <div className="hidden sm:flex items-center gap-2">
+                  <Link to="/provider-dashboard">
+                    <Button size="sm" variant="ghost">
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button size="sm" variant="secondary" onClick={handleLogout} className="gap-1.5">
+                    <LogOut className="h-3.5 w-3.5" />
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <Link to="/provider-login" className="hidden sm:block">
+                  <Button size="sm" className="shadow-sm">
+                    Provider Login
+                  </Button>
+                </Link>
+              )}
+            </>
+          ) : (
+            <Link to={ctaLink} className="hidden sm:block">
+              <Button size="sm" className="shadow-sm">
+                {ctaLabel}
+              </Button>
+            </Link>
+          )}
           <button
             className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground hover:bg-secondary md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -102,12 +156,48 @@ export function Header({
                 {link.label}
               </Link>
             ))}
-            <div className="mt-4 border-t border-border pt-4">
-              <Link to={ctaLink} onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full">
-                  {ctaLabel}
-                </Button>
-              </Link>
+            <div className="mt-4 border-t border-border pt-4 space-y-2">
+              {variant === "provider" ? (
+                <>
+                  <Link to="/provider-signup" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      List Your Facility
+                    </Button>
+                  </Link>
+                  {isLoggedIn ? (
+                    <>
+                      <Link to="/provider-dashboard" onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="secondary" className="w-full">
+                          Dashboard
+                        </Button>
+                      </Link>
+                      <Button 
+                        variant="ghost" 
+                        className="w-full gap-2" 
+                        onClick={() => {
+                          handleLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </Button>
+                    </>
+                  ) : (
+                    <Link to="/provider-login" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full">
+                        Provider Login
+                      </Button>
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <Link to={ctaLink} onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="w-full">
+                    {ctaLabel}
+                  </Button>
+                </Link>
+              )}
             </div>
           </nav>
         </div>
