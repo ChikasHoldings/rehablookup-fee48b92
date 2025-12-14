@@ -29,9 +29,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import logo from "@/assets/logo.png";
 import { useProviderNotifications } from "@/hooks/useProviderNotifications";
+import { ProviderSearchCommand } from "./ProviderSearchCommand";
 
 interface ProviderHeaderProps {
   facilityName?: string;
@@ -52,8 +52,7 @@ const notificationIcons: Record<string, React.ReactNode> = {
 };
 
 export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   
   const { notifications, unreadCount, markAsRead, isLoading } = useProviderNotifications();
@@ -71,7 +70,6 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
       markAsRead(notification.id);
     }
     
-    // Navigate based on notification type
     if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
       navigate("/provider/leads");
     } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
@@ -82,8 +80,8 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   };
 
   return (
-    <header className="sticky top-0 z-50 h-16 bg-primary border-b border-white/10 shadow-md">
-      <div className="h-full max-w-[1800px] mx-auto px-4 md:px-6 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
+      <div className="h-16 max-w-[1800px] mx-auto px-4 md:px-6 flex items-center justify-between gap-4">
         {/* Left - Logo & Facility Selector */}
         <div className="flex items-center gap-6 min-w-0">
           <Link 
@@ -98,10 +96,8 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             />
           </Link>
           
-          {/* Divider */}
           <div className="hidden md:block h-8 w-px bg-white/30" />
           
-          {/* Facility Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -158,29 +154,20 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
         </div>
 
         {/* Center - Search (Desktop) */}
-        <div className="hidden lg:flex flex-1 max-w-sm">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
-            <Input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-9 pl-9 pr-4 bg-white/10 border-white/20 text-white text-sm placeholder:text-white/50 focus:bg-white/15 focus:border-white/30 rounded-lg"
-            />
-          </div>
+        <div className="hidden lg:flex flex-1 max-w-md">
+          <ProviderSearchCommand facilityId={facilityId} />
         </div>
 
         {/* Right - Actions */}
         <div className="flex items-center gap-1">
-          {/* Mobile Search */}
+          {/* Mobile Search Toggle */}
           <Button
             variant="ghost"
             size="icon"
             className="lg:hidden h-9 w-9 text-white hover:text-white hover:bg-white/15"
-            onClick={() => setSearchOpen(!searchOpen)}
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
           >
-            {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+            {mobileSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
           </Button>
 
           {/* View Listing */}
@@ -274,7 +261,6 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Divider */}
           <div className="hidden sm:block h-6 w-px bg-white/25 mx-1" />
 
           {/* Account */}
@@ -337,19 +323,13 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
       </div>
 
       {/* Mobile Search Expanded */}
-      {searchOpen && (
+      {mobileSearchOpen && (
         <div className="lg:hidden px-4 pb-3 bg-primary border-t border-white/10 animate-fade-in">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
-            <Input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-9 pl-9 pr-4 bg-white/10 border-white/20 text-white text-sm placeholder:text-white/50 rounded-lg"
-              autoFocus
-            />
-          </div>
+          <ProviderSearchCommand 
+            facilityId={facilityId} 
+            onClose={() => setMobileSearchOpen(false)} 
+            variant="header"
+          />
         </div>
       )}
     </header>
