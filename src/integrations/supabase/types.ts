@@ -460,6 +460,7 @@ export type Database = {
           email_product_updates: boolean
           email_weekly_digest: boolean
           id: string
+          last_digest_sent_at: string | null
           lead_notification_frequency: string | null
           notify_facility_views: boolean | null
           notify_lead_limit_warnings: boolean | null
@@ -477,6 +478,7 @@ export type Database = {
           email_product_updates?: boolean
           email_weekly_digest?: boolean
           id?: string
+          last_digest_sent_at?: string | null
           lead_notification_frequency?: string | null
           notify_facility_views?: boolean | null
           notify_lead_limit_warnings?: boolean | null
@@ -494,6 +496,7 @@ export type Database = {
           email_product_updates?: boolean
           email_weekly_digest?: boolean
           id?: string
+          last_digest_sent_at?: string | null
           lead_notification_frequency?: string | null
           notify_facility_views?: boolean | null
           notify_lead_limit_warnings?: boolean | null
