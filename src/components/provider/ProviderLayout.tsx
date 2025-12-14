@@ -28,6 +28,7 @@ interface ProviderLayoutProps {
 export function ProviderLayout({ children }: ProviderLayoutProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [facility, setFacility] = useState<Facility | null>(null);
+  const [viewsCount, setViewsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
@@ -61,6 +62,21 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
 
       if (facilityData) {
         setFacility(facilityData);
+        
+        // Fetch view counts for last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const { data: viewsData } = await supabase
+          .from("facility_views")
+          .select("view_count")
+          .eq("facility_id", facilityData.id)
+          .gte("view_date", thirtyDaysAgo.toISOString().split('T')[0]);
+        
+        if (viewsData) {
+          const totalViews = viewsData.reduce((sum, row) => sum + row.view_count, 0);
+          setViewsCount(totalViews);
+        }
       }
 
       setIsLoading(false);
@@ -117,7 +133,7 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
         <StatsBar 
           status={facility?.status || "inactive"} 
           leadsCount={0} 
-          viewsCount={0} 
+          viewsCount={viewsCount} 
         />
       </div>
 

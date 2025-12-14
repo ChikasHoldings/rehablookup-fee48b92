@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { ContactRequestForm } from "@/components/forms/ContactRequestForm";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { treatmentCenters } from "@/data/treatmentCenters";
+import { supabase } from "@/integrations/supabase/client";
 import {
   MapPin,
   Phone,
@@ -20,7 +22,30 @@ import {
 
 const TreatmentCenterProfile = () => {
   const { id } = useParams<{ id: string }>();
-  const center = treatmentCenters.find((c) => c.id === id);
+  const [hasTrackedView, setHasTrackedView] = useState(false);
+  
+  // First try to find in static data
+  const staticCenter = treatmentCenters.find((c) => c.id === id);
+  
+  // Track view for database facilities
+  useEffect(() => {
+    const trackView = async () => {
+      if (!id || hasTrackedView || staticCenter) return;
+      
+      try {
+        await supabase.functions.invoke('track-view', {
+          body: { facility_id: id }
+        });
+        setHasTrackedView(true);
+      } catch (error) {
+        console.error('Failed to track view:', error);
+      }
+    };
+
+    trackView();
+  }, [id, hasTrackedView, staticCenter]);
+
+  const center = staticCenter;
 
   if (!center) {
     return (
