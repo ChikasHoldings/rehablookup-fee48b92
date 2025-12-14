@@ -21,8 +21,30 @@ import {
   Home,
   Activity,
   Stethoscope,
-  Sparkles
+  Sparkles,
+  Quote
 } from "lucide-react";
+
+const testimonials = [
+  {
+    name: "Sarah M.",
+    location: "California",
+    quote: "RehabLookup helped me find the perfect treatment center for my son. The process was easy and the support team was incredibly compassionate.",
+    rating: 5,
+  },
+  {
+    name: "Michael T.",
+    location: "Texas",
+    quote: "After struggling to find help for years, I finally found a facility that changed my life. Forever grateful for this resource.",
+    rating: 5,
+  },
+  {
+    name: "Jennifer K.",
+    location: "Florida",
+    quote: "The verified reviews and transparent information made all the difference. We knew exactly what to expect before making our decision.",
+    rating: 5,
+  },
+];
 
 const treatmentOptions = [
   {
@@ -361,6 +383,57 @@ const Index = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20 md:py-24">
+        <div className="container">
+          {/* Section Header */}
+          <div className="mb-12 text-center">
+            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+              Stories of Hope and Recovery
+            </h2>
+            <p className="mx-auto max-w-xl text-muted-foreground">
+              Real families share their experiences finding treatment through RehabLookup.
+            </p>
+          </div>
+
+          {/* Testimonials Grid */}
+          <div className="grid gap-6 md:grid-cols-3">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={testimonial.name}
+                className="group animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                  {/* Quote Icon */}
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <Quote className="h-5 w-5 text-primary" />
+                  </div>
+                  
+                  {/* Rating */}
+                  <div className="mb-4 flex gap-1">
+                    {Array.from({ length: testimonial.rating }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-accent text-accent" />
+                    ))}
+                  </div>
+                  
+                  {/* Quote */}
+                  <p className="mb-6 text-foreground leading-relaxed">
+                    "{testimonial.quote}"
+                  </p>
+                  
+                  {/* Author */}
+                  <div className="mt-auto">
+                    <p className="font-semibold text-foreground">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.location}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
