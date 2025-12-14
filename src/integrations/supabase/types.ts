@@ -14,7 +14,221 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      facilities: {
+        Row: {
+          address: string
+          bed_count: string | null
+          city: string
+          created_at: string
+          description: string | null
+          email: string | null
+          facility_type: string
+          gender_served: string | null
+          id: string
+          name: string
+          phone: string
+          state: string
+          status: string
+          updated_at: string
+          user_id: string
+          website: string | null
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          bed_count?: string | null
+          city: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          facility_type: string
+          gender_served?: string | null
+          id?: string
+          name: string
+          phone: string
+          state: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          bed_count?: string | null
+          city?: string
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          facility_type?: string
+          gender_served?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          state?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      facility_age_groups: {
+        Row: {
+          age_group: string
+          created_at: string
+          facility_id: string
+          id: string
+        }
+        Insert: {
+          age_group: string
+          created_at?: string
+          facility_id: string
+          id?: string
+        }
+        Update: {
+          age_group?: string
+          created_at?: string
+          facility_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_age_groups_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_credentials: {
+        Row: {
+          accreditations: string | null
+          created_at: string
+          facility_id: string
+          id: string
+          licensing_info: string | null
+        }
+        Insert: {
+          accreditations?: string | null
+          created_at?: string
+          facility_id: string
+          id?: string
+          licensing_info?: string | null
+        }
+        Update: {
+          accreditations?: string | null
+          created_at?: string
+          facility_id?: string
+          id?: string
+          licensing_info?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_credentials_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_insurance: {
+        Row: {
+          created_at: string
+          facility_id: string
+          id: string
+          insurance_name: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          id?: string
+          insurance_name: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          id?: string
+          insurance_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_insurance_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_services: {
+        Row: {
+          created_at: string
+          facility_id: string
+          id: string
+          service_name: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          id?: string
+          service_name: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          id?: string
+          service_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_services_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          job_title: string | null
+          last_name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          job_title?: string | null
+          last_name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          job_title?: string | null
+          last_name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

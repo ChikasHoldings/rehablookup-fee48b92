@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -101,6 +102,16 @@ export default function ProviderSignup() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/provider-dashboard");
+      }
+    });
+  }, [navigate]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -165,13 +176,146 @@ export default function ProviderSignup() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      toast({
-        title: "Application Submitted!",
-        description: "Our team will review your application and contact you within 2-3 business days.",
+
+    try {
+      // 1. Create the user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/provider-dashboard`,
+        },
       });
+
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          toast({
+            title: "Account Exists",
+            description: "An account with this email already exists. Please sign in instead.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Signup Failed",
+            description: authError.message,
+            variant: "destructive",
+          });
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!authData.user) {
+        toast({
+          title: "Signup Failed",
+          description: "Unable to create account. Please try again.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const userId = authData.user.id;
+
+      // 2. Create profile
+      const { error: profileError } = await supabase.from("profiles").insert({
+        user_id: userId,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        job_title: formData.jobTitle,
+      });
+
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+      }
+
+      // 3. Create facility
+      const { data: facilityData, error: facilityError } = await supabase
+        .from("facilities")
+        .insert({
+          user_id: userId,
+          name: formData.facilityName,
+          facility_type: formData.facilityType,
+          phone: formData.facilityPhone,
+          email: formData.facilityEmail,
+          website: formData.website,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zip_code: formData.zipCode,
+          description: formData.description,
+          bed_count: formData.bedCount,
+          gender_served: formData.genderServed,
+        })
+        .select()
+        .single();
+
+      if (facilityError) {
+        console.error("Facility creation error:", facilityError);
+        toast({
+          title: "Partial Success",
+          description: "Account created but there was an issue saving facility data. Please update in your dashboard.",
+        });
+        navigate("/provider-dashboard");
+        return;
+      }
+
+      const facilityId = facilityData.id;
+
+      // 4. Insert services
+      if (formData.selectedTreatments.length > 0) {
+        const servicesData = formData.selectedTreatments.map((service) => ({
+          facility_id: facilityId,
+          service_name: service,
+        }));
+        await supabase.from("facility_services").insert(servicesData);
+      }
+
+      // 5. Insert age groups
+      if (formData.ageGroups.length > 0) {
+        const ageGroupsData = formData.ageGroups.map((ageGroup) => ({
+          facility_id: facilityId,
+          age_group: ageGroup,
+        }));
+        await supabase.from("facility_age_groups").insert(ageGroupsData);
+      }
+
+      // 6. Insert insurance
+      if (formData.selectedInsurance.length > 0) {
+        const insuranceData = formData.selectedInsurance.map((insurance) => ({
+          facility_id: facilityId,
+          insurance_name: insurance,
+        }));
+        await supabase.from("facility_insurance").insert(insuranceData);
+      }
+
+      // 7. Insert credentials
+      if (formData.licensingInfo || formData.accreditations) {
+        await supabase.from("facility_credentials").insert({
+          facility_id: facilityId,
+          licensing_info: formData.licensingInfo,
+          accreditations: formData.accreditations,
+        });
+      }
+
+      toast({
+        title: "Welcome to RehabLookup!",
+        description: "Your account and facility have been created successfully.",
+      });
+
+      navigate("/provider-dashboard");
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   const canProceed = () => {
@@ -183,6 +327,7 @@ export default function ProviderSignup() {
           formData.email &&
           formData.phone &&
           formData.password &&
+          formData.password.length >= 6 &&
           formData.password === formData.confirmPassword
         );
       case 2:
@@ -356,6 +501,9 @@ export default function ProviderSignup() {
                           className="pl-10"
                         />
                       </div>
+                      {formData.password && formData.password.length < 6 && (
+                        <p className="text-xs text-destructive">Password must be at least 6 characters</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword">Confirm Password *</Label>
@@ -793,7 +941,7 @@ export default function ProviderSignup() {
                     disabled={!canProceed() || isSubmitting}
                     className="gap-2"
                   >
-                    {isSubmitting ? "Submitting..." : "Submit Application"}
+                    {isSubmitting ? "Creating Account..." : "Create Account & Submit"}
                     {!isSubmitting && <CheckCircle className="h-4 w-4" />}
                   </Button>
                 )}
