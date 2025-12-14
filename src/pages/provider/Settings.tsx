@@ -28,6 +28,14 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +55,12 @@ interface NotificationPreferences {
   email_product_updates: boolean;
   sms_lead_alerts: boolean;
   browser_notifications: boolean;
+  lead_notification_frequency: 'instant' | 'daily_digest' | 'weekly_digest' | 'none';
+  notify_new_leads: boolean;
+  notify_lead_status_changes: boolean;
+  notify_lead_limit_warnings: boolean;
+  notify_facility_views: boolean;
+  digest_time: string;
 }
 
 export default function ProviderSettingsPage() {
@@ -75,6 +89,12 @@ export default function ProviderSettingsPage() {
   const [emailProductUpdates, setEmailProductUpdates] = useState(false);
   const [smsLeadAlerts, setSmsLeadAlerts] = useState(false);
   const [browserNotifications, setBrowserNotifications] = useState(false);
+  const [leadNotificationFrequency, setLeadNotificationFrequency] = useState<'instant' | 'daily_digest' | 'weekly_digest' | 'none'>('instant');
+  const [notifyNewLeads, setNotifyNewLeads] = useState(true);
+  const [notifyLeadStatusChanges, setNotifyLeadStatusChanges] = useState(true);
+  const [notifyLeadLimitWarnings, setNotifyLeadLimitWarnings] = useState(true);
+  const [notifyFacilityViews, setNotifyFacilityViews] = useState(false);
+  const [digestTime, setDigestTime] = useState('09:00');
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [notificationsSaved, setNotificationsSaved] = useState(false);
   
@@ -84,7 +104,7 @@ export default function ProviderSettingsPage() {
   // Fetch notification preferences
   const { data: notificationPrefs, isLoading: isLoadingNotifications } = useQuery({
     queryKey: ["notification-preferences"],
-    queryFn: async (): Promise<NotificationPreferences | null> => {
+    queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
 
@@ -99,7 +119,7 @@ export default function ProviderSettingsPage() {
         return null;
       }
 
-      return data;
+      return data as NotificationPreferences | null;
     },
   });
 
@@ -111,6 +131,12 @@ export default function ProviderSettingsPage() {
       setEmailProductUpdates(notificationPrefs.email_product_updates);
       setSmsLeadAlerts(notificationPrefs.sms_lead_alerts);
       setBrowserNotifications(notificationPrefs.browser_notifications);
+      setLeadNotificationFrequency(notificationPrefs.lead_notification_frequency || 'instant');
+      setNotifyNewLeads(notificationPrefs.notify_new_leads ?? true);
+      setNotifyLeadStatusChanges(notificationPrefs.notify_lead_status_changes ?? true);
+      setNotifyLeadLimitWarnings(notificationPrefs.notify_lead_limit_warnings ?? true);
+      setNotifyFacilityViews(notificationPrefs.notify_facility_views ?? false);
+      setDigestTime(notificationPrefs.digest_time || '09:00');
     }
   }, [notificationPrefs]);
 
@@ -131,6 +157,12 @@ export default function ProviderSettingsPage() {
       email_product_updates: emailProductUpdates,
       sms_lead_alerts: smsLeadAlerts,
       browser_notifications: browserNotifications,
+      lead_notification_frequency: leadNotificationFrequency,
+      notify_new_leads: notifyNewLeads,
+      notify_lead_status_changes: notifyLeadStatusChanges,
+      notify_lead_limit_warnings: notifyLeadLimitWarnings,
+      notify_facility_views: notifyFacilityViews,
+      digest_time: digestTime,
     };
 
     // Check if preferences exist
@@ -151,6 +183,12 @@ export default function ProviderSettingsPage() {
           email_product_updates: emailProductUpdates,
           sms_lead_alerts: smsLeadAlerts,
           browser_notifications: browserNotifications,
+          lead_notification_frequency: leadNotificationFrequency,
+          notify_new_leads: notifyNewLeads,
+          notify_lead_status_changes: notifyLeadStatusChanges,
+          notify_lead_limit_warnings: notifyLeadLimitWarnings,
+          notify_facility_views: notifyFacilityViews,
+          digest_time: digestTime,
         })
         .eq("user_id", session.user.id);
       error = result.error;
@@ -690,36 +728,164 @@ export default function ProviderSettingsPage() {
 
         {/* Notifications Tab */}
         <TabsContent value="notifications" className="mt-6 space-y-6">
-          {/* Email Notifications */}
+          {/* Lead Notification Frequency */}
           <Card className="border-border shadow-sm">
             <CardHeader className="pb-4">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                Email Notifications
+                Lead Email Delivery
               </CardTitle>
               <CardDescription className="text-sm">
-                Configure which emails you'd like to receive
+                Choose how often you want to receive lead notification emails
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <RadioGroup 
+                value={leadNotificationFrequency} 
+                onValueChange={(value) => setLeadNotificationFrequency(value as typeof leadNotificationFrequency)}
+                className="space-y-3"
+              >
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="instant" id="instant" />
+                  <Label htmlFor="instant" className="flex-1 cursor-pointer">
+                    <span className="text-sm font-medium">Instant</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Get notified immediately when you receive a new lead</p>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="daily_digest" id="daily_digest" />
+                  <Label htmlFor="daily_digest" className="flex-1 cursor-pointer">
+                    <span className="text-sm font-medium">Daily Digest</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Receive a summary of all leads once per day</p>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="weekly_digest" id="weekly_digest" />
+                  <Label htmlFor="weekly_digest" className="flex-1 cursor-pointer">
+                    <span className="text-sm font-medium">Weekly Digest</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Receive a weekly summary with all leads</p>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="none" id="none" />
+                  <Label htmlFor="none" className="flex-1 cursor-pointer">
+                    <span className="text-sm font-medium">None</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Don't send lead notification emails (still visible in dashboard)</p>
+                  </Label>
+                </div>
+              </RadioGroup>
+              
+              {(leadNotificationFrequency === 'daily_digest' || leadNotificationFrequency === 'weekly_digest') && (
+                <div className="pt-4 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-medium">Delivery Time</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">When should we send your digest?</p>
+                    </div>
+                    <Select value={digestTime} onValueChange={setDigestTime}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="06:00">6:00 AM</SelectItem>
+                        <SelectItem value="07:00">7:00 AM</SelectItem>
+                        <SelectItem value="08:00">8:00 AM</SelectItem>
+                        <SelectItem value="09:00">9:00 AM</SelectItem>
+                        <SelectItem value="10:00">10:00 AM</SelectItem>
+                        <SelectItem value="12:00">12:00 PM</SelectItem>
+                        <SelectItem value="17:00">5:00 PM</SelectItem>
+                        <SelectItem value="18:00">6:00 PM</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Event Types to Notify */}
+          <Card className="border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                Event Types
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Choose which events you want to be notified about
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-0">
               <div className="flex items-center justify-between py-4">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Lead Alerts</p>
+                  <p className="text-sm font-medium text-foreground">New Leads</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Get notified immediately when someone contacts your facility
+                    When someone submits an inquiry through your profile
                   </p>
                 </div>
                 <Switch
-                  checked={emailLeadAlerts}
-                  onCheckedChange={setEmailLeadAlerts}
+                  checked={notifyNewLeads}
+                  onCheckedChange={setNotifyNewLeads}
                 />
               </div>
               <Separator />
               <div className="flex items-center justify-between py-4">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Weekly Digest</p>
+                  <p className="text-sm font-medium text-foreground">Lead Status Changes</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Summary of your facility's performance and leads
+                    When a lead's status is updated (contacted, converted, etc.)
+                  </p>
+                </div>
+                <Switch
+                  checked={notifyLeadStatusChanges}
+                  onCheckedChange={setNotifyLeadStatusChanges}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between py-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Lead Limit Warnings</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    When you're approaching your monthly lead limit
+                  </p>
+                </div>
+                <Switch
+                  checked={notifyLeadLimitWarnings}
+                  onCheckedChange={setNotifyLeadLimitWarnings}
+                />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between py-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Facility Views</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Weekly summary of how many people viewed your profile
+                  </p>
+                </div>
+                <Switch
+                  checked={notifyFacilityViews}
+                  onCheckedChange={setNotifyFacilityViews}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Other Email Notifications */}
+          <Card className="border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                Other Emails
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Additional email notifications
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-0">
+              <div className="flex items-center justify-between py-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Weekly Performance Digest</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Summary of your facility's performance metrics
                   </p>
                 </div>
                 <Switch

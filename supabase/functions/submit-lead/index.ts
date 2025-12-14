@@ -378,8 +378,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get provider's profile email
+    // Get provider's profile email and notification preferences
     let providerEmail: string | null = null;
+    let notificationPrefs: { 
+      lead_notification_frequency?: string; 
+      notify_new_leads?: boolean;
+      notify_lead_limit_warnings?: boolean;
+    } | null = null;
+    
     if (facility.user_id) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -387,6 +393,14 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("user_id", facility.user_id)
         .maybeSingle();
       providerEmail = profile?.email || null;
+      
+      // Fetch notification preferences
+      const { data: prefs } = await supabase
+        .from("notification_preferences")
+        .select("lead_notification_frequency, notify_new_leads, notify_lead_limit_warnings")
+        .eq("user_id", facility.user_id)
+        .maybeSingle();
+      notificationPrefs = prefs;
     }
 
     // ============ LEAD CAP ENFORCEMENT ============
@@ -441,6 +455,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     // ============ EMAIL NOTIFICATION ============
     
+    // Check notification preferences - respect provider settings
+    const shouldSendInstantEmail = 
+      (notificationPrefs?.notify_new_leads !== false) && // Default to true if not set
+      (notificationPrefs?.lead_notification_frequency === 'instant' || !notificationPrefs?.lead_notification_frequency); // Default to instant
+    
     const facilityEmailAddress = body.facilityEmail || facility.email;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     
@@ -448,7 +467,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (facilityEmailAddress) emailRecipients.push(facilityEmailAddress);
     if (providerEmail && providerEmail !== facilityEmailAddress) emailRecipients.push(providerEmail);
 
-    if (emailRecipients.length > 0 && resendApiKey) {
+    // Only send email if frequency is instant (or not set = default to instant)
+    if (emailRecipients.length > 0 && resendApiKey && shouldSendInstantEmail) {
       try {
         const resend = new Resend(resendApiKey);
         
@@ -557,6 +577,8 @@ const handler = async (req: Request): Promise<Response> => {
       } catch (emailError) {
         console.error("Failed to send email notification:", emailError);
       }
+    } else if (!shouldSendInstantEmail) {
+      console.log("Email notification skipped - provider prefers digest delivery");
     } else {
       console.log("Email notification skipped - no recipients or API key");
     }
@@ -587,8 +609,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // ============ LEAD LIMIT WARNING EMAIL & NOTIFICATION ============
-    // Send warning email if provider is at or above 80% of their lead limit
-    if (capCheckResult && providerEmail && capCheckResult.leadLimit > 0) {
+    // Send warning email if provider is at or above 80% of their lead limit (and has warnings enabled)
+    const shouldSendLimitWarning = notificationPrefs?.notify_lead_limit_warnings !== false;
+    
+    if (capCheckResult && providerEmail && capCheckResult.leadLimit > 0 && shouldSendLimitWarning) {
       const newUsedLeads = capCheckResult.usedLeads + 1; // Account for the lead we just created
       const usagePercentage = (newUsedLeads / capCheckResult.leadLimit) * 100;
       
