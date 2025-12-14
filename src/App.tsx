@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import RehabCenters from "./pages/RehabCenters";
 import TreatmentCenterProfile from "./pages/TreatmentCenterProfile";
+import CenterProfile from "./pages/CenterProfile";
 import TreatmentTypes from "./pages/TreatmentTypes";
 import HowItWorks from "./pages/HowItWorks";
 import ForProviders from "./pages/ForProviders";
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/rehab-centers" element={<RehabCenters />} />
           <Route path="/rehab-centers/:id" element={<TreatmentCenterProfile />} />
+          <Route path="/center/:slug" element={<CenterProfile />} />
           <Route path="/treatment-types" element={<TreatmentTypes />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/for-providers" element={<ForProviders />} />
