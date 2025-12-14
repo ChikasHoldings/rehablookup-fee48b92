@@ -41,76 +41,76 @@ const Contact = () => {
 
   return (
     <Layout>
-      {/* Hero */}
-      <section className="gradient-hero py-16 md:py-20">
+      {/* Hero - Light background */}
+      <section className="border-b border-border bg-card py-12 md:py-16">
         <div className="container text-center">
-          <h1 className="mb-4 font-display text-4xl font-bold text-primary-foreground md:text-5xl">
+          <h1 className="mb-3 font-display text-3xl font-bold text-foreground md:text-4xl">
             Contact Us
           </h1>
-          <p className="text-lg text-primary-foreground/85">
+          <p className="text-muted-foreground">
             Have questions? We're here to help.
           </p>
         </div>
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <div className="container">
-          <div className="grid gap-12 lg:grid-cols-2">
+          <div className="grid gap-10 lg:grid-cols-2">
             {/* Contact Info */}
             <div>
-              <h2 className="mb-6 font-display text-2xl font-bold text-foreground md:text-3xl">
+              <h2 className="mb-5 font-display text-xl font-bold text-foreground md:text-2xl">
                 Get in Touch
               </h2>
-              <p className="mb-8 text-muted-foreground">
+              <p className="mb-6 text-muted-foreground">
                 Whether you have questions about our directory, need assistance finding 
                 treatment, or want to list a facility, we're here to help.
               </p>
 
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <Phone className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold text-foreground">Phone</h3>
                     <a
                       href="tel:1-800-555-0199"
-                      className="text-lg text-primary hover:underline"
+                      className="text-primary hover:underline"
                     >
                       1-800-555-0199
                     </a>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Available 24/7 for treatment inquiries
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <Mail className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold text-foreground">Email</h3>
                     <a
                       href="mailto:help@rehablookup.com"
-                      className="text-lg text-primary hover:underline"
+                      className="text-primary hover:underline"
                     >
                       help@rehablookup.com
                     </a>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Response within 1-2 business days
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <Clock className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold text-foreground">Hours</h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Phone support: 24/7<br />
                       Email support: Mon-Fri 9am-5pm EST
                     </p>
@@ -118,12 +118,12 @@ const Contact = () => {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <MapPin className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <h3 className="mb-1 font-semibold text-foreground">Service Area</h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Nationwide coverage across all 50 states
                     </p>
                   </div>
@@ -131,14 +131,14 @@ const Contact = () => {
               </div>
 
               {/* Note */}
-              <div className="mt-8 rounded-xl border border-primary/20 bg-primary/5 p-6">
+              <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
                 <div className="flex items-start gap-3">
                   <MessageSquare className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                   <div>
                     <h4 className="mb-1 font-semibold text-foreground">
                       Looking for Treatment Help?
                     </h4>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       For immediate treatment assistance, please call our 24/7 helpline 
                       or visit our{" "}
                       <a href="/rehab-centers" className="text-primary underline">
@@ -152,25 +152,25 @@ const Contact = () => {
             </div>
 
             {/* Contact Form */}
-            <div className="rounded-xl border border-border bg-card p-6 shadow-lg md:p-8">
-              <h3 className="mb-6 font-display text-xl font-semibold text-foreground">
+            <div className="rounded-xl border border-border bg-card p-6 shadow-card">
+              <h3 className="mb-5 font-display text-lg font-semibold text-foreground">
                 Send Us a Message
               </h3>
 
               {isSubmitted ? (
                 <div className="py-8 text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-                    <CheckCircle className="h-8 w-8 text-success" />
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <CheckCircle className="h-7 w-7 text-primary" />
                   </div>
-                  <h4 className="mb-2 font-display text-xl font-semibold text-foreground">
+                  <h4 className="mb-2 font-display text-lg font-semibold text-foreground">
                     Message Received
                   </h4>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Thank you for contacting us. We'll respond within 1-2 business days.
                   </p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-foreground">
                       Full Name *
@@ -183,7 +183,7 @@ const Contact = () => {
                         setFormData({ ...formData, name: e.target.value })
                       }
                       placeholder="Your name"
-                      className="h-11 w-full rounded-lg border border-input bg-background px-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="h-10 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
 
@@ -199,7 +199,7 @@ const Contact = () => {
                         setFormData({ ...formData, email: e.target.value })
                       }
                       placeholder="you@example.com"
-                      className="h-11 w-full rounded-lg border border-input bg-background px-4 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="h-10 w-full rounded-lg border border-input bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
 
@@ -213,7 +213,7 @@ const Contact = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, subject: e.target.value })
                       }
-                      className="h-11 w-full appearance-none rounded-lg border border-input bg-background px-4 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="h-10 w-full appearance-none rounded-lg border border-input bg-background px-4 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       <option value="">Select a subject</option>
                       <option value="general">General Inquiry</option>
@@ -235,8 +235,8 @@ const Contact = () => {
                         setFormData({ ...formData, message: e.target.value })
                       }
                       placeholder="How can we help you?"
-                      rows={5}
-                      className="w-full resize-none rounded-lg border border-input bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      rows={4}
+                      className="w-full resize-none rounded-lg border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
 

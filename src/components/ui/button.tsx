@@ -10,9 +10,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 hover:shadow-lg active:scale-[0.98]",
+          "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 active:scale-[0.98]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 hover:shadow-lg",
+          "bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90",
         outline:
           "border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground",
         secondary:
@@ -22,13 +22,13 @@ const buttonVariants = cva(
         link: 
           "text-primary underline-offset-4 hover:underline",
         success:
-          "gradient-cta text-success-foreground shadow-md hover:opacity-90 hover:shadow-lg active:scale-[0.98]",
+          "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 active:scale-[0.98]",
         warning:
-          "bg-warning text-warning-foreground shadow-md hover:bg-warning/90 hover:shadow-lg active:scale-[0.98]",
+          "bg-warning text-warning-foreground shadow-md hover:bg-warning/90 active:scale-[0.98]",
         hero:
-          "bg-primary-foreground text-primary shadow-lg hover:bg-primary-foreground/90 hover:shadow-xl active:scale-[0.98]",
+          "bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-[0.98]",
         "hero-secondary":
-          "bg-primary-foreground/15 text-primary-foreground border-2 border-primary-foreground/30 backdrop-blur-sm hover:bg-primary-foreground/25 hover:border-primary-foreground/50",
+          "bg-transparent text-primary border-2 border-primary hover:bg-primary/5",
       },
       size: {
         default: "h-11 px-5 py-2",
