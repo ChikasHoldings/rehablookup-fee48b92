@@ -5,6 +5,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import heroImage from "@/assets/hero-recovery.jpg";
+import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
   Shield, 
   Phone, 
@@ -461,25 +462,33 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Stats Card */}
+            {/* Image with Stats Overlay */}
             <div className="relative animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              <div className="rounded-2xl border border-accent/20 bg-gradient-to-br from-primary to-primary/90 p-10 shadow-xl">
-                <div className="grid gap-8 sm:grid-cols-2">
-                  <div className="text-center group">
-                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl transition-transform group-hover:scale-105">10K+</div>
-                    <p className="text-sm text-primary-foreground/70">Families Helped</p>
-                  </div>
-                  <div className="text-center group">
-                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl transition-transform group-hover:scale-105">500+</div>
-                    <p className="text-sm text-primary-foreground/70">Verified Centers</p>
-                  </div>
-                  <div className="text-center group">
-                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl transition-transform group-hover:scale-105">50</div>
-                    <p className="text-sm text-primary-foreground/70">States Covered</p>
-                  </div>
-                  <div className="text-center group">
-                    <div className="mb-2 font-display text-4xl font-bold text-primary-foreground md:text-5xl transition-transform group-hover:scale-105">24/7</div>
-                    <p className="text-sm text-primary-foreground/70">Support Available</p>
+              <div className="relative overflow-hidden rounded-2xl shadow-xl">
+                <img 
+                  src={whyChooseUsImage} 
+                  alt="Healthcare professional consulting with a family about treatment options"
+                  className="h-full w-full object-cover aspect-square"
+                />
+                {/* Stats Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-primary via-primary/95 to-transparent p-6 pt-16">
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="font-display text-2xl font-bold text-accent md:text-3xl">10K+</div>
+                      <p className="text-xs text-primary-foreground/70">Families</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-display text-2xl font-bold text-accent md:text-3xl">500+</div>
+                      <p className="text-xs text-primary-foreground/70">Centers</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-display text-2xl font-bold text-accent md:text-3xl">50</div>
+                      <p className="text-xs text-primary-foreground/70">States</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-display text-2xl font-bold text-primary-foreground md:text-3xl">24/7</div>
+                      <p className="text-xs text-primary-foreground/70">Support</p>
+                    </div>
                   </div>
                 </div>
               </div>
