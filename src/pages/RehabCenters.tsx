@@ -5,7 +5,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
-import { Phone, MapPin, Filter, Search, ArrowRight, Shield, Clock, CheckCircle, Grid3X3, List, X } from "lucide-react";
+import { Phone, MapPin, Filter, Search, ArrowRight, Shield, Clock, CheckCircle, Grid3X3, List, X, ArrowUpDown, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -15,8 +15,26 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const ITEMS_PER_PAGE = 9;
+
+type SortOption = "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc" | "reviews";
+
+const sortOptions: { value: SortOption; label: string; icon?: React.ReactNode }[] = [
+  { value: "featured", label: "Featured First", icon: <Sparkles className="h-4 w-4" /> },
+  { value: "rating-high", label: "Highest Rated", icon: <Star className="h-4 w-4" /> },
+  { value: "rating-low", label: "Lowest Rated" },
+  { value: "reviews", label: "Most Reviews" },
+  { value: "name-asc", label: "Name (A-Z)" },
+  { value: "name-desc", label: "Name (Z-A)" },
+];
 
 const RehabCenters = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,6 +43,7 @@ const RehabCenters = () => {
   const insurance = searchParams.get("insurance") || "";
   const type = searchParams.get("type") || "";
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const sortParam = (searchParams.get("sort") as SortOption) || "featured";
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -56,9 +75,6 @@ const RehabCenters = () => {
 
   const filteredCenters = useMemo(() => {
     let results = [...allCenters];
-
-    // Sort featured first
-    results.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
 
     // Filter by location
     if (location) {
@@ -94,8 +110,33 @@ const RehabCenters = () => {
       );
     }
 
+    // Apply sorting
+    switch (sortParam) {
+      case "featured":
+        results.sort((a, b) => {
+          if (b.featured !== a.featured) return b.featured ? 1 : -1;
+          return b.rating - a.rating;
+        });
+        break;
+      case "rating-high":
+        results.sort((a, b) => b.rating - a.rating);
+        break;
+      case "rating-low":
+        results.sort((a, b) => a.rating - b.rating);
+        break;
+      case "reviews":
+        results.sort((a, b) => b.reviewCount - a.reviewCount);
+        break;
+      case "name-asc":
+        results.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        results.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+    }
+
     return results;
-  }, [allCenters, location, treatment, insurance, type]);
+  }, [allCenters, location, treatment, insurance, type, sortParam]);
 
   const hasFilters = location || treatment || insurance || type;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
@@ -122,7 +163,20 @@ const RehabCenters = () => {
   };
 
   const clearAllFilters = () => {
-    setSearchParams({});
+    const newParams = new URLSearchParams();
+    if (sortParam !== "featured") newParams.set("sort", sortParam);
+    setSearchParams(newParams);
+  };
+
+  const handleSortChange = (value: SortOption) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value === "featured") {
+      newParams.delete("sort");
+    } else {
+      newParams.set("sort", value);
+    }
+    newParams.delete("page");
+    setSearchParams(newParams);
   };
 
   return (
@@ -267,30 +321,51 @@ const RehabCenters = () => {
               )}
             </div>
 
-            {/* View Toggle */}
-            <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`rounded-md p-2 transition-colors ${
-                  viewMode === "grid" 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-label="Grid view"
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`rounded-md p-2 transition-colors ${
-                  viewMode === "list" 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-label="List view"
-              >
-                <List className="h-4 w-4" />
-              </button>
+            {/* Sort and View Controls */}
+            <div className="flex items-center gap-3">
+              {/* Sort Dropdown */}
+              <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
+                <SelectTrigger className="h-10 w-[180px] gap-2 bg-card">
+                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <span className="flex items-center gap-2">
+                        {option.icon}
+                        {option.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`rounded-md p-2 transition-colors ${
+                    viewMode === "grid" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-label="Grid view"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`rounded-md p-2 transition-colors ${
+                    viewMode === "list" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-label="List view"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
 
