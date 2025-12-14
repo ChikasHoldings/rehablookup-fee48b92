@@ -40,16 +40,10 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Get all approved facilities with their owner's email
+    // Get all approved facilities
     const { data: facilities, error: facilitiesError } = await supabaseClient
       .from("facilities")
-      .select(`
-        id,
-        user_id,
-        profiles!inner (
-          email
-        )
-      `)
+      .select("id, user_id")
       .eq("status", "approved");
 
     if (facilitiesError) {
@@ -63,8 +57,14 @@ serve(async (req) => {
 
     // Check each facility's owner for Featured subscription
     for (const facility of facilities || []) {
-      const profiles = facility.profiles as unknown as { email: string }[] | { email: string };
-      const providerEmail = Array.isArray(profiles) ? profiles[0]?.email : profiles?.email;
+      // Get provider email from profiles table
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("email")
+        .eq("user_id", facility.user_id)
+        .maybeSingle();
+      
+      const providerEmail = profile?.email;
       
       if (!providerEmail) continue;
 
