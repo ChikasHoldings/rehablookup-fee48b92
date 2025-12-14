@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
   CreditCard, 
   Check, 
@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Users,
   Crown,
-  Zap
+  Zap,
+  RefreshCw
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,33 +25,76 @@ import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function ProviderBillingPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: subscription, isLoading: subscriptionLoading, refetch } = useSubscription();
-  const { data: providerData } = useProviderData();
+  const { data: subscription, isLoading: subscriptionLoading, refetch, isFetching } = useSubscription();
+  const { data: providerData, refetch: refetchProvider } = useProviderData();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Handle success/cancel from Stripe
+  // Handle success/cancel from Stripe and clear params
   useEffect(() => {
-    if (searchParams.get("success") === "true") {
+    const success = searchParams.get("success");
+    const canceled = searchParams.get("canceled");
+    
+    if (success === "true") {
       toast({
         title: "Subscription Activated!",
         description: "Your plan has been upgraded successfully. Welcome aboard!",
       });
+      // Clear URL params and refetch
+      setSearchParams({});
       refetch();
+      refetchProvider();
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
-    } else if (searchParams.get("canceled") === "true") {
+    } else if (canceled === "true") {
       toast({
         variant: "destructive",
         title: "Checkout Canceled",
         description: "Your subscription was not changed.",
       });
+      setSearchParams({});
     }
-  }, [searchParams, toast, refetch, queryClient]);
+  }, [searchParams, setSearchParams, toast, refetch, refetchProvider, queryClient]);
+
+  // Auto-refresh subscription status periodically when page is visible
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        refetch();
+      }
+    }, 60000); // Every minute
+    
+    return () => clearInterval(interval);
+  }, [refetch]);
+
+  // Manual refresh handler
+  const handleRefreshStatus = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      await refetchProvider();
+      toast({
+        title: "Status Refreshed",
+        description: "Your subscription status has been updated.",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetch, refetchProvider, toast]);
 
   const handleCheckout = async (plan: "professional" | "featured") => {
     setCheckoutLoading(plan);
@@ -176,6 +220,16 @@ export default function ProviderBillingPage() {
             </div>
             
             <div className="flex flex-wrap gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/10 hover:bg-white/20 text-primary-foreground border-white/20"
+                onClick={handleRefreshStatus}
+                disabled={isRefreshing || isFetching}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing || isFetching ? "animate-spin" : ""}`} />
+                Refresh Status
+              </Button>
               {isSubscribed && (
                 <Button 
                   variant="secondary"
