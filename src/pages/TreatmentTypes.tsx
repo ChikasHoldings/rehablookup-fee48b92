@@ -71,10 +71,10 @@ const TreatmentTypes = () => {
             <Stethoscope className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium text-primary-foreground">Treatment Programs</span>
           </div>
-          <h1 className="mb-3 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+          <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             Treatment Types
           </h1>
-          <p className="text-primary-foreground/80 max-w-2xl mx-auto">
+          <p className="text-base text-primary-foreground/80 max-w-2xl mx-auto">
             Explore different treatment approaches to find the program that best fits your unique needs and recovery goals.
           </p>
         </div>
@@ -113,7 +113,7 @@ const TreatmentTypes = () => {
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-accent/10 transition-colors group-hover:bg-accent/20">
                   <type.icon className="h-7 w-7 text-accent" />
                 </div>
-                <h3 className="mb-2 font-display text-xl font-semibold text-foreground">
+                <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
                   {type.title}
                 </h3>
                 <p className="mb-4 text-sm text-muted-foreground leading-relaxed">
@@ -143,7 +143,7 @@ const TreatmentTypes = () => {
       <section className="py-16 md:py-20">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
               Not Sure Which Treatment Is Right?
             </h2>
             <p className="mb-6 text-muted-foreground max-w-xl mx-auto">

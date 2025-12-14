@@ -277,7 +277,7 @@ const FAQ = () => {
               <HelpCircle className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Frequently Asked Questions</span>
             </div>
-            <h1 className="mb-4 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               How Can We Help You?
             </h1>
             <p className="mb-8 text-primary-foreground/70">
@@ -359,7 +359,7 @@ const FAQ = () => {
                       <category.icon className="h-6 w-6 text-accent" />
                     </div>
                     <div>
-                      <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                      <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
                         {category.name}
                       </h2>
                       <p className="text-sm text-muted-foreground">{category.description}</p>
@@ -394,7 +394,7 @@ const FAQ = () => {
       <section className="py-16 md:py-20 bg-muted/30">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
+            <h2 className="mb-4 font-display text-xl font-bold text-foreground md:text-2xl">
               Still Have Questions?
             </h2>
             <p className="mb-8 text-muted-foreground max-w-xl mx-auto">

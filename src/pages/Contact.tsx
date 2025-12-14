@@ -52,10 +52,10 @@ const Contact = () => {
             <MessageSquare className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium text-primary-foreground">Get In Touch</span>
           </div>
-          <h1 className="mb-3 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+          <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             Contact Us
           </h1>
-          <p className="text-primary-foreground/80 max-w-xl mx-auto">
+          <p className="text-base text-primary-foreground/80 max-w-xl mx-auto">
             Have questions about finding treatment? We're here to help 24/7.
           </p>
         </div>
@@ -308,7 +308,7 @@ const Contact = () => {
       {/* CTA Banner */}
       <section className="bg-primary py-12 md:py-16">
         <div className="container text-center">
-          <h2 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
+          <h2 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl">
             Need Immediate Assistance?
           </h2>
           <p className="mb-6 text-primary-foreground/80 max-w-xl mx-auto">

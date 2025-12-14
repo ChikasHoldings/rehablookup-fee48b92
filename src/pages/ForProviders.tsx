@@ -86,10 +86,10 @@ const ForProviders = () => {
             <Building2 className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium text-primary-foreground">For Treatment Centers</span>
           </div>
-          <h1 className="mb-3 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+          <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             Partner With RehabLookup
           </h1>
-          <p className="text-primary-foreground/80 max-w-2xl mx-auto mb-8">
+          <p className="text-base text-primary-foreground/80 max-w-2xl mx-auto mb-8">
             Join our network of verified treatment centers and connect with families seeking quality addiction care.
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -141,7 +141,7 @@ const ForProviders = () => {
               <TrendingUp className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-accent">Partner Benefits</span>
             </div>
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
               Why Partner With Us?
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
@@ -180,7 +180,7 @@ const ForProviders = () => {
                 <CheckCircle className="h-4 w-4 text-accent" />
                 <span className="text-sm font-medium text-accent">Listing Features</span>
               </div>
-              <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl">
+              <h2 className="mb-5 font-display text-xl font-bold text-foreground md:text-2xl">
                 What's Included in Your Listing
               </h2>
               <p className="mb-6 text-muted-foreground">
@@ -230,7 +230,7 @@ const ForProviders = () => {
               <Clock className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-accent">Simple Process</span>
             </div>
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
               Getting Listed Is Easy
             </h2>
           </div>
@@ -265,7 +265,7 @@ const ForProviders = () => {
       <section className="py-16 md:py-20">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
               Ready to Grow Your Admissions?
             </h2>
             <p className="mb-6 text-muted-foreground max-w-xl mx-auto">

@@ -267,7 +267,7 @@ const Index = () => {
               <Star className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-accent">Featured Facilities</span>
             </div>
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
               Top-Rated Treatment Centers
             </h2>
             <p className="max-w-xl text-muted-foreground">
@@ -309,7 +309,7 @@ const Index = () => {
               <Sparkles className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-primary-foreground">Treatment Programs</span>
             </div>
-            <h2 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
               Comprehensive Care for Every Need
             </h2>
             <p className="mx-auto max-w-xl text-primary-foreground/70">
@@ -373,7 +373,7 @@ const Index = () => {
               <CheckCircle className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-accent">Simple Process</span>
             </div>
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
               How It Works
             </h2>
             <p className="mx-auto max-w-xl text-muted-foreground">
@@ -425,7 +425,7 @@ const Index = () => {
                     </div>
                   </div>
                   
-                  <h3 className="mb-2 font-display text-xl font-semibold text-foreground">
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
                     {item.title}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
@@ -458,7 +458,7 @@ const Index = () => {
                 <Heart className="h-4 w-4 text-accent" />
                 <span className="text-sm font-medium text-accent">Why Choose Us</span>
               </div>
-              <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+              <h2 className="mb-5 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
                 Trusted by Families Across America
               </h2>
               <p className="mb-8 text-muted-foreground leading-relaxed max-w-lg">
@@ -554,7 +554,7 @@ const Index = () => {
               <Quote className="h-4 w-4 text-accent" />
               <span className="text-sm font-medium text-accent">Testimonials</span>
             </div>
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
               Stories of Hope and Recovery
             </h2>
             <p className="mx-auto max-w-xl text-muted-foreground">
@@ -619,7 +619,7 @@ const Index = () => {
                 <BookOpen className="h-4 w-4 text-accent" />
                 <span className="text-sm font-medium text-accent">Resources</span>
               </div>
-              <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
                 Resources & Guides
               </h2>
               <p className="max-w-xl text-muted-foreground">
@@ -693,7 +693,7 @@ const Index = () => {
       <section className="py-16 md:py-20">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+            <h2 className="mb-4 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
               Ready to Take the First Step?
             </h2>
             <p className="mb-8 text-muted-foreground max-w-xl mx-auto">
