@@ -56,6 +56,7 @@ import {
   LeadLimitWarningBanner, 
   LeadLimitReachedBanner 
 } from "@/components/provider/LeadUsageIndicator";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface Lead {
   id: string;
@@ -74,13 +75,6 @@ interface DateRange {
   to: Date | undefined;
 }
 
-// Plan limits - in production this would come from billing system
-const PLAN_LEAD_LIMITS = {
-  free: 5,
-  professional: 75,
-  enterprise: 999999,
-};
-
 export default function ProviderLeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -96,11 +90,11 @@ export default function ProviderLeadsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: providerData } = useProviderData();
+  const { data: subscription } = useSubscription();
   const facilityId = providerData?.facility?.id;
   
-  // Current plan - in production this would come from billing system
-  const currentPlan = "free";
-  const leadLimit = PLAN_LEAD_LIMITS[currentPlan as keyof typeof PLAN_LEAD_LIMITS];
+  // Get lead limit from subscription data
+  const leadLimit = subscription?.lead_limit ?? 5;
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["provider-leads", facilityId],

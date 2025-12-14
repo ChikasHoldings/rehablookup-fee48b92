@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useProviderData } from "@/hooks/useProviderData";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   LeadUsageIndicator, 
@@ -25,15 +26,9 @@ import {
   LeadLimitReachedBanner 
 } from "@/components/provider/LeadUsageIndicator";
 
-// Plan limits - in production this would come from billing system
-const PLAN_LEAD_LIMITS = {
-  free: 5,
-  professional: 75,
-  enterprise: 999999,
-};
-
 export default function ProviderDashboardPage() {
   const { data: providerData, isLoading } = useProviderData();
+  const { data: subscription } = useSubscription();
   
   const facility = providerData?.facility;
   const profile = providerData?.profile;
@@ -42,9 +37,8 @@ export default function ProviderDashboardPage() {
   const monthlyLeadsCount = providerData?.monthlyLeadsCount ?? 0;
   const userName = profile?.first_name || "";
   
-  // Current plan - in production this would come from billing system
-  const currentPlan = "free";
-  const leadLimit = PLAN_LEAD_LIMITS[currentPlan as keyof typeof PLAN_LEAD_LIMITS];
+  // Get lead limit from subscription data
+  const leadLimit = subscription?.lead_limit ?? 5;
 
   const getStatusConfig = (status: string) => {
     switch (status) {
