@@ -4,6 +4,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
+import heroImage from "@/assets/hero-recovery.jpg";
 import { 
   Shield, 
   Phone, 
@@ -69,7 +70,16 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative flex min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-hidden bg-card">
+      <section className="relative flex min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        />
+        
+        {/* Light overlay to maintain current colors */}
+        <div className="absolute inset-0 bg-card/85" />
+        
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
