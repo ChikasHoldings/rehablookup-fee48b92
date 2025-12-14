@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +18,8 @@ import {
   Eye,
   EyeOff,
   Lock,
-  Loader2
+  Loader2,
+  LogOut
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,6 +66,7 @@ interface NotificationPreferences {
 }
 
 export default function ProviderSettingsPage() {
+  const navigate = useNavigate();
   const { data: providerData, isLoading } = useProviderData();
   const [localProfile, setLocalProfile] = useState<{
     first_name: string;
@@ -82,6 +85,13 @@ export default function ProviderSettingsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  
+  // Delete account states
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  
+  // Sign out all sessions state
+  const [isSigningOutAll, setIsSigningOutAll] = useState(false);
   
   // Notification states
   const [emailLeadAlerts, setEmailLeadAlerts] = useState(true);
@@ -315,6 +325,99 @@ export default function ProviderSettingsPage() {
         title: "Password updated",
         description: "Your password has been changed successfully.",
       });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      toast({
+        title: "Confirmation required",
+        description: "Please type DELETE to confirm account deletion.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
+      // Delete user's facility and related data (cascades via FK)
+      const { error: facilityError } = await supabase
+        .from("facilities")
+        .delete()
+        .eq("user_id", session.user.id);
+
+      if (facilityError) {
+        console.error("Error deleting facility:", facilityError);
+      }
+
+      // Delete profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("user_id", session.user.id);
+
+      if (profileError) {
+        console.error("Error deleting profile:", profileError);
+      }
+
+      // Delete notification preferences
+      const { error: notifError } = await supabase
+        .from("notification_preferences")
+        .delete()
+        .eq("user_id", session.user.id);
+
+      if (notifError) {
+        console.error("Error deleting notification preferences:", notifError);
+      }
+
+      // Sign out and redirect
+      await supabase.auth.signOut();
+      
+      toast({
+        title: "Account deleted",
+        description: "Your account has been permanently deleted.",
+      });
+      
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast({
+        title: "Error deleting account",
+        description: "Failed to delete your account. Please contact support.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
+  const handleSignOutAllSessions = async () => {
+    setIsSigningOutAll(true);
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) throw error;
+      
+      toast({
+        title: "Signed out",
+        description: "You have been signed out from all devices.",
+      });
+      
+      navigate("/provider/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out from all sessions.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigningOutAll(false);
     }
   };
 
@@ -659,7 +762,7 @@ export default function ProviderSettingsPage() {
                 Manage devices where you're currently logged in
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -675,6 +778,22 @@ export default function ProviderSettingsPage() {
                     </p>
                   </div>
                 </div>
+              </div>
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2 text-muted-foreground"
+                  onClick={handleSignOutAllSessions}
+                  disabled={isSigningOutAll}
+                >
+                  {isSigningOutAll ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogOut className="h-4 w-4" />
+                  )}
+                  Sign Out All Sessions
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -708,16 +827,41 @@ export default function ProviderSettingsPage() {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete your account, 
-                        facility listing, and all associated data from our servers.
+                      <AlertDialogDescription className="space-y-3">
+                        <p>
+                          This action cannot be undone. This will permanently delete your account, 
+                          facility listing, leads, and all associated data from our servers.
+                        </p>
+                        <div className="space-y-2">
+                          <Label htmlFor="deleteConfirm" className="text-sm font-medium text-foreground">
+                            Type DELETE to confirm
+                          </Label>
+                          <Input
+                            id="deleteConfirm"
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            placeholder="DELETE"
+                            className="font-mono"
+                          />
+                        </div>
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Delete Account
-                      </AlertDialogAction>
+                      <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>Cancel</AlertDialogCancel>
+                      <Button 
+                        variant="destructive"
+                        onClick={handleDeleteAccount}
+                        disabled={isDeletingAccount || deleteConfirmText !== "DELETE"}
+                      >
+                        {isDeletingAccount ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Deleting...
+                          </>
+                        ) : (
+                          "Delete Account"
+                        )}
+                      </Button>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
