@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -18,7 +19,12 @@ import {
   Shield,
   AlertCircle,
   Clock,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Plus,
+  X,
+  Loader2,
+  Stethoscope,
+  CreditCard
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,24 +89,57 @@ const states = [
   "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ];
 
+const availableServices = [
+  "Detox Programs",
+  "Inpatient Treatment",
+  "Outpatient Treatment",
+  "Medication-Assisted Treatment (MAT)",
+  "Dual Diagnosis",
+  "Individual Therapy",
+  "Group Therapy",
+  "Family Therapy",
+  "Cognitive Behavioral Therapy (CBT)",
+  "12-Step Programs",
+  "Holistic Therapy",
+  "Aftercare Planning",
+  "Relapse Prevention",
+  "Trauma Therapy",
+  "Mental Health Services",
+];
+
+const availableInsurance = [
+  "Aetna",
+  "Blue Cross Blue Shield",
+  "Cigna",
+  "Humana",
+  "Kaiser Permanente",
+  "United Healthcare",
+  "Medicare",
+  "Medicaid",
+  "Tricare",
+  "Self-Pay",
+  "Private Pay",
+  "Sliding Scale",
+];
+
 export default function ProviderListingPage() {
+  const queryClient = useQueryClient();
   const [facility, setFacility] = useState<Facility | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
+  const [newService, setNewService] = useState("");
+  const [newInsurance, setNewInsurance] = useState("");
   const { toast } = useToast();
   const { selectedFacility } = useSelectedFacility();
 
-  useEffect(() => {
-    const fetchFacility = async () => {
-      if (!selectedFacility?.id) {
-        setIsLoading(false);
-        return;
-      }
-
+  // Fetch facility data with React Query
+  const { data: facilityData, isLoading } = useQuery({
+    queryKey: ["facility-listing", selectedFacility?.id],
+    queryFn: async () => {
+      if (!selectedFacility?.id) return null;
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) return null;
 
       const { data } = await supabase
         .from("facilities")
@@ -109,15 +148,104 @@ export default function ProviderListingPage() {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      if (data) {
-        setFacility(data);
-      }
-      setIsLoading(false);
-    };
+      return data;
+    },
+    enabled: !!selectedFacility?.id,
+  });
 
-    setIsLoading(true);
-    fetchFacility();
-  }, [selectedFacility?.id]);
+  // Fetch services
+  const { data: services = [], refetch: refetchServices } = useQuery({
+    queryKey: ["facility-services", selectedFacility?.id],
+    queryFn: async () => {
+      if (!selectedFacility?.id) return [];
+      const { data } = await supabase
+        .from("facility_services")
+        .select("id, service_name")
+        .eq("facility_id", selectedFacility.id);
+      return data || [];
+    },
+    enabled: !!selectedFacility?.id,
+  });
+
+  // Fetch insurance
+  const { data: insurance = [], refetch: refetchInsurance } = useQuery({
+    queryKey: ["facility-insurance", selectedFacility?.id],
+    queryFn: async () => {
+      if (!selectedFacility?.id) return [];
+      const { data } = await supabase
+        .from("facility_insurance")
+        .select("id, insurance_name")
+        .eq("facility_id", selectedFacility.id);
+      return data || [];
+    },
+    enabled: !!selectedFacility?.id,
+  });
+
+  // Update local facility state when data changes
+  useEffect(() => {
+    if (facilityData) {
+      setFacility(facilityData);
+    }
+  }, [facilityData]);
+
+  // Real-time subscriptions
+  useEffect(() => {
+    if (!selectedFacility?.id) return;
+
+    const facilityChannel = supabase
+      .channel(`facility-${selectedFacility.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facilities",
+          filter: `id=eq.${selectedFacility.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["facility-listing", selectedFacility.id] });
+        }
+      )
+      .subscribe();
+
+    const servicesChannel = supabase
+      .channel(`services-${selectedFacility.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_services",
+          filter: `facility_id=eq.${selectedFacility.id}`,
+        },
+        () => {
+          refetchServices();
+        }
+      )
+      .subscribe();
+
+    const insuranceChannel = supabase
+      .channel(`insurance-${selectedFacility.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_insurance",
+          filter: `facility_id=eq.${selectedFacility.id}`,
+        },
+        () => {
+          refetchInsurance();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(facilityChannel);
+      supabase.removeChannel(servicesChannel);
+      supabase.removeChannel(insuranceChannel);
+    };
+  }, [selectedFacility?.id, queryClient, refetchServices, refetchInsurance]);
 
   const handleSave = async () => {
     if (!facility) return;
@@ -180,6 +308,68 @@ export default function ProviderListingPage() {
     if (facility) {
       setFacility({ ...facility, [field]: value });
       setHasChanges(true);
+    }
+  };
+
+  // Add service
+  const handleAddService = async (serviceName: string) => {
+    if (!facility || !serviceName.trim()) return;
+    
+    const { error } = await supabase
+      .from("facility_services")
+      .insert({ facility_id: facility.id, service_name: serviceName.trim() });
+
+    if (error) {
+      toast({ title: "Failed to add service", variant: "destructive" });
+    } else {
+      setNewService("");
+      refetchServices();
+      toast({ title: "Service added" });
+    }
+  };
+
+  // Remove service
+  const handleRemoveService = async (serviceId: string) => {
+    const { error } = await supabase
+      .from("facility_services")
+      .delete()
+      .eq("id", serviceId);
+
+    if (error) {
+      toast({ title: "Failed to remove service", variant: "destructive" });
+    } else {
+      refetchServices();
+    }
+  };
+
+  // Add insurance
+  const handleAddInsurance = async (insuranceName: string) => {
+    if (!facility || !insuranceName.trim()) return;
+    
+    const { error } = await supabase
+      .from("facility_insurance")
+      .insert({ facility_id: facility.id, insurance_name: insuranceName.trim() });
+
+    if (error) {
+      toast({ title: "Failed to add insurance", variant: "destructive" });
+    } else {
+      setNewInsurance("");
+      refetchInsurance();
+      toast({ title: "Insurance added" });
+    }
+  };
+
+  // Remove insurance
+  const handleRemoveInsurance = async (insuranceId: string) => {
+    const { error } = await supabase
+      .from("facility_insurance")
+      .delete()
+      .eq("id", insuranceId);
+
+    if (error) {
+      toast({ title: "Failed to remove insurance", variant: "destructive" });
+    } else {
+      refetchInsurance();
     }
   };
 
@@ -607,6 +797,140 @@ export default function ProviderListingPage() {
                     />
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Services Offered */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                    <Stethoscope className="h-4 w-4 text-teal-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Services Offered</CardTitle>
+                    <CardDescription className="text-xs">Treatment programs and therapies available</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Current Services */}
+                {services.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {services.map((service) => (
+                      <Badge 
+                        key={service.id} 
+                        variant="secondary" 
+                        className="gap-1.5 pr-1.5 py-1"
+                      >
+                        {service.service_name}
+                        <button
+                          onClick={() => handleRemoveService(service.id)}
+                          className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add Service */}
+                <div className="flex gap-2">
+                  <Select value={newService} onValueChange={setNewService}>
+                    <SelectTrigger className="h-10 flex-1">
+                      <SelectValue placeholder="Select a service to add..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card max-h-[200px]">
+                      {availableServices
+                        .filter(s => !services.some(existing => existing.service_name === s))
+                        .map((service) => (
+                          <SelectItem key={service} value={service}>
+                            {service}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    onClick={() => handleAddService(newService)}
+                    disabled={!newService}
+                    size="icon"
+                    className="h-10 w-10"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Add the treatment services your facility offers to help families find the right care.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Insurance Accepted */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <CreditCard className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Insurance Accepted</CardTitle>
+                    <CardDescription className="text-xs">Payment options and insurance providers</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Current Insurance */}
+                {insurance.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {insurance.map((ins) => (
+                      <Badge 
+                        key={ins.id} 
+                        variant="secondary" 
+                        className="gap-1.5 pr-1.5 py-1"
+                      >
+                        {ins.insurance_name}
+                        <button
+                          onClick={() => handleRemoveInsurance(ins.id)}
+                          className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add Insurance */}
+                <div className="flex gap-2">
+                  <Select value={newInsurance} onValueChange={setNewInsurance}>
+                    <SelectTrigger className="h-10 flex-1">
+                      <SelectValue placeholder="Select insurance to add..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card max-h-[200px]">
+                      {availableInsurance
+                        .filter(i => !insurance.some(existing => existing.insurance_name === i))
+                        .map((ins) => (
+                          <SelectItem key={ins} value={ins}>
+                            {ins}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    onClick={() => handleAddInsurance(newInsurance)}
+                    disabled={!newInsurance}
+                    size="icon"
+                    className="h-10 w-10"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Let families know which insurance providers you accept.
+                </p>
               </CardContent>
             </Card>
           </div>
