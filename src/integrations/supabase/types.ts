@@ -23,6 +23,7 @@ export type Database = {
           description: string | null
           email: string | null
           facility_type: string
+          featured: boolean
           gender_served: string | null
           id: string
           name: string
@@ -42,6 +43,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facility_type: string
+          featured?: boolean
           gender_served?: string | null
           id?: string
           name: string
@@ -61,6 +63,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facility_type?: string
+          featured?: boolean
           gender_served?: string | null
           id?: string
           name?: string
