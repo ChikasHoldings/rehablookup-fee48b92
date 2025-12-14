@@ -455,10 +455,16 @@ export type Database = {
         Row: {
           browser_notifications: boolean
           created_at: string
+          digest_time: string | null
           email_lead_alerts: boolean
           email_product_updates: boolean
           email_weekly_digest: boolean
           id: string
+          lead_notification_frequency: string | null
+          notify_facility_views: boolean | null
+          notify_lead_limit_warnings: boolean | null
+          notify_lead_status_changes: boolean | null
+          notify_new_leads: boolean | null
           sms_lead_alerts: boolean
           updated_at: string
           user_id: string
@@ -466,10 +472,16 @@ export type Database = {
         Insert: {
           browser_notifications?: boolean
           created_at?: string
+          digest_time?: string | null
           email_lead_alerts?: boolean
           email_product_updates?: boolean
           email_weekly_digest?: boolean
           id?: string
+          lead_notification_frequency?: string | null
+          notify_facility_views?: boolean | null
+          notify_lead_limit_warnings?: boolean | null
+          notify_lead_status_changes?: boolean | null
+          notify_new_leads?: boolean | null
           sms_lead_alerts?: boolean
           updated_at?: string
           user_id: string
@@ -477,10 +489,16 @@ export type Database = {
         Update: {
           browser_notifications?: boolean
           created_at?: string
+          digest_time?: string | null
           email_lead_alerts?: boolean
           email_product_updates?: boolean
           email_weekly_digest?: boolean
           id?: string
+          lead_notification_frequency?: string | null
+          notify_facility_views?: boolean | null
+          notify_lead_limit_warnings?: boolean | null
+          notify_lead_status_changes?: boolean | null
+          notify_new_leads?: boolean | null
           sms_lead_alerts?: boolean
           updated_at?: string
           user_id?: string
