@@ -116,6 +116,30 @@ export function Footer() {
             </ul>
           </div>
 
+          {/* Providers */}
+          <div>
+            <h4 className="mb-4 font-display text-sm font-semibold uppercase tracking-wider text-primary-foreground">
+              Providers
+            </h4>
+            <ul className="space-y-2.5">
+              <li>
+                <Link to="/for-providers" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                  For Providers
+                </Link>
+              </li>
+              <li>
+                <Link to="/provider-resources" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                  Provider Resources
+                </Link>
+              </li>
+              <li>
+                <Link to="/provider-login" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                  Provider Login
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Legal */}
           <div>
             <h4 className="mb-4 font-display text-sm font-semibold uppercase tracking-wider text-primary-foreground">
