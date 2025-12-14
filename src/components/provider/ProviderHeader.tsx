@@ -11,8 +11,6 @@ import {
   Bell,
   Search,
   X,
-  Plus,
-  Check,
   UserPlus,
   MessageSquare,
   Shield,
@@ -32,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import logo from "@/assets/logo.png";
 import { useProviderNotifications } from "@/hooks/useProviderNotifications";
 import { ProviderSearchCommand } from "./ProviderSearchCommand";
+import { FacilityLocationDropdown } from "./FacilityLocationDropdown";
 
 interface ProviderHeaderProps {
   facilityName?: string;
@@ -98,59 +97,12 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           
           <div className="hidden md:block h-8 w-px bg-white/30" />
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className="gap-2 text-white hover:text-white hover:bg-white/15 h-9 px-2.5 rounded-lg min-w-0"
-              >
-                <div className="flex items-center justify-center h-6 w-6 rounded-md bg-white/20 shrink-0 overflow-hidden">
-                  {facilityLogo ? (
-                    <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <Building2 className="h-3.5 w-3.5 text-white" />
-                  )}
-                </div>
-                <span className="font-medium text-sm truncate max-w-[140px] md:max-w-[200px] text-white">
-                  {facilityName || "Select Facility"}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5 text-white/70 shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64 bg-card" sideOffset={8}>
-              <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wide">
-                Your Facilities
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {facilityName && (
-                <DropdownMenuItem className="flex items-center justify-between cursor-pointer py-2.5">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-                      {facilityLogo ? (
-                        <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <Building2 className="h-4 w-4 text-primary" />
-                      )}
-                    </div>
-                    <span className="truncate font-medium">{facilityName}</span>
-                  </div>
-                  <Check className="h-4 w-4 text-primary shrink-0" />
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link 
-                  to="/provider-signup" 
-                  className="flex items-center gap-2.5 cursor-pointer text-primary py-2.5"
-                >
-                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Plus className="h-4 w-4" />
-                  </div>
-                  <span className="font-medium">Add New Facility</span>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Enhanced Location Dropdown */}
+          <FacilityLocationDropdown
+            currentFacilityId={facilityId}
+            currentFacilityName={facilityName}
+            currentFacilityLogo={facilityLogo}
+          />
         </div>
 
         {/* Center - Search (Desktop) */}
