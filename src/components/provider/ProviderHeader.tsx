@@ -9,7 +9,9 @@ import {
   ExternalLink,
   Bell,
   Search,
-  X
+  X,
+  Plus,
+  Check
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -67,14 +69,46 @@ export function ProviderHeader({ facilityName, facilityId, userName, onLogout }:
             />
           </Link>
           
+          {/* Facility Selector Dropdown */}
           <div className="hidden md:flex items-center gap-3">
             <div className="h-6 w-px bg-primary-foreground/20" />
-            <Badge 
-              variant="secondary" 
-              className="bg-primary-foreground/15 text-primary-foreground border-0 font-semibold text-xs px-3 py-1"
-            >
-              Provider Panel
-            </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="gap-2 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground h-9 px-3 rounded-lg"
+                >
+                  <Building2 className="h-4 w-4" />
+                  <span className="font-medium text-sm max-w-[180px] truncate">
+                    {facilityName || "No Facility"}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 bg-card" sideOffset={8}>
+                <DropdownMenuLabel>Your Facilities</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {facilityName && (
+                  <DropdownMenuItem className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="truncate max-w-[180px]">{facilityName}</span>
+                    </div>
+                    <Check className="h-4 w-4 text-primary" />
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link 
+                    to="/provider-signup" 
+                    className="flex items-center gap-2 cursor-pointer text-primary"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add New Facility
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
