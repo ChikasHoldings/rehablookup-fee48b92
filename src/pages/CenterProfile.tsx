@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useRef, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface FacilityData {
   id: string;
@@ -46,6 +47,8 @@ interface FacilityData {
   featured: boolean;
   logo_url: string | null;
   gallery_urls: string[] | null;
+  status: string;
+  user_id: string;
   facility_services: { service_name: string }[];
   facility_insurance: { insurance_name: string }[];
   facility_age_groups: { age_group: string }[];
@@ -68,13 +71,22 @@ const CenterProfile = () => {
   const [showAllInsurance, setShowAllInsurance] = useState(false);
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [logoError, setLogoError] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const fromSearch = location.state?.fromSearch;
+
+  // Get current user for owner check
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserId(session?.user?.id ?? null);
+    });
+  }, []);
 
   // Fetch facility data by slug
   const { data: facility, isLoading, error } = useQuery({
-    queryKey: ["facility", slug],
+    queryKey: ["facility", slug, currentUserId],
     queryFn: async (): Promise<FacilityData | null> => {
-      const { data, error } = await supabase
+      // First try to get approved facility (public access)
+      const { data: approvedData, error: approvedError } = await supabase
         .from("facilities")
         .select(`
           id,
@@ -94,6 +106,8 @@ const CenterProfile = () => {
           featured,
           logo_url,
           gallery_urls,
+          status,
+          user_id,
           facility_services (service_name),
           facility_insurance (insurance_name),
           facility_age_groups (age_group),
@@ -103,8 +117,46 @@ const CenterProfile = () => {
         .eq("status", "approved")
         .maybeSingle();
 
-      if (error) throw error;
-      return data as FacilityData | null;
+      if (approvedData) return approvedData as FacilityData;
+
+      // If not found as approved, try to get if user owns it (any status)
+      if (currentUserId) {
+        const { data: ownedData } = await supabase
+          .from("facilities")
+          .select(`
+            id,
+            name,
+            slug,
+            city,
+            state,
+            zip_code,
+            address,
+            phone,
+            email,
+            website,
+            description,
+            facility_type,
+            gender_served,
+            bed_count,
+            featured,
+            logo_url,
+            gallery_urls,
+            status,
+            user_id,
+            facility_services (service_name),
+            facility_insurance (insurance_name),
+            facility_age_groups (age_group),
+            facility_credentials (accreditations, licensing_info)
+          `)
+          .eq("slug", slug)
+          .eq("user_id", currentUserId)
+          .maybeSingle();
+
+        if (ownedData) return ownedData as FacilityData;
+      }
+
+      if (approvedError) throw approvedError;
+      return null;
     },
     enabled: !!slug,
   });
@@ -188,6 +240,8 @@ const CenterProfile = () => {
   const galleryImages = facility.gallery_urls?.filter(Boolean) || [];
   const initials = getInitials(facility.name);
   const hasValidLogo = facility.logo_url && !logoError;
+  const isOwner = currentUserId === facility.user_id;
+  const isPending = facility.status === "pending";
 
   return (
     <Layout>
@@ -211,6 +265,17 @@ const CenterProfile = () => {
       {/* Main Content - Contained Layout */}
       <div className="bg-muted/30 min-h-screen pb-24 md:pb-0">
         <div className="container max-w-6xl py-6 md:py-8">
+          {/* Pending Status Banner for Owner */}
+          {isOwner && isPending && (
+            <Alert className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800 dark:text-amber-200">
+                <strong>Preview Mode:</strong> Your listing is under review and only visible to you. 
+                It will be publicly visible once approved (usually within 24-48 hours).
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Back Link */}
           {fromSearch && (
             <Link
