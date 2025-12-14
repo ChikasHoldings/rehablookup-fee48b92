@@ -5,7 +5,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
-import { Phone, MapPin, Search, ArrowRight, Shield, Clock, CheckCircle, Grid3X3, List, X, ArrowUpDown } from "lucide-react";
+import { Phone, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -214,33 +214,16 @@ const RehabCenters = () => {
               initialLocation={location}
               initialTreatmentType={treatment}
               initialInsurance={insurance}
+              onSearchComplete={() => {
+                document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+              }}
             />
           </div>
         </div>
       </section>
 
-      {/* Trust Indicators */}
-      <section className="border-b border-border bg-card py-4">
-        <div className="container">
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground md:gap-10">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-accent" />
-              <span>All Centers Verified</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-accent" />
-              <span>24/7 Support Available</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-accent" />
-              <span>Free Consultation</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Results */}
-      <section className="bg-muted/30 py-12 md:py-16">
+      <section id="results" className="scroll-mt-4 bg-muted/30 py-12 md:py-16">
         <div className="container">
           {/* Results header with count, filters, and view toggle */}
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
