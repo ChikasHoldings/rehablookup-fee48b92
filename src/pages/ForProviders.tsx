@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import {
   Building2,
@@ -289,6 +290,7 @@ const ForProviders = () => {
       </section>
       </main>
       
+      <Footer />
       <BackToTop />
     </div>
   );
