@@ -98,13 +98,13 @@ const Index = () => {
             </div>
 
             {/* Headline */}
-            <h1 className="mb-4 font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in" style={{ animationDelay: "50ms" }}>
+            <h1 className="mb-4 font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in drop-shadow-sm" style={{ animationDelay: "50ms" }}>
               Find the Right Path to{" "}
               <span className="text-primary">Recovery</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="mb-8 text-base text-muted-foreground sm:text-lg md:text-xl animate-fade-in max-w-2xl mx-auto" style={{ animationDelay: "100ms" }}>
+            <p className="mb-8 text-base text-foreground/80 sm:text-lg md:text-xl animate-fade-in max-w-2xl mx-auto font-medium" style={{ animationDelay: "100ms" }}>
               Search verified addiction treatment centers and take the first step toward a healthier future.
             </p>
 
@@ -116,8 +116,8 @@ const Index = () => {
             {/* Trust Badges */}
             <div className="flex flex-wrap items-center justify-center gap-6 animate-fade-in md:gap-8" style={{ animationDelay: "200ms" }}>
               {trustBadges.map((badge) => (
-                <div key={badge.label} className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                <div key={badge.label} className="flex items-center gap-2 text-foreground/70 transition-colors hover:text-primary">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
                     <badge.icon className="h-4 w-4 text-primary" />
                   </div>
                   <span className="text-sm font-medium">{badge.label}</span>
@@ -127,7 +127,7 @@ const Index = () => {
 
             {/* Quick Call CTA */}
             <div className="mt-8 animate-fade-in" style={{ animationDelay: "250ms" }}>
-              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-primary transition-colors">
                 <Phone className="h-4 w-4" />
                 <span>Need help now? Call <strong className="text-foreground">1-800-555-0199</strong></span>
               </a>
