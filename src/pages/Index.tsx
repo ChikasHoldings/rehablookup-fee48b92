@@ -28,8 +28,31 @@ import {
   Activity,
   Stethoscope,
   Sparkles,
-  Quote
+  Quote,
+  BookOpen,
+  Calendar
 } from "lucide-react";
+
+const blogArticles = [
+  {
+    title: "Understanding the Stages of Addiction Recovery",
+    excerpt: "Recovery is a journey with distinct stages. Learn what to expect and how to navigate each phase successfully.",
+    category: "Recovery",
+    readTime: "5 min read",
+  },
+  {
+    title: "How to Support a Loved One in Treatment",
+    excerpt: "Family support is crucial for recovery. Discover effective ways to be there for someone during their treatment journey.",
+    category: "Family Support",
+    readTime: "4 min read",
+  },
+  {
+    title: "Choosing Between Inpatient and Outpatient Care",
+    excerpt: "Not sure which treatment option is right? We break down the key differences to help you make an informed decision.",
+    category: "Treatment Options",
+    readTime: "6 min read",
+  },
+];
 
 const testimonials = [
   {
@@ -520,6 +543,70 @@ const Index = () => {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+          </div>
+        </div>
+      </section>
+
+      {/* Resources / Blog Section */}
+      <section className="py-20 md:py-24">
+        <div className="container">
+          {/* Section Header */}
+          <div className="mb-12 flex flex-col items-center text-center md:flex-row md:items-end md:justify-between md:text-left">
+            <div>
+              <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
+                Resources & Guides
+              </h2>
+              <p className="max-w-xl text-muted-foreground">
+                Helpful articles to guide you through the recovery journey.
+              </p>
+            </div>
+            <Link to="/resources" className="mt-4 md:mt-0">
+              <Button variant="outline" className="gap-2 group">
+                View All Articles
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+          </div>
+
+          {/* Articles Grid */}
+          <div className="grid gap-6 md:grid-cols-3">
+            {blogArticles.map((article, index) => (
+              <article
+                key={article.title}
+                className="group animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
+                  {/* Category & Read Time */}
+                  <div className="mb-4 flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                      <BookOpen className="h-3 w-3" />
+                      {article.category}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      {article.readTime}
+                    </span>
+                  </div>
+                  
+                  {/* Title */}
+                  <h3 className="mb-3 font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {article.title}
+                  </h3>
+                  
+                  {/* Excerpt */}
+                  <p className="mb-4 text-sm text-muted-foreground leading-relaxed">
+                    {article.excerpt}
+                  </p>
+                  
+                  {/* Read More Link */}
+                  <div className="flex items-center gap-1 text-sm font-medium text-primary">
+                    Read article
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
       </section>
