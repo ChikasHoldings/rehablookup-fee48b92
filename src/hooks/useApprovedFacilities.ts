@@ -11,6 +11,7 @@ interface FacilityWithRelations {
   address: string;
   phone: string;
   description: string | null;
+  featured: boolean;
   facility_services: { service_name: string }[];
   facility_insurance: { insurance_name: string }[];
 }
@@ -30,6 +31,7 @@ export const useApprovedFacilities = () => {
           address,
           phone,
           description,
+          featured,
           facility_services (service_name),
           facility_insurance (insurance_name)
         `)
@@ -50,7 +52,7 @@ export const useApprovedFacilities = () => {
         insuranceAccepted: facility.facility_insurance.map((i) => i.insurance_name),
         description: facility.description || "Treatment center offering quality care and support.",
         programOverview: facility.description || "Comprehensive treatment programs tailored to individual needs.",
-        featured: false,
+        featured: facility.featured,
         rating: 4.5,
         reviewCount: 0,
         amenities: [],
