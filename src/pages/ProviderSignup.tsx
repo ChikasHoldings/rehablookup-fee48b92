@@ -30,8 +30,10 @@ import {
   MapPin,
   Globe,
   Lock,
+  Image as ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { compressImage, validateImageFile } from "@/lib/imageUtils";
 
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
@@ -42,9 +44,10 @@ const providerNavLinks = [
 const steps = [
   { id: 1, name: "Account", icon: User },
   { id: 2, name: "Facility", icon: Building2 },
-  { id: 3, name: "Services", icon: Stethoscope },
-  { id: 4, name: "Insurance", icon: CreditCard },
-  { id: 5, name: "Review", icon: CheckCircle },
+  { id: 3, name: "Branding", icon: ImageIcon },
+  { id: 4, name: "Services", icon: Stethoscope },
+  { id: 5, name: "Insurance", icon: CreditCard },
+  { id: 6, name: "Review", icon: CheckCircle },
 ];
 
 const treatmentTypes = [
@@ -136,13 +139,19 @@ export default function ProviderSignup() {
     zipCode: "",
     description: "",
 
-    // Step 3: Services
+    // Step 3: Branding
+    logoFile: null as File | null,
+    logoPreview: "",
+    galleryFiles: [] as File[],
+    galleryPreviews: [] as string[],
+
+    // Step 4: Services
     selectedTreatments: [] as string[],
     bedCount: "",
     ageGroups: [] as string[],
     genderServed: "",
 
-    // Step 4: Insurance
+    // Step 5: Insurance
     selectedInsurance: [] as string[],
     licensingInfo: "",
     accreditations: "",
@@ -167,7 +176,7 @@ export default function ProviderSignup() {
   };
 
   const nextStep = () => {
-    if (currentStep < 5) setCurrentStep(currentStep + 1);
+    if (currentStep < 6) setCurrentStep(currentStep + 1);
   };
 
   const prevStep = () => {
@@ -300,6 +309,63 @@ export default function ProviderSignup() {
         });
       }
 
+      // 8. Upload images if provided
+      let logoUrl: string | null = null;
+      const galleryUrls: string[] = [];
+
+      if (formData.logoFile) {
+        try {
+          const compressedLogo = await compressImage(formData.logoFile, "logo");
+          const logoFileName = `${userId}/${facilityId}/logo/${Date.now()}.webp`;
+          
+          const { error: logoUploadError } = await supabase.storage
+            .from("facility-images")
+            .upload(logoFileName, compressedLogo, { upsert: true });
+
+          if (!logoUploadError) {
+            const { data: logoUrlData } = supabase.storage
+              .from("facility-images")
+              .getPublicUrl(logoFileName);
+            logoUrl = logoUrlData.publicUrl;
+          }
+        } catch (e) {
+          console.error("Logo upload error:", e);
+        }
+      }
+
+      if (formData.galleryFiles.length > 0) {
+        for (const file of formData.galleryFiles) {
+          try {
+            const compressedImage = await compressImage(file, "gallery");
+            const galleryFileName = `${userId}/${facilityId}/gallery/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+            
+            const { error: galleryUploadError } = await supabase.storage
+              .from("facility-images")
+              .upload(galleryFileName, compressedImage, { upsert: true });
+
+            if (!galleryUploadError) {
+              const { data: galleryUrlData } = supabase.storage
+                .from("facility-images")
+                .getPublicUrl(galleryFileName);
+              galleryUrls.push(galleryUrlData.publicUrl);
+            }
+          } catch (e) {
+            console.error("Gallery upload error:", e);
+          }
+        }
+      }
+
+      // Update facility with image URLs if any were uploaded
+      if (logoUrl || galleryUrls.length > 0) {
+        await supabase
+          .from("facilities")
+          .update({
+            logo_url: logoUrl,
+            gallery_urls: galleryUrls.length > 0 ? galleryUrls : null,
+          })
+          .eq("id", facilityId);
+      }
+
       toast({
         title: "Welcome to RehabLookup!",
         description: "Your account and facility have been created successfully.",
@@ -341,14 +407,87 @@ export default function ProviderSignup() {
           formData.zipCode
         );
       case 3:
-        return formData.selectedTreatments.length > 0;
+        return true; // Branding is optional
       case 4:
-        return formData.selectedInsurance.length > 0;
+        return formData.selectedTreatments.length > 0;
       case 5:
+        return formData.selectedInsurance.length > 0;
+      case 6:
         return formData.agreeToTerms;
       default:
         return false;
     }
+  };
+
+  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      toast({
+        title: "Invalid file",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create preview
+    const preview = URL.createObjectURL(file);
+    setFormData((prev) => ({
+      ...prev,
+      logoFile: file,
+      logoPreview: preview,
+    }));
+  };
+
+  const handleGallerySelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const remainingSlots = 5 - formData.galleryFiles.length;
+    if (files.length > remainingSlots) {
+      toast({
+        title: "Too many images",
+        description: `You can only upload ${remainingSlots} more image${remainingSlots !== 1 ? "s" : ""}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validFiles: File[] = [];
+    const previews: string[] = [];
+
+    for (const file of files) {
+      const validation = validateImageFile(file);
+      if (validation.valid) {
+        validFiles.push(file);
+        previews.push(URL.createObjectURL(file));
+      }
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      galleryFiles: [...prev.galleryFiles, ...validFiles],
+      galleryPreviews: [...prev.galleryPreviews, ...previews],
+    }));
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      galleryFiles: prev.galleryFiles.filter((_, i) => i !== index),
+      galleryPreviews: prev.galleryPreviews.filter((_, i) => i !== index),
+    }));
+  };
+
+  const removeLogo = () => {
+    setFormData((prev) => ({
+      ...prev,
+      logoFile: null,
+      logoPreview: "",
+    }));
   };
 
   return (
@@ -680,8 +819,104 @@ export default function ProviderSignup() {
                 </div>
               )}
 
-              {/* Step 3: Services */}
+              {/* Step 3: Branding & Photos */}
               {currentStep === 3 && (
+                <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Upload your facility's logo and photos to stand out in search results.
+                    </p>
+                  </div>
+
+                  {/* Logo Upload */}
+                  <div className="space-y-3">
+                    <Label>Facility Logo</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Your logo will appear on your public profile and in search results.
+                    </p>
+                    {formData.logoPreview ? (
+                      <div className="relative w-32 h-32">
+                        <img
+                          src={formData.logoPreview}
+                          alt="Logo preview"
+                          className="w-full h-full object-cover rounded-lg border border-border"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeLogo}
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-sm"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={handleLogoSelect}
+                          className="sr-only"
+                        />
+                        <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
+                        <span className="text-xs text-muted-foreground">Upload logo</span>
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Gallery Upload */}
+                  <div className="space-y-3">
+                    <Label>Facility Gallery</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Upload up to 5 photos of your facility. These will appear on your public profile.
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                      {formData.galleryPreviews.map((preview, index) => (
+                        <div key={index} className="relative aspect-square">
+                          <img
+                            src={preview}
+                            alt={`Gallery ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg border border-border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryImage(index)}
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-sm"
+                          >
+                            ×
+                          </button>
+                          {index === 0 && (
+                            <span className="absolute bottom-1 left-1 px-2 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded">
+                              Primary
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                      {formData.galleryFiles.length < 5 && (
+                        <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            multiple
+                            onChange={handleGallerySelect}
+                            className="sr-only"
+                          />
+                          <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
+                          <span className="text-xs text-muted-foreground text-center px-2">
+                            Add ({formData.galleryFiles.length}/5)
+                          </span>
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground text-center pt-4 border-t border-border">
+                    You can skip this step and add images later from your dashboard.
+                  </p>
+                </div>
+              )}
+
+              {/* Step 4: Services */}
+              {currentStep === 4 && (
                 <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
                   <div>
                     <p className="text-sm text-muted-foreground">
@@ -765,8 +1000,8 @@ export default function ProviderSignup() {
                 </div>
               )}
 
-              {/* Step 4: Insurance */}
-              {currentStep === 4 && (
+              {/* Step 5: Insurance */}
+              {currentStep === 5 && (
                 <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
                   <div>
                     <p className="text-sm text-muted-foreground">
@@ -821,8 +1056,8 @@ export default function ProviderSignup() {
                 </div>
               )}
 
-              {/* Step 5: Review */}
-              {currentStep === 5 && (
+              {/* Step 6: Review */}
+              {currentStep === 6 && (
                 <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
                   <div>
                     <p className="text-sm text-muted-foreground">
@@ -854,6 +1089,29 @@ export default function ProviderSignup() {
                         <p><span className="text-muted-foreground">Phone:</span> {formData.facilityPhone}</p>
                       </div>
                     </div>
+
+                    {/* Branding Preview */}
+                    {(formData.logoPreview || formData.galleryPreviews.length > 0) && (
+                      <div className="rounded-lg border border-border bg-muted/30 p-5">
+                        <h3 className="font-semibold text-foreground flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4 text-primary" /> Branding
+                        </h3>
+                        <div className="mt-3 flex flex-wrap gap-3">
+                          {formData.logoPreview && (
+                            <div className="text-center">
+                              <img src={formData.logoPreview} alt="Logo" className="h-16 w-16 object-cover rounded-lg border border-border" />
+                              <span className="text-xs text-muted-foreground mt-1 block">Logo</span>
+                            </div>
+                          )}
+                          {formData.galleryPreviews.map((preview, idx) => (
+                            <div key={idx} className="text-center">
+                              <img src={preview} alt={`Gallery ${idx + 1}`} className="h-16 w-16 object-cover rounded-lg border border-border" />
+                              <span className="text-xs text-muted-foreground mt-1 block">Photo {idx + 1}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="rounded-lg border border-border bg-muted/30 p-5">
                       <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -919,7 +1177,7 @@ export default function ProviderSignup() {
                   <div />
                 )}
 
-                {currentStep < 5 ? (
+                {currentStep < 6 ? (
                   <Button 
                     onClick={nextStep} 
                     disabled={!canProceed()} 
