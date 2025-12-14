@@ -5,7 +5,6 @@ import { Menu, X, Phone, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/", label: "Home" },
   { href: "/rehab-centers", label: "Find Treatment" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
