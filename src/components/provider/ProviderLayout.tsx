@@ -88,7 +88,7 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center animate-fade-in">
           <div className="relative">
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
@@ -102,21 +102,25 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <ProviderHeader
-        facilityName={facility?.name}
-        userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
-        onLogout={handleLogout}
-      />
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
+      {/* Fixed Header - z-50 to stay on top */}
+      <div className="flex-shrink-0 z-50">
+        <ProviderHeader
+          facilityName={facility?.name}
+          userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
+          onLogout={handleLogout}
+        />
+      </div>
 
-      <div className="flex">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex flex-col w-64 min-h-[calc(100vh-56px)] border-r border-border bg-card/50 backdrop-blur-sm">
-          <ProviderSidebar />
+      <div className="flex flex-1 overflow-hidden">
+        {/* Fixed Desktop Sidebar - z-40 below header */}
+        <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
+          <div className="flex-1 overflow-y-auto">
+            <ProviderSidebar />
+          </div>
           
           {/* Sidebar Footer */}
-          <div className="mt-auto p-4 border-t border-border">
+          <div className="flex-shrink-0 p-4 border-t border-border">
             <div className="rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 p-4">
               <p className="text-xs font-medium text-foreground">Need Help?</p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -129,7 +133,7 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
           </div>
         </aside>
 
-        {/* Mobile Sidebar */}
+        {/* Mobile Sidebar Sheet */}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetTrigger asChild>
             <Button 
@@ -145,10 +149,10 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
               <div className="p-4 border-b border-border">
                 <p className="font-display font-semibold text-foreground">Navigation</p>
               </div>
-              <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-y-auto">
                 <ProviderSidebar onNavigate={() => setSidebarOpen(false)} />
               </div>
-              <div className="p-4 border-t border-border">
+              <div className="flex-shrink-0 p-4 border-t border-border">
                 <div className="rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 p-4">
                   <p className="text-xs font-medium text-foreground">Need Help?</p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -160,8 +164,8 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
           </SheetContent>
         </Sheet>
 
-        {/* Main Content */}
-        <main className="flex-1 min-h-[calc(100vh-56px)] bg-muted/30">
+        {/* Scrollable Main Content Area */}
+        <main className="flex-1 overflow-y-auto bg-muted/30">
           <div className="p-4 md:p-6 lg:p-8 animate-fade-in">
             {children}
           </div>
