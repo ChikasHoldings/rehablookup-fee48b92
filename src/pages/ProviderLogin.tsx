@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Lock, Mail, ArrowRight } from "lucide-react";
+import { Heart, Lock, Mail, ArrowRight, Building2, Shield, BarChart3 } from "lucide-react";
 
 export default function ProviderLogin() {
   const [email, setEmail] = useState("");
@@ -28,108 +27,199 @@ export default function ProviderLogin() {
   };
 
   return (
-    <Layout>
-      <section className="flex min-h-[calc(100vh-200px)] items-center justify-center py-16 md:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-md">
-            {/* Logo */}
-            <div className="mb-8 flex justify-center">
-              <Link to="/" className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                  <Heart className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="font-display text-xl font-semibold text-foreground">
-                  RehabLookup
-                </span>
+    <div className="flex min-h-screen">
+      {/* Left Panel - Branding & Benefits */}
+      <div className="hidden lg:flex lg:w-1/2 bg-primary flex-col justify-between p-12 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-accent blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-primary-foreground blur-3xl" />
+        </div>
+        
+        {/* Logo */}
+        <Link to="/" className="relative z-10 flex items-center gap-2.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-foreground">
+            <Heart className="h-5 w-5 text-primary" />
+          </div>
+          <span className="font-display text-xl font-semibold text-primary-foreground">
+            RehabLookup
+          </span>
+        </Link>
+        
+        {/* Benefits */}
+        <div className="relative z-10 space-y-8">
+          <h2 className="font-display text-3xl font-bold text-primary-foreground">
+            Provider Dashboard
+          </h2>
+          <p className="text-lg text-primary-foreground/80 max-w-md">
+            Manage your facility listing, respond to inquiries, and track your performance.
+          </p>
+          
+          <div className="space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/10 backdrop-blur-sm">
+                <Building2 className="h-6 w-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-primary-foreground">Manage Your Listing</h3>
+                <p className="text-sm text-primary-foreground/70">Update facility details, photos, and treatment programs anytime.</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/10 backdrop-blur-sm">
+                <BarChart3 className="h-6 w-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-primary-foreground">Track Performance</h3>
+                <p className="text-sm text-primary-foreground/70">View inquiry analytics and optimize your visibility.</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/10 backdrop-blur-sm">
+                <Shield className="h-6 w-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-primary-foreground">Secure Access</h3>
+                <p className="text-sm text-primary-foreground/70">Enterprise-grade security protects your facility data.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <p className="relative z-10 text-sm text-primary-foreground/60">
+          © {new Date().getFullYear()} RehabLookup. All rights reserved.
+        </p>
+      </div>
+      
+      {/* Right Panel - Login Form */}
+      <div className="flex w-full lg:w-1/2 flex-col bg-background">
+        {/* Minimal Header for Mobile */}
+        <header className="lg:hidden flex items-center justify-between p-4 border-b border-border">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <Heart className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="font-display text-lg font-semibold text-foreground">
+              RehabLookup
+            </span>
+          </Link>
+          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Back to site
+          </Link>
+        </header>
+        
+        {/* Login Form Container */}
+        <div className="flex flex-1 items-center justify-center p-6 md:p-12">
+          <div className="w-full max-w-md space-y-8">
+            {/* Desktop Back Link */}
+            <div className="hidden lg:block">
+              <Link 
+                to="/" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Back to RehabLookup
               </Link>
             </div>
+            
+            {/* Header */}
+            <div>
+              <h1 className="font-display text-3xl font-bold text-foreground">
+                Welcome back
+              </h1>
+              <p className="mt-2 text-muted-foreground">
+                Sign in to access your provider dashboard.
+              </p>
+            </div>
 
-            {/* Login Card */}
-            <div className="rounded-2xl border border-border bg-card p-8 shadow-lg">
-              <div className="mb-6 text-center">
-                <h1 className="font-display text-2xl font-bold text-foreground">
-                  Provider Login
-                </h1>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Access your facility dashboard and manage your listing.
-                </p>
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@facility.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 pl-11 text-base"
+                    required
+                  />
+                </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@facility.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <a
-                      href="#"
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </a>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Signing in..." : "Sign In"}
-                  {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
-                </Button>
-              </form>
-
-              <div className="mt-6 border-t border-border pt-6 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Don't have an account?{" "}
-                  <Link
-                    to="/for-providers"
-                    className="font-medium text-primary hover:underline"
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <a
+                    href="#"
+                    className="text-sm text-primary hover:underline"
                   >
-                    List your facility
-                  </Link>
-                </p>
+                    Forgot password?
+                  </a>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-12 pl-11 text-base"
+                    required
+                  />
+                </div>
               </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 text-base"
+                disabled={isLoading}
+              >
+                {isLoading ? "Signing in..." : "Sign In"}
+                {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
+              </Button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-3 text-muted-foreground">
+                  New to RehabLookup?
+                </span>
+              </div>
+            </div>
+
+            {/* Register CTA */}
+            <div className="text-center space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Get your treatment facility listed and connect with patients seeking recovery.
+              </p>
+              <Button variant="outline" className="w-full h-12" asChild>
+                <Link to="/for-providers">
+                  List Your Facility
+                </Link>
+              </Button>
             </div>
 
             {/* Help Link */}
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               Need help?{" "}
               <Link to="/contact" className="text-primary hover:underline">
-                Contact our support team
+                Contact support
               </Link>
             </p>
           </div>
         </div>
-      </section>
-    </Layout>
+      </div>
+    </div>
   );
 }
