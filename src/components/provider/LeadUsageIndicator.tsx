@@ -17,6 +17,29 @@ export function LeadUsageIndicator({
   variant = "full",
   className = "" 
 }: LeadUsageIndicatorProps) {
+  // Handle 0 lead limit case (Basic plan)
+  if (leadLimit === 0) {
+    if (variant === "compact") {
+      return (
+        <div className={`flex items-center gap-2 text-sm ${className}`}>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground">No leads included</span>
+        </div>
+      );
+    }
+    return (
+      <div className={`space-y-2 ${className}`}>
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl font-bold text-muted-foreground">0</span>
+          <span className="text-sm text-muted-foreground">leads/month</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Upgrade to start receiving leads
+        </p>
+      </div>
+    );
+  }
+
   const usagePercent = Math.min((usedLeads / leadLimit) * 100, 100);
   const isNearLimit = usagePercent >= 80 && usagePercent < 100;
   const isAtLimit = usagePercent >= 100;
@@ -66,9 +89,7 @@ export function LeadUsageIndicator({
       <p className="text-xs text-muted-foreground">
         {isAtLimit 
           ? "Limit reached for this month" 
-          : isNearLimit 
-            ? `${leadLimit - usedLeads} leads remaining this month`
-            : `${leadLimit - usedLeads} leads remaining this month`
+          : `${leadLimit - usedLeads} leads remaining this month`
         }
       </p>
     </div>
@@ -81,6 +102,9 @@ interface LeadLimitBannerProps {
 }
 
 export function LeadLimitWarningBanner({ usedLeads, leadLimit }: LeadLimitBannerProps) {
+  // Don't show warning for 0-limit plans or when not near limit
+  if (leadLimit === 0) return null;
+  
   const usagePercent = (usedLeads / leadLimit) * 100;
   const isNearLimit = usagePercent >= 80 && usagePercent < 100;
 
@@ -105,6 +129,9 @@ export function LeadLimitWarningBanner({ usedLeads, leadLimit }: LeadLimitBanner
 }
 
 export function LeadLimitReachedBanner({ usedLeads, leadLimit }: LeadLimitBannerProps) {
+  // Don't show for 0-limit plans (they have their own messaging)
+  if (leadLimit === 0) return null;
+  
   const isAtLimit = usedLeads >= leadLimit;
 
   if (!isAtLimit) return null;

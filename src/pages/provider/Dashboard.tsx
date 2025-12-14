@@ -229,11 +229,11 @@ export default function ProviderDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-foreground">Free Plan</span>
+              <span className="text-xl font-bold text-foreground">{subscription?.plan_name || "Basic Listing"}</span>
             </div>
             <Button variant="link" className="h-auto p-0 text-xs text-primary mt-1" asChild>
               <Link to="/provider/billing">
-                View plans
+                {subscription?.subscribed ? "Manage plan" : "Upgrade plan"}
                 <ArrowRight className="h-3 w-3 ml-1" />
               </Link>
             </Button>
