@@ -81,31 +81,37 @@ const treatmentOptions = [
     icon: Pill,
     title: "Drug Addiction",
     description: "Evidence-based programs for substance abuse including opioids, stimulants, and more.",
+    link: "/rehab-centers?type=drug",
   },
   {
     icon: Activity,
     title: "Alcohol Treatment",
     description: "Medically supervised detox and long-term recovery programs for alcohol dependence.",
+    link: "/rehab-centers?type=alcohol",
   },
   {
     icon: Brain,
     title: "Mental Health",
     description: "Dual diagnosis treatment addressing addiction alongside anxiety, depression, and PTSD.",
+    link: "/rehab-centers?type=mental-health",
   },
   {
     icon: Home,
     title: "Residential Rehab",
     description: "24/7 inpatient care in a structured, supportive environment for focused recovery.",
+    link: "/rehab-centers?type=residential",
   },
   {
     icon: Stethoscope,
     title: "Outpatient Programs",
     description: "Flexible treatment options that allow you to maintain work and family commitments.",
+    link: "/rehab-centers?type=outpatient",
   },
   {
     icon: Sparkles,
     title: "Holistic Therapy",
     description: "Complementary approaches including yoga, meditation, art therapy, and nutrition.",
+    link: "/rehab-centers?type=holistic",
   },
 ];
 
@@ -287,7 +293,7 @@ const Index = () => {
             {treatmentOptions.map((option, index) => (
               <Link
                 key={option.title}
-                to="/treatment-types"
+                to={option.link}
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 75}ms` }}
               >
