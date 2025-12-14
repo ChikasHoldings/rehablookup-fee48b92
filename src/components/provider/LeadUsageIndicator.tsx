@@ -153,3 +153,24 @@ export function LeadLimitReachedBanner({ usedLeads, leadLimit }: LeadLimitBanner
     </Alert>
   );
 }
+
+// Banner for Basic plan providers (0 leads)
+export function BasicPlanBanner() {
+  return (
+    <Alert className="border-primary/30 bg-primary/5">
+      <AlertCircle className="h-4 w-4 text-primary" />
+      <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <span className="text-foreground">
+          <strong>Upgrade required to receive leads.</strong>{" "}
+          <span className="text-muted-foreground">Your Basic plan doesn't include lead delivery. Upgrade to Professional or Featured to start receiving patient inquiries.</span>
+        </span>
+        <Button size="sm" className="shrink-0 gap-1.5" asChild>
+          <Link to="/provider/billing">
+            <Zap className="h-3.5 w-3.5" />
+            View Plans
+          </Link>
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
+}

@@ -56,7 +56,8 @@ import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 import { 
   LeadUsageIndicator, 
   LeadLimitWarningBanner, 
-  LeadLimitReachedBanner 
+  LeadLimitReachedBanner,
+  BasicPlanBanner
 } from "@/components/provider/LeadUsageIndicator";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -235,8 +236,9 @@ export default function ProviderLeadsPage() {
       </div>
 
       {/* Lead Limit Banners */}
-      <LeadLimitReachedBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />
-      <LeadLimitWarningBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />
+      {leadLimit === 0 && <BasicPlanBanner />}
+      {leadLimit > 0 && <LeadLimitReachedBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />}
+      {leadLimit > 0 && <LeadLimitWarningBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />}
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
