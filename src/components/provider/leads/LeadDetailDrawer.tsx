@@ -13,7 +13,9 @@ import {
   Trash2,
   Loader2,
   Send,
-  Clock
+  Clock,
+  ShieldCheck,
+  ShieldX
 } from "lucide-react";
 import {
   Dialog,
@@ -49,6 +51,8 @@ interface Lead {
   created_at: string;
   status: string;
   facility_id: string;
+  source: string | null;
+  email_verified: boolean | null;
 }
 
 interface LeadNote {
@@ -278,7 +282,20 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                         <Mail className="h-4 w-4 text-blue-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{lead.email}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium">{lead.email}</p>
+                          {lead.email_verified ? (
+                            <Badge variant="secondary" className="gap-1 text-xs bg-green-100 text-green-700 border-0">
+                              <ShieldCheck className="h-3 w-3" />
+                              Verified
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
+                              <ShieldX className="h-3 w-3" />
+                              Unverified
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {lead.preferred_contact === "email" ? "Preferred contact" : "Email"}
                         </p>
