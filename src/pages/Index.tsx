@@ -140,11 +140,8 @@ const Index = () => {
       </section>
 
       {/* Featured Centers */}
-      <section className="relative py-20 md:py-24 overflow-hidden">
-        {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-radial pointer-events-none" />
-        
-        <div className="container relative">
+      <section className="py-20 md:py-24">
+        <div className="container">
           {/* Section Header */}
           <div className="mb-12 flex flex-col items-center text-center">
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
@@ -181,13 +178,8 @@ const Index = () => {
       </section>
 
       {/* Treatment Options */}
-      <section className="relative py-20 md:py-24 overflow-hidden">
-        {/* Layered background */}
-        <div className="absolute inset-0 bg-secondary/40" />
-        <div className="absolute inset-0 bg-gradient-radial-accent pointer-events-none" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        
-        <div className="container relative">
+      <section className="py-20 md:py-24 bg-secondary/30">
+        <div className="container">
           {/* Section Header */}
           <div className="mb-12 text-center">
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
@@ -206,7 +198,7 @@ const Index = () => {
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 75}ms` }}
               >
-                <div className="relative h-full rounded-2xl border border-border/80 bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 hover:shadow-glow">
+                <div className="relative h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30">
                   {/* Icon with gradient background */}
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10 transition-all group-hover:ring-primary/20">
                     <option.icon className="h-6 w-6 text-primary" />
@@ -238,17 +230,11 @@ const Index = () => {
             </Link>
           </div>
         </div>
-        
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </section>
 
       {/* How It Works */}
-      <section className="relative py-20 md:py-24 overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-background" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-        <div className="container relative">
+      <section className="py-20 md:py-24">
+        <div className="container">
           {/* Section Header */}
           <div className="mb-14 text-center">
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
@@ -291,7 +277,7 @@ const Index = () => {
                   <div className="absolute top-10 left-1/2 hidden h-0.5 w-full bg-gradient-to-r from-primary/20 to-primary/5 md:block" />
                 )}
                 
-                <div className="relative rounded-2xl border border-border/80 bg-card p-8 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
+                <div className="relative rounded-2xl border border-border bg-card p-8 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
                   {/* Step number */}
                   <div className="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-sm font-bold text-primary-foreground shadow-lg ring-4 ring-background">
                     {item.step}
@@ -309,15 +295,11 @@ const Index = () => {
             ))}
           </div>
         </div>
-        
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </section>
 
       {/* Why Choose Us */}
-      <section className="relative py-20 md:py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-radial pointer-events-none" />
-        
-        <div className="container relative">
+      <section className="py-20 md:py-24 bg-secondary/30">
+        <div className="container">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Content */}
             <div>
@@ -358,11 +340,7 @@ const Index = () => {
 
             {/* Stats Card */}
             <div className="relative">
-              {/* Decorative elements */}
-              <div className="absolute -top-6 -left-6 h-24 w-24 rounded-2xl border border-accent/15 bg-accent-light/50" />
-              <div className="absolute -bottom-6 -right-6 h-24 w-24 rounded-2xl border border-primary/15 bg-primary-light/50" />
-              
-              <div className="relative rounded-2xl border border-border/80 bg-card p-10 shadow-xl">
+              <div className="rounded-2xl border border-border bg-card p-10 shadow-lg">
                 <div className="grid gap-8 sm:grid-cols-2">
                   <div className="text-center group">
                     <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl transition-transform group-hover:scale-105">10K+</div>
@@ -388,16 +366,8 @@ const Index = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="relative py-16 md:py-20 overflow-hidden">
-        {/* Background with gradient */}
-        <div className="absolute inset-0 bg-gradient-primary" />
-        <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 h-80 w-80 rounded-full bg-primary-foreground/5 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-primary-foreground/5 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
-        </div>
-
-        <div className="container relative text-center">
+      <section className="py-16 md:py-20 bg-primary">
+        <div className="container text-center">
           <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             Ready to Take the First Step?
           </h2>
