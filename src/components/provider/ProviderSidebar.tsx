@@ -5,7 +5,8 @@ import {
   Users, 
   CreditCard, 
   Settings,
-  ChevronRight
+  ChevronRight,
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const navItems = [
   { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard, description: "Overview & stats" },
   { href: "/provider/listing", label: "My Listing", icon: Building2, description: "Edit facility info" },
   { href: "/provider/leads", label: "Leads", icon: Users, description: "Contact requests" },
+  { href: "/provider/analytics", label: "Analytics", icon: BarChart3, description: "Performance metrics" },
   { href: "/provider/billing", label: "Billing", icon: CreditCard, description: "Plans & payments" },
   { href: "/provider/settings", label: "Settings", icon: Settings, description: "Account preferences" },
 ];

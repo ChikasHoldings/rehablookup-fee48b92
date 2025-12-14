@@ -19,6 +19,7 @@ import { ProviderShell } from "./components/provider/ProviderShell";
 import ProviderDashboardPage from "./pages/provider/Dashboard";
 import ProviderListingPage from "./pages/provider/Listing";
 import ProviderLeadsPage from "./pages/provider/Leads";
+import ProviderAnalyticsPage from "./pages/provider/Analytics";
 import ProviderBillingPage from "./pages/provider/Billing";
 import ProviderSettingsPage from "./pages/provider/Settings";
 import Resources from "./pages/Resources";
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="dashboard" element={<ProviderDashboardPage />} />
             <Route path="listing" element={<ProviderListingPage />} />
             <Route path="leads" element={<ProviderLeadsPage />} />
+            <Route path="analytics" element={<ProviderAnalyticsPage />} />
             <Route path="billing" element={<ProviderBillingPage />} />
             <Route path="settings" element={<ProviderSettingsPage />} />
           </Route>
