@@ -15,7 +15,13 @@ import {
   Send,
   Clock,
   ShieldCheck,
-  ShieldX
+  ShieldX,
+  User,
+  MapPin,
+  AlertTriangle,
+  Stethoscope,
+  CreditCard,
+  Sparkles
 } from "lucide-react";
 import {
   Dialog,
@@ -53,6 +59,17 @@ interface Lead {
   facility_id: string;
   source: string | null;
   email_verified: boolean | null;
+  // Qualified intake fields
+  who_seeking_help: string | null;
+  location_zip: string | null;
+  location_city_state: string | null;
+  urgency: string | null;
+  primary_substance: string[] | null;
+  level_of_care: string | null;
+  dual_diagnosis: string | null;
+  insurance_type: string | null;
+  insurance_provider: string | null;
+  budget_preference: string | null;
 }
 
 interface LeadNote {
@@ -341,6 +358,107 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                     <div className="p-4 rounded-lg bg-muted/50 text-sm">
                       {lead.message}
                     </div>
+                  </div>
+                </>
+              )}
+
+              {/* Qualified Intake Details */}
+              {lead.source === "Request Help Page" && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      Intake Details
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {lead.who_seeking_help && (
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                          <div className="flex items-center gap-2 mb-1">
+                            <User className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Seeking help for</span>
+                          </div>
+                          <p className="text-sm font-medium capitalize">
+                            {lead.who_seeking_help === "self" ? "Themselves" : "A loved one"}
+                          </p>
+                        </div>
+                      )}
+                      {(lead.location_zip || lead.location_city_state) && (
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                          <div className="flex items-center gap-2 mb-1">
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Location</span>
+                          </div>
+                          <p className="text-sm font-medium">
+                            {lead.location_city_state || lead.location_zip}
+                          </p>
+                        </div>
+                      )}
+                      {lead.urgency && (
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertTriangle className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Urgency</span>
+                          </div>
+                          <p className="text-sm font-medium capitalize">
+                            {lead.urgency === "immediate" ? "Immediate" : 
+                             lead.urgency === "within-week" ? "Within a week" : "Flexible"}
+                          </p>
+                        </div>
+                      )}
+                      {lead.level_of_care && (
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Level of Care</span>
+                          </div>
+                          <p className="text-sm font-medium capitalize">
+                            {lead.level_of_care === "not-sure" ? "Not sure" : lead.level_of_care}
+                          </p>
+                        </div>
+                      )}
+                      {lead.insurance_type && (
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                          <div className="flex items-center gap-2 mb-1">
+                            <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Insurance</span>
+                          </div>
+                          <p className="text-sm font-medium capitalize">
+                            {lead.insurance_type === "ppo" ? "PPO / Private" :
+                             lead.insurance_type === "self-pay" ? "Self-Pay" :
+                             lead.insurance_type === "not-sure" ? "Not sure" :
+                             lead.insurance_type}
+                            {lead.insurance_provider && ` (${lead.insurance_provider})`}
+                          </p>
+                        </div>
+                      )}
+                      {lead.dual_diagnosis && (
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Mental Health Concern</span>
+                          </div>
+                          <p className="text-sm font-medium capitalize">
+                            {lead.dual_diagnosis === "not-sure" ? "Not sure" : lead.dual_diagnosis}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {lead.primary_substance && lead.primary_substance.length > 0 && (
+                      <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Substances of Concern</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {lead.primary_substance.map((substance, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {substance}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
