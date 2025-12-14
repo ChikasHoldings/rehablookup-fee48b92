@@ -218,7 +218,7 @@ export default function ProviderListingPage() {
 
   return (
     <ProviderLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6 pb-6">
         {/* Header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">
@@ -270,10 +270,10 @@ export default function ProviderListingPage() {
           </div>
         </div>
 
-        {/* Main Content Grid */}
+        {/* Main Content Grid - Reorder columns on mobile for better UX */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left Column - Main Forms */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Left Column - Main Forms (appears first on all screens) */}
+          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
             {/* Basic Information */}
             <Card>
               <CardHeader className="pb-4">
@@ -533,10 +533,10 @@ export default function ProviderListingPage() {
             </Card>
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Status Card */}
-            <Card className="lg:sticky lg:top-4">
+          {/* Right Column - Sidebar (appears second on mobile, first position doesn't matter due to order) */}
+          <div className="space-y-6 order-1 lg:order-2">
+            {/* Status Card - Not sticky on mobile to prevent overlap */}
+            <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium">Listing Status</CardTitle>
               </CardHeader>
@@ -617,9 +617,9 @@ export default function ProviderListingPage() {
           </div>
         </div>
 
-        {/* Mobile Save Button - add padding to main content to prevent overlap */}
-        <div className="lg:hidden h-20" /> {/* Spacer for fixed button */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border z-30">
+        {/* Mobile Save Button - positioned to not overlap with navigation FAB */}
+        <div className="lg:hidden h-24" /> {/* Spacer for fixed button */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-20 p-4 bg-background/95 backdrop-blur-sm border-t border-border z-30">
           <Button 
             onClick={handleSave} 
             disabled={isSaving || !hasChanges} 
@@ -628,7 +628,7 @@ export default function ProviderListingPage() {
             {showSaved ? (
               <>
                 <CheckCircle className="h-4 w-4" />
-                Saved Successfully
+                Saved
               </>
             ) : (
               <>
