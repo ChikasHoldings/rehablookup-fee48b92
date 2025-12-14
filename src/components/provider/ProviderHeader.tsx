@@ -82,7 +82,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   };
 
   return (
-    <header className="sticky top-0 z-50 h-16 bg-primary border-b border-primary-foreground/10 shadow-sm">
+    <header className="sticky top-0 z-50 h-16 bg-primary border-b border-white/10 shadow-md">
       <div className="h-full max-w-[1800px] mx-auto px-4 md:px-6 flex items-center justify-between gap-4">
         {/* Left - Logo & Facility Selector */}
         <div className="flex items-center gap-6 min-w-0">
@@ -94,31 +94,31 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             <img 
               src={logo} 
               alt="RehabLookup" 
-              className="h-9 w-auto brightness-0 invert opacity-90 group-hover:opacity-100 transition-opacity"
+              className="h-9 w-auto brightness-0 invert group-hover:opacity-80 transition-opacity"
             />
           </Link>
           
           {/* Divider */}
-          <div className="hidden md:block h-8 w-px bg-primary-foreground/20" />
+          <div className="hidden md:block h-8 w-px bg-white/30" />
           
           {/* Facility Selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 h-9 px-2.5 rounded-lg min-w-0"
+                className="gap-2 text-white hover:text-white hover:bg-white/15 h-9 px-2.5 rounded-lg min-w-0"
               >
-                <div className="flex items-center justify-center h-6 w-6 rounded-md bg-primary-foreground/15 shrink-0 overflow-hidden">
+                <div className="flex items-center justify-center h-6 w-6 rounded-md bg-white/20 shrink-0 overflow-hidden">
                   {facilityLogo ? (
                     <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <Building2 className="h-3.5 w-3.5" />
+                    <Building2 className="h-3.5 w-3.5 text-white" />
                   )}
                 </div>
-                <span className="font-medium text-sm truncate max-w-[140px] md:max-w-[200px]">
+                <span className="font-medium text-sm truncate max-w-[140px] md:max-w-[200px] text-white">
                   {facilityName || "Select Facility"}
                 </span>
-                <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
+                <ChevronDown className="h-3.5 w-3.5 text-white/70 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64 bg-card" sideOffset={8}>
@@ -160,13 +160,13 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
         {/* Center - Search (Desktop) */}
         <div className="hidden lg:flex flex-1 max-w-sm">
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
             <Input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-9 pl-9 pr-4 bg-primary-foreground/5 border-primary-foreground/10 text-primary-foreground text-sm placeholder:text-primary-foreground/40 focus:bg-primary-foreground/10 focus:border-primary-foreground/20 rounded-lg"
+              className="w-full h-9 pl-9 pr-4 bg-white/10 border-white/20 text-white text-sm placeholder:text-white/50 focus:bg-white/15 focus:border-white/30 rounded-lg"
             />
           </div>
         </div>
@@ -177,10 +177,10 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-9 w-9 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+            className="lg:hidden h-9 w-9 text-white hover:text-white hover:bg-white/15"
             onClick={() => setSearchOpen(!searchOpen)}
           >
-            {searchOpen ? <X className="h-4.5 w-4.5" /> : <Search className="h-4.5 w-4.5" />}
+            {searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
           </Button>
 
           {/* View Listing */}
@@ -189,7 +189,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               href={facilitySlug ? `/center/${facilitySlug}` : `/rehab-centers/${facilityId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium text-primary-foreground/60 hover:text-primary-foreground hover:bg-primary-foreground/10 rounded-lg transition-colors"
+              className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium text-white/80 hover:text-white hover:bg-white/15 rounded-lg transition-colors"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               <span>View Listing</span>
@@ -202,11 +202,11 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="relative h-9 w-9 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                className="relative h-9 w-9 text-white hover:text-white hover:bg-white/15"
               >
-                <Bell className="h-4.5 w-4.5" />
+                <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground ring-2 ring-primary">
+                  <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white ring-2 ring-primary">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -275,23 +275,23 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           </DropdownMenu>
 
           {/* Divider */}
-          <div className="hidden sm:block h-6 w-px bg-primary-foreground/15 mx-1" />
+          <div className="hidden sm:block h-6 w-px bg-white/25 mx-1" />
 
           {/* Account */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10 h-9 pl-1.5 pr-2.5 rounded-lg"
+                className="gap-2 text-white hover:text-white hover:bg-white/15 h-9 pl-1.5 pr-2.5 rounded-lg"
               >
-                <div className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs font-semibold overflow-hidden">
+                <div className="h-7 w-7 rounded-full bg-white/25 flex items-center justify-center text-xs font-semibold text-white overflow-hidden">
                   {facilityLogo ? (
                     <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
                   ) : (
                     initials
                   )}
                 </div>
-                <ChevronDown className="h-3.5 w-3.5 opacity-50 hidden sm:block" />
+                <ChevronDown className="h-3.5 w-3.5 text-white/70 hidden sm:block" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-card" sideOffset={8}>
@@ -338,15 +338,15 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
       {/* Mobile Search Expanded */}
       {searchOpen && (
-        <div className="lg:hidden px-4 pb-3 bg-primary border-t border-primary-foreground/10 animate-fade-in">
+        <div className="lg:hidden px-4 pb-3 bg-primary border-t border-white/10 animate-fade-in">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-foreground/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
             <Input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-9 pl-9 pr-4 bg-primary-foreground/5 border-primary-foreground/10 text-primary-foreground text-sm placeholder:text-primary-foreground/40 rounded-lg"
+              className="w-full h-9 pl-9 pr-4 bg-white/10 border-white/20 text-white text-sm placeholder:text-white/50 rounded-lg"
               autoFocus
             />
           </div>
