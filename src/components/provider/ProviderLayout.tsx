@@ -107,6 +107,7 @@ export function ProviderLayout({ children }: ProviderLayoutProps) {
       <div className="flex-shrink-0 z-50">
         <ProviderHeader
           facilityName={facility?.name}
+          facilityId={facility?.id}
           userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
           onLogout={handleLogout}
         />
