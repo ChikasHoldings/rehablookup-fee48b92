@@ -12,9 +12,7 @@ import {
   Building2,
   Eye,
   FileEdit,
-  Settings,
   Calendar,
-  BarChart3,
   Phone,
   Mail
 } from "lucide-react";
@@ -139,26 +137,6 @@ export default function ProviderDashboardPage() {
   const statusConfig = facility ? getStatusConfig(facility.status) : getStatusConfig("inactive");
   const StatusIcon = statusConfig.icon;
 
-  const quickActions = [
-    { 
-      label: "Edit Listing", 
-      description: "Update your facility details",
-      icon: FileEdit, 
-      href: "/provider/listing",
-    },
-    { 
-      label: "View Analytics", 
-      description: "See performance metrics",
-      icon: BarChart3, 
-      href: "/provider/leads",
-    },
-    { 
-      label: "Account Settings", 
-      description: "Manage your account",
-      icon: Settings, 
-      href: "/provider/settings",
-    },
-  ];
 
   // Get the correct profile URL
   const profileUrl = facility?.slug ? `/center/${facility.slug}` : facility?.id ? `/rehab-centers/${facility.id}` : null;
@@ -305,31 +283,6 @@ export default function ProviderDashboardPage() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-sm font-medium text-muted-foreground mb-4">Quick Actions</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {quickActions.map((action) => (
-            <Link key={action.label} to={action.href}>
-              <Card className="h-full hover:shadow-md hover:border-primary/20 transition-all cursor-pointer group">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <action.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground text-sm">{action.label}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{action.description}</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </div>
-
       {/* Recent Activity */}
       <Card>
         <CardHeader className="pb-4">
@@ -413,8 +366,8 @@ export default function ProviderDashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Getting Started (only show if no facility or pending) */}
-      {(!facility || facility.status === "pending") && (
+      {/* Getting Started (only show if no facility) */}
+      {!facility && (
         <Card className="bg-gradient-to-br from-primary/5 via-background to-accent/5 border-primary/10">
           <CardContent className="py-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -423,24 +376,18 @@ export default function ProviderDashboardPage() {
                   <Building2 className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">
-                    {facility ? "Listing under review" : "Complete your listing"}
-                  </h3>
+                  <h3 className="font-semibold text-foreground">Complete your listing</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    {facility 
-                      ? "We're reviewing your listing details. You'll be notified once it's approved."
-                      : "Add your facility information to start receiving inquiries from families."}
+                    Add your facility information to start receiving inquiries from families.
                   </p>
                 </div>
               </div>
-              {!facility && (
-                <Button asChild className="shrink-0">
-                  <Link to="/provider/listing">
-                    Get Started
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              )}
+              <Button asChild className="shrink-0">
+                <Link to="/provider/listing">
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
