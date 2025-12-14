@@ -10,8 +10,7 @@ import { Header } from "@/components/layout/Header";
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
   { href: "/provider-resources", label: "Resources" },
-  { href: "/contact", label: "Support" },
-  { href: "/", label: "Main Site" },
+  { href: "/provider-support", label: "Support" },
 ];
 
 export default function ProviderLogin() {

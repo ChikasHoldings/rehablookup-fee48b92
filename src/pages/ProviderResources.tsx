@@ -1,7 +1,14 @@
-import { Layout } from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
+import { Header } from "@/components/layout/Header";
+import { BackToTop } from "@/components/ui/back-to-top";
 import { FileText, BookOpen, Video, Download, HelpCircle, Users, TrendingUp, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const providerNavLinks = [
+  { href: "/for-providers", label: "Why List With Us" },
+  { href: "/provider-resources", label: "Resources" },
+  { href: "/provider-support", label: "Support" },
+];
 
 const resources = [
   {
@@ -59,9 +66,17 @@ const faqs = [
 
 export default function ProviderResources() {
   return (
-    <Layout>
-      {/* Hero Section */}
-      <section className="bg-primary py-16 md:py-20">
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header
+        navLinks={providerNavLinks}
+        ctaLink="/provider-login"
+        ctaLabel="Provider Login"
+        variant="provider"
+      />
+      
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="bg-primary py-16 md:py-20">
         <div className="container text-center">
           <h1 className="font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
             Provider Resources
@@ -161,6 +176,9 @@ export default function ProviderResources() {
           </div>
         </div>
       </section>
-    </Layout>
+      </main>
+      
+      <BackToTop />
+    </div>
   );
 }

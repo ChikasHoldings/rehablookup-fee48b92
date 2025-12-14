@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { Header } from "@/components/layout/Header";
+import { BackToTop } from "@/components/ui/back-to-top";
 import {
   Building2,
   Users,
@@ -15,6 +16,12 @@ import {
   BarChart3,
   Clock,
 } from "lucide-react";
+
+const providerNavLinks = [
+  { href: "/for-providers", label: "Why List With Us" },
+  { href: "/provider-resources", label: "Resources" },
+  { href: "/provider-support", label: "Support" },
+];
 
 const benefits = [
   {
@@ -62,7 +69,15 @@ const listingFeatures = [
 
 const ForProviders = () => {
   return (
-    <Layout>
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header
+        navLinks={providerNavLinks}
+        ctaLink="/provider-login"
+        ctaLabel="Provider Login"
+        variant="provider"
+      />
+      
+      <main className="flex-1">
       {/* Hero - Navy background */}
       <section className="bg-primary py-12 md:py-16">
         <div className="container text-center">
@@ -272,7 +287,10 @@ const ForProviders = () => {
           </div>
         </div>
       </section>
-    </Layout>
+      </main>
+      
+      <BackToTop />
+    </div>
   );
 };
 
