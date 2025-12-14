@@ -140,11 +140,14 @@ const Index = () => {
       </section>
 
       {/* Featured Centers */}
-      <section className="py-20 md:py-24">
-        <div className="container">
+      <section className="relative py-20 md:py-24 overflow-hidden">
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-radial pointer-events-none" />
+        
+        <div className="container relative">
           {/* Section Header */}
           <div className="mb-12 flex flex-col items-center text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-light px-4 py-1.5 shadow-sm">
               <Star className="h-3.5 w-3.5 fill-accent text-accent" />
               <span className="text-xs font-semibold uppercase tracking-wider text-accent">Featured</span>
             </div>
@@ -170,9 +173,9 @@ const Index = () => {
           </div>
 
           {/* View All Link */}
-          <div className="mt-10 text-center">
+          <div className="mt-12 text-center">
             <Link to="/rehab-centers">
-              <Button variant="outline" size="lg" className="gap-2 group">
+              <Button variant="outline" size="lg" className="gap-2 group border-primary/20 hover:border-primary/40 hover:bg-primary-light">
                 View All Centers
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -183,12 +186,15 @@ const Index = () => {
 
       {/* Treatment Options */}
       <section className="relative py-20 md:py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-secondary/30" />
+        {/* Layered background */}
+        <div className="absolute inset-0 bg-secondary/40" />
+        <div className="absolute inset-0 bg-gradient-radial-accent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         
         <div className="container relative">
           {/* Section Header */}
           <div className="mb-12 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light px-4 py-1.5 shadow-sm">
               <Heart className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs font-semibold uppercase tracking-wider text-primary">Treatment Options</span>
             </div>
@@ -201,16 +207,16 @@ const Index = () => {
           </div>
 
           {/* Options Grid */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {treatmentOptions.map((option, index) => (
               <div
                 key={option.title}
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 75}ms` }}
               >
-                <div className="relative h-full rounded-2xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
-                  {/* Icon */}
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/15">
+                <div className="relative h-full rounded-2xl border border-border/80 bg-card p-6 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 hover:shadow-glow">
+                  {/* Icon with gradient background */}
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10 transition-all group-hover:ring-primary/20">
                     <option.icon className="h-6 w-6 text-primary" />
                   </div>
                   
@@ -222,7 +228,7 @@ const Index = () => {
                   </p>
                   
                   {/* Hover arrow */}
-                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-1">
                     Learn more <ArrowRight className="h-3.5 w-3.5" />
                   </div>
                 </div>
@@ -231,30 +237,30 @@ const Index = () => {
           </div>
 
           {/* CTA */}
-          <div className="mt-10 text-center">
+          <div className="mt-12 text-center">
             <Link to="/rehab-centers">
-              <Button variant="default" size="lg" className="gap-2 group">
+              <Button variant="default" size="lg" className="gap-2 group shadow-lg hover:shadow-xl transition-shadow">
                 Explore All Treatment Options
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </div>
         </div>
+        
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </section>
 
       {/* How It Works */}
       <section className="relative py-20 md:py-24 overflow-hidden">
         {/* Background */}
-        <div className="absolute inset-0 bg-secondary/50" />
-        <div className="absolute inset-0 opacity-50">
-          <div className="absolute top-0 left-1/4 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-accent/5 blur-3xl" />
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-background" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
         <div className="container relative">
           {/* Section Header */}
           <div className="mb-14 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light px-4 py-1.5 shadow-sm">
+              <Clock className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs font-semibold uppercase tracking-wider text-primary">Simple Process</span>
             </div>
             <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
@@ -266,7 +272,7 @@ const Index = () => {
           </div>
 
           {/* Steps */}
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3 md:gap-8">
             {[
               {
                 step: 1,
@@ -294,16 +300,16 @@ const Index = () => {
               >
                 {/* Connector line */}
                 {index < 2 && (
-                  <div className="absolute top-8 left-1/2 hidden h-0.5 w-full bg-border md:block" />
+                  <div className="absolute top-10 left-1/2 hidden h-0.5 w-full bg-gradient-to-r from-primary/20 to-primary/5 md:block" />
                 )}
                 
-                <div className="relative rounded-2xl border border-border bg-card p-8 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <div className="relative rounded-2xl border border-border/80 bg-card p-8 shadow-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
                   {/* Step number */}
-                  <div className="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md">
+                  <div className="absolute -top-4 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-sm font-bold text-primary-foreground shadow-lg ring-4 ring-background">
                     {item.step}
                   </div>
                   
-                  <div className="mb-4 text-4xl">{item.icon}</div>
+                  <div className="mb-4 mt-2 text-4xl">{item.icon}</div>
                   <h3 className="mb-2 font-display text-xl font-semibold text-foreground">
                     {item.title}
                   </h3>
@@ -315,15 +321,19 @@ const Index = () => {
             ))}
           </div>
         </div>
+        
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-20 md:py-24">
-        <div className="container">
+      <section className="relative py-20 md:py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-radial pointer-events-none" />
+        
+        <div className="container relative">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Content */}
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light px-4 py-1.5 shadow-sm">
                 <Heart className="h-3.5 w-3.5 text-primary" />
                 <span className="text-xs font-semibold uppercase tracking-wider text-primary">Why RehabLookup</span>
               </div>
@@ -342,9 +352,9 @@ const Index = () => {
                   "No hidden fees or surprise referrals",
                   "Confidential, secure communication",
                   "24/7 support for urgent situations",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3 group">
-                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/20 transition-colors group-hover:bg-accent/30">
+                ].map((item, index) => (
+                  <li key={item} className="flex items-start gap-3 group animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/25 to-accent/10 ring-1 ring-accent/20 transition-all group-hover:ring-accent/40">
                       <CheckCircle className="h-3.5 w-3.5 text-accent" />
                     </div>
                     <span className="text-foreground">{item}</span>
@@ -354,7 +364,7 @@ const Index = () => {
 
               <div className="mt-8">
                 <Link to="/about">
-                  <Button variant="secondary" className="gap-2 group">
+                  <Button variant="secondary" className="gap-2 group border border-border hover:border-primary/20 hover:bg-primary-light">
                     Learn More About Us
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
@@ -365,25 +375,25 @@ const Index = () => {
             {/* Stats Card */}
             <div className="relative">
               {/* Decorative elements */}
-              <div className="absolute -top-6 -left-6 h-24 w-24 rounded-2xl border border-accent/20 bg-accent/5" />
-              <div className="absolute -bottom-6 -right-6 h-24 w-24 rounded-2xl border border-primary/20 bg-primary/5" />
+              <div className="absolute -top-6 -left-6 h-24 w-24 rounded-2xl border border-accent/15 bg-accent-light/50" />
+              <div className="absolute -bottom-6 -right-6 h-24 w-24 rounded-2xl border border-primary/15 bg-primary-light/50" />
               
-              <div className="relative rounded-2xl border border-border bg-card p-10 shadow-lg">
+              <div className="relative rounded-2xl border border-border/80 bg-card p-10 shadow-xl">
                 <div className="grid gap-8 sm:grid-cols-2">
-                  <div className="text-center">
-                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl">10K+</div>
+                  <div className="text-center group">
+                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl transition-transform group-hover:scale-105">10K+</div>
                     <p className="text-sm text-muted-foreground">Families Helped</p>
                   </div>
-                  <div className="text-center">
-                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl">500+</div>
+                  <div className="text-center group">
+                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl transition-transform group-hover:scale-105">500+</div>
                     <p className="text-sm text-muted-foreground">Verified Centers</p>
                   </div>
-                  <div className="text-center">
-                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl">50</div>
+                  <div className="text-center group">
+                    <div className="mb-2 font-display text-4xl font-bold text-primary md:text-5xl transition-transform group-hover:scale-105">50</div>
                     <p className="text-sm text-muted-foreground">States Covered</p>
                   </div>
-                  <div className="text-center">
-                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl">24/7</div>
+                  <div className="text-center group">
+                    <div className="mb-2 font-display text-4xl font-bold text-accent md:text-5xl transition-transform group-hover:scale-105">24/7</div>
                     <p className="text-sm text-muted-foreground">Support Available</p>
                   </div>
                 </div>
@@ -395,23 +405,24 @@ const Index = () => {
 
       {/* CTA Banner */}
       <section className="relative py-16 md:py-20 overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-primary" />
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-white blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-white blur-3xl" />
+        {/* Background with gradient */}
+        <div className="absolute inset-0 bg-gradient-primary" />
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 h-80 w-80 rounded-full bg-primary-foreground/5 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-primary-foreground/5 blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
         </div>
 
         <div className="container relative text-center">
           <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             Ready to Take the First Step?
           </h2>
-          <p className="mb-8 text-lg text-primary-foreground/85 max-w-xl mx-auto">
+          <p className="mb-8 text-lg text-primary-foreground/90 max-w-xl mx-auto">
             Recovery is possible. Find the right treatment center for you or your loved one today.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link to="/rehab-centers">
-              <Button variant="hero-light" size="lg" className="gap-2 min-w-[200px]">
+              <Button variant="hero-light" size="lg" className="gap-2 min-w-[200px] shadow-xl hover:shadow-2xl transition-shadow">
                 Find Rehab Now
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -419,7 +430,7 @@ const Index = () => {
             <a href="tel:1-800-555-0199">
               <Button 
                 size="lg" 
-                className="gap-2 min-w-[200px] bg-transparent border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+                className="gap-2 min-w-[200px] bg-primary-foreground/10 border-2 border-primary-foreground/25 text-primary-foreground backdrop-blur-sm hover:bg-primary-foreground/20 hover:border-primary-foreground/40 transition-all"
               >
                 <Phone className="h-4 w-4" />
                 Call 1-800-555-0199
