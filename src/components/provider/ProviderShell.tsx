@@ -126,22 +126,7 @@ function ProviderShellContent() {
       <div className="flex flex-1 overflow-hidden">
         {/* Fixed Desktop Sidebar - z-40 below header */}
         <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
-          <div className="flex-1 overflow-y-auto">
-            <MemoizedSidebar />
-          </div>
-          
-          {/* Sidebar Footer */}
-          <div className="flex-shrink-0 p-4 border-t border-border">
-            <div className="rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 p-4">
-              <p className="text-xs font-medium text-foreground">Need Help?</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Contact our support team for assistance.
-              </p>
-              <Button variant="link" className="h-auto p-0 mt-2 text-xs" asChild>
-                <a href="/provider-support">Get Support →</a>
-              </Button>
-            </div>
-          </div>
+          <MemoizedSidebar />
         </aside>
 
         {/* Mobile Sidebar Sheet */}
@@ -162,14 +147,6 @@ function ProviderShellContent() {
               </div>
               <div className="flex-1 overflow-y-auto">
                 <MemoizedSidebar onNavigate={handleCloseSidebar} />
-              </div>
-              <div className="flex-shrink-0 p-4 border-t border-border">
-                <div className="rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 p-4">
-                  <p className="text-xs font-medium text-foreground">Need Help?</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Contact support for assistance.
-                  </p>
-                </div>
               </div>
             </div>
           </SheetContent>
