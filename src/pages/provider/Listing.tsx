@@ -18,7 +18,8 @@ import {
   ArrowUpRight,
   Shield,
   AlertCircle,
-  Clock
+  Clock,
+  Image as ImageIcon
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,9 +37,11 @@ import {
 } from "@/components/ui/select";
 import { useProviderData } from "@/hooks/useProviderData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FacilityImageUpload } from "@/components/provider/FacilityImageUpload";
 
 interface Facility {
   id: string;
+  user_id: string;
   name: string;
   address: string;
   city: string;
@@ -53,6 +56,8 @@ interface Facility {
   bed_count: string | null;
   status: string;
   featured: boolean;
+  logo_url: string | null;
+  gallery_urls: string[] | null;
 }
 
 const facilityTypes = [
@@ -126,6 +131,8 @@ export default function ProviderListingPage() {
         facility_type: facility.facility_type,
         gender_served: facility.gender_served,
         bed_count: facility.bed_count,
+        logo_url: facility.logo_url,
+        gallery_urls: facility.gallery_urls,
       })
       .eq("id", facility.id);
 
@@ -145,6 +152,20 @@ export default function ProviderListingPage() {
         title: "Changes saved",
         description: "Your listing has been updated successfully.",
       });
+    }
+  };
+
+  const handleLogoChange = (images: string[]) => {
+    if (facility) {
+      setFacility({ ...facility, logo_url: images[0] || null });
+      setHasChanges(true);
+    }
+  };
+
+  const handleGalleryChange = (images: string[]) => {
+    if (facility) {
+      setFacility({ ...facility, gallery_urls: images });
+      setHasChanges(true);
     }
   };
 
@@ -274,6 +295,54 @@ export default function ProviderListingPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Left Column - Main Forms (appears first on all screens) */}
           <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
+            {/* Logo & Facility Photos */}
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <ImageIcon className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Logo & Facility Photos</CardTitle>
+                    <CardDescription className="text-xs">Upload your logo and gallery images to showcase your facility</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Logo Upload */}
+                <div className="space-y-3">
+                  <Label className="text-xs font-medium">Facility Logo</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Your logo will appear on your public profile and in search results.
+                  </p>
+                  <FacilityImageUpload
+                    type="logo"
+                    currentImages={facility.logo_url ? [facility.logo_url] : []}
+                    userId={facility.user_id}
+                    facilityId={facility.id}
+                    onImagesChange={handleLogoChange}
+                  />
+                </div>
+
+                <Separator />
+
+                {/* Gallery Upload */}
+                <div className="space-y-3">
+                  <Label className="text-xs font-medium">Facility Gallery</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Upload up to 5 photos of your facility. The first image will be your primary gallery photo.
+                  </p>
+                  <FacilityImageUpload
+                    type="gallery"
+                    currentImages={facility.gallery_urls || []}
+                    userId={facility.user_id}
+                    facilityId={facility.id}
+                    onImagesChange={handleGalleryChange}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Basic Information */}
             <Card>
               <CardHeader className="pb-4">

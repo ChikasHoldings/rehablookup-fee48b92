@@ -109,6 +109,7 @@ export function ProviderShell() {
           facilityName={facility?.name}
           facilityId={facility?.id}
           facilitySlug={facility?.slug}
+          facilityLogo={facility?.logo_url}
           userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
           onLogout={handleLogout}
         />
