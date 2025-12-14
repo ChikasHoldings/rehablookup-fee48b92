@@ -120,29 +120,28 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Section - Navy Background */}
-      <section className="relative min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-hidden bg-primary">
-        {/* Background Image with dark overlay */}
+      {/* Hero Section - Light Background with Image */}
+      <section className="relative flex min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-hidden">
+        {/* Background Image */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
         
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary/90" />
+        {/* Light overlay to maintain readability */}
+        <div className="absolute inset-0 bg-card/85" />
         
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
-          <div className="absolute top-1/2 left-1/4 h-64 w-64 rounded-full bg-accent/5 blur-3xl" />
+          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-accent/5 blur-3xl" />
         </div>
 
         {/* Content Container */}
-        <div className="container relative flex h-full min-h-[calc(100vh-5rem)] flex-col justify-center py-12 md:py-16">
+        <div className="container relative flex flex-1 flex-col justify-center py-8 md:py-10">
           <div className="mx-auto w-full max-w-4xl text-center">
             {/* Trust Badge */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 animate-fade-in backdrop-blur-sm">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2 animate-fade-in">
               <Star className="h-4 w-4 fill-accent text-accent" />
               <span className="text-sm font-semibold text-accent">
                 Trusted by 10,000+ families nationwide
@@ -150,27 +149,27 @@ const Index = () => {
             </div>
 
             {/* Headline */}
-            <h1 className="mb-5 font-display text-4xl font-bold leading-tight text-primary-foreground sm:text-5xl md:text-6xl lg:text-7xl animate-fade-in" style={{ animationDelay: "50ms" }}>
+            <h1 className="mb-4 font-display text-3xl font-bold leading-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl animate-fade-in drop-shadow-sm" style={{ animationDelay: "50ms" }}>
               Find the Right Path to{" "}
-              <span className="text-accent">Recovery</span>
+              <span className="text-primary">Recovery</span>
             </h1>
 
             {/* Subheadline */}
-            <p className="mb-10 text-lg text-primary-foreground/80 sm:text-xl animate-fade-in max-w-2xl mx-auto" style={{ animationDelay: "100ms" }}>
+            <p className="mb-8 text-base text-foreground/80 sm:text-lg md:text-xl animate-fade-in max-w-2xl mx-auto font-medium" style={{ animationDelay: "100ms" }}>
               Search verified addiction treatment centers and take the first step toward a healthier future.
             </p>
 
             {/* Search Form */}
-            <div className="mb-10 animate-fade-in" style={{ animationDelay: "150ms" }}>
+            <div className="mb-8 animate-fade-in" style={{ animationDelay: "150ms" }}>
               <SearchForm variant="compact-hero" />
             </div>
 
             {/* Trust Badges */}
             <div className="flex flex-wrap items-center justify-center gap-6 animate-fade-in md:gap-8" style={{ animationDelay: "200ms" }}>
               {trustBadges.map((badge) => (
-                <div key={badge.label} className="flex items-center gap-2 text-primary-foreground/70 transition-colors hover:text-primary-foreground">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
-                    <badge.icon className="h-4 w-4 text-accent" />
+                <div key={badge.label} className="flex items-center gap-2 text-foreground/70 transition-colors hover:text-primary">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
+                    <badge.icon className="h-4 w-4 text-primary" />
                   </div>
                   <span className="text-sm font-medium">{badge.label}</span>
                 </div>
@@ -178,10 +177,10 @@ const Index = () => {
             </div>
 
             {/* Quick Call CTA */}
-            <div className="mt-10 animate-fade-in" style={{ animationDelay: "250ms" }}>
-              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm text-primary-foreground/90 hover:bg-white/15 transition-colors backdrop-blur-sm">
-                <Phone className="h-4 w-4 text-accent" />
-                <span>Need help now? Call <strong className="text-primary-foreground">1-800-555-0199</strong></span>
+            <div className="mt-8 animate-fade-in" style={{ animationDelay: "250ms" }}>
+              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-primary transition-colors">
+                <Phone className="h-4 w-4" />
+                <span>Need help now? Call <strong className="text-foreground">1-800-555-0199</strong></span>
               </a>
             </div>
           </div>
