@@ -126,7 +126,7 @@ const CenterProfile = () => {
     return (
       <Layout>
         <div className="bg-muted/30 min-h-screen py-8">
-          <div className="container max-w-5xl">
+          <div className="container max-w-6xl">
             <Skeleton className="h-8 w-48 mb-4" />
             <Skeleton className="h-48 w-full mb-6 rounded-xl" />
             <div className="grid md:grid-cols-3 gap-6">
@@ -195,7 +195,7 @@ const CenterProfile = () => {
 
       {/* Main Content - Contained Layout */}
       <div className="bg-muted/30 min-h-screen pb-24 md:pb-0">
-        <div className="container max-w-5xl py-6 md:py-8">
+        <div className="container max-w-6xl py-6 md:py-8">
           {/* Back Link */}
           {fromSearch && (
             <Link
