@@ -47,7 +47,6 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, isToday, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProviderData } from "@/hooks/useProviderData";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
@@ -60,6 +59,7 @@ import {
   BasicPlanBanner
 } from "@/components/provider/LeadUsageIndicator";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 
 interface Lead {
   id: string;
@@ -106,9 +106,9 @@ export default function ProviderLeadsPage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: providerData } = useProviderData();
+  const { selectedFacility } = useSelectedFacility();
   const { data: subscription } = useSubscription();
-  const facilityId = providerData?.facility?.id;
+  const facilityId = selectedFacility?.id;
   
   // Get lead limit from subscription data
   const leadLimit = subscription?.lead_limit ?? 5;

@@ -98,11 +98,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           <div className="hidden md:block h-8 w-px bg-white/30" />
           
           {/* Enhanced Location Dropdown */}
-          <FacilityLocationDropdown
-            currentFacilityId={facilityId}
-            currentFacilityName={facilityName}
-            currentFacilityLogo={facilityLogo}
-          />
+          <FacilityLocationDropdown />
         </div>
 
         {/* Center - Search (Desktop) */}

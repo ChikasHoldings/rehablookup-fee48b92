@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { 
   Building2, 
   ChevronDown, 
@@ -9,7 +8,6 @@ import {
   Crown,
   Lock,
   AlertCircle,
-  ExternalLink
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,15 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
-import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { cn } from "@/lib/utils";
-
-interface FacilityLocationDropdownProps {
-  currentFacilityId?: string;
-  currentFacilityName?: string;
-  currentFacilityLogo?: string | null;
-  onFacilityChange?: (facility: ProviderFacility) => void;
-}
 
 const getLocationLimit = (plan: string): number => {
   switch (plan) {
@@ -44,15 +36,10 @@ const getLocationLimit = (plan: string): number => {
   }
 };
 
-export function FacilityLocationDropdown({
-  currentFacilityId,
-  currentFacilityName,
-  currentFacilityLogo,
-  onFacilityChange,
-}: FacilityLocationDropdownProps) {
-  const navigate = useNavigate();
+export function FacilityLocationDropdown() {
   const { facilities, isLoading } = useProviderFacilities();
   const { data: subscription } = useSubscription();
+  const { selectedFacility, setSelectedFacility } = useSelectedFacility();
   
   const currentPlan = subscription?.plan || "basic";
   const locationLimit = getLocationLimit(currentPlan);
@@ -61,12 +48,8 @@ export function FacilityLocationDropdown({
   const pendingFacilities = facilities.filter(f => f.status === "pending");
 
   const handleFacilitySelect = (facility: ProviderFacility) => {
-    if (facility.id !== currentFacilityId) {
-      onFacilityChange?.(facility);
-      // Store selected facility in localStorage for persistence
-      localStorage.setItem("selectedFacilityId", facility.id);
-      // Reload to switch context
-      window.location.reload();
+    if (facility.id !== selectedFacility?.id) {
+      setSelectedFacility(facility);
     }
   };
 
@@ -96,14 +79,14 @@ export function FacilityLocationDropdown({
           className="gap-2 text-white hover:text-white hover:bg-white/15 h-9 px-2.5 rounded-lg min-w-0"
         >
           <div className="flex items-center justify-center h-6 w-6 rounded-md bg-white/20 shrink-0 overflow-hidden">
-            {currentFacilityLogo ? (
-              <img src={currentFacilityLogo} alt="" className="h-full w-full object-cover" />
+            {selectedFacility?.logo_url ? (
+              <img src={selectedFacility.logo_url} alt="" className="h-full w-full object-cover" />
             ) : (
               <Building2 className="h-3.5 w-3.5 text-white" />
             )}
           </div>
           <span className="font-medium text-sm truncate max-w-[140px] md:max-w-[200px] text-white">
-            {currentFacilityName || "Select Facility"}
+            {selectedFacility?.name || "Select Facility"}
           </span>
           <ChevronDown className="h-3.5 w-3.5 text-white/70 shrink-0" />
         </Button>
@@ -159,7 +142,7 @@ export function FacilityLocationDropdown({
                     key={facility.id}
                     className={cn(
                       "flex items-center justify-between cursor-pointer py-2.5 px-3",
-                      facility.id === currentFacilityId && "bg-primary/5"
+                      facility.id === selectedFacility?.id && "bg-primary/5"
                     )}
                     onClick={() => handleFacilitySelect(facility)}
                   >
@@ -180,7 +163,7 @@ export function FacilityLocationDropdown({
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {getStatusBadge(facility.status)}
-                      {facility.id === currentFacilityId && (
+                      {facility.id === selectedFacility?.id && (
                         <Check className="h-4 w-4 text-primary" />
                       )}
                     </div>
@@ -201,7 +184,7 @@ export function FacilityLocationDropdown({
                     key={facility.id}
                     className={cn(
                       "flex items-center justify-between cursor-pointer py-2.5 px-3 opacity-75",
-                      facility.id === currentFacilityId && "bg-primary/5 opacity-100"
+                      facility.id === selectedFacility?.id && "bg-primary/5 opacity-100"
                     )}
                     onClick={() => handleFacilitySelect(facility)}
                   >
@@ -222,7 +205,7 @@ export function FacilityLocationDropdown({
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {getStatusBadge(facility.status)}
-                      {facility.id === currentFacilityId && (
+                      {facility.id === selectedFacility?.id && (
                         <Check className="h-4 w-4 text-primary" />
                       )}
                     </div>
