@@ -41,7 +41,6 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, isToday, isWithinInterval, startOfDay, endOfDay } from "date-fns";
@@ -52,6 +51,11 @@ import { cn } from "@/lib/utils";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
+import { 
+  LeadUsageIndicator, 
+  LeadLimitWarningBanner, 
+  LeadLimitReachedBanner 
+} from "@/components/provider/LeadUsageIndicator";
 
 interface Lead {
   id: string;
@@ -70,8 +74,12 @@ interface DateRange {
   to: Date | undefined;
 }
 
-// Placeholder subscription limits - in production this would come from billing system
-const LEAD_LIMIT_PER_MONTH = 50;
+// Plan limits - in production this would come from billing system
+const PLAN_LEAD_LIMITS = {
+  free: 5,
+  professional: 75,
+  enterprise: 999999,
+};
 
 export default function ProviderLeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -89,6 +97,10 @@ export default function ProviderLeadsPage() {
   const queryClient = useQueryClient();
   const { data: providerData } = useProviderData();
   const facilityId = providerData?.facility?.id;
+  
+  // Current plan - in production this would come from billing system
+  const currentPlan = "free";
+  const leadLimit = PLAN_LEAD_LIMITS[currentPlan as keyof typeof PLAN_LEAD_LIMITS];
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["provider-leads", facilityId],
@@ -193,7 +205,6 @@ export default function ProviderLeadsPage() {
   };
 
   const hasActiveFilters = searchQuery || statusFilter !== "all" || dateRange.from || dateRange.to;
-  const leadsAtLimit = thisMonthLeads.length >= LEAD_LIMIT_PER_MONTH;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -205,16 +216,9 @@ export default function ProviderLeadsPage() {
         </p>
       </div>
 
-      {/* Lead Cap Warning */}
-      {leadsAtLimit && (
-        <Alert variant="destructive" className="border-destructive/50 bg-destructive/5">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Monthly lead limit reached ({LEAD_LIMIT_PER_MONTH} leads). 
-            Upgrade your plan to receive more inquiries.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Lead Limit Banners */}
+      <LeadLimitReachedBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />
+      <LeadLimitWarningBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
@@ -236,6 +240,7 @@ export default function ProviderLeadsPage() {
           </CardContent>
         </Card>
 
+        {/* This Month with Usage Indicator */}
         <Card className="relative overflow-hidden">
           <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-blue-500/5" />
           <CardHeader className="pb-2 relative">
@@ -248,12 +253,13 @@ export default function ProviderLeadsPage() {
             {isLoading ? (
               <Skeleton className="h-9 w-16" />
             ) : (
-              <div className="flex items-baseline gap-2">
-                <p className="text-3xl font-bold text-foreground">{thisMonthLeads.length}</p>
-                <span className="text-xs text-muted-foreground">/ {LEAD_LIMIT_PER_MONTH}</span>
-              </div>
+              <LeadUsageIndicator 
+                usedLeads={thisMonthLeads.length} 
+                leadLimit={leadLimit}
+                variant="compact"
+              />
             )}
-            <p className="text-xs text-muted-foreground mt-1">{format(new Date(), "MMMM yyyy")}</p>
+            <p className="text-xs text-muted-foreground mt-2">{format(new Date(), "MMMM yyyy")}</p>
           </CardContent>
         </Card>
 

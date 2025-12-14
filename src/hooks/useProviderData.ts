@@ -24,6 +24,7 @@ interface ProviderData {
   facility: Facility | null;
   viewsCount: number;
   leadsCount: number;
+  monthlyLeadsCount: number;
 }
 
 export function useProviderData() {
@@ -53,6 +54,7 @@ export function useProviderData() {
 
       let viewsCount = 0;
       let leadsCount = 0;
+      let monthlyLeadsCount = 0;
 
       if (facilityData) {
         // Fetch view counts for last 30 days
@@ -69,13 +71,26 @@ export function useProviderData() {
           viewsCount = viewsData.reduce((sum, row) => sum + row.view_count, 0);
         }
 
-        // Fetch leads count
-        const { count } = await supabase
+        // Fetch total leads count
+        const { count: totalCount } = await supabase
           .from("leads")
           .select("*", { count: "exact", head: true })
           .eq("facility_id", facilityData.id);
         
-        leadsCount = count || 0;
+        leadsCount = totalCount || 0;
+
+        // Fetch monthly leads count (current month)
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        
+        const { count: monthlyCount } = await supabase
+          .from("leads")
+          .select("*", { count: "exact", head: true })
+          .eq("facility_id", facilityData.id)
+          .gte("created_at", startOfMonth.toISOString());
+        
+        monthlyLeadsCount = monthlyCount || 0;
       }
 
       return {
@@ -83,6 +98,7 @@ export function useProviderData() {
         facility: facilityData,
         viewsCount,
         leadsCount,
+        monthlyLeadsCount,
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
