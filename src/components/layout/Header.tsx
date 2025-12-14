@@ -4,14 +4,31 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
+export interface NavLink {
+  href: string;
+  label: string;
+}
+
+export interface HeaderProps {
+  navLinks?: NavLink[];
+  ctaLink?: string;
+  ctaLabel?: string;
+  variant?: "default" | "provider";
+}
+
+const defaultNavLinks: NavLink[] = [
   { href: "/rehab-centers", label: "Find Rehab" },
   { href: "/treatment-types", label: "Treatment Types" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/for-providers", label: "For Providers" },
 ];
 
-export function Header() {
+export function Header({ 
+  navLinks = defaultNavLinks, 
+  ctaLink = "/rehab-centers",
+  ctaLabel = "Get Help Now",
+  variant = "default"
+}: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -19,12 +36,15 @@ export function Header() {
     <header className="z-50 w-full border-b border-border bg-card shadow-sm">
       <div className="container flex h-16 items-center justify-between md:h-18">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
+        <Link to={variant === "provider" ? "/provider-login" : "/"} className="flex items-center gap-2.5 group">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary transition-transform group-hover:scale-105">
             <Heart className="h-4.5 w-4.5 text-primary-foreground" />
           </div>
           <span className="font-display text-lg font-semibold text-foreground">
             RehabLookup
+            {variant === "provider" && (
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">Providers</span>
+            )}
           </span>
         </Link>
 
@@ -48,9 +68,9 @@ export function Header() {
 
         {/* CTA & Mobile Toggle */}
         <div className="flex items-center gap-2">
-          <Link to="/rehab-centers" className="hidden sm:block">
+          <Link to={ctaLink} className="hidden sm:block">
             <Button size="sm" className="shadow-sm">
-              Get Help Now
+              {ctaLabel}
             </Button>
           </Link>
           <button
@@ -83,9 +103,9 @@ export function Header() {
               </Link>
             ))}
             <div className="mt-4 border-t border-border pt-4">
-              <Link to="/rehab-centers" onClick={() => setMobileMenuOpen(false)}>
+              <Link to={ctaLink} onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full">
-                  Get Help Now
+                  {ctaLabel}
                 </Button>
               </Link>
             </div>
