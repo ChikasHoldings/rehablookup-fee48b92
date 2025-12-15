@@ -23,7 +23,8 @@ export interface RequestHelpFormData {
   insuranceProvider: string;
   budgetPreference: string;
   // Step 4
-  name: string;
+  firstName: string;
+  lastName: string;
   phone: string;
   email: string;
   preferredContact: string;
@@ -41,7 +42,8 @@ const initialFormData: RequestHelpFormData = {
   insuranceType: "",
   insuranceProvider: "",
   budgetPreference: "",
-  name: "",
+  firstName: "",
+  lastName: "",
   phone: "",
   email: "",
   preferredContact: "call",
