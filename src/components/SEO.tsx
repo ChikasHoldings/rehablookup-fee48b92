@@ -14,7 +14,6 @@ interface SEOProps {
 const SITE_NAME = "RehabLookup";
 const SITE_URL = "https://rehablookup.com";
 const DEFAULT_IMAGE = "/og-image.jpg";
-const PHONE_NUMBER = "1-800-555-0199";
 
 export function SEO({
   title,
@@ -39,7 +38,7 @@ export function SEO({
     logo: `${SITE_URL}/logo.png`,
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: PHONE_NUMBER,
+      email: "help@rehablookup.com",
       contactType: "customer service",
       availableLanguage: "English",
       areaServed: "US",

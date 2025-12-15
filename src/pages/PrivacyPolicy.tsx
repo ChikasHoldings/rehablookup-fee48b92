@@ -154,7 +154,6 @@ const PrivacyPolicy = () => {
                 </p>
                 <ul className="mt-4 list-none space-y-2 text-muted-foreground">
                   <li>Email: <a href="mailto:privacy@rehablookup.com" className="text-primary hover:underline">privacy@rehablookup.com</a></li>
-                  <li>Phone: <a href="tel:1-800-555-0199" className="text-primary hover:underline">1-800-555-0199</a></li>
                 </ul>
               </section>
             </div>

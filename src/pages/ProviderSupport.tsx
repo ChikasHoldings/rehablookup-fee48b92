@@ -10,7 +10,6 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Mail,
-  Phone,
   MessageSquare,
   Clock,
   HelpCircle,
@@ -93,24 +92,22 @@ export default function ProviderSupport() {
             <div className="grid gap-6 md:grid-cols-3 mb-12">
               <div className="rounded-xl border border-border bg-card p-6 text-center">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Phone className="h-5 w-5 text-primary" />
+                  <Mail className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="font-display text-lg font-semibold text-foreground">Phone</h3>
+                <h3 className="font-display text-lg font-semibold text-foreground">Email Support</h3>
                 <p className="mt-1 text-sm text-muted-foreground">Mon-Fri, 9am-6pm EST</p>
-                <a href="tel:1-800-555-0199" className="mt-3 inline-block text-primary font-medium hover:underline">
-                  1-800-555-0199
+                <a href="mailto:providers@rehablookup.com" className="mt-3 inline-block text-primary font-medium hover:underline">
+                  providers@rehablookup.com
                 </a>
               </div>
 
               <div className="rounded-xl border border-border bg-card p-6 text-center">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Mail className="h-5 w-5 text-primary" />
+                  <MessageSquare className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="font-display text-lg font-semibold text-foreground">Email</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Response within 24 hours</p>
-                <a href="mailto:providers@rehablookup.com" className="mt-3 inline-block text-primary font-medium hover:underline">
-                  providers@rehablookup.com
-                </a>
+                <h3 className="font-display text-lg font-semibold text-foreground">Live Chat</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Quick questions answered</p>
+                <p className="mt-3 text-foreground font-medium">Available in dashboard</p>
               </div>
 
               <div className="rounded-xl border border-border bg-card p-6 text-center">

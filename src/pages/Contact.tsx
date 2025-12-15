@@ -5,7 +5,6 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Phone,
   Mail,
   MapPin,
   Clock,
@@ -99,7 +98,7 @@ const Contact = () => {
             {/* Contact Info */}
             <div className="animate-fade-in">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                <Phone className="h-4 w-4 text-accent" />
+                <Mail className="h-4 w-4 text-accent" />
                 <span className="text-sm font-medium text-accent">Contact Information</span>
               </div>
               <h2 className="mb-5 font-display text-xl font-bold text-foreground md:text-2xl">
@@ -111,24 +110,6 @@ const Contact = () => {
               </p>
 
               <div className="space-y-5">
-                <div className="group flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-accent/30 hover:shadow-card">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10 transition-colors group-hover:bg-accent/20">
-                    <Phone className="h-5 w-5 text-accent" />
-                  </div>
-                  <div>
-                    <h3 className="mb-1 font-semibold text-foreground">Phone</h3>
-                    <a
-                      href="tel:1-800-555-0199"
-                      className="text-primary hover:text-primary/80 font-medium"
-                    >
-                      1-800-555-0199
-                    </a>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Available 24/7 for treatment inquiries
-                    </p>
-                  </div>
-                </div>
-
                 <div className="group flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-accent/30 hover:shadow-card">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10 transition-colors group-hover:bg-accent/20">
                     <Mail className="h-5 w-5 text-accent" />
@@ -154,7 +135,6 @@ const Contact = () => {
                   <div>
                     <h3 className="mb-1 font-semibold text-foreground">Hours</h3>
                     <p className="text-sm text-muted-foreground">
-                      Phone support: <span className="text-foreground font-medium">24/7</span><br />
                       Email support: <span className="text-foreground font-medium">Mon-Fri 9am-5pm EST</span>
                     </p>
                   </div>
@@ -184,8 +164,11 @@ const Contact = () => {
                       Looking for Treatment Help?
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      For immediate treatment assistance, please call our 24/7 helpline 
-                      or visit our{" "}
+                      For immediate treatment assistance,{" "}
+                      <Link to="/request-help?source=contact_sidebar" className="text-primary font-medium hover:underline">
+                        request help
+                      </Link>
+                      {" "}or visit our{" "}
                       <Link to="/rehab-centers" className="text-primary font-medium hover:underline">
                         treatment center search
                       </Link>
