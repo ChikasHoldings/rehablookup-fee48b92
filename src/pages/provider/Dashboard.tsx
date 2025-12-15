@@ -195,7 +195,7 @@ export default function ProviderDashboardPage() {
   const profileUrl = facility?.slug ? `/center/${facility.slug}` : facility?.id ? `/rehab-centers/${facility.id}` : null;
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+    <div className="p-4 md:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
       {/* Welcome Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
