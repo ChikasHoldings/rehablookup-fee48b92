@@ -338,9 +338,17 @@ export default function ProviderListingPage() {
       // Invalidate all relevant queries for real-time updates
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
       queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       setHasChanges(false);
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);
+      
+      // Show toast for auto-save to confirm public profile is updated
+      toast({
+        title: "Changes saved",
+        description: "Your public profile has been updated and is now live.",
+      });
     }
   }, [facility, isSaving, selectedFacility?.id, queryClient]);
 
@@ -452,8 +460,8 @@ export default function ProviderListingPage() {
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] }); // Public profile
       setTimeout(() => setShowSaved(false), 2000);
       toast({
-        title: "Changes saved",
-        description: "Your listing has been updated successfully.",
+        title: "Profile updated",
+        description: "Your public profile is now live with the latest changes.",
       });
     }
   };
