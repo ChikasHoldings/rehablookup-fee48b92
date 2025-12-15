@@ -268,6 +268,7 @@ export type Database = {
           profile_completion_celebrated: boolean | null
           profile_reminder_count: number | null
           profile_reminder_sent_at: string | null
+          reply_email: string | null
           slug: string | null
           state: string
           status: string
@@ -300,6 +301,7 @@ export type Database = {
           profile_completion_celebrated?: boolean | null
           profile_reminder_count?: number | null
           profile_reminder_sent_at?: string | null
+          reply_email?: string | null
           slug?: string | null
           state: string
           status?: string
@@ -332,6 +334,7 @@ export type Database = {
           profile_completion_celebrated?: boolean | null
           profile_reminder_count?: number | null
           profile_reminder_sent_at?: string | null
+          reply_email?: string | null
           slug?: string | null
           state?: string
           status?: string

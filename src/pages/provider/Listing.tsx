@@ -56,6 +56,7 @@ interface Facility {
   zip_code: string;
   phone: string;
   email: string | null;
+  reply_email: string | null;
   website: string | null;
   description: string | null;
   facility_type: string;
@@ -156,6 +157,11 @@ const validateField = (field: string, value: string | null): string | null => {
       if (!/^[\d\s\-\(\)\+]{10,}$/.test(trimmedValue)) return "Enter a valid phone number";
       return null;
     case "email":
+      if (trimmedValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
+        return "Enter a valid email address";
+      }
+      return null;
+    case "reply_email":
       if (trimmedValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
         return "Enter a valid email address";
       }
@@ -322,6 +328,7 @@ export default function ProviderListingPage() {
         zip_code: facility.zip_code,
         phone: facility.phone,
         email: facility.email,
+        reply_email: facility.reply_email,
         website: facility.website,
         description: facility.description,
         facility_type: facility.facility_type,
@@ -435,6 +442,7 @@ export default function ProviderListingPage() {
         zip_code: facility.zip_code,
         phone: facility.phone,
         email: facility.email,
+        reply_email: facility.reply_email,
         website: facility.website,
         description: facility.description,
         facility_type: facility.facility_type,
@@ -1035,6 +1043,32 @@ export default function ProviderListingPage() {
                     )}
                   </div>
                 </div>
+                
+                {/* Reply Email - Important for lead communication */}
+                <div className="space-y-2">
+                  <Label htmlFor="reply_email" className="text-xs font-medium">
+                    Reply Email <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="reply_email"
+                      type="email"
+                      value={facility.reply_email || ""}
+                      onChange={(e) => updateField("reply_email", e.target.value)}
+                      onBlur={(e) => handleFieldBlur("reply_email", e.target.value)}
+                      className={`h-10 pl-10 ${fieldErrors.reply_email && touchedFields.has("reply_email") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      placeholder="replies@facility.com"
+                    />
+                  </div>
+                  {fieldErrors.reply_email && touchedFields.has("reply_email") && (
+                    <p className="text-xs text-destructive">{fieldErrors.reply_email}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Replies from leads will be sent to this email address.
+                  </p>
+                </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="website" className="text-xs font-medium">
                     Website
