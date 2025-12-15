@@ -450,132 +450,164 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Details Tab */}
-          <TabsContent value="details" className="p-3 space-y-4 mt-0 data-[state=inactive]:hidden">
-            {/* Contact */}
+          <TabsContent value="details" className="p-3 space-y-3 mt-0 data-[state=inactive]:hidden">
+            {/* Message/Note - Prominent display */}
+            {lead.message && (
+              <section className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <h3 className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Message from {firstName}
+                </h3>
+                <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                  {lead.message}
+                </p>
+              </section>
+            )}
+
+            {/* Contact Info */}
             <section>
-              <h3 className="text-[11px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Contact</h3>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between py-2 px-2.5 rounded-md bg-muted/50 hover:bg-muted/70 transition-colors">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-md bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Phone className="h-3.5 w-3.5 text-green-600" />
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Contact</h3>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <Phone className="h-3 w-3 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-[13px] font-medium text-foreground">{lead.phone}</p>
-                      <p className="text-[10px] text-muted-foreground">{lead.preferred_contact === "call" ? "Preferred method" : "Phone"}</p>
+                      <p className="text-sm font-medium text-foreground">{lead.phone}</p>
+                      <p className="text-[10px] text-muted-foreground">{lead.preferred_contact === "call" ? "Preferred" : "Phone"}</p>
                     </div>
                   </div>
                   <div className="flex gap-0.5">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(lead.phone, "phone")}>
-                      {copiedField === "phone" ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(lead.phone, "phone")}>
+                      {copiedField === "phone" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                      <a href={`tel:${lead.phone}`}><ExternalLink className="h-3.5 w-3.5" /></a>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                      <a href={`tel:${lead.phone}`}><ExternalLink className="h-3 w-3" /></a>
                     </Button>
                   </div>
                 </div>
-                <div className="flex items-center justify-between py-2 px-2.5 rounded-md bg-muted/50 hover:bg-muted/70 transition-colors">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-7 w-7 rounded-md bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <Mail className="h-3.5 w-3.5 text-blue-600" />
+                <div className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-6 w-6 rounded bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Mail className="h-3 w-3 text-blue-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-medium text-foreground truncate">{lead.email}</p>
-                      <p className="text-[10px] text-muted-foreground">{lead.preferred_contact === "email" ? "Preferred method" : "Email"}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{lead.email}</p>
+                      <p className="text-[10px] text-muted-foreground">{lead.preferred_contact === "email" ? "Preferred" : "Email"}</p>
                     </div>
                   </div>
                   <div className="flex gap-0.5 flex-shrink-0">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(lead.email, "email")}>
-                      {copiedField === "email" ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(lead.email, "email")}>
+                      {copiedField === "email" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                      <a href={`mailto:${lead.email}`}><ExternalLink className="h-3.5 w-3.5" /></a>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
+                      <a href={`mailto:${lead.email}`}><ExternalLink className="h-3 w-3" /></a>
                     </Button>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Message */}
-            {lead.message && (
+            {/* Intake Details - Show for all leads with data */}
+            {(lead.urgency || lead.level_of_care || lead.insurance_type || lead.insurance_provider || 
+              lead.who_seeking_help || lead.dual_diagnosis || lead.budget_preference || 
+              lead.location_city_state || lead.location_zip || (lead.primary_substance && lead.primary_substance.length > 0)) && (
               <section>
-                <h3 className="text-[11px] font-semibold text-foreground/70 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <MessageSquare className="h-3 w-3" />
-                  Message
-                </h3>
-                <div className="py-2.5 px-3 rounded-md bg-muted/50 text-[13px] leading-relaxed text-foreground">
-                  {lead.message}
-                </div>
-              </section>
-            )}
-
-            {/* Intake Details */}
-            {lead.source === "Request Help Page" && (
-              <section>
-                <h3 className="text-[11px] font-semibold text-foreground/70 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3 text-primary" />
-                  Intake Details
+                  Intake Information
                 </h3>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5">
+                  {lead.who_seeking_help && (
+                    <div className="py-1.5 px-2 rounded bg-muted/40">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
+                        <User className="h-2.5 w-2.5" /> Seeking For
+                      </p>
+                      <p className="text-sm font-medium text-foreground capitalize">{lead.who_seeking_help}</p>
+                    </div>
+                  )}
                   {lead.urgency && (
-                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
+                    <div className={cn(
+                      "py-1.5 px-2 rounded",
+                      lead.urgency === "immediate" ? "bg-red-50 border border-red-200" : "bg-muted/40"
+                    )}>
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
                         <AlertTriangle className="h-2.5 w-2.5" /> Urgency
                       </p>
-                      <p className="text-[13px] font-medium text-foreground">{formatUrgency(lead.urgency)}</p>
+                      <p className={cn(
+                        "text-sm font-medium",
+                        lead.urgency === "immediate" ? "text-red-700" : "text-foreground"
+                      )}>{formatUrgency(lead.urgency)}</p>
                     </div>
                   )}
                   {lead.level_of_care && (
-                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
+                    <div className="py-1.5 px-2 rounded bg-muted/40">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
                         <Stethoscope className="h-2.5 w-2.5" /> Level of Care
                       </p>
-                      <p className="text-[13px] font-medium text-foreground">{formatLevel(lead.level_of_care)}</p>
+                      <p className="text-sm font-medium text-foreground">{formatLevel(lead.level_of_care)}</p>
                     </div>
                   )}
-                  {lead.insurance_type && (
-                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
+                  {(lead.insurance_type || lead.insurance_provider) && (
+                    <div className="py-1.5 px-2 rounded bg-muted/40">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
                         <CreditCard className="h-2.5 w-2.5" /> Insurance
                       </p>
-                      <p className="text-[13px] font-medium text-foreground">{formatInsurance(lead.insurance_type)}</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {lead.insurance_provider || formatInsurance(lead.insurance_type)}
+                      </p>
+                      {lead.insurance_provider && lead.insurance_type && (
+                        <p className="text-[10px] text-muted-foreground">{formatInsurance(lead.insurance_type)}</p>
+                      )}
                     </div>
                   )}
-                  {lead.location_city_state && (
-                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
+                  {(lead.location_city_state || lead.location_zip) && (
+                    <div className="py-1.5 px-2 rounded bg-muted/40">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
                         <MapPin className="h-2.5 w-2.5" /> Location
                       </p>
-                      <p className="text-[13px] font-medium text-foreground">{lead.location_city_state}</p>
-                    </div>
-                  )}
-                  {lead.who_seeking_help && (
-                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
-                        <User className="h-2.5 w-2.5" /> Seeking For
-                      </p>
-                      <p className="text-[13px] font-medium text-foreground capitalize">{lead.who_seeking_help}</p>
+                      <p className="text-sm font-medium text-foreground">{lead.location_city_state || lead.location_zip}</p>
+                      {lead.location_city_state && lead.location_zip && (
+                        <p className="text-[10px] text-muted-foreground">{lead.location_zip}</p>
+                      )}
                     </div>
                   )}
                   {lead.dual_diagnosis && (
-                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
-                      <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Dual Diagnosis</p>
-                      <p className="text-[13px] font-medium text-foreground capitalize">{lead.dual_diagnosis}</p>
+                    <div className="py-1.5 px-2 rounded bg-muted/40">
+                      <p className="text-[10px] text-muted-foreground uppercase">Dual Diagnosis</p>
+                      <p className="text-sm font-medium text-foreground capitalize">{lead.dual_diagnosis}</p>
+                    </div>
+                  )}
+                  {lead.budget_preference && (
+                    <div className="py-1.5 px-2 rounded bg-muted/40">
+                      <p className="text-[10px] text-muted-foreground uppercase">Budget</p>
+                      <p className="text-sm font-medium text-foreground capitalize">{lead.budget_preference.replace(/-/g, ' ')}</p>
                     </div>
                   )}
                 </div>
                 {lead.primary_substance && lead.primary_substance.length > 0 && (
-                  <div className="py-2 px-2.5 rounded-md bg-muted/50 mt-2">
-                    <p className="text-[10px] text-muted-foreground uppercase mb-1.5">Primary Substance(s)</p>
+                  <div className="py-1.5 px-2 rounded bg-muted/40 mt-1.5">
+                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Primary Substance(s)</p>
                     <div className="flex flex-wrap gap-1">
                       {lead.primary_substance.map((s, i) => (
-                        <Badge key={i} variant="secondary" className="capitalize text-[11px] h-5 px-1.5">{s}</Badge>
+                        <Badge key={i} variant="secondary" className="capitalize text-xs h-5 px-1.5">{s}</Badge>
                       ))}
                     </div>
                   </div>
                 )}
               </section>
             )}
+
+            {/* Source & Timestamp */}
+            <section className="pt-2 border-t border-border/50">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  Source: <span className="font-medium text-foreground">{lead.source || "Direct"}</span>
+                </span>
+                <span>{format(new Date(lead.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
+              </div>
+            </section>
           </TabsContent>
 
           {/* Notes Tab */}
