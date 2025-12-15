@@ -402,7 +402,8 @@ export default function ProviderListingPage() {
     }
   };
 
-  if (isLoading) {
+  // Show loading state while data is being fetched OR while facility state is being initialized
+  if (isLoading || (facilityData && !facility)) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
@@ -413,7 +414,8 @@ export default function ProviderListingPage() {
     );
   }
 
-  if (!facility) {
+  // Only show "No Listing Found" when we're sure there's no data (not loading and no facilityData)
+  if (!isLoading && !facilityData && !facility) {
     return (
       <div className="max-w-md mx-auto text-center py-20">
         <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
@@ -426,6 +428,18 @@ export default function ProviderListingPage() {
         <Button asChild className="mt-6" size="lg">
           <Link to="/provider-signup">Create Your Listing</Link>
         </Button>
+      </div>
+    );
+  }
+
+  // If we still don't have facility data at this point, show loading
+  if (!facility) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
+          <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
+        </div>
       </div>
     );
   }
