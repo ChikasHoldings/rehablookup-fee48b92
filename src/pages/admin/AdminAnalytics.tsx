@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
-import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin } from "lucide-react";
+import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Route, ShieldCheck, Gauge, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -239,26 +239,30 @@ export default function AdminAnalytics() {
     },
   });
 
-  // Fetch leads data
+  // Fetch leads data (including unassigned leads without facility)
   const { data: leadsData, isLoading: isLoadingLeads } = useQuery({
     queryKey: ["admin-analytics-leads", dateRange, selectedState, selectedCity],
     queryFn: async () => {
+      // Fetch all leads including those without facility assignments
       let query = supabase
         .from("leads")
-        .select("*, facilities!inner(city, state)")
+        .select("*, facilities(city, state)")
         .gte("created_at", dateRange.from.toISOString())
         .lte("created_at", dateRange.to.toISOString());
-      
-      if (selectedState !== "all") {
-        query = query.eq("facilities.state", selectedState);
-      }
-      if (selectedCity !== "all") {
-        query = query.eq("facilities.city", selectedCity);
-      }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      
+      // Filter by location if specified (only for leads with facilities)
+      let filtered = data || [];
+      if (selectedState !== "all") {
+        filtered = filtered.filter(l => l.facilities?.state === selectedState);
+      }
+      if (selectedCity !== "all") {
+        filtered = filtered.filter(l => l.facilities?.city === selectedCity);
+      }
+      
+      return filtered;
     },
   });
 
@@ -292,7 +296,7 @@ export default function AdminAnalytics() {
     const totalViews = viewsData?.reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
     const totalClicks = interactionsData?.reduce((sum, i) => sum + (i.interaction_count || 0), 0) || 0;
     const totalLeads = leadsData?.length || 0;
-    const qualifiedLeads = leadsData?.filter(l => l.email_verified)?.length || 0;
+    const qualifiedLeads = leadsData?.filter(l => l.qualified === true)?.length || 0;
     const conversionRate = totalViews > 0 ? ((totalLeads / totalViews) * 100).toFixed(2) : "0.00";
 
     return {
@@ -311,6 +315,97 @@ export default function AdminAnalytics() {
       downgrades: subscriptionData?.downgrades || 0,
     };
   }, [viewsData, interactionsData, leadsData, subscriptionData]);
+
+  // Calculate auto-assignment analytics
+  const assignmentAnalytics = useMemo(() => {
+    if (!leadsData) return {
+      qualificationRate: 0,
+      assignmentSuccessRate: 0,
+      unassignedCount: 0,
+      assignedCount: 0,
+      qualifiedCount: 0,
+      unqualifiedCount: 0,
+      assignmentReasons: [],
+      qualificationReasons: [],
+    };
+
+    const totalLeads = leadsData.length;
+    const qualifiedCount = leadsData.filter(l => l.qualified === true).length;
+    const unqualifiedCount = leadsData.filter(l => l.qualified === false).length;
+    const assignedCount = leadsData.filter(l => l.assignment_status === 'assigned').length;
+    const unassignedCount = leadsData.filter(l => l.assignment_status === 'unassigned' || l.assignment_status === 'pending').length;
+
+    const qualificationRate = totalLeads > 0 ? ((qualifiedCount / totalLeads) * 100) : 0;
+    const assignmentSuccessRate = qualifiedCount > 0 ? ((assignedCount / qualifiedCount) * 100) : 0;
+
+    // Group by assignment reasons
+    const reasonMap = new Map<string, number>();
+    leadsData.forEach(l => {
+      if (l.assignment_reason) {
+        reasonMap.set(l.assignment_reason, (reasonMap.get(l.assignment_reason) || 0) + 1);
+      }
+    });
+    const assignmentReasons = Array.from(reasonMap.entries())
+      .map(([reason, count]) => ({ reason, count, percentage: totalLeads > 0 ? ((count / totalLeads) * 100).toFixed(1) : '0' }))
+      .sort((a, b) => b.count - a.count);
+
+    // Group by qualification reasons (for unqualified leads)
+    const qualReasonMap = new Map<string, number>();
+    leadsData.filter(l => l.qualified === false).forEach(l => {
+      const reason = l.qualification_reason || 'Unknown';
+      qualReasonMap.set(reason, (qualReasonMap.get(reason) || 0) + 1);
+    });
+    const qualificationReasons = Array.from(qualReasonMap.entries())
+      .map(([reason, count]) => ({ reason, count, percentage: unqualifiedCount > 0 ? ((count / unqualifiedCount) * 100).toFixed(1) : '0' }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      qualificationRate,
+      assignmentSuccessRate,
+      unassignedCount,
+      assignedCount,
+      qualifiedCount,
+      unqualifiedCount,
+      assignmentReasons,
+      qualificationReasons,
+    };
+  }, [leadsData]);
+
+  // Calculate provider capacity utilization
+  const providerCapacity = useMemo(() => {
+    if (!facilities || !leadsData) return [];
+
+    const currentMonth = new Date();
+    const monthStart = startOfMonth(currentMonth);
+
+    return facilities
+      .filter(f => f.status === 'approved')
+      .map(facility => {
+        // Get leads for this month for this facility
+        const monthlyLeads = leadsData.filter(l => 
+          l.facility_id === facility.id && 
+          l.qualified === true &&
+          new Date(l.created_at) >= monthStart
+        ).length;
+
+        // Default limits by plan (would be fetched from subscription in real implementation)
+        const leadLimit = 25; // Default - would come from subscription data
+        const usagePercentage = leadLimit > 0 ? (monthlyLeads / leadLimit) * 100 : 0;
+
+        return {
+          id: facility.id,
+          name: facility.name,
+          city: facility.city,
+          state: facility.state,
+          monthlyLeads,
+          leadLimit,
+          usagePercentage: Math.min(usagePercentage, 100),
+          available: Math.max(leadLimit - monthlyLeads, 0),
+          atCapacity: monthlyLeads >= leadLimit,
+        };
+      })
+      .sort((a, b) => b.usagePercentage - a.usagePercentage);
+  }, [facilities, leadsData]);
 
   // Generate time series data based on grouping
   const timeSeriesData = useMemo(() => {
@@ -763,6 +858,10 @@ export default function AdminAnalytics() {
             <FileText className="h-4 w-4 mr-2" />
             Leads
           </TabsTrigger>
+          <TabsTrigger value="autoassign" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Route className="h-4 w-4 mr-2" />
+            Auto-Assignment
+          </TabsTrigger>
           <TabsTrigger value="subscriptions" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <CreditCard className="h-4 w-4 mr-2" />
             Subscriptions
@@ -931,6 +1030,259 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Auto-Assignment Analytics Tab */}
+        <TabsContent value="autoassign" className="space-y-4">
+          {/* KPI Cards Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="border-green-100 bg-green-50/30">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-green-100">
+                    <ShieldCheck className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-700">{assignmentAnalytics.qualificationRate.toFixed(1)}%</div>
+                    <p className="text-xs text-muted-foreground font-medium">Qualification Rate</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-blue-100 bg-blue-50/30">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-blue-100">
+                    <Route className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-blue-700">{assignmentAnalytics.assignmentSuccessRate.toFixed(1)}%</div>
+                    <p className="text-xs text-muted-foreground font-medium">Assignment Success</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-purple-100 bg-purple-50/30">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-purple-100">
+                    <CheckCircle className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-purple-700">{assignmentAnalytics.assignedCount}</div>
+                    <p className="text-xs text-muted-foreground font-medium">Assigned Leads</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-amber-100 bg-amber-50/30">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-100">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-amber-700">{assignmentAnalytics.unassignedCount}</div>
+                    <p className="text-xs text-muted-foreground font-medium">Unassigned</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-4">
+            {/* Assignment Reasons Chart */}
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Route className="h-4 w-4 text-blue-600" />
+                  Assignment Reasons
+                </CardTitle>
+                <CardDescription>Why leads were assigned to specific providers</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {isLoading ? (
+                  <Skeleton className="h-[280px] w-full" />
+                ) : assignmentAnalytics.assignmentReasons.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={assignmentAnalytics.assignmentReasons} layout="vertical" margin={{ left: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis 
+                        dataKey="reason" 
+                        type="category" 
+                        width={140} 
+                        tick={{ fontSize: 11 }} 
+                        tickLine={false} 
+                        axisLine={false}
+                        tickFormatter={(value) => value.length > 20 ? value.substring(0, 20) + '...' : value}
+                      />
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Bar dataKey="count" fill={CHART_COLORS.secondary} radius={[0, 4, 4, 0]} name="Leads" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <Route className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No assignment data yet</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Qualification Breakdown */}
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-green-600" />
+                  Qualification Breakdown
+                </CardTitle>
+                <CardDescription>Lead qualification distribution</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {isLoading ? (
+                  <Skeleton className="h-[280px] w-full" />
+                ) : (
+                  <div className="h-[280px] flex flex-col justify-center space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-green-700 flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4" />
+                          Qualified
+                        </span>
+                        <span className="font-bold text-green-700">{assignmentAnalytics.qualifiedCount}</span>
+                      </div>
+                      <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-green-500 rounded-full transition-all duration-500" 
+                          style={{ width: `${assignmentAnalytics.qualificationRate}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-red-700 flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          Unqualified
+                        </span>
+                        <span className="font-bold text-red-700">{assignmentAnalytics.unqualifiedCount}</span>
+                      </div>
+                      <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-red-500 rounded-full transition-all duration-500" 
+                          style={{ width: `${100 - assignmentAnalytics.qualificationRate}%` }}
+                        />
+                      </div>
+                    </div>
+                    {assignmentAnalytics.qualificationReasons.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <p className="text-xs text-muted-foreground font-medium mb-2">Top Disqualification Reasons</p>
+                        <div className="space-y-1.5">
+                          {assignmentAnalytics.qualificationReasons.slice(0, 3).map((r, i) => (
+                            <div key={i} className="flex justify-between text-xs">
+                              <span className="text-muted-foreground truncate max-w-[180px]">{r.reason}</span>
+                              <span className="font-medium">{r.count} ({r.percentage}%)</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Provider Capacity Utilization Table */}
+          <Card className="border-slate-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Gauge className="h-4 w-4 text-purple-600" />
+                Provider Capacity Utilization
+              </CardTitle>
+              <CardDescription>Monthly lead capacity usage by provider</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {isLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : providerCapacity.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
+                        <TableHead className="font-semibold">Provider</TableHead>
+                        <TableHead className="font-semibold">Location</TableHead>
+                        <TableHead className="text-center font-semibold">Leads Used</TableHead>
+                        <TableHead className="text-center font-semibold">Limit</TableHead>
+                        <TableHead className="text-center font-semibold">Available</TableHead>
+                        <TableHead className="font-semibold min-w-[200px]">Capacity</TableHead>
+                        <TableHead className="text-center font-semibold">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {providerCapacity.slice(0, 15).map((provider) => (
+                        <TableRow key={provider.id} className="hover:bg-slate-50/50">
+                          <TableCell className="font-medium">
+                            <div className="truncate max-w-[180px]" title={provider.name}>
+                              {provider.name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {provider.city}, {provider.state}
+                          </TableCell>
+                          <TableCell className="text-center font-medium">{provider.monthlyLeads}</TableCell>
+                          <TableCell className="text-center text-muted-foreground">{provider.leadLimit}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge 
+                              variant={provider.available === 0 ? "destructive" : provider.available <= 5 ? "secondary" : "outline"}
+                              className="font-medium"
+                            >
+                              {provider.available}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                  className={cn(
+                                    "h-full rounded-full transition-all duration-500",
+                                    provider.usagePercentage >= 90 ? "bg-red-500" :
+                                    provider.usagePercentage >= 70 ? "bg-amber-500" :
+                                    "bg-green-500"
+                                  )}
+                                  style={{ width: `${provider.usagePercentage}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-medium w-10 text-right">
+                                {provider.usagePercentage.toFixed(0)}%
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {provider.atCapacity ? (
+                              <Badge variant="destructive" className="text-xs">At Capacity</Badge>
+                            ) : provider.usagePercentage >= 80 ? (
+                              <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-200">Near Limit</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs text-green-700 border-green-200">Available</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Gauge className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">No provider data available</p>
+                  <p className="text-sm mt-1">Capacity metrics will appear once providers receive leads</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="subscriptions" className="space-y-4">
