@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -35,8 +35,10 @@ import {
   AlertTriangle,
   X,
   ZoomIn,
+  Radio,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -163,6 +165,8 @@ export default function AdminProviders() {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [detailTab, setDetailTab] = useState("overview");
+  const [isLive, setIsLive] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   
   // Contact form state
   const [contactSubject, setContactSubject] = useState("");
@@ -176,6 +180,55 @@ export default function AdminProviders() {
   const [flagImageType, setFlagImageType] = useState<"logo" | "gallery">("gallery");
   const [flagReason, setFlagReason] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  // Invalidate all provider queries for real-time updates
+  const invalidateProviderQueries = useCallback(() => {
+    setLastUpdate(new Date());
+    queryClient.invalidateQueries({ queryKey: ["admin-providers"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-providers-status-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-providers-count"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
+  }, [queryClient]);
+
+  // Real-time subscriptions
+  useEffect(() => {
+    if (!isLive) return;
+
+    const facilitiesChannel = supabase
+      .channel("admin-providers-facilities")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "facilities" },
+        (payload) => {
+          console.log("Facilities update:", payload.eventType);
+          invalidateProviderQueries();
+          if (payload.eventType === "INSERT") {
+            toast.info("New provider registered", { description: "List updated automatically" });
+          } else if (payload.eventType === "UPDATE") {
+            toast.info("Provider updated", { description: "Data refreshed" });
+          }
+        }
+      )
+      .subscribe();
+
+    const leadsChannel = supabase
+      .channel("admin-providers-leads")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        (payload) => {
+          console.log("New lead:", payload);
+          queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-provider-leads"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(facilitiesChannel);
+      supabase.removeChannel(leadsChannel);
+    };
+  }, [isLive, invalidateProviderQueries, queryClient]);
 
   // Fetch all status counts
   const { data: statusCounts } = useQuery({
@@ -605,15 +658,36 @@ export default function AdminProviders() {
           <h1 className="text-2xl font-bold text-foreground">Provider Management</h1>
           <p className="text-muted-foreground">Manage and monitor all facility providers</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-providers"] })}
-          className="gap-2"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={isLive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsLive(!isLive)}
+                  className="gap-2"
+                >
+                  <Radio className={`h-3.5 w-3.5 ${isLive ? "animate-pulse" : ""}`} />
+                  {isLive ? "Live" : "Paused"}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isLive ? "Receiving real-time updates" : "Real-time updates paused"}</p>
+                <p className="text-xs text-muted-foreground">Last update: {lastUpdate.toLocaleTimeString()}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => invalidateProviderQueries()}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
