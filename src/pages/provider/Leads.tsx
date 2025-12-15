@@ -7,7 +7,8 @@ import {
   CalendarIcon,
   Sparkles,
   TrendingUp,
-  MessageSquare,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import {
   Select,
@@ -320,7 +321,7 @@ export default function ProviderLeadsPage() {
                             </div>
                           </div>
                           <span className="text-[10px] text-muted-foreground font-medium">
-                            {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true }).replace('about ', '')}
                           </span>
                         </div>
 
@@ -338,14 +339,27 @@ export default function ProviderLeadsPage() {
                                 Direct
                               </Badge>
                             )}
-                            <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
-                            <LeadScoreBadge lead={lead} size="sm" />
-                            {lead.message && (
-                              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-muted-foreground/30 bg-background/50">
-                                <MessageSquare className="h-2.5 w-2.5 mr-0.5" />
-                                Note
+                            {/* Urgency Tag */}
+                            {lead.urgency === 'immediate' && (
+                              <Badge className="h-5 px-2 text-[10px] bg-red-500 text-white border-0 font-semibold shadow-sm">
+                                <AlertTriangle className="h-2.5 w-2.5 mr-1" />
+                                Urgent
                               </Badge>
                             )}
+                            {lead.urgency === 'within_week' && (
+                              <Badge className="h-5 px-2 text-[10px] bg-amber-500 text-white border-0 font-semibold shadow-sm">
+                                <Clock className="h-2.5 w-2.5 mr-1" />
+                                This Week
+                              </Badge>
+                            )}
+                            {lead.urgency === 'within_month' && (
+                              <Badge variant="outline" className="h-5 px-2 text-[10px] border-muted-foreground/40 font-medium">
+                                <Clock className="h-2.5 w-2.5 mr-1" />
+                                This Month
+                              </Badge>
+                            )}
+                            <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                            <LeadScoreBadge lead={lead} size="sm" />
                           </div>
                         )}
                       </div>
