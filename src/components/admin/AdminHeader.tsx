@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle } from "lucide-react";
 import {
@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import {
   CommandDialog,
   CommandEmpty,
@@ -22,47 +21,126 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
 
 interface AdminHeaderProps {
   userEmail?: string;
   onLogout: () => void;
 }
 
-// Mock notifications for demo - in production, fetch from database
-const mockNotifications = [
-  {
-    id: "1",
-    title: "New provider signup",
-    message: "Recovery Center of Texas has registered",
-    time: "5 minutes ago",
-    read: false,
-    type: "provider",
-  },
-  {
-    id: "2",
-    title: "Lead awaiting assignment",
-    message: "3 unassigned leads need attention",
-    time: "1 hour ago",
-    read: false,
-    type: "lead",
-  },
-  {
-    id: "3",
-    title: "Provider approved",
-    message: "Sunrise Recovery has been approved",
-    time: "2 hours ago",
-    read: true,
-    type: "success",
-  },
-];
+type Notification = {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  type: "provider" | "lead" | "success" | "warning";
+  link?: string;
+};
 
 function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
   const initials = userEmail?.slice(0, 2).toUpperCase() || "AD";
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [notifications] = useState(mockNotifications);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // Fetch pending providers
+  const { data: pendingProviders } = useQuery({
+    queryKey: ["admin-notifications-pending"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("facilities")
+        .select("id, name, city, state, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch unassigned leads
+  const { data: unassignedLeads } = useQuery({
+    queryKey: ["admin-notifications-unassigned-leads"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("leads")
+        .select("id, name, created_at")
+        .is("facility_id", null)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    refetchInterval: 30000,
+  });
+
+  // Fetch recent approvals (last 24 hours)
+  const { data: recentApprovals } = useQuery({
+    queryKey: ["admin-notifications-approvals"],
+    queryFn: async () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const { data } = await supabase
+        .from("facilities")
+        .select("id, name, updated_at")
+        .eq("status", "approved")
+        .gte("updated_at", yesterday.toISOString())
+        .order("updated_at", { ascending: false })
+        .limit(3);
+      return data || [];
+    },
+    refetchInterval: 60000,
+  });
+
+  // Build notifications from real data
+  const notifications: Notification[] = [];
+
+  // Add pending providers as notifications
+  pendingProviders?.forEach((provider) => {
+    notifications.push({
+      id: `pending-${provider.id}`,
+      title: "New provider signup",
+      message: `${provider.name} (${provider.city}, ${provider.state}) is pending review`,
+      time: formatDistanceToNow(new Date(provider.created_at), { addSuffix: true }),
+      type: "provider",
+      link: "/admin/providers?status=pending",
+    });
+  });
+
+  // Add unassigned leads count as notification
+  if (unassignedLeads && unassignedLeads.length > 0) {
+    notifications.push({
+      id: "unassigned-leads",
+      title: "Leads awaiting assignment",
+      message: `${unassignedLeads.length} unassigned lead${unassignedLeads.length > 1 ? "s" : ""} need attention`,
+      time: formatDistanceToNow(new Date(unassignedLeads[0].created_at), { addSuffix: true }),
+      type: "lead",
+      link: "/admin/leads?unassigned=true",
+    });
+  }
+
+  // Add recent approvals
+  recentApprovals?.forEach((facility) => {
+    notifications.push({
+      id: `approved-${facility.id}`,
+      title: "Provider approved",
+      message: `${facility.name} has been approved`,
+      time: formatDistanceToNow(new Date(facility.updated_at), { addSuffix: true }),
+      type: "success",
+      link: "/admin/providers",
+    });
+  });
+
+  // Sort by most recent first (pending providers and unassigned leads are priorities)
+  const sortedNotifications = notifications.sort((a, b) => {
+    // Prioritize pending providers and unassigned leads
+    if (a.type === "provider" || a.type === "lead") return -1;
+    if (b.type === "provider" || b.type === "lead") return 1;
+    return 0;
+  });
+
+  const unreadCount = (pendingProviders?.length || 0) + (unassignedLeads && unassignedLeads.length > 0 ? 1 : 0);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -76,6 +154,24 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
         return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }
   };
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (notification.link) {
+      navigate(notification.link);
+    }
+  };
+
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   return (
     <>
@@ -123,7 +219,7 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
-                    {unreadCount}
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}
               </Button>
@@ -133,25 +229,32 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
                 <h3 className="font-semibold">Notifications</h3>
                 {unreadCount > 0 && (
                   <Badge variant="secondary" className="text-xs">
-                    {unreadCount} new
+                    {unreadCount} action{unreadCount > 1 ? "s" : ""} needed
                   </Badge>
                 )}
               </div>
               <ScrollArea className="h-[300px]">
-                {notifications.length > 0 ? (
+                {sortedNotifications.length > 0 ? (
                   <div className="py-2">
-                    {notifications.map((notification) => (
+                    {sortedNotifications.map((notification) => (
                       <div
                         key={notification.id}
+                        onClick={() => handleNotificationClick(notification)}
                         className={`flex items-start gap-3 px-4 py-3 hover:bg-muted cursor-pointer transition-colors ${
-                          !notification.read ? "bg-muted/50" : ""
+                          notification.type === "provider" || notification.type === "lead"
+                            ? "bg-muted/50"
+                            : ""
                         }`}
                       >
                         <div className="mt-0.5">
                           {getNotificationIcon(notification.type)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${!notification.read ? "font-medium" : ""}`}>
+                          <p className={`text-sm ${
+                            notification.type === "provider" || notification.type === "lead"
+                              ? "font-medium"
+                              : ""
+                          }`}>
                             {notification.title}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
@@ -161,7 +264,7 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
                             {notification.time}
                           </p>
                         </div>
-                        {!notification.read && (
+                        {(notification.type === "provider" || notification.type === "lead") && (
                           <div className="h-2 w-2 rounded-full bg-blue-500 mt-2" />
                         )}
                       </div>
@@ -169,16 +272,23 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
                   </div>
                 ) : (
                   <div className="py-8 text-center text-muted-foreground">
-                    <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No notifications</p>
+                    <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500/50" />
+                    <p className="text-sm font-medium">All caught up!</p>
+                    <p className="text-xs">No pending actions</p>
                   </div>
                 )}
               </ScrollArea>
-              <div className="border-t p-2">
-                <Button variant="ghost" className="w-full text-sm" asChild>
-                  <Link to="/admin/settings">View all notifications</Link>
-                </Button>
-              </div>
+              {sortedNotifications.length > 0 && (
+                <div className="border-t p-2">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full text-sm" 
+                    onClick={() => navigate("/admin/providers?status=pending")}
+                  >
+                    View pending providers
+                  </Button>
+                </div>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -221,13 +331,13 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Quick Actions">
-            <CommandItem onSelect={() => { navigate("/admin/providers"); setSearchOpen(false); }}>
+            <CommandItem onSelect={() => { navigate("/admin/providers?status=pending"); setSearchOpen(false); }}>
               <Building2 className="h-4 w-4 mr-2" />
-              View All Providers
+              Review Pending Providers ({pendingProviders?.length || 0})
             </CommandItem>
             <CommandItem onSelect={() => { navigate("/admin/leads?unassigned=true"); setSearchOpen(false); }}>
               <Users className="h-4 w-4 mr-2" />
-              View Unassigned Leads
+              View Unassigned Leads ({unassignedLeads?.length || 0})
             </CommandItem>
             <CommandItem onSelect={() => { navigate("/admin/featured"); setSearchOpen(false); }}>
               <AlertCircle className="h-4 w-4 mr-2" />
