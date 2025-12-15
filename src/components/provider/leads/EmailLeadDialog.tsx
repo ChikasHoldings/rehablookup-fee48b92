@@ -226,10 +226,23 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
     };
   }, [lead, providerData]);
 
-  // Check if reply email is configured AND verified
+  // Check if email sending is allowed:
+  // - Account email is always verified (Supabase Auth handles this)
+  // - Custom reply_email only needs verification if it's DIFFERENT from account email
   const replyEmailVerified = useMemo(() => {
     const facility = providerData?.facility as any;
-    return !!(facility?.reply_email && facility?.reply_email_verified);
+    const profile = providerData?.profile as any;
+    const accountEmail = profile?.email?.toLowerCase().trim();
+    const replyEmail = facility?.reply_email?.toLowerCase().trim();
+    
+    // If no custom reply email set, use account email (always verified)
+    if (!replyEmail) return true;
+    
+    // If reply email matches account email, it's verified
+    if (replyEmail === accountEmail) return true;
+    
+    // If different email, must be explicitly verified
+    return !!facility?.reply_email_verified;
   }, [providerData]);
 
   // For display purposes - has any reply email configured (even if not verified)
