@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
+import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Bell,
   CheckCheck,
@@ -15,8 +25,14 @@ import {
   Building2,
   Eye,
   Users,
+  RefreshCw,
+  Filter,
+  Search,
+  Mail,
+  Clock,
+  Loader2,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +46,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -43,6 +60,12 @@ const getNotificationIcon = (type: string) => {
       return <Building2 className="h-5 w-5 text-green-500" />;
     case "new_lead":
       return <Users className="h-5 w-5 text-purple-500" />;
+    case "lead_assigned":
+      return <Users className="h-5 w-5 text-indigo-500" />;
+    case "system":
+      return <Bell className="h-5 w-5 text-slate-500" />;
+    case "email":
+      return <Mail className="h-5 w-5 text-cyan-500" />;
     default:
       return <Bell className="h-5 w-5 text-muted-foreground" />;
   }
@@ -60,121 +83,319 @@ const getNotificationBadge = (type: string) => {
       return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>;
     case "new_lead":
       return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">New Lead</Badge>;
-    default:
+    case "lead_assigned":
+      return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">Lead Assigned</Badge>;
+    case "system":
       return <Badge variant="secondary">System</Badge>;
+    case "email":
+      return <Badge variant="outline" className="bg-cyan-50 text-cyan-700 border-cyan-200">Email</Badge>;
+    default:
+      return <Badge variant="secondary">Notification</Badge>;
   }
 };
 
 export default function AdminNotifications() {
+  const navigate = useNavigate();
   const {
-    notifications,
-    unreadCount,
-    isLoading,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-    deleteAll,
+    notifications: globalNotifications,
+    unreadCount: globalUnreadCount,
+    isLoading: globalLoading,
+    markAsRead: markGlobalAsRead,
+    markAllAsRead: markAllGlobalAsRead,
+    deleteNotification: deleteGlobalNotification,
+    deleteAll: deleteAllGlobal,
+    refetch: refetchGlobal,
   } = useAdminNotifications();
-  const [filter, setFilter] = useState<"all" | "unread">("all");
 
-  const filteredNotifications = filter === "unread"
-    ? notifications.filter((n) => !n.read)
-    : notifications;
+  const {
+    notifications: userNotifications,
+    unreadCount: userUnreadCount,
+    isLoading: userLoading,
+    markAsRead: markUserAsRead,
+    markAllAsRead: markAllUserAsRead,
+    deleteNotification: deleteUserNotification,
+    deleteAll: deleteAllUser,
+  } = useAdminUserNotifications();
+
+  const [activeTab, setActiveTab] = useState<"all" | "global" | "personal">("all");
+  const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Combine notifications
+  const allNotifications = [
+    ...globalNotifications.map(n => ({ ...n, source: "global" as const })),
+    ...userNotifications.map(n => ({ ...n, source: "personal" as const })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const totalUnreadCount = globalUnreadCount + userUnreadCount;
+  const isLoading = globalLoading || userLoading;
+
+  // Filter notifications
+  const getFilteredNotifications = () => {
+    let notifications = activeTab === "global" 
+      ? globalNotifications.map(n => ({ ...n, source: "global" as const }))
+      : activeTab === "personal"
+      ? userNotifications.map(n => ({ ...n, source: "personal" as const }))
+      : allNotifications;
+
+    if (filter === "unread") {
+      notifications = notifications.filter(n => !n.read);
+    }
+
+    if (typeFilter !== "all") {
+      notifications = notifications.filter(n => n.type === typeFilter);
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      notifications = notifications.filter(n => 
+        n.title.toLowerCase().includes(query) || 
+        n.message.toLowerCase().includes(query)
+      );
+    }
+
+    return notifications;
+  };
+
+  const filteredNotifications = getFilteredNotifications();
+
+  // Get unique notification types for filter
+  const notificationTypes = Array.from(new Set(allNotifications.map(n => n.type)));
+
+  const handleMarkAsRead = (id: string, source: "global" | "personal") => {
+    if (source === "global") {
+      markGlobalAsRead(id);
+    } else {
+      markUserAsRead(id);
+    }
+  };
+
+  const handleDelete = (id: string, source: "global" | "personal") => {
+    if (source === "global") {
+      deleteGlobalNotification(id);
+    } else {
+      deleteUserNotification(id);
+    }
+  };
+
+  const handleMarkAllAsRead = () => {
+    if (activeTab === "global") {
+      markAllGlobalAsRead();
+    } else if (activeTab === "personal") {
+      markAllUserAsRead();
+    } else {
+      markAllGlobalAsRead();
+      markAllUserAsRead();
+    }
+  };
+
+  const handleDeleteAll = () => {
+    if (activeTab === "global") {
+      deleteAllGlobal();
+    } else if (activeTab === "personal") {
+      deleteAllUser();
+    } else {
+      deleteAllGlobal();
+      deleteAllUser();
+    }
+  };
+
+  const getNotificationLink = (notification: typeof allNotifications[0]) => {
+    const metadata = notification.metadata as Record<string, any> | null;
+    
+    if (notification.type === "provider_signup") {
+      return "/admin/providers?status=pending";
+    }
+    if (notification.type === "payment_failed") {
+      return "/admin/subscriptions";
+    }
+    if (notification.type === "new_lead" || notification.type === "lead_assigned") {
+      return "/admin/leads";
+    }
+    if (notification.type === "facility_approved" && metadata?.facility_id) {
+      return `/admin/providers`;
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
-            <p className="text-muted-foreground">
-              System notifications and alerts
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {unreadCount > 0 && (
-              <Button variant="outline" size="sm" onClick={() => markAllAsRead()}>
-                <CheckCheck className="h-4 w-4 mr-2" />
-                Mark All Read
-              </Button>
-            )}
-            {notifications.length > 0 && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-destructive">
-                    <Trash2 className="h-4 w-4 mr-2" />
+          <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
+          <p className="text-muted-foreground">
+            System notifications and alerts
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => refetchGlobal()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+            Refresh
+          </Button>
+          {totalUnreadCount > 0 && (
+            <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
+              <CheckCheck className="h-4 w-4 mr-2" />
+              Mark All Read
+            </Button>
+          )}
+          {allNotifications.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Clear All
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear all notifications?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all {activeTab === "all" ? "" : activeTab} notifications. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                     Clear All
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Clear all notifications?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete all notifications. This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => deleteAll()}>
-                      Clear All
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
+      </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Notifications</CardTitle>
-              <Bell className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{notifications.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unread</CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">{unreadCount}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Payment Issues</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">
-                {notifications.filter((n) => n.type === "payment_failed").length}
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Notifications</CardTitle>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{allNotifications.length}</div>
+            <p className="text-xs text-muted-foreground">
+              {globalNotifications.length} global, {userNotifications.length} personal
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Unread</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{totalUnreadCount}</div>
+            <p className="text-xs text-muted-foreground">
+              Requiring attention
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Payment Issues</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">
+              {allNotifications.filter((n) => n.type === "payment_failed").length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Failed payments
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New Signups</CardTitle>
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {allNotifications.filter((n) => n.type === "provider_signup").length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Pending review
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search notifications..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+            <div className="flex gap-2">
+              <Select value={filter} onValueChange={(v) => setFilter(v as "all" | "unread")}>
+                <SelectTrigger className="w-[130px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="unread">Unread</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="All types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {notificationTypes.map(type => (
+                    <SelectItem key={type} value={type}>
+                      {type.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      <Tabs defaultValue="all" onValueChange={(v) => setFilter(v as "all" | "unread")}>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
         <TabsList>
-          <TabsTrigger value="all">All ({notifications.length})</TabsTrigger>
-          <TabsTrigger value="unread">Unread ({unreadCount})</TabsTrigger>
+          <TabsTrigger value="all" className="gap-2">
+            All
+            <Badge variant="secondary" className="ml-1">{allNotifications.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="global" className="gap-2">
+            Global
+            <Badge variant="secondary" className="ml-1">{globalNotifications.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="personal" className="gap-2">
+            Personal
+            <Badge variant="secondary" className="ml-1">{userNotifications.length}</Badge>
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="all" className="mt-4">
+
+        <TabsContent value={activeTab} className="mt-4">
           <NotificationList
             notifications={filteredNotifications}
             isLoading={isLoading}
-            onMarkAsRead={markAsRead}
-            onDelete={deleteNotification}
-          />
-        </TabsContent>
-        <TabsContent value="unread" className="mt-4">
-          <NotificationList
-            notifications={filteredNotifications}
-            isLoading={isLoading}
-            onMarkAsRead={markAsRead}
-            onDelete={deleteNotification}
+            onMarkAsRead={handleMarkAsRead}
+            onDelete={handleDelete}
+            onNavigate={(link) => navigate(link)}
+            getNotificationLink={getNotificationLink}
           />
         </TabsContent>
       </Tabs>
@@ -183,18 +404,36 @@ export default function AdminNotifications() {
 }
 
 interface NotificationListProps {
-  notifications: ReturnType<typeof useAdminNotifications>["notifications"];
+  notifications: Array<{
+    id: string;
+    type: string;
+    title: string;
+    message: string;
+    read: boolean;
+    created_at: string;
+    source: "global" | "personal";
+    metadata?: Record<string, unknown> | null;
+  }>;
   isLoading: boolean;
-  onMarkAsRead: (id: string) => void;
-  onDelete: (id: string) => void;
+  onMarkAsRead: (id: string, source: "global" | "personal") => void;
+  onDelete: (id: string, source: "global" | "personal") => void;
+  onNavigate: (link: string) => void;
+  getNotificationLink: (notification: NotificationListProps["notifications"][0]) => string | null;
 }
 
-function NotificationList({ notifications, isLoading, onMarkAsRead, onDelete }: NotificationListProps) {
+function NotificationList({ 
+  notifications, 
+  isLoading, 
+  onMarkAsRead, 
+  onDelete, 
+  onNavigate,
+  getNotificationLink,
+}: NotificationListProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full" />
+          <Skeleton key={i} className="h-24 w-full" />
         ))}
       </div>
     );
@@ -205,7 +444,8 @@ function NotificationList({ notifications, isLoading, onMarkAsRead, onDelete }: 
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Bell className="h-12 w-12 text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground">No notifications</p>
+          <p className="text-lg font-medium text-muted-foreground">No notifications</p>
+          <p className="text-sm text-muted-foreground">You're all caught up!</p>
         </CardContent>
       </Card>
     );
@@ -214,51 +454,66 @@ function NotificationList({ notifications, isLoading, onMarkAsRead, onDelete }: 
   return (
     <ScrollArea className="h-[600px]">
       <div className="space-y-3">
-        {notifications.map((notification) => (
-          <Card
-            key={notification.id}
-            className={cn(
-              "transition-colors",
-              !notification.read && "border-l-4 border-l-primary bg-primary/5"
-            )}
-          >
-            <CardContent className="flex items-start gap-4 p-4">
-              <div className="flex-shrink-0 mt-1">
-                {getNotificationIcon(notification.type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  {getNotificationBadge(notification.type)}
-                  <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                  </span>
+        {notifications.map((notification) => {
+          const link = getNotificationLink(notification);
+          
+          return (
+            <Card
+              key={`${notification.source}-${notification.id}`}
+              className={cn(
+                "transition-colors hover:bg-muted/50",
+                !notification.read && "border-l-4 border-l-primary bg-primary/5",
+                link && "cursor-pointer"
+              )}
+              onClick={() => link && onNavigate(link)}
+            >
+              <CardContent className="flex items-start gap-4 p-4">
+                <div className="flex-shrink-0 mt-1">
+                  {getNotificationIcon(notification.type)}
                 </div>
-                <h4 className="font-medium text-sm">{notification.title}</h4>
-                <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
-              </div>
-              <div className="flex items-center gap-1">
-                {!notification.read && (
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    {getNotificationBadge(notification.type)}
+                    {notification.source === "personal" && (
+                      <Badge variant="outline" className="text-xs">Personal</Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                  <h4 className="font-medium text-sm">{notification.title}</h4>
+                  <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {format(new Date(notification.created_at), "MMM d, yyyy 'at' h:mm a")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  {!notification.read && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => onMarkAsRead(notification.id, notification.source)}
+                      title="Mark as read"
+                    >
+                      <CheckCheck className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
-                    onClick={() => onMarkAsRead(notification.id)}
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => onDelete(notification.id, notification.source)}
+                    title="Delete"
                   >
-                    <CheckCheck className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => onDelete(notification.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </ScrollArea>
   );
