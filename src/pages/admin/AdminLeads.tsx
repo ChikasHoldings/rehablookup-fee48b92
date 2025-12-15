@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -21,6 +21,7 @@ import {
   CheckSquare,
   Square,
   Send,
+  Radio,
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -214,6 +215,52 @@ export default function AdminLeads() {
   const [showBulkAssignDialog, setShowBulkAssignDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+  const [isLive, setIsLive] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Invalidate leads queries helper
+  const invalidateLeadsQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-leads-count"] });
+    setLastUpdate(new Date());
+  }, [queryClient]);
+
+  // Real-time subscriptions for leads
+  useEffect(() => {
+    if (!isLive) return;
+
+    const leadsChannel = supabase
+      .channel("admin-leads-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        (payload) => {
+          invalidateLeadsQueries();
+          toast.success("New lead received", {
+            description: `${(payload.new as Lead).name} submitted a new inquiry`,
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "leads" },
+        () => {
+          invalidateLeadsQueries();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "leads" },
+        () => {
+          invalidateLeadsQueries();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(leadsChannel);
+    };
+  }, [isLive, invalidateLeadsQueries]);
 
   // Fetch total count for pagination
   const { data: totalCount } = useQuery({
@@ -470,12 +517,32 @@ export default function AdminLeads() {
           <h1 className="text-2xl font-bold text-foreground">Leads Management</h1>
           <p className="text-muted-foreground">Review, score, and route incoming leads</p>
         </div>
-        {selectedLeads.size > 0 && (
-          <Button onClick={() => setShowBulkAssignDialog(true)}>
-            <Send className="h-4 w-4 mr-2" />
-            Assign {unassignedSelectedCount} Lead{unassignedSelectedCount !== 1 ? "s" : ""}
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={isLive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsLive(!isLive)}
+                  className={isLive ? "bg-green-600 hover:bg-green-700" : ""}
+                >
+                  <Radio className={`h-4 w-4 mr-2 ${isLive ? "animate-pulse" : ""}`} />
+                  {isLive ? "Live" : "Paused"}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Last update: {format(lastUpdate, "h:mm:ss a")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {selectedLeads.size > 0 && (
+            <Button onClick={() => setShowBulkAssignDialog(true)}>
+              <Send className="h-4 w-4 mr-2" />
+              Assign {unassignedSelectedCount} Lead{unassignedSelectedCount !== 1 ? "s" : ""}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Quick Stats */}
