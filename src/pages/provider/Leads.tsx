@@ -177,7 +177,9 @@ export default function ProviderLeadsPage() {
         {/* Left Panel - Lead List */}
         <div className={cn(
           "flex flex-col bg-background border-r transition-all duration-200",
-          selectedLead ? "w-[320px] lg:w-[360px]" : "flex-1 max-w-2xl"
+          selectedLead 
+            ? "hidden md:flex w-[280px] lg:w-[320px] xl:w-[360px]" 
+            : "flex-1 max-w-full md:max-w-2xl"
         )}>
           {/* Filters Header */}
           <div className="flex-shrink-0 border-b bg-muted/30">
@@ -403,11 +405,16 @@ export default function ProviderLeadsPage() {
         </div>
 
         {/* Right Panel - Detail */}
-        <LeadDetailPanel 
-          lead={selectedLead} 
-          onClose={() => setSelectedLead(null)}
-          facilityName={selectedFacility?.name}
-        />
+        <div className={cn(
+          "flex-1 min-w-0",
+          selectedLead ? "flex" : "hidden md:flex"
+        )}>
+          <LeadDetailPanel 
+            lead={selectedLead} 
+            onClose={() => setSelectedLead(null)}
+            facilityName={selectedFacility?.name}
+          />
+        </div>
       </div>
     </div>
   );
