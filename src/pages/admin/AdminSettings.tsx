@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Settings,
   Shield,
@@ -17,18 +18,18 @@ import {
   AlertTriangle,
   CheckCircle,
   Info,
-  ExternalLink,
   RefreshCw,
   Palette,
   FileText,
   Activity,
+  Download,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
@@ -39,12 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface SettingRowProps {
@@ -98,10 +94,136 @@ const StatusBadge = ({ status, label }: { status: "active" | "inactive" | "warni
 };
 
 export default function AdminSettings() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("general");
 
-  // Mock data for storage
-  const storageUsed = 2.4;
+  // Invalidate settings queries helper
+  const invalidateSettingsQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-settings-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-edge-functions-count"] });
+  }, [queryClient]);
+
+  // Real-time subscriptions - always active
+  useEffect(() => {
+    const facilitiesChannel = supabase
+      .channel("admin-settings-facilities")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "facilities" },
+        () => {
+          invalidateSettingsQueries();
+        }
+      )
+      .subscribe();
+
+    const leadsChannel = supabase
+      .channel("admin-settings-leads")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leads" },
+        () => {
+          invalidateSettingsQueries();
+        }
+      )
+      .subscribe();
+
+    const usersChannel = supabase
+      .channel("admin-settings-users")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_roles" },
+        () => {
+          invalidateSettingsQueries();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(facilitiesChannel);
+      supabase.removeChannel(leadsChannel);
+      supabase.removeChannel(usersChannel);
+    };
+  }, [invalidateSettingsQueries]);
+
+  // Fetch platform stats
+  const { data: stats, isLoading: loadingStats, refetch: refetchStats } = useQuery({
+    queryKey: ["admin-settings-stats"],
+    queryFn: async () => {
+      const [facilitiesResult, leadsResult, adminUsersResult, flaggedResult] = await Promise.all([
+        supabase.from("facilities").select("id", { count: "exact", head: true }),
+        supabase.from("leads").select("id", { count: "exact", head: true }),
+        supabase.from("user_roles").select("id", { count: "exact", head: true }),
+        supabase.from("flagged_images").select("id", { count: "exact", head: true }).eq("resolved", false),
+      ]);
+
+      return {
+        totalFacilities: facilitiesResult.count || 0,
+        totalLeads: leadsResult.count || 0,
+        totalAdminUsers: adminUsersResult.count || 0,
+        pendingFlags: flaggedResult.count || 0,
+      };
+    },
+  });
+
+  // Export data mutation
+  const exportData = useMutation({
+    mutationFn: async (type: "providers" | "leads" | "analytics" | "audit") => {
+      let data: any[] = [];
+      let filename = "";
+
+      switch (type) {
+        case "providers":
+          const { data: facilities } = await supabase
+            .from("facilities")
+            .select("name, city, state, phone, email, status, created_at");
+          data = facilities || [];
+          filename = "providers-export.json";
+          break;
+        case "leads":
+          const { data: leads } = await supabase
+            .from("leads")
+            .select("name, email, phone, status, created_at, facility_id");
+          data = leads || [];
+          filename = "leads-export.json";
+          break;
+        case "audit":
+          const { data: auditLogs } = await supabase
+            .from("admin_audit_log")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(1000);
+          data = auditLogs || [];
+          filename = "audit-log-export.json";
+          break;
+        default:
+          throw new Error("Invalid export type");
+      }
+
+      // Create and download JSON file
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      return { count: data.length };
+    },
+    onSuccess: (result, type) => {
+      toast.success(`Export complete`, {
+        description: `Exported ${result.count} ${type} records`,
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("Export failed", { description: error.message });
+    },
+  });
+
+  // Storage estimation (based on facility images count)
+  const storageUsed = 2.4; // This would need actual storage API
   const storageTotal = 10;
   const storagePercent = (storageUsed / storageTotal) * 100;
 
@@ -113,8 +235,16 @@ export default function AdminSettings() {
           <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
           <p className="text-muted-foreground">Manage platform configuration and preferences</p>
         </div>
-        <Button variant="outline" className="gap-2">
-          <RefreshCw className="h-4 w-4" />
+        <Button 
+          variant="outline" 
+          className="gap-2"
+          onClick={() => {
+            refetchStats();
+            toast.success("Status refreshed");
+          }}
+          disabled={loadingStats}
+        >
+          <RefreshCw className={cn("h-4 w-4", loadingStats && "animate-spin")} />
           Refresh Status
         </Button>
       </div>
@@ -630,20 +760,40 @@ export default function AdminSettings() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-                  <Users className="h-5 w-5 text-blue-500" />
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-4 flex-col gap-2"
+                  onClick={() => exportData.mutate("providers")}
+                  disabled={exportData.isPending}
+                >
+                  <Download className="h-5 w-5 text-blue-500" />
                   <span>Export Providers</span>
                 </Button>
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-                  <Activity className="h-5 w-5 text-green-500" />
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-4 flex-col gap-2"
+                  onClick={() => exportData.mutate("leads")}
+                  disabled={exportData.isPending}
+                >
+                  <Download className="h-5 w-5 text-green-500" />
                   <span>Export Leads</span>
                 </Button>
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-                  <FileText className="h-5 w-5 text-purple-500" />
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-4 flex-col gap-2"
+                  disabled
+                >
+                  <Activity className="h-5 w-5 text-purple-500" />
                   <span>Export Analytics</span>
+                  <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
                 </Button>
-                <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-                  <Shield className="h-5 w-5 text-amber-500" />
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-4 flex-col gap-2"
+                  onClick={() => exportData.mutate("audit")}
+                  disabled={exportData.isPending}
+                >
+                  <Download className="h-5 w-5 text-amber-500" />
                   <span>Export Audit Log</span>
                 </Button>
               </div>
