@@ -136,12 +136,12 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
         </div>
 
         {/* Right - Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {/* Status Indicator */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 mr-2">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 mr-2">
             <span className={`h-2 w-2 rounded-full ${statusConfig.dotClass} animate-pulse`} />
-            <span className="text-xs text-white/70">Status:</span>
-            <span className={`text-xs font-medium ${statusConfig.textClass}`}>
+            <span className="text-xs text-white/80">Status:</span>
+            <span className={`text-xs font-semibold ${statusConfig.textClass}`}>
               {statusConfig.label}
             </span>
           </div>
@@ -150,7 +150,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-9 w-9 text-white hover:text-white hover:bg-white/15"
+            className="lg:hidden h-10 w-10 text-white hover:text-white hover:bg-white/15"
             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
           >
             {mobileSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
@@ -162,9 +162,9 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               href={facilitySlug ? `/center/${facilitySlug}` : `/rehab-centers/${facilityId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium text-white/80 hover:text-white hover:bg-white/15 rounded-lg transition-colors"
+              className="hidden md:inline-flex items-center gap-1.5 h-10 px-3.5 text-sm font-medium text-white hover:bg-white/15 rounded-lg transition-colors border border-white/20"
             >
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ExternalLink className="h-4 w-4" />
               <span>View Listing</span>
             </a>
           )}
@@ -175,11 +175,11 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="relative h-9 w-9 text-white hover:text-white hover:bg-white/15"
+                className="relative h-10 w-10 text-white hover:text-white hover:bg-white/15"
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white ring-2 ring-primary">
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white ring-2 ring-primary">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -247,23 +247,23 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="hidden sm:block h-6 w-px bg-white/25 mx-1" />
+          <div className="hidden sm:block h-7 w-px bg-white/30 mx-2" />
 
           {/* Account */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-2 text-white hover:text-white hover:bg-white/15 h-9 pl-1.5 pr-2.5 rounded-lg"
+                className="gap-2.5 text-white hover:text-white hover:bg-white/15 h-10 pl-2 pr-3 rounded-lg"
               >
-                <div className="h-7 w-7 rounded-full bg-white/25 flex items-center justify-center text-xs font-semibold text-white overflow-hidden">
+                <div className="h-8 w-8 rounded-full bg-white/30 border border-white/30 flex items-center justify-center text-sm font-semibold text-white overflow-hidden">
                   {facilityLogo ? (
                     <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
                   ) : (
                     initials
                   )}
                 </div>
-                <ChevronDown className="h-3.5 w-3.5 text-white/70 hidden sm:block" />
+                <ChevronDown className="h-4 w-4 text-white hidden sm:block" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-card" sideOffset={8}>

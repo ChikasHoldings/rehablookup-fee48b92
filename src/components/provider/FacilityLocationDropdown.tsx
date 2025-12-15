@@ -76,19 +76,19 @@ export function FacilityLocationDropdown() {
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
-          className="gap-2 text-white hover:text-white hover:bg-white/15 h-9 px-2.5 rounded-lg min-w-0"
+          className="gap-2.5 text-white hover:text-white hover:bg-white/15 h-10 px-3 rounded-lg min-w-0"
         >
-          <div className="flex items-center justify-center h-6 w-6 rounded-md bg-white/20 shrink-0 overflow-hidden">
+          <div className="flex items-center justify-center h-7 w-7 rounded-md bg-white/30 border border-white/20 shrink-0 overflow-hidden">
             {selectedFacility?.logo_url ? (
               <img src={selectedFacility.logo_url} alt="" className="h-full w-full object-cover" />
             ) : (
-              <Building2 className="h-3.5 w-3.5 text-white" />
+              <Building2 className="h-4 w-4 text-white" />
             )}
           </div>
           <span className="font-medium text-sm truncate max-w-[140px] md:max-w-[200px] text-white">
             {selectedFacility?.name || "Select Facility"}
           </span>
-          <ChevronDown className="h-3.5 w-3.5 text-white/70 shrink-0" />
+          <ChevronDown className="h-4 w-4 text-white shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-72 bg-card" sideOffset={8}>
