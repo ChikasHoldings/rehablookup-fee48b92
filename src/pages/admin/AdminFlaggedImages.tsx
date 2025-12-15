@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -79,6 +79,37 @@ export default function AdminFlaggedImages() {
   const [selectedImage, setSelectedImage] = useState<FlaggedImage | null>(null);
   const [showResolveDialog, setShowResolveDialog] = useState(false);
   const [resolutionNotes, setResolutionNotes] = useState("");
+
+  // Invalidate all flagged images queries helper
+  const invalidateFlaggedQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-flagged-images"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-flagged-images-counts"] });
+  }, [queryClient]);
+
+  // Real-time subscriptions - always active
+  useEffect(() => {
+    const flaggedChannel = supabase
+      .channel("admin-flagged-images-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "flagged_images" },
+        (payload) => {
+          console.log("Flagged images update:", payload.eventType);
+          invalidateFlaggedQueries();
+          
+          if (payload.eventType === "INSERT") {
+            toast.info("New image flagged", { description: "Review queue updated" });
+          } else if (payload.eventType === "UPDATE") {
+            toast.info("Flag status updated", { description: "Data refreshed" });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(flaggedChannel);
+    };
+  }, [invalidateFlaggedQueries]);
 
   // Fetch flagged images with facility info
   const { data: flaggedImages, isLoading } = useQuery({
