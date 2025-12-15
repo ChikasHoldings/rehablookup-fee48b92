@@ -9,6 +9,8 @@ import {
   TrendingUp,
   AlertTriangle,
   Clock,
+  SlidersHorizontal,
+  ChevronDown,
 } from "lucide-react";
 import {
   Select,
@@ -55,6 +57,7 @@ export default function ProviderLeadsPage() {
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -176,72 +179,100 @@ export default function ProviderLeadsPage() {
           "flex flex-col bg-background border-r transition-all duration-200",
           selectedLead ? "w-[320px] lg:w-[360px]" : "flex-1 max-w-2xl"
         )}>
-          {/* Filters Bar */}
-          <div className="flex-shrink-0 p-3 border-b bg-muted/30">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-[140px]">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 text-sm"
-                />
+          {/* Filters Header */}
+          <div className="flex-shrink-0 border-b bg-muted/30">
+            {/* Toggle Button */}
+            <button
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="font-medium">Filters</span>
+                {hasFilters && (
+                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                    Active
+                  </Badge>
+                )}
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[100px] h-9 text-xs">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="all">All</SelectItem>
-                  {getStatusOptions().map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={sourceFilter} onValueChange={setSourceFilter}>
-                <SelectTrigger className="w-[90px] h-9 text-xs">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="qualified">Qualified</SelectItem>
-                  <SelectItem value="direct">Direct</SelectItem>
-                </SelectContent>
-              </Select>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-9 text-xs px-2.5", dateRange.from && "border-primary text-primary")}>
-                    <CalendarIcon className="h-4 w-4" />
+              <ChevronDown className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                filtersExpanded && "rotate-180"
+              )} />
+            </button>
+
+            {/* Collapsible Filters */}
+            <div className={cn(
+              "overflow-hidden transition-all duration-200",
+              filtersExpanded ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"
+            )}>
+              <div className="p-3 pt-0 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative flex-1 min-w-[140px]">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 h-9 text-sm"
+                    />
+                  </div>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[100px] h-9 text-xs">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background">
+                      <SelectItem value="all">All</SelectItem>
+                      {getStatusOptions().map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                    <SelectTrigger className="w-[90px] h-9 text-xs">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background">
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="qualified">Qualified</SelectItem>
+                      <SelectItem value="direct">Direct</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-xs px-2.5", dateRange.from && "border-primary text-primary")}>
+                        <CalendarIcon className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-background" align="end">
+                      <CalendarComponent
+                        mode="range"
+                        selected={{ from: dateRange.from, to: dateRange.to }}
+                        onSelect={(r) => setDateRange({ from: r?.from, to: r?.to })}
+                        numberOfMonths={2}
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    variant={sortBy === 'score' ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-9 text-xs px-2.5"
+                    onClick={() => setSortBy(sortBy === 'score' ? 'date' : 'score')}
+                  >
+                    <TrendingUp className="h-4 w-4" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-background" align="end">
-                  <CalendarComponent
-                    mode="range"
-                    selected={{ from: dateRange.from, to: dateRange.to }}
-                    onSelect={(r) => setDateRange({ from: r?.from, to: r?.to })}
-                    numberOfMonths={2}
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-              <Button
-                variant={sortBy === 'score' ? "secondary" : "ghost"}
-                size="sm"
-                className="h-9 text-xs px-2.5"
-                onClick={() => setSortBy(sortBy === 'score' ? 'date' : 'score')}
-              >
-                <TrendingUp className="h-4 w-4" />
-              </Button>
-              {hasFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 text-xs px-2">
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+                  {hasFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 text-xs px-2">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                {hasFilters && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Showing {filteredLeads.length} of {leads.length} leads
+                  </p>
+                )}
+              </div>
             </div>
-            {hasFilters && (
-              <p className="text-[11px] text-muted-foreground mt-2">
-                Showing {filteredLeads.length} of {leads.length} leads
-              </p>
-            )}
           </div>
 
           {/* Lead List */}
