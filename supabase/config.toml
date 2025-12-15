@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.track-view]
 verify_jwt = false
 
+[functions.track-interaction]
+verify_jwt = false
+
 [functions.send-lead-email]
 verify_jwt = true
 

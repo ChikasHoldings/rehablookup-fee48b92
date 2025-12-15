@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { BarChart3, CalendarIcon, X, ChevronDown } from "lucide-react";
+import { BarChart3, CalendarIcon, X, ChevronDown, Phone, Globe } from "lucide-react";
 import { LeadAnalyticsDashboard } from "@/components/provider/LeadAnalyticsDashboard";
+import { EngagementAnalytics } from "@/components/provider/EngagementAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Popover,
   PopoverContent,
@@ -36,8 +38,8 @@ export default function ProviderAnalyticsPage() {
   useEffect(() => {
     if (!facilityId) return;
     
-    const channel = supabase
-      .channel("analytics-realtime")
+    const leadsChannel = supabase
+      .channel("analytics-leads-realtime")
       .on(
         "postgres_changes",
         {
@@ -52,8 +54,25 @@ export default function ProviderAnalyticsPage() {
       )
       .subscribe();
 
+    const interactionsChannel = supabase
+      .channel("analytics-interactions-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_interactions",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["interaction-analytics", facilityId] });
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(leadsChannel);
+      supabase.removeChannel(interactionsChannel);
     };
   }, [facilityId, queryClient]);
 
@@ -99,7 +118,7 @@ export default function ProviderAnalyticsPage() {
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Analytics</h1>
             <p className="text-muted-foreground text-sm">
-              Track your lead performance and conversion metrics
+              Track your lead performance and profile engagement
             </p>
           </div>
         </div>
@@ -204,8 +223,25 @@ export default function ProviderAnalyticsPage() {
         </div>
       )}
 
-      {/* Analytics Dashboard */}
-      <LeadAnalyticsDashboard facilityId={facilityId} dateRange={dateRange} />
+      {/* Main Tabs */}
+      <Tabs defaultValue="leads" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="leads">Lead Analytics</TabsTrigger>
+          <TabsTrigger value="engagement" className="gap-1.5">
+            <Phone className="h-3.5 w-3.5" />
+            <Globe className="h-3.5 w-3.5" />
+            Engagement
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="leads">
+          <LeadAnalyticsDashboard facilityId={facilityId} dateRange={dateRange} />
+        </TabsContent>
+
+        <TabsContent value="engagement">
+          <EngagementAnalytics facilityId={facilityId} dateRange={dateRange} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

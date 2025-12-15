@@ -248,6 +248,44 @@ export type Database = {
           },
         ]
       }
+      facility_interactions: {
+        Row: {
+          created_at: string
+          facility_id: string
+          id: string
+          interaction_count: number
+          interaction_date: string
+          interaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          id?: string
+          interaction_count?: number
+          interaction_date?: string
+          interaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          id?: string
+          interaction_count?: number
+          interaction_date?: string
+          interaction_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_interactions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_services: {
         Row: {
           created_at: string
