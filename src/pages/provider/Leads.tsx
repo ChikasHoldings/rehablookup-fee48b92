@@ -336,7 +336,7 @@ export default function ProviderLeadsPage() {
       )}
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card className="relative overflow-hidden">
           <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-primary/5" />
           <CardHeader className="pb-2 relative">
@@ -355,26 +355,49 @@ export default function ProviderLeadsPage() {
           </CardContent>
         </Card>
 
-        {/* This Month with Usage Indicator */}
-        <Card className="relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-blue-500/5" />
+        {/* Qualified Leads This Month */}
+        <Card className="relative overflow-hidden border-primary/20">
+          <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-primary/10" />
           <CardHeader className="pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              This Month
+              <Sparkles className="h-4 w-4 text-primary" />
+              Qualified
             </CardTitle>
           </CardHeader>
           <CardContent className="relative">
             {isLoading ? (
               <Skeleton className="h-9 w-16" />
             ) : (
-              <LeadUsageIndicator 
-                usedLeads={thisMonthLeads.length} 
-                leadLimit={leadLimit}
-                variant="compact"
-              />
+              <div className="flex items-baseline gap-1">
+                <p className="text-3xl font-bold text-primary">{thisMonthQualifiedLeads.length}</p>
+                <span className="text-sm text-muted-foreground">/ {leadLimit}</span>
+              </div>
             )}
-            <p className="text-xs text-muted-foreground mt-2">{format(new Date(), "MMMM yyyy")}</p>
+            <p className="text-xs text-muted-foreground mt-1">This month</p>
+          </CardContent>
+        </Card>
+
+        {/* Direct Leads This Month */}
+        <Card className="relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-blue-500/5" />
+          <CardHeader className="pb-2 relative">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Direct
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative">
+            {isLoading ? (
+              <Skeleton className="h-9 w-16" />
+            ) : (
+              <div className="flex items-baseline gap-1">
+                <p className="text-3xl font-bold text-foreground">{thisMonthDirectLeads.length}</p>
+                {currentPlan !== "basic" && (
+                  <span className="text-xs text-green-600 font-medium">∞</span>
+                )}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">This month</p>
           </CardContent>
         </Card>
 
