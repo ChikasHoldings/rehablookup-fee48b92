@@ -532,52 +532,45 @@ export function LeadProfileModal({
                   </div>
                 )}
 
-                {/* Admin: Assignment Section */}
+                {/* Admin: Assignment Info (Read-only) */}
                 {isAdmin && (
-                  <div className="space-y-3 p-4 rounded-lg bg-amber-50/50 border border-amber-200">
+                  <div className="space-y-3 p-4 rounded-lg bg-muted/50 border">
                     <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
-                      Provider Assignment
+                      Assignment Details
                     </h3>
                     {lead.facility_id && assignedFacility ? (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">{assignedFacility.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {assignedFacility.city}, {assignedFacility.state}
-                          </p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium">{assignedFacility.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {assignedFacility.city}, {assignedFacility.state}
+                            </p>
+                          </div>
+                          <Badge className="bg-green-100 text-green-700 border-green-200">
+                            Assigned
+                          </Badge>
                         </div>
-                        <Badge className="bg-green-100 text-green-700 border-green-200">
-                          Assigned
-                        </Badge>
+                        {(lead as any).assignment_reason && (
+                          <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                            {(lead as any).assignment_reason}
+                          </p>
+                        )}
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <p className="text-sm text-amber-700">This lead is unassigned</p>
-                        <div className="flex items-center gap-2">
-                          <Select value={selectedFacilityId} onValueChange={setSelectedFacilityId}>
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Select a provider..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {facilities.map((facility) => (
-                                <SelectItem key={facility.id} value={facility.id}>
-                                  {facility.name} - {facility.city}, {facility.state}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            onClick={handleAssignLead}
-                            disabled={!selectedFacilityId || isAssigning}
-                          >
-                            {isAssigning ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              "Assign"
-                            )}
-                          </Button>
-                        </div>
+                      <div className="space-y-2">
+                        <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">
+                          Unassigned
+                        </Badge>
+                        {(lead as any).assignment_reason && (
+                          <p className="text-xs text-muted-foreground">
+                            Reason: {(lead as any).assignment_reason}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground italic">
+                          Leads are automatically assigned by the system
+                        </p>
                       </div>
                     )}
                   </div>
