@@ -246,8 +246,8 @@ export default function ProviderDashboardPage() {
         />
       )}
 
-      {/* Status Banner - hide when approved and profile complete */}
-      {!(facility?.status === "approved" && providerData?.facility?.profile_completion_celebrated) && (
+      {/* Status Banner - only show when not approved (pending or inactive) */}
+      {facility?.status !== "approved" && (
         <Card className="border-l-4" style={{ borderLeftColor: statusConfig.dotClass === 'bg-green-500' ? '#22c55e' : statusConfig.dotClass === 'bg-amber-500' ? '#f59e0b' : '#71717a' }}>
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
