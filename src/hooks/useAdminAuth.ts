@@ -11,49 +11,67 @@ export function useAdminAuth() {
 
   useEffect(() => {
     const checkAdminStatus = async (userId: string) => {
-      const { data, error } = await supabase.rpc('has_role', {
-        _user_id: userId,
-        _role: 'admin'
-      });
-      
-      if (error) {
-        console.error("Error checking admin status:", error);
+      try {
+        const { data, error } = await supabase.rpc("has_role", {
+          _user_id: userId,
+          _role: "admin",
+        });
+
+        if (error) {
+          console.error("Error checking admin status:", error);
+          return false;
+        }
+
+        return data === true;
+      } catch (err) {
+        console.error("Exception checking admin status:", err);
         return false;
       }
-      return data === true;
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-          const adminStatus = await checkAdminStatus(session.user.id);
-          setIsAdmin(adminStatus);
-          if (!adminStatus) {
-            navigate("/", { replace: true });
+      async (_event, session) => {
+        try {
+          if (session?.user) {
+            setUser(session.user);
+            const adminStatus = await checkAdminStatus(session.user.id);
+            setIsAdmin(adminStatus);
+            if (!adminStatus) {
+              navigate("/", { replace: true });
+            }
+          } else {
+            setUser(null);
+            setIsAdmin(false);
+            navigate("/admin-login", { replace: true });
           }
-        } else {
-          setUser(null);
-          setIsAdmin(false);
-          navigate("/admin-login", { replace: true });
+        } finally {
+          setIsLoading(false);
         }
-        setIsLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        const adminStatus = await checkAdminStatus(session.user.id);
-        setIsAdmin(adminStatus);
-        if (!adminStatus) {
-          navigate("/", { replace: true });
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        try {
+          if (session?.user) {
+            setUser(session.user);
+            const adminStatus = await checkAdminStatus(session.user.id);
+            setIsAdmin(adminStatus);
+            if (!adminStatus) {
+              navigate("/", { replace: true });
+            }
+          } else {
+            navigate("/admin-login", { replace: true });
+          }
+        } finally {
+          setIsLoading(false);
         }
-      } else {
-        navigate("/admin-login", { replace: true });
-      }
-      setIsLoading(false);
-    });
+      })
+      .catch((error) => {
+        console.error("Error getting auth session:", error);
+        setIsLoading(false);
+      });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
