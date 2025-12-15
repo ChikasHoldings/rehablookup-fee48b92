@@ -6,7 +6,7 @@ import {
   Clock,
   ArrowLeft,
   ArrowRight,
-  Phone,
+  Heart,
   Share2,
   Calendar,
   User,
@@ -358,12 +358,12 @@ const ArticleDetail = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Our specialists are available 24/7 to help you find the right treatment center.
                 </p>
-                <a href="tel:1-800-555-0199">
+                <Link to="/request-help">
                   <Button className="w-full gap-2">
-                    <Phone className="h-4 w-4" />
-                    Call 1-800-555-0199
+                    <Heart className="h-4 w-4" />
+                    Request Help
                   </Button>
-                </a>
+                </Link>
               </div>
 
               {/* Related Articles */}
@@ -440,12 +440,12 @@ const ArticleDetail = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <a href="tel:1-800-555-0199">
+              <Link to="/request-help">
                 <Button variant="outline" size="lg" className="gap-2">
-                  <Phone className="h-4 w-4" />
-                  Call for Help
+                  <Heart className="h-4 w-4" />
+                  Request Help
                 </Button>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

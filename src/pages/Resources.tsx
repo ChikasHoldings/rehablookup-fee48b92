@@ -380,12 +380,12 @@ const Resources = () => {
               Our specialists are available 24/7 to answer your questions and help you find the right treatment.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href="tel:1-800-555-0199">
+              <Link to="/request-help">
                 <Button size="lg" className="gap-2">
-                  <Phone className="h-4 w-4" />
-                  Call 1-800-555-0199
+                  <Heart className="h-4 w-4" />
+                  Request Help
                 </Button>
-              </a>
+              </Link>
               <Link to="/contact">
                 <Button variant="outline" size="lg" className="gap-2">
                   Request a Callback

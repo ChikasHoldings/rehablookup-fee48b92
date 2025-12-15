@@ -171,7 +171,7 @@ export default function ProviderResources() {
                 <Link to="/contact">Contact Support</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                <a href="tel:1-800-555-0199">Call 1-800-555-0199</a>
+                <Link to="/provider-support">Provider Support</Link>
               </Button>
             </div>
           </div>

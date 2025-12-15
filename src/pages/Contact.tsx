@@ -15,6 +15,7 @@ import {
   Shield,
   ArrowRight,
   Users,
+  Heart,
 } from "lucide-react";
 
 const Contact = () => {
@@ -325,12 +326,12 @@ const Contact = () => {
             Our specialists are available 24/7 to help you find the right treatment center.
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href="tel:1-800-555-0199">
+            <Link to="/request-help">
               <Button variant="hero-light" size="lg" className="gap-2">
-                <Phone className="h-4 w-4" />
-                Call 1-800-555-0199
+                <Heart className="h-4 w-4" />
+                Request Help
               </Button>
-            </a>
+            </Link>
             <Link to="/rehab-centers">
               <Button variant="hero-light" size="lg" className="gap-2">
                 Find Treatment Centers

@@ -230,12 +230,12 @@ const HowItWorks = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <a href="tel:1-800-555-0199">
+              <Link to="/request-help">
                 <Button variant="outline" size="lg" className="gap-2">
-                  <Phone className="h-4 w-4" />
-                  Call 1-800-555-0199
+                  <Heart className="h-4 w-4" />
+                  Request Help
                 </Button>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

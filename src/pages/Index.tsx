@@ -249,12 +249,12 @@ const Index = () => {
               ))}
             </div>
 
-            {/* Quick Call CTA */}
+            {/* Quick Help CTA */}
             <div className="mt-5 animate-fade-in" style={{ animationDelay: "250ms" }}>
-              <a href="tel:1-800-555-0199" className="inline-flex items-center gap-2 text-xs sm:text-sm text-foreground/70 hover:text-primary transition-colors">
-                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span>Need help now? Call <strong className="text-foreground">1-800-555-0199</strong></span>
-              </a>
+              <Link to="/request-help" className="inline-flex items-center gap-2 text-xs sm:text-sm text-foreground/70 hover:text-primary transition-colors">
+                <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span>Need help now? <strong className="text-foreground">Request Help</strong></span>
+              </Link>
             </div>
           </div>
         </div>
@@ -743,12 +743,12 @@ const Index = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <a href="tel:1-800-555-0199">
+              <Link to="/request-help">
                 <Button variant="outline" size="lg" className="gap-2 min-w-[200px]">
-                  <Phone className="h-4 w-4" />
-                  Call 1-800-555-0199
+                  <Heart className="h-4 w-4" />
+                  Request Help
                 </Button>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

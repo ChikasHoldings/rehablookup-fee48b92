@@ -197,7 +197,7 @@ const faqCategories: FAQCategory[] = [
       },
       {
         question: "Can I speak to someone for help choosing a facility?",
-        answer: "Yes, our support team is available 24/7 to help you navigate options, answer questions, and connect you with appropriate treatment centers. Call us at 1-800-555-0199 for personalized assistance. Our team understands this is a difficult time and provides compassionate, non-judgmental support."
+        answer: "Yes, our support team is available 24/7 to help you navigate options, answer questions, and connect you with appropriate treatment centers. Visit our Request Help page to get personalized assistance. Our team understands this is a difficult time and provides compassionate, non-judgmental support."
       },
       {
         question: "How do treatment centers get listed on RehabLookup?",
@@ -417,12 +417,12 @@ const FAQ = () => {
               Our compassionate support team is available 24/7 to answer your questions and help you find the right treatment.
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <a href="tel:1-800-555-0199">
+              <Link to="/request-help">
                 <Button size="lg" className="gap-2 min-w-[200px]">
-                  <Phone className="h-4 w-4" />
-                  Call 1-800-555-0199
+                  <Heart className="h-4 w-4" />
+                  Request Help
                 </Button>
-              </a>
+              </Link>
               <Link to="/contact">
                 <Button variant="outline" size="lg" className="gap-2 min-w-[200px]">
                   Contact Us
