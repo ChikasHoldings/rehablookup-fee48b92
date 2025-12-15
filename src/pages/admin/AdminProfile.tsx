@@ -4,7 +4,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { User, Camera, Eye, EyeOff, ShieldCheck, Save, Loader2 } from "lucide-react";
+import { User, Camera, Eye, EyeOff, ShieldCheck, Save, Loader2, History, UserCog, Bell, KeyRound, Image, CheckCircle, UserPlus, Ban, BadgeCheck, Star, FileText, Settings } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,11 +75,69 @@ export default function AdminProfile() {
     enabled: !!userData?.id,
   });
 
+  // Fetch recent activity
+  const { data: recentActivity, isLoading: isLoadingActivity } = useQuery({
+    queryKey: ["admin-activity", userData?.id],
+    queryFn: async () => {
+      if (!userData?.id) return [];
+      const { data, error } = await supabase
+        .from("admin_audit_log")
+        .select("*")
+        .eq("admin_user_id", userData.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userData?.id,
+  });
+
   useEffect(() => {
     if (profile?.display_name) {
       setDisplayName(profile.display_name);
     }
   }, [profile]);
+
+  const getActionIcon = (actionType: string) => {
+    const iconMap: Record<string, React.ReactNode> = {
+      profile_photo_updated: <Image className="h-4 w-4" />,
+      profile_name_updated: <UserCog className="h-4 w-4" />,
+      password_changed: <KeyRound className="h-4 w-4" />,
+      notifications_marked_read: <Bell className="h-4 w-4" />,
+      notifications_cleared: <Bell className="h-4 w-4" />,
+      provider_approved: <CheckCircle className="h-4 w-4" />,
+      provider_suspended: <Ban className="h-4 w-4" />,
+      provider_verified: <BadgeCheck className="h-4 w-4" />,
+      provider_featured: <Star className="h-4 w-4" />,
+      lead_assigned: <FileText className="h-4 w-4" />,
+      lead_status_changed: <FileText className="h-4 w-4" />,
+      admin_user_created: <UserPlus className="h-4 w-4" />,
+      admin_user_deactivated: <Ban className="h-4 w-4" />,
+      admin_permissions_updated: <Settings className="h-4 w-4" />,
+    };
+    return iconMap[actionType] || <History className="h-4 w-4" />;
+  };
+
+  const getActionLabel = (actionType: string) => {
+    const labelMap: Record<string, string> = {
+      profile_photo_updated: "Updated profile photo",
+      profile_name_updated: "Updated display name",
+      password_changed: "Changed password",
+      notifications_marked_read: "Marked notifications as read",
+      notifications_cleared: "Cleared notifications",
+      provider_approved: "Approved provider",
+      provider_suspended: "Suspended provider",
+      provider_verified: "Verified provider",
+      provider_featured: "Toggled featured status",
+      lead_assigned: "Assigned lead",
+      lead_status_changed: "Changed lead status",
+      admin_user_created: "Created admin user",
+      admin_user_deactivated: "Deactivated admin user",
+      admin_permissions_updated: "Updated admin permissions",
+    };
+    return labelMap[actionType] || actionType.replace(/_/g, " ");
+  };
 
   const passwordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
@@ -480,6 +539,60 @@ export default function AdminProfile() {
               </Button>
             </form>
           </Form>
+        </CardContent>
+      </Card>
+
+      {/* Activity Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Recent Activity
+          </CardTitle>
+          <CardDescription>Your recent actions in the admin panel</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingActivity ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : recentActivity && recentActivity.length > 0 ? (
+            <div className="relative">
+              <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+              <div className="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="relative flex gap-4 pl-10">
+                    <div className="absolute left-2 p-1.5 rounded-full bg-background border border-border">
+                      {getActionIcon(activity.action_type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">
+                        {getActionLabel(activity.action_type)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {activity.target_type && (
+                          <span className="capitalize">{activity.target_type.replace(/_/g, " ")}</span>
+                        )}
+                        {activity.target_id && (
+                          <span className="ml-1 font-mono text-[10px] bg-muted px-1 rounded">
+                            {activity.target_id.slice(0, 8)}...
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No recent activity</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
