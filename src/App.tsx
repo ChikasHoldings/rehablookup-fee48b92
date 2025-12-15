@@ -37,6 +37,15 @@ import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
+import { AdminShell } from "./components/admin/AdminShell";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProviders from "./pages/admin/AdminProviders";
+import AdminLeads from "./pages/admin/AdminLeads";
+import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
+import AdminFeatured from "./pages/admin/AdminFeatured";
+import AdminAuditLog from "./pages/admin/AdminAuditLog";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +92,19 @@ const App = () => (
             <Route path="notifications" element={<ProviderNotificationsPage />} />
             <Route path="help" element={<ProviderHelpPage />} />
             <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
+          </Route>
+          
+          {/* Admin Panel Routes - Nested under admin shell */}
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminShell />}>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="providers" element={<AdminProviders />} />
+            <Route path="leads" element={<AdminLeads />} />
+            <Route path="subscriptions" element={<AdminSubscriptions />} />
+            <Route path="featured" element={<AdminFeatured />} />
+            <Route path="audit-log" element={<AdminAuditLog />} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
           
           <Route path="/resources" element={<Resources />} />
