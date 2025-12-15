@@ -225,19 +225,21 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <Button size="sm" variant="outline" className="gap-1.5 h-8 px-3" onClick={() => setShowEmailDialog(true)}>
-              <Mail className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Email</span>
-            </Button>
-            <Select value={lead.status} onValueChange={(v) => updateStatus.mutate(v as LeadStatus)} disabled={updateStatus.isPending}>
-              <SelectTrigger className="w-[115px] h-8 text-xs font-medium">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-background">
-                {getStatusOptions().map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div className="flex items-start gap-2 flex-shrink-0">
+            <div className="flex flex-col gap-1.5">
+              <Button size="sm" variant="outline" className="gap-1.5 h-8 px-3 w-full justify-start" onClick={() => setShowEmailDialog(true)}>
+                <Mail className="h-3.5 w-3.5" />
+                Send email
+              </Button>
+              <Select value={lead.status} onValueChange={(v) => updateStatus.mutate(v as LeadStatus)} disabled={updateStatus.isPending}>
+                <SelectTrigger className="w-[115px] h-8 text-xs font-medium">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  {getStatusOptions().map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
