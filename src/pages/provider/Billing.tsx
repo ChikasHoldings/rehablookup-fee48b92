@@ -487,7 +487,7 @@ export default function ProviderBillingPage() {
                           : "bg-muted text-muted-foreground"
                     }`}>
                       {plan.key === "basic" 
-                        ? "Direct inquiries only (from your profile)"
+                        ? "1 direct inquiry (lifetime)"
                         : `${plan.qualified_lead_limit || plan.lead_limit} exclusive qualified leads/month`
                       }
                     </div>

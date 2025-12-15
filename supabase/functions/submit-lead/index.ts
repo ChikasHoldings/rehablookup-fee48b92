@@ -9,8 +9,9 @@ const corsHeaders = {
 };
 
 // Plan configuration matching check-subscription (supports both old and new product IDs)
-const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number }> = {
-  basic: { product_ids: [], lead_limit: 0 },
+// Basic plan: 1 lifetime lead (direct inquiry only, no routed leads)
+const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; lifetime_limit?: number }> = {
+  basic: { product_ids: [], lead_limit: 1, lifetime_limit: 1 }, // 1 lifetime lead
   professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 25 },
   featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 75 },
 };
@@ -60,52 +61,46 @@ async function checkProviderLeadCap(
   
   if (!stripeKey) {
     console.error("STRIPE_SECRET_KEY not set - defaulting to basic plan");
-    return { canReceiveLeads: false, reason: "Provider on Basic plan (0 leads)", leadLimit: 0, usedLeads: 0, planName: "basic" };
   }
 
   try {
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    
-    // Find Stripe customer by email
-    const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
-    
-    let leadLimit = PLAN_CONFIG.basic.lead_limit; // Default to 0
+    let leadLimit = PLAN_CONFIG.basic.lead_limit; // Default to 1 (lifetime)
     let planName = "basic";
+    let isLifetimeLimit = true; // Basic plan uses lifetime limit
     
-    if (customers.data.length > 0) {
-      const customerId = customers.data[0].id;
+    if (stripeKey) {
+      const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
       
-      // Check for active subscription
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customerId,
-        status: "active",
-        limit: 1,
-      });
+      // Find Stripe customer by email
+      const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
       
-      if (subscriptions.data.length > 0) {
-        const subscription = subscriptions.data[0];
-        const productId = subscription.items.data[0].price.product as string;
+      if (customers.data.length > 0) {
+        const customerId = customers.data[0].id;
         
-        // Determine lead limit based on product (supports both old and new product IDs)
-        if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-          leadLimit = PLAN_CONFIG.professional.lead_limit;
-          planName = "professional";
-        } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-          leadLimit = PLAN_CONFIG.featured.lead_limit;
-          planName = "featured";
+        // Check for active subscription
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customerId,
+          status: "active",
+          limit: 1,
+        });
+        
+        if (subscriptions.data.length > 0) {
+          const subscription = subscriptions.data[0];
+          const productId = subscription.items.data[0].price.product as string;
+          
+          // Determine lead limit based on product (supports both old and new product IDs)
+          if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
+            leadLimit = PLAN_CONFIG.professional.lead_limit;
+            planName = "professional";
+            isLifetimeLimit = false;
+          } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
+            leadLimit = PLAN_CONFIG.featured.lead_limit;
+            planName = "featured";
+            isLifetimeLimit = false;
+          }
         }
       }
     }
-    
-    // If no paid plan, they can't receive leads
-    if (leadLimit === 0) {
-      return { canReceiveLeads: false, reason: "Provider on Basic plan (0 leads)", leadLimit: 0, usedLeads: 0, planName };
-    }
-    
-    // Count leads this month for all facilities owned by this provider
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
     
     // Get all facility IDs for this user
     const { data: userFacilities } = await supabase
@@ -119,23 +114,49 @@ async function checkProviderLeadCap(
       return { canReceiveLeads: true, leadLimit, usedLeads: 0, planName };
     }
     
-    // Count all leads this month across all provider's facilities
-    const { count: monthlyLeadCount } = await supabase
-      .from("leads")
-      .select("*", { count: "exact", head: true })
-      .in("facility_id", facilityIds)
-      .gte("created_at", startOfMonth.toISOString());
+    let usedLeads = 0;
     
-    const usedLeads = monthlyLeadCount || 0;
-    
-    if (usedLeads >= leadLimit) {
-      return { 
-        canReceiveLeads: false, 
-        reason: `Provider has reached monthly lead limit (${usedLeads}/${leadLimit})`,
-        leadLimit,
-        usedLeads,
-        planName
-      };
+    if (isLifetimeLimit) {
+      // Basic plan: count ALL leads ever (lifetime limit)
+      const { count: lifetimeLeadCount } = await supabase
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .in("facility_id", facilityIds);
+      
+      usedLeads = lifetimeLeadCount || 0;
+      
+      if (usedLeads >= leadLimit) {
+        return { 
+          canReceiveLeads: false, 
+          reason: `Provider has reached lifetime lead limit (${usedLeads}/${leadLimit})`,
+          leadLimit,
+          usedLeads,
+          planName
+        };
+      }
+    } else {
+      // Paid plans: count leads this month
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const { count: monthlyLeadCount } = await supabase
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .in("facility_id", facilityIds)
+        .gte("created_at", startOfMonth.toISOString());
+      
+      usedLeads = monthlyLeadCount || 0;
+      
+      if (usedLeads >= leadLimit) {
+        return { 
+          canReceiveLeads: false, 
+          reason: `Provider has reached monthly lead limit (${usedLeads}/${leadLimit})`,
+          leadLimit,
+          usedLeads,
+          planName
+        };
+      }
     }
     
     return { canReceiveLeads: true, leadLimit, usedLeads, planName };

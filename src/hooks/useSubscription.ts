@@ -16,9 +16,9 @@ const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   subscribed: false,
   plan: "basic",
   plan_name: "Basic Listing",
-  lead_limit: 0, // Basic plan does NOT receive routed leads
-  qualified_lead_limit: 0,
-  direct_lead_limit: -1, // Unlimited direct inquiries only
+  lead_limit: 1, // Basic plan gets 1 lifetime lead (direct inquiry only)
+  qualified_lead_limit: 0, // No routed/qualified leads
+  direct_lead_limit: 1, // 1 lifetime direct inquiry
   subscription_end: null,
 };
 
@@ -61,9 +61,9 @@ export const PLAN_DETAILS = {
     price: "Free",
     period: "",
     description: "Get listed and be discoverable",
-    lead_limit: 0, // No routed leads for Basic
-    qualified_lead_limit: 0,
-    direct_lead_limit: -1, // Unlimited direct inquiries from profile only
+    lead_limit: 1, // 1 lifetime lead (direct inquiry only)
+    qualified_lead_limit: 0, // No routed leads
+    direct_lead_limit: 1, // 1 lifetime direct inquiry
     location_limit: 1,
     featured: false,
     features: [
@@ -71,7 +71,7 @@ export const PLAN_DETAILS = {
       "Listed in search results",
       "Facility name, location & services",
       "Website link",
-      "Receive direct inquiries only",
+      "1 direct inquiry (lifetime)",
       "Basic dashboard (views & clicks)",
     ],
     notIncluded: [
@@ -134,7 +134,7 @@ export const PLAN_DETAILS = {
 };
 
 // Direct inquiry clarification text for UI usage
-export const DIRECT_INQUIRY_CLARIFICATION = "Direct inquiries come from users who contact your profile directly and do not count toward monthly lead limits.";
+export const DIRECT_INQUIRY_CLARIFICATION = "Direct inquiries come from users who contact your profile directly. Basic plan includes 1 lifetime direct inquiry. Paid plans include unlimited direct inquiries.";
 
 // Marketing messaging
 export const EXCLUSIVITY_MESSAGE = "No shared leads. No bidding. No race to call.";
