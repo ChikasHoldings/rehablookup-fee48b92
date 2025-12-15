@@ -486,7 +486,8 @@ export default function ProviderSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+      <div className="space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">
@@ -1265,6 +1266,7 @@ export default function ProviderSettingsPage() {
           <ActivityLogTab />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

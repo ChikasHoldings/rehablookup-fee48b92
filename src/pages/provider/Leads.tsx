@@ -151,7 +151,7 @@ export default function ProviderLeadsPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-muted/30">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 px-6 py-4 bg-background border-b">
         <div className="flex items-center justify-between">
