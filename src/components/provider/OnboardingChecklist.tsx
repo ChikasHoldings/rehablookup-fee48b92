@@ -1,22 +1,25 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   CheckCircle2, 
-  Circle, 
   Building2, 
   FileText, 
   Image as ImageIcon,
   Stethoscope,
   CreditCard,
   ChevronRight,
-  Sparkles
+  ChevronDown,
+  Sparkles,
+  PartyPopper
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import confetti from "canvas-confetti";
 
 interface OnboardingChecklistProps {
   facilityId: string;
@@ -44,7 +47,57 @@ interface ChecklistItem {
   priority: "required" | "recommended";
 }
 
+// Celebration confetti function
+function triggerCelebration() {
+  const duration = 3000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+  function randomInRange(min: number, max: number) {
+    return Math.random() * (max - min) + min;
+  }
+
+  const interval = setInterval(function() {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+
+    const particleCount = 50 * (timeLeft / duration);
+
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+      colors: ['#1B365D', '#C9A227', '#22c55e', '#3b82f6', '#f59e0b'],
+    });
+    confetti({
+      ...defaults,
+      particleCount,
+      origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+      colors: ['#1B365D', '#C9A227', '#22c55e', '#3b82f6', '#f59e0b'],
+    });
+  }, 250);
+}
+
 export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChecklistProps) {
+  const [isOpen, setIsOpen] = useState(true);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const previousPercentageRef = useRef<number | null>(null);
+  const celebrationTriggeredRef = useRef(false);
+  const queryClient = useQueryClient();
+
+  // Check if user has dismissed the celebration
+  useEffect(() => {
+    const dismissedKey = `profile-complete-dismissed-${facilityId}`;
+    const wasDismissed = localStorage.getItem(dismissedKey);
+    if (wasDismissed) {
+      setDismissed(true);
+    }
+  }, [facilityId]);
+
   // Fetch services count
   const { data: servicesCount = 0 } = useQuery({
     queryKey: ["facility-services-count", facilityId],
@@ -150,94 +203,171 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
   const isComplete = completionPercentage === 100;
   const nextIncompleteItem = checklistItems.find(item => !item.completed);
 
-  // Don't show if 100% complete
+  // Trigger celebration when reaching 100%
+  useEffect(() => {
+    if (
+      isComplete && 
+      previousPercentageRef.current !== null && 
+      previousPercentageRef.current < 100 &&
+      !celebrationTriggeredRef.current
+    ) {
+      celebrationTriggeredRef.current = true;
+      setShowCelebration(true);
+      triggerCelebration();
+      
+      // Send congratulatory email
+      supabase.functions.invoke('send-profile-complete-email', {
+        body: { facilityId }
+      }).catch(console.error);
+    }
+    previousPercentageRef.current = completionPercentage;
+  }, [completionPercentage, isComplete, facilityId]);
+
+  const handleDismissCelebration = () => {
+    const dismissedKey = `profile-complete-dismissed-${facilityId}`;
+    localStorage.setItem(dismissedKey, 'true');
+    setDismissed(true);
+    setShowCelebration(false);
+  };
+
+  // Show celebration card if complete
+  if (isComplete && showCelebration && !dismissed) {
+    return (
+      <Card className="border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-background animate-fade-in overflow-hidden">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-green-100 flex items-center justify-center animate-scale-in">
+                <PartyPopper className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold text-green-700">
+                  🎉 Profile Complete!
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Your listing is now fully optimized
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-3xl font-bold text-green-600">100%</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-sm text-muted-foreground mb-4">
+            Congratulations! Your facility profile is complete. Families can now find all the information they need to choose your center.
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" className="bg-green-600 hover:bg-green-700" asChild>
+              <Link to="/provider/listing">
+                View Your Listing
+              </Link>
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleDismissCelebration}>
+              Dismiss
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Don't show if 100% complete and dismissed
+  if (isComplete && dismissed) {
+    return null;
+  }
+
+  // Don't show if complete (without celebration shown yet)
   if (isComplete) {
     return null;
   }
 
   return (
-    <Card className="border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-background">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold">
-                Complete Your Profile
-              </CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {completedCount} of {totalCount} tasks completed
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-2xl font-bold text-primary">{completionPercentage}%</span>
-          </div>
-        </div>
-        <Progress value={completionPercentage} className="h-2 mt-3" />
-      </CardHeader>
-      <CardContent className="pt-0 space-y-2">
-        {checklistItems.slice(0, 5).map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.id}
-              to={item.link}
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-lg border transition-colors group",
-                item.completed 
-                  ? "bg-muted/50 border-transparent" 
-                  : "bg-background border-border hover:border-primary/50 hover:bg-primary/5"
-              )}
-            >
-              <div className={cn(
-                "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
-                item.completed ? "bg-green-100" : "bg-primary/10"
-              )}>
-                {item.completed ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Icon className="h-4 w-4 text-primary" />
-                )}
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card className="border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-background">
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-3 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    Complete Your Profile
+                    <ChevronDown className={cn(
+                      "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                      isOpen && "rotate-180"
+                    )} />
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {completedCount} of {totalCount} tasks completed
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn(
-                  "text-sm font-medium",
-                  item.completed ? "text-muted-foreground line-through" : "text-foreground"
-                )}>
-                  {item.label}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {item.description}
-                </p>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-primary">{completionPercentage}%</span>
               </div>
-              {!item.completed && (
-                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              )}
-            </Link>
-          );
-        })}
+            </div>
+            <Progress value={completionPercentage} className="h-2 mt-3" />
+          </CardHeader>
+        </CollapsibleTrigger>
         
-        {checklistItems.length > 5 && (
-          <Button variant="ghost" size="sm" asChild className="w-full text-xs">
-            <Link to="/provider/listing">
-              View all {totalCount - completedCount} remaining tasks
-              <ChevronRight className="h-3 w-3 ml-1" />
-            </Link>
-          </Button>
-        )}
+        <CollapsibleContent>
+          <CardContent className="pt-0 space-y-2 animate-fade-in">
+            {checklistItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.id}
+                  to={item.link}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg border transition-colors group",
+                    item.completed 
+                      ? "bg-muted/50 border-transparent" 
+                      : "bg-background border-border hover:border-primary/50 hover:bg-primary/5"
+                  )}
+                >
+                  <div className={cn(
+                    "h-8 w-8 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                    item.completed ? "bg-green-100" : "bg-primary/10"
+                  )}>
+                    {item.completed ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Icon className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={cn(
+                      "text-sm font-medium",
+                      item.completed ? "text-muted-foreground line-through" : "text-foreground"
+                    )}>
+                      {item.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {item.description}
+                    </p>
+                  </div>
+                  {!item.completed && (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  )}
+                </Link>
+              );
+            })}
 
-        {nextIncompleteItem && (
-          <Button asChild className="w-full mt-2" size="sm">
-            <Link to={nextIncompleteItem.link} className="gap-2">
-              Continue Setup
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+            {nextIncompleteItem && (
+              <Button asChild className="w-full mt-2" size="sm">
+                <Link to={nextIncompleteItem.link} className="gap-2">
+                  Continue Setup
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
