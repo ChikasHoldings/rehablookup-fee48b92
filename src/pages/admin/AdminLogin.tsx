@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Eye, EyeOff } from "lucide-react";
+import { Shield, Eye, EyeOff, Ban } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isSuspended, setIsSuspended] = useState(false);
 
   useEffect(() => {
     const checkExistingSession = async () => {
@@ -30,7 +31,21 @@ export default function AdminLogin() {
           _user_id: session.user.id,
           _role: 'admin'
         });
+        
         if (isAdmin) {
+          // Check if suspended
+          const { data: profile } = await supabase
+            .from('admin_user_profiles')
+            .select('status')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          if (profile?.status === 'suspended') {
+            await supabase.auth.signOut();
+            setIsSuspended(true);
+            return;
+          }
+          
           navigate("/admin", { replace: true });
         }
       }
@@ -41,6 +56,7 @@ export default function AdminLogin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    setIsSuspended(false);
 
     const validation = loginSchema.safeParse({ email, password });
     if (!validation.success) {
@@ -81,6 +97,20 @@ export default function AdminLogin() {
           return;
         }
 
+        // Check if admin is suspended
+        const { data: profile } = await supabase
+          .from('admin_user_profiles')
+          .select('status')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (profile?.status === 'suspended') {
+          await supabase.auth.signOut();
+          setIsSuspended(true);
+          setIsLoading(false);
+          return;
+        }
+
         toast.success("Welcome back, Admin!");
         navigate("/admin", { replace: true });
       }
@@ -90,6 +120,41 @@ export default function AdminLogin() {
       setIsLoading(false);
     }
   };
+
+  // Suspended account view
+  if (isSuspended) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
+              <Ban className="h-8 w-8 text-destructive" />
+            </div>
+            <CardTitle className="text-2xl text-destructive">Account Suspended</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Your admin account has been suspended and you cannot access the admin panel.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">Why was my account suspended?</p>
+              <p>
+                Account suspensions are typically due to policy violations or security concerns. 
+                If you believe this is an error, please contact a Super Admin for assistance.
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => setIsSuspended(false)}
+            >
+              Try Another Account
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
