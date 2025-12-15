@@ -101,6 +101,15 @@ export default function ProviderLeadsPage() {
     return () => { supabase.removeChannel(channel); };
   }, [facilityId, queryClient, toast]);
 
+  // Sync selectedLead with leads data to reflect real-time updates
+  useEffect(() => {
+    if (selectedLead && leads.length > 0) {
+      const updatedLead = leads.find(l => l.id === selectedLead.id);
+      if (updatedLead && JSON.stringify(updatedLead) !== JSON.stringify(selectedLead)) {
+        setSelectedLead(updatedLead);
+      }
+    }
+  }, [leads, selectedLead]);
   const filteredLeads = useMemo(() => {
     let result = leads.filter(lead => {
       if (searchQuery) {

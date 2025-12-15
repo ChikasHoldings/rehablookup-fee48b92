@@ -127,9 +127,32 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
       if (!lead) return;
       const { error } = await supabase.from("leads").update({ status: newStatus }).eq("id", lead.id);
       if (error) throw error;
+      return newStatus;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["provider-leads"] }); toast.success("Status updated"); },
-    onError: () => { toast.error("Failed to update"); },
+    onMutate: async (newStatus) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["provider-leads"] });
+      // Snapshot the previous value
+      const previousLeads = queryClient.getQueryData(["provider-leads"]);
+      // Optimistically update
+      queryClient.setQueryData(["provider-leads"], (old: Lead[] | undefined) => 
+        old?.map(l => l.id === lead?.id ? { ...l, status: newStatus } : l)
+      );
+      return { previousLeads };
+    },
+    onError: (err, _, context) => {
+      // Rollback on error
+      if (context?.previousLeads) {
+        queryClient.setQueryData(["provider-leads"], context.previousLeads);
+      }
+      toast.error("Failed to update status");
+    },
+    onSuccess: (newStatus) => {
+      toast.success(`Status changed to ${newStatus?.replace("_", " ")}`);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
+    },
   });
 
   const snoozeReminder = useMutation({
@@ -232,11 +255,43 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
                 Send email
               </Button>
               <Select value={lead.status} onValueChange={(v) => updateStatus.mutate(v as LeadStatus)} disabled={updateStatus.isPending}>
-                <SelectTrigger className="w-[115px] h-8 text-xs font-medium">
-                  <SelectValue />
+                <SelectTrigger className={cn(
+                  "w-[130px] h-8 text-xs font-medium transition-all",
+                  updateStatus.isPending && "opacity-70"
+                )}>
+                  {updateStatus.isPending ? (
+                    <span className="flex items-center gap-1.5">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Updating...
+                    </span>
+                  ) : (
+                    <SelectValue />
+                  )}
                 </SelectTrigger>
                 <SelectContent className="bg-background">
-                  {getStatusOptions().map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  {getStatusOptions().map((o) => (
+                    <SelectItem 
+                      key={o.value} 
+                      value={o.value}
+                      className={cn(
+                        "text-xs",
+                        lead.status === o.value && "font-semibold"
+                      )}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className={cn(
+                          "h-2 w-2 rounded-full",
+                          o.value === "new" && "bg-blue-500",
+                          o.value === "contacted" && "bg-amber-500",
+                          o.value === "in_progress" && "bg-purple-500",
+                          o.value === "converted" && "bg-green-500",
+                          o.value === "lost" && "bg-red-500",
+                          o.value === "closed" && "bg-slate-400",
+                        )} />
+                        {o.label}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
