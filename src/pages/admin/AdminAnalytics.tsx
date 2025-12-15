@@ -460,6 +460,44 @@ export default function AdminAnalytics() {
     ].filter(d => d.value > 0);
   }, [subscriptionData]);
 
+  // Provider performance data
+  const providerPerformance = useMemo(() => {
+    if (!facilities || !viewsData || !leadsData) return [];
+
+    return facilities
+      .filter(f => f.status === "approved")
+      .map(facility => {
+        const views = viewsData
+          ?.filter(v => v.facility_id === facility.id)
+          .reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
+        
+        const clicks = interactionsData
+          ?.filter(i => i.facility_id === facility.id)
+          .reduce((sum, i) => sum + (i.interaction_count || 0), 0) || 0;
+        
+        const facilityLeads = leadsData?.filter(l => l.facility_id === facility.id) || [];
+        const leads = facilityLeads.length;
+        const qualifiedLeads = facilityLeads.filter(l => l.email_verified).length;
+        const conversionRate = views > 0 ? ((leads / views) * 100).toFixed(2) : "0.00";
+        const clickToLeadRate = clicks > 0 ? ((leads / clicks) * 100).toFixed(2) : "0.00";
+
+        return {
+          id: facility.id,
+          name: facility.name,
+          city: facility.city,
+          state: facility.state,
+          views,
+          clicks,
+          leads,
+          qualifiedLeads,
+          conversionRate,
+          clickToLeadRate,
+        };
+      })
+      .filter(p => p.views > 0 || p.leads > 0 || p.clicks > 0)
+      .sort((a, b) => b.leads - a.leads);
+  }, [facilities, viewsData, interactionsData, leadsData]);
+
   const handleSort = (key: string) => {
     setSortConfig(prev => ({
       key,
@@ -1139,6 +1177,127 @@ export default function AdminAnalytics() {
               <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
               <p className="font-medium">No location data available</p>
               <p className="text-sm mt-1">Try adjusting your filters</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Provider Performance Table */}
+      <Card className="border-slate-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Users className="h-5 w-5 text-slate-600" />
+            Provider Performance
+          </CardTitle>
+          <CardDescription>Individual provider metrics and conversion rates</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : providerPerformance.length > 0 ? (
+            <div className="overflow-x-auto rounded-lg border border-slate-100">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
+                    <TableHead className="font-semibold min-w-[180px]">Provider</TableHead>
+                    <TableHead className="font-semibold">Location</TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Users className="h-3.5 w-3.5" />
+                        Views
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <MousePointerClick className="h-3.5 w-3.5" />
+                        Clicks
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <FileText className="h-3.5 w-3.5" />
+                        Leads
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        Verified
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <Tooltip>
+                        <TooltipTrigger className="flex items-center justify-center gap-1 cursor-help">
+                          <Target className="h-3.5 w-3.5" />
+                          Conv.
+                        </TooltipTrigger>
+                        <TooltipContent>Leads / Views</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead className="text-center">
+                      <Tooltip>
+                        <TooltipTrigger className="flex items-center justify-center gap-1 cursor-help">
+                          <Zap className="h-3.5 w-3.5" />
+                          Click→Lead
+                        </TooltipTrigger>
+                        <TooltipContent>Leads / Clicks</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {providerPerformance.slice(0, 20).map((provider) => (
+                    <TableRow key={provider.id} className="hover:bg-slate-50/50">
+                      <TableCell className="font-medium">
+                        <div className="truncate max-w-[180px]" title={provider.name}>
+                          {provider.name}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {provider.city}, {provider.state}
+                      </TableCell>
+                      <TableCell className="text-center">{provider.views.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">{provider.clicks.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="font-medium">{provider.leads}</Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50">
+                          {provider.qualifiedLeads}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={cn(
+                          "font-medium text-sm",
+                          parseFloat(provider.conversionRate) >= 5 ? "text-green-600" : 
+                          parseFloat(provider.conversionRate) >= 2 ? "text-amber-600" : "text-slate-500"
+                        )}>
+                          {provider.conversionRate}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={cn(
+                          "font-medium text-sm",
+                          parseFloat(provider.clickToLeadRate) >= 10 ? "text-green-600" : 
+                          parseFloat(provider.clickToLeadRate) >= 5 ? "text-amber-600" : "text-slate-500"
+                        )}>
+                          {provider.clickToLeadRate}%
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="font-medium">No provider data available</p>
+              <p className="text-sm mt-1">Provider metrics will appear once there is activity</p>
             </div>
           )}
         </CardContent>
