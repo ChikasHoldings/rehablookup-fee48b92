@@ -11,6 +11,8 @@ interface VerifyRequest {
   code: string;
 }
 
+const MAX_ATTEMPTS = 5;
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,57 +28,116 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedCode = code.toString().trim();
+
+    // Validate code format (6 digits)
+    if (!/^\d{6}$/.test(normalizedCode)) {
+      return new Response(
+        JSON.stringify({ error: "Code must be 6 digits" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find the verification code
+    // Find the MOST RECENT unverified, unexpired code for this email
+    const now = new Date().toISOString();
     const { data: verificationRecord, error: fetchError } = await supabase
       .from("email_verification_codes")
       .select("*")
-      .eq("email", email.toLowerCase())
-      .eq("code", code)
+      .eq("email", normalizedEmail)
       .eq("verified", false)
-      .gte("expires_at", new Date().toISOString())
+      .gt("expires_at", now)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (fetchError) {
       console.error("Error fetching verification code:", fetchError);
-      throw new Error("Failed to verify code");
+      return new Response(
+        JSON.stringify({ error: "Failed to verify code. Please try again." }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
+    // No valid code found - check why
     if (!verificationRecord) {
-      // Check if code exists but is expired or already used
+      // Check if there's an expired code
       const { data: expiredRecord } = await supabase
         .from("email_verification_codes")
         .select("*")
-        .eq("email", email.toLowerCase())
-        .eq("code", code)
+        .eq("email", normalizedEmail)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      if (expiredRecord?.verified) {
+      if (!expiredRecord) {
         return new Response(
-          JSON.stringify({ error: "This code has already been used" }),
+          JSON.stringify({ error: "No verification code found. Please request a new code." }),
           { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
 
-      if (expiredRecord && new Date(expiredRecord.expires_at) < new Date()) {
+      if (expiredRecord.verified) {
         return new Response(
-          JSON.stringify({ error: "This code has expired. Please request a new one." }),
+          JSON.stringify({ error: "This code has already been used. Please request a new code." }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      if (new Date(expiredRecord.expires_at) < new Date()) {
+        return new Response(
+          JSON.stringify({ error: "This code has expired. Please request a new code." }),
           { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
 
       return new Response(
-        JSON.stringify({ error: "Invalid verification code" }),
+        JSON.stringify({ error: "No valid verification code found. Please request a new code." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Mark code as verified
+    // Check attempt limit
+    const attempts = verificationRecord.attempts || 0;
+    if (attempts >= MAX_ATTEMPTS) {
+      // Mark code as expired due to too many attempts
+      await supabase
+        .from("email_verification_codes")
+        .update({ expires_at: new Date().toISOString() })
+        .eq("id", verificationRecord.id);
+
+      return new Response(
+        JSON.stringify({ error: "Too many incorrect attempts. Please request a new code." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Compare codes (string comparison)
+    if (verificationRecord.code !== normalizedCode) {
+      // Increment attempt count
+      await supabase
+        .from("email_verification_codes")
+        .update({ attempts: attempts + 1 })
+        .eq("id", verificationRecord.id);
+
+      const remainingAttempts = MAX_ATTEMPTS - attempts - 1;
+      const errorMessage = remainingAttempts > 0
+        ? `Invalid code. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining.`
+        : "Invalid code. Too many incorrect attempts. Please request a new code.";
+
+      console.log(`Invalid code attempt for ${normalizedEmail}: expected ${verificationRecord.code.substring(0, 2)}****, got ${normalizedCode.substring(0, 2)}****`);
+
+      return new Response(
+        JSON.stringify({ error: errorMessage }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Code matches! Mark as verified
     const { error: updateError } = await supabase
       .from("email_verification_codes")
       .update({ verified: true })
@@ -84,10 +145,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (updateError) {
       console.error("Error marking code as verified:", updateError);
-      throw new Error("Failed to verify code");
+      return new Response(
+        JSON.stringify({ error: "Failed to verify code. Please try again." }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    console.log(`Email verified: ${email}`);
+    console.log(`Email verified successfully: ${normalizedEmail}`);
 
     return new Response(
       JSON.stringify({ success: true, verified: true }),

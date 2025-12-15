@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { RequestHelpFormData } from "@/pages/RequestHelp";
-import { ArrowLeft, Loader2, Mail, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -33,12 +33,31 @@ export function StepContactVerification({
   const [codeSent, setCodeSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [resendCount, setResendCount] = useState(0);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      cooldownRef.current = setTimeout(() => {
+        setResendCooldown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (cooldownRef.current) clearTimeout(cooldownRef.current);
+    };
+  }, [resendCooldown]);
 
   const validateContact = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Please enter your name";
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
     }
 
     const phoneDigits = formData.phone.replace(/\D/g, "");
@@ -57,7 +76,29 @@ export function StepContactVerification({
   const handleSendCode = async () => {
     if (!validateContact()) return;
 
+    // Check resend limit
+    if (resendCount >= 3) {
+      toast({
+        title: "Too many attempts",
+        description: "Maximum verification attempts reached. Please wait 10 minutes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check cooldown
+    if (resendCooldown > 0) {
+      toast({
+        title: "Please wait",
+        description: `You can resend in ${resendCooldown} seconds`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSendingCode(true);
+    setErrors(prev => ({ ...prev, code: "" }));
+
     try {
       const { data, error } = await supabase.functions.invoke("send-verification-code", {
         body: { email: formData.email.toLowerCase().trim() },
@@ -67,14 +108,24 @@ export function StepContactVerification({
       if (data?.error) throw new Error(data.error);
 
       setCodeSent(true);
+      setResendCount(prev => prev + 1);
+      setResendCooldown(60); // 60 second cooldown between resends
+      setVerificationCode(""); // Clear any previous code
+
       toast({
         title: "Verification code sent",
         description: "Check your email for the 6-digit code",
       });
     } catch (error: any) {
+      const errorMessage = error.message || "Please try again";
+      
+      if (errorMessage.includes("Too many")) {
+        setResendCount(3); // Max out resends
+      }
+      
       toast({
         title: "Failed to send code",
-        description: error.message || "Please try again",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -89,6 +140,8 @@ export function StepContactVerification({
     }
 
     setIsVerifying(true);
+    setErrors(prev => ({ ...prev, code: "" }));
+
     try {
       const { data, error } = await supabase.functions.invoke("verify-code", {
         body: { 
@@ -106,7 +159,15 @@ export function StepContactVerification({
         description: "You can now submit your request",
       });
     } catch (error: any) {
-      setErrors(prev => ({ ...prev, code: error.message || "Invalid code" }));
+      const errorMessage = error.message || "Invalid code";
+      setErrors(prev => ({ ...prev, code: errorMessage }));
+      
+      // Don't clear the code on error so user can see what they entered
+      toast({
+        title: "Verification failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsVerifying(false);
     }
@@ -124,6 +185,8 @@ export function StepContactVerification({
 
     setIsSubmitting(true);
     try {
+      const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
+      
       const { data, error } = await supabase.functions.invoke("submit-qualified-lead", {
         body: {
           facilityId: facilityId || undefined,
@@ -137,7 +200,9 @@ export function StepContactVerification({
           insuranceType: formData.insuranceType,
           insuranceProvider: formData.insuranceProvider || undefined,
           budgetPreference: formData.budgetPreference || undefined,
-          name: formData.name.trim(),
+          name: fullName,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
           phone: formData.phone.trim(),
           email: formData.email.toLowerCase().trim(),
           preferredContact: formData.preferredContact,
@@ -150,9 +215,10 @@ export function StepContactVerification({
 
       onSuccess();
     } catch (error: any) {
+      const errorMessage = error.message || "Please try again";
       toast({
         title: "Submission failed",
-        description: error.message || "Please try again",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -167,6 +233,17 @@ export function StepContactVerification({
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
   };
 
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateFormData({ email: e.target.value });
+    setErrors(prev => ({ ...prev, email: "" }));
+    // Reset verification state when email changes
+    setCodeSent(false);
+    setIsEmailVerified(false);
+    setVerificationCode("");
+    setResendCount(0);
+    setResendCooldown(0);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -174,26 +251,51 @@ export function StepContactVerification({
         <p className="text-sm text-muted-foreground">We'll need to verify your email before submitting.</p>
       </div>
 
-      {/* Name */}
-      <div className="space-y-2">
-        <Label htmlFor="name" className="text-base font-medium">Full Name</Label>
-        <Input
-          id="name"
-          placeholder="Your full name"
-          value={formData.name}
-          onChange={(e) => {
-            updateFormData({ name: e.target.value });
-            setErrors(prev => ({ ...prev, name: "" }));
-          }}
-          className={errors.name ? "border-destructive" : ""}
-          disabled={codeSent}
-        />
-        {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+      {/* First Name */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="firstName" className="text-base font-medium">
+            First Name <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="firstName"
+            placeholder="John"
+            value={formData.firstName}
+            onChange={(e) => {
+              updateFormData({ firstName: e.target.value });
+              setErrors(prev => ({ ...prev, firstName: "" }));
+            }}
+            className={errors.firstName ? "border-destructive" : ""}
+            disabled={codeSent}
+          />
+          {errors.firstName && <p className="text-sm text-destructive">{errors.firstName}</p>}
+        </div>
+
+        {/* Last Name */}
+        <div className="space-y-2">
+          <Label htmlFor="lastName" className="text-base font-medium">
+            Last Name <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="lastName"
+            placeholder="Doe"
+            value={formData.lastName}
+            onChange={(e) => {
+              updateFormData({ lastName: e.target.value });
+              setErrors(prev => ({ ...prev, lastName: "" }));
+            }}
+            className={errors.lastName ? "border-destructive" : ""}
+            disabled={codeSent}
+          />
+          {errors.lastName && <p className="text-sm text-destructive">{errors.lastName}</p>}
+        </div>
       </div>
 
       {/* Phone */}
       <div className="space-y-2">
-        <Label htmlFor="phone" className="text-base font-medium">Phone Number</Label>
+        <Label htmlFor="phone" className="text-base font-medium">
+          Phone Number <span className="text-destructive">*</span>
+        </Label>
         <Input
           id="phone"
           type="tel"
@@ -211,19 +313,16 @@ export function StepContactVerification({
 
       {/* Email */}
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-base font-medium">Email Address</Label>
+        <Label htmlFor="email" className="text-base font-medium">
+          Email Address <span className="text-destructive">*</span>
+        </Label>
         <div className="flex gap-2">
           <Input
             id="email"
             type="email"
             placeholder="you@example.com"
             value={formData.email}
-            onChange={(e) => {
-              updateFormData({ email: e.target.value });
-              setErrors(prev => ({ ...prev, email: "" }));
-              setCodeSent(false);
-              setIsEmailVerified(false);
-            }}
+            onChange={handleEmailChange}
             className={`flex-1 ${errors.email ? "border-destructive" : ""}`}
             disabled={isEmailVerified}
           />
@@ -232,13 +331,18 @@ export function StepContactVerification({
               type="button"
               variant={codeSent ? "outline" : "secondary"}
               onClick={handleSendCode}
-              disabled={isSendingCode || !formData.email}
-              className="shrink-0"
+              disabled={isSendingCode || !formData.email || resendCooldown > 0 || resendCount >= 3}
+              className="shrink-0 min-w-[100px]"
             >
               {isSendingCode ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : resendCooldown > 0 ? (
+                <span className="text-sm">{resendCooldown}s</span>
               ) : codeSent ? (
-                "Resend"
+                <>
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Resend
+                </>
               ) : (
                 <>
                   <Mail className="h-4 w-4 mr-2" />
@@ -248,13 +352,19 @@ export function StepContactVerification({
             </Button>
           )}
           {isEmailVerified && (
-            <div className="flex items-center text-green-600 shrink-0">
+            <div className="flex items-center text-green-600 shrink-0 px-3">
               <CheckCircle2 className="h-5 w-5 mr-1" />
               <span className="text-sm font-medium">Verified</span>
             </div>
           )}
         </div>
         {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+        {resendCount >= 3 && !isEmailVerified && (
+          <p className="text-sm text-amber-600 flex items-center gap-1">
+            <AlertCircle className="h-4 w-4" />
+            Maximum attempts reached. Please wait 10 minutes.
+          </p>
+        )}
       </div>
 
       {/* Verification Code Input */}
@@ -280,7 +390,12 @@ export function StepContactVerification({
                 <InputOTPSlot index={5} />
               </InputOTPGroup>
             </InputOTP>
-            {errors.code && <p className="text-sm text-destructive">{errors.code}</p>}
+            {errors.code && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {errors.code}
+              </p>
+            )}
             <Button
               type="button"
               onClick={handleVerifyCode}
@@ -292,6 +407,9 @@ export function StepContactVerification({
               ) : null}
               Verify Code
             </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Code expires in 10 minutes. {resendCount < 3 && `Resends remaining: ${3 - resendCount}`}
+            </p>
           </div>
         </div>
       )}

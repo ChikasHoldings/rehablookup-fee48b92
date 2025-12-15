@@ -36,6 +36,8 @@ interface QualifiedLeadRequest {
   budgetPreference?: string;
   // Step 4
   name: string;
+  firstName?: string;
+  lastName?: string;
   phone: string;
   email: string;
   preferredContact: string;
