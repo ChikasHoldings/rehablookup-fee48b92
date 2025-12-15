@@ -10,11 +10,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration matching check-subscription
-const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number; qualified_lead_limit: number }> = {
-  basic: { product_id: null, lead_limit: 4, qualified_lead_limit: 4 },
-  professional: { product_id: "prod_TbalLOPujTIoUe", lead_limit: 25, qualified_lead_limit: 25 },
-  featured: { product_id: "prod_TbalOeJZA2ZoJl", lead_limit: 75, qualified_lead_limit: 75 },
+// Plan configuration matching check-subscription (supports both old and new product IDs)
+const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; qualified_lead_limit: number }> = {
+  basic: { product_ids: [], lead_limit: 4, qualified_lead_limit: 4 },
+  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 25, qualified_lead_limit: 25 },
+  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 75, qualified_lead_limit: 75 },
 };
 
 interface QualifiedLeadRequest {
@@ -96,10 +96,10 @@ async function checkProviderLeadCap(
         const subscription = subscriptions.data[0];
         const productId = subscription.items.data[0].price.product as string;
         
-        if (productId === PLAN_CONFIG.professional.product_id) {
+        if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
           leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
           planName = "professional";
-        } else if (productId === PLAN_CONFIG.featured.product_id) {
+        } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
           leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
           planName = "featured";
         }
@@ -208,10 +208,10 @@ async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> 
             
             if (subscriptions.data.length > 0) {
               const productId = subscriptions.data[0].items.data[0].price.product as string;
-              if (productId === PLAN_CONFIG.featured.product_id) {
+              if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
                 planName = "featured";
                 leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
-              } else if (productId === PLAN_CONFIG.professional.product_id) {
+              } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
                 planName = "professional";
                 leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
               }

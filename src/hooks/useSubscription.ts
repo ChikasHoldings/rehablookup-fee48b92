@@ -81,47 +81,56 @@ export const PLAN_DETAILS = {
   },
   professional: {
     name: "Professional",
-    price: "$349",
+    price: "$399",
     period: "/month",
-    description: "Qualified leads + unlimited direct inquiries",
-    lead_limit: 25, // 25 qualified leads/month
+    description: "Exclusive leads + steady visibility",
+    lead_limit: 25, // 25 exclusive qualified leads/month
     qualified_lead_limit: 25,
     direct_lead_limit: -1, // Unlimited direct leads from profile
     location_limit: 3,
     featured: false,
     features: [
-      "Up to 3 facility locations",
-      "25 qualified leads/month",
+      "25 exclusive qualified leads/month",
       "Unlimited direct profile inquiries",
+      "Up to 3 facility locations",
       "Standard search placement",
       "Email lead notifications",
       "Lead management dashboard",
-      "Analytics & insights",
+      "Performance analytics & insights",
     ],
-    price_id: "price_1SeNZz9fxdThyiakUJKysCFz",
-    product_id: "prod_TbalLOPujTIoUe",
+    microcopy: "Each lead is delivered exclusively to one provider — never shared.",
+    price_id: "price_1Sel1C9fxdThyiakWLfgbl9K",
+    product_id: "prod_Tbyz1bf6iYyzYd",
   },
   featured: {
     name: "Featured",
-    price: "$899",
+    price: "$1,099",
     period: "/month",
-    description: "Maximum visibility & lead volume",
-    lead_limit: 75, // 75 qualified leads/month
+    description: "Maximum visibility & priority access",
+    lead_limit: 75, // 75 exclusive qualified leads/month
     qualified_lead_limit: 75,
     direct_lead_limit: -1, // Unlimited direct leads
     location_limit: 5,
     featured: true,
     features: [
-      "Up to 5 facility locations",
-      "75 qualified leads/month",
+      "75 exclusive qualified leads/month",
       "Unlimited direct profile inquiries",
-      "Homepage featured section",
+      "Up to 5 facility locations",
+      "Homepage featured placement",
       "Priority search placement",
       "Gold Featured badge",
       "Priority email support",
-      "All Professional features",
+      "Advanced analytics",
+      "All Professional features included",
     ],
-    price_id: "price_1SeNaD9fxdThyiakNFokIAVC",
-    product_id: "prod_TbalOeJZA2ZoJl",
+    microcopy: "Priority access to exclusive leads with enhanced visibility across the platform.",
+    price_id: "price_1Sel1P9fxdThyiakj5MaAvOE",
+    product_id: "prod_TbyzJVNOQL71NN",
   },
 };
+
+// Direct inquiry clarification text for UI usage
+export const DIRECT_INQUIRY_CLARIFICATION = "Direct inquiries come from users who contact your profile directly and do not count toward monthly lead limits.";
+
+// Marketing messaging
+export const EXCLUSIVITY_MESSAGE = "No shared leads. No bidding. No race to call.";

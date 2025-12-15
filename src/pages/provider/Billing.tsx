@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useSubscription, PLAN_DETAILS, DIRECT_INQUIRY_CLARIFICATION, EXCLUSIVITY_MESSAGE } from "@/hooks/useSubscription";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -487,13 +487,21 @@ export default function ProviderBillingPage() {
                     }`}>
                       {plan.key === "basic" 
                         ? `${plan.lead_limit} leads/month (1 per week)`
-                        : `${plan.qualified_lead_limit || plan.lead_limit} qualified leads/month`
+                        : `${plan.qualified_lead_limit || plan.lead_limit} exclusive qualified leads/month`
                       }
                     </div>
                     {(plan.key === "professional" || plan.key === "featured") && (
-                      <div className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200">
-                        + Unlimited direct profile inquiries
-                      </div>
+                      <>
+                        <p className="text-[11px] text-muted-foreground px-1 italic">
+                          {(plan as any).microcopy}
+                        </p>
+                        <div className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200 group relative">
+                          + Unlimited direct profile inquiries
+                          <span className="hidden group-hover:block absolute left-0 right-0 top-full mt-1 p-2 bg-foreground text-background text-[10px] rounded z-10">
+                            {DIRECT_INQUIRY_CLARIFICATION}
+                          </span>
+                        </div>
+                      </>
                     )}
                     <div className={`text-xs font-medium px-3 py-1.5 rounded-lg ${
                       plan.key === "featured"
@@ -508,6 +516,13 @@ export default function ProviderBillingPage() {
                       }
                     </div>
                   </div>
+                  
+                  {/* Exclusivity message for paid plans */}
+                  {plan.key !== "basic" && (
+                    <p className="text-xs text-center text-muted-foreground bg-muted/30 rounded-lg py-2 px-3 border border-border/50">
+                      {EXCLUSIVITY_MESSAGE}
+                    </p>
+                  )}
                   
                   <ul className="space-y-2.5">
                     {plan.features.map((feature) => (
