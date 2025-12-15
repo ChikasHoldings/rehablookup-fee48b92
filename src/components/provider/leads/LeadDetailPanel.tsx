@@ -42,6 +42,7 @@ import { LeadScoreBadge } from "./LeadScoreBadge";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
 import { cn } from "@/lib/utils";
+import { calculateLeadScore } from "@/lib/leadScoring";
 
 export interface Lead {
   id: string;
@@ -189,11 +190,19 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
   const formatUrgency = (u: string | null) => ({ immediate: "Immediate", "within-week": "This Week", "within-month": "This Month", researching: "Researching" }[u || ""] || u || "—");
   const formatLevel = (l: string | null) => ({ detox: "Detox", residential: "Residential", php: "PHP", iop: "IOP", outpatient: "Outpatient", "not-sure": "Not Sure" }[l || ""] || l || "—");
   const formatInsurance = (t: string | null) => ({ ppo: "PPO/Private", medicaid: "Medicaid", medicare: "Medicare", "self-pay": "Self-Pay", "not-sure": "Not Sure" }[t || ""] || t || "—");
+  
+  const leadScore = calculateLeadScore(lead);
+  const gradeAccentColor = {
+    A: "border-l-green-500 bg-green-50/30",
+    B: "border-l-blue-500 bg-blue-50/30",
+    C: "border-l-amber-500 bg-amber-50/30",
+    D: "border-l-slate-400 bg-slate-50/30",
+  }[leadScore.grade];
 
   return (
     <div className="flex-1 flex flex-col bg-background min-h-0 overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 border-b">
+      <div className={cn("flex-shrink-0 border-b border-l-4", gradeAccentColor)}>
         {/* Top row: Avatar, Name, Actions */}
         <div className="p-4 pb-3 flex items-center gap-3">
           <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
