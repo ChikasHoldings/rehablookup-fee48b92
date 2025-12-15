@@ -40,6 +40,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -708,15 +714,39 @@ export default function ProviderLeadsPage() {
                         <TableCell>
                           <div className={isLocked ? "blur-sm" : ""}>
                             {lead.source === "Request Help Page" ? (
-                              <Badge className="gap-1.5 text-xs font-semibold bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30 shadow-sm">
-                                <Sparkles className="h-3.5 w-3.5" />
-                                Qualified
-                              </Badge>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge className="gap-1.5 text-xs font-semibold bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30 shadow-sm cursor-help">
+                                      <Sparkles className="h-3.5 w-3.5" />
+                                      Qualified
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[280px] text-center">
+                                    <p className="font-semibold mb-1">Qualified Lead</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Matched to your facility through our intake form. Pre-screened for treatment needs, insurance, and location.
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             ) : (
-                              <Badge variant="outline" className="gap-1.5 text-xs font-medium bg-muted/50 border-border">
-                                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                                Direct
-                              </Badge>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge variant="outline" className="gap-1.5 text-xs font-medium bg-muted/50 border-border cursor-help">
+                                      <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                      Direct
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[280px] text-center">
+                                    <p className="font-semibold mb-1">Direct Inquiry</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Submitted directly from your public profile page. These don't count toward your qualified lead limit.
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                           </div>
                         </TableCell>
