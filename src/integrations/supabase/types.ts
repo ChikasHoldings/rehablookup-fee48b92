@@ -403,6 +403,7 @@ export type Database = {
           email: string
           email_verified: boolean | null
           facility_id: string | null
+          follow_up_reminder_sent_at: string | null
           id: string
           insurance_provider: string | null
           insurance_type: string | null
@@ -429,6 +430,7 @@ export type Database = {
           email: string
           email_verified?: boolean | null
           facility_id?: string | null
+          follow_up_reminder_sent_at?: string | null
           id?: string
           insurance_provider?: string | null
           insurance_type?: string | null
@@ -455,6 +457,7 @@ export type Database = {
           email?: string
           email_verified?: boolean | null
           facility_id?: string | null
+          follow_up_reminder_sent_at?: string | null
           id?: string
           insurance_provider?: string | null
           insurance_type?: string | null
