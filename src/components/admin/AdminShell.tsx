@@ -26,6 +26,7 @@ const mobileNavItems = [
   { to: "/admin/leads", icon: Users, label: "Leads" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions" },
   { to: "/admin/featured", icon: Star, label: "Featured" },
+  { to: "/admin/users", icon: Users, label: "User Mgmt" },
   { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log" },
   { to: "/admin/settings", icon: Settings, label: "Settings" },
 ];
