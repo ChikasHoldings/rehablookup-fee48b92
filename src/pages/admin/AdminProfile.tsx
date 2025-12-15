@@ -8,7 +8,8 @@ import {
   User, Camera, Eye, EyeOff, ShieldCheck, Save, Loader2, History, 
   UserCog, Bell, KeyRound, Image, CheckCircle, UserPlus, Ban, 
   BadgeCheck, Star, FileText, Settings, RefreshCw, Shield, 
-  Clock, AlertTriangle, Lock
+  Clock, AlertTriangle, Lock, Monitor, Smartphone, Laptop, Tablet,
+  Globe, MapPin, LogOut, Trash2
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Form,
   FormControl,
@@ -67,6 +79,21 @@ const getStrengthLabel = (strength: number): { label: string; color: string } =>
   return { label: "Very Strong", color: "bg-emerald-600" };
 };
 
+// Get device icon based on device/browser info
+const getDeviceIcon = (deviceName: string | null, browser: string | null) => {
+  const name = (deviceName || browser || "").toLowerCase();
+  if (name.includes("mobile") || name.includes("iphone") || name.includes("android")) {
+    return <Smartphone className="h-5 w-5" />;
+  }
+  if (name.includes("tablet") || name.includes("ipad")) {
+    return <Tablet className="h-5 w-5" />;
+  }
+  if (name.includes("laptop")) {
+    return <Laptop className="h-5 w-5" />;
+  }
+  return <Monitor className="h-5 w-5" />;
+};
+
 export default function AdminProfile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -78,6 +105,8 @@ export default function AdminProfile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [avatarKey, setAvatarKey] = useState(Date.now());
+  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
+  const [isRevokingAll, setIsRevokingAll] = useState(false);
 
   // Fetch current user and profile
   const { data: userData } = useQuery({
@@ -104,6 +133,24 @@ export default function AdminProfile() {
     enabled: !!userData?.id,
   });
 
+  // Fetch active sessions
+  const { data: sessions, isLoading: isLoadingSessions, refetch: refetchSessions } = useQuery({
+    queryKey: ["admin-sessions", userData?.id],
+    queryFn: async () => {
+      if (!userData?.id) return [];
+      const { data, error } = await supabase
+        .from("user_sessions")
+        .select("*")
+        .eq("user_id", userData.id)
+        .is("revoked_at", null)
+        .order("last_active_at", { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userData?.id,
+  });
+
   // Fetch recent activity with real-time updates
   const { data: recentActivity, isLoading: isLoadingActivity } = useQuery({
     queryKey: ["admin-activity", userData?.id],
@@ -122,11 +169,11 @@ export default function AdminProfile() {
     enabled: !!userData?.id,
   });
 
-  // Real-time subscription for activity updates
+  // Real-time subscription for activity and session updates
   useEffect(() => {
     if (!userData?.id) return;
 
-    const channel = supabase
+    const activityChannel = supabase
       .channel('admin-profile-activity')
       .on(
         'postgres_changes',
@@ -142,8 +189,25 @@ export default function AdminProfile() {
       )
       .subscribe();
 
+    const sessionChannel = supabase
+      .channel('admin-profile-sessions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_sessions',
+          filter: `user_id=eq.${userData.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-sessions", userData.id] });
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(activityChannel);
+      supabase.removeChannel(sessionChannel);
     };
   }, [userData?.id, queryClient]);
 
@@ -170,6 +234,7 @@ export default function AdminProfile() {
       admin_user_deactivated: <Ban className="h-4 w-4" />,
       admin_permissions_updated: <Settings className="h-4 w-4" />,
       login: <Lock className="h-4 w-4" />,
+      session_revoked: <LogOut className="h-4 w-4" />,
     };
     return iconMap[actionType] || <History className="h-4 w-4" />;
   };
@@ -191,6 +256,7 @@ export default function AdminProfile() {
       admin_user_deactivated: "Deactivated admin user",
       admin_permissions_updated: "Updated admin permissions",
       login: "Signed in",
+      session_revoked: "Revoked session",
     };
     return labelMap[actionType] || actionType.replace(/_/g, " ");
   };
@@ -400,7 +466,7 @@ export default function AdminProfile() {
         targetId: userData?.id,
         details: { 
           changedAt: new Date().toISOString(),
-          ipAddress: "logged" // Actual IP would be captured server-side
+          ipAddress: "logged"
         },
       });
 
@@ -420,8 +486,107 @@ export default function AdminProfile() {
     }
   };
 
+  const handleRevokeSession = async (sessionId: string) => {
+    if (!userData?.id) return;
+
+    setRevokingSessionId(sessionId);
+    try {
+      const { error } = await supabase
+        .from("user_sessions")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("id", sessionId)
+        .eq("user_id", userData.id);
+
+      if (error) throw error;
+
+      await refetchSessions();
+      
+      // Log audit action
+      await logAdminAction({
+        actionType: "session_revoked",
+        targetType: "user_session",
+        targetId: sessionId,
+        details: { revokedAt: new Date().toISOString() },
+      });
+
+      toast({
+        title: "Session revoked",
+        description: "The session has been terminated.",
+      });
+    } catch (err) {
+      console.error("Error revoking session:", err);
+      toast({
+        title: "Failed to revoke session",
+        description: "Could not revoke the session. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setRevokingSessionId(null);
+    }
+  };
+
+  const handleRevokeAllOtherSessions = async () => {
+    if (!userData?.id || !sessions) return;
+
+    setIsRevokingAll(true);
+    try {
+      // Find the current session (most recent or marked as current)
+      const currentSession = sessions.find(s => s.is_current) || sessions[0];
+      const otherSessionIds = sessions
+        .filter(s => s.id !== currentSession?.id)
+        .map(s => s.id);
+
+      if (otherSessionIds.length === 0) {
+        toast({
+          title: "No other sessions",
+          description: "There are no other active sessions to revoke.",
+        });
+        setIsRevokingAll(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from("user_sessions")
+        .update({ revoked_at: new Date().toISOString() })
+        .in("id", otherSessionIds)
+        .eq("user_id", userData.id);
+
+      if (error) throw error;
+
+      await refetchSessions();
+      
+      // Log audit action
+      await logAdminAction({
+        actionType: "session_revoked",
+        targetType: "user_sessions",
+        targetId: userData.id,
+        details: { 
+          revokedCount: otherSessionIds.length,
+          revokedAt: new Date().toISOString() 
+        },
+      });
+
+      toast({
+        title: "Sessions revoked",
+        description: `${otherSessionIds.length} other session(s) have been terminated.`,
+      });
+    } catch (err) {
+      console.error("Error revoking sessions:", err);
+      toast({
+        title: "Failed to revoke sessions",
+        description: "Could not revoke sessions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRevokingAll(false);
+    }
+  };
+
   const initials = profile?.display_name?.slice(0, 2).toUpperCase() || 
                    userData?.email?.slice(0, 2).toUpperCase() || "AD";
+
+  const currentSession = sessions?.find(s => s.is_current) || sessions?.[0];
+  const otherSessions = sessions?.filter(s => s.id !== currentSession?.id) || [];
 
   if (isLoading) {
     return (
@@ -547,6 +712,211 @@ export default function AdminProfile() {
               )}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Session Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Monitor className="h-5 w-5" />
+                Active Sessions
+              </CardTitle>
+              <CardDescription>Manage your active sessions across devices</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetchSessions()}
+                className="gap-1.5"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
+              {otherSessions.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-1.5 text-red-600 hover:text-red-700">
+                      <LogOut className="h-4 w-4" />
+                      Revoke All Others
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Revoke all other sessions?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will sign you out from all other devices. You will remain signed in on this device only.
+                        {otherSessions.length > 0 && (
+                          <span className="block mt-2 font-medium">
+                            {otherSessions.length} session(s) will be terminated.
+                          </span>
+                        )}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleRevokeAllOtherSessions}
+                        className="bg-red-600 hover:bg-red-700"
+                        disabled={isRevokingAll}
+                      >
+                        {isRevokingAll ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Revoking...
+                          </>
+                        ) : (
+                          "Revoke All"
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoadingSessions ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : sessions && sessions.length > 0 ? (
+            <div className="space-y-4">
+              {/* Current Session */}
+              {currentSession && (
+                <div className="border rounded-lg p-4 bg-green-50/50 border-green-200">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 rounded-lg bg-green-100 text-green-600">
+                        {getDeviceIcon(currentSession.device_name, currentSession.browser)}
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">
+                            {currentSession.browser || "Unknown Browser"}
+                            {currentSession.os && ` on ${currentSession.os}`}
+                          </p>
+                          <Badge className="bg-green-100 text-green-700 text-xs">
+                            Current Session
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {currentSession.ip_address && (
+                            <span className="flex items-center gap-1">
+                              <Globe className="h-3 w-3" />
+                              {currentSession.ip_address}
+                            </span>
+                          )}
+                          {currentSession.location && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {currentSession.location}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Active {currentSession.last_active_at 
+                            ? formatDistanceToNow(new Date(currentSession.last_active_at), { addSuffix: true })
+                            : "now"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Other Sessions */}
+              {otherSessions.length > 0 && (
+                <>
+                  <Separator />
+                  <p className="text-sm font-medium text-muted-foreground">Other Sessions ({otherSessions.length})</p>
+                  <div className="space-y-3">
+                    {otherSessions.map((session) => (
+                      <div key={session.id} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className="p-2 rounded-lg bg-muted text-muted-foreground">
+                              {getDeviceIcon(session.device_name, session.browser)}
+                            </div>
+                            <div className="space-y-1">
+                              <p className="font-medium">
+                                {session.browser || "Unknown Browser"}
+                                {session.os && ` on ${session.os}`}
+                              </p>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                {session.ip_address && (
+                                  <span className="flex items-center gap-1">
+                                    <Globe className="h-3 w-3" />
+                                    {session.ip_address}
+                                  </span>
+                                )}
+                                {session.location && (
+                                  <span className="flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {session.location}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Last active {session.last_active_at 
+                                  ? formatDistanceToNow(new Date(session.last_active_at), { addSuffix: true })
+                                  : "unknown"}
+                              </p>
+                            </div>
+                          </div>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                disabled={revokingSessionId === session.id}
+                              >
+                                {revokingSessionId === session.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Revoke this session?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will sign you out from this device. You can sign in again anytime.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleRevokeSession(session.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Revoke Session
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Monitor className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No active sessions found</p>
+              <p className="text-xs mt-1">Session tracking starts with your next login</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
