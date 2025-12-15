@@ -160,7 +160,7 @@ const TreatmentTypes = () => {
               Our specialists can help you understand your options and find the best program for your situation.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/request-help">
+              <Link to="/request-help?source=treatment_cta">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Request Help

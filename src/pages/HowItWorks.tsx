@@ -230,7 +230,7 @@ const HowItWorks = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/request-help">
+              <Link to="/request-help?source=howitworks_cta">
                 <Button variant="outline" size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Request Help

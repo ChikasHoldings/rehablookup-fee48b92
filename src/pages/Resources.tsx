@@ -380,7 +380,7 @@ const Resources = () => {
               Our specialists are available 24/7 to answer your questions and help you find the right treatment.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/request-help">
+              <Link to="/request-help?source=resources_cta">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Request Help

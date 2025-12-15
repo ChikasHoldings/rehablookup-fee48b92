@@ -417,7 +417,7 @@ const FAQ = () => {
               Our compassionate support team is available 24/7 to answer your questions and help you find the right treatment.
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link to="/request-help">
+              <Link to="/request-help?source=faq_cta">
                 <Button size="lg" className="gap-2 min-w-[200px]">
                   <Heart className="h-4 w-4" />
                   Request Help

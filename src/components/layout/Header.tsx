@@ -27,7 +27,7 @@ const defaultNavLinks: NavLink[] = [
 
 export function Header({ 
   navLinks = defaultNavLinks, 
-  ctaLink = "/request-help",
+  ctaLink = "/request-help?source=header",
   ctaLabel = "Get Help Now",
   variant = "default"
 }: HeaderProps) {
