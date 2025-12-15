@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
@@ -137,6 +138,15 @@ export default function AdminProfile() {
       if (updateError) throw updateError;
 
       queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
+      
+      // Log audit action
+      await logAdminAction({
+        actionType: AdminAuditActions.PROFILE_PHOTO_UPDATED,
+        targetType: "admin_profile",
+        targetId: userData.id,
+        details: { fileName },
+      });
+
       toast({
         title: "Photo updated",
         description: "Your profile photo has been updated.",
@@ -166,6 +176,15 @@ export default function AdminProfile() {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
+      
+      // Log audit action
+      await logAdminAction({
+        actionType: AdminAuditActions.PROFILE_NAME_UPDATED,
+        targetType: "admin_profile",
+        targetId: userData.id,
+        details: { newDisplayName: displayName },
+      });
+
       toast({
         title: "Profile updated",
         description: "Your display name has been updated.",
@@ -209,6 +228,15 @@ export default function AdminProfile() {
       if (error) throw error;
 
       passwordForm.reset();
+      
+      // Log audit action
+      await logAdminAction({
+        actionType: AdminAuditActions.PASSWORD_CHANGED,
+        targetType: "admin_profile",
+        targetId: userData?.id,
+        details: { changedAt: new Date().toISOString() },
+      });
+
       toast({
         title: "Password updated",
         description: "Your password has been changed successfully.",
