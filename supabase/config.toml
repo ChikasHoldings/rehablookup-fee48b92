@@ -83,3 +83,9 @@ verify_jwt = true
 
 [functions.check-churn-alerts]
 verify_jwt = false
+
+[functions.send-admin-daily-summary]
+verify_jwt = false
+
+[functions.send-admin-weekly-report]
+verify_jwt = false
