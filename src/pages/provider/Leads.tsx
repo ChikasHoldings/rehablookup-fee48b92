@@ -70,7 +70,7 @@ export default function ProviderLeadsPage() {
   const isMobile = useIsMobile();
   const facilityId = selectedFacility?.id;
   const currentPlan = subscription?.plan || "basic";
-  const leadLimit = subscription?.lead_limit ?? 4;
+  const leadLimit = currentPlan === "basic" ? 1 : (subscription?.lead_limit ?? 25); // Basic: 1 lifetime lead
 
   // Swipe gestures for mobile navigation
   const { handlers: swipeHandlers } = useSwipeGesture({
@@ -117,6 +117,9 @@ export default function ProviderLeadsPage() {
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 2,
   });
+
+  // For Basic plan lifetime count - must be after leads query
+  const totalLeadsCount = leads.length;
 
   useEffect(() => {
     if (!facilityId) return;
@@ -184,12 +187,12 @@ export default function ProviderLeadsPage() {
   };
 
   // Determine if upgrade message should show
-  const showUpgradeIndicator = leadLimit === 0 || 
-    (currentPlan === "basic" && thisMonthLeads.length >= leadLimit * 0.8) ||
+  const basicLifetimeLimitReached = currentPlan === "basic" && totalLeadsCount >= 1;
+  const showUpgradeIndicator = currentPlan === "basic" || 
     (currentPlan === "professional" && thisMonthQualified.length >= leadLimit * 0.8);
   
   const isAtLimit = currentPlan === "basic" 
-    ? thisMonthLeads.length >= leadLimit 
+    ? totalLeadsCount >= 1 // Lifetime limit for basic
     : thisMonthQualified.length >= leadLimit;
 
   return (
@@ -216,17 +219,19 @@ export default function ProviderLeadsPage() {
               <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
                 {isMobile && mobileView === 'detail' 
                   ? 'Swipe right to go back'
-                  : `${leads.length} total • ${thisMonthQualified.length}/${leadLimit} qualified`
+                  : currentPlan === "basic"
+                    ? `${totalLeadsCount}/1 lifetime lead`
+                    : `${leads.length} total • ${thisMonthQualified.length}/${leadLimit} qualified`
                 }
               </p>
             </div>
           </div>
           
           {/* Detailed Upgrade Indicator - Right aligned in header */}
-          {showUpgradeIndicator && (!isMobile || mobileView === 'list') && currentPlan !== "featured" && (
+          {showUpgradeIndicator && (!isMobile || mobileView === 'list') && (subscription?.plan !== "featured") && (
             <div className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg border flex-shrink-0",
-              leadLimit === 0 
+              currentPlan === "basic" && !basicLifetimeLimitReached
                 ? "bg-primary/5 border-primary/20"
                 : isAtLimit
                   ? "bg-destructive/5 border-destructive/20"
@@ -237,36 +242,36 @@ export default function ProviderLeadsPage() {
                 <div className="flex items-center gap-2">
                   <TrendingUp className={cn(
                     "h-3.5 w-3.5",
-                    leadLimit === 0 ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-600 dark:text-amber-400"
+                    currentPlan === "basic" && !basicLifetimeLimitReached ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-600 dark:text-amber-400"
                   )} />
                   <span className={cn(
                     "text-xs font-semibold",
-                    leadLimit === 0 ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-700 dark:text-amber-300"
+                    currentPlan === "basic" && !basicLifetimeLimitReached ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-700 dark:text-amber-300"
                   )}>
-                    {leadLimit === 0 
-                      ? "No leads included"
+                    {currentPlan === "basic"
+                      ? basicLifetimeLimitReached 
+                        ? "Lifetime limit reached" 
+                        : "1 lifetime lead"
                       : isAtLimit 
                         ? "Limit reached!" 
                         : "Approaching limit"
                     }
                   </span>
                 </div>
-                {leadLimit > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className={cn(
-                          "h-full transition-all rounded-full",
-                          isAtLimit ? "bg-destructive" : "bg-amber-500"
-                        )}
-                        style={{ width: `${Math.min(((currentPlan === "basic" ? thisMonthLeads.length : thisMonthQualified.length) / leadLimit) * 100, 100)}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground font-medium">
-                      {currentPlan === "basic" ? thisMonthLeads.length : thisMonthQualified.length}/{leadLimit}
-                    </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className={cn(
+                        "h-full transition-all rounded-full",
+                        isAtLimit ? "bg-destructive" : currentPlan === "basic" ? "bg-primary" : "bg-amber-500"
+                      )}
+                      style={{ width: `${Math.min((currentPlan === "basic" ? totalLeadsCount : thisMonthQualified.length) / leadLimit * 100, 100)}%` }}
+                    />
                   </div>
-                )}
+                  <span className="text-[10px] text-muted-foreground font-medium">
+                    {currentPlan === "basic" ? `${totalLeadsCount}/1` : `${thisMonthQualified.length}/${leadLimit}`}
+                  </span>
+                </div>
               </div>
               
               {/* Upgrade Button */}
@@ -402,16 +407,16 @@ export default function ProviderLeadsPage() {
               <div className="space-y-2">
                 {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-[88px] rounded-xl" />)}
               </div>
-            ) : currentPlan === "basic" && leads.length === 0 ? (
-              // Basic plan upgrade CTA - no leads inbox
+            ) : currentPlan === "basic" && basicLifetimeLimitReached ? (
+              // Basic plan lifetime limit reached
               <div className="flex items-center justify-center h-full p-8">
                 <div className="text-center max-w-md">
-                  <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Zap className="h-8 w-8 text-primary" />
+                  <div className="h-16 w-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                    <AlertTriangle className="h-8 w-8 text-destructive" />
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-2">Upgrade to Receive Leads</h3>
+                  <h3 className="font-semibold text-lg text-foreground mb-2">Lifetime Lead Limit Reached</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Your Basic Listing is live and discoverable. Upgrade to Professional to receive exclusive qualified leads delivered directly to you.
+                    You've used your 1 lifetime lead on the Basic plan. Upgrade to Professional to receive 25 exclusive qualified leads per month.
                   </p>
                   <div className="space-y-3">
                     <Button asChild className="w-full">
@@ -421,7 +426,31 @@ export default function ProviderLeadsPage() {
                       </Link>
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                      Direct inquiries from your profile will still appear here
+                      Get 25 exclusive leads/month • Priority placement • Advanced analytics
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : currentPlan === "basic" && leads.length === 0 ? (
+              // Basic plan upgrade CTA - no leads yet
+              <div className="flex items-center justify-center h-full p-8">
+                <div className="text-center max-w-md">
+                  <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Zap className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-foreground mb-2">1 Lifetime Lead Included</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Your Basic Listing is live. You can receive 1 direct inquiry from your profile. Upgrade to Professional for 25 exclusive leads per month.
+                  </p>
+                  <div className="space-y-3">
+                    <Button asChild className="w-full">
+                      <Link to="/provider/billing">
+                        <Zap className="h-4 w-4 mr-2" />
+                        Upgrade to Professional
+                      </Link>
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Your 1 direct inquiry will appear here when received
                     </p>
                   </div>
                 </div>
