@@ -74,6 +74,7 @@ interface EmailTemplate {
   subject: string;
   body: string;
   isWelcome?: boolean;
+  isFollowup?: boolean;
 }
 
 // Welcome template IDs - only one can be sent per lead
@@ -84,6 +85,15 @@ const WELCOME_TEMPLATE_IDS = [
   "welcome_hope",
   "welcome_practical"
 ];
+
+// Follow-up template IDs - 24-hour cooldown per template
+const FOLLOWUP_TEMPLATE_IDS = [
+  "next_steps",
+  "scheduling_call",
+  "gentle_followup"
+];
+
+const COOLDOWN_HOURS = 24;
 
 const EMAIL_TEMPLATES: EmailTemplate[] = [
   // Welcome variants (only one per lead)
@@ -193,6 +203,7 @@ Best,
     category: "Follow-up",
     icon: FileText,
     iconColor: "text-blue-500",
+    isFollowup: true,
     subject: "Your next steps with {{provider_name}}",
     body: `Hi {{lead_first_name}},
 
@@ -243,6 +254,7 @@ Best regards,
     category: "Follow-up",
     icon: PhoneCall,
     iconColor: "text-violet-500",
+    isFollowup: true,
     subject: "Let's schedule a time to talk - {{provider_name}}",
     body: `Hi {{lead_first_name}},
 
@@ -268,6 +280,7 @@ Looking forward to speaking with you,
     category: "Follow-up",
     icon: Clock,
     iconColor: "text-amber-500",
+    isFollowup: true,
     subject: "Checking in - {{provider_name}}",
     body: `Hi {{lead_first_name}},
 
@@ -295,29 +308,61 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
   const { data: providerData } = useProviderData(selectedFacility?.id || undefined);
   const { data: templateTags = [] } = useTemplateTags();
 
-  // Fetch sent template IDs for this lead (across ALL providers)
-  const { data: sentTemplateIds = [] } = useQuery({
+  // Fetch sent template IDs and timestamps for this lead (across ALL providers)
+  const { data: sentEmails = [] } = useQuery({
     queryKey: ["lead-sent-templates", lead?.id],
     queryFn: async () => {
       if (!lead?.id) return [];
       const { data, error } = await supabase
         .from("lead_emails")
-        .select("template_id")
+        .select("template_id, created_at")
         .eq("lead_id", lead.id);
       
       if (error) {
         console.error("Error fetching sent templates:", error);
         return [];
       }
-      return data.map(d => d.template_id);
+      return data;
     },
     enabled: !!lead?.id && open,
   });
 
   // Check if any welcome template has been sent to this lead
   const welcomeTemplateSent = useMemo(() => {
-    return sentTemplateIds.some(id => WELCOME_TEMPLATE_IDS.includes(id));
-  }, [sentTemplateIds]);
+    return sentEmails.some(e => WELCOME_TEMPLATE_IDS.includes(e.template_id));
+  }, [sentEmails]);
+
+  // Calculate cooldown status for follow-up templates
+  const followupCooldowns = useMemo(() => {
+    const cooldowns: Record<string, { onCooldown: boolean; hoursRemaining: number }> = {};
+    const now = Date.now();
+    const cooldownMs = COOLDOWN_HOURS * 60 * 60 * 1000;
+
+    FOLLOWUP_TEMPLATE_IDS.forEach(templateId => {
+      const recentEmail = sentEmails
+        .filter(e => e.template_id === templateId)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+      
+      if (recentEmail) {
+        const sentAt = new Date(recentEmail.created_at).getTime();
+        const availableAt = sentAt + cooldownMs;
+        const remaining = availableAt - now;
+        
+        if (remaining > 0) {
+          cooldowns[templateId] = {
+            onCooldown: true,
+            hoursRemaining: Math.ceil(remaining / (1000 * 60 * 60))
+          };
+        } else {
+          cooldowns[templateId] = { onCooldown: false, hoursRemaining: 0 };
+        }
+      } else {
+        cooldowns[templateId] = { onCooldown: false, hoursRemaining: 0 };
+      }
+    });
+
+    return cooldowns;
+  }, [sentEmails]);
 
   // Filter templates to hide welcome variants if any welcome was already sent
   const availableTemplates = useMemo(() => {
@@ -335,6 +380,11 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
     if (welcomeTemplateSent) return 0;
     return WELCOME_TEMPLATE_IDS.length;
   }, [welcomeTemplateSent]);
+
+  // Count follow-up templates on cooldown
+  const followupOnCooldownCount = useMemo(() => {
+    return Object.values(followupCooldowns).filter(c => c.onCooldown).length;
+  }, [followupCooldowns]);
 
   // Build template context from current data
   const templateContext = useMemo((): TemplateContext | null => {
@@ -588,6 +638,16 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                 </div>
               )}
 
+              {/* Follow-up Cooldown Notice */}
+              {followupOnCooldownCount > 0 && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50/50 border border-amber-100 text-xs">
+                  <Clock className="h-3.5 w-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-amber-700 leading-relaxed">
+                    {followupOnCooldownCount} follow-up template{followupOnCooldownCount !== 1 ? 's are' : ' is'} on 24-hour cooldown to prevent over-emailing.
+                  </p>
+                </div>
+              )}
+
               {/* Template Selection */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -615,33 +675,54 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                     )}
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
-                    {Object.entries(templatesByCategory).map(([category, templates]) => (
-                      <div key={category}>
-                        <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30">
-                          {category}
-                          {category === "Welcome" && (
-                            <span className="ml-1 text-emerald-600">({templates.length} available)</span>
-                          )}
+                    {Object.entries(templatesByCategory).map(([category, templates]) => {
+                      const followupAvailable = category === "Follow-up" 
+                        ? templates.filter(t => !followupCooldowns[t.id]?.onCooldown).length 
+                        : templates.length;
+                      
+                      return (
+                        <div key={category}>
+                          <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30">
+                            {category}
+                            {category === "Welcome" && (
+                              <span className="ml-1 text-emerald-600">({templates.length} available)</span>
+                            )}
+                            {category === "Follow-up" && followupOnCooldownCount > 0 && (
+                              <span className="ml-1 text-amber-600">({followupAvailable} available)</span>
+                            )}
+                          </div>
+                          {templates.map((template) => {
+                            const cooldown = followupCooldowns[template.id];
+                            const isOnCooldown = cooldown?.onCooldown;
+                            
+                            return (
+                              <SelectItem 
+                                key={template.id} 
+                                value={template.id}
+                                disabled={isOnCooldown}
+                                className={`py-3 px-2 ${isOnCooldown ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                <div className="flex items-center gap-2.5 w-full">
+                                  <div className={`h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0`}>
+                                    <template.icon className={`h-4 w-4 ${isOnCooldown ? 'text-muted-foreground' : template.iconColor}`} />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className={`font-medium text-sm ${isOnCooldown ? 'text-muted-foreground' : ''}`}>{template.name}</p>
+                                    {isOnCooldown ? (
+                                      <p className="text-xs text-amber-600">
+                                        Available in {cooldown.hoursRemaining}h
+                                      </p>
+                                    ) : (
+                                      <p className="text-xs text-muted-foreground">{template.category}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
                         </div>
-                        {templates.map((template) => (
-                          <SelectItem 
-                            key={template.id} 
-                            value={template.id}
-                            className="py-3 px-2 cursor-pointer"
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <div className={`h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0`}>
-                                <template.icon className={`h-4 w-4 ${template.iconColor}`} />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="font-medium text-sm">{template.name}</p>
-                                <p className="text-xs text-muted-foreground">{template.category}</p>
-                              </div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
