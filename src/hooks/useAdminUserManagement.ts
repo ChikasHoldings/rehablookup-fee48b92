@@ -9,6 +9,7 @@ export type AdminUserStatus = "active" | "suspended" | "pending_password_reset";
 
 export const ADMIN_PERMISSIONS = {
   dashboard: { label: "Dashboard", description: "View dashboard metrics and overview" },
+  analytics: { label: "Analytics", description: "View detailed analytics and reports" },
   providers: { label: "Providers", description: "Manage providers and facilities" },
   leads: { label: "Leads", description: "View and assign leads" },
   subscriptions: { label: "Subscriptions", description: "Manage subscriptions and billing" },
@@ -16,12 +17,13 @@ export const ADMIN_PERMISSIONS = {
   users: { label: "User Management", description: "Create and manage admin users (Super Admin only)" },
   audit_log: { label: "Audit Log", description: "View system audit logs" },
   settings: { label: "Settings", description: "Access system settings" },
-  flagged_images: { label: "Flagged Images", description: "Review flagged images" },
+  notifications: { label: "Notifications", description: "View and manage notifications" },
 } as const;
 
 export const ROLE_DEFAULTS: Record<AdminRole, Record<string, boolean>> = {
   admin: {
     dashboard: true,
+    analytics: true,
     providers: true,
     leads: true,
     subscriptions: true,
@@ -29,10 +31,11 @@ export const ROLE_DEFAULTS: Record<AdminRole, Record<string, boolean>> = {
     users: true,
     audit_log: true,
     settings: true,
-    flagged_images: true,
+    notifications: true,
   },
   moderator: {
     dashboard: true,
+    analytics: true,
     providers: true,
     leads: true,
     subscriptions: false,
@@ -40,7 +43,7 @@ export const ROLE_DEFAULTS: Record<AdminRole, Record<string, boolean>> = {
     users: false,
     audit_log: false,
     settings: false,
-    flagged_images: true,
+    notifications: true,
   },
 };
 

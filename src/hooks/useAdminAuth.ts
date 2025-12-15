@@ -6,6 +6,8 @@ import { User } from "@supabase/supabase-js";
 // Map routes to permission keys
 const routePermissionMap: Record<string, string> = {
   "/admin": "dashboard",
+  "/admin/dashboard": "dashboard",
+  "/admin/analytics": "analytics",
   "/admin/providers": "providers",
   "/admin/leads": "leads",
   "/admin/subscriptions": "subscriptions",
@@ -15,6 +17,7 @@ const routePermissionMap: Record<string, string> = {
   "/admin/settings": "settings",
   "/admin/notifications": "notifications",
   "/admin/flagged-images": "providers",
+  "/admin/profile": "dashboard",
 };
 
 interface AdminProfile {
