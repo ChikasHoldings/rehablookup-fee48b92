@@ -170,7 +170,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get facility
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
-      .select("id, name, email")
+      .select("id, name, email, reply_email")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -179,6 +179,16 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: "Facility not found" }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate reply_email exists
+    const replyToEmail = facility.reply_email || facility.email || profile.email;
+    if (!replyToEmail) {
+      console.error("No reply email configured");
+      return new Response(
+        JSON.stringify({ error: "Please set a reply email in your facility settings before sending emails." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -257,12 +267,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const resend = new Resend(resendApiKey);
+    
+    console.log("Sending email with Reply-To:", replyToEmail);
+    
     const emailResponse = await resend.emails.send({
       from: `${facility.name} via RehabLookup <noreply@resend.dev>`,
       to: [lead.email],
       subject: emailSubject,
       html: emailHtml,
-      reply_to: facility.email || profile.email,
+      reply_to: replyToEmail,
     });
 
     console.log("Email sent:", emailResponse);

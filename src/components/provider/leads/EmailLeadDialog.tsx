@@ -208,7 +208,7 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
     };
 
     const profile = providerData.profile as any;
-    const facility = providerData.facility;
+    const facility = providerData.facility as any;
 
     const providerDataContext: ProviderData = {
       primary_contact_name: profile?.primary_contact_name || 
@@ -225,6 +225,13 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
       provider: providerDataContext,
     };
   }, [lead, providerData]);
+
+  // Check if reply email is configured
+  const replyEmailConfigured = useMemo(() => {
+    const facility = providerData?.facility as any;
+    const profile = providerData?.profile as any;
+    return !!(facility?.reply_email || facility?.email || profile?.email);
+  }, [providerData]);
 
   const sendEmail = useMutation({
     mutationFn: async () => {
@@ -330,6 +337,16 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
       toast({
         title: "Select a template",
         description: "Please choose an email template before sending.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if reply email is configured
+    if (!replyEmailConfigured) {
+      toast({
+        title: "Reply email required",
+        description: "Please set a reply email in your facility settings before sending emails.",
         variant: "destructive",
       });
       return;
@@ -492,6 +509,17 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                 </p>
               </div>
 
+              {/* Reply Email Warning */}
+              {!replyEmailConfigured && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50/50 border border-red-100 text-xs">
+                  <AlertTriangle className="h-3.5 w-3.5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-red-700 leading-relaxed">
+                    <p className="font-medium">Reply email not configured</p>
+                    <p>Set a reply email in My Listing → Contact Information to receive lead replies.</p>
+                  </div>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex gap-2 pt-2">
                 <Button
@@ -504,7 +532,7 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                 </Button>
                 <Button
                   onClick={handleSend}
-                  disabled={!selectedTemplate || sendEmail.isPending}
+                  disabled={!selectedTemplate || sendEmail.isPending || !replyEmailConfigured}
                   className="flex-1 gap-2 rounded-lg shadow-md shadow-primary/20"
                 >
                   {sendEmail.isPending ? (
