@@ -4,14 +4,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { User, Camera, Eye, EyeOff, ShieldCheck, Save, Loader2, History, UserCog, Bell, KeyRound, Image, CheckCircle, UserPlus, Ban, BadgeCheck, Star, FileText, Settings } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { 
+  User, Camera, Eye, EyeOff, ShieldCheck, Save, Loader2, History, 
+  UserCog, Bell, KeyRound, Image, CheckCircle, UserPlus, Ban, 
+  BadgeCheck, Star, FileText, Settings, RefreshCw, Shield, 
+  Clock, AlertTriangle, Lock
+} from "lucide-react";
+import { formatDistanceToNow, format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   Form,
   FormControl,
@@ -23,6 +30,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
+// Enhanced password schema with special character requirement
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
   newPassword: z
@@ -30,7 +38,8 @@ const passwordSchema = z.object({
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character"),
   confirmPassword: z.string(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords do not match",
@@ -38,6 +47,25 @@ const passwordSchema = z.object({
 });
 
 type PasswordFormData = z.infer<typeof passwordSchema>;
+
+// Password strength calculator
+const calculatePasswordStrength = (password: string): number => {
+  let strength = 0;
+  if (password.length >= 8) strength += 20;
+  if (password.length >= 12) strength += 10;
+  if (/[A-Z]/.test(password)) strength += 20;
+  if (/[a-z]/.test(password)) strength += 20;
+  if (/[0-9]/.test(password)) strength += 15;
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 15;
+  return Math.min(strength, 100);
+};
+
+const getStrengthLabel = (strength: number): { label: string; color: string } => {
+  if (strength < 40) return { label: "Weak", color: "bg-red-500" };
+  if (strength < 70) return { label: "Medium", color: "bg-amber-500" };
+  if (strength < 90) return { label: "Strong", color: "bg-green-500" };
+  return { label: "Very Strong", color: "bg-emerald-600" };
+};
 
 export default function AdminProfile() {
   const { toast } = useToast();
@@ -49,6 +77,7 @@ export default function AdminProfile() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [avatarKey, setAvatarKey] = useState(Date.now());
 
   // Fetch current user and profile
   const { data: userData } = useQuery({
@@ -59,7 +88,7 @@ export default function AdminProfile() {
     },
   });
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, refetch: refetchProfile } = useQuery({
     queryKey: ["admin-profile", userData?.id],
     queryFn: async () => {
       if (!userData?.id) return null;
@@ -75,7 +104,7 @@ export default function AdminProfile() {
     enabled: !!userData?.id,
   });
 
-  // Fetch recent activity
+  // Fetch recent activity with real-time updates
   const { data: recentActivity, isLoading: isLoadingActivity } = useQuery({
     queryKey: ["admin-activity", userData?.id],
     queryFn: async () => {
@@ -92,6 +121,31 @@ export default function AdminProfile() {
     },
     enabled: !!userData?.id,
   });
+
+  // Real-time subscription for activity updates
+  useEffect(() => {
+    if (!userData?.id) return;
+
+    const channel = supabase
+      .channel('admin-profile-activity')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'admin_audit_log',
+          filter: `admin_user_id=eq.${userData.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-activity", userData.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.id, queryClient]);
 
   useEffect(() => {
     if (profile?.display_name) {
@@ -115,6 +169,7 @@ export default function AdminProfile() {
       admin_user_created: <UserPlus className="h-4 w-4" />,
       admin_user_deactivated: <Ban className="h-4 w-4" />,
       admin_permissions_updated: <Settings className="h-4 w-4" />,
+      login: <Lock className="h-4 w-4" />,
     };
     return iconMap[actionType] || <History className="h-4 w-4" />;
   };
@@ -135,6 +190,7 @@ export default function AdminProfile() {
       admin_user_created: "Created admin user",
       admin_user_deactivated: "Deactivated admin user",
       admin_permissions_updated: "Updated admin permissions",
+      login: "Signed in",
     };
     return labelMap[actionType] || actionType.replace(/_/g, " ");
   };
@@ -148,20 +204,26 @@ export default function AdminProfile() {
     },
   });
 
+  const watchedNewPassword = passwordForm.watch("newPassword");
+  const passwordStrength = calculatePasswordStrength(watchedNewPassword || "");
+  const strengthInfo = getStrengthLabel(passwordStrength);
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userData?.id) return;
 
-    // Validate file
-    if (!file.type.startsWith("image/")) {
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
       toast({
-        title: "Invalid file",
-        description: "Please upload an image file.",
+        title: "Invalid file type",
+        description: "Please upload a JPG, PNG, WebP, or GIF image.",
         variant: "destructive",
       });
       return;
     }
 
+    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -173,75 +235,105 @@ export default function AdminProfile() {
 
     setIsUploadingPhoto(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `admin-avatars/${userData.id}.${fileExt}`;
+      const fileExt = file.name.split(".").pop()?.toLowerCase() || 'png';
+      const timestamp = Date.now();
+      const fileName = `admin-avatars/${userData.id}-${timestamp}.${fileExt}`;
 
-      // Upload to storage
+      // Delete old avatar if exists
+      if (profile?.avatar_url) {
+        const oldPath = profile.avatar_url.split('/').pop();
+        if (oldPath && oldPath.startsWith(userData.id)) {
+          await supabase.storage
+            .from("facility-images")
+            .remove([`admin-avatars/${oldPath}`]);
+        }
+      }
+
+      // Upload new avatar
       const { error: uploadError } = await supabase.storage
         .from("facility-images")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { 
+          upsert: true,
+          cacheControl: '0',
+          contentType: file.type
+        });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
+      // Get public URL with cache buster
       const { data: urlData } = supabase.storage
         .from("facility-images")
         .getPublicUrl(fileName);
 
-      // Update profile
+      const avatarUrlWithCacheBuster = `${urlData.publicUrl}?t=${timestamp}`;
+
+      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from("admin_user_profiles")
-        .update({ avatar_url: urlData.publicUrl })
+        .update({ 
+          avatar_url: avatarUrlWithCacheBuster,
+          updated_at: new Date().toISOString()
+        })
         .eq("user_id", userData.id);
 
       if (updateError) throw updateError;
 
-      queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
+      // Force avatar refresh
+      setAvatarKey(timestamp);
+      
+      // Invalidate and refetch profile
+      await queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
+      await refetchProfile();
       
       // Log audit action
       await logAdminAction({
         actionType: AdminAuditActions.PROFILE_PHOTO_UPDATED,
         targetType: "admin_profile",
         targetId: userData.id,
-        details: { fileName },
+        details: { fileName, timestamp },
       });
 
       toast({
         title: "Photo updated",
-        description: "Your profile photo has been updated.",
+        description: "Your profile photo has been updated successfully.",
       });
     } catch (err) {
       console.error("Error uploading photo:", err);
       toast({
         title: "Upload failed",
-        description: "Failed to upload photo. Please try again.",
+        description: err instanceof Error ? err.message : "Failed to upload photo. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsUploadingPhoto(false);
+      // Reset input so same file can be selected again
+      e.target.value = '';
     }
   };
 
   const handleUpdateProfile = async () => {
-    if (!userData?.id) return;
+    if (!userData?.id || !displayName.trim()) return;
 
     setIsUpdatingProfile(true);
     try {
       const { error } = await supabase
         .from("admin_user_profiles")
-        .update({ display_name: displayName })
+        .update({ 
+          display_name: displayName.trim(),
+          updated_at: new Date().toISOString()
+        })
         .eq("user_id", userData.id);
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
       
       // Log audit action
       await logAdminAction({
         actionType: AdminAuditActions.PROFILE_NAME_UPDATED,
         targetType: "admin_profile",
         targetId: userData.id,
-        details: { newDisplayName: displayName },
+        details: { newDisplayName: displayName.trim() },
       });
 
       toast({
@@ -261,11 +353,13 @@ export default function AdminProfile() {
   };
 
   const handleChangePassword = async (data: PasswordFormData) => {
+    if (!userData?.email) return;
+
     setIsUpdatingPassword(true);
     try {
       // First verify current password by attempting a sign-in
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userData?.email || "",
+        email: userData.email,
         password: data.currentPassword,
       });
 
@@ -273,6 +367,17 @@ export default function AdminProfile() {
         toast({
           title: "Invalid current password",
           description: "The current password you entered is incorrect.",
+          variant: "destructive",
+        });
+        setIsUpdatingPassword(false);
+        return;
+      }
+
+      // Check if new password is same as current
+      if (data.currentPassword === data.newPassword) {
+        toast({
+          title: "Password unchanged",
+          description: "New password must be different from current password.",
           variant: "destructive",
         });
         setIsUpdatingPassword(false);
@@ -293,18 +398,21 @@ export default function AdminProfile() {
         actionType: AdminAuditActions.PASSWORD_CHANGED,
         targetType: "admin_profile",
         targetId: userData?.id,
-        details: { changedAt: new Date().toISOString() },
+        details: { 
+          changedAt: new Date().toISOString(),
+          ipAddress: "logged" // Actual IP would be captured server-side
+        },
       });
 
       toast({
         title: "Password updated",
-        description: "Your password has been changed successfully.",
+        description: "Your password has been changed successfully. Please use the new password for future logins.",
       });
     } catch (err) {
       console.error("Error changing password:", err);
       toast({
         title: "Password change failed",
-        description: "Failed to change password. Please try again.",
+        description: err instanceof Error ? err.message : "Failed to change password. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -324,11 +432,41 @@ export default function AdminProfile() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">My Profile</h1>
-        <p className="text-muted-foreground">Manage your admin account settings</p>
+    <div className="space-y-6 max-w-3xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
+          <p className="text-muted-foreground">Manage your admin account settings and security</p>
+        </div>
+        <Badge variant="outline" className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          Live
+        </Badge>
       </div>
+
+      {/* Account Status Card */}
+      <Card className="border-l-4 border-l-green-500">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-full bg-green-100">
+                <Shield className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium">Account Status: Active</p>
+                <p className="text-sm text-muted-foreground">
+                  Last login: {profile?.last_login_at 
+                    ? format(new Date(profile.last_login_at), "PPp")
+                    : "Recently"}
+                </p>
+              </div>
+            </div>
+            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+              {profile?.status || "active"}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Profile Photo & Name */}
       <Card>
@@ -343,13 +481,16 @@ export default function AdminProfile() {
           {/* Photo Upload */}
           <div className="flex items-center gap-6">
             <div className="relative group">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={profile?.avatar_url || undefined} />
+              <Avatar className="h-24 w-24 ring-2 ring-border ring-offset-2 ring-offset-background" key={avatarKey}>
+                <AvatarImage 
+                  src={profile?.avatar_url || undefined} 
+                  alt={profile?.display_name || "Admin"} 
+                />
                 <AvatarFallback className="bg-amber-100 text-amber-600 text-xl font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                 {isUploadingPhoto ? (
                   <Loader2 className="h-6 w-6 text-white animate-spin" />
                 ) : (
@@ -357,7 +498,7 @@ export default function AdminProfile() {
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={handlePhotoUpload}
                   className="hidden"
                   disabled={isUploadingPhoto}
@@ -365,10 +506,11 @@ export default function AdminProfile() {
               </label>
             </div>
             <div className="space-y-1">
-              <p className="font-medium">{profile?.display_name || "Admin User"}</p>
+              <p className="font-medium text-lg">{profile?.display_name || "Admin User"}</p>
               <p className="text-sm text-muted-foreground">{userData?.email}</p>
-              <p className="text-xs text-muted-foreground">
-                Click on the photo to upload a new one
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Camera className="h-3 w-3" />
+                Click on the photo to upload (max 5MB)
               </p>
             </div>
           </div>
@@ -384,11 +526,13 @@ export default function AdminProfile() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Enter your name"
+                maxLength={50}
               />
+              <p className="text-xs text-muted-foreground">{displayName.length}/50 characters</p>
             </div>
             <Button 
               onClick={handleUpdateProfile} 
-              disabled={isUpdatingProfile || !displayName.trim()}
+              disabled={isUpdatingProfile || !displayName.trim() || displayName === profile?.display_name}
             >
               {isUpdatingProfile ? (
                 <>
@@ -406,16 +550,39 @@ export default function AdminProfile() {
         </CardContent>
       </Card>
 
-      {/* Change Password */}
+      {/* Security Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5" />
-            Change Password
-          </CardTitle>
-          <CardDescription>Update your account password</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5" />
+                Password & Security
+              </CardTitle>
+              <CardDescription>Secure your account with a strong password</CardDescription>
+            </div>
+            <Badge variant="outline" className="gap-1">
+              <Lock className="h-3 w-3" />
+              Encrypted
+            </Badge>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          {/* Security Tips */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="flex gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-medium text-amber-800">Security Best Practices</p>
+                <ul className="text-sm text-amber-700 list-disc list-inside space-y-0.5">
+                  <li>Use a unique password not used elsewhere</li>
+                  <li>Change your password regularly (every 90 days)</li>
+                  <li>Never share your credentials with anyone</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <Form {...passwordForm}>
             <form onSubmit={passwordForm.handleSubmit(handleChangePassword)} className="space-y-4">
               <FormField
@@ -429,6 +596,7 @@ export default function AdminProfile() {
                         <Input
                           type={showCurrentPassword ? "text" : "password"}
                           placeholder="Enter current password"
+                          autoComplete="current-password"
                           {...field}
                         />
                         <Button
@@ -462,6 +630,7 @@ export default function AdminProfile() {
                         <Input
                           type={showNewPassword ? "text" : "password"}
                           placeholder="Enter new password"
+                          autoComplete="new-password"
                           {...field}
                         />
                         <Button
@@ -480,6 +649,21 @@ export default function AdminProfile() {
                       </div>
                     </FormControl>
                     <FormMessage />
+                    {watchedNewPassword && (
+                      <div className="space-y-2 mt-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span>Password Strength</span>
+                          <span className={`font-medium ${
+                            passwordStrength < 40 ? "text-red-600" : 
+                            passwordStrength < 70 ? "text-amber-600" : 
+                            "text-green-600"
+                          }`}>
+                            {strengthInfo.label}
+                          </span>
+                        </div>
+                        <Progress value={passwordStrength} className="h-2" />
+                      </div>
+                    )}
                   </FormItem>
                 )}
               />
@@ -495,6 +679,7 @@ export default function AdminProfile() {
                         <Input
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="Confirm new password"
+                          autoComplete="new-password"
                           {...field}
                         />
                         <Button
@@ -517,24 +702,46 @@ export default function AdminProfile() {
                 )}
               />
 
-              <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-1">Password Requirements</p>
-                <ul className="list-disc list-inside space-y-0.5 text-xs">
-                  <li>At least 8 characters</li>
-                  <li>One uppercase letter</li>
-                  <li>One lowercase letter</li>
-                  <li>One number</li>
-                </ul>
+              <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                <p className="font-medium text-foreground mb-2 flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Password Requirements
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className={`flex items-center gap-1.5 ${watchedNewPassword?.length >= 8 ? "text-green-600" : "text-muted-foreground"}`}>
+                    <CheckCircle className="h-3 w-3" />
+                    At least 8 characters
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${/[A-Z]/.test(watchedNewPassword || "") ? "text-green-600" : "text-muted-foreground"}`}>
+                    <CheckCircle className="h-3 w-3" />
+                    One uppercase letter
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${/[a-z]/.test(watchedNewPassword || "") ? "text-green-600" : "text-muted-foreground"}`}>
+                    <CheckCircle className="h-3 w-3" />
+                    One lowercase letter
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${/[0-9]/.test(watchedNewPassword || "") ? "text-green-600" : "text-muted-foreground"}`}>
+                    <CheckCircle className="h-3 w-3" />
+                    One number
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${/[!@#$%^&*(),.?":{}|<>]/.test(watchedNewPassword || "") ? "text-green-600" : "text-muted-foreground"}`}>
+                    <CheckCircle className="h-3 w-3" />
+                    One special character
+                  </div>
+                </div>
               </div>
 
-              <Button type="submit" disabled={isUpdatingPassword}>
+              <Button type="submit" disabled={isUpdatingPassword} className="w-full">
                 {isUpdatingPassword ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Updating...
+                    Updating Password...
                   </>
                 ) : (
-                  "Change Password"
+                  <>
+                    <KeyRound className="h-4 w-4 mr-2" />
+                    Change Password
+                  </>
                 )}
               </Button>
             </form>
@@ -545,11 +752,24 @@ export default function AdminProfile() {
       {/* Activity Timeline */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <History className="h-5 w-5" />
-            Recent Activity
-          </CardTitle>
-          <CardDescription>Your recent actions in the admin panel</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Recent Activity
+              </CardTitle>
+              <CardDescription>Your recent actions in the admin panel</CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-activity"] })}
+              className="gap-1.5"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoadingActivity ? (
@@ -560,8 +780,11 @@ export default function AdminProfile() {
             <div className="relative">
               <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
               <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="relative flex gap-4 pl-10">
+                {recentActivity.map((activity, index) => (
+                  <div 
+                    key={activity.id} 
+                    className={`relative flex gap-4 pl-10 ${index === 0 ? "animate-fade-in" : ""}`}
+                  >
                     <div className="absolute left-2 p-1.5 rounded-full bg-background border border-border">
                       {getActionIcon(activity.action_type)}
                     </div>
@@ -569,17 +792,20 @@ export default function AdminProfile() {
                       <p className="text-sm font-medium">
                         {getActionLabel(activity.action_type)}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {activity.target_type && (
-                          <span className="capitalize">{activity.target_type.replace(/_/g, " ")}</span>
+                          <Badge variant="secondary" className="text-[10px] h-5">
+                            {activity.target_type.replace(/_/g, " ")}
+                          </Badge>
                         )}
                         {activity.target_id && (
-                          <span className="ml-1 font-mono text-[10px] bg-muted px-1 rounded">
+                          <span className="font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded">
                             {activity.target_id.slice(0, 8)}...
                           </span>
                         )}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
                         {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
                       </p>
                     </div>
@@ -591,6 +817,7 @@ export default function AdminProfile() {
             <div className="text-center py-8 text-muted-foreground">
               <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No recent activity</p>
+              <p className="text-xs mt-1">Your actions will appear here</p>
             </div>
           )}
         </CardContent>
