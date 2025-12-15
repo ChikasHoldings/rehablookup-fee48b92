@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   ChevronDown,
   MessageSquare,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Select,
@@ -403,6 +404,12 @@ export default function ProviderLeadsPage() {
                             )}
                             <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
                             <LeadScoreBadge lead={lead} size="sm" />
+                            {/* Email verified indicator */}
+                            {lead.email_verified && (
+                              <div className="h-5 w-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center" title="Email verified">
+                                <ShieldCheck className="h-2.5 w-2.5 text-green-600 dark:text-green-400" />
+                              </div>
+                            )}
                             {/* Message indicator */}
                             {lead.message && (
                               <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center" title="Has message">
