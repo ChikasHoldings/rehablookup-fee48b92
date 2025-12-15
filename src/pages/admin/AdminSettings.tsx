@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -191,9 +192,20 @@ export default function AdminSettings() {
     },
   });
 
+  // Helper to get a setting value
+  const getSetting = useCallback((key: string): any => {
+    const setting = platformSettings?.[key];
+    if (!setting) return undefined;
+    // The value is stored as JSONB, extract the raw value
+    return setting.setting_value;
+  }, [platformSettings]);
+
+  // Loading state for settings
+  const settingsLoading = loadingSettings;
+
   // Update setting mutation
   const updateSetting = useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: Record<string, any> }) => {
+    mutationFn: async ({ key, value }: { key: string; value: any }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
       const { error } = await supabase
@@ -623,137 +635,324 @@ export default function AdminSettings() {
 
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Authentication */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Lock className="h-5 w-5 text-amber-500" />
-                  Authentication
-                </CardTitle>
-                <CardDescription>Configure login and access security</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                <SettingRow
-                  icon={<Smartphone className="h-4 w-4 text-slate-500" />}
-                  title="Two-Factor Authentication"
-                  description="Require 2FA for all admin accounts"
-                  comingSoon
-                >
-                  <Switch disabled />
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<Key className="h-4 w-4 text-slate-500" />}
-                  title="Password Requirements"
-                  description="Minimum password strength settings"
-                >
-                  <Select defaultValue="strong">
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="basic">Basic</SelectItem>
-                      <SelectItem value="strong">Strong</SelectItem>
-                      <SelectItem value="very-strong">Very Strong</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<Clock className="h-4 w-4 text-slate-500" />}
-                  title="Password Expiry"
-                  description="Force password change after period"
-                  comingSoon
-                >
-                  <Select defaultValue="never" disabled>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="60">60 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
-                      <SelectItem value="never">Never</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </SettingRow>
-              </CardContent>
-            </Card>
+          {settingsLoading ? (
+            <div className="space-y-6">
+              <Skeleton className="h-[280px] w-full" />
+              <Skeleton className="h-[280px] w-full" />
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Authentication */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Lock className="h-5 w-5 text-amber-500" />
+                      Authentication
+                    </CardTitle>
+                    <CardDescription>Configure login and access security</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <SettingRow
+                      icon={<Smartphone className="h-4 w-4 text-slate-500" />}
+                      title="Two-Factor Authentication"
+                      description="Require 2FA for all admin accounts"
+                    >
+                      <Switch 
+                        checked={getSetting('two_factor_required') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'two_factor_required', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Key className="h-4 w-4 text-slate-500" />}
+                      title="Password Requirements"
+                      description="Minimum password strength settings"
+                    >
+                      <Select 
+                        value={getSetting('password_requirements') || 'strong'}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'password_requirements', 
+                          value 
+                        })}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="basic">Basic</SelectItem>
+                          <SelectItem value="strong">Strong</SelectItem>
+                          <SelectItem value="very-strong">Very Strong</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Clock className="h-4 w-4 text-slate-500" />}
+                      title="Password Expiry"
+                      description="Force password change after period"
+                    >
+                      <Select 
+                        value={getSetting('password_expiry_days') || 'never'}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'password_expiry_days', 
+                          value 
+                        })}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="30">30 days</SelectItem>
+                          <SelectItem value="60">60 days</SelectItem>
+                          <SelectItem value="90">90 days</SelectItem>
+                          <SelectItem value="never">Never</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                  </CardContent>
+                </Card>
 
-            {/* Access Control */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="h-5 w-5 text-blue-500" />
-                  Access Control
-                </CardTitle>
-                <CardDescription>Manage user permissions and roles</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                <SettingRow
-                  icon={<Shield className="h-4 w-4 text-slate-500" />}
-                  title="Role-Based Access"
-                  description="Granular permission system for admin users"
-                >
-                  <StatusBadge status="active" label="Enabled" />
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<Activity className="h-4 w-4 text-slate-500" />}
-                  title="Session Management"
-                  description="Track and manage active user sessions"
-                >
-                  <StatusBadge status="active" label="Active" />
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<FileText className="h-4 w-4 text-slate-500" />}
-                  title="Audit Logging"
-                  description="Track all administrative actions"
-                >
-                  <StatusBadge status="active" label="Recording" />
-                </SettingRow>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Security Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Shield className="h-5 w-5 text-green-500" />
-                Security Overview
-              </CardTitle>
-              <CardDescription>Current security posture and recommendations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
-                  <CheckCircle className="h-8 w-8 text-green-500" />
-                  <div>
-                    <p className="font-medium text-green-800">Row Level Security Enabled</p>
-                    <p className="text-sm text-green-600">All database tables have RLS policies configured</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
-                  <CheckCircle className="h-8 w-8 text-green-500" />
-                  <div>
-                    <p className="font-medium text-green-800">HTTPS Enforced</p>
-                    <p className="text-sm text-green-600">All connections are encrypted with TLS 1.3</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 p-4 rounded-lg bg-amber-50 border border-amber-100">
-                  <AlertTriangle className="h-8 w-8 text-amber-500" />
-                  <div className="flex-1">
-                    <p className="font-medium text-amber-800">Two-Factor Authentication</p>
-                    <p className="text-sm text-amber-600">Consider enabling 2FA for enhanced security</p>
-                  </div>
-                  <Badge variant="secondary">Recommended</Badge>
-                </div>
+                {/* Access Control */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Users className="h-5 w-5 text-blue-500" />
+                      Access Control
+                    </CardTitle>
+                    <CardDescription>Manage user permissions and roles</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <SettingRow
+                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      title="IP Whitelist"
+                      description="Restrict admin access to specific IPs"
+                    >
+                      <Switch 
+                        checked={getSetting('ip_whitelist_enabled') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'ip_whitelist_enabled', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Activity className="h-4 w-4 text-slate-500" />}
+                      title="Failed Login Lockout"
+                      description="Max failed attempts before lockout"
+                    >
+                      <Select 
+                        value={String(getSetting('failed_login_lockout') || '5')}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'failed_login_lockout', 
+                          value: parseInt(value) 
+                        })}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3">3 attempts</SelectItem>
+                          <SelectItem value="5">5 attempts</SelectItem>
+                          <SelectItem value="10">10 attempts</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Clock className="h-4 w-4 text-slate-500" />}
+                      title="Lockout Duration"
+                      description="How long accounts stay locked"
+                    >
+                      <Select 
+                        value={String(getSetting('lockout_duration_minutes') || '15')}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'lockout_duration_minutes', 
+                          value: parseInt(value) 
+                        })}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5 minutes</SelectItem>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">60 minutes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Security Status Cards */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Activity className="h-5 w-5 text-blue-500" />
+                    Security Status
+                  </CardTitle>
+                  <CardDescription>Current security feature status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                        <Shield className="h-4 w-4" />
+                        <span className="text-sm font-medium">Role-Based Access</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700">Enabled</p>
+                      <p className="text-xs text-green-600 mt-1">Granular permissions active</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                        <Activity className="h-4 w-4" />
+                        <span className="text-sm font-medium">Session Tracking</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700">Active</p>
+                      <p className="text-xs text-green-600 mt-1">All sessions monitored</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                        <FileText className="h-4 w-4" />
+                        <span className="text-sm font-medium">Audit Logging</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700">Recording</p>
+                      <p className="text-xs text-green-600 mt-1">All actions logged</p>
+                    </div>
+                    <div className={cn(
+                      "p-4 rounded-lg border",
+                      getSetting('two_factor_required') 
+                        ? "bg-green-50 border-green-100" 
+                        : "bg-amber-50 border-amber-100"
+                    )}>
+                      <div className={cn(
+                        "flex items-center gap-2 mb-1",
+                        getSetting('two_factor_required') ? "text-green-700" : "text-amber-700"
+                      )}>
+                        <Smartphone className="h-4 w-4" />
+                        <span className="text-sm font-medium">2FA Status</span>
+                      </div>
+                      <p className={cn(
+                        "text-2xl font-bold",
+                        getSetting('two_factor_required') ? "text-green-700" : "text-amber-700"
+                      )}>
+                        {getSetting('two_factor_required') ? 'Required' : 'Optional'}
+                      </p>
+                      <p className={cn(
+                        "text-xs mt-1",
+                        getSetting('two_factor_required') ? "text-green-600" : "text-amber-600"
+                      )}>
+                        {getSetting('two_factor_required') ? 'All admins must use 2FA' : 'Consider enabling'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Security Overview */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Shield className="h-5 w-5 text-green-500" />
+                    Security Overview
+                  </CardTitle>
+                  <CardDescription>Current security posture and recommendations</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
+                      <CheckCircle className="h-8 w-8 text-green-500" />
+                      <div>
+                        <p className="font-medium text-green-800">Row Level Security Enabled</p>
+                        <p className="text-sm text-green-600">All database tables have RLS policies configured</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
+                      <CheckCircle className="h-8 w-8 text-green-500" />
+                      <div>
+                        <p className="font-medium text-green-800">HTTPS Enforced</p>
+                        <p className="text-sm text-green-600">All connections are encrypted with TLS 1.3</p>
+                      </div>
+                    </div>
+                    <div className={cn(
+                      "flex items-center gap-4 p-4 rounded-lg border",
+                      getSetting('two_factor_required') 
+                        ? "bg-green-50 border-green-100" 
+                        : "bg-amber-50 border-amber-100"
+                    )}>
+                      {getSetting('two_factor_required') ? (
+                        <CheckCircle className="h-8 w-8 text-green-500" />
+                      ) : (
+                        <AlertTriangle className="h-8 w-8 text-amber-500" />
+                      )}
+                      <div className="flex-1">
+                        <p className={cn(
+                          "font-medium",
+                          getSetting('two_factor_required') ? "text-green-800" : "text-amber-800"
+                        )}>
+                          Two-Factor Authentication
+                        </p>
+                        <p className={cn(
+                          "text-sm",
+                          getSetting('two_factor_required') ? "text-green-600" : "text-amber-600"
+                        )}>
+                          {getSetting('two_factor_required') 
+                            ? '2FA is required for all admin accounts' 
+                            : 'Consider enabling 2FA for enhanced security'}
+                        </p>
+                      </div>
+                      {!getSetting('two_factor_required') && (
+                        <Badge variant="secondary">Recommended</Badge>
+                      )}
+                    </div>
+                    <div className={cn(
+                      "flex items-center gap-4 p-4 rounded-lg border",
+                      getSetting('ip_whitelist_enabled') 
+                        ? "bg-green-50 border-green-100" 
+                        : "bg-muted/50"
+                    )}>
+                      {getSetting('ip_whitelist_enabled') ? (
+                        <CheckCircle className="h-8 w-8 text-green-500" />
+                      ) : (
+                        <Shield className="h-8 w-8 text-muted-foreground" />
+                      )}
+                      <div className="flex-1">
+                        <p className={cn(
+                          "font-medium",
+                          getSetting('ip_whitelist_enabled') ? "text-green-800" : "text-foreground"
+                        )}>
+                          IP Whitelist
+                        </p>
+                        <p className={cn(
+                          "text-sm",
+                          getSetting('ip_whitelist_enabled') ? "text-green-600" : "text-muted-foreground"
+                        )}>
+                          {getSetting('ip_whitelist_enabled') 
+                            ? 'Admin access restricted to specific IPs' 
+                            : 'IP restriction is currently disabled'}
+                        </p>
+                      </div>
+                      {getSetting('ip_whitelist_enabled') && (
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </TabsContent>
 
         {/* Notifications Tab */}
