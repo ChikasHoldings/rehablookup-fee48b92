@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle } from "lucide-react";
+import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
+import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 
 interface AdminHeaderProps {
   userEmail?: string;
@@ -44,6 +45,9 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
+  
+  // Get persisted admin notifications
+  const { notifications: persistedNotifications, unreadCount: persistedUnreadCount, markAsRead } = useAdminNotifications();
 
   // Invalidate queries callback for realtime updates
   const invalidateNotifications = useCallback(() => {
@@ -178,6 +182,18 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
     });
   });
 
+  // Add persisted notifications (payment failures, system alerts)
+  persistedNotifications?.slice(0, 5).forEach((notif) => {
+    notifications.push({
+      id: `persisted-${notif.id}`,
+      title: notif.title,
+      message: notif.message,
+      time: formatDistanceToNow(new Date(notif.created_at), { addSuffix: true }),
+      type: notif.type === "payment_failed" ? "warning" : "provider",
+      link: "/admin/notifications",
+    });
+  });
+
   // Sort by most recent first (pending providers and unassigned leads are priorities)
   const sortedNotifications = notifications.sort((a, b) => {
     // Prioritize pending providers and unassigned leads
@@ -186,7 +202,7 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
     return 0;
   });
 
-  const unreadCount = (pendingProviders?.length || 0) + (unassignedLeads && unassignedLeads.length > 0 ? 1 : 0);
+  const unreadCount = (pendingProviders?.length || 0) + (unassignedLeads && unassignedLeads.length > 0 ? 1 : 0) + persistedUnreadCount;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -196,6 +212,8 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
         return <Users className="h-4 w-4 text-amber-500" />;
       case "success":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "warning":
+        return <CreditCard className="h-4 w-4 text-red-500" />;
       default:
         return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }
@@ -325,13 +343,20 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
                 )}
               </ScrollArea>
               {sortedNotifications.length > 0 && (
-                <div className="border-t p-2">
+                <div className="border-t p-2 flex gap-2">
                   <Button 
                     variant="ghost" 
-                    className="w-full text-sm" 
+                    className="flex-1 text-sm" 
                     onClick={() => navigate("/admin/providers?status=pending")}
                   >
-                    View pending providers
+                    View Pending
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="flex-1 text-sm" 
+                    onClick={() => navigate("/admin/notifications")}
+                  >
+                    All Notifications
                   </Button>
                 </div>
               )}

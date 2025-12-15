@@ -59,3 +59,9 @@ verify_jwt = false
 
 [functions.send-profile-complete-email]
 verify_jwt = true
+
+[functions.notify-admin-provider-signup]
+verify_jwt = false
+
+[functions.notify-payment-failed]
+verify_jwt = false

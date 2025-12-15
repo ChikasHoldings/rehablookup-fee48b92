@@ -380,6 +380,22 @@ export default function ProviderSignup() {
         user_id: userId,
       });
 
+      // 10. Notify admin of new provider signup
+      try {
+        await supabase.functions.invoke("notify-admin-provider-signup", {
+          body: {
+            facilityId,
+            facilityName: formData.facilityName,
+            providerEmail: formData.email,
+            city: formData.city,
+            state: formData.state,
+          },
+        });
+      } catch (notifyError) {
+        console.error("Admin notification error:", notifyError);
+        // Non-blocking - continue even if notification fails
+      }
+
       toast({
         title: "Welcome to RehabLookup!",
         description: "Your account and facility have been created successfully.",
