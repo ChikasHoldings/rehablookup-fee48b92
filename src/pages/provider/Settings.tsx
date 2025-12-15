@@ -441,7 +441,7 @@ export default function ProviderSettingsPage() {
         description: "You have been signed out from all devices.",
       });
       
-      navigate("/provider/login");
+      navigate("/provider-login");
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
