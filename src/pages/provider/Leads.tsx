@@ -459,7 +459,7 @@ export default function ProviderLeadsPage() {
                             </div>
                             <div className="min-w-0">
                               <h4 className={cn(
-                                "font-semibold text-sm truncate leading-tight",
+                                "font-semibold text-[15px] truncate leading-tight",
                                 selected ? "text-primary" : "text-foreground"
                               )}>
                                 {locked ? "Hidden Lead" : lead.name}
