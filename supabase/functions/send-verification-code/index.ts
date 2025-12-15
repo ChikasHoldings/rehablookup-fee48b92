@@ -152,8 +152,16 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("email", normalizedEmail)
         .eq("code", code);
       
+      // Check if it's a domain verification issue
+      const errorMessage = emailError.message || JSON.stringify(emailError);
+      const isDomainIssue = errorMessage.includes("verify a domain") || errorMessage.includes("validation_error");
+      
+      const userMessage = isDomainIssue 
+        ? "Email service is being configured. Please try again later or use a different contact method."
+        : "Failed to send verification email. Please check your email address and try again.";
+      
       return new Response(
-        JSON.stringify({ error: "Failed to send verification email. Please check your email address and try again." }),
+        JSON.stringify({ error: userMessage }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
