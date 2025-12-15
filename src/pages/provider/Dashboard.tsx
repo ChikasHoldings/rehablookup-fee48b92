@@ -33,6 +33,7 @@ import {
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
+import { OnboardingChecklist } from "@/components/provider/OnboardingChecklist";
 
 interface Lead {
   id: string;
@@ -228,6 +229,14 @@ export default function ProviderDashboardPage() {
       {/* Lead Limit Banners */}
       <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
       <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
+
+      {/* Onboarding Checklist - only show if we have full facility data */}
+      {providerData?.facility && (
+        <OnboardingChecklist 
+          facilityId={providerData.facility.id} 
+          facilityData={providerData.facility}
+        />
+      )}
 
       {/* Status Banner */}
       <Card className="border-l-4" style={{ borderLeftColor: statusConfig.dotClass === 'bg-green-500' ? '#22c55e' : statusConfig.dotClass === 'bg-amber-500' ? '#f59e0b' : '#71717a' }}>
