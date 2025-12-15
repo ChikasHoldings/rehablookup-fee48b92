@@ -268,11 +268,12 @@ export default function ProviderLeadsPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {filteredLeads.map((lead, idx) => {
                   const locked = isLeadLocked(lead, idx);
                   const selected = selectedLead?.id === lead.id;
                   const location = lead.location_city_state || (lead.location_zip ? `ZIP: ${lead.location_zip}` : null);
+                  const isQualified = lead.source === "Request Help Page";
                   
                   return (
                     <button
@@ -280,22 +281,26 @@ export default function ProviderLeadsPage() {
                       onClick={() => !locked && setSelectedLead(lead)}
                       disabled={locked}
                       className={cn(
-                        "w-full text-left rounded-xl border transition-all duration-200 overflow-hidden group",
+                        "w-full text-left rounded-xl border-2 transition-all duration-200 overflow-hidden shadow-sm",
                         selected 
-                          ? "bg-primary/5 border-primary shadow-sm ring-1 ring-primary/20" 
-                          : "bg-background border-border/60 hover:border-border hover:shadow-sm",
+                          ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/10" 
+                          : isQualified
+                            ? "border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-emerald-50/30 hover:border-emerald-300 hover:shadow-md dark:border-emerald-800/50 dark:from-emerald-950/30 dark:to-emerald-950/10"
+                            : "border-slate-200 bg-gradient-to-br from-slate-50/80 to-white hover:border-slate-300 hover:shadow-md dark:border-slate-700/50 dark:from-slate-900/30 dark:to-slate-900/10",
                         locked && "opacity-40 blur-[1px] cursor-not-allowed"
                       )}
                     >
-                      <div className="p-3.5">
+                      <div className="p-4">
                         {/* Top Row - Name & Time */}
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             <div className={cn(
-                              "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold",
+                              "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold shadow-sm",
                               selected 
                                 ? "bg-primary text-primary-foreground" 
-                                : "bg-gradient-to-br from-muted to-muted/60 text-muted-foreground"
+                                : isQualified
+                                  ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"
+                                  : "bg-gradient-to-br from-slate-400 to-slate-500 text-white"
                             )}>
                               {locked ? "?" : lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                             </div>
@@ -307,30 +312,41 @@ export default function ProviderLeadsPage() {
                                 {locked ? "Hidden Lead" : lead.name}
                               </h4>
                               {location && !locked && (
-                                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                                  <span className="inline-block w-1 h-1 rounded-full bg-muted-foreground/40" />
                                   {location}
                                 </p>
                               )}
                             </div>
                           </div>
-                          <span className="text-[10px] text-muted-foreground flex-shrink-0 mt-0.5">
-                            {format(new Date(lead.created_at), "MMM d")}
-                          </span>
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <span className="text-[10px] text-muted-foreground font-medium">
+                              {format(new Date(lead.created_at), "MMM d")}
+                            </span>
+                            <span className="text-[9px] text-muted-foreground/70">
+                              {format(new Date(lead.created_at), "h:mm a")}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Bottom Row - Tags */}
                         {!locked && (
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
-                            <LeadScoreBadge lead={lead} size="sm" />
-                            {lead.source === "Request Help Page" && (
-                              <Badge className="h-5 px-1.5 text-[10px] bg-emerald-500/10 text-emerald-600 border-0 font-medium">
-                                <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                            {/* Lead Type Tag - Primary distinction */}
+                            {isQualified ? (
+                              <Badge className="h-5 px-2 text-[10px] bg-emerald-500 text-white border-0 font-semibold shadow-sm">
+                                <Sparkles className="h-2.5 w-2.5 mr-1" />
                                 Qualified
                               </Badge>
+                            ) : (
+                              <Badge className="h-5 px-2 text-[10px] bg-slate-500 text-white border-0 font-semibold shadow-sm">
+                                Direct
+                              </Badge>
                             )}
+                            <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                            <LeadScoreBadge lead={lead} size="sm" />
                             {lead.message && (
-                              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-muted-foreground/20">
+                              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-muted-foreground/30 bg-background/50">
                                 <MessageSquare className="h-2.5 w-2.5 mr-0.5" />
                                 Note
                               </Badge>
