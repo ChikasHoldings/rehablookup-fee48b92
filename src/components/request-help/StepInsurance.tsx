@@ -48,7 +48,7 @@ export function StepInsurance({ formData, updateFormData, onNext, onBack }: Step
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-1">Insurance & Budget</h2>
         <p className="text-sm text-muted-foreground">This helps us find facilities that work with your coverage.</p>

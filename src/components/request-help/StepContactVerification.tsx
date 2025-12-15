@@ -245,7 +245,7 @@ export function StepContactVerification({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-1">Contact & Verification</h2>
         <p className="text-sm text-muted-foreground">We'll need to verify your email before submitting.</p>
