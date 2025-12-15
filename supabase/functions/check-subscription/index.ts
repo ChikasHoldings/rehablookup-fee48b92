@@ -7,13 +7,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration - Basic plan gets NO routed leads
+// Plan configuration - Basic plan gets 1 lifetime lead (direct inquiry only)
 const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; qualified_lead_limit: number; direct_lead_limit: number; name: string; featured: boolean }> = {
   basic: {
     product_ids: [],
-    lead_limit: 0, // Basic plan does NOT receive routed leads
-    qualified_lead_limit: 0,
-    direct_lead_limit: -1, // Unlimited direct inquiries from profile only
+    lead_limit: 1, // 1 lifetime lead (direct inquiry only)
+    qualified_lead_limit: 0, // No routed/qualified leads
+    direct_lead_limit: 1, // 1 lifetime direct inquiry
     name: "Basic Listing",
     featured: false,
   },
