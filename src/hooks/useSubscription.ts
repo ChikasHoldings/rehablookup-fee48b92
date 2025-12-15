@@ -6,6 +6,8 @@ export interface SubscriptionData {
   plan: "basic" | "professional" | "featured";
   plan_name: string;
   lead_limit: number;
+  qualified_lead_limit?: number;
+  direct_lead_limit?: number; // -1 means unlimited
   subscription_end: string | null;
   product_id?: string;
 }
@@ -15,6 +17,8 @@ const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   plan: "basic",
   plan_name: "Basic Listing",
   lead_limit: 4, // Basic plan includes 4 leads/month (1 per week)
+  qualified_lead_limit: 4,
+  direct_lead_limit: 4,
   subscription_end: null,
 };
 
@@ -62,7 +66,9 @@ export const PLAN_DETAILS = {
     price: "$0",
     period: "/month",
     description: "Public profile with limited leads",
-    lead_limit: 4,
+    lead_limit: 4, // 4 qualified leads/month (1 per week)
+    qualified_lead_limit: 4,
+    direct_lead_limit: 4, // Direct leads also limited for Basic
     location_limit: 1,
     featured: false,
     features: [
@@ -77,13 +83,16 @@ export const PLAN_DETAILS = {
     name: "Professional",
     price: "$349",
     period: "/month",
-    description: "Start receiving qualified leads",
-    lead_limit: 25,
+    description: "Qualified leads + unlimited direct inquiries",
+    lead_limit: 25, // 25 qualified leads/month
+    qualified_lead_limit: 25,
+    direct_lead_limit: -1, // Unlimited direct leads from profile
     location_limit: 3,
     featured: false,
     features: [
       "Up to 3 facility locations",
-      "Up to 25 leads/month",
+      "25 qualified leads/month",
+      "Unlimited direct profile inquiries",
       "Standard search placement",
       "Email lead notifications",
       "Lead management dashboard",
@@ -97,12 +106,15 @@ export const PLAN_DETAILS = {
     price: "$899",
     period: "/month",
     description: "Maximum visibility & lead volume",
-    lead_limit: 75,
+    lead_limit: 75, // 75 qualified leads/month
+    qualified_lead_limit: 75,
+    direct_lead_limit: -1, // Unlimited direct leads
     location_limit: 5,
     featured: true,
     features: [
       "Up to 5 facility locations",
-      "Up to 75 leads/month",
+      "75 qualified leads/month",
+      "Unlimited direct profile inquiries",
       "Homepage featured section",
       "Priority search placement",
       "Gold Featured badge",

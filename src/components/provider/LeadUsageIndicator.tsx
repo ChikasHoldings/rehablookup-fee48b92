@@ -146,8 +146,15 @@ export function LeadLimitWarningBanner({ usedLeads, leadLimit }: LeadLimitBanner
   );
 }
 
-export function LeadLimitReachedBanner({ usedLeads, leadLimit }: LeadLimitBannerProps) {
-  const storageKey = `lead_reached_dismissed_${leadLimit}`;
+interface LeadLimitReachedBannerProps {
+  usedLeads: number;
+  leadLimit: number;
+  plan?: "basic" | "professional" | "featured";
+  isQualifiedLeads?: boolean;
+}
+
+export function LeadLimitReachedBanner({ usedLeads, leadLimit, plan = "basic", isQualifiedLeads = false }: LeadLimitReachedBannerProps) {
+  const storageKey = `lead_reached_dismissed_${leadLimit}_${plan}`;
   const [isDismissed, setIsDismissed] = useState(() => {
     return sessionStorage.getItem(storageKey) === "true";
   });
@@ -164,17 +171,25 @@ export function LeadLimitReachedBanner({ usedLeads, leadLimit }: LeadLimitBanner
     setIsDismissed(true);
   };
 
+  const isProfessionalPlan = plan === "professional";
+  const upgradePlan = isProfessionalPlan ? "Featured" : "Professional";
+
   return (
     <Alert variant="destructive" className="bg-destructive/5 border-destructive/30 relative">
       <AlertCircle className="h-4 w-4" />
       <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8">
-        <span>
-          You've reached your monthly lead limit ({leadLimit} leads). New leads are paused until you upgrade.
-        </span>
+        <div>
+          <span>
+            You've reached your monthly {isQualifiedLeads ? "qualified " : ""}lead limit ({leadLimit} leads).
+            {isProfessionalPlan && (
+              <span className="text-green-600 dark:text-green-400 ml-1">Direct profile inquiries still unlimited.</span>
+            )}
+          </span>
+        </div>
         <Button size="sm" className="shrink-0 gap-1.5" asChild>
           <Link to="/provider/billing">
             <Zap className="h-3.5 w-3.5" />
-            Upgrade to Featured
+            Upgrade to {upgradePlan}
           </Link>
         </Button>
       </AlertDescription>
@@ -215,12 +230,23 @@ interface LeadLimitOverlayProps {
   usedLeads: number;
   leadLimit: number;
   hiddenLeadsCount: number;
+  plan?: "basic" | "professional" | "featured";
+  isQualifiedOnly?: boolean; // For Professional plan, only qualified leads count toward limit
 }
 
-export function LeadLimitOverlay({ usedLeads, leadLimit, hiddenLeadsCount }: LeadLimitOverlayProps) {
+export function LeadLimitOverlay({ 
+  usedLeads, 
+  leadLimit, 
+  hiddenLeadsCount, 
+  plan = "basic",
+  isQualifiedOnly = false 
+}: LeadLimitOverlayProps) {
   const isAtLimit = usedLeads >= leadLimit;
   
   if (!isAtLimit || hiddenLeadsCount === 0) return null;
+
+  const isProfessionalPlan = plan === "professional";
+  const upgradePlan = isProfessionalPlan ? "Featured" : "Professional";
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
@@ -229,24 +255,32 @@ export function LeadLimitOverlay({ usedLeads, leadLimit, hiddenLeadsCount }: Lea
           <Lock className="h-8 w-8 text-primary" />
         </div>
         <h3 className="text-xl font-bold text-foreground mb-2">
-          {hiddenLeadsCount} {hiddenLeadsCount === 1 ? 'Lead' : 'Leads'} Waiting
+          {hiddenLeadsCount} Qualified {hiddenLeadsCount === 1 ? 'Lead' : 'Leads'} Waiting
         </h3>
         <p className="text-muted-foreground mb-2">
-          You&apos;ve used all {leadLimit} leads included in your Basic plan this month.
+          You&apos;ve used all {leadLimit} qualified leads included in your {plan === "basic" ? "Basic" : "Professional"} plan this month.
         </p>
+        {isProfessionalPlan && (
+          <p className="text-sm text-green-600 dark:text-green-400 mb-3">
+            ✓ Direct leads from your profile are still unlimited
+          </p>
+        )}
         <p className="text-sm font-medium text-foreground mb-6">
-          Upgrade now to unlock {hiddenLeadsCount === 1 ? 'this lead' : `these ${hiddenLeadsCount} leads`} and contact them immediately!
+          Upgrade to {upgradePlan} to unlock {hiddenLeadsCount === 1 ? 'this lead' : `these ${hiddenLeadsCount} leads`} and contact them immediately!
         </p>
         
         <div className="space-y-3">
           <Button size="lg" className="w-full gap-2" asChild>
             <Link to="/provider/billing">
               <Crown className="h-5 w-5" />
-              Upgrade to Unlock Leads
+              Upgrade to {upgradePlan}
             </Link>
           </Button>
           <p className="text-xs text-muted-foreground">
-            Professional: 25 leads/month • Featured: 75 leads/month
+            {plan === "basic" 
+              ? "Professional: 25 qualified leads + unlimited direct • Featured: 75 + unlimited"
+              : "Featured: 75 qualified leads/month + unlimited direct inquiries"
+            }
           </p>
         </div>
       </div>

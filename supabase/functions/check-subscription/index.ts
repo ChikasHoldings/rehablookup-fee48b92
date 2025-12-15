@@ -8,22 +8,28 @@ const corsHeaders = {
 };
 
 // Plan configuration with lead limits - matches new pricing structure
-const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number; name: string; featured: boolean }> = {
+const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number; qualified_lead_limit: number; direct_lead_limit: number; name: string; featured: boolean }> = {
   basic: {
     product_id: null,
     lead_limit: 4, // Basic plan includes 4 leads/month (1 per week)
+    qualified_lead_limit: 4,
+    direct_lead_limit: 4, // Limited for Basic
     name: "Basic Listing",
     featured: false,
   },
   professional: {
     product_id: "prod_TbalLOPujTIoUe",
-    lead_limit: 25,
+    lead_limit: 25, // 25 qualified leads/month
+    qualified_lead_limit: 25,
+    direct_lead_limit: -1, // Unlimited direct leads from profile
     name: "Professional",
     featured: false,
   },
   featured: {
     product_id: "prod_TbalOeJZA2ZoJl",
-    lead_limit: 75,
+    lead_limit: 75, // 75 qualified leads/month
+    qualified_lead_limit: 75,
+    direct_lead_limit: -1, // Unlimited direct leads
     name: "Featured",
     featured: true,
   },
@@ -74,6 +80,8 @@ serve(async (req) => {
           plan: "basic",
           plan_name: PLAN_CONFIG.basic.name,
           lead_limit: PLAN_CONFIG.basic.lead_limit,
+          qualified_lead_limit: PLAN_CONFIG.basic.qualified_lead_limit,
+          direct_lead_limit: PLAN_CONFIG.basic.direct_lead_limit,
           subscription_end: null,
           is_featured: false,
         }),
@@ -101,6 +109,8 @@ serve(async (req) => {
           plan: "basic",
           plan_name: PLAN_CONFIG.basic.name,
           lead_limit: PLAN_CONFIG.basic.lead_limit,
+          qualified_lead_limit: PLAN_CONFIG.basic.qualified_lead_limit,
+          direct_lead_limit: PLAN_CONFIG.basic.direct_lead_limit,
           subscription_end: null,
           is_featured: false,
         }),
@@ -128,7 +138,7 @@ serve(async (req) => {
       planConfig = PLAN_CONFIG.featured;
     }
 
-    logStep("Determined plan", { plan, leadLimit: planConfig.lead_limit, featured: planConfig.featured });
+    logStep("Determined plan", { plan, leadLimit: planConfig.lead_limit, qualifiedLeadLimit: planConfig.qualified_lead_limit, featured: planConfig.featured });
 
     return new Response(
       JSON.stringify({
@@ -136,6 +146,8 @@ serve(async (req) => {
         plan,
         plan_name: planConfig.name,
         lead_limit: planConfig.lead_limit,
+        qualified_lead_limit: planConfig.qualified_lead_limit,
+        direct_lead_limit: planConfig.direct_lead_limit,
         subscription_end: subscriptionEnd,
         product_id: productId,
         is_featured: planConfig.featured,
