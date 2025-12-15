@@ -35,7 +35,6 @@ import {
   AlertTriangle,
   X,
   ZoomIn,
-  Radio,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -165,8 +164,6 @@ export default function AdminProviders() {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [detailTab, setDetailTab] = useState("overview");
-  const [isLive, setIsLive] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   
   // Contact form state
   const [contactSubject, setContactSubject] = useState("");
@@ -183,17 +180,14 @@ export default function AdminProviders() {
 
   // Invalidate all provider queries for real-time updates
   const invalidateProviderQueries = useCallback(() => {
-    setLastUpdate(new Date());
     queryClient.invalidateQueries({ queryKey: ["admin-providers"] });
     queryClient.invalidateQueries({ queryKey: ["admin-providers-status-counts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-providers-count"] });
     queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
   }, [queryClient]);
 
-  // Real-time subscriptions
+  // Real-time subscriptions - always active
   useEffect(() => {
-    if (!isLive) return;
-
     const facilitiesChannel = supabase
       .channel("admin-providers-facilities")
       .on(
@@ -228,7 +222,7 @@ export default function AdminProviders() {
       supabase.removeChannel(facilitiesChannel);
       supabase.removeChannel(leadsChannel);
     };
-  }, [isLive, invalidateProviderQueries, queryClient]);
+  }, [invalidateProviderQueries, queryClient]);
 
   // Fetch all status counts
   const { data: statusCounts } = useQuery({
@@ -659,25 +653,6 @@ export default function AdminProviders() {
           <p className="text-muted-foreground">Manage and monitor all facility providers</p>
         </div>
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={isLive ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsLive(!isLive)}
-                  className="gap-2"
-                >
-                  <Radio className={`h-3.5 w-3.5 ${isLive ? "animate-pulse" : ""}`} />
-                  {isLive ? "Live" : "Paused"}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isLive ? "Receiving real-time updates" : "Real-time updates paused"}</p>
-                <p className="text-xs text-muted-foreground">Last update: {lastUpdate.toLocaleTimeString()}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
           <Button
             variant="outline"
             size="sm"
