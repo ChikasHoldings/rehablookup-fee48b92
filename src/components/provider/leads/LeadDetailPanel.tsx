@@ -31,6 +31,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -98,6 +108,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("details");
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<LeadStatus | null>(null);
   const queryClient = useQueryClient();
 
   const { data: notes = [] } = useQuery({
@@ -254,7 +265,18 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
                 <Mail className="h-3.5 w-3.5" />
                 Send email
               </Button>
-              <Select value={lead.status} onValueChange={(v) => updateStatus.mutate(v as LeadStatus)} disabled={updateStatus.isPending}>
+              <Select 
+                value={lead.status} 
+                onValueChange={(v) => {
+                  const newStatus = v as LeadStatus;
+                  if (newStatus === "lost" || newStatus === "closed") {
+                    setPendingStatus(newStatus);
+                  } else {
+                    updateStatus.mutate(newStatus);
+                  }
+                }} 
+                disabled={updateStatus.isPending}
+              >
                 <SelectTrigger className={cn(
                   "w-[130px] h-8 text-xs font-medium transition-all",
                   updateStatus.isPending && "opacity-70"
@@ -344,7 +366,58 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
         lead={lead}
       />
 
-      {/* Tabs */}
+      {/* Status Change Confirmation Dialog */}
+      <AlertDialog open={!!pendingStatus} onOpenChange={(open) => !open && setPendingStatus(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {pendingStatus === "lost" ? (
+                <>
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  Mark Lead as Lost?
+                </>
+              ) : (
+                <>
+                  <X className="h-5 w-5 text-slate-500" />
+                  Close This Lead?
+                </>
+              )}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingStatus === "lost" ? (
+                <>
+                  This will mark <span className="font-medium text-foreground">{lead.name}</span> as a lost lead. 
+                  This action indicates the lead did not convert and will be reflected in your analytics.
+                </>
+              ) : (
+                <>
+                  This will close the lead for <span className="font-medium text-foreground">{lead.name}</span>. 
+                  Closed leads are archived and won't appear in your active leads list.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={cn(
+                pendingStatus === "lost" && "bg-red-600 hover:bg-red-700",
+                pendingStatus === "closed" && "bg-slate-600 hover:bg-slate-700"
+              )}
+              onClick={() => {
+                if (pendingStatus) {
+                  updateStatus.mutate(pendingStatus);
+                  setPendingStatus(null);
+                }
+              }}
+            >
+              {pendingStatus === "lost" ? "Mark as Lost" : "Close Lead"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <TabsList className="flex-shrink-0 h-10 w-full justify-start rounded-none border-b bg-transparent px-4 gap-4">
           <TabsTrigger value="details" className="text-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-2.5 px-0">
