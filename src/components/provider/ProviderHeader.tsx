@@ -39,6 +39,7 @@ interface ProviderHeaderProps {
   facilityId?: string;
   facilitySlug?: string | null;
   facilityLogo?: string | null;
+  facilityStatus?: string;
   userName?: string;
   onLogout: () => void;
 }
@@ -52,9 +53,33 @@ const notificationIcons: Record<string, React.ReactNode> = {
   system: <Settings className="h-4 w-4 text-muted-foreground" />,
 };
 
-export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
+const getStatusConfig = (status: string) => {
+  switch (status) {
+    case "approved":
+      return { 
+        label: "Live", 
+        dotClass: "bg-green-500",
+        textClass: "text-green-400"
+      };
+    case "pending":
+      return { 
+        label: "Pending", 
+        dotClass: "bg-amber-500",
+        textClass: "text-amber-400"
+      };
+    default:
+      return { 
+        label: "Inactive", 
+        dotClass: "bg-white/50",
+        textClass: "text-white/70"
+      };
+  }
+};
+
+export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, facilityStatus, userName, onLogout }: ProviderHeaderProps) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
+  const statusConfig = getStatusConfig(facilityStatus || "inactive");
   
   const { notifications, unreadCount, markAsRead, isLoading } = useProviderNotifications();
   const recentNotifications = notifications.slice(0, 5);
@@ -82,7 +107,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
   return (
     <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
-      <div className="h-16 max-w-[1800px] mx-auto px-4 md:px-6 flex items-center justify-between gap-4">
+      <div className="h-[72px] max-w-[1800px] mx-auto px-4 md:px-6 flex items-center justify-between gap-4">
         {/* Left - Logo & Facility Selector */}
         <div className="flex items-center min-w-0">
           <Link 
@@ -112,6 +137,15 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
         {/* Right - Actions */}
         <div className="flex items-center gap-1">
+          {/* Status Indicator */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 mr-2">
+            <span className={`h-2 w-2 rounded-full ${statusConfig.dotClass} animate-pulse`} />
+            <span className="text-xs text-white/70">Status:</span>
+            <span className={`text-xs font-medium ${statusConfig.textClass}`}>
+              {statusConfig.label}
+            </span>
+          </div>
+
           {/* Mobile Search Toggle */}
           <Button
             variant="ghost"
