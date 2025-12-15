@@ -792,10 +792,12 @@ export type Database = {
         Row: {
           browser_notifications: boolean
           created_at: string
+          default_snooze_duration: string | null
           digest_time: string | null
           email_lead_alerts: boolean
           email_product_updates: boolean
           email_weekly_digest: boolean
+          followup_reminders_enabled: boolean | null
           id: string
           last_digest_sent_at: string | null
           lead_notification_frequency: string | null
@@ -810,10 +812,12 @@ export type Database = {
         Insert: {
           browser_notifications?: boolean
           created_at?: string
+          default_snooze_duration?: string | null
           digest_time?: string | null
           email_lead_alerts?: boolean
           email_product_updates?: boolean
           email_weekly_digest?: boolean
+          followup_reminders_enabled?: boolean | null
           id?: string
           last_digest_sent_at?: string | null
           lead_notification_frequency?: string | null
@@ -828,10 +832,12 @@ export type Database = {
         Update: {
           browser_notifications?: boolean
           created_at?: string
+          default_snooze_duration?: string | null
           digest_time?: string | null
           email_lead_alerts?: boolean
           email_product_updates?: boolean
           email_weekly_digest?: boolean
+          followup_reminders_enabled?: boolean | null
           id?: string
           last_digest_sent_at?: string | null
           lead_notification_frequency?: string | null
