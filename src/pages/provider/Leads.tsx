@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, startOfMonth, isWithinInterval, startOfDay, endOfDay, formatDistanceToNow } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -319,14 +319,9 @@ export default function ProviderLeadsPage() {
                               )}
                             </div>
                           </div>
-                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                            <span className="text-[10px] text-muted-foreground font-medium">
-                              {format(new Date(lead.created_at), "MMM d")}
-                            </span>
-                            <span className="text-[9px] text-muted-foreground/70">
-                              {format(new Date(lead.created_at), "h:mm a")}
-                            </span>
-                          </div>
+                          <span className="text-[10px] text-muted-foreground font-medium">
+                            {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                          </span>
                         </div>
 
                         {/* Bottom Row - Tags */}
