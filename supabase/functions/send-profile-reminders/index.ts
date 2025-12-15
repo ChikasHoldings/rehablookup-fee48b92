@@ -17,21 +17,12 @@ interface FacilityWithProfile {
   website: string | null;
   profile_reminder_count: number;
   user_id: string;
-  profile: {
-    email: string;
-    first_name: string;
-  } | null;
+  profile: { email: string; first_name: string } | null;
   services_count: number;
   insurance_count: number;
 }
 
 interface CompletionStatus {
-  hasDescription: boolean;
-  hasLogo: boolean;
-  hasGallery: boolean;
-  hasWebsite: boolean;
-  hasServices: boolean;
-  hasInsurance: boolean;
   completedCount: number;
   totalCount: number;
   percentage: number;
@@ -49,18 +40,17 @@ function calculateCompletion(facility: FacilityWithProfile): CompletionStatus {
   };
 
   const missingItems: string[] = [];
-  if (!checks.hasDescription) missingItems.push("Add a detailed description (50+ characters)");
-  if (!checks.hasLogo) missingItems.push("Upload your facility logo");
+  if (!checks.hasDescription) missingItems.push("Add a description");
+  if (!checks.hasLogo) missingItems.push("Upload your logo");
   if (!checks.hasGallery) missingItems.push("Add facility photos");
-  if (!checks.hasWebsite) missingItems.push("Add your website URL");
-  if (!checks.hasServices) missingItems.push("List at least 3 services you offer");
-  if (!checks.hasInsurance) missingItems.push("Add accepted insurance providers");
+  if (!checks.hasWebsite) missingItems.push("Add your website");
+  if (!checks.hasServices) missingItems.push("List your services");
+  if (!checks.hasInsurance) missingItems.push("Add insurance info");
 
   const completedCount = Object.values(checks).filter(Boolean).length;
   const totalCount = Object.keys(checks).length;
 
   return {
-    ...checks,
     completedCount,
     totalCount,
     percentage: Math.round((completedCount / totalCount) * 100),
@@ -68,71 +58,98 @@ function calculateCompletion(facility: FacilityWithProfile): CompletionStatus {
   };
 }
 
-function generateReminderEmail(
-  firstName: string,
-  facilityName: string,
-  completion: CompletionStatus,
-  dashboardUrl: string
-): string {
+function generateReminderEmail(firstName: string, facilityName: string, completion: CompletionStatus, dashboardUrl: string): string {
   const missingItemsHtml = completion.missingItems
-    .slice(0, 4)
-    .map(item => `<li style="margin-bottom: 8px; color: #4a5568;">${item}</li>`)
+    .slice(0, 3)
+    .map(item => `<li style="margin-bottom: 6px; color: #4b5563; font-size: 14px;">${item}</li>`)
     .join("");
 
   return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #1B365D 0%, #2a4a7a 100%); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Complete Your Profile</h1>
-        <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">RehabLookup.com</p>
-      </div>
-      
-      <div style="background: #ffffff; padding: 32px; border: 1px solid #e2e8f0; border-top: none;">
-        <p style="margin-top: 0;">Hi ${firstName},</p>
-        
-        <p>Your listing for <strong>${facilityName}</strong> is ${completion.percentage}% complete. A complete profile helps families find and trust your facility.</p>
-        
-        <div style="background: #f8fafc; border-radius: 8px; padding: 20px; margin: 24px 0;">
-          <div style="display: flex; align-items: center; margin-bottom: 16px;">
-            <div style="background: #1B365D; color: white; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">
-              ${completion.percentage}%
-            </div>
-            <div style="margin-left: 16px;">
-              <strong style="color: #1B365D;">Profile Completion</strong>
-              <p style="margin: 0; font-size: 14px; color: #64748b;">${completion.completedCount} of ${completion.totalCount} items completed</p>
-            </div>
-          </div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
           
-          <p style="margin: 0 0 12px 0; font-weight: 600; color: #1B365D;">To improve your listing:</p>
-          <ul style="margin: 0; padding-left: 20px;">
-            ${missingItemsHtml}
-          </ul>
-        </div>
-        
-        <div style="text-align: center; margin: 32px 0;">
-          <a href="${dashboardUrl}" style="display: inline-block; background: #1B365D; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-            Complete Your Profile
-          </a>
-        </div>
-        
-        <p style="color: #64748b; font-size: 14px;">
-          Facilities with complete profiles receive <strong>up to 3x more inquiries</strong> from families seeking treatment.
-        </p>
-      </div>
-      
-      <div style="background: #f8fafc; padding: 20px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0; border-top: none; text-align: center;">
-        <p style="margin: 0; color: #64748b; font-size: 12px;">
-          You're receiving this because you have a facility listing on RehabLookup.com.<br>
-          <a href="${dashboardUrl}/settings" style="color: #1B365D;">Manage notification preferences</a>
-        </p>
-      </div>
-    </body>
-    </html>
+          <tr>
+            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 24px 32px; border-radius: 8px 8px 0 0;">
+              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
+              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
+                Complete Your Profile
+              </h1>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+              
+              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+                Hi ${firstName},
+              </p>
+              
+              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+                Your listing for <strong>${facilityName}</strong> is ${completion.percentage}% complete. Finishing your profile helps families find and trust your facility.
+              </p>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 6px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="60" valign="top">
+                          <div style="background: #1B365D; color: #fff; border-radius: 50%; width: 48px; height: 48px; text-align: center; line-height: 48px; font-weight: 600; font-size: 16px;">
+                            ${completion.percentage}%
+                          </div>
+                        </td>
+                        <td valign="top" style="padding-left: 16px;">
+                          <p style="margin: 0 0 12px 0; font-weight: 600; color: #1B365D; font-size: 15px;">To improve your listing:</p>
+                          <ul style="margin: 0; padding-left: 18px;">
+                            ${missingItemsHtml}
+                          </ul>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">
+                Complete profiles receive up to 3x more inquiries from families seeking treatment.
+              </p>
+              
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}/listing" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                      Complete Your Profile
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                RehabLookup | <a href="${dashboardUrl}/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
   `;
 }
 
@@ -148,14 +165,8 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get the dashboard URL from environment or default
     const dashboardUrl = Deno.env.get("DASHBOARD_URL") || "https://rehablookup.com/provider";
 
-    // Find facilities that need reminders:
-    // - Created more than 3 days ago
-    // - Haven't received a reminder in the last 7 days
-    // - Have received fewer than 3 reminders total
-    // - Are pending or approved status
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -166,17 +177,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { data: facilities, error: facilitiesError } = await supabase
       .from("facilities")
-      .select(`
-        id,
-        name,
-        description,
-        logo_url,
-        gallery_urls,
-        website,
-        profile_reminder_count,
-        user_id,
-        created_at
-      `)
+      .select(`id, name, description, logo_url, gallery_urls, website, profile_reminder_count, user_id, created_at`)
       .in("status", ["pending", "approved"])
       .lt("profile_reminder_count", 3)
       .lt("created_at", threeDaysAgo.toISOString())
@@ -201,7 +202,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     for (const facility of facilities) {
       try {
-        // Fetch profile for this facility's user
         const { data: profile } = await supabase
           .from("profiles")
           .select("email, first_name")
@@ -213,26 +213,22 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Check notification preferences
         const { data: preferences } = await supabase
           .from("notification_preferences")
           .select("email_product_updates")
           .eq("user_id", facility.user_id)
           .maybeSingle();
 
-        // Skip if user has opted out of product updates
         if (preferences?.email_product_updates === false) {
           console.log(`[PROFILE-REMINDERS] User opted out for facility ${facility.id}`);
           continue;
         }
 
-        // Fetch services count
         const { count: servicesCount } = await supabase
           .from("facility_services")
           .select("*", { count: "exact", head: true })
           .eq("facility_id", facility.id);
 
-        // Fetch insurance count
         const { count: insuranceCount } = await supabase
           .from("facility_insurance")
           .select("*", { count: "exact", head: true })
@@ -247,7 +243,6 @@ const handler = async (req: Request): Promise<Response> => {
 
         const completion = calculateCompletion(facilityWithCounts);
 
-        // Only send reminder if profile is incomplete (less than 100%)
         if (completion.percentage >= 100) {
           console.log(`[PROFILE-REMINDERS] Facility ${facility.id} is complete, skipping`);
           continue;
@@ -269,9 +264,9 @@ const handler = async (req: Request): Promise<Response> => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "RehabLookup <notifications@resend.dev>",
+            from: "RehabLookup <noreply@resend.dev>",
             to: [profile.email],
-            subject: `Complete your ${facility.name} profile (${completion.percentage}% done)`,
+            subject: `Your ${facility.name} profile is ${completion.percentage}% complete`,
             html: emailHtml,
           }),
         });
@@ -283,7 +278,6 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Update the facility reminder tracking
         await supabase
           .from("facilities")
           .update({
