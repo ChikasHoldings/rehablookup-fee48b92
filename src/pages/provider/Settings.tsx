@@ -667,9 +667,6 @@ export default function ProviderSettingsPage() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Additional language and timezone options coming soon
-              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -770,35 +767,18 @@ export default function ProviderSettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Two-Factor Authentication */}
-          <Card className="border-border shadow-sm">
+          {/* Two-Factor Authentication - Planned Feature */}
+          <Card className="border-border shadow-sm opacity-60">
             <CardHeader className="pb-4">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Shield className="h-4 w-4 text-muted-foreground" />
                 Two-Factor Authentication
+                <Badge variant="secondary" className="text-xs ml-2">Planned</Badge>
               </CardTitle>
               <CardDescription className="text-sm">
-                Add an extra layer of security to your account
+                Enhanced account security will be available in a future update
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                    <Smartphone className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Authenticator App</p>
-                    <p className="text-xs text-muted-foreground">
-                      Use an authenticator app for verification codes
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="outline" className="text-muted-foreground">
-                  Coming Soon
-                </Badge>
-              </div>
-            </CardContent>
           </Card>
 
           {/* Sessions */}
