@@ -13,6 +13,7 @@ import {
   ChevronDown,
   MessageSquare,
   ShieldCheck,
+  ChevronLeft,
 } from "lucide-react";
 import {
   Select,
@@ -46,6 +47,8 @@ import {
 } from "@/components/provider/LeadUsageIndicator";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 interface DateRange {
   from: Date | undefined;
@@ -60,14 +63,46 @@ export default function ProviderLeadsPage() {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
   const { data: subscription } = useSubscription();
+  const isMobile = useIsMobile();
   const facilityId = selectedFacility?.id;
   const currentPlan = subscription?.plan || "basic";
   const leadLimit = subscription?.lead_limit ?? 4;
+
+  // Swipe gestures for mobile navigation
+  const { handlers: swipeHandlers } = useSwipeGesture({
+    onSwipeLeft: () => {
+      if (isMobile && selectedLead) return; // Already on detail
+      if (isMobile && mobileView === 'list' && selectedLead) {
+        setMobileView('detail');
+      }
+    },
+    onSwipeRight: () => {
+      if (isMobile && mobileView === 'detail') {
+        setMobileView('list');
+      }
+    },
+    threshold: 75,
+  });
+
+  // Handle lead selection on mobile
+  const handleSelectLead = (lead: Lead) => {
+    setSelectedLead(lead);
+    if (isMobile) {
+      setMobileView('detail');
+    }
+  };
+
+  // Handle back navigation on mobile
+  const handleBackToList = () => {
+    setMobileView('list');
+    // Optionally keep lead selected for context
+  };
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["provider-leads", facilityId],
@@ -151,22 +186,40 @@ export default function ProviderLeadsPage() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden" {...swipeHandlers}>
       {/* Header */}
-      <div className="flex-shrink-0 px-6 py-4 bg-background border-b">
+      <div className="flex-shrink-0 px-4 md:px-6 py-4 bg-background border-b">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">Lead Management</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {leads.length} total leads • {thisMonthQualified.length}/{leadLimit} qualified this month
-            </p>
+          <div className="flex items-center gap-3">
+            {/* Mobile back button */}
+            {isMobile && mobileView === 'detail' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 -ml-2"
+                onClick={handleBackToList}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            )}
+            <div>
+              <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                {isMobile && mobileView === 'detail' ? 'Lead Details' : 'Lead Management'}
+              </h1>
+              <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+                {isMobile && mobileView === 'detail' 
+                  ? 'Swipe right to go back'
+                  : `${leads.length} total • ${thisMonthQualified.length}/${leadLimit} qualified`
+                }
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Banners */}
-      {(leadLimit === 0 || currentPlan !== "featured") && (
-        <div className="flex-shrink-0 px-6 py-2 space-y-2 bg-background border-b">
+      {/* Banners - hidden on mobile detail view */}
+      {(leadLimit === 0 || currentPlan !== "featured") && (!isMobile || mobileView === 'list') && (
+        <div className="flex-shrink-0 px-4 md:px-6 py-2 space-y-2 bg-background border-b">
           {leadLimit === 0 && <BasicPlanBanner />}
           {currentPlan === "basic" && leadLimit > 0 && (
             <>
@@ -187,10 +240,13 @@ export default function ProviderLeadsPage() {
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Left Panel - Lead List */}
         <div className={cn(
-          "flex flex-col bg-background border-r transition-all duration-200",
-          selectedLead 
-            ? "hidden md:flex w-[280px] lg:w-[320px] xl:w-[360px]" 
-            : "flex-1 max-w-full md:max-w-2xl"
+          "flex flex-col bg-background transition-all duration-300",
+          // Desktop behavior
+          !isMobile && selectedLead && "hidden md:flex w-[280px] lg:w-[320px] xl:w-[360px] border-r",
+          !isMobile && !selectedLead && "flex-1 max-w-full md:max-w-2xl border-r",
+          // Mobile behavior - full width, slide animation
+          isMobile && mobileView === 'list' && "flex-1 w-full",
+          isMobile && mobileView === 'detail' && "hidden"
         )}>
           {/* Filters Header */}
           <div className="flex-shrink-0 border-b bg-muted/30">
@@ -323,7 +379,7 @@ export default function ProviderLeadsPage() {
                   return (
                     <button
                       key={lead.id}
-                      onClick={() => !locked && setSelectedLead(lead)}
+                      onClick={() => !locked && handleSelectLead(lead)}
                       disabled={locked}
                       className={cn(
                         "w-full text-left rounded-xl border-2 transition-all duration-200 overflow-hidden shadow-sm",
@@ -429,12 +485,23 @@ export default function ProviderLeadsPage() {
 
         {/* Right Panel - Detail */}
         <div className={cn(
-          "flex-1 min-w-0",
-          selectedLead ? "flex" : "hidden md:flex"
+          "flex-1 min-w-0 transition-all duration-300",
+          // Desktop behavior
+          !isMobile && selectedLead && "flex",
+          !isMobile && !selectedLead && "hidden md:flex",
+          // Mobile behavior
+          isMobile && mobileView === 'detail' && "flex w-full",
+          isMobile && mobileView === 'list' && "hidden"
         )}>
           <LeadDetailPanel 
             lead={selectedLead} 
-            onClose={() => setSelectedLead(null)}
+            onClose={() => {
+              if (isMobile) {
+                handleBackToList();
+              } else {
+                setSelectedLead(null);
+              }
+            }}
             facilityName={selectedFacility?.name}
           />
         </div>
