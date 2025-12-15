@@ -272,7 +272,10 @@ export default function ProviderLeadsPage() {
               {/* Upgrade Button */}
               <Button 
                 size="sm" 
-                className="h-7 px-2.5 text-xs gap-1.5"
+                className={cn(
+                  "h-7 px-2.5 text-xs gap-1.5",
+                  isAtLimit && "animate-pulse"
+                )}
                 asChild
               >
                 <Link to="/provider/billing">
