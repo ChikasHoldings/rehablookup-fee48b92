@@ -12,12 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ComposedChart, Area } from "recharts";
-import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, Filter, RotateCcw, Info, ArrowUpDown, Building2 } from "lucide-react";
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
+import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type DatePreset = "today" | "last7" | "last30" | "thisMonth" | "lastMonth" | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear" | "custom";
-type Grouping = "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+type Grouping = "daily" | "weekly" | "monthly";
 
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
@@ -28,6 +28,34 @@ const US_STATES = [
 ];
 
 const PLAN_OPTIONS = ["All", "Basic", "Professional", "Featured"];
+
+const CHART_COLORS = {
+  primary: "#1B365D",
+  secondary: "#3B82F6",
+  success: "#10B981",
+  warning: "#F59E0B",
+  danger: "#EF4444",
+  purple: "#8B5CF6",
+  pink: "#EC4899",
+  cyan: "#06B6D4",
+};
+
+// Custom tooltip component for charts
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background border border-border rounded-lg shadow-lg p-3">
+        <p className="font-medium text-sm mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {entry.name}: <span className="font-semibold">{entry.value.toLocaleString()}</span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function AdminAnalytics() {
   const [datePreset, setDatePreset] = useState<DatePreset>("last30");
@@ -179,8 +207,6 @@ export default function AdminAnalytics() {
         upgrades: 0,
         downgrades: 0,
         subscriptionsByPlan: {},
-        revenueOverTime: [],
-        subscriptionsOverTime: []
       };
     },
   });
@@ -339,8 +365,20 @@ export default function AdminAnalytics() {
     return locationPerformance
       .filter(l => l.leads > 0)
       .sort((a, b) => b.leads - a.leads)
-      .slice(0, 10);
+      .slice(0, 8);
   }, [locationPerformance]);
+
+  // Plan distribution data for pie chart
+  const planDistributionData = useMemo(() => {
+    const basic = subscriptionData?.subscriptionsByPlan?.basic || 0;
+    const professional = subscriptionData?.subscriptionsByPlan?.professional || 0;
+    const featured = subscriptionData?.subscriptionsByPlan?.featured || 0;
+    return [
+      { name: "Basic", value: basic, color: CHART_COLORS.secondary },
+      { name: "Professional", value: professional, color: CHART_COLORS.purple },
+      { name: "Featured", value: featured, color: CHART_COLORS.warning },
+    ].filter(d => d.value > 0);
+  }, [subscriptionData]);
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({
@@ -363,20 +401,27 @@ export default function AdminAnalytics() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Analytics Dashboard</h1>
-        <p className="text-muted-foreground">Platform-wide performance metrics and insights</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Analytics Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Platform performance metrics and insights</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs font-normal">
+            {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
+          </Badge>
+        </div>
       </div>
 
       {/* Filter Bar */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-4 items-end">
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="pt-5 pb-5">
+          <div className="flex flex-wrap gap-3 items-end">
             {/* Date Preset */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Date Range</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Date Range</label>
               <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[150px] h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,22 +441,22 @@ export default function AdminAnalytics() {
 
             {/* Custom Date Picker */}
             {datePreset === "custom" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Custom Range</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Custom Range</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                    <Button variant="outline" className="w-[220px] h-9 justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                       {customDateRange.from ? (
                         customDateRange.to ? (
-                          <>
-                            {format(customDateRange.from, "LLL dd, y")} - {format(customDateRange.to, "LLL dd, y")}
-                          </>
+                          <span className="text-sm">
+                            {format(customDateRange.from, "MMM d")} - {format(customDateRange.to, "MMM d")}
+                          </span>
                         ) : (
-                          format(customDateRange.from, "LLL dd, y")
+                          format(customDateRange.from, "MMM d, y")
                         )
                       ) : (
-                        <span>Pick a date range</span>
+                        <span className="text-muted-foreground">Pick dates</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -430,10 +475,10 @@ export default function AdminAnalytics() {
             )}
 
             {/* Grouping */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Group by</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Group by</label>
               <Select value={grouping} onValueChange={(v) => setGrouping(v as Grouping)}>
-                <SelectTrigger className="w-[120px]">
+                <SelectTrigger className="w-[110px] h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -444,11 +489,13 @@ export default function AdminAnalytics() {
               </Select>
             </div>
 
+            <div className="h-9 w-px bg-border mx-1" />
+
             {/* State */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">State</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">State</label>
               <Select value={selectedState} onValueChange={(v) => { setSelectedState(v); setSelectedCity("all"); }}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[140px] h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -461,10 +508,10 @@ export default function AdminAnalytics() {
             </div>
 
             {/* City */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">City</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">City</label>
               <Select value={selectedCity} onValueChange={setSelectedCity} disabled={selectedState === "all"}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[140px] h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -477,10 +524,10 @@ export default function AdminAnalytics() {
             </div>
 
             {/* Plan */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Plan</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Plan</label>
               <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[120px] h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -492,12 +539,12 @@ export default function AdminAnalytics() {
             </div>
 
             <div className="flex gap-2 ml-auto">
-              <Button variant="outline" onClick={handleReset}>
-                <RotateCcw className="h-4 w-4 mr-2" />
+              <Button variant="ghost" size="sm" onClick={handleReset} className="h-9">
+                <RotateCcw className="h-4 w-4 mr-1.5" />
                 Reset
               </Button>
-              <Button onClick={() => refetchSubscriptions()}>
-                <RefreshCw className="h-4 w-4 mr-2" />
+              <Button size="sm" onClick={() => refetchSubscriptions()} className="h-9">
+                <RefreshCw className="h-4 w-4 mr-1.5" />
                 Refresh
               </Button>
             </div>
@@ -505,131 +552,174 @@ export default function AdminAnalytics() {
         </CardContent>
       </Card>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {/* KPI Cards - Primary Row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <KPICard
           title="Visitors"
           value={kpis.visitors}
-          icon={<Users className="h-4 w-4" />}
+          icon={<Users className="h-5 w-5" />}
           tooltip="Total page views across all facility profiles"
           isLoading={isLoading}
+          color="blue"
         />
         <KPICard
           title="Clicks"
           value={kpis.clicks}
-          icon={<MousePointerClick className="h-4 w-4" />}
+          icon={<MousePointerClick className="h-5 w-5" />}
           tooltip="CTA clicks: Call Now, View Profile, Request Help"
           isLoading={isLoading}
+          color="purple"
         />
         <KPICard
           title="Total Leads"
           value={kpis.totalLeads}
-          icon={<FileText className="h-4 w-4" />}
+          icon={<FileText className="h-5 w-5" />}
           tooltip="Total lead submissions from all sources"
           isLoading={isLoading}
+          color="cyan"
         />
         <KPICard
-          title="Qualified Leads"
+          title="Qualified"
           value={kpis.qualifiedLeads}
-          icon={<CheckCircle className="h-4 w-4" />}
+          icon={<CheckCircle className="h-5 w-5" />}
           tooltip="Leads with verified email addresses"
           isLoading={isLoading}
+          color="green"
         />
         <KPICard
-          title="Conversion Rate"
+          title="Conversion"
           value={`${kpis.conversionRate}%`}
-          icon={<TrendingUp className="h-4 w-4" />}
+          icon={<Target className="h-5 w-5" />}
           tooltip="Leads divided by Visitors"
           isLoading={isLoading}
+          color="amber"
         />
+      </div>
+
+      {/* KPI Cards - Secondary Row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <KPICard
           title="Active Subs"
           value={kpis.activeSubscriptions}
-          icon={<CreditCard className="h-4 w-4" />}
+          icon={<CreditCard className="h-5 w-5" />}
           tooltip="Currently active subscriptions"
           isLoading={isLoading}
+          color="blue"
         />
         <KPICard
           title="New Subs"
           value={kpis.newSubscriptions}
-          icon={<TrendingUp className="h-4 w-4" />}
+          icon={<Zap className="h-5 w-5" />}
           tooltip="New subscriptions in selected period"
           isLoading={isLoading}
+          color="green"
         />
         <KPICard
           title="Revenue"
           value={`$${kpis.revenue.toLocaleString()}`}
-          icon={<DollarSign className="h-4 w-4" />}
+          icon={<DollarSign className="h-5 w-5" />}
           tooltip="Total revenue in selected period"
           isLoading={isLoading}
+          color="emerald"
         />
         <KPICard
           title="MRR"
           value={`$${kpis.mrr.toLocaleString()}`}
-          icon={<DollarSign className="h-4 w-4" />}
+          icon={<Activity className="h-5 w-5" />}
           tooltip="Monthly Recurring Revenue"
           isLoading={isLoading}
+          color="purple"
         />
         <KPICard
-          title="Churn Rate"
+          title="Churn"
           value={`${kpis.churnRate}%`}
-          icon={<UserMinus className="h-4 w-4" />}
+          icon={<UserMinus className="h-5 w-5" />}
           tooltip="Subscription cancellation rate"
           isLoading={isLoading}
-          variant={kpis.churnRate > 5 ? "destructive" : "default"}
+          color={kpis.churnRate > 5 ? "red" : "slate"}
         />
       </div>
 
       {/* Charts */}
       <Tabs defaultValue="traffic" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="traffic">Traffic & Engagement</TabsTrigger>
-          <TabsTrigger value="leads">Leads</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions & Revenue</TabsTrigger>
-          <TabsTrigger value="churn">Churn & Retention</TabsTrigger>
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="traffic" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Activity className="h-4 w-4 mr-2" />
+            Traffic
+          </TabsTrigger>
+          <TabsTrigger value="leads" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <FileText className="h-4 w-4 mr-2" />
+            Leads
+          </TabsTrigger>
+          <TabsTrigger value="subscriptions" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <CreditCard className="h-4 w-4 mr-2" />
+            Subscriptions
+          </TabsTrigger>
+          <TabsTrigger value="churn" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <TrendingDown className="h-4 w-4 mr-2" />
+            Retention
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="traffic" className="space-y-4">
           <div className="grid lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Visitors Over Time</CardTitle>
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Users className="h-4 w-4 text-blue-600" />
+                  Visitors Over Time
+                </CardTitle>
+                <CardDescription>Daily visitor count trend</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {isLoading ? (
-                  <Skeleton className="h-[300px] w-full" />
+                  <Skeleton className="h-[280px] w-full" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={timeSeriesData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <RechartsTooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="visitors" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                    </LineChart>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <AreaChart data={timeSeriesData}>
+                      <defs>
+                        <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Area type="monotone" dataKey="visitors" stroke={CHART_COLORS.primary} strokeWidth={2} fillOpacity={1} fill="url(#colorVisitors)" name="Visitors" />
+                    </AreaChart>
                   </ResponsiveContainer>
                 )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Clicks Over Time</CardTitle>
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <MousePointerClick className="h-4 w-4 text-purple-600" />
+                  Clicks Over Time
+                </CardTitle>
+                <CardDescription>CTA interaction trend</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {isLoading ? (
-                  <Skeleton className="h-[300px] w-full" />
+                  <Skeleton className="h-[280px] w-full" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={timeSeriesData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <RechartsTooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="clicks" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
-                    </LineChart>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <AreaChart data={timeSeriesData}>
+                      <defs>
+                        <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={CHART_COLORS.purple} stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor={CHART_COLORS.purple} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Area type="monotone" dataKey="clicks" stroke={CHART_COLORS.purple} strokeWidth={2} fillOpacity={1} fill="url(#colorClicks)" name="Clicks" />
+                    </AreaChart>
                   </ResponsiveContainer>
                 )}
               </CardContent>
@@ -639,68 +729,92 @@ export default function AdminAnalytics() {
 
         <TabsContent value="leads" className="space-y-4">
           <div className="grid lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Lead Submissions Over Time</CardTitle>
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-cyan-600" />
+                  Lead Submissions
+                </CardTitle>
+                <CardDescription>Lead volume over time</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {isLoading ? (
-                  <Skeleton className="h-[300px] w-full" />
+                  <Skeleton className="h-[280px] w-full" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={timeSeriesData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <RechartsTooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="leads" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                    </LineChart>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <AreaChart data={timeSeriesData}>
+                      <defs>
+                        <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={CHART_COLORS.cyan} stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor={CHART_COLORS.cyan} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Area type="monotone" dataKey="leads" stroke={CHART_COLORS.cyan} strokeWidth={2} fillOpacity={1} fill="url(#colorLeads)" name="Leads" />
+                    </AreaChart>
                   </ResponsiveContainer>
                 )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Qualified vs Unqualified Leads</CardTitle>
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  Lead Quality
+                </CardTitle>
+                <CardDescription>Qualified vs unqualified breakdown</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {isLoading ? (
-                  <Skeleton className="h-[300px] w-full" />
+                  <Skeleton className="h-[280px] w-full" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={timeSeriesData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <RechartsTooltip />
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={timeSeriesData} barGap={0}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={40} />
+                      <RechartsTooltip content={<CustomTooltip />} />
                       <Legend />
-                      <Bar dataKey="qualifiedLeads" stackId="a" fill="hsl(var(--chart-1))" name="Qualified" />
-                      <Bar dataKey="unqualifiedLeads" stackId="a" fill="hsl(var(--chart-3))" name="Unqualified" />
+                      <Bar dataKey="qualifiedLeads" stackId="a" fill={CHART_COLORS.success} name="Qualified" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="unqualifiedLeads" stackId="a" fill={CHART_COLORS.warning} name="Unqualified" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-base">Top Cities by Leads</CardTitle>
+            <Card className="lg:col-span-2 border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                  Top Cities by Leads
+                </CardTitle>
+                <CardDescription>Geographic lead distribution</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {isLoading ? (
-                  <Skeleton className="h-[300px] w-full" />
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={topCitiesByLeads} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis type="number" className="text-xs" />
-                      <YAxis dataKey="city" type="category" width={120} className="text-xs" />
-                      <RechartsTooltip />
-                      <Bar dataKey="leads" fill="hsl(var(--primary))" />
+                  <Skeleton className="h-[280px] w-full" />
+                ) : topCitiesByLeads.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={topCitiesByLeads} layout="vertical" margin={{ left: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="city" type="category" width={100} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Bar dataKey="leads" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]} name="Leads" />
                     </BarChart>
                   </ResponsiveContainer>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <MapPin className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No lead data for selected filters</p>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -709,44 +823,74 @@ export default function AdminAnalytics() {
 
         <TabsContent value="subscriptions" className="space-y-4">
           <div className="grid lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Subscriptions by Plan</CardTitle>
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-purple-600" />
+                  Plan Distribution
+                </CardTitle>
+                <CardDescription>Active subscriptions by plan type</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {isLoading ? (
-                  <Skeleton className="h-[300px] w-full" />
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={[
-                      { plan: "Basic", count: subscriptionData?.subscriptionsByPlan?.basic || 0 },
-                      { plan: "Professional", count: subscriptionData?.subscriptionsByPlan?.professional || 0 },
-                      { plan: "Featured", count: subscriptionData?.subscriptionsByPlan?.featured || 0 },
-                    ]}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="plan" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <RechartsTooltip />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" />
-                    </BarChart>
+                  <Skeleton className="h-[280px] w-full" />
+                ) : planDistributionData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Pie
+                        data={planDistributionData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={4}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {planDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip content={<CustomTooltip />} />
+                    </PieChart>
                   </ResponsiveContainer>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <CreditCard className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No subscription data available</p>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Upgrades vs Downgrades</CardTitle>
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  Subscription Movement
+                </CardTitle>
+                <CardDescription>Plan upgrades vs downgrades</CardDescription>
               </CardHeader>
-              <CardContent className="flex items-center justify-center h-[300px]">
-                <div className="grid grid-cols-2 gap-8 text-center">
-                  <div>
-                    <div className="text-4xl font-bold text-green-600">{kpis.upgrades}</div>
-                    <div className="text-sm text-muted-foreground mt-1">Upgrades</div>
-                  </div>
-                  <div>
-                    <div className="text-4xl font-bold text-red-600">{kpis.downgrades}</div>
-                    <div className="text-sm text-muted-foreground mt-1">Downgrades</div>
+              <CardContent className="pt-0">
+                <div className="h-[280px] flex items-center justify-center">
+                  <div className="grid grid-cols-2 gap-12 text-center">
+                    <div className="space-y-2">
+                      <div className="h-20 w-20 mx-auto rounded-2xl bg-green-50 flex items-center justify-center">
+                        <TrendingUp className="h-10 w-10 text-green-600" />
+                      </div>
+                      <div className="text-4xl font-bold text-green-600">{kpis.upgrades}</div>
+                      <div className="text-sm text-muted-foreground font-medium">Upgrades</div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-20 w-20 mx-auto rounded-2xl bg-red-50 flex items-center justify-center">
+                        <TrendingDown className="h-10 w-10 text-red-500" />
+                      </div>
+                      <div className="text-4xl font-bold text-red-500">{kpis.downgrades}</div>
+                      <div className="text-sm text-muted-foreground font-medium">Downgrades</div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -756,32 +900,55 @@ export default function AdminAnalytics() {
 
         <TabsContent value="churn" className="space-y-4">
           <div className="grid lg:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Churn Overview</CardTitle>
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <UserMinus className="h-4 w-4 text-red-500" />
+                  Churn Overview
+                </CardTitle>
+                <CardDescription>Subscription cancellations this period</CardDescription>
               </CardHeader>
-              <CardContent className="flex items-center justify-center h-[300px]">
-                <div className="text-center space-y-4">
-                  <div className="text-6xl font-bold text-red-600">{kpis.churnCount}</div>
-                  <div className="text-lg text-muted-foreground">Churned Subscriptions</div>
-                  <Badge variant={kpis.churnRate > 5 ? "destructive" : "secondary"} className="text-lg px-4 py-1">
-                    {kpis.churnRate}% Churn Rate
-                  </Badge>
+              <CardContent className="pt-0">
+                <div className="h-[280px] flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <div className="h-28 w-28 mx-auto rounded-full bg-red-50 flex items-center justify-center border-4 border-red-100">
+                      <span className="text-5xl font-bold text-red-600">{kpis.churnCount}</span>
+                    </div>
+                    <div>
+                      <div className="text-lg font-medium">Churned Subscriptions</div>
+                      <Badge 
+                        variant={kpis.churnRate > 5 ? "destructive" : "secondary"} 
+                        className="mt-2 text-sm px-3 py-1"
+                      >
+                        {kpis.churnRate}% Churn Rate
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Retention Metrics</CardTitle>
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Award className="h-4 w-4 text-green-600" />
+                  Retention Rate
+                </CardTitle>
+                <CardDescription>Percentage of subscribers retained</CardDescription>
               </CardHeader>
-              <CardContent className="flex items-center justify-center h-[300px]">
-                <div className="text-center space-y-4">
-                  <div className="text-6xl font-bold text-green-600">{100 - kpis.churnRate}%</div>
-                  <div className="text-lg text-muted-foreground">Retention Rate</div>
-                  <p className="text-sm text-muted-foreground max-w-xs">
-                    Percentage of subscribers retained during the selected period
-                  </p>
+              <CardContent className="pt-0">
+                <div className="h-[280px] flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <div className="h-28 w-28 mx-auto rounded-full bg-green-50 flex items-center justify-center border-4 border-green-100">
+                      <span className="text-4xl font-bold text-green-600">{(100 - kpis.churnRate).toFixed(1)}%</span>
+                    </div>
+                    <div>
+                      <div className="text-lg font-medium">Retention Rate</div>
+                      <p className="text-sm text-muted-foreground mt-1 max-w-[200px] mx-auto">
+                        Subscribers retained during selected period
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -790,10 +957,10 @@ export default function AdminAnalytics() {
       </Tabs>
 
       {/* Location Performance Table */}
-      <Card>
+      <Card className="border-slate-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Building2 className="h-5 w-5 text-slate-600" />
             Location Performance
           </CardTitle>
           <CardDescription>Performance metrics by state and city</CardDescription>
@@ -806,46 +973,60 @@ export default function AdminAnalytics() {
               ))}
             </div>
           ) : locationPerformance.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg border border-slate-100">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>State</TableHead>
-                    <TableHead>City</TableHead>
-                    <TableHead className="cursor-pointer" onClick={() => handleSort("visitors")}>
+                  <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
+                    <TableHead className="font-semibold">State</TableHead>
+                    <TableHead className="font-semibold">City</TableHead>
+                    <TableHead className="cursor-pointer hover:text-primary" onClick={() => handleSort("visitors")}>
                       <div className="flex items-center gap-1">
-                        Visitors <ArrowUpDown className="h-3 w-3" />
+                        Visitors 
+                        <ArrowUpDown className={cn("h-3 w-3", sortConfig.key === "visitors" && "text-primary")} />
                       </div>
                     </TableHead>
-                    <TableHead className="cursor-pointer" onClick={() => handleSort("clicks")}>
+                    <TableHead className="cursor-pointer hover:text-primary" onClick={() => handleSort("clicks")}>
                       <div className="flex items-center gap-1">
-                        Clicks <ArrowUpDown className="h-3 w-3" />
+                        Clicks 
+                        <ArrowUpDown className={cn("h-3 w-3", sortConfig.key === "clicks" && "text-primary")} />
                       </div>
                     </TableHead>
-                    <TableHead className="cursor-pointer" onClick={() => handleSort("leads")}>
+                    <TableHead className="cursor-pointer hover:text-primary" onClick={() => handleSort("leads")}>
                       <div className="flex items-center gap-1">
-                        Leads <ArrowUpDown className="h-3 w-3" />
+                        Leads 
+                        <ArrowUpDown className={cn("h-3 w-3", sortConfig.key === "leads" && "text-primary")} />
                       </div>
                     </TableHead>
-                    <TableHead className="cursor-pointer" onClick={() => handleSort("qualifiedLeads")}>
+                    <TableHead className="cursor-pointer hover:text-primary" onClick={() => handleSort("qualifiedLeads")}>
                       <div className="flex items-center gap-1">
-                        Verified <ArrowUpDown className="h-3 w-3" />
+                        Verified 
+                        <ArrowUpDown className={cn("h-3 w-3", sortConfig.key === "qualifiedLeads" && "text-primary")} />
                       </div>
                     </TableHead>
                     <TableHead>Conv. Rate</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {locationPerformance.slice(0, 20).map((loc, i) => (
-                    <TableRow key={i}>
+                  {locationPerformance.slice(0, 15).map((loc, i) => (
+                    <TableRow key={i} className="hover:bg-slate-50/50">
                       <TableCell className="font-medium">{loc.state}</TableCell>
-                      <TableCell>{loc.city}</TableCell>
+                      <TableCell className="text-muted-foreground">{loc.city}</TableCell>
                       <TableCell>{loc.visitors.toLocaleString()}</TableCell>
                       <TableCell>{loc.clicks.toLocaleString()}</TableCell>
-                      <TableCell>{loc.leads}</TableCell>
-                      <TableCell>{loc.qualifiedLeads}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{loc.conversionRate}%</Badge>
+                        <Badge variant="secondary" className="font-medium">{loc.leads}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50">{loc.qualifiedLeads}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className={cn(
+                          "font-medium",
+                          parseFloat(loc.conversionRate) >= 5 ? "text-green-600" : 
+                          parseFloat(loc.conversionRate) >= 2 ? "text-amber-600" : "text-slate-500"
+                        )}>
+                          {loc.conversionRate}%
+                        </span>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -853,9 +1034,10 @@ export default function AdminAnalytics() {
               </Table>
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Building2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No location data available for the selected filters</p>
+            <div className="text-center py-12 text-muted-foreground">
+              <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="font-medium">No location data available</p>
+              <p className="text-sm mt-1">Try adjusting your filters</p>
             </div>
           )}
         </CardContent>
@@ -865,45 +1047,53 @@ export default function AdminAnalytics() {
 }
 
 // KPI Card Component
-function KPICard({ 
-  title, 
-  value, 
-  icon, 
-  tooltip, 
-  isLoading,
-  variant = "default"
-}: { 
-  title: string; 
-  value: string | number; 
-  icon: React.ReactNode; 
-  tooltip: string; 
+interface KPICardProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  tooltip: string;
   isLoading: boolean;
-  variant?: "default" | "destructive";
-}) {
+  color: "blue" | "purple" | "green" | "amber" | "red" | "cyan" | "emerald" | "slate";
+}
+
+const colorClasses = {
+  blue: { bg: "bg-blue-50", icon: "text-blue-600", border: "border-blue-100" },
+  purple: { bg: "bg-purple-50", icon: "text-purple-600", border: "border-purple-100" },
+  green: { bg: "bg-green-50", icon: "text-green-600", border: "border-green-100" },
+  amber: { bg: "bg-amber-50", icon: "text-amber-600", border: "border-amber-100" },
+  red: { bg: "bg-red-50", icon: "text-red-600", border: "border-red-100" },
+  cyan: { bg: "bg-cyan-50", icon: "text-cyan-600", border: "border-cyan-100" },
+  emerald: { bg: "bg-emerald-50", icon: "text-emerald-600", border: "border-emerald-100" },
+  slate: { bg: "bg-slate-50", icon: "text-slate-600", border: "border-slate-100" },
+};
+
+function KPICard({ title, value, icon, tooltip, isLoading, color }: KPICardProps) {
+  const colors = colorClasses[color];
+  
   return (
-    <Card className={cn(variant === "destructive" && "border-red-200 bg-red-50")}>
-      <CardContent className="pt-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className={cn("p-2 rounded-lg", variant === "destructive" ? "bg-red-100" : "bg-primary/10")}>
-            {icon}
+    <Card className={cn("border-slate-200 hover:shadow-md transition-shadow", colors.border)}>
+      <CardContent className="pt-4 pb-4">
+        <div className="flex items-start justify-between">
+          <div className={cn("p-2.5 rounded-xl", colors.bg)}>
+            <div className={colors.icon}>{icon}</div>
           </div>
           <Tooltip>
             <TooltipTrigger>
-              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+              <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
             </TooltipTrigger>
-            <TooltipContent>
-              <p className="max-w-xs">{tooltip}</p>
+            <TooltipContent side="top" className="max-w-[200px]">
+              <p className="text-xs">{tooltip}</p>
             </TooltipContent>
           </Tooltip>
         </div>
-        {isLoading ? (
-          <Skeleton className="h-8 w-20" />
-        ) : (
-          <div className={cn("text-2xl font-bold", variant === "destructive" && "text-red-600")}>
-            {value}
-          </div>
-        )}
-        <p className="text-xs text-muted-foreground mt-1">{title}</p>
+        <div className="mt-3">
+          {isLoading ? (
+            <Skeleton className="h-7 w-16" />
+          ) : (
+            <div className="text-2xl font-bold text-slate-900">{value}</div>
+          )}
+          <p className="text-xs text-muted-foreground mt-0.5 font-medium uppercase tracking-wide">{title}</p>
+        </div>
       </CardContent>
     </Card>
   );
