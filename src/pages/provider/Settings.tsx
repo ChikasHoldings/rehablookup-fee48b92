@@ -20,7 +20,9 @@ import {
   Lock,
   Loader2,
   LogOut,
-  Activity
+  Activity,
+  Clock,
+  BellOff
 } from "lucide-react";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
 import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
@@ -67,6 +69,8 @@ interface NotificationPreferences {
   notify_lead_limit_warnings: boolean;
   notify_facility_views: boolean;
   digest_time: string;
+  followup_reminders_enabled: boolean;
+  default_snooze_duration: string;
 }
 
 export default function ProviderSettingsPage() {
@@ -109,6 +113,8 @@ export default function ProviderSettingsPage() {
   const [notifyLeadLimitWarnings, setNotifyLeadLimitWarnings] = useState(true);
   const [notifyFacilityViews, setNotifyFacilityViews] = useState(false);
   const [digestTime, setDigestTime] = useState('09:00');
+  const [followupRemindersEnabled, setFollowupRemindersEnabled] = useState(true);
+  const [defaultSnoozeDuration, setDefaultSnoozeDuration] = useState('1_day');
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [notificationsSaved, setNotificationsSaved] = useState(false);
   
@@ -134,7 +140,7 @@ export default function ProviderSettingsPage() {
         return null;
       }
 
-      return data as NotificationPreferences | null;
+      return data as unknown as NotificationPreferences | null;
     },
   });
 
@@ -152,6 +158,8 @@ export default function ProviderSettingsPage() {
       setNotifyLeadLimitWarnings(notificationPrefs.notify_lead_limit_warnings ?? true);
       setNotifyFacilityViews(notificationPrefs.notify_facility_views ?? false);
       setDigestTime(notificationPrefs.digest_time || '09:00');
+      setFollowupRemindersEnabled(notificationPrefs.followup_reminders_enabled ?? true);
+      setDefaultSnoozeDuration(notificationPrefs.default_snooze_duration || '1_day');
     }
   }, [notificationPrefs]);
 
