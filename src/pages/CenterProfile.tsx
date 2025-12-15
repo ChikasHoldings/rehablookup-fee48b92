@@ -246,6 +246,15 @@ const CenterProfile = () => {
     contactFormRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Track interaction (call or website click)
+  const trackInteraction = (type: "call" | "website") => {
+    if (facility?.id) {
+      supabase.functions.invoke("track-interaction", {
+        body: { facilityId: facility.id, interactionType: type },
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -328,7 +337,11 @@ const CenterProfile = () => {
       {/* Sticky Mobile CTA */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card p-3 shadow-lg md:hidden">
         <div className="flex gap-2">
-          <a href={`tel:${facility.phone}`} className="flex-1">
+          <a 
+            href={`tel:${facility.phone}`} 
+            className="flex-1"
+            onClick={() => trackInteraction("call")}
+          >
             <Button size="sm" className="w-full gap-2">
               <Phone className="h-4 w-4" />
               Call Now
@@ -417,7 +430,10 @@ const CenterProfile = () => {
 
               {/* Desktop Actions */}
               <div className="hidden md:flex flex-col gap-2 shrink-0">
-                <a href={`tel:${facility.phone}`}>
+                <a 
+                  href={`tel:${facility.phone}`}
+                  onClick={() => trackInteraction("call")}
+                >
                   <Button size="sm" className="w-full gap-2">
                     <Phone className="h-4 w-4" />
                     Call Now
@@ -425,7 +441,12 @@ const CenterProfile = () => {
                 </a>
                 <div className="flex gap-2">
                   {facility.website && (
-                    <a href={facility.website} target="_blank" rel="noopener noreferrer">
+                    <a 
+                      href={facility.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      onClick={() => trackInteraction("website")}
+                    >
                       <Button variant="outline" size="sm" className="gap-1.5">
                         <Globe className="h-4 w-4" />
                         Website
