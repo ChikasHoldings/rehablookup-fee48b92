@@ -365,7 +365,6 @@ export default function ProviderLeadsPage() {
           )}
           onClick={() => setSourceFilter(sourceFilter === "qualified" ? "all" : "qualified")}
         >
-          <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-primary/10" />
           <CardHeader className="pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -377,14 +376,66 @@ export default function ProviderLeadsPage() {
           </CardHeader>
           <CardContent className="relative">
             {isLoading ? (
-              <Skeleton className="h-9 w-16" />
+              <Skeleton className="h-14 w-14 rounded-full" />
             ) : (
-              <div className="flex items-baseline gap-1">
-                <p className="text-3xl font-bold text-primary">{thisMonthQualifiedLeads.length}</p>
-                <span className="text-sm text-muted-foreground">/ {leadLimit}</span>
+              <div className="flex items-center gap-4">
+                {/* Progress Ring */}
+                <div className="relative h-14 w-14 flex-shrink-0">
+                  <svg className="h-14 w-14 -rotate-90" viewBox="0 0 56 56">
+                    {/* Background circle */}
+                    <circle
+                      cx="28"
+                      cy="28"
+                      r="24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="6"
+                      className="text-muted/30"
+                    />
+                    {/* Progress circle */}
+                    <circle
+                      cx="28"
+                      cy="28"
+                      r="24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      className={cn(
+                        "transition-all duration-500",
+                        thisMonthQualifiedLeads.length >= leadLimit 
+                          ? "text-destructive" 
+                          : thisMonthQualifiedLeads.length >= leadLimit * 0.8 
+                            ? "text-amber-500" 
+                            : "text-primary"
+                      )}
+                      strokeDasharray={`${Math.min((thisMonthQualifiedLeads.length / leadLimit) * 150.8, 150.8)} 150.8`}
+                    />
+                  </svg>
+                  {/* Center text */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className={cn(
+                      "text-sm font-bold",
+                      thisMonthQualifiedLeads.length >= leadLimit 
+                        ? "text-destructive" 
+                        : thisMonthQualifiedLeads.length >= leadLimit * 0.8 
+                          ? "text-amber-500" 
+                          : "text-primary"
+                    )}>
+                      {Math.round((thisMonthQualifiedLeads.length / leadLimit) * 100)}%
+                    </span>
+                  </div>
+                </div>
+                {/* Count */}
+                <div>
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-2xl font-bold text-primary">{thisMonthQualifiedLeads.length}</p>
+                    <span className="text-sm text-muted-foreground">/ {leadLimit}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Click to filter</p>
+                </div>
               </div>
             )}
-            <p className="text-xs text-muted-foreground mt-1">Click to filter</p>
           </CardContent>
         </Card>
 
