@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -14,7 +14,9 @@ import {
   FileEdit,
   Calendar,
   Phone,
-  Mail
+  Mail,
+  AlertTriangle,
+  BellOff
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +24,7 @@ import { useProviderData } from "@/hooks/useProviderData";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, differenceInHours, isPast } from "date-fns";
 import { 
   LeadUsageIndicator, 
   LeadLimitWarningBanner, 
@@ -324,6 +326,130 @@ export default function ProviderDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Leads Awaiting Follow-up Widget */}
+      {(() => {
+        const now = new Date();
+        const leadsAwaitingFollowup = recentLeads.filter(lead => {
+          if (lead.status !== 'new') return false;
+          const hoursSinceCreated = differenceInHours(now, new Date(lead.created_at));
+          return hoursSinceCreated >= 24;
+        });
+        
+        const snoozedLeads = leadsAwaitingFollowup.filter(
+          lead => lead.snooze_until && !isPast(new Date(lead.snooze_until))
+        );
+        const urgentLeads = leadsAwaitingFollowup.filter(
+          lead => !lead.snooze_until || isPast(new Date(lead.snooze_until))
+        );
+
+        if (leadsAwaitingFollowup.length === 0) return null;
+
+        return (
+          <Card className="border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50/50 to-background">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-semibold text-amber-800">
+                      {urgentLeads.length} Lead{urgentLeads.length !== 1 ? 's' : ''} Awaiting Follow-up
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      {urgentLeads.length > 0 
+                        ? "These leads have been waiting over 24 hours" 
+                        : "All leads are snoozed"}
+                      {snoozedLeads.length > 0 && ` • ${snoozedLeads.length} snoozed`}
+                    </p>
+                  </div>
+                </div>
+                <Button variant="default" size="sm" asChild className="gap-1.5 bg-amber-600 hover:bg-amber-700">
+                  <Link to="/provider/leads?status=new">
+                    <Phone className="h-3.5 w-3.5" />
+                    Contact Now
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            {urgentLeads.length > 0 && (
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  {urgentLeads.slice(0, 3).map((lead) => {
+                    const hoursWaiting = differenceInHours(now, new Date(lead.created_at));
+                    const urgencyLevel = hoursWaiting >= 72 ? 'critical' : hoursWaiting >= 48 ? 'high' : 'moderate';
+                    
+                    return (
+                      <button
+                        key={lead.id}
+                        onClick={() => handleLeadClick(lead)}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg border border-amber-200 bg-white hover:bg-amber-50 transition-colors group text-left"
+                      >
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
+                          urgencyLevel === 'critical' ? 'bg-red-100' : 
+                          urgencyLevel === 'high' ? 'bg-orange-100' : 'bg-amber-100'
+                        }`}>
+                          <span className={`text-sm font-semibold ${
+                            urgencyLevel === 'critical' ? 'text-red-700' : 
+                            urgencyLevel === 'high' ? 'text-orange-700' : 'text-amber-700'
+                          }`}>
+                            {lead.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-foreground text-sm truncate">{lead.name}</p>
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                              urgencyLevel === 'critical' ? 'bg-red-100 text-red-700' : 
+                              urgencyLevel === 'high' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {hoursWaiting}h
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                            <span className="flex items-center gap-1">
+                              {lead.preferred_contact === "call" ? (
+                                <Phone className="h-3 w-3" />
+                              ) : (
+                                <Mail className="h-3 w-3" />
+                              )}
+                              {lead.preferred_contact === "call" ? lead.phone : lead.email}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" asChild onClick={(e) => e.stopPropagation()}>
+                            <a href={`tel:${lead.phone}`}>
+                              <Phone className="h-3 w-3" />
+                              Call
+                            </a>
+                          </Button>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {urgentLeads.length > 3 && (
+                    <Button variant="ghost" size="sm" asChild className="w-full text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-50">
+                      <Link to="/provider/leads?status=new">
+                        +{urgentLeads.length - 3} more lead{urgentLeads.length - 3 !== 1 ? 's' : ''} awaiting follow-up
+                        <ArrowRight className="ml-1 h-3 w-3" />
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+                {snoozedLeads.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-amber-200 flex items-center gap-2 text-xs text-muted-foreground">
+                    <BellOff className="h-3.5 w-3.5" />
+                    <span>{snoozedLeads.length} lead{snoozedLeads.length !== 1 ? 's' : ''} with snoozed reminders</span>
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        );
+      })()}
 
       {/* Recent Activity */}
       <Card>
