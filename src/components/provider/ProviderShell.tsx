@@ -112,7 +112,7 @@ function ProviderShellContent() {
   const facility = selectedFacility || providerData?.facility;
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Fixed Header - z-50 to stay on top */}
       <div className="flex-shrink-0 z-50">
         <MemoizedHeader
