@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard } from "lucide-react";
+import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -380,6 +380,12 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
                 <p className="text-xs text-muted-foreground">Administrator</p>
               </div>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/admin/profile" className="flex items-center gap-2 cursor-pointer">
+                  <User className="h-4 w-4" />
+                  My Profile
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer">
                   <Settings className="h-4 w-4" />
