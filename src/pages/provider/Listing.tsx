@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -249,6 +249,32 @@ export default function ProviderListingPage() {
     },
     enabled: !!selectedFacility?.id,
   });
+
+  // Fetch provider profile email (for reply email default)
+  const { data: profileData } = useQuery({
+    queryKey: ["provider-profile"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+  
+  const profileEmail = profileData?.email || "";
+
+  // Check if the current reply email needs verification
+  const needsReplyEmailVerification = useMemo(() => {
+    if (!facility?.reply_email) return false;
+    const replyEmail = facility.reply_email.toLowerCase().trim();
+    const accountEmail = profileEmail.toLowerCase().trim();
+    // Only needs verification if it's different from account email and not already verified
+    return replyEmail !== accountEmail && !facility.reply_email_verified;
+  }, [facility?.reply_email, facility?.reply_email_verified, profileEmail]);
 
   // Update local facility state when data changes
   useEffect(() => {
@@ -1173,12 +1199,15 @@ export default function ProviderListingPage() {
                   </div>
                 </div>
                 
-                {/* Reply Email - Important for lead communication */}
+                {/* Reply Email - Lead replies go to this address */}
                 <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="reply_email" className="text-xs font-medium flex items-center gap-2">
-                      Reply Email <span className="text-destructive">*</span>
-                      {facility.reply_email_verified && (
+                      Reply Email
+                      {/* Show verified badge if using account email OR custom email is verified */}
+                      {(!facility.reply_email || 
+                        facility.reply_email.toLowerCase().trim() === profileEmail.toLowerCase().trim() ||
+                        facility.reply_email_verified) && (
                         <Badge variant="outline" className="gap-1 text-green-700 border-green-200 bg-green-500/10">
                           <ShieldCheck className="h-3 w-3" />
                           Verified
@@ -1186,6 +1215,16 @@ export default function ProviderListingPage() {
                       )}
                     </Label>
                   </div>
+                  
+                  {/* Show account email info */}
+                  {!facility.reply_email && profileEmail && (
+                    <div className="flex items-center gap-2 p-2 rounded bg-primary/5 border border-primary/10">
+                      <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                      <p className="text-xs text-muted-foreground">
+                        Using your account email: <span className="font-medium text-foreground">{profileEmail}</span>
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -1197,7 +1236,7 @@ export default function ProviderListingPage() {
                         onChange={(e) => {
                           updateField("reply_email", e.target.value);
                           // Reset verification state when email changes
-                          if (facility.reply_email_verified && e.target.value !== facilityData?.reply_email) {
+                          if (e.target.value !== facilityData?.reply_email) {
                             setCodeSent(false);
                             setVerificationCode("");
                             setVerificationError(null);
@@ -1205,16 +1244,17 @@ export default function ProviderListingPage() {
                         }}
                         onBlur={(e) => handleFieldBlur("reply_email", e.target.value)}
                         className={`h-10 pl-10 ${fieldErrors.reply_email && touchedFields.has("reply_email") ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                        placeholder="replies@facility.com"
+                        placeholder={profileEmail || "replies@facility.com"}
                       />
                     </div>
-                    {!facility.reply_email_verified && facility.reply_email && !fieldErrors.reply_email && (
+                    {/* Only show verify button if using a DIFFERENT email that's not verified */}
+                    {needsReplyEmailVerification && !fieldErrors.reply_email && (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         onClick={handleSendVerificationCode}
-                        disabled={isSendingCode || !facility.reply_email}
+                        disabled={isSendingCode}
                         className="h-10 gap-2"
                       >
                         {isSendingCode ? (
@@ -1225,7 +1265,7 @@ export default function ProviderListingPage() {
                         ) : (
                           <>
                             <Send className="h-4 w-4" />
-                            {codeSent ? "Resend Code" : "Verify"}
+                            {codeSent ? "Resend" : "Verify"}
                           </>
                         )}
                       </Button>
@@ -1236,8 +1276,8 @@ export default function ProviderListingPage() {
                     <p className="text-xs text-destructive">{fieldErrors.reply_email}</p>
                   )}
 
-                  {/* Verification code input */}
-                  {codeSent && !facility.reply_email_verified && (
+                  {/* Verification code input - only show when needed */}
+                  {codeSent && needsReplyEmailVerification && (
                     <div className="space-y-2 pt-2 border-t">
                       <Label className="text-xs font-medium">Enter 6-digit verification code</Label>
                       <div className="flex gap-2">
@@ -1268,7 +1308,7 @@ export default function ProviderListingPage() {
                           ) : (
                             <>
                               <CheckCircle className="h-4 w-4" />
-                              Verify Code
+                              Verify
                             </>
                           )}
                         </Button>
@@ -1282,22 +1322,14 @@ export default function ProviderListingPage() {
                     </div>
                   )}
 
-                  {/* Warning if email changed and was previously verified */}
-                  {facilityData?.reply_email_verified && 
-                   facility.reply_email !== facilityData?.reply_email && 
-                   facility.reply_email && (
-                    <div className="flex items-start gap-2 p-2 rounded bg-amber-500/10 border border-amber-200">
-                      <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-amber-700">
-                        You've changed your reply email. Please verify the new address to continue sending emails to leads.
-                      </p>
-                    </div>
-                  )}
-
                   <p className="text-xs text-muted-foreground">
-                    {facility.reply_email_verified 
-                      ? "Lead replies will be sent directly to this verified email address."
-                      : "Verify your email to enable sending messages to leads. Replies will go to this address."}
+                    {!facility.reply_email 
+                      ? "Leave blank to use your account email for lead replies."
+                      : facility.reply_email.toLowerCase().trim() === profileEmail.toLowerCase().trim()
+                        ? "Using your account email for lead replies."
+                        : facility.reply_email_verified 
+                          ? "Lead replies will be sent to this verified custom email."
+                          : "Verify this email to receive lead replies here."}
                   </p>
                 </div>
                 
