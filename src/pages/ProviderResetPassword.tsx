@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,12 @@ import { Lock, ArrowRight, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
+
+const passwordSchema = z.string()
+  .min(8, { message: "Password must be at least 8 characters long" })
+  .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
+  .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
+  .regex(/[0-9]/, { message: "Password must contain at least one number" });
 
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
@@ -28,57 +35,46 @@ export default function ProviderResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have a valid recovery session
+    // Set up auth state listener FIRST to catch PASSWORD_RECOVERY event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "PASSWORD_RECOVERY") {
+          setIsValidSession(true);
+          setIsCheckingSession(false);
+        } else if (event === "SIGNED_IN" && session) {
+          // User is signed in (either from recovery link or existing session)
+          setIsValidSession(true);
+          setIsCheckingSession(false);
+        }
+      }
+    );
+
+    // Then check for existing session
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Check for recovery event
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          if (event === "PASSWORD_RECOVERY") {
-            setIsValidSession(true);
-          }
-        }
-      );
-
-      // If we have a session, it's valid
+      // If we have a session, it's valid for password reset
       if (session) {
         setIsValidSession(true);
       }
       
       setIsCheckingSession(false);
-
-      return () => subscription.unsubscribe();
     };
 
     checkSession();
-  }, []);
 
-  const validatePassword = (password: string): string | null => {
-    if (password.length < 8) {
-      return "Password must be at least 8 characters long";
-    }
-    if (!/[A-Z]/.test(password)) {
-      return "Password must contain at least one uppercase letter";
-    }
-    if (!/[a-z]/.test(password)) {
-      return "Password must contain at least one lowercase letter";
-    }
-    if (!/[0-9]/.test(password)) {
-      return "Password must contain at least one number";
-    }
-    return null;
-  };
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate password
-    const passwordError = validatePassword(password);
-    if (passwordError) {
+    // Validate password with zod
+    const result = passwordSchema.safeParse(password);
+    if (!result.success) {
       toast({
         title: "Invalid Password",
-        description: passwordError,
+        description: result.error.errors[0]?.message || "Please enter a valid password.",
         variant: "destructive",
       });
       return;
