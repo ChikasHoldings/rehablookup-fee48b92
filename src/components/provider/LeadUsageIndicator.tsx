@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, TrendingUp, Zap, X } from "lucide-react";
+import { AlertCircle, TrendingUp, Zap, X, Lock, Crown, Users } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -207,5 +207,51 @@ export function BasicPlanBanner() {
         </Button>
       </AlertDescription>
     </Alert>
+  );
+}
+
+// Lead Limit Overlay - Shows over lead table/rows when limit is reached
+interface LeadLimitOverlayProps {
+  usedLeads: number;
+  leadLimit: number;
+  hiddenLeadsCount: number;
+}
+
+export function LeadLimitOverlay({ usedLeads, leadLimit, hiddenLeadsCount }: LeadLimitOverlayProps) {
+  const isAtLimit = usedLeads >= leadLimit;
+  
+  if (!isAtLimit || hiddenLeadsCount === 0) return null;
+
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+      <div className="max-w-md w-full mx-4 p-8 bg-card border border-border rounded-2xl shadow-xl text-center">
+        <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
+          <Lock className="h-8 w-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-bold text-foreground mb-2">
+          Monthly Lead Limit Reached
+        </h3>
+        <p className="text-muted-foreground mb-6">
+          You've used all {leadLimit} leads this month. 
+          {hiddenLeadsCount > 0 && (
+            <span className="block mt-2 font-medium text-foreground">
+              {hiddenLeadsCount} new {hiddenLeadsCount === 1 ? 'lead is' : 'leads are'} waiting for you!
+            </span>
+          )}
+        </p>
+        
+        <div className="space-y-3">
+          <Button size="lg" className="w-full gap-2" asChild>
+            <Link to="/provider/billing">
+              <Crown className="h-5 w-5" />
+              Upgrade to Unlock Leads
+            </Link>
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Professional plan: 25 leads/month • Featured plan: 75 leads/month
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
