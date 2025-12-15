@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
-import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Radio } from "lucide-react";
+import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -67,12 +67,9 @@ export default function AdminAnalytics() {
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedPlan, setSelectedPlan] = useState<string>("All");
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "leads", direction: "desc" });
-  const [isLive, setIsLive] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  // Realtime subscription for live updates
+  // Realtime subscription for live updates - always active
   const invalidateAnalyticsQueries = useCallback(() => {
-    setLastUpdate(new Date());
     queryClient.invalidateQueries({ queryKey: ["admin-analytics-views"] });
     queryClient.invalidateQueries({ queryKey: ["admin-analytics-interactions"] });
     queryClient.invalidateQueries({ queryKey: ["admin-analytics-leads"] });
@@ -80,7 +77,6 @@ export default function AdminAnalytics() {
   }, [queryClient]);
 
   useEffect(() => {
-    if (!isLive) return;
 
     // Subscribe to leads table changes
     const leadsChannel = supabase
@@ -144,7 +140,7 @@ export default function AdminAnalytics() {
       supabase.removeChannel(interactionsChannel);
       supabase.removeChannel(facilitiesChannel);
     };
-  }, [isLive, invalidateAnalyticsQueries]);
+  }, [invalidateAnalyticsQueries]);
 
   // Calculate date range based on preset
   const dateRange = useMemo(() => {
@@ -524,32 +520,9 @@ export default function AdminAnalytics() {
           <h1 className="text-2xl font-bold text-slate-900">Analytics Dashboard</h1>
           <p className="text-muted-foreground mt-1">Platform performance metrics and insights</p>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Live indicator */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={isLive ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsLive(!isLive)}
-                className={cn(
-                  "gap-2 transition-all",
-                  isLive && "bg-emerald-600 hover:bg-emerald-700"
-                )}
-              >
-                <Radio className={cn("h-3.5 w-3.5", isLive && "animate-pulse")} />
-                {isLive ? "Live" : "Paused"}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isLive ? "Real-time updates enabled" : "Click to enable live updates"}</p>
-              {isLive && <p className="text-xs text-muted-foreground">Last update: {format(lastUpdate, "HH:mm:ss")}</p>}
-            </TooltipContent>
-          </Tooltip>
-          <Badge variant="outline" className="text-xs font-normal">
-            {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
-          </Badge>
-        </div>
+        <Badge variant="outline" className="text-xs font-normal">
+          {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
+        </Badge>
       </div>
 
       {/* Filter Bar */}
