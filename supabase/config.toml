@@ -71,3 +71,9 @@ verify_jwt = false
 
 [functions.get-revenue-stats]
 verify_jwt = true
+
+[functions.get-provider-subscription]
+verify_jwt = true
+
+[functions.send-admin-notification]
+verify_jwt = true

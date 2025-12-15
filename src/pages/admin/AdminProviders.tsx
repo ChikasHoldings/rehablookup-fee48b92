@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -21,17 +21,23 @@ import {
   Calendar,
   FileText,
   TrendingUp,
-  AlertTriangle,
   RefreshCw,
   ExternalLink,
   MessageSquare,
+  CreditCard,
+  Receipt,
+  Send,
+  Inbox,
+  Crown,
+  DollarSign,
+  Download,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +58,15 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type Facility = {
   id: string;
@@ -80,14 +95,38 @@ type Facility = {
   user_id: string;
 };
 
-type FacilityServices = {
+type Lead = {
   id: string;
-  service_name: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  created_at: string;
+  email_verified: boolean | null;
+  source: string | null;
+  urgency: string | null;
 };
 
-type FacilityInsurance = {
-  id: string;
-  insurance_name: string;
+type SubscriptionData = {
+  plan: string;
+  plan_name: string;
+  subscribed: boolean;
+  subscription: {
+    id: string;
+    status: string;
+    current_period_start: string;
+    current_period_end: string;
+    cancel_at_period_end: boolean;
+  } | null;
+  payments: Array<{
+    id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    created: string;
+    invoice_pdf: string | null;
+    description: string;
+  }>;
 };
 
 const ITEMS_PER_PAGE = 15;
@@ -100,6 +139,13 @@ export default function AdminProviders() {
   const [adminNotes, setAdminNotes] = useState("");
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [detailTab, setDetailTab] = useState("overview");
+  
+  // Contact form state
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [sendEmail, setSendEmail] = useState(true);
+  const [sendInApp, setSendInApp] = useState(true);
 
   // Fetch all status counts
   const { data: statusCounts } = useQuery({
@@ -193,32 +239,49 @@ export default function AdminProviders() {
     },
   });
 
-  // Fetch services for selected provider
-  const { data: providerServices } = useQuery({
-    queryKey: ["admin-provider-services", selectedProvider?.id],
+  // Fetch provider profile for email
+  const { data: providerProfile } = useQuery({
+    queryKey: ["admin-provider-profile", selectedProvider?.user_id],
     queryFn: async () => {
-      if (!selectedProvider?.id) return [];
+      if (!selectedProvider?.user_id) return null;
       const { data } = await supabase
-        .from("facility_services")
+        .from("profiles")
         .select("*")
-        .eq("facility_id", selectedProvider.id);
-      return data as FacilityServices[];
+        .eq("user_id", selectedProvider.user_id)
+        .maybeSingle();
+      return data;
     },
-    enabled: !!selectedProvider?.id,
+    enabled: !!selectedProvider?.user_id,
   });
 
-  // Fetch insurance for selected provider
-  const { data: providerInsurance } = useQuery({
-    queryKey: ["admin-provider-insurance", selectedProvider?.id],
+  // Fetch subscription data for selected provider
+  const { data: subscriptionData, isLoading: isLoadingSubscription } = useQuery({
+    queryKey: ["admin-provider-subscription", selectedProvider?.user_id],
+    queryFn: async () => {
+      if (!selectedProvider?.user_id) return null;
+      const { data, error } = await supabase.functions.invoke("get-provider-subscription", {
+        body: { userId: selectedProvider.user_id },
+      });
+      if (error) throw error;
+      return data as SubscriptionData;
+    },
+    enabled: !!selectedProvider?.user_id && showDetailDialog,
+  });
+
+  // Fetch leads for selected provider
+  const { data: providerLeads, isLoading: isLoadingLeads } = useQuery({
+    queryKey: ["admin-provider-leads", selectedProvider?.id],
     queryFn: async () => {
       if (!selectedProvider?.id) return [];
       const { data } = await supabase
-        .from("facility_insurance")
+        .from("leads")
         .select("*")
-        .eq("facility_id", selectedProvider.id);
-      return data as FacilityInsurance[];
+        .eq("facility_id", selectedProvider.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return data as Lead[];
     },
-    enabled: !!selectedProvider?.id,
+    enabled: !!selectedProvider?.id && showDetailDialog,
   });
 
   // Update provider mutation
@@ -252,6 +315,40 @@ export default function AdminProviders() {
     },
     onError: () => {
       toast.error("Failed to update provider");
+    },
+  });
+
+  // Send notification mutation
+  const sendNotification = useMutation({
+    mutationFn: async () => {
+      if (!selectedProvider || !contactSubject || !contactMessage) {
+        throw new Error("Missing required fields");
+      }
+      
+      const { data, error } = await supabase.functions.invoke("send-admin-notification", {
+        body: {
+          providerUserId: selectedProvider.user_id,
+          facilityId: selectedProvider.id,
+          subject: contactSubject,
+          message: contactMessage,
+          sendEmail,
+          sendInApp,
+          providerEmail: providerProfile?.email || selectedProvider.email,
+          providerName: providerProfile?.first_name || selectedProvider.name,
+        },
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Message sent successfully");
+      setContactSubject("");
+      setContactMessage("");
+      setDetailTab("overview");
+    },
+    onError: (error) => {
+      toast.error(`Failed to send message: ${error.message}`);
     },
   });
 
@@ -317,6 +414,7 @@ export default function AdminProviders() {
   const openProviderDetail = (provider: Facility) => {
     setSelectedProvider(provider);
     setAdminNotes(provider.admin_notes || "");
+    setDetailTab("overview");
     setShowDetailDialog(true);
   };
 
@@ -338,6 +436,31 @@ export default function AdminProviders() {
       return <Badge variant="secondary" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-200"><Clock className="h-3 w-3" />Pending</Badge>;
     }
     return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Rejected</Badge>;
+  };
+
+  const getPlanBadge = (plan: string) => {
+    if (plan === "featured") {
+      return <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white gap-1"><Crown className="h-3 w-3" />Featured</Badge>;
+    }
+    if (plan === "professional") {
+      return <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white gap-1"><Star className="h-3 w-3" />Professional</Badge>;
+    }
+    return <Badge variant="secondary" className="gap-1">Basic</Badge>;
+  };
+
+  const getLeadStatusBadge = (status: string) => {
+    switch (status) {
+      case "new":
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-700">New</Badge>;
+      case "contacted":
+        return <Badge className="bg-emerald-100 text-emerald-700">Contacted</Badge>;
+      case "converted":
+        return <Badge className="bg-purple-100 text-purple-700">Converted</Badge>;
+      case "lost":
+        return <Badge variant="destructive">Lost</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   return (
@@ -645,7 +768,7 @@ export default function AdminProviders() {
 
       {/* Provider Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-0">
             <div className="flex items-start gap-4">
               <Avatar className="h-16 w-16 border-2 border-background shadow-lg">
@@ -660,232 +783,493 @@ export default function AdminProviders() {
                   {selectedProvider?.verified && <BadgeCheck className="h-5 w-5 text-blue-500" />}
                   {selectedProvider?.featured && <Star className="h-5 w-5 text-amber-500 fill-amber-500" />}
                 </div>
-                <p className="text-muted-foreground flex items-center gap-1 mt-1">
+                <p className="text-muted-foreground flex items-center gap-1 mt-1 text-sm">
                   <MapPin className="h-4 w-4" />
-                  {selectedProvider?.address}, {selectedProvider?.city}, {selectedProvider?.state} {selectedProvider?.zip_code}
+                  {selectedProvider?.city}, {selectedProvider?.state}
                 </p>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
                   {selectedProvider && getStatusBadge(selectedProvider)}
+                  {subscriptionData && getPlanBadge(subscriptionData.plan)}
                   <Badge variant="outline">{selectedProvider?.facility_type}</Badge>
                 </div>
               </div>
             </div>
           </DialogHeader>
 
-          <ScrollArea className="max-h-[calc(90vh-200px)]">
-            <div className="p-6 space-y-6">
-              {/* Quick Actions */}
-              <div className="flex flex-wrap gap-2">
-                {selectedProvider?.status === "pending" && (
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
-                    handleStatusChange(selectedProvider.id, "approved");
-                    setShowDetailDialog(false);
-                  }}>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
-                  </Button>
-                )}
-                {selectedProvider?.suspended ? (
-                  <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-300" onClick={() => {
-                    handleReactivate(selectedProvider.id);
-                    setShowDetailDialog(false);
-                  }}>
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Reactivate
-                  </Button>
-                ) : selectedProvider && (
-                  <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => {
-                    handleSuspend(selectedProvider.id);
-                    setShowDetailDialog(false);
-                  }}>
-                    <Ban className="h-4 w-4 mr-2" />
-                    Suspend
-                  </Button>
-                )}
-                {selectedProvider && (
+          <Tabs value={detailTab} onValueChange={setDetailTab} className="flex-1">
+            <div className="px-6 border-b">
+              <TabsList className="h-12 w-full justify-start bg-transparent border-none p-0 gap-4">
+                <TabsTrigger value="overview" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="leads" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
+                  <Inbox className="h-4 w-4 mr-2" />
+                  Leads
+                  <Badge variant="secondary" className="ml-2 h-5">{providerLeads?.length || 0}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="subscription" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Subscription
+                </TabsTrigger>
+                <TabsTrigger value="contact" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
+                  <Send className="h-4 w-4 mr-2" />
+                  Contact
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <ScrollArea className="max-h-[calc(90vh-220px)]">
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="p-6 space-y-6 m-0">
+                {/* Quick Actions */}
+                <div className="flex flex-wrap gap-2">
+                  {selectedProvider?.status === "pending" && (
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
+                      handleStatusChange(selectedProvider.id, "approved");
+                      setShowDetailDialog(false);
+                    }}>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Approve
+                    </Button>
+                  )}
+                  {selectedProvider?.suspended ? (
+                    <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-300" onClick={() => {
+                      handleReactivate(selectedProvider.id);
+                      setShowDetailDialog(false);
+                    }}>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Reactivate
+                    </Button>
+                  ) : selectedProvider && (
+                    <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => {
+                      handleSuspend(selectedProvider.id);
+                      setShowDetailDialog(false);
+                    }}>
+                      <Ban className="h-4 w-4 mr-2" />
+                      Suspend
+                    </Button>
+                  )}
+                  {selectedProvider && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => handleToggleVerified(selectedProvider.id, selectedProvider.verified)}>
+                        <Shield className="h-4 w-4 mr-2" />
+                        {selectedProvider.verified ? "Remove Verified" : "Mark Verified"}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleToggleFeatured(selectedProvider.id, selectedProvider.featured)}>
+                        <Star className="h-4 w-4 mr-2" />
+                        {selectedProvider.featured ? "Remove Featured" : "Mark Featured"}
+                      </Button>
+                    </>
+                  )}
+                  {selectedProvider?.slug && (
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={`/center/${selectedProvider.slug}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View Public Page
+                      </a>
+                    </Button>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Contact Information */}
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Contact Information
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Phone</p>
+                        <p className="font-medium">{selectedProvider?.phone}</p>
+                      </div>
+                    </div>
+                    {(providerProfile?.email || selectedProvider?.email) && (
+                      <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Email</p>
+                          <p className="font-medium truncate">{providerProfile?.email || selectedProvider?.email}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedProvider?.website && (
+                      <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg sm:col-span-2">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">Website</p>
+                          <a href={selectedProvider.website} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline truncate block">
+                            {selectedProvider.website}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Facility Details */}
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Facility Details
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <p className="text-xs text-muted-foreground">Total Leads</p>
+                      <p className="text-xl font-bold text-primary">{leadCounts?.[selectedProvider?.id || ""] || 0}</p>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <p className="text-xs text-muted-foreground">Bed Count</p>
+                      <p className="text-xl font-bold">{selectedProvider?.bed_count || "N/A"}</p>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <p className="text-xs text-muted-foreground">Gender Served</p>
+                      <p className="text-lg font-semibold capitalize">{selectedProvider?.gender_served || "All"}</p>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg text-center">
+                      <p className="text-xs text-muted-foreground">Lead Limit</p>
+                      <p className="text-xl font-bold">{selectedProvider?.lead_limit_override || "Default"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {selectedProvider?.description && (
                   <>
-                    <Button size="sm" variant="outline" onClick={() => handleToggleVerified(selectedProvider.id, selectedProvider.verified)}>
-                      <Shield className="h-4 w-4 mr-2" />
-                      {selectedProvider.verified ? "Remove Verified" : "Mark Verified"}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleToggleFeatured(selectedProvider.id, selectedProvider.featured)}>
-                      <Star className="h-4 w-4 mr-2" />
-                      {selectedProvider.featured ? "Remove Featured" : "Mark Featured"}
-                    </Button>
+                    <Separator />
+                    <div>
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Description
+                      </h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{selectedProvider.description}</p>
+                    </div>
                   </>
                 )}
-                {selectedProvider?.email && (
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={`mailto:${selectedProvider.email}`}>
-                      <Mail className="h-4 w-4 mr-2" />
-                      Contact
-                    </a>
-                  </Button>
-                )}
-                {selectedProvider?.slug && (
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={`/center/${selectedProvider.slug}`} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View Public Page
-                    </a>
-                  </Button>
-                )}
-              </div>
 
-              <Separator />
+                <Separator />
 
-              {/* Contact Information */}
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Contact Information
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Phone</p>
-                      <p className="font-medium">{selectedProvider?.phone}</p>
-                    </div>
+                {/* Timestamps */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Created</p>
+                    <p className="font-medium">{selectedProvider ? format(new Date(selectedProvider.created_at), "PPP") : ""}</p>
                   </div>
-                  {selectedProvider?.email && (
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Email</p>
-                        <p className="font-medium truncate">{selectedProvider.email}</p>
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">Last Updated</p>
+                    <p className="font-medium">{selectedProvider ? format(new Date(selectedProvider.updated_at), "PPP") : ""}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Admin Notes */}
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Admin Notes
+                  </h3>
+                  <Textarea
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="Add internal notes about this provider..."
+                    rows={4}
+                    className="resize-none"
+                  />
+                  <div className="flex justify-end mt-3">
+                    <Button onClick={handleSaveNotes} size="sm">
+                      Save Notes
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Leads Tab */}
+              <TabsContent value="leads" className="p-6 m-0">
+                {isLoadingLeads ? (
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
+                  </div>
+                ) : providerLeads && providerLeads.length > 0 ? (
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead>Lead</TableHead>
+                          <TableHead>Contact</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Source</TableHead>
+                          <TableHead>Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {providerLeads.map((lead) => (
+                          <TableRow key={lead.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{lead.name}</p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  {lead.email_verified && <BadgeCheck className="h-3 w-3 text-emerald-500" />}
+                                  {lead.email}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <p className="text-sm">{lead.phone}</p>
+                            </TableCell>
+                            <TableCell>
+                              {getLeadStatusBadge(lead.status)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {lead.source || "direct"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <p className="text-sm text-muted-foreground">
+                                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                              </p>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Inbox className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="text-muted-foreground">No leads received yet</p>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Subscription Tab */}
+              <TabsContent value="subscription" className="p-6 space-y-6 m-0">
+                {isLoadingSubscription ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-48 w-full" />
+                  </div>
+                ) : subscriptionData ? (
+                  <>
+                    {/* Current Plan */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <CreditCard className="h-5 w-5" />
+                          Current Plan
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            {getPlanBadge(subscriptionData.plan)}
+                            <div>
+                              <p className="font-semibold">{subscriptionData.plan_name}</p>
+                              {subscriptionData.subscription ? (
+                                <p className="text-sm text-muted-foreground">
+                                  Renews {format(new Date(subscriptionData.subscription.current_period_end), "PPP")}
+                                  {subscriptionData.subscription.cancel_at_period_end && (
+                                    <span className="text-destructive ml-2">(Cancels at period end)</span>
+                                  )}
+                                </p>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">Free plan - no active subscription</p>
+                              )}
+                            </div>
+                          </div>
+                          <Badge variant={subscriptionData.subscribed ? "default" : "secondary"}>
+                            {subscriptionData.subscribed ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Payment History */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Receipt className="h-5 w-5" />
+                          Payment History
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {subscriptionData.payments.length > 0 ? (
+                          <div className="border rounded-lg overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                  <TableHead>Date</TableHead>
+                                  <TableHead>Description</TableHead>
+                                  <TableHead>Amount</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead></TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {subscriptionData.payments.map((payment) => (
+                                  <TableRow key={payment.id}>
+                                    <TableCell>
+                                      {format(new Date(payment.created), "MMM d, yyyy")}
+                                    </TableCell>
+                                    <TableCell>{payment.description}</TableCell>
+                                    <TableCell>
+                                      <span className="font-medium">
+                                        ${payment.amount.toFixed(2)} {payment.currency.toUpperCase()}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant={payment.status === "paid" ? "default" : "secondary"} className={payment.status === "paid" ? "bg-emerald-100 text-emerald-700" : ""}>
+                                        {payment.status}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      {payment.invoice_pdf && (
+                                        <Button size="sm" variant="ghost" asChild>
+                                          <a href={payment.invoice_pdf} target="_blank" rel="noopener noreferrer">
+                                            <Download className="h-4 w-4" />
+                                          </a>
+                                        </Button>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            <DollarSign className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                            <p className="text-muted-foreground">No payment history</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <CreditCard className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="text-muted-foreground">Unable to load subscription data</p>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Contact Tab */}
+              <TabsContent value="contact" className="p-6 space-y-6 m-0">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Send className="h-5 w-5" />
+                      Send Message to Provider
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="contact-subject">Subject</Label>
+                      <Input
+                        id="contact-subject"
+                        placeholder="Enter message subject..."
+                        value={contactSubject}
+                        onChange={(e) => setContactSubject(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="contact-message">Message</Label>
+                      <Textarea
+                        id="contact-message"
+                        placeholder="Write your message to the provider..."
+                        value={contactMessage}
+                        onChange={(e) => setContactMessage(e.target.value)}
+                        rows={6}
+                        className="resize-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                      <Label>Delivery Method</Label>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="send-email"
+                            checked={sendEmail}
+                            onCheckedChange={(checked) => setSendEmail(!!checked)}
+                          />
+                          <Label htmlFor="send-email" className="text-sm font-normal flex items-center gap-1">
+                            <Mail className="h-4 w-4" />
+                            Email
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="send-inapp"
+                            checked={sendInApp}
+                            onCheckedChange={(checked) => setSendInApp(!!checked)}
+                          />
+                          <Label htmlFor="send-inapp" className="text-sm font-normal flex items-center gap-1">
+                            <MessageSquare className="h-4 w-4" />
+                            In-App Notification
+                          </Label>
+                        </div>
                       </div>
                     </div>
-                  )}
-                  {selectedProvider?.website && (
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg sm:col-span-2">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-muted-foreground">Website</p>
-                        <a href={selectedProvider.website} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline truncate block">
-                          {selectedProvider.website}
+
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        onClick={() => sendNotification.mutate()}
+                        disabled={!contactSubject || !contactMessage || (!sendEmail && !sendInApp) || sendNotification.isPending}
+                      >
+                        {sendNotification.isPending ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-2" />
+                            Send Message
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Contact */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Quick Contact</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {(providerProfile?.email || selectedProvider?.email) && (
+                      <Button variant="outline" className="w-full justify-start" asChild>
+                        <a href={`mailto:${providerProfile?.email || selectedProvider?.email}`}>
+                          <Mail className="h-4 w-4 mr-2" />
+                          Email: {providerProfile?.email || selectedProvider?.email}
                         </a>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Facility Details */}
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Facility Details
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="p-3 bg-muted/50 rounded-lg text-center">
-                    <p className="text-xs text-muted-foreground">Leads Total</p>
-                    <p className="text-xl font-bold text-primary">{leadCounts?.[selectedProvider?.id || ""] || 0}</p>
-                  </div>
-                  <div className="p-3 bg-muted/50 rounded-lg text-center">
-                    <p className="text-xs text-muted-foreground">Bed Count</p>
-                    <p className="text-xl font-bold">{selectedProvider?.bed_count || "N/A"}</p>
-                  </div>
-                  <div className="p-3 bg-muted/50 rounded-lg text-center">
-                    <p className="text-xs text-muted-foreground">Gender Served</p>
-                    <p className="text-lg font-semibold capitalize">{selectedProvider?.gender_served || "All"}</p>
-                  </div>
-                  <div className="p-3 bg-muted/50 rounded-lg text-center">
-                    <p className="text-xs text-muted-foreground">Lead Limit</p>
-                    <p className="text-xl font-bold">{selectedProvider?.lead_limit_override || "Default"}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              {selectedProvider?.description && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="font-semibold mb-3 flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Description
-                    </h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{selectedProvider.description}</p>
-                  </div>
-                </>
-              )}
-
-              {/* Services */}
-              {providerServices && providerServices.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="font-semibold mb-3 flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Services ({providerServices.length})
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {providerServices.map((service) => (
-                        <Badge key={service.id} variant="outline">{service.service_name}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Insurance */}
-              {providerInsurance && providerInsurance.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="font-semibold mb-3 flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Accepted Insurance ({providerInsurance.length})
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {providerInsurance.map((insurance) => (
-                        <Badge key={insurance.id} variant="secondary">{insurance.insurance_name}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <Separator />
-
-              {/* Timestamps */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Created</p>
-                  <p className="font-medium">{selectedProvider ? format(new Date(selectedProvider.created_at), "PPP") : ""}</p>
-                </div>
-                <div className="p-3 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Last Updated</p>
-                  <p className="font-medium">{selectedProvider ? format(new Date(selectedProvider.updated_at), "PPP") : ""}</p>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Admin Notes */}
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Admin Notes
-                </h3>
-                <Textarea
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  placeholder="Add internal notes about this provider..."
-                  rows={4}
-                  className="resize-none"
-                />
-                <div className="flex justify-end mt-3">
-                  <Button onClick={handleSaveNotes} size="sm">
-                    Save Notes
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </ScrollArea>
+                      </Button>
+                    )}
+                    {selectedProvider?.phone && (
+                      <Button variant="outline" className="w-full justify-start" asChild>
+                        <a href={`tel:${selectedProvider.phone}`}>
+                          <Phone className="h-4 w-4 mr-2" />
+                          Call: {selectedProvider.phone}
+                        </a>
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
