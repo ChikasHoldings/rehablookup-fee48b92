@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, memo } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, ShieldX } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
@@ -21,18 +21,37 @@ const MemoizedHeader = memo(AdminHeader);
 const MemoizedSidebar = memo(AdminSidebar);
 
 const mobileNavItems = [
-  { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
-  { to: "/admin/providers", icon: Building2, label: "Providers" },
-  { to: "/admin/leads", icon: Users, label: "Leads" },
-  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions" },
-  { to: "/admin/featured", icon: Star, label: "Featured" },
-  { to: "/admin/users", icon: Users, label: "User Mgmt" },
-  { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log" },
-  { to: "/admin/settings", icon: Settings, label: "Settings" },
+  { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
+  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
+  { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
+  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
+  { to: "/admin/featured", icon: Star, label: "Featured", permission: "featured" },
+  { to: "/admin/users", icon: Users, label: "User Mgmt", permission: "users" },
+  { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
+  { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
 ];
 
+function AccessDenied() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full py-20">
+      <div className="bg-destructive/10 p-4 rounded-full mb-4">
+        <ShieldX className="h-12 w-12 text-destructive" />
+      </div>
+      <h2 className="text-xl font-semibold text-slate-900 mb-2">Access Denied</h2>
+      <p className="text-slate-600 text-center max-w-md">
+        You don't have permission to access this page. Contact a Super Admin to request access.
+      </p>
+      <Link to="/admin">
+        <Button variant="outline" className="mt-6">
+          Return to Dashboard
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
 export function AdminShell() {
-  const { user, isAdmin, isLoading, logout } = useAdminAuth();
+  const { user, isAdmin, isSuperAdmin, hasPermission, canAccessRoute, isLoading, logout } = useAdminAuth();
   const mainContentRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -55,18 +74,26 @@ export function AdminShell() {
     return null;
   }
 
+  // Check if user can access current route
+  const hasRouteAccess = canAccessRoute(location.pathname);
+
+  // Filter mobile nav items based on permissions
+  const visibleNavItems = mobileNavItems.filter(
+    (item) => isSuperAdmin || item.permission === "dashboard" || hasPermission(item.permission)
+  );
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-100">
       <MemoizedHeader userEmail={user?.email} onLogout={logout} />
       
       <div className="flex flex-1">
-        <MemoizedSidebar />
+        <MemoizedSidebar isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />
         
         <main
           ref={mainContentRef}
           className="flex-1 overflow-y-auto h-[calc(100vh-4rem)] p-4 lg:p-6"
         >
-          <Outlet />
+          {hasRouteAccess ? <Outlet /> : <AccessDenied />}
         </main>
       </div>
 
@@ -83,7 +110,7 @@ export function AdminShell() {
               <span className="text-lg font-bold">Admin Menu</span>
             </div>
             <nav className="p-4 space-y-1">
-              {mobileNavItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = item.end
                   ? location.pathname === item.to
