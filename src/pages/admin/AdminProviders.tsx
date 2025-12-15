@@ -390,14 +390,21 @@ export default function AdminProviders() {
       const { error } = await supabase.from("facilities").update(updates).eq("id", id);
       if (error) throw error;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("admin_audit_log").insert({
-        admin_user_id: user?.id,
-        action_type: actionType,
-        target_type: "facility",
-        target_id: id,
-        details: updates,
-      });
+      // Log admin action (non-blocking - don't fail the main operation if audit fails)
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase.from("admin_audit_log").insert({
+            admin_user_id: user.id,
+            action_type: actionType,
+            target_type: "facility",
+            target_id: id,
+            details: updates,
+          });
+        }
+      } catch (auditError) {
+        console.error("Failed to log admin action:", auditError);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-providers"] });
@@ -405,7 +412,8 @@ export default function AdminProviders() {
       queryClient.invalidateQueries({ queryKey: ["admin-providers-count"] });
       toast.success("Provider updated successfully");
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Provider update failed:", error);
       toast.error("Failed to update provider");
     },
   });
