@@ -708,13 +708,13 @@ export default function ProviderLeadsPage() {
                         <TableCell>
                           <div className={isLocked ? "blur-sm" : ""}>
                             {lead.source === "Request Help Page" ? (
-                              <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-0">
-                                <Sparkles className="h-3 w-3" />
+                              <Badge className="gap-1.5 text-xs font-semibold bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30 shadow-sm">
+                                <Sparkles className="h-3.5 w-3.5" />
                                 Qualified
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="gap-1 text-xs">
-                                <FileText className="h-3 w-3" />
+                              <Badge variant="outline" className="gap-1.5 text-xs font-medium bg-muted/50 border-border">
+                                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                                 Direct
                               </Badge>
                             )}
