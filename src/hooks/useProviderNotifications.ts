@@ -47,8 +47,7 @@ export function useProviderNotifications() {
           schema: "public",
           table: "provider_notifications",
         },
-        (payload) => {
-          console.log("Notification realtime update:", payload.eventType);
+        () => {
           queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
         }
       )

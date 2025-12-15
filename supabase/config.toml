@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.send-followup-reminders]
 verify_jwt = false
+
+[functions.send-support-request]
+verify_jwt = true

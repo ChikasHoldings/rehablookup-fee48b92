@@ -115,19 +115,17 @@ export default function ProviderHelpPage() {
     setIsSubmitting(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Log the support request (in production, this would send an email)
-      console.log("Support request submitted:", {
-        userId: session?.user?.id,
-        userEmail: session?.user?.email,
-        category: contactCategory,
-        subject: contactSubject,
-        message: contactMessage,
+      const { error } = await supabase.functions.invoke("send-support-request", {
+        body: {
+          category: contactCategory,
+          subject: contactSubject,
+          message: contactMessage,
+        },
       });
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (error) {
+        throw new Error(error.message || "Failed to submit support request");
+      }
 
       setSubmitted(true);
       toast({
@@ -146,7 +144,7 @@ export default function ProviderHelpPage() {
       console.error("Error submitting support request:", error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
         variant: "destructive",
       });
     } finally {
