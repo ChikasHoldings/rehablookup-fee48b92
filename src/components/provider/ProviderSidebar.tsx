@@ -83,14 +83,14 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                   className={cn(
                     "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      ? "bg-primary text-white shadow-sm" 
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <div className={cn(
                     "flex items-center justify-center h-8 w-8 rounded-lg transition-colors",
                     isActive 
-                      ? "bg-primary-foreground/20" 
+                      ? "bg-white/20" 
                       : "bg-muted group-hover:bg-background"
                   )}>
                     <Icon className="h-4 w-4" />
@@ -140,7 +140,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                 className={cn(
                   "w-full h-8 text-xs font-medium gap-1.5",
                   isBasic 
-                    ? "bg-primary hover:bg-primary/90" 
+                    ? "bg-primary hover:bg-primary/90 text-white" 
                     : "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
                 )}
                 onClick={handleUpgrade}
