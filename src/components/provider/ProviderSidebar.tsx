@@ -14,7 +14,9 @@ import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface ProviderSidebarProps {
   onNavigate?: () => void;
@@ -34,6 +36,40 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const navigate = useNavigate();
   const { data: subscription, isLoading } = useSubscription();
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const { selectedFacility } = useSelectedFacility();
+  const queryClient = useQueryClient();
+
+  // Fetch new leads count
+  const { data: newLeadsCount = 0 } = useQuery({
+    queryKey: ["new-leads-count", selectedFacility?.id],
+    queryFn: async () => {
+      if (!selectedFacility?.id) return 0;
+      const { count, error } = await supabase
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .eq("facility_id", selectedFacility.id)
+        .eq("status", "new");
+      if (error) return 0;
+      return count || 0;
+    },
+    enabled: !!selectedFacility?.id,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Subscribe to realtime lead changes
+  useEffect(() => {
+    if (!selectedFacility?.id) return;
+    const channel = supabase
+      .channel("sidebar-leads-count")
+      .on("postgres_changes", 
+        { event: "*", schema: "public", table: "leads", filter: `facility_id=eq.${selectedFacility.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["new-leads-count", selectedFacility.id] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedFacility?.id, queryClient]);
 
   const currentPlan = subscription?.plan || "basic";
   const planDetails = PLAN_DETAILS[currentPlan];
@@ -74,6 +110,8 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;
+            const isLeadsItem = item.href === "/provider/leads";
+            const showBadge = isLeadsItem && newLeadsCount > 0;
             
             return (
               <li key={item.href}>
@@ -88,14 +126,32 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                   )}
                 >
                   <div className={cn(
-                    "flex items-center justify-center h-8 w-8 rounded-lg transition-colors",
+                    "flex items-center justify-center h-8 w-8 rounded-lg transition-colors relative",
                     isActive 
                       ? "bg-white/20" 
                       : "bg-muted group-hover:bg-background"
                   )}>
                     <Icon className="h-4 w-4" />
+                    {showBadge && (
+                      <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                        {newLeadsCount > 99 ? "99+" : newLeadsCount}
+                      </span>
+                    )}
                   </div>
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate flex-1">{item.label}</span>
+                  {showBadge && (
+                    <Badge 
+                      variant="secondary" 
+                      className={cn(
+                        "h-5 px-1.5 text-[10px] font-semibold",
+                        isActive 
+                          ? "bg-white/20 text-white" 
+                          : "bg-primary/10 text-primary"
+                      )}
+                    >
+                      {newLeadsCount > 99 ? "99+" : newLeadsCount} new
+                    </Badge>
+                  )}
                 </Link>
               </li>
             );
