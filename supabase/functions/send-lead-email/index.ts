@@ -16,6 +16,15 @@ const WELCOME_TEMPLATE_IDS = [
   "welcome_practical"
 ];
 
+// Follow-up templates - 24-hour cooldown per template per lead
+const FOLLOWUP_TEMPLATE_IDS = [
+  "next_steps",
+  "scheduling_call",
+  "gentle_followup"
+];
+
+const COOLDOWN_HOURS = 24;
+
 // Email templates - shorter, human, no em dashes
 const templates: Record<string, { name: string; subject: string; body: string; category: string }> = {
   // Welcome variants (only one per lead)
@@ -268,6 +277,37 @@ const handler = async (req: Request): Promise<Response> => {
             error: `A welcome email ("${sentTemplate?.name || 'Welcome'}") has already been sent to this lead. Please choose a different template type.` 
           }),
           { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    }
+
+    // Check 24-hour cooldown for follow-up templates
+    const isFollowupTemplate = FOLLOWUP_TEMPLATE_IDS.includes(templateId);
+    if (isFollowupTemplate) {
+      const cooldownTime = new Date();
+      cooldownTime.setHours(cooldownTime.getHours() - COOLDOWN_HOURS);
+      
+      const { data: recentFollowupEmail } = await supabase
+        .from("lead_emails")
+        .select("created_at, template_name")
+        .eq("lead_id", leadId)
+        .eq("template_id", templateId)
+        .gte("created_at", cooldownTime.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (recentFollowupEmail) {
+        const sentAt = new Date(recentFollowupEmail.created_at);
+        const availableAt = new Date(sentAt.getTime() + COOLDOWN_HOURS * 60 * 60 * 1000);
+        const hoursRemaining = Math.ceil((availableAt.getTime() - Date.now()) / (1000 * 60 * 60));
+        
+        console.log("Follow-up template on cooldown:", templateId, "available in", hoursRemaining, "hours");
+        return new Response(
+          JSON.stringify({ 
+            error: `This follow-up email was sent recently. Please wait ${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''} before sending "${template.name}" again to this lead.` 
+          }),
+          { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
     }
