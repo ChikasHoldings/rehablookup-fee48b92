@@ -484,11 +484,16 @@ export default function ProviderBillingPage() {
                           ? "bg-primary/5 text-primary border border-primary/20"
                           : "bg-muted text-muted-foreground"
                     }`}>
-                      {plan.lead_limit === 0 
-                        ? "No leads included" 
-                        : `Up to ${plan.lead_limit} leads/month`
+                      {plan.key === "basic" 
+                        ? `${plan.lead_limit} leads/month (1 per week)`
+                        : `${plan.qualified_lead_limit || plan.lead_limit} qualified leads/month`
                       }
                     </div>
+                    {(plan.key === "professional" || plan.key === "featured") && (
+                      <div className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200">
+                        + Unlimited direct profile inquiries
+                      </div>
+                    )}
                     <div className={`text-xs font-medium px-3 py-1.5 rounded-lg ${
                       plan.key === "featured"
                         ? "bg-amber-50/50 text-amber-600 border border-amber-100"
