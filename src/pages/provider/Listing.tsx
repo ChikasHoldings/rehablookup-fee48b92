@@ -362,6 +362,21 @@ export default function ProviderListingPage() {
     };
   }, [hasChanges, facility, performAutoSave]);
 
+  // Keyboard shortcut: Ctrl+S / Cmd+S to save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (hasChanges && !isSaving && !isAutoSaving) {
+          handleSave();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasChanges, isSaving, isAutoSaving]);
+
   const handleSave = async () => {
     if (!facility) return;
     
