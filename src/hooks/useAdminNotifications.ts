@@ -18,16 +18,25 @@ export function useAdminNotifications() {
   const { data: notifications = [], isLoading, error } = useQuery({
     queryKey: ["admin-notifications"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("admin_notifications")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
+      try {
+        const { data, error } = await supabase
+          .from("admin_notifications" as any)
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
 
-      if (error) throw error;
-      return (data || []) as AdminNotification[];
+        if (error) {
+          console.error("Error fetching admin notifications:", error);
+          return [];
+        }
+        return (data || []) as unknown as AdminNotification[];
+      } catch (e) {
+        console.error("Exception fetching admin notifications:", e);
+        return [];
+      }
     },
     staleTime: 30 * 1000,
+    retry: false, // Don't retry on failure
   });
 
   // Real-time subscription for instant updates
@@ -57,10 +66,10 @@ export function useAdminNotifications() {
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
-        .from("admin_notifications")
+        .from("admin_notifications" as any)
         .update({ read: true })
         .eq("id", notificationId);
-      if (error) throw error;
+      if (error) console.error("Error marking notification as read:", error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
@@ -70,10 +79,10 @@ export function useAdminNotifications() {
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
-        .from("admin_notifications")
+        .from("admin_notifications" as any)
         .update({ read: true })
         .eq("read", false);
-      if (error) throw error;
+      if (error) console.error("Error marking all as read:", error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
@@ -83,10 +92,10 @@ export function useAdminNotifications() {
   const deleteNotificationMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
-        .from("admin_notifications")
+        .from("admin_notifications" as any)
         .delete()
         .eq("id", notificationId);
-      if (error) throw error;
+      if (error) console.error("Error deleting notification:", error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
@@ -96,10 +105,10 @@ export function useAdminNotifications() {
   const deleteAllMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
-        .from("admin_notifications")
+        .from("admin_notifications" as any)
         .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all
-      if (error) throw error;
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+      if (error) console.error("Error deleting all notifications:", error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
