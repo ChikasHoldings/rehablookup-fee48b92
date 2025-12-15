@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Search,
   Calendar,
-  Radio,
   Filter,
   User,
   FileText,
@@ -108,18 +107,14 @@ export default function AdminAuditLog() {
   const [targetFilter, setTargetFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: subDays(new Date(), 30), to: new Date() });
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLive, setIsLive] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   const invalidateAuditLog = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-audit-log"] });
-    setLastUpdate(new Date());
+    queryClient.invalidateQueries({ queryKey: ["admin-profiles-for-audit"] });
   }, [queryClient]);
 
-  // Real-time subscription for audit log updates
+  // Real-time subscription for audit log updates - always active
   useEffect(() => {
-    if (!isLive) return;
-
     const channel = supabase
       .channel("audit-log-realtime")
       .on(
@@ -130,10 +125,10 @@ export default function AdminAuditLog() {
           table: "admin_audit_log",
         },
         (payload) => {
-          console.log("New audit log entry:", payload);
+          console.log("New audit log entry:", payload.eventType);
           invalidateAuditLog();
           toast.info("New admin action logged", {
-            description: `Action: ${(payload.new as AuditLog).action_type}`,
+            description: `Action: ${(payload.new as AuditLog).action_type.replace(/_/g, " ")}`,
           });
         }
       )
@@ -142,7 +137,7 @@ export default function AdminAuditLog() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isLive, invalidateAuditLog]);
+  }, [invalidateAuditLog]);
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ["admin-audit-log", dateRange],
@@ -278,27 +273,6 @@ export default function AdminAuditLog() {
           <p className="text-muted-foreground">Track all administrative actions across the platform</p>
         </div>
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={isLive ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsLive(!isLive)}
-                  className={cn(
-                    "gap-2",
-                    isLive && "bg-green-600 hover:bg-green-700"
-                  )}
-                >
-                  <Radio className={cn("h-3.5 w-3.5", isLive && "animate-pulse")} />
-                  {isLive ? "Live" : "Paused"}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Last update: {format(lastUpdate, "h:mm:ss a")}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
           {datePresets.map((preset) => (
             <Button
               key={preset.label}
