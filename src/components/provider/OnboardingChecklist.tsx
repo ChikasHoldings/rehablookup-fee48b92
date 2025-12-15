@@ -34,6 +34,7 @@ interface OnboardingChecklistProps {
     website?: string | null;
     logo_url?: string | null;
     gallery_urls?: string[] | null;
+    profile_completion_celebrated?: boolean | null;
   } | null;
 }
 
@@ -84,11 +85,13 @@ function triggerCelebration() {
 export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChecklistProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [showCelebration, setShowCelebration] = useState(false);
-  const previousPercentageRef = useRef<number | null>(null);
   const celebrationTriggeredRef = useRef(false);
   const queryClient = useQueryClient();
 
-  // Check if user has already dismissed celebration (localStorage check)
+  // Check if celebration was already done (database flag takes priority)
+  const alreadyCelebrated = facilityData?.profile_completion_celebrated === true;
+  
+  // Check if user has dismissed the current celebration session
   const dismissedKey = `profile-complete-dismissed-${facilityId}`;
   const wasDismissedInStorage = typeof window !== 'undefined' && localStorage.getItem(dismissedKey) === 'true';
 
@@ -257,33 +260,46 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
   const isComplete = completionPercentage === 100;
   const nextIncompleteItem = checklistItems.find(item => !item.completed);
 
-  // Trigger celebration when reaching 100%
+  // Trigger celebration when reaching 100% (only if not already celebrated)
   useEffect(() => {
     if (
       isComplete && 
-      previousPercentageRef.current !== null && 
-      previousPercentageRef.current < 100 &&
-      !celebrationTriggeredRef.current
+      !alreadyCelebrated &&
+      !celebrationTriggeredRef.current &&
+      !wasDismissedInStorage
     ) {
       celebrationTriggeredRef.current = true;
       setShowCelebration(true);
       triggerCelebration();
+      
+      // Mark as celebrated in database and send email
+      supabase
+        .from('facilities')
+        .update({ profile_completion_celebrated: true })
+        .eq('id', facilityId)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+        });
       
       // Send congratulatory email
       supabase.functions.invoke('send-profile-complete-email', {
         body: { facilityId }
       }).catch(console.error);
     }
-    previousPercentageRef.current = completionPercentage;
-  }, [completionPercentage, isComplete, facilityId]);
+  }, [isComplete, alreadyCelebrated, facilityId, wasDismissedInStorage, queryClient]);
 
   const handleDismissCelebration = () => {
     localStorage.setItem(dismissedKey, 'true');
     setShowCelebration(false);
   };
 
-  // Show celebration card if complete
-  if (isComplete && showCelebration && !wasDismissedInStorage) {
+  // If profile is complete and already celebrated in database, hide completely
+  if (isComplete && alreadyCelebrated) {
+    return null;
+  }
+
+  // Show celebration card only if complete, celebration active, and not dismissed
+  if (isComplete && showCelebration && !wasDismissedInStorage && !alreadyCelebrated) {
     return (
       <Card className="border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-background animate-fade-in overflow-hidden">
         <CardHeader className="pb-4">
@@ -325,12 +341,7 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
     );
   }
 
-  // Don't show if 100% complete and dismissed
-  if (isComplete && wasDismissedInStorage) {
-    return null;
-  }
-
-  // Don't show if complete (without celebration shown yet)
+  // Don't show if 100% complete (profile is done, hide the checklist)
   if (isComplete) {
     return null;
   }
