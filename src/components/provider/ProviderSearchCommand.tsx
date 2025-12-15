@@ -119,7 +119,7 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
   return (
     <div className="relative w-full">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" />
         <Input
           ref={inputRef}
           type="text"
@@ -128,13 +128,13 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
           onChange={(e) => setQuery(e.target.value)}
           onFocus={handleFocus}
           onKeyDown={handleKeyDown}
-          className="w-full h-9 pl-9 pr-8 bg-white/10 border-white/20 text-white text-sm placeholder:text-white/50 focus:bg-white/15 focus:border-white/30 rounded-lg"
+          className="w-full h-10 pl-10 pr-8 bg-white/15 border-white/30 text-white text-sm placeholder:text-white/60 focus:bg-white/20 focus:border-white/50 focus:ring-white/20 rounded-lg"
         />
         {query && (
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-white/50 hover:text-white hover:bg-white/10"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-white/70 hover:text-white hover:bg-white/15"
             onClick={handleClear}
           >
             <X className="h-3.5 w-3.5" />
