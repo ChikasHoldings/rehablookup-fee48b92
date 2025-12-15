@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { 
   HelpCircle, 
   MessageSquare, 
@@ -73,21 +74,21 @@ const faqs = [
 const helpTopics = [
   {
     icon: FileText,
-    title: "Getting Started",
-    description: "Learn the basics of managing your facility listing",
-    link: "/provider-resources"
+    title: "Knowledge Base",
+    description: "Search articles and guides for answers",
+    link: "/provider/knowledge-base"
   },
   {
     icon: BookOpen,
-    title: "Best Practices",
-    description: "Tips for optimizing your listing and converting leads",
-    link: "/provider-resources"
+    title: "Getting Started",
+    description: "Learn the basics of managing your facility listing",
+    link: "/provider/knowledge-base"
   },
   {
     icon: AlertCircle,
     title: "Troubleshooting",
     description: "Common issues and how to resolve them",
-    link: "/provider-support"
+    link: "/provider/knowledge-base"
   },
 ];
 
@@ -168,20 +169,21 @@ export default function ProviderHelpPage() {
       {/* Quick Help Topics */}
       <div className="grid gap-4 md:grid-cols-3">
         {helpTopics.map((topic) => (
-          <Card key={topic.title} className="hover:shadow-md transition-shadow cursor-pointer group">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  <topic.icon className="h-5 w-5" />
+          <Link key={topic.title} to={topic.link}>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer group h-full">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-2.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                    <topic.icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm">{topic.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{topic.description}</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm">{topic.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">{topic.description}</p>
-                </div>
-                <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
