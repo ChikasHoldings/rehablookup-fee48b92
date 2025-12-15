@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Star,
-  GripVertical,
   Eye,
   Search,
   MapPin,
@@ -10,10 +9,13 @@ import {
   TrendingUp,
   Users,
   ExternalLink,
-  Plus,
-  X,
-  ArrowUpDown,
+  Pin,
+  PinOff,
   CheckCircle2,
+  Info,
+  RefreshCw,
+  Crown,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 type Facility = {
@@ -34,6 +38,9 @@ type Facility = {
   logo_url: string | null;
   status: string;
   slug: string | null;
+  featured_pinned: boolean | null;
+  last_featured_shown_at: string | null;
+  suspended: boolean | null;
 };
 
 type FacilityStats = {
@@ -46,14 +53,13 @@ export default function AdminFeatured() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch featured facilities
-  const { data: featuredFacilities, isLoading: loadingFeatured } = useQuery({
-    queryKey: ["admin-featured-facilities"],
+  // Fetch all approved facilities for featured eligibility display
+  const { data: allFacilities, isLoading: loadingFacilities, refetch } = useQuery({
+    queryKey: ["admin-all-facilities-featured"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facilities")
         .select("*")
-        .eq("featured", true)
         .eq("status", "approved")
         .order("name");
       if (error) throw error;
@@ -61,22 +67,37 @@ export default function AdminFeatured() {
     },
   });
 
-  // Fetch eligible facilities (approved but not featured)
-  const { data: eligibleFacilities, isLoading: loadingEligible } = useQuery({
-    queryKey: ["admin-eligible-featured"],
+  // Fetch auto-featured facility IDs from edge function
+  const { data: featuredData, isLoading: loadingFeaturedIds } = useQuery({
+    queryKey: ["admin-auto-featured-ids"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("facilities")
-        .select("*")
-        .eq("featured", false)
-        .eq("status", "approved")
-        .order("name");
+      const { data, error } = await supabase.functions.invoke("get-featured-facilities");
       if (error) throw error;
-      return data as Facility[];
+      return {
+        featuredFacilityIds: data?.featuredFacilityIds || [],
+        homepageFeaturedIds: data?.homepageFeaturedIds || [],
+      };
     },
+    staleTime: 1000 * 60 * 2,
   });
 
-  // Fetch stats for all facilities
+  const autoFeaturedIds = featuredData?.featuredFacilityIds || [];
+  const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
+
+  // Auto-featured facilities (from Featured plan subscription)
+  const autoFeaturedFacilities = allFacilities?.filter(f => autoFeaturedIds.includes(f.id)) || [];
+  
+  // Legacy featured (manually set, not from subscription)
+  const legacyFeaturedFacilities = allFacilities?.filter(
+    f => f.featured && !autoFeaturedIds.includes(f.id)
+  ) || [];
+
+  // Eligible for legacy featuring (approved, not suspended, not already featured)
+  const eligibleFacilities = allFacilities?.filter(
+    f => !f.featured && !autoFeaturedIds.includes(f.id) && !f.suspended
+  ) || [];
+
+  // Fetch stats for facilities
   const { data: facilityStats } = useQuery({
     queryKey: ["admin-facility-stats"],
     queryFn: async () => {
@@ -117,8 +138,35 @@ export default function AdminFeatured() {
     },
   });
 
-  // Toggle featured mutation
-  const toggleFeatured = useMutation({
+  // Toggle pinned status
+  const togglePinned = useMutation({
+    mutationFn: async ({ id, pinned }: { id: string; pinned: boolean }) => {
+      const { error } = await supabase
+        .from("facilities")
+        .update({ featured_pinned: pinned })
+        .eq("id", id);
+      if (error) throw error;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("admin_audit_log").insert({
+        admin_user_id: user?.id,
+        action_type: pinned ? "pinned_featured" : "unpinned_featured",
+        target_type: "facility",
+        target_id: id,
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-all-facilities-featured"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-auto-featured-ids"] });
+      toast.success(variables.pinned ? "Provider pinned to featured" : "Provider unpinned");
+    },
+    onError: () => {
+      toast.error("Failed to update pinned status");
+    },
+  });
+
+  // Toggle legacy featured
+  const toggleLegacyFeatured = useMutation({
     mutationFn: async ({ id, featured }: { id: string; featured: boolean }) => {
       const { error } = await supabase
         .from("facilities")
@@ -129,29 +177,29 @@ export default function AdminFeatured() {
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("admin_audit_log").insert({
         admin_user_id: user?.id,
-        action_type: featured ? "featured" : "unfeatured",
+        action_type: featured ? "legacy_featured" : "legacy_unfeatured",
         target_type: "facility",
         target_id: id,
       });
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-featured-facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-eligible-featured"] });
-      toast.success(variables.featured ? "Provider added to featured" : "Provider removed from featured");
+      queryClient.invalidateQueries({ queryKey: ["admin-all-facilities-featured"] });
+      toast.success(variables.featured ? "Provider added to legacy featured" : "Provider removed from featured");
     },
     onError: () => {
       toast.error("Failed to update featured status");
     },
   });
 
-  // Filter eligible facilities by search
-  const filteredEligible = eligibleFacilities?.filter((f) =>
+  const filteredEligible = eligibleFacilities.filter((f) =>
     f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     f.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
     f.state.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getStats = (facilityId: string) => facilityStats?.[facilityId] || { total_views: 0, total_leads: 0 };
+
+  const isLoading = loadingFacilities || loadingFeaturedIds;
 
   return (
     <div className="space-y-6">
@@ -160,20 +208,34 @@ export default function AdminFeatured() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Featured Placement</h1>
           <p className="text-muted-foreground">
-            Manage which providers appear in featured sections across the platform
+            Auto-featured rotation for Featured plan subscribers + legacy manual featuring
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
           <Badge variant="outline" className="px-3 py-1.5 text-amber-700 bg-amber-50 border-amber-200">
-            <Star className="h-3.5 w-3.5 mr-1.5 fill-amber-500 text-amber-500" />
-            {featuredFacilities?.length || 0} Featured
+            <Crown className="h-3.5 w-3.5 mr-1.5" />
+            {autoFeaturedFacilities.length} Auto-Featured
           </Badge>
           <Badge variant="outline" className="px-3 py-1.5">
-            <Users className="h-3.5 w-3.5 mr-1.5" />
-            {eligibleFacilities?.length || 0} Eligible
+            <Star className="h-3.5 w-3.5 mr-1.5 fill-current" />
+            {legacyFeaturedFacilities.length} Legacy
           </Badge>
         </div>
       </div>
+
+      {/* Info Alert */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          <strong>Auto-Featured System:</strong> Providers on the Featured plan ($899/mo) are automatically 
+          featured and rotated daily. Homepage shows max 6 at a time. Pinned providers always appear.
+          Featured providers appear first in all search results.
+        </AlertDescription>
+      </Alert>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -181,11 +243,12 @@ export default function AdminFeatured() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-amber-700">Featured Providers</p>
-                <p className="text-3xl font-bold text-amber-900">{featuredFacilities?.length || 0}</p>
+                <p className="text-sm font-medium text-amber-700">Auto-Featured</p>
+                <p className="text-3xl font-bold text-amber-900">{autoFeaturedFacilities.length}</p>
+                <p className="text-xs text-amber-600 mt-1">Featured Plan subscribers</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-amber-200 flex items-center justify-center">
-                <Star className="h-6 w-6 text-amber-700 fill-amber-500" />
+                <Zap className="h-6 w-6 text-amber-700" />
               </div>
             </div>
           </CardContent>
@@ -195,26 +258,9 @@ export default function AdminFeatured() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Verified Featured</p>
-                <p className="text-3xl font-bold">
-                  {featuredFacilities?.filter(f => f.verified).length || 0}
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <Shield className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Featured Views (30d)</p>
-                <p className="text-3xl font-bold">
-                  {featuredFacilities?.reduce((sum, f) => sum + (getStats(f.id).total_views), 0).toLocaleString() || 0}
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Homepage Display</p>
+                <p className="text-3xl font-bold">{homepageFeaturedIds.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">Max 6, rotates daily</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
                 <Eye className="h-6 w-6 text-green-600" />
@@ -227,61 +273,76 @@ export default function AdminFeatured() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Featured Leads (30d)</p>
+                <p className="text-sm font-medium text-muted-foreground">Pinned</p>
                 <p className="text-3xl font-bold">
-                  {featuredFacilities?.reduce((sum, f) => sum + (getStats(f.id).total_leads), 0) || 0}
+                  {autoFeaturedFacilities.filter(f => f.featured_pinned).length}
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">Always shown on homepage</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
+                <Pin className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Featured Views (30d)</p>
+                <p className="text-3xl font-bold">
+                  {autoFeaturedFacilities.reduce((sum, f) => sum + (getStats(f.id).total_views), 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Currently Featured */}
+      {/* Auto-Featured Providers (Featured Plan) */}
       <Card>
         <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <Star className="h-5 w-5 text-amber-600 fill-amber-500" />
-              </div>
-              <div>
-                <CardTitle>Currently Featured</CardTitle>
-                <CardDescription>
-                  These providers appear prominently across the platform
-                </CardDescription>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
+              <Zap className="h-5 w-5 text-amber-600" />
             </div>
-            <Button variant="outline" size="sm" disabled>
-              <ArrowUpDown className="h-4 w-4 mr-2" />
-              Reorder
-            </Button>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                Auto-Featured Providers
+                <Badge className="bg-amber-100 text-amber-800 border-amber-200">Featured Plan</Badge>
+              </CardTitle>
+              <CardDescription>
+                Automatically featured based on active Featured plan subscription. Rotates daily on homepage.
+              </CardDescription>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          {loadingFeatured ? (
+          {isLoading ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
                 <Skeleton key={i} className="h-20 w-full" />
               ))}
             </div>
-          ) : featuredFacilities && featuredFacilities.length > 0 ? (
+          ) : autoFeaturedFacilities.length > 0 ? (
             <div className="space-y-3">
-              {featuredFacilities.map((facility, index) => {
+              {autoFeaturedFacilities.map((facility) => {
                 const stats = getStats(facility.id);
+                const isOnHomepage = homepageFeaturedIds.includes(facility.id);
                 return (
                   <div
                     key={facility.id}
-                    className="flex items-center justify-between p-4 rounded-xl border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-white hover:shadow-md transition-shadow"
+                    className={`flex items-center justify-between p-4 rounded-xl border-2 transition-shadow ${
+                      facility.featured_pinned 
+                        ? "border-purple-300 bg-gradient-to-r from-purple-50 to-white" 
+                        : "border-amber-200 bg-gradient-to-r from-amber-50 to-white"
+                    } hover:shadow-md`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-3">
-                        <GripVertical className="h-5 w-5 text-amber-400 cursor-grab" />
-                        <span className="text-sm font-medium text-amber-600 w-6">#{index + 1}</span>
-                      </div>
                       <Avatar className="h-12 w-12 border-2 border-amber-200">
                         <AvatarImage src={facility.logo_url || undefined} />
                         <AvatarFallback className="bg-amber-100 text-amber-800 font-semibold">
@@ -289,8 +350,20 @@ export default function AdminFeatured() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold text-foreground">{facility.name}</p>
+                          {facility.featured_pinned && (
+                            <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                              <Pin className="h-3 w-3 mr-1" />
+                              Pinned
+                            </Badge>
+                          )}
+                          {isOnHomepage && (
+                            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                              <Eye className="h-3 w-3 mr-1" />
+                              On Homepage
+                            </Badge>
+                          )}
                           {facility.verified && (
                             <Badge className="bg-blue-100 text-blue-700 border-blue-200">
                               <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -317,26 +390,45 @@ export default function AdminFeatured() {
 
                     <div className="flex items-center gap-2">
                       {facility.slug && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                        >
+                        <Button variant="ghost" size="sm" asChild>
                           <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         </Button>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => toggleFeatured.mutate({ id: facility.id, featured: false })}
-                        disabled={toggleFeatured.isPending}
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant={facility.featured_pinned ? "default" : "outline"}
+                              size="sm"
+                              className={facility.featured_pinned ? "bg-purple-600 hover:bg-purple-700" : ""}
+                              onClick={() => togglePinned.mutate({ 
+                                id: facility.id, 
+                                pinned: !facility.featured_pinned 
+                              })}
+                              disabled={togglePinned.isPending}
+                            >
+                              {facility.featured_pinned ? (
+                                <>
+                                  <PinOff className="h-4 w-4 mr-1" />
+                                  Unpin
+                                </>
+                              ) : (
+                                <>
+                                  <Pin className="h-4 w-4 mr-1" />
+                                  Pin
+                                </>
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {facility.featured_pinned 
+                              ? "Remove from always-shown list" 
+                              : "Always show on homepage (bypass rotation)"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                 );
@@ -344,15 +436,72 @@ export default function AdminFeatured() {
             </div>
           ) : (
             <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed">
-              <Star className="h-12 w-12 mx-auto mb-3 text-amber-300" />
-              <p className="font-medium text-foreground">No featured providers yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Add providers from the eligible list below</p>
+              <Zap className="h-12 w-12 mx-auto mb-3 text-amber-300" />
+              <p className="font-medium text-foreground">No Featured Plan subscribers</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Providers on the Featured plan will appear here automatically
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Eligible for Featured */}
+      {/* Legacy Featured (Manual) */}
+      {legacyFeaturedFacilities.length > 0 && (
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                <Star className="h-5 w-5 text-slate-600 fill-slate-400" />
+              </div>
+              <div>
+                <CardTitle>Legacy Featured</CardTitle>
+                <CardDescription>
+                  Manually featured providers (not from subscription). Consider migrating to Featured plan.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {legacyFeaturedFacilities.map((facility) => {
+                const stats = getStats(facility.id);
+                return (
+                  <div
+                    key={facility.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-muted/30"
+                  >
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={facility.logo_url || undefined} />
+                        <AvatarFallback className="bg-slate-100 text-slate-600">
+                          {facility.name.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{facility.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {facility.city}, {facility.state} • {stats.total_views} views
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleLegacyFeatured.mutate({ id: facility.id, featured: false })}
+                      disabled={toggleLegacyFeatured.isPending}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Add Legacy Featured */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -361,9 +510,9 @@ export default function AdminFeatured() {
                 <Users className="h-5 w-5 text-slate-600" />
               </div>
               <div>
-                <CardTitle>Eligible Providers</CardTitle>
+                <CardTitle>Add Legacy Featured</CardTitle>
                 <CardDescription>
-                  Approved providers that can be added to featured placement
+                  Manually feature providers (for providers not on Featured plan)
                 </CardDescription>
               </div>
             </div>
@@ -379,63 +528,47 @@ export default function AdminFeatured() {
           </div>
         </CardHeader>
         <CardContent>
-          {loadingEligible ? (
+          {isLoading ? (
             <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
+              {[...Array(3)].map((_, i) => (
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
-          ) : filteredEligible && filteredEligible.length > 0 ? (
+          ) : filteredEligible.length > 0 ? (
             <div className="space-y-2">
-              {filteredEligible.slice(0, 10).map((facility) => {
-                const stats = getStats(facility.id);
-                return (
-                  <div
-                    key={facility.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={facility.logo_url || undefined} />
-                        <AvatarFallback className="bg-slate-100 text-slate-600">
-                          {facility.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{facility.name}</p>
-                          {facility.verified && (
-                            <Badge variant="outline" className="text-blue-600 border-blue-200 text-xs">
-                              Verified
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          <span className="text-sm text-muted-foreground">
-                            {facility.city}, {facility.state}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {stats.total_views} views • {stats.total_leads} leads
-                          </span>
-                        </div>
-                      </div>
+              {filteredEligible.slice(0, 10).map((facility) => (
+                <div
+                  key={facility.id}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={facility.logo_url || undefined} />
+                      <AvatarFallback className="bg-slate-100 text-slate-600">
+                        {facility.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{facility.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {facility.city}, {facility.state}
+                      </p>
                     </div>
-
-                    <Button
-                      size="sm"
-                      onClick={() => toggleFeatured.mutate({ id: facility.id, featured: true })}
-                      disabled={toggleFeatured.isPending}
-                      className="bg-amber-500 hover:bg-amber-600 text-white"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Featured
-                    </Button>
                   </div>
-                );
-              })}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleLegacyFeatured.mutate({ id: facility.id, featured: true })}
+                    disabled={toggleLegacyFeatured.isPending}
+                  >
+                    <Star className="h-4 w-4 mr-1" />
+                    Feature
+                  </Button>
+                </div>
+              ))}
               {filteredEligible.length > 10 && (
                 <p className="text-sm text-muted-foreground text-center py-2">
-                  Showing 10 of {filteredEligible.length} providers. Use search to find more.
+                  Showing 10 of {filteredEligible.length} providers
                 </p>
               )}
             </div>
@@ -446,7 +579,7 @@ export default function AdminFeatured() {
             </div>
           ) : (
             <p className="text-center py-8 text-muted-foreground">
-              No eligible providers available
+              All providers are either featured or on Featured plan
             </p>
           )}
         </CardContent>
@@ -462,7 +595,7 @@ export default function AdminFeatured() {
             <div>
               <CardTitle>Homepage Preview</CardTitle>
               <CardDescription>
-                How featured providers will appear on the public homepage
+                Current homepage featured display (max 6, rotates daily for fairness)
               </CardDescription>
             </div>
           </div>
@@ -470,8 +603,8 @@ export default function AdminFeatured() {
         <CardContent>
           <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 border">
             <h3 className="text-lg font-semibold text-center mb-6">Featured Treatment Centers</h3>
-            <div className="grid gap-4 md:grid-cols-3">
-              {featuredFacilities?.slice(0, 3).map((facility) => (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {allFacilities?.filter(f => homepageFeaturedIds.includes(f.id)).slice(0, 6).map((facility) => (
                 <div
                   key={facility.id}
                   className="p-5 rounded-xl border bg-white shadow-sm hover:shadow-md transition-shadow"
@@ -491,11 +624,17 @@ export default function AdminFeatured() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 text-xs">
-                      <Star className="h-3 w-3 mr-1 fill-amber-500 text-amber-500" />
+                      <Crown className="h-3 w-3 mr-1" />
                       Featured
                     </Badge>
+                    {facility.featured_pinned && (
+                      <Badge variant="outline" className="text-purple-600 border-purple-200 text-xs">
+                        <Pin className="h-3 w-3 mr-1" />
+                        Pinned
+                      </Badge>
+                    )}
                     {facility.verified && (
                       <Badge variant="outline" className="text-blue-600 border-blue-200 text-xs">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -505,10 +644,10 @@ export default function AdminFeatured() {
                   </div>
                 </div>
               ))}
-              {(!featuredFacilities || featuredFacilities.length === 0) && (
-                <div className="col-span-3 text-center py-12 text-muted-foreground">
-                  <Star className="h-10 w-10 mx-auto mb-2 text-amber-200" />
-                  <p>Add featured providers to see a preview</p>
+              {homepageFeaturedIds.length === 0 && (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  <Crown className="h-10 w-10 mx-auto mb-2 text-amber-200" />
+                  <p>No Featured plan subscribers to display</p>
                 </div>
               )}
             </div>
