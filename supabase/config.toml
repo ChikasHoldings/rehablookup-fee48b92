@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.notify-payment-failed]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
