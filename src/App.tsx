@@ -14,6 +14,8 @@ import HowItWorks from "./pages/HowItWorks";
 import ForProviders from "./pages/ForProviders";
 import ProviderResources from "./pages/ProviderResources";
 import ProviderLogin from "./pages/ProviderLogin";
+import ProviderForgotPassword from "./pages/ProviderForgotPassword";
+import ProviderResetPassword from "./pages/ProviderResetPassword";
 import ProviderSupport from "./pages/ProviderSupport";
 import ProviderSignup from "./pages/ProviderSignup";
 import RequestHelp from "./pages/RequestHelp";
@@ -64,6 +66,8 @@ const App = () => (
           <Route path="/for-providers" element={<ForProviders />} />
           <Route path="/provider-resources" element={<ProviderResources />} />
           <Route path="/provider-login" element={<ProviderLogin />} />
+          <Route path="/provider-forgot-password" element={<ProviderForgotPassword />} />
+          <Route path="/provider-reset-password" element={<ProviderResetPassword />} />
           <Route path="/provider-support" element={<ProviderSupport />} />
           <Route path="/provider-signup" element={<ProviderSignup />} />
           
