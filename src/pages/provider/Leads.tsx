@@ -178,8 +178,9 @@ export default function ProviderLeadsPage() {
   const clearFilters = () => { setSearchQuery(""); setStatusFilter("all"); setSourceFilter("all"); setDateRange({ from: undefined, to: undefined }); };
   const hasFilters = searchQuery || statusFilter !== "all" || sourceFilter !== "all" || dateRange.from || dateRange.to;
 
+  // Basic plan: ALL leads are always locked/blurred to encourage upgrade
   const isLeadLocked = (lead: Lead, index: number) => {
-    if (currentPlan === "basic") return index >= leadLimit;
+    if (currentPlan === "basic") return true; // Always locked for basic plan
     if (currentPlan === "professional" && lead.source === "Request Help Page") {
       return filteredLeads.slice(0, index).filter(l => l.source === "Request Help Page").length >= leadLimit;
     }
@@ -187,12 +188,11 @@ export default function ProviderLeadsPage() {
   };
 
   // Determine if upgrade message should show
-  const basicLifetimeLimitReached = currentPlan === "basic" && totalLeadsCount >= 1;
   const showUpgradeIndicator = currentPlan === "basic" || 
     (currentPlan === "professional" && thisMonthQualified.length >= leadLimit * 0.8);
   
   const isAtLimit = currentPlan === "basic" 
-    ? totalLeadsCount >= 1 // Lifetime limit for basic
+    ? true // Always show as at limit for basic to encourage upgrade
     : thisMonthQualified.length >= leadLimit;
 
   return (
@@ -231,7 +231,7 @@ export default function ProviderLeadsPage() {
           {showUpgradeIndicator && (!isMobile || mobileView === 'list') && (subscription?.plan !== "featured") && (
             <div className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg border flex-shrink-0",
-              currentPlan === "basic" && !basicLifetimeLimitReached
+              currentPlan === "basic"
                 ? "bg-primary/5 border-primary/20"
                 : isAtLimit
                   ? "bg-destructive/5 border-destructive/20"
@@ -242,16 +242,14 @@ export default function ProviderLeadsPage() {
                 <div className="flex items-center gap-2">
                   <TrendingUp className={cn(
                     "h-3.5 w-3.5",
-                    currentPlan === "basic" && !basicLifetimeLimitReached ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-600 dark:text-amber-400"
+                    currentPlan === "basic" ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-600 dark:text-amber-400"
                   )} />
                   <span className={cn(
                     "text-xs font-semibold",
-                    currentPlan === "basic" && !basicLifetimeLimitReached ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-700 dark:text-amber-300"
+                    currentPlan === "basic" ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-700 dark:text-amber-300"
                   )}>
                     {currentPlan === "basic"
-                      ? basicLifetimeLimitReached 
-                        ? "Lifetime limit reached" 
-                        : "1 lifetime lead"
+                      ? "Upgrade to view leads"
                       : isAtLimit 
                         ? "Limit reached!" 
                         : "Approaching limit"
@@ -265,11 +263,11 @@ export default function ProviderLeadsPage() {
                         "h-full transition-all rounded-full",
                         isAtLimit ? "bg-destructive" : currentPlan === "basic" ? "bg-primary" : "bg-amber-500"
                       )}
-                      style={{ width: `${Math.min((currentPlan === "basic" ? totalLeadsCount : thisMonthQualified.length) / leadLimit * 100, 100)}%` }}
+                      style={{ width: `${Math.min((currentPlan === "basic" ? 100 : thisMonthQualified.length / leadLimit * 100), 100)}%` }}
                     />
                   </div>
                   <span className="text-[10px] text-muted-foreground font-medium">
-                    {currentPlan === "basic" ? `${totalLeadsCount}/1` : `${thisMonthQualified.length}/${leadLimit}`}
+                    {currentPlan === "basic" ? `${totalLeadsCount} waiting` : `${thisMonthQualified.length}/${leadLimit}`}
                   </span>
                 </div>
               </div>
@@ -402,45 +400,21 @@ export default function ProviderLeadsPage() {
           </div>
 
           {/* Lead List */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 relative">
             {isLoading ? (
               <div className="space-y-2">
                 {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-[88px] rounded-xl" />)}
               </div>
-            ) : currentPlan === "basic" && basicLifetimeLimitReached ? (
-              // Basic plan lifetime limit reached
-              <div className="flex items-center justify-center h-full p-8">
-                <div className="text-center max-w-md">
-                  <div className="h-16 w-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangle className="h-8 w-8 text-destructive" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-2">Lifetime Lead Limit Reached</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    You've used your 1 lifetime lead on the Basic plan. Upgrade to Professional to receive 25 exclusive qualified leads per month.
-                  </p>
-                  <div className="space-y-3">
-                    <Button asChild className="w-full">
-                      <Link to="/provider/billing">
-                        <Zap className="h-4 w-4 mr-2" />
-                        Upgrade to Professional
-                      </Link>
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Get 25 exclusive leads/month • Priority placement • Advanced analytics
-                    </p>
-                  </div>
-                </div>
-              </div>
             ) : currentPlan === "basic" && leads.length === 0 ? (
-              // Basic plan upgrade CTA - no leads yet
+              // Basic plan - no leads yet, show upgrade CTA
               <div className="flex items-center justify-center h-full p-8">
                 <div className="text-center max-w-md">
                   <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                     <Zap className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-2">1 Lifetime Lead Included</h3>
+                  <h3 className="font-semibold text-lg text-foreground mb-2">Upgrade to View & Contact Leads</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Your Basic Listing is live. You can receive 1 direct inquiry from your profile. Upgrade to Professional for 25 exclusive leads per month.
+                    Your Basic Listing is live. Upgrade to Professional to view and contact leads directly.
                   </p>
                   <div className="space-y-3">
                     <Button asChild className="w-full">
@@ -450,7 +424,7 @@ export default function ProviderLeadsPage() {
                       </Link>
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                      Your 1 direct inquiry will appear here when received
+                      Get 25 exclusive leads/month • Full contact info • Direct communication
                     </p>
                   </div>
                 </div>
@@ -474,116 +448,146 @@ export default function ProviderLeadsPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-2.5">
-                {filteredLeads.map((lead, idx) => {
-                  const locked = isLeadLocked(lead, idx);
-                  const selected = selectedLead?.id === lead.id;
-                  const location = lead.location_city_state || (lead.location_zip ? `ZIP: ${lead.location_zip}` : null);
-                  const isQualified = lead.source === "Request Help Page";
-                  
-                  return (
-                    <button
-                      key={lead.id}
-                      onClick={() => !locked && handleSelectLead(lead)}
-                      disabled={locked}
-                      className={cn(
-                        "w-full text-left rounded-xl border-2 transition-all duration-200 overflow-hidden shadow-sm",
-                        selected 
-                          ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/10" 
-                          : isQualified
-                            ? "border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-emerald-50/30 hover:border-emerald-300 hover:shadow-md dark:border-emerald-800/50 dark:from-emerald-950/30 dark:to-emerald-950/10"
-                            : "border-slate-200 bg-gradient-to-br from-slate-50/80 to-white hover:border-slate-300 hover:shadow-md dark:border-slate-700/50 dark:from-slate-900/30 dark:to-slate-900/10",
-                        locked && "opacity-40 blur-[1px] cursor-not-allowed"
-                      )}
-                    >
-                      <div className="p-4">
-                        {/* Top Row - Name & Time */}
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className={cn(
-                              "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold shadow-sm",
-                              selected 
-                                ? "bg-primary text-primary-foreground" 
-                                : isQualified
-                                  ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"
-                                  : "bg-gradient-to-br from-slate-400 to-slate-500 text-white"
-                            )}>
-                              {locked ? "?" : lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
-                            </div>
-                            <div className="min-w-0">
-                              <h4 className={cn(
-                                "font-semibold text-[15px] truncate leading-tight",
-                                selected ? "text-primary" : "text-foreground"
+              <>
+                {/* Basic Plan Upgrade Overlay */}
+                {currentPlan === "basic" && leads.length > 0 && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+                    <div className="text-center max-w-sm p-6">
+                      <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                        <Zap className="h-7 w-7 text-primary" />
+                      </div>
+                      <h3 className="font-semibold text-lg text-foreground mb-2">
+                        {leads.length} Lead{leads.length > 1 ? 's' : ''} Waiting
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Upgrade to Professional to view contact details and connect with people seeking help.
+                      </p>
+                      <div className="space-y-3">
+                        <Button asChild className="w-full" size="lg">
+                          <Link to="/provider/billing">
+                            <Zap className="h-4 w-4 mr-2" />
+                            Upgrade to View Leads
+                          </Link>
+                        </Button>
+                        <p className="text-xs text-muted-foreground">
+                          25 exclusive leads/month • Full contact info • Direct communication
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className={cn("space-y-2.5", currentPlan === "basic" && leads.length > 0 && "blur-sm pointer-events-none")}>
+                  {filteredLeads.map((lead, idx) => {
+                    const locked = isLeadLocked(lead, idx);
+                    const selected = selectedLead?.id === lead.id;
+                    const location = lead.location_city_state || (lead.location_zip ? `ZIP: ${lead.location_zip}` : null);
+                    const isQualified = lead.source === "Request Help Page";
+                    
+                    return (
+                      <button
+                        key={lead.id}
+                        onClick={() => !locked && handleSelectLead(lead)}
+                        disabled={locked}
+                        className={cn(
+                          "w-full text-left rounded-xl border-2 transition-all duration-200 overflow-hidden shadow-sm",
+                          selected 
+                            ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/10" 
+                            : isQualified
+                              ? "border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-emerald-50/30 hover:border-emerald-300 hover:shadow-md dark:border-emerald-800/50 dark:from-emerald-950/30 dark:to-emerald-950/10"
+                              : "border-slate-200 bg-gradient-to-br from-slate-50/80 to-white hover:border-slate-300 hover:shadow-md dark:border-slate-700/50 dark:from-slate-900/30 dark:to-slate-900/10",
+                          locked && "opacity-60 cursor-not-allowed"
+                        )}
+                      >
+                        <div className="p-4">
+                          {/* Top Row - Name & Time */}
+                          <div className="flex items-start justify-between gap-3 mb-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={cn(
+                                "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold shadow-sm",
+                                selected 
+                                  ? "bg-primary text-primary-foreground" 
+                                  : isQualified
+                                    ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"
+                                    : "bg-gradient-to-br from-slate-400 to-slate-500 text-white"
                               )}>
-                                {locked ? "Hidden Lead" : lead.name}
-                              </h4>
-                              {location && !locked && (
-                                <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
-                                  <span className="inline-block w-1 h-1 rounded-full bg-muted-foreground/40" />
-                                  {location}
-                                </p>
+                                {locked ? "?" : lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className={cn(
+                                  "font-semibold text-[15px] truncate leading-tight",
+                                  selected ? "text-primary" : "text-foreground"
+                                )}>
+                                  {locked ? "Hidden Lead" : lead.name}
+                                </h4>
+                                {location && !locked && (
+                                  <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                                    <span className="inline-block w-1 h-1 rounded-full bg-muted-foreground/40" />
+                                    {location}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground font-medium">
+                              {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true }).replace('about ', '')}
+                            </span>
+                          </div>
+
+                          {/* Bottom Row - Tags */}
+                          {!locked && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {/* Lead Type Tag - Primary distinction */}
+                              {isQualified ? (
+                                <Badge className="h-5 px-2 text-[10px] bg-emerald-500 text-white border-0 font-semibold shadow-sm">
+                                  <Sparkles className="h-2.5 w-2.5 mr-1" />
+                                  Qualified
+                                </Badge>
+                              ) : (
+                                <Badge className="h-5 px-2 text-[10px] bg-slate-500 text-white border-0 font-semibold shadow-sm">
+                                  Direct
+                                </Badge>
+                              )}
+                              {/* Urgency Tag */}
+                              {lead.urgency === 'immediate' && (
+                                <Badge className="h-5 px-2 text-[10px] bg-red-500 text-white border-0 font-semibold shadow-sm">
+                                  <AlertTriangle className="h-2.5 w-2.5 mr-1" />
+                                  Urgent
+                                </Badge>
+                              )}
+                              {lead.urgency === 'within_week' && (
+                                <Badge className="h-5 px-2 text-[10px] bg-amber-500 text-white border-0 font-semibold shadow-sm">
+                                  <Clock className="h-2.5 w-2.5 mr-1" />
+                                  This Week
+                                </Badge>
+                              )}
+                              {lead.urgency === 'within_month' && (
+                                <Badge variant="outline" className="h-5 px-2 text-[10px] border-muted-foreground/40 font-medium">
+                                  <Clock className="h-2.5 w-2.5 mr-1" />
+                                  This Month
+                                </Badge>
+                              )}
+                              <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                              <LeadScoreBadge lead={lead} size="sm" />
+                              {/* Email verified indicator */}
+                              {lead.email_verified && (
+                                <div className="h-5 w-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center" title="Email verified">
+                                  <ShieldCheck className="h-2.5 w-2.5 text-green-600 dark:text-green-400" />
+                                </div>
+                              )}
+                              {/* Message indicator */}
+                              {lead.message && (
+                                <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center" title="Has message">
+                                  <MessageSquare className="h-2.5 w-2.5 text-blue-600 dark:text-blue-400" />
+                                </div>
                               )}
                             </div>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground font-medium">
-                            {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true }).replace('about ', '')}
-                          </span>
+                          )}
                         </div>
-
-                        {/* Bottom Row - Tags */}
-                        {!locked && (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {/* Lead Type Tag - Primary distinction */}
-                            {isQualified ? (
-                              <Badge className="h-5 px-2 text-[10px] bg-emerald-500 text-white border-0 font-semibold shadow-sm">
-                                <Sparkles className="h-2.5 w-2.5 mr-1" />
-                                Qualified
-                              </Badge>
-                            ) : (
-                              <Badge className="h-5 px-2 text-[10px] bg-slate-500 text-white border-0 font-semibold shadow-sm">
-                                Direct
-                              </Badge>
-                            )}
-                            {/* Urgency Tag */}
-                            {lead.urgency === 'immediate' && (
-                              <Badge className="h-5 px-2 text-[10px] bg-red-500 text-white border-0 font-semibold shadow-sm">
-                                <AlertTriangle className="h-2.5 w-2.5 mr-1" />
-                                Urgent
-                              </Badge>
-                            )}
-                            {lead.urgency === 'within_week' && (
-                              <Badge className="h-5 px-2 text-[10px] bg-amber-500 text-white border-0 font-semibold shadow-sm">
-                                <Clock className="h-2.5 w-2.5 mr-1" />
-                                This Week
-                              </Badge>
-                            )}
-                            {lead.urgency === 'within_month' && (
-                              <Badge variant="outline" className="h-5 px-2 text-[10px] border-muted-foreground/40 font-medium">
-                                <Clock className="h-2.5 w-2.5 mr-1" />
-                                This Month
-                              </Badge>
-                            )}
-                            <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
-                            <LeadScoreBadge lead={lead} size="sm" />
-                            {/* Email verified indicator */}
-                            {lead.email_verified && (
-                              <div className="h-5 w-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center" title="Email verified">
-                                <ShieldCheck className="h-2.5 w-2.5 text-green-600 dark:text-green-400" />
-                              </div>
-                            )}
-                            {/* Message indicator */}
-                            {lead.message && (
-                              <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center" title="Has message">
-                                <MessageSquare className="h-2.5 w-2.5 text-blue-600 dark:text-blue-400" />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         </div>
