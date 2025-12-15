@@ -301,12 +301,12 @@ export default function ProviderDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Monthly Leads with Usage */}
+        {/* Leads - different display for Basic vs Paid plans */}
         <Card className="group hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {planKey === "basic" ? "Exclusive Leads" : "Leads This Month"}
+                {planKey === "basic" ? "Direct Inquiry" : "Leads This Month"}
               </CardTitle>
               <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
                 <Users className="h-4 w-4 text-green-600" />
@@ -318,13 +318,18 @@ export default function ProviderDashboardPage() {
               <Skeleton className="h-9 w-16" />
             ) : planKey === "basic" ? (
               <div className="space-y-2">
-                <span className="text-3xl font-bold text-muted-foreground">0</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-foreground">{monthlyLeadsCount}</span>
+                  <span className="text-lg text-muted-foreground">/ 1</span>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Upgrade to receive exclusive qualified leads
+                  {monthlyLeadsCount >= 1 
+                    ? "Lifetime limit reached" 
+                    : "1 direct inquiry (lifetime)"}
                 </p>
                 <Button variant="link" className="h-auto p-0 text-xs text-primary" asChild>
                   <Link to="/provider/billing">
-                    Upgrade now
+                    Upgrade for more leads
                     <ArrowRight className="h-3 w-3 ml-1" />
                   </Link>
                 </Button>
