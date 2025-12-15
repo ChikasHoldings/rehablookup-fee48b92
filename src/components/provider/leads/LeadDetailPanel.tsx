@@ -603,7 +603,9 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
             <section className="pt-2 border-t border-border/50">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  Source: <span className="font-medium text-foreground">{lead.source || "Direct"}</span>
+                  Source: <span className="font-medium text-foreground">
+                    {lead.source === "Request Help Page" ? "Qualified Lead" : (lead.source || "Direct")}
+                  </span>
                 </span>
                 <span>{format(new Date(lead.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
               </div>
