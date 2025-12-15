@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User } from "lucide-react";
+import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
-import { useAdminNotifications } from "@/hooks/useAdminNotifications";
+import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
 
 interface AdminHeaderProps {
   userEmail?: string;
@@ -46,8 +46,13 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
   const queryClient = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
   
-  // Get persisted admin notifications
-  const { notifications: persistedNotifications, unreadCount: persistedUnreadCount, markAsRead } = useAdminNotifications();
+  // Get user-specific admin notifications
+  const { 
+    notifications: userNotifications, 
+    unreadCount: userUnreadCount, 
+    markAsRead, 
+    markAllAsRead 
+  } = useAdminUserNotifications();
 
   // Invalidate queries callback for realtime updates
   const invalidateNotifications = useCallback(() => {
@@ -182,15 +187,17 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
     });
   });
 
-  // Add persisted notifications (payment failures, system alerts)
-  persistedNotifications?.slice(0, 5).forEach((notif) => {
+  // Add user-specific notifications (tasks assigned to this admin, etc.)
+  userNotifications?.slice(0, 5).forEach((notif) => {
     notifications.push({
-      id: `persisted-${notif.id}`,
+      id: `user-${notif.id}`,
       title: notif.title,
       message: notif.message,
       time: formatDistanceToNow(new Date(notif.created_at), { addSuffix: true }),
-      type: notif.type === "payment_failed" ? "warning" : "provider",
-      link: "/admin/notifications",
+      type: notif.type === "payment_failed" ? "warning" : 
+            notif.type === "lead_assigned" ? "lead" : 
+            notif.type === "provider_signup" ? "provider" : "provider",
+      link: notif.link || "/admin/notifications",
     });
   });
 
@@ -202,7 +209,7 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
     return 0;
   });
 
-  const unreadCount = (pendingProviders?.length || 0) + (unassignedLeads && unassignedLeads.length > 0 ? 1 : 0) + persistedUnreadCount;
+  const unreadCount = (pendingProviders?.length || 0) + (unassignedLeads && unassignedLeads.length > 0 ? 1 : 0) + userUnreadCount;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -291,11 +298,24 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
             <DropdownMenuContent className="w-80 bg-background" align="end">
               <div className="flex items-center justify-between px-4 py-3 border-b">
                 <h3 className="font-semibold">Notifications</h3>
-                {unreadCount > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {unreadCount} action{unreadCount > 1 ? "s" : ""} needed
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {userUnreadCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => markAllAsRead()}
+                    >
+                      <CheckCheck className="h-3 w-3 mr-1" />
+                      Mark read
+                    </Button>
+                  )}
+                  {unreadCount > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </div>
               </div>
               <ScrollArea className="h-[300px]">
                 {sortedNotifications.length > 0 ? (
