@@ -20,7 +20,6 @@ import {
   Mail,
   Calendar,
   FileText,
-  TrendingUp,
   RefreshCw,
   ExternalLink,
   MessageSquare,
@@ -31,6 +30,11 @@ import {
   Crown,
   DollarSign,
   Download,
+  Image,
+  Flag,
+  AlertTriangle,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -50,6 +54,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -67,6 +72,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Facility = {
   id: string;
@@ -87,6 +99,7 @@ type Facility = {
   verified: boolean | null;
   suspended: boolean | null;
   logo_url: string | null;
+  gallery_urls: string[] | null;
   admin_notes: string | null;
   created_at: string;
   updated_at: string;
@@ -105,6 +118,16 @@ type Lead = {
   email_verified: boolean | null;
   source: string | null;
   urgency: string | null;
+};
+
+type FlaggedImage = {
+  id: string;
+  facility_id: string;
+  image_url: string;
+  image_type: string;
+  reason: string | null;
+  flagged_at: string;
+  resolved: boolean;
 };
 
 type SubscriptionData = {
@@ -146,6 +169,13 @@ export default function AdminProviders() {
   const [contactMessage, setContactMessage] = useState("");
   const [sendEmail, setSendEmail] = useState(true);
   const [sendInApp, setSendInApp] = useState(true);
+  
+  // Image flagging state
+  const [showFlagDialog, setShowFlagDialog] = useState(false);
+  const [flagImageUrl, setFlagImageUrl] = useState("");
+  const [flagImageType, setFlagImageType] = useState<"logo" | "gallery">("gallery");
+  const [flagReason, setFlagReason] = useState("");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Fetch all status counts
   const { data: statusCounts } = useQuery({
@@ -284,6 +314,21 @@ export default function AdminProviders() {
     enabled: !!selectedProvider?.id && showDetailDialog,
   });
 
+  // Fetch flagged images for selected provider
+  const { data: flaggedImages } = useQuery({
+    queryKey: ["admin-flagged-images", selectedProvider?.id],
+    queryFn: async () => {
+      if (!selectedProvider?.id) return [];
+      const { data } = await supabase
+        .from("flagged_images")
+        .select("*")
+        .eq("facility_id", selectedProvider.id)
+        .eq("resolved", false);
+      return (data || []) as FlaggedImage[];
+    },
+    enabled: !!selectedProvider?.id && showDetailDialog,
+  });
+
   // Update provider mutation
   const updateProvider = useMutation({
     mutationFn: async ({
@@ -351,6 +396,78 @@ export default function AdminProviders() {
       toast.error(`Failed to send message: ${error.message}`);
     },
   });
+
+  // Flag image mutation
+  const flagImage = useMutation({
+    mutationFn: async () => {
+      if (!selectedProvider || !flagImageUrl) {
+        throw new Error("Missing required fields");
+      }
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase.from("flagged_images").insert({
+        facility_id: selectedProvider.id,
+        image_url: flagImageUrl,
+        image_type: flagImageType,
+        reason: flagReason || null,
+        flagged_by: user.id,
+      });
+      
+      if (error) throw error;
+
+      // Log admin action
+      await supabase.from("admin_audit_log").insert({
+        admin_user_id: user.id,
+        action_type: "flag_image",
+        target_type: "facility",
+        target_id: selectedProvider.id,
+        details: { image_url: flagImageUrl, image_type: flagImageType, reason: flagReason },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Image flagged successfully");
+      setShowFlagDialog(false);
+      setFlagImageUrl("");
+      setFlagReason("");
+      queryClient.invalidateQueries({ queryKey: ["admin-flagged-images", selectedProvider?.id] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to flag image: ${error.message}`);
+    },
+  });
+
+  // Resolve flagged image mutation
+  const resolveFlaggedImage = useMutation({
+    mutationFn: async (imageId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase.from("flagged_images").update({
+        resolved: true,
+        resolved_at: new Date().toISOString(),
+        resolved_by: user.id,
+      }).eq("id", imageId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Flag resolved");
+      queryClient.invalidateQueries({ queryKey: ["admin-flagged-images", selectedProvider?.id] });
+    },
+  });
+
+  const openFlagDialog = (imageUrl: string, type: "logo" | "gallery") => {
+    setFlagImageUrl(imageUrl);
+    setFlagImageType(type);
+    setFlagReason("");
+    setShowFlagDialog(true);
+  };
+
+  const isImageFlagged = (imageUrl: string) => {
+    return flaggedImages?.some(f => f.image_url === imageUrl) || false;
+  };
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -953,6 +1070,176 @@ export default function AdminProviders() {
                   </>
                 )}
 
+                {/* Profile Images */}
+                <Separator />
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Image className="h-4 w-4" />
+                    Profile Images
+                    {flaggedImages && flaggedImages.length > 0 && (
+                      <Badge variant="destructive" className="ml-2 gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        {flaggedImages.length} flagged
+                      </Badge>
+                    )}
+                  </h3>
+                  
+                  {/* Logo */}
+                  <div className="mb-4">
+                    <p className="text-sm text-muted-foreground mb-2">Facility Logo</p>
+                    {selectedProvider?.logo_url ? (
+                      <div className="relative inline-block group">
+                        <img
+                          src={selectedProvider.logo_url}
+                          alt="Facility logo"
+                          className={`w-24 h-24 object-cover rounded-lg border-2 cursor-pointer transition-all hover:opacity-90 ${
+                            isImageFlagged(selectedProvider.logo_url) 
+                              ? "border-destructive ring-2 ring-destructive/20" 
+                              : "border-border"
+                          }`}
+                          onClick={() => setPreviewImage(selectedProvider.logo_url)}
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewImage(selectedProvider.logo_url);
+                            }}
+                          >
+                            <ZoomIn className="h-4 w-4" />
+                          </Button>
+                          {!isImageFlagged(selectedProvider.logo_url) && (
+                            <Button
+                              size="icon"
+                              variant="destructive"
+                              className="h-8 w-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openFlagDialog(selectedProvider.logo_url!, "logo");
+                              }}
+                            >
+                              <Flag className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        {isImageFlagged(selectedProvider.logo_url) && (
+                          <div className="absolute -top-2 -right-2">
+                            <Badge variant="destructive" className="h-5 px-1">
+                              <Flag className="h-3 w-3" />
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center">
+                        <Image className="h-8 w-8 text-muted-foreground/30" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Gallery */}
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Gallery Images ({selectedProvider?.gallery_urls?.length || 0})
+                    </p>
+                    {selectedProvider?.gallery_urls && selectedProvider.gallery_urls.length > 0 ? (
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                        {selectedProvider.gallery_urls.map((url, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={url}
+                              alt={`Gallery image ${index + 1}`}
+                              className={`w-full aspect-square object-cover rounded-lg border-2 cursor-pointer transition-all hover:opacity-90 ${
+                                isImageFlagged(url) 
+                                  ? "border-destructive ring-2 ring-destructive/20" 
+                                  : "border-border"
+                              }`}
+                              onClick={() => setPreviewImage(url)}
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1">
+                              <Button
+                                size="icon"
+                                variant="secondary"
+                                className="h-7 w-7"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewImage(url);
+                                }}
+                              >
+                                <ZoomIn className="h-3 w-3" />
+                              </Button>
+                              {!isImageFlagged(url) && (
+                                <Button
+                                  size="icon"
+                                  variant="destructive"
+                                  className="h-7 w-7"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openFlagDialog(url, "gallery");
+                                  }}
+                                >
+                                  <Flag className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                            {isImageFlagged(url) && (
+                              <div className="absolute -top-2 -right-2">
+                                <Badge variant="destructive" className="h-5 px-1">
+                                  <Flag className="h-3 w-3" />
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 bg-muted/30 rounded-lg">
+                        <Image className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">No gallery images uploaded</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Flagged Images List */}
+                  {flaggedImages && flaggedImages.length > 0 && (
+                    <div className="mt-4 p-4 bg-destructive/5 border border-destructive/20 rounded-lg">
+                      <h4 className="font-medium text-destructive flex items-center gap-2 mb-3">
+                        <AlertTriangle className="h-4 w-4" />
+                        Flagged Images ({flaggedImages.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {flaggedImages.map((flag) => (
+                          <div key={flag.id} className="flex items-center justify-between p-2 bg-background rounded border">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={flag.image_url}
+                                alt="Flagged"
+                                className="w-10 h-10 object-cover rounded"
+                              />
+                              <div>
+                                <Badge variant="outline" className="text-xs">{flag.image_type}</Badge>
+                                {flag.reason && (
+                                  <p className="text-xs text-muted-foreground mt-1">{flag.reason}</p>
+                                )}
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => resolveFlaggedImage.mutate(flag.id)}
+                            >
+                              Resolve
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <Separator />
 
                 {/* Timestamps */}
@@ -1270,6 +1557,92 @@ export default function AdminProviders() {
               </TabsContent>
             </ScrollArea>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/95">
+          <div className="relative">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="absolute top-2 right-2 z-10 text-white hover:bg-white/20"
+              onClick={() => setPreviewImage(null)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            {previewImage && (
+              <img
+                src={previewImage}
+                alt="Preview"
+                className="w-full max-h-[80vh] object-contain"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Flag Image Dialog */}
+      <Dialog open={showFlagDialog} onOpenChange={setShowFlagDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Flag className="h-5 w-5" />
+              Flag Inappropriate Image
+            </DialogTitle>
+            <DialogDescription>
+              Flag this image for review. The provider will be notified that their image has been flagged.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {flagImageUrl && (
+              <div className="flex justify-center">
+                <img
+                  src={flagImageUrl}
+                  alt="Image to flag"
+                  className="max-w-48 max-h-48 object-contain rounded-lg border"
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Reason for flagging</Label>
+              <Select value={flagReason} onValueChange={setFlagReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a reason..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inappropriate">Inappropriate content</SelectItem>
+                  <SelectItem value="misleading">Misleading or fake image</SelectItem>
+                  <SelectItem value="low_quality">Low quality / unprofessional</SelectItem>
+                  <SelectItem value="copyright">Copyright violation</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowFlagDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => flagImage.mutate()}
+                disabled={!flagReason || flagImage.isPending}
+              >
+                {flagImage.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Flagging...
+                  </>
+                ) : (
+                  <>
+                    <Flag className="h-4 w-4 mr-2" />
+                    Flag Image
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
