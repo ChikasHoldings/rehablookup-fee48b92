@@ -246,30 +246,32 @@ export default function ProviderDashboardPage() {
         />
       )}
 
-      {/* Status Banner */}
-      <Card className="border-l-4" style={{ borderLeftColor: statusConfig.dotClass === 'bg-green-500' ? '#22c55e' : statusConfig.dotClass === 'bg-amber-500' ? '#f59e0b' : '#71717a' }}>
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`h-10 w-10 rounded-lg ${statusConfig.bgClass} flex items-center justify-center`}>
-                <StatusIcon className={`h-5 w-5 ${statusConfig.textClass}`} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className={`h-2 w-2 rounded-full ${statusConfig.dotClass}`} />
-                  <span className={`font-semibold ${statusConfig.textClass}`}>{statusConfig.label}</span>
+      {/* Status Banner - hide when approved and profile complete */}
+      {!(facility?.status === "approved" && providerData?.facility?.profile_completion_celebrated) && (
+        <Card className="border-l-4" style={{ borderLeftColor: statusConfig.dotClass === 'bg-green-500' ? '#22c55e' : statusConfig.dotClass === 'bg-amber-500' ? '#f59e0b' : '#71717a' }}>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`h-10 w-10 rounded-lg ${statusConfig.bgClass} flex items-center justify-center`}>
+                  <StatusIcon className={`h-5 w-5 ${statusConfig.textClass}`} />
                 </div>
-                <p className="text-sm text-muted-foreground">{statusConfig.description}</p>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${statusConfig.dotClass}`} />
+                    <span className={`font-semibold ${statusConfig.textClass}`}>{statusConfig.label}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{statusConfig.description}</p>
+                </div>
               </div>
+              {facility?.status === "pending" && (
+                <p className="text-xs text-muted-foreground hidden sm:block">
+                  Usually reviewed within 24-48 hours
+                </p>
+              )}
             </div>
-            {facility?.status === "pending" && (
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                Usually reviewed within 24-48 hours
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
