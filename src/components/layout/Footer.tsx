@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Heart, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 
 export function Footer() {
@@ -164,13 +165,13 @@ export function Footer() {
         <div className="mt-12 grid gap-4 rounded-xl bg-primary-foreground/5 p-5 sm:grid-cols-3">
           <div className="flex items-center gap-3 text-sm">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
-              <Phone className="h-4 w-4 text-accent" />
+              <Heart className="h-4 w-4 text-accent" />
             </div>
             <div>
-              <p className="text-xs text-primary-foreground/50">Call Us</p>
-              <a href="tel:1-800-555-0199" className="font-medium text-primary-foreground transition-colors hover:text-primary-foreground/80">
-                1-800-555-0199
-              </a>
+              <p className="text-xs text-primary-foreground/50">Need Help?</p>
+              <Link to="/request-help?source=footer" className="font-medium text-primary-foreground transition-colors hover:text-primary-foreground/80">
+                Request Help Now
+              </Link>
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm">
