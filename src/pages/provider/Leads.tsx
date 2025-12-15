@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { 
   Users, 
   Search,
@@ -14,6 +15,7 @@ import {
   MessageSquare,
   ShieldCheck,
   ChevronLeft,
+  Zap,
 } from "lucide-react";
 import {
   Select,
@@ -40,11 +42,7 @@ import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components
 import { LeadScoreBadge } from "@/components/provider/leads/LeadScoreBadge";
 import { LeadDetailPanel, type Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { calculateLeadScore } from "@/lib/leadScoring";
-import { 
-  LeadLimitWarningBanner, 
-  LeadLimitReachedBanner,
-  BasicPlanBanner,
-} from "@/components/provider/LeadUsageIndicator";
+// Removed unused banner imports - now using compact header indicator
 import { useSubscription } from "@/hooks/useSubscription";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -185,25 +183,34 @@ export default function ProviderLeadsPage() {
     return false;
   };
 
+  // Determine if upgrade message should show
+  const showUpgradeIndicator = leadLimit === 0 || 
+    (currentPlan === "basic" && thisMonthLeads.length >= leadLimit * 0.8) ||
+    (currentPlan === "professional" && thisMonthQualified.length >= leadLimit * 0.8);
+  
+  const isAtLimit = currentPlan === "basic" 
+    ? thisMonthLeads.length >= leadLimit 
+    : thisMonthQualified.length >= leadLimit;
+
   return (
     <div className="h-full flex flex-col overflow-hidden" {...swipeHandlers}>
       {/* Header */}
       <div className="flex-shrink-0 px-4 md:px-6 py-4 bg-background border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             {/* Mobile back button */}
             {isMobile && mobileView === 'detail' && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 -ml-2"
+                className="h-8 w-8 -ml-2 flex-shrink-0"
                 onClick={handleBackToList}
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
             )}
-            <div>
-              <h1 className="text-lg md:text-xl font-semibold text-foreground">
+            <div className="min-w-0">
+              <h1 className="text-lg md:text-xl font-semibold text-foreground truncate">
                 {isMobile && mobileView === 'detail' ? 'Lead Details' : 'Lead Management'}
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
@@ -214,27 +221,36 @@ export default function ProviderLeadsPage() {
               </p>
             </div>
           </div>
+          
+          {/* Compact Upgrade Indicator - Right aligned in header */}
+          {showUpgradeIndicator && (!isMobile || mobileView === 'list') && currentPlan !== "featured" && (
+            <Link 
+              to="/provider/billing"
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex-shrink-0",
+                leadLimit === 0 
+                  ? "bg-primary/10 text-primary hover:bg-primary/20"
+                  : isAtLimit
+                    ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                    : "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+              )}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                {leadLimit === 0 
+                  ? "Upgrade to get leads"
+                  : isAtLimit 
+                    ? "Limit reached" 
+                    : `${currentPlan === "basic" ? thisMonthLeads.length : thisMonthQualified.length}/${leadLimit} used`
+                }
+              </span>
+              <span className="sm:hidden">
+                {leadLimit === 0 ? "Upgrade" : isAtLimit ? "Limit" : `${currentPlan === "basic" ? thisMonthLeads.length : thisMonthQualified.length}/${leadLimit}`}
+              </span>
+            </Link>
+          )}
         </div>
       </div>
-
-      {/* Banners - hidden on mobile detail view */}
-      {(leadLimit === 0 || currentPlan !== "featured") && (!isMobile || mobileView === 'list') && (
-        <div className="flex-shrink-0 px-4 md:px-6 py-2 space-y-2 bg-background border-b">
-          {leadLimit === 0 && <BasicPlanBanner />}
-          {currentPlan === "basic" && leadLimit > 0 && (
-            <>
-              <LeadLimitReachedBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} plan="basic" />
-              <LeadLimitWarningBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />
-            </>
-          )}
-          {currentPlan === "professional" && leadLimit > 0 && (
-            <>
-              <LeadLimitReachedBanner usedLeads={thisMonthQualified.length} leadLimit={leadLimit} plan="professional" isQualifiedLeads />
-              <LeadLimitWarningBanner usedLeads={thisMonthQualified.length} leadLimit={leadLimit} />
-            </>
-          )}
-        </div>
-      )}
 
       {/* Main Content */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
