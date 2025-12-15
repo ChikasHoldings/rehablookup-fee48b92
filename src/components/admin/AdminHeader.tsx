@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle } from "lucide-react";
 import {
@@ -21,7 +21,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 
@@ -42,7 +42,53 @@ type Notification = {
 function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
   const initials = userEmail?.slice(0, 2).toUpperCase() || "AD";
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Invalidate queries callback for realtime updates
+  const invalidateNotifications = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-notifications-pending"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-notifications-unassigned-leads"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-notifications-approvals"] });
+  }, [queryClient]);
+
+  // Set up realtime subscriptions for notifications
+  useEffect(() => {
+    const facilitiesChannel = supabase
+      .channel("admin-facilities-notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facilities",
+        },
+        () => {
+          invalidateNotifications();
+        }
+      )
+      .subscribe();
+
+    const leadsChannel = supabase
+      .channel("admin-leads-notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "leads",
+        },
+        () => {
+          invalidateNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(facilitiesChannel);
+      supabase.removeChannel(leadsChannel);
+    };
+  }, [invalidateNotifications]);
 
   // Fetch pending providers
   const { data: pendingProviders } = useQuery({
