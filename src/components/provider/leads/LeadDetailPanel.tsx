@@ -196,7 +196,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
       <div className="flex-shrink-0 p-4 border-b bg-gradient-to-r from-muted/50 to-transparent">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <span className="text-sm font-semibold text-primary">
                 {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
               </span>
@@ -211,22 +211,6 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
                     Verified
                   </Badge>
                 )}
-              </div>
-              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1 hover:text-foreground cursor-pointer" onClick={() => handleCopy(lead.phone, "phone")}>
-                  <Phone className="h-3 w-3" />
-                  {lead.phone}
-                  {copiedField === "phone" && <Check className="h-3 w-3 text-green-600" />}
-                </span>
-                <span className="text-muted-foreground/40">•</span>
-                <span className="flex items-center gap-1 hover:text-foreground cursor-pointer truncate" onClick={() => handleCopy(lead.email, "email")}>
-                  <Mail className="h-3 w-3" />
-                  <span className="truncate max-w-[140px]">{lead.email}</span>
-                  {copiedField === "email" && <Check className="h-3 w-3 text-green-600" />}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <LeadStatusBadge status={lead.status as LeadStatus} />
                 {lead.source === "Request Help Page" && (
                   <Badge className="bg-primary/10 text-primary border-0 gap-1 h-5 text-[10px] px-1.5">
                     <Sparkles className="h-2.5 w-2.5" />
@@ -239,39 +223,36 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
                     Urgent
                   </Badge>
                 )}
-                <span className="text-[10px] text-muted-foreground ml-auto">
-                  {formatDistanceToNow(new Date(lead.created_at), { addSuffix: false }).replace("about ", "")} ago
-                </span>
               </div>
+              {lead.location_city_state && (
+                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {lead.location_city_state}
+                </p>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: false }).replace("about ", "")} ago
+              </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => setShowEmailDialog(true)}>
+              <Mail className="h-3.5 w-3.5" />
+              Email
+            </Button>
+            <Select value={lead.status} onValueChange={(v) => updateStatus.mutate(v as LeadStatus)} disabled={updateStatus.isPending}>
+              <SelectTrigger className="w-[120px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-background">
+                {getStatusOptions().map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="flex-shrink-0 px-4 py-2.5 border-b bg-muted/20 flex items-center gap-2 flex-wrap">
-        <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700 h-8" asChild>
-          <a href={`tel:${lead.phone}`}>
-            <Phone className="h-3.5 w-3.5" />
-            Call
-          </a>
-        </Button>
-        <Button size="sm" variant="outline" className="gap-2 h-8" onClick={() => setShowEmailDialog(true)}>
-          <Mail className="h-3.5 w-3.5" />
-          Email
-        </Button>
-        <div className="flex-1" />
-        <Select value={lead.status} onValueChange={(v) => updateStatus.mutate(v as LeadStatus)} disabled={updateStatus.isPending}>
-          <SelectTrigger className="w-[130px] h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-background">
-            {getStatusOptions().map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Email Dialog */}
