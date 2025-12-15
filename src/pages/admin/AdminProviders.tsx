@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   Building2,
   Search,
-  Filter,
   CheckCircle,
   XCircle,
   Star,
@@ -14,19 +13,25 @@ import {
   Ban,
   BadgeCheck,
   Users,
+  Clock,
+  MapPin,
+  Phone,
+  Globe,
+  Mail,
+  Calendar,
+  FileText,
+  TrendingUp,
+  AlertTriangle,
+  RefreshCw,
+  ExternalLink,
+  MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +42,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -46,59 +50,80 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Facility = {
   id: string;
   name: string;
   city: string;
   state: string;
+  address: string;
+  zip_code: string;
+  phone: string;
+  email: string | null;
+  website: string | null;
+  description: string | null;
+  facility_type: string;
+  bed_count: string | null;
+  gender_served: string | null;
   status: string;
   featured: boolean;
-  verified: boolean;
-  suspended: boolean;
+  verified: boolean | null;
+  suspended: boolean | null;
   logo_url: string | null;
   admin_notes: string | null;
   created_at: string;
+  updated_at: string;
   lead_limit_override: number | null;
+  slug: string | null;
+  user_id: string;
 };
 
-const ITEMS_PER_PAGE = 20;
+type FacilityServices = {
+  id: string;
+  service_name: string;
+};
+
+type FacilityInsurance = {
+  id: string;
+  insurance_name: string;
+};
+
+const ITEMS_PER_PAGE = 15;
 
 export default function AdminProviders() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
+  const [activeTab, setActiveTab] = useState("all");
   const [selectedProvider, setSelectedProvider] = useState<Facility | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch total count for pagination
-  const { data: totalCount } = useQuery({
-    queryKey: ["admin-providers-count", statusFilter, searchQuery],
+  // Fetch all status counts
+  const { data: statusCounts } = useQuery({
+    queryKey: ["admin-providers-status-counts"],
     queryFn: async () => {
-      let query = supabase
-        .from("facilities")
-        .select("id", { count: "exact", head: true });
+      const [allResult, approvedResult, pendingResult, suspendedResult] = await Promise.all([
+        supabase.from("facilities").select("id", { count: "exact", head: true }),
+        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved").neq("suspended", true),
+        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
+      ]);
 
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
-      }
-
-      const { count, error } = await query;
-      if (error) throw error;
-      return count || 0;
+      return {
+        all: allResult.count || 0,
+        approved: approvedResult.count || 0,
+        pending: pendingResult.count || 0,
+        suspended: suspendedResult.count || 0,
+      };
     },
   });
 
-  // Fetch providers with pagination
+  // Fetch providers with pagination and filtering
   const { data: providers, isLoading } = useQuery({
-    queryKey: ["admin-providers", statusFilter, searchQuery, currentPage],
+    queryKey: ["admin-providers", activeTab, searchQuery, currentPage],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -109,12 +134,16 @@ export default function AdminProviders() {
         .order("created_at", { ascending: false })
         .range(from, to);
 
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
+      if (activeTab === "approved") {
+        query = query.eq("status", "approved").neq("suspended", true);
+      } else if (activeTab === "pending") {
+        query = query.eq("status", "pending");
+      } else if (activeTab === "suspended") {
+        query = query.eq("suspended", true);
       }
 
       if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
+        query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
       }
 
       const { data, error } = await query;
@@ -123,32 +152,37 @@ export default function AdminProviders() {
     },
   });
 
+  // Fetch total count for current filter
+  const { data: totalCount } = useQuery({
+    queryKey: ["admin-providers-count", activeTab, searchQuery],
+    queryFn: async () => {
+      let query = supabase.from("facilities").select("id", { count: "exact", head: true });
+
+      if (activeTab === "approved") {
+        query = query.eq("status", "approved").neq("suspended", true);
+      } else if (activeTab === "pending") {
+        query = query.eq("status", "pending");
+      } else if (activeTab === "suspended") {
+        query = query.eq("suspended", true);
+      }
+
+      if (searchQuery) {
+        query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
   const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
 
-  // Reset to page 1 when filters change
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
-  };
-
-  // Fetch lead counts for each provider
+  // Fetch lead counts for providers
   const { data: leadCounts } = useQuery({
     queryKey: ["admin-provider-lead-counts"],
     queryFn: async () => {
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const { data } = await supabase
-        .from("leads")
-        .select("facility_id")
-        .gte("created_at", startOfMonth.toISOString());
-
+      const { data } = await supabase.from("leads").select("facility_id");
       const counts: Record<string, number> = {};
       data?.forEach((lead) => {
         if (lead.facility_id) {
@@ -157,6 +191,34 @@ export default function AdminProviders() {
       });
       return counts;
     },
+  });
+
+  // Fetch services for selected provider
+  const { data: providerServices } = useQuery({
+    queryKey: ["admin-provider-services", selectedProvider?.id],
+    queryFn: async () => {
+      if (!selectedProvider?.id) return [];
+      const { data } = await supabase
+        .from("facility_services")
+        .select("*")
+        .eq("facility_id", selectedProvider.id);
+      return data as FacilityServices[];
+    },
+    enabled: !!selectedProvider?.id,
+  });
+
+  // Fetch insurance for selected provider
+  const { data: providerInsurance } = useQuery({
+    queryKey: ["admin-provider-insurance", selectedProvider?.id],
+    queryFn: async () => {
+      if (!selectedProvider?.id) return [];
+      const { data } = await supabase
+        .from("facility_insurance")
+        .select("*")
+        .eq("facility_id", selectedProvider.id);
+      return data as FacilityInsurance[];
+    },
+    enabled: !!selectedProvider?.id,
   });
 
   // Update provider mutation
@@ -173,7 +235,6 @@ export default function AdminProviders() {
       const { error } = await supabase.from("facilities").update(updates).eq("id", id);
       if (error) throw error;
 
-      // Log admin action
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("admin_audit_log").insert({
         admin_user_id: user?.id,
@@ -185,6 +246,8 @@ export default function AdminProviders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-providers"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-providers-status-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-providers-count"] });
       toast.success("Provider updated successfully");
     },
     onError: () => {
@@ -192,15 +255,25 @@ export default function AdminProviders() {
     },
   });
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
   const handleStatusChange = (id: string, newStatus: string) => {
     updateProvider.mutate({
       id,
-      updates: { status: newStatus },
+      updates: { status: newStatus, suspended: false },
       actionType: `status_changed_to_${newStatus}`,
     });
   };
 
-  const handleToggleVerified = (id: string, currentValue: boolean) => {
+  const handleToggleVerified = (id: string, currentValue: boolean | null) => {
     updateProvider.mutate({
       id,
       updates: { verified: !currentValue },
@@ -216,11 +289,19 @@ export default function AdminProviders() {
     });
   };
 
-  const handleToggleSuspended = (id: string, currentValue: boolean) => {
+  const handleSuspend = (id: string) => {
     updateProvider.mutate({
       id,
-      updates: { suspended: !currentValue },
-      actionType: currentValue ? "unsuspended" : "suspended",
+      updates: { suspended: true },
+      actionType: "suspended",
+    });
+  };
+
+  const handleReactivate = (id: string) => {
+    updateProvider.mutate({
+      id,
+      updates: { suspended: false, status: "approved" },
+      actionType: "reactivated",
     });
   };
 
@@ -231,7 +312,6 @@ export default function AdminProviders() {
       updates: { admin_notes: adminNotes },
       actionType: "notes_updated",
     });
-    setShowDetailDialog(false);
   };
 
   const openProviderDetail = (provider: Facility) => {
@@ -240,159 +320,261 @@ export default function AdminProviders() {
     setShowDetailDialog(true);
   };
 
+  const getStatusIcon = (provider: Facility) => {
+    if (provider.suspended) return <Ban className="h-4 w-4 text-destructive" />;
+    if (provider.status === "approved") return <CheckCircle className="h-4 w-4 text-emerald-500" />;
+    if (provider.status === "pending") return <Clock className="h-4 w-4 text-amber-500" />;
+    return <XCircle className="h-4 w-4 text-destructive" />;
+  };
+
+  const getStatusBadge = (provider: Facility) => {
+    if (provider.suspended) {
+      return <Badge variant="destructive" className="gap-1"><Ban className="h-3 w-3" />Suspended</Badge>;
+    }
+    if (provider.status === "approved") {
+      return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><CheckCircle className="h-3 w-3" />Approved</Badge>;
+    }
+    if (provider.status === "pending") {
+      return <Badge variant="secondary" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-200"><Clock className="h-3 w-3" />Pending</Badge>;
+    }
+    return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Rejected</Badge>;
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Providers Management</h1>
-        <p className="text-muted-foreground">Manage all facility listings</p>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Provider Management</h1>
+          <p className="text-muted-foreground">Manage and monitor all facility providers</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-providers"] })}
+          className="gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </Button>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or city..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-9"
-              />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border-l-4 border-l-primary">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Providers</p>
+                <p className="text-2xl font-bold">{statusCounts?.all || 0}</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-primary" />
+              </div>
             </div>
-            <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Providers Table */}
+        <Card className="border-l-4 border-l-emerald-500">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Approved</p>
+                <p className="text-2xl font-bold text-emerald-600">{statusCounts?.approved || 0}</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-amber-500">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Pending Review</p>
+                <p className="text-2xl font-bold text-amber-600">{statusCounts?.pending || 0}</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-amber-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-destructive">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Suspended</p>
+                <p className="text-2xl font-bold text-destructive">{statusCounts?.suspended || 0}</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                <Ban className="h-5 w-5 text-destructive" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs and Search */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full sm:w-auto">
+          <TabsList className="grid w-full sm:w-auto grid-cols-4 h-10">
+            <TabsTrigger value="all" className="gap-1.5 text-xs sm:text-sm">
+              All
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{statusCounts?.all || 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="approved" className="gap-1.5 text-xs sm:text-sm">
+              Approved
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-emerald-100 text-emerald-700">{statusCounts?.approved || 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="gap-1.5 text-xs sm:text-sm">
+              Pending
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-amber-100 text-amber-700">{statusCounts?.pending || 0}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="suspended" className="gap-1.5 text-xs sm:text-sm">
+              Suspended
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-red-100 text-red-700">{statusCounts?.suspended || 0}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, city, or email..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </div>
+
+      {/* Provider List */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Providers ({totalCount || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="p-4 space-y-3">
               {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
+                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <Skeleton className="h-6 w-20" />
+                </div>
               ))}
             </div>
           ) : providers && providers.length > 0 ? (
-            <div className="space-y-2">
+            <div className="divide-y">
               {providers.map((provider) => (
                 <div
                   key={provider.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-muted/50 transition-colors"
+                  className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer group"
+                  onClick={() => openProviderDetail(provider)}
                 >
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={provider.logo_url || undefined} />
-                      <AvatarFallback className="bg-slate-100 text-slate-600">
-                        {provider.name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{provider.name}</p>
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="relative">
+                      <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
+                        <AvatarImage src={provider.logo_url || undefined} />
+                        <AvatarFallback className="bg-primary/5 text-primary font-semibold">
+                          {provider.name.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-1 -right-1">
+                        {getStatusIcon(provider)}
+                      </div>
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                          {provider.name}
+                        </p>
                         {provider.verified && (
-                          <BadgeCheck className="h-4 w-4 text-blue-500" />
+                          <BadgeCheck className="h-4 w-4 text-blue-500 shrink-0" />
                         )}
                         {provider.featured && (
-                          <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                        )}
-                        {provider.suspended && (
-                          <Ban className="h-4 w-4 text-red-500" />
+                          <Star className="h-4 w-4 text-amber-500 fill-amber-500 shrink-0" />
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {provider.city}, {provider.state}
-                      </p>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {provider.city}, {provider.state}
+                        </span>
+                        <span className="hidden sm:flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {leadCounts?.[provider.id] || 0} leads
+                        </span>
+                        <span className="hidden md:flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDistanceToNow(new Date(provider.created_at), { addSuffix: true })}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="hidden md:flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        {leadCounts?.[provider.id] || 0} leads
-                      </span>
-                    </div>
-
-                    <Badge
-                      variant={
-                        provider.status === "approved"
-                          ? "default"
-                          : provider.status === "pending"
-                          ? "secondary"
-                          : "destructive"
-                      }
-                    >
-                      {provider.status}
-                    </Badge>
+                  <div className="flex items-center gap-3">
+                    {getStatusBadge(provider)}
 
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenuItem onClick={() => openProviderDetail(provider)}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {provider.status === "pending" && (
-                          <DropdownMenuItem
-                            onClick={() => handleStatusChange(provider.id, "approved")}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                            Approve
+                        {provider.slug && (
+                          <DropdownMenuItem onClick={() => window.open(`/center/${provider.slug}`, "_blank")}>
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            View Public Profile
                           </DropdownMenuItem>
                         )}
-                        {provider.status === "approved" && (
-                          <DropdownMenuItem
-                            onClick={() => handleStatusChange(provider.id, "pending")}
-                          >
-                            <XCircle className="h-4 w-4 mr-2 text-amber-500" />
+                        <DropdownMenuSeparator />
+                        
+                        {provider.status === "pending" && (
+                          <DropdownMenuItem onClick={() => handleStatusChange(provider.id, "approved")} className="text-emerald-600">
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Approve Provider
+                          </DropdownMenuItem>
+                        )}
+                        {provider.status === "approved" && !provider.suspended && (
+                          <DropdownMenuItem onClick={() => handleStatusChange(provider.id, "pending")} className="text-amber-600">
+                            <Clock className="h-4 w-4 mr-2" />
                             Set to Pending
                           </DropdownMenuItem>
                         )}
+                        
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleToggleVerified(provider.id, provider.verified)}
-                        >
+                        <DropdownMenuItem onClick={() => handleToggleVerified(provider.id, provider.verified)}>
                           <Shield className="h-4 w-4 mr-2" />
-                          {provider.verified ? "Remove Verified" : "Mark as Verified"}
+                          {provider.verified ? "Remove Verification" : "Mark as Verified"}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleToggleFeatured(provider.id, provider.featured)}
-                        >
+                        <DropdownMenuItem onClick={() => handleToggleFeatured(provider.id, provider.featured)}>
                           <Star className="h-4 w-4 mr-2" />
                           {provider.featured ? "Remove Featured" : "Mark as Featured"}
                         </DropdownMenuItem>
+                        
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleToggleSuspended(provider.id, provider.suspended)}
-                          className={provider.suspended ? "text-green-600" : "text-red-600"}
-                        >
-                          <Ban className="h-4 w-4 mr-2" />
-                          {provider.suspended ? "Unsuspend" : "Suspend"}
-                        </DropdownMenuItem>
+                        {provider.suspended ? (
+                          <DropdownMenuItem onClick={() => handleReactivate(provider.id)} className="text-emerald-600">
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Reactivate Provider
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => handleSuspend(provider.id)} className="text-destructive">
+                            <Ban className="h-4 w-4 mr-2" />
+                            Suspend Provider
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -400,123 +582,310 @@ export default function AdminProviders() {
               ))}
             </div>
           ) : (
-            <p className="text-center py-8 text-muted-foreground">No providers found</p>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t mt-4">
-              <p className="text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} providers
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum: number;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        className="w-8 h-8 p-0"
-                        onClick={() => setCurrentPage(pageNum)}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Building2 className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-muted-foreground font-medium">No providers found</p>
+              <p className="text-sm text-muted-foreground/70">Try adjusting your search or filters</p>
             </div>
           )}
         </CardContent>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
+            <p className="text-sm text-muted-foreground">
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} providers
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <div className="hidden sm:flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Provider Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedProvider?.name}
-              {selectedProvider?.verified && (
-                <BadgeCheck className="h-5 w-5 text-blue-500" />
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedProvider?.city}, {selectedProvider?.state}
-            </DialogDescription>
+        <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-0">
+            <div className="flex items-start gap-4">
+              <Avatar className="h-16 w-16 border-2 border-background shadow-lg">
+                <AvatarImage src={selectedProvider?.logo_url || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                  {selectedProvider?.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <DialogTitle className="text-xl">{selectedProvider?.name}</DialogTitle>
+                  {selectedProvider?.verified && <BadgeCheck className="h-5 w-5 text-blue-500" />}
+                  {selectedProvider?.featured && <Star className="h-5 w-5 text-amber-500 fill-amber-500" />}
+                </div>
+                <p className="text-muted-foreground flex items-center gap-1 mt-1">
+                  <MapPin className="h-4 w-4" />
+                  {selectedProvider?.address}, {selectedProvider?.city}, {selectedProvider?.state} {selectedProvider?.zip_code}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  {selectedProvider && getStatusBadge(selectedProvider)}
+                  <Badge variant="outline">{selectedProvider?.facility_type}</Badge>
+                </div>
+              </div>
+            </div>
           </DialogHeader>
 
-          {selectedProvider && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <Badge
-                    variant={
-                      selectedProvider.status === "approved" ? "default" : "secondary"
-                    }
-                  >
-                    {selectedProvider.status}
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Leads This Month</p>
-                  <p className="font-medium">{leadCounts?.[selectedProvider.id] || 0}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Featured</p>
-                  <p className="font-medium">{selectedProvider.featured ? "Yes" : "No"}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Verified</p>
-                  <p className="font-medium">{selectedProvider.verified ? "Yes" : "No"}</p>
+          <ScrollArea className="max-h-[calc(90vh-200px)]">
+            <div className="p-6 space-y-6">
+              {/* Quick Actions */}
+              <div className="flex flex-wrap gap-2">
+                {selectedProvider?.status === "pending" && (
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
+                    handleStatusChange(selectedProvider.id, "approved");
+                    setShowDetailDialog(false);
+                  }}>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve
+                  </Button>
+                )}
+                {selectedProvider?.suspended ? (
+                  <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-300" onClick={() => {
+                    handleReactivate(selectedProvider.id);
+                    setShowDetailDialog(false);
+                  }}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reactivate
+                  </Button>
+                ) : selectedProvider && (
+                  <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => {
+                    handleSuspend(selectedProvider.id);
+                    setShowDetailDialog(false);
+                  }}>
+                    <Ban className="h-4 w-4 mr-2" />
+                    Suspend
+                  </Button>
+                )}
+                {selectedProvider && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => handleToggleVerified(selectedProvider.id, selectedProvider.verified)}>
+                      <Shield className="h-4 w-4 mr-2" />
+                      {selectedProvider.verified ? "Remove Verified" : "Mark Verified"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleToggleFeatured(selectedProvider.id, selectedProvider.featured)}>
+                      <Star className="h-4 w-4 mr-2" />
+                      {selectedProvider.featured ? "Remove Featured" : "Mark Featured"}
+                    </Button>
+                  </>
+                )}
+                {selectedProvider?.email && (
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={`mailto:${selectedProvider.email}`}>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Contact
+                    </a>
+                  </Button>
+                )}
+                {selectedProvider?.slug && (
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={`/center/${selectedProvider.slug}`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Public Page
+                    </a>
+                  </Button>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Contact Information */}
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Contact Information
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Phone</p>
+                      <p className="font-medium">{selectedProvider?.phone}</p>
+                    </div>
+                  </div>
+                  {selectedProvider?.email && (
+                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="font-medium truncate">{selectedProvider.email}</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedProvider?.website && (
+                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg sm:col-span-2">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Website</p>
+                        <a href={selectedProvider.website} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline truncate block">
+                          {selectedProvider.website}
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Admin Notes</Label>
+              <Separator />
+
+              {/* Facility Details */}
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Facility Details
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-xs text-muted-foreground">Leads Total</p>
+                    <p className="text-xl font-bold text-primary">{leadCounts?.[selectedProvider?.id || ""] || 0}</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-xs text-muted-foreground">Bed Count</p>
+                    <p className="text-xl font-bold">{selectedProvider?.bed_count || "N/A"}</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-xs text-muted-foreground">Gender Served</p>
+                    <p className="text-lg font-semibold capitalize">{selectedProvider?.gender_served || "All"}</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-xs text-muted-foreground">Lead Limit</p>
+                    <p className="text-xl font-bold">{selectedProvider?.lead_limit_override || "Default"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              {selectedProvider?.description && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Description
+                    </h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{selectedProvider.description}</p>
+                  </div>
+                </>
+              )}
+
+              {/* Services */}
+              {providerServices && providerServices.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Services ({providerServices.length})
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {providerServices.map((service) => (
+                        <Badge key={service.id} variant="outline">{service.service_name}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Insurance */}
+              {providerInsurance && providerInsurance.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Accepted Insurance ({providerInsurance.length})
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {providerInsurance.map((insurance) => (
+                        <Badge key={insurance.id} variant="secondary">{insurance.insurance_name}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <Separator />
+
+              {/* Timestamps */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground">Created</p>
+                  <p className="font-medium">{selectedProvider ? format(new Date(selectedProvider.created_at), "PPP") : ""}</p>
+                </div>
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground">Last Updated</p>
+                  <p className="font-medium">{selectedProvider ? format(new Date(selectedProvider.updated_at), "PPP") : ""}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Admin Notes */}
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Admin Notes
+                </h3>
                 <Textarea
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
                   placeholder="Add internal notes about this provider..."
                   rows={4}
+                  className="resize-none"
                 />
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowDetailDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveNotes}>Save Notes</Button>
+                <div className="flex justify-end mt-3">
+                  <Button onClick={handleSaveNotes} size="sm">
+                    Save Notes
+                  </Button>
+                </div>
               </div>
             </div>
-          )}
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
