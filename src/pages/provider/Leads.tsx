@@ -222,32 +222,65 @@ export default function ProviderLeadsPage() {
             </div>
           </div>
           
-          {/* Compact Upgrade Indicator - Right aligned in header */}
+          {/* Detailed Upgrade Indicator - Right aligned in header */}
           {showUpgradeIndicator && (!isMobile || mobileView === 'list') && currentPlan !== "featured" && (
-            <Link 
-              to="/provider/billing"
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex-shrink-0",
-                leadLimit === 0 
-                  ? "bg-primary/10 text-primary hover:bg-primary/20"
-                  : isAtLimit
-                    ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
-                    : "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
-              )}
-            >
-              <Zap className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">
-                {leadLimit === 0 
-                  ? "Upgrade to get leads"
-                  : isAtLimit 
-                    ? "Limit reached" 
-                    : `${currentPlan === "basic" ? thisMonthLeads.length : thisMonthQualified.length}/${leadLimit} used`
-                }
-              </span>
-              <span className="sm:hidden">
-                {leadLimit === 0 ? "Upgrade" : isAtLimit ? "Limit" : `${currentPlan === "basic" ? thisMonthLeads.length : thisMonthQualified.length}/${leadLimit}`}
-              </span>
-            </Link>
+            <div className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg border flex-shrink-0",
+              leadLimit === 0 
+                ? "bg-primary/5 border-primary/20"
+                : isAtLimit
+                  ? "bg-destructive/5 border-destructive/20"
+                  : "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
+            )}>
+              {/* Usage Info */}
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className={cn(
+                    "h-3.5 w-3.5",
+                    leadLimit === 0 ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-600 dark:text-amber-400"
+                  )} />
+                  <span className={cn(
+                    "text-xs font-semibold",
+                    leadLimit === 0 ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-700 dark:text-amber-300"
+                  )}>
+                    {leadLimit === 0 
+                      ? "No leads included"
+                      : isAtLimit 
+                        ? "Limit reached!" 
+                        : "Approaching limit"
+                    }
+                  </span>
+                </div>
+                {leadLimit > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={cn(
+                          "h-full transition-all rounded-full",
+                          isAtLimit ? "bg-destructive" : "bg-amber-500"
+                        )}
+                        style={{ width: `${Math.min(((currentPlan === "basic" ? thisMonthLeads.length : thisMonthQualified.length) / leadLimit) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {currentPlan === "basic" ? thisMonthLeads.length : thisMonthQualified.length}/{leadLimit}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Upgrade Button */}
+              <Button 
+                size="sm" 
+                className="h-7 px-2.5 text-xs gap-1.5"
+                asChild
+              >
+                <Link to="/provider/billing">
+                  <Zap className="h-3 w-3" />
+                  <span className="hidden sm:inline">Upgrade</span>
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
       </div>
