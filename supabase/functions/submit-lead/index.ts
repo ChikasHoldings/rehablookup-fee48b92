@@ -167,7 +167,97 @@ async function checkProviderLeadCap(
   }
 }
 
-// Tier-based email templates with different urgency levels
+// Special email template for Basic plan providers - prompts to upgrade to view leads
+function getBasicPlanUpgradeEmail(
+  facilityName: string,
+  supabaseUrl: string,
+  totalLeadsCount: number
+): { subject: string; html: string } {
+  const billingUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/billing`;
+  const dashboardUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/leads`;
+  
+  const subject = `🔒 New Lead Waiting - Upgrade to View & Contact`;
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+  <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
+    <h1 style="color: #fff; margin: 0; font-size: 24px;">🔒 Someone Is Looking for Help</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You have a new lead waiting for ${facilityName}</p>
+  </div>
+  
+  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
+    
+    <!-- Lead Preview (Blurred) -->
+    <div style="position: relative; margin-bottom: 24px;">
+      <div style="background: #f9fafb; border-radius: 8px; padding: 20px; filter: blur(4px); user-select: none;">
+        <p style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">Name: ████████ ████████</p>
+        <p style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">Phone: (███) ███-████</p>
+        <p style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">Email: ████████@████.com</p>
+        <p style="margin: 0; font-size: 16px; color: #374151;">Message: ████████ ████████ ████████...</p>
+      </div>
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(27, 54, 93, 0.95); padding: 16px 24px; border-radius: 8px; text-align: center;">
+        <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">🔒 Lead details hidden</p>
+      </div>
+    </div>
+    
+    <!-- Leads Waiting Counter -->
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #C9A227; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="margin: 0 0 8px 0; font-size: 48px; font-weight: bold; color: #92400e;">${totalLeadsCount}</p>
+      <p style="margin: 0; color: #92400e; font-size: 16px; font-weight: 600;">Lead${totalLeadsCount > 1 ? 's' : ''} Waiting For You</p>
+    </div>
+    
+    <!-- Upgrade Message -->
+    <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <h3 style="margin: 0 0 12px 0; color: #166534; font-size: 16px;">🚀 Upgrade to Professional to:</h3>
+      <ul style="margin: 0; padding-left: 20px; color: #166534;">
+        <li style="margin-bottom: 8px;">View complete lead contact details</li>
+        <li style="margin-bottom: 8px;">Call and email leads directly</li>
+        <li style="margin-bottom: 8px;">Receive up to 25 qualified leads per month</li>
+        <li>Get priority placement in search results</li>
+      </ul>
+    </div>
+    
+    <!-- CTA Buttons -->
+    <div style="text-align: center; margin-top: 28px;">
+      <a href="${billingUrl}" style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
+        🔓 Upgrade & View Leads
+      </a>
+    </div>
+    
+    <div style="text-align: center; margin-top: 16px;">
+      <a href="${dashboardUrl}" style="display: inline-block; color: #6b7280; padding: 12px 32px; text-decoration: none; font-size: 14px;">
+        View in Dashboard →
+      </a>
+    </div>
+    
+    <!-- Value Proposition -->
+    <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin-top: 24px; text-align: center;">
+      <p style="margin: 0; color: #4b5563; font-size: 13px;">
+        <strong>Professional plan:</strong> $399/month · 25 exclusive leads · Priority support
+      </p>
+    </div>
+    
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+    
+    <p style="font-size: 13px; color: #9ca3af; text-align: center; margin: 0;">
+      This lead was submitted via <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a><br>
+      <a href="${dashboardUrl}" style="color: #1B365D; font-weight: 500;">View all leads in your dashboard →</a>
+    </p>
+  </div>
+</body>
+</html>
+  `;
+  
+  return { subject, html };
+}
+
+// Tier-based email templates with different urgency levels (for Professional and Featured plans)
 function getLeadEmailTemplate(
   planName: string,
   facilityName: string,
@@ -193,23 +283,8 @@ function getLeadEmailTemplate(
   const dashboardUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/leads`;
   const billingUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/billing`;
   
-  // Plan-specific styling and messaging
+  // Plan-specific styling and messaging (Professional and Featured only now)
   const planConfig = {
-    basic: {
-      headerGradient: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
-      headerEmoji: "📩",
-      headerTitle: "New Lead",
-      urgencyLevel: "standard",
-      showUpgradeCTA: true,
-      tipColor: "#f3f4f6",
-      tipBorderColor: "#d1d5db",
-      tipTextColor: "#374151",
-      ctaColor: "#6b7280",
-      ctaGradient: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
-      leadCounterBg: "#fef3c7",
-      leadCounterBorder: "#fcd34d",
-      leadCounterText: "#92400e",
-    },
     professional: {
       headerGradient: "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)",
       headerEmoji: "🎯",
@@ -242,30 +317,28 @@ function getLeadEmailTemplate(
     }
   };
   
-  const config = planConfig[planName as keyof typeof planConfig] || planConfig.basic;
+  const config = planConfig[planName as keyof typeof planConfig] || planConfig.professional;
   const remainingLeads = leadLimit - usedLeads;
   const usagePercentage = leadLimit > 0 ? Math.round((usedLeads / leadLimit) * 100) : 0;
   
   // Different tip messages based on plan
   const tipMessages = {
-    basic: "💡 Upgrade to Professional for priority support and 25 qualified leads/month",
     professional: "⚡ Quick tip: Respond within 5 minutes to increase your conversion rate by 400%!",
     featured: "🌟 As a Featured provider, you get priority placement and maximum visibility!"
   };
   
-  const tip = tipMessages[planName as keyof typeof tipMessages] || tipMessages.basic;
+  const tip = tipMessages[planName as keyof typeof tipMessages] || tipMessages.professional;
   
   // Subject line varies by plan
   const subjectPrefixes = {
-    basic: "📩 New Lead:",
     professional: "🎯 Qualified Lead:",
     featured: "⭐ Priority Lead:"
   };
   
-  const subjectPrefix = subjectPrefixes[planName as keyof typeof subjectPrefixes] || subjectPrefixes.basic;
+  const subjectPrefix = subjectPrefixes[planName as keyof typeof subjectPrefixes] || subjectPrefixes.professional;
   const subject = `${subjectPrefix} ${leadName} is interested in ${facilityName}`;
   
-  // Lead usage section for Basic/Professional
+  // Lead usage section for Professional
   const leadUsageSection = config.showUpgradeCTA && leadLimit > 0 ? `
     <div style="background: ${config.leadCounterBg}; border: 1px solid ${config.leadCounterBorder}; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
       <p style="margin: 0 0 4px 0; font-size: 12px; color: ${config.leadCounterText}; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Lead Usage</p>
@@ -273,11 +346,6 @@ function getLeadEmailTemplate(
       <p style="margin: 4px 0 0 0; font-size: 13px; color: ${config.leadCounterText};">
         ${remainingLeads} leads remaining${usagePercentage >= 80 ? ' ⚠️' : ''}
       </p>
-      ${planName === 'basic' ? `
-        <a href="${billingUrl}" style="display: inline-block; margin-top: 12px; background: ${config.ctaGradient}; color: #fff; padding: 8px 20px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500;">
-          🚀 Upgrade for More Leads
-        </a>
-      ` : ''}
     </div>
   ` : '';
   
@@ -725,20 +793,43 @@ const handler = async (req: Request): Promise<Response> => {
         // Get tier-based email template
         const planName = capCheckResult?.planName || "basic";
         const usedLeads = capCheckResult?.usedLeads || 0;
-        const leadLimit = capCheckResult?.leadLimit || 4;
+        const leadLimit = capCheckResult?.leadLimit || 1;
         
-        const { subject: emailSubject, html: emailHtml } = getLeadEmailTemplate(
-          planName,
-          body.facilityName,
-          sanitizedName,
-          sanitizedPhone,
-          sanitizedEmail,
-          body.preferredContact,
-          sanitizedMessage,
-          supabaseUrl,
-          usedLeads + 1, // Account for the lead we just created
-          leadLimit
-        );
+        let emailSubject: string;
+        let emailHtml: string;
+        
+        // Basic plan gets upgrade-focused email (blurred lead details)
+        if (planName === "basic") {
+          // Get total leads count for this facility
+          const { count: totalLeadsCount } = await supabase
+            .from("leads")
+            .select("*", { count: "exact", head: true })
+            .eq("facility_id", body.facilityId);
+          
+          const result = getBasicPlanUpgradeEmail(
+            body.facilityName,
+            supabaseUrl,
+            totalLeadsCount || 1
+          );
+          emailSubject = result.subject;
+          emailHtml = result.html;
+        } else {
+          // Professional and Featured plans get full lead details
+          const result = getLeadEmailTemplate(
+            planName,
+            body.facilityName,
+            sanitizedName,
+            sanitizedPhone,
+            sanitizedEmail,
+            body.preferredContact,
+            sanitizedMessage,
+            supabaseUrl,
+            usedLeads + 1, // Account for the lead we just created
+            leadLimit
+          );
+          emailSubject = result.subject;
+          emailHtml = result.html;
+        }
 
         const emailResponse = await resend.emails.send({
           from: "RehabLookup <noreply@resend.dev>",
