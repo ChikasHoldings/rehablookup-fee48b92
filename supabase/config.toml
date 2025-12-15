@@ -53,3 +53,6 @@ verify_jwt = true
 
 [functions.send-profile-reminders]
 verify_jwt = false
+
+[functions.send-profile-complete-email]
+verify_jwt = true

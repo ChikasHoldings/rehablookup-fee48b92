@@ -93,6 +93,7 @@ export type Database = {
           logo_url: string | null
           name: string
           phone: string
+          profile_completion_celebrated: boolean | null
           profile_reminder_count: number | null
           profile_reminder_sent_at: string | null
           slug: string | null
@@ -118,6 +119,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           phone: string
+          profile_completion_celebrated?: boolean | null
           profile_reminder_count?: number | null
           profile_reminder_sent_at?: string | null
           slug?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           phone?: string
+          profile_completion_celebrated?: boolean | null
           profile_reminder_count?: number | null
           profile_reminder_sent_at?: string | null
           slug?: string | null
