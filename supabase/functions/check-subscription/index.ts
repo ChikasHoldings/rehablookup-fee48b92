@@ -7,10 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration with lead limits - matches new pricing structure
-const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number; qualified_lead_limit: number; direct_lead_limit: number; name: string; featured: boolean }> = {
+// Plan configuration with lead limits - updated pricing structure
+const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; qualified_lead_limit: number; direct_lead_limit: number; name: string; featured: boolean }> = {
   basic: {
-    product_id: null,
+    product_ids: [],
     lead_limit: 4, // Basic plan includes 4 leads/month (1 per week)
     qualified_lead_limit: 4,
     direct_lead_limit: 4, // Limited for Basic
@@ -18,16 +18,18 @@ const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: numbe
     featured: false,
   },
   professional: {
-    product_id: "prod_TbalLOPujTIoUe",
-    lead_limit: 25, // 25 qualified leads/month
+    // Support both old and new product IDs for existing subscriptions
+    product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"],
+    lead_limit: 25, // 25 exclusive qualified leads/month
     qualified_lead_limit: 25,
     direct_lead_limit: -1, // Unlimited direct leads from profile
     name: "Professional",
     featured: false,
   },
   featured: {
-    product_id: "prod_TbalOeJZA2ZoJl",
-    lead_limit: 75, // 75 qualified leads/month
+    // Support both old and new product IDs for existing subscriptions
+    product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"],
+    lead_limit: 75, // 75 exclusive qualified leads/month
     qualified_lead_limit: 75,
     direct_lead_limit: -1, // Unlimited direct leads
     name: "Featured",
@@ -126,14 +128,14 @@ serve(async (req) => {
     const productId = subscription.items.data[0].price.product as string;
     logStep("Active subscription found", { subscriptionId: subscription.id, productId, endDate: subscriptionEnd });
 
-    // Determine plan based on product ID
+    // Determine plan based on product ID (supports both old and new product IDs)
     let plan = "basic";
     let planConfig = PLAN_CONFIG.basic;
 
-    if (productId === PLAN_CONFIG.professional.product_id) {
+    if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
       plan = "professional";
       planConfig = PLAN_CONFIG.professional;
-    } else if (productId === PLAN_CONFIG.featured.product_id) {
+    } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
       plan = "featured";
       planConfig = PLAN_CONFIG.featured;
     }

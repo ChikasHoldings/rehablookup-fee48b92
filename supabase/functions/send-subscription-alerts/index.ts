@@ -14,9 +14,12 @@ const PLAN_CONFIG: Record<string, { lead_limit: number; name: string }> = {
   featured: { lead_limit: 75, name: "Featured" },
 };
 
+// Support both old and new product IDs for existing subscriptions
 const PRODUCT_TO_PLAN: Record<string, string> = {
   "prod_TbalLOPujTIoUe": "professional",
+  "prod_Tbyz1bf6iYyzYd": "professional",
   "prod_TbalOeJZA2ZoJl": "featured",
+  "prod_TbyzJVNOQL71NN": "featured",
 };
 
 const logStep = (step: string, details?: unknown) => {

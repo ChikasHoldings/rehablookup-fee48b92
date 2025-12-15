@@ -187,8 +187,8 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             <>
               <p className="text-xs text-muted-foreground mb-3">
                 {isBasic 
-                  ? "Upgrade to start receiving qualified leads" 
-                  : "Get featured placement & more leads"
+                  ? "Upgrade to start receiving exclusive leads" 
+                  : "Get priority access & more exclusive leads"
                 }
               </p>
               <Button 
