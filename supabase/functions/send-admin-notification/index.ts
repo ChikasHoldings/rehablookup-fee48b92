@@ -1,0 +1,162 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const logStep = (step: string, details?: unknown) => {
+  console.log(`[SEND-ADMIN-NOTIFICATION] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
+  try {
+    logStep("Function started");
+
+    // Verify admin role
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    
+    const adminUser = userData.user;
+    if (!adminUser) throw new Error("User not authenticated");
+
+    // Check if user is admin
+    const { data: roleData } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", adminUser.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!roleData) throw new Error("Unauthorized: Admin access required");
+    logStep("Admin verified", { adminId: adminUser.id });
+
+    const { 
+      providerUserId, 
+      facilityId,
+      subject, 
+      message, 
+      sendEmail = true,
+      sendInApp = true,
+      providerEmail,
+      providerName
+    } = await req.json();
+
+    if (!providerUserId) throw new Error("Provider user ID is required");
+    if (!subject || !message) throw new Error("Subject and message are required");
+
+    logStep("Processing notification", { providerUserId, sendEmail, sendInApp });
+
+    // Send in-app notification
+    if (sendInApp) {
+      const { error: notifError } = await supabaseClient
+        .from("provider_notifications")
+        .insert({
+          user_id: providerUserId,
+          facility_id: facilityId || null,
+          type: "admin_message",
+          title: subject,
+          message: message,
+          metadata: {
+            from_admin: adminUser.id,
+            sent_at: new Date().toISOString(),
+          },
+        });
+
+      if (notifError) {
+        logStep("Failed to create in-app notification", { error: notifError.message });
+      } else {
+        logStep("In-app notification created");
+      }
+    }
+
+    // Send email notification
+    if (sendEmail && providerEmail) {
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (!resendApiKey) {
+        logStep("RESEND_API_KEY not set, skipping email");
+      } else {
+        const resend = new Resend(resendApiKey);
+        
+        const emailResult = await resend.emails.send({
+          from: "RehabLookup Admin <onboarding@resend.dev>",
+          to: [providerEmail],
+          subject: subject,
+          html: `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              </head>
+              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1a1a1a; margin: 0; padding: 0; background-color: #f6f8fb;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <div style="background: linear-gradient(135deg, #1B365D 0%, #2a4a7a 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Message from RehabLookup</h1>
+                  </div>
+                  <div style="background: #ffffff; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    ${providerName ? `<p style="margin-bottom: 20px;">Hi ${providerName},</p>` : ""}
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #1B365D;">
+                      ${message.split('\n').map((line: string) => `<p style="margin: 0 0 10px 0;">${line}</p>`).join('')}
+                    </div>
+                    <p style="color: #666; font-size: 14px; margin-top: 30px;">
+                      If you have any questions, please reply to this email or contact our support team.
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                      This message was sent by the RehabLookup admin team.
+                    </p>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `,
+        });
+
+        logStep("Email sent", { emailId: emailResult.data?.id });
+      }
+    }
+
+    // Log admin action
+    await supabaseClient.from("admin_audit_log").insert({
+      admin_user_id: adminUser.id,
+      action_type: "contact_provider",
+      target_type: "provider",
+      target_id: providerUserId,
+      details: {
+        subject,
+        message_preview: message.substring(0, 100),
+        sent_email: sendEmail,
+        sent_in_app: sendInApp,
+      },
+    });
+
+    return new Response(
+      JSON.stringify({ success: true, message: "Notification sent successfully" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+    );
+  }
+});
