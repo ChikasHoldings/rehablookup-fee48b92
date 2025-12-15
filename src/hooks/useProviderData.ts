@@ -42,6 +42,23 @@ export function useProviderData(facilityId?: string) {
   useEffect(() => {
     if (!facilityId) return;
 
+    // Subscribe to facility changes (for profile completion updates)
+    const facilityChannel = supabase
+      .channel(`facility-data-${facilityId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'facilities',
+          filter: `id=eq.${facilityId}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
+        }
+      )
+      .subscribe();
+
     // Subscribe to facility_views changes
     const viewsChannel = supabase
       .channel(`facility-views-${facilityId}`)
@@ -54,7 +71,6 @@ export function useProviderData(facilityId?: string) {
           filter: `facility_id=eq.${facilityId}`
         },
         () => {
-          // Invalidate query to refetch updated stats
           queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
         }
       )
@@ -72,13 +88,13 @@ export function useProviderData(facilityId?: string) {
           filter: `facility_id=eq.${facilityId}`
         },
         () => {
-          // Invalidate query to refetch updated stats
           queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
         }
       )
       .subscribe();
 
     return () => {
+      supabase.removeChannel(facilityChannel);
       supabase.removeChannel(viewsChannel);
       supabase.removeChannel(leadsChannel);
     };

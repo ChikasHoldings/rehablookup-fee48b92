@@ -98,7 +98,7 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
     }
   }, [facilityId]);
 
-  // Fetch services count
+  // Fetch services count with real-time updates
   const { data: servicesCount = 0 } = useQuery({
     queryKey: ["facility-services-count", facilityId],
     queryFn: async () => {
@@ -109,10 +109,10 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
       return count || 0;
     },
     enabled: !!facilityId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30, // 30 seconds for faster updates
   });
 
-  // Fetch insurance count
+  // Fetch insurance count with real-time updates
   const { data: insuranceCount = 0 } = useQuery({
     queryKey: ["facility-insurance-count", facilityId],
     queryFn: async () => {
@@ -123,8 +123,68 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
       return count || 0;
     },
     enabled: !!facilityId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 30, // 30 seconds for faster updates
   });
+
+  // Real-time subscriptions for services, insurance, and facility updates
+  useEffect(() => {
+    if (!facilityId) return;
+
+    const servicesChannel = supabase
+      .channel(`onboarding-services-${facilityId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_services",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["facility-services-count", facilityId] });
+        }
+      )
+      .subscribe();
+
+    const insuranceChannel = supabase
+      .channel(`onboarding-insurance-${facilityId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_insurance",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facilityId] });
+        }
+      )
+      .subscribe();
+
+    const facilityChannel = supabase
+      .channel(`onboarding-facility-${facilityId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facilities",
+          filter: `id=eq.${facilityId}`,
+        },
+        () => {
+          // Invalidate provider data to refresh facilityData prop
+          queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(servicesChannel);
+      supabase.removeChannel(insuranceChannel);
+      supabase.removeChannel(facilityChannel);
+    };
+  }, [facilityId, queryClient]);
 
   const checklistItems: ChecklistItem[] = useMemo(() => {
     if (!facilityData) return [];
