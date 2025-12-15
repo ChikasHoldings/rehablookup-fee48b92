@@ -193,68 +193,81 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
   return (
     <div className="flex-1 flex flex-col bg-background min-h-0 overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b bg-gradient-to-r from-muted/50 to-transparent">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-semibold text-primary">
-                {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+      <div className="flex-shrink-0 border-b">
+        {/* Top row: Avatar, Name, Actions */}
+        <div className="p-4 pb-3 flex items-center gap-3">
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-base font-semibold text-primary">
+              {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold text-foreground truncate leading-tight">{lead.name}</h2>
+            <div className="flex items-center gap-1.5 mt-0.5 text-sm text-muted-foreground">
+              {lead.location_city_state && (
+                <>
+                  <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">{lead.location_city_state}</span>
+                  <span className="text-muted-foreground/40 mx-0.5">•</span>
+                </>
+              )}
+              <span className="text-xs whitespace-nowrap">
+                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: false }).replace("about ", "")} ago
               </span>
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-semibold text-foreground truncate">{lead.name}</h2>
-                <LeadScoreBadge lead={lead} size="sm" />
-                {lead.email_verified && (
-                  <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50 h-5 text-[10px] px-1.5">
-                    <ShieldCheck className="h-2.5 w-2.5" />
-                    Verified
-                  </Badge>
-                )}
-                {lead.source === "Request Help Page" && (
-                  <Badge className="bg-primary/10 text-primary border-0 gap-1 h-5 text-[10px] px-1.5">
-                    <Sparkles className="h-2.5 w-2.5" />
-                    Qualified
-                  </Badge>
-                )}
-                {lead.urgency === "immediate" && (
-                  <Badge variant="destructive" className="gap-1 h-5 text-[10px] px-1.5 animate-pulse">
-                    <Zap className="h-2.5 w-2.5" />
-                    Urgent
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                {lead.location_city_state && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {lead.location_city_state}
-                  </span>
-                )}
-                {lead.location_city_state && <span className="text-muted-foreground/40">•</span>}
-                <span className="text-[10px]">
-                  {formatDistanceToNow(new Date(lead.created_at), { addSuffix: false }).replace("about ", "")} ago
-                </span>
-              </div>
-            </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => setShowEmailDialog(true)}>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <Button size="sm" variant="outline" className="gap-1.5 h-8 px-3" onClick={() => setShowEmailDialog(true)}>
               <Mail className="h-3.5 w-3.5" />
-              Email
+              <span className="hidden sm:inline">Email</span>
             </Button>
             <Select value={lead.status} onValueChange={(v) => updateStatus.mutate(v as LeadStatus)} disabled={updateStatus.isPending}>
-              <SelectTrigger className="w-[120px] h-8 text-xs">
+              <SelectTrigger className="w-[115px] h-8 text-xs font-medium">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-background">
                 {getStatusOptions().map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+        
+        {/* Badges row */}
+        <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
+          <LeadScoreBadge lead={lead} size="sm" />
+          {lead.email_verified && (
+            <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50/80 h-6 text-xs px-2 font-medium">
+              <ShieldCheck className="h-3 w-3" />
+              Verified
+            </Badge>
+          )}
+          {lead.source === "Request Help Page" && (
+            <Badge className="bg-primary/10 text-primary border-0 gap-1 h-6 text-xs px-2 font-medium">
+              <Sparkles className="h-3 w-3" />
+              Qualified
+            </Badge>
+          )}
+          {lead.urgency === "immediate" && (
+            <Badge variant="destructive" className="gap-1 h-6 text-xs px-2 font-medium animate-pulse">
+              <Zap className="h-3 w-3" />
+              Urgent
+            </Badge>
+          )}
+          {lead.urgency === "within_week" && (
+            <Badge className="bg-amber-500 text-white border-0 gap-1 h-6 text-xs px-2 font-medium">
+              <Clock className="h-3 w-3" />
+              This Week
+            </Badge>
+          )}
+          {lead.urgency === "within_month" && (
+            <Badge variant="outline" className="gap-1 h-6 text-xs px-2 font-medium border-muted-foreground/30">
+              <Clock className="h-3 w-3" />
+              This Month
+            </Badge>
+          )}
         </div>
       </div>
 
