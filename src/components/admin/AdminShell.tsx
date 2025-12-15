@@ -1,21 +1,12 @@
 import { useRef, useEffect, useState, memo } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
-import { Menu, ShieldX } from "lucide-react";
+import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 import { ForcePasswordChangeDialog } from "./ForcePasswordChangeDialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  CreditCard,
-  Star,
-  ClipboardList,
-  Settings,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MemoizedHeader = memo(AdminHeader);
@@ -23,6 +14,7 @@ const MemoizedSidebar = memo(AdminSidebar);
 
 const mobileNavItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
+  { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },

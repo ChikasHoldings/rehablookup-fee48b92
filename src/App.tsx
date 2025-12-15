@@ -102,7 +102,7 @@ const App = () => (
           {/* Admin Panel Routes - Nested under admin shell */}
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminShell />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route index element={<AdminDashboard />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="providers" element={<AdminProviders />} />
