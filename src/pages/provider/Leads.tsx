@@ -2,15 +2,12 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Users, 
-  Mail, 
-  Phone, 
-  MessageSquare, 
-  TrendingUp, 
   Search,
   X,
   CalendarIcon,
   Sparkles,
-  ChevronRight,
+  TrendingUp,
+  MessageSquare,
 } from "lucide-react";
 import {
   Select,
@@ -247,13 +244,13 @@ export default function ProviderLeadsPage() {
           </div>
 
           {/* Lead List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {isLoading ? (
-              <div className="p-3 space-y-2">
-                {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-[76px] rounded-lg" />)}
+              <div className="space-y-2">
+                {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-[88px] rounded-xl" />)}
               </div>
             ) : leads.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center h-full p-8">
+              <div className="flex items-center justify-center h-full p-8">
                 <div className="text-center">
                   <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
                     <Users className="h-8 w-8 text-muted-foreground/50" />
@@ -271,60 +268,75 @@ export default function ProviderLeadsPage() {
                 </div>
               </div>
             ) : (
-              <div className="divide-y">
+              <div className="space-y-2">
                 {filteredLeads.map((lead, idx) => {
                   const locked = isLeadLocked(lead, idx);
                   const selected = selectedLead?.id === lead.id;
+                  const location = lead.location_city_state || (lead.location_zip ? `ZIP: ${lead.location_zip}` : null);
+                  
                   return (
                     <button
                       key={lead.id}
                       onClick={() => !locked && setSelectedLead(lead)}
                       disabled={locked}
                       className={cn(
-                        "w-full text-left px-4 py-3 transition-colors relative group",
-                        selected ? "bg-primary/5 border-l-2 border-l-primary" : "hover:bg-muted/50 border-l-2 border-l-transparent",
+                        "w-full text-left rounded-xl border transition-all duration-200 overflow-hidden group",
+                        selected 
+                          ? "bg-primary/5 border-primary shadow-sm ring-1 ring-primary/20" 
+                          : "bg-background border-border/60 hover:border-border hover:shadow-sm",
                         locked && "opacity-40 blur-[1px] cursor-not-allowed"
                       )}
                     >
-                      <div className="flex items-start gap-3">
-                        {/* Avatar */}
-                        <div className={cn(
-                          "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-medium",
-                          selected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                        )}>
-                          {locked ? "?" : lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                      <div className="p-3.5">
+                        {/* Top Row - Name & Time */}
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={cn(
+                              "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold",
+                              selected 
+                                ? "bg-primary text-primary-foreground" 
+                                : "bg-gradient-to-br from-muted to-muted/60 text-muted-foreground"
+                            )}>
+                              {locked ? "?" : lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className={cn(
+                                "font-semibold text-sm truncate leading-tight",
+                                selected ? "text-primary" : "text-foreground"
+                              )}>
+                                {locked ? "Hidden Lead" : lead.name}
+                              </h4>
+                              {location && !locked && (
+                                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                  {location}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground flex-shrink-0 mt-0.5">
+                            {format(new Date(lead.created_at), "MMM d")}
+                          </span>
                         </div>
-                        
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={cn("font-medium text-sm truncate", selected && "text-primary")}>
-                              {locked ? "Hidden Lead" : lead.name}
-                            </span>
-                            {lead.source === "Request Help Page" && !locked && (
-                              <Badge className="h-5 px-1.5 text-[10px] bg-primary/10 text-primary border-0">
+
+                        {/* Bottom Row - Tags */}
+                        {!locked && (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                            <LeadScoreBadge lead={lead} size="sm" />
+                            {lead.source === "Request Help Page" && (
+                              <Badge className="h-5 px-1.5 text-[10px] bg-emerald-500/10 text-emerald-600 border-0 font-medium">
                                 <Sparkles className="h-2.5 w-2.5 mr-0.5" />
                                 Qualified
                               </Badge>
                             )}
+                            {lead.message && (
+                              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-muted-foreground/20">
+                                <MessageSquare className="h-2.5 w-2.5 mr-0.5" />
+                                Note
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                            <span>{format(new Date(lead.created_at), "MMM d, h:mm a")}</span>
-                            {lead.message && !locked && <MessageSquare className="h-3 w-3" />}
-                          </div>
-                          {!locked && (
-                            <div className="flex items-center gap-3 mt-1.5">
-                              <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
-                              <LeadScoreBadge lead={lead} size="sm" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Arrow */}
-                        <ChevronRight className={cn(
-                          "h-4 w-4 text-muted-foreground/50 flex-shrink-0 transition-transform",
-                          selected && "text-primary translate-x-0.5"
-                        )} />
+                        )}
                       </div>
                     </button>
                   );
