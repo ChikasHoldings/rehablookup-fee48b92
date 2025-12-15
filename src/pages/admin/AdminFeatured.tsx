@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Star,
@@ -52,6 +52,59 @@ type FacilityStats = {
 export default function AdminFeatured() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Invalidate all featured queries helper
+  const invalidateFeaturedQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-all-facilities-featured"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-auto-featured-ids"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-facility-stats"] });
+  }, [queryClient]);
+
+  // Real-time subscriptions - always active
+  useEffect(() => {
+    const facilitiesChannel = supabase
+      .channel("admin-featured-facilities")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "facilities" },
+        (payload) => {
+          console.log("Featured facilities update:", payload.eventType);
+          invalidateFeaturedQueries();
+          if (payload.eventType === "UPDATE") {
+            toast.info("Featured status updated", { description: "Data refreshed" });
+          }
+        }
+      )
+      .subscribe();
+
+    const viewsChannel = supabase
+      .channel("admin-featured-views")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "facility_views" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-facility-stats"] });
+        }
+      )
+      .subscribe();
+
+    const leadsChannel = supabase
+      .channel("admin-featured-leads")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-facility-stats"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(facilitiesChannel);
+      supabase.removeChannel(viewsChannel);
+      supabase.removeChannel(leadsChannel);
+    };
+  }, [invalidateFeaturedQueries, queryClient]);
 
   // Fetch all approved facilities for featured eligibility display
   const { data: allFacilities, isLoading: loadingFacilities, refetch } = useQuery({
