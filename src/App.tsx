@@ -25,6 +25,7 @@ import ProviderBillingPage from "./pages/provider/Billing";
 import ProviderSettingsPage from "./pages/provider/Settings";
 import ProviderNotificationsPage from "./pages/provider/Notifications";
 import ProviderHelpPage from "./pages/provider/Help";
+import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
 import Resources from "./pages/Resources";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="settings" element={<ProviderSettingsPage />} />
             <Route path="notifications" element={<ProviderNotificationsPage />} />
             <Route path="help" element={<ProviderHelpPage />} />
+            <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
           </Route>
           
           <Route path="/resources" element={<Resources />} />
