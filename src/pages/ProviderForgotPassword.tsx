@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,8 @@ import { Mail, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
+
+const emailSchema = z.string().trim().email({ message: "Please enter a valid email address" }).max(255, { message: "Email is too long" });
 
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
@@ -24,10 +27,12 @@ export default function ProviderForgotPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim()) {
+    // Validate email with zod
+    const result = emailSchema.safeParse(email);
+    if (!result.success) {
       toast({
-        title: "Email Required",
-        description: "Please enter your email address.",
+        title: "Invalid Email",
+        description: result.error.errors[0]?.message || "Please enter a valid email address.",
         variant: "destructive",
       });
       return;

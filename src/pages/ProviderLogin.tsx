@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,11 @@ import { Lock, Mail, ArrowRight, Eye, EyeOff, AlertTriangle, Clock, ShieldCheck,
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
+
+const loginSchema = z.object({
+  email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
+  password: z.string().min(1, { message: "Password is required" }),
+});
 
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
@@ -275,10 +281,13 @@ export default function ProviderLogin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim() || !password.trim()) {
+    // Validate with zod
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      const firstError = result.error.errors[0];
       toast({
-        title: "Missing Information",
-        description: "Please enter both email and password.",
+        title: "Invalid Input",
+        description: firstError?.message || "Please check your email and password.",
         variant: "destructive",
       });
       return;
