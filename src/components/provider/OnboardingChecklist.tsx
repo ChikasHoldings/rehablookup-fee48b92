@@ -84,19 +84,13 @@ function triggerCelebration() {
 export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChecklistProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   const previousPercentageRef = useRef<number | null>(null);
   const celebrationTriggeredRef = useRef(false);
   const queryClient = useQueryClient();
 
-  // Check if user has dismissed the celebration
-  useEffect(() => {
-    const dismissedKey = `profile-complete-dismissed-${facilityId}`;
-    const wasDismissed = localStorage.getItem(dismissedKey);
-    if (wasDismissed) {
-      setDismissed(true);
-    }
-  }, [facilityId]);
+  // Check if user has already dismissed celebration (localStorage check)
+  const dismissedKey = `profile-complete-dismissed-${facilityId}`;
+  const wasDismissedInStorage = typeof window !== 'undefined' && localStorage.getItem(dismissedKey) === 'true';
 
   // Fetch services count with real-time updates
   const { data: servicesCount = 0 } = useQuery({
@@ -284,14 +278,12 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
   }, [completionPercentage, isComplete, facilityId]);
 
   const handleDismissCelebration = () => {
-    const dismissedKey = `profile-complete-dismissed-${facilityId}`;
     localStorage.setItem(dismissedKey, 'true');
-    setDismissed(true);
     setShowCelebration(false);
   };
 
   // Show celebration card if complete
-  if (isComplete && showCelebration && !dismissed) {
+  if (isComplete && showCelebration && !wasDismissedInStorage) {
     return (
       <Card className="border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-background animate-fade-in overflow-hidden">
         <CardHeader className="pb-4">
@@ -334,7 +326,7 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
   }
 
   // Don't show if 100% complete and dismissed
-  if (isComplete && dismissed) {
+  if (isComplete && wasDismissedInStorage) {
     return null;
   }
 
