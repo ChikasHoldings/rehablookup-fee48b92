@@ -16,6 +16,8 @@ import {
   Shield,
   AlertTriangle,
   BellOff,
+  HelpCircle,
+  User,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -246,7 +248,13 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                   </div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
+            <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/provider/listing" className="flex items-center gap-2.5 cursor-pointer py-2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  My Listing
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/provider/settings" className="flex items-center gap-2.5 cursor-pointer py-2">
                   <Settings className="h-4 w-4 text-muted-foreground" />
@@ -257,6 +265,13 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                 <Link to="/provider/billing" className="flex items-center gap-2.5 cursor-pointer py-2">
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
                   Billing & Plans
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/provider/help" className="flex items-center gap-2.5 cursor-pointer py-2">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  Help & Support
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

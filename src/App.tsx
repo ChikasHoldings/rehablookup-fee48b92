@@ -24,6 +24,7 @@ import ProviderAnalyticsPage from "./pages/provider/Analytics";
 import ProviderBillingPage from "./pages/provider/Billing";
 import ProviderSettingsPage from "./pages/provider/Settings";
 import ProviderNotificationsPage from "./pages/provider/Notifications";
+import ProviderHelpPage from "./pages/provider/Help";
 import Resources from "./pages/Resources";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="billing" element={<ProviderBillingPage />} />
             <Route path="settings" element={<ProviderSettingsPage />} />
             <Route path="notifications" element={<ProviderNotificationsPage />} />
+            <Route path="help" element={<ProviderHelpPage />} />
           </Route>
           
           <Route path="/resources" element={<Resources />} />

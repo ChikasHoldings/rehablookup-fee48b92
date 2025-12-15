@@ -1,0 +1,344 @@
+import { useState } from "react";
+import { 
+  HelpCircle, 
+  MessageSquare, 
+  ChevronDown, 
+  ChevronUp,
+  Mail,
+  Phone,
+  FileText,
+  BookOpen,
+  AlertCircle,
+  CheckCircle,
+  Send,
+  Loader2,
+  ExternalLink
+} from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+const faqs = [
+  {
+    question: "How do I update my facility listing?",
+    answer: "Navigate to 'My Listing' in the sidebar to update your facility information, including services, insurance accepted, and facility images. Changes are saved automatically and will be reflected on your public profile after review."
+  },
+  {
+    question: "How do leads work?",
+    answer: "When someone interested in treatment views your facility profile and submits a contact request, it appears in your Leads tab. You'll receive an email notification (if enabled) and can manage lead status, add notes, and contact prospects directly."
+  },
+  {
+    question: "What's included in my subscription plan?",
+    answer: "Your plan includes a set number of leads per month, profile views tracking, analytics dashboard, and email notifications. Visit the Billing page to see your current plan details and upgrade options."
+  },
+  {
+    question: "How can I improve my listing visibility?",
+    answer: "Complete all profile fields, add high-quality images, ensure your services and insurance information is accurate, and consider upgrading to a featured listing for premium placement in search results."
+  },
+  {
+    question: "How do I change my notification preferences?",
+    answer: "Go to Settings > Notifications to customize which alerts you receive via email, SMS, or browser notifications. You can set up instant alerts or daily/weekly digests."
+  },
+  {
+    question: "What happens when I reach my lead limit?",
+    answer: "You'll receive a warning when approaching your monthly lead limit. Once reached, new leads won't be delivered until the next billing cycle or until you upgrade your plan."
+  },
+  {
+    question: "How do I download my lead data?",
+    answer: "In the Leads section, use the export feature to download your lead data as a CSV file for use with your CRM or for record-keeping purposes."
+  },
+  {
+    question: "Can I have multiple facilities?",
+    answer: "Yes! You can manage multiple facility listings from a single account. Use the facility selector in the header to switch between locations."
+  },
+];
+
+const helpTopics = [
+  {
+    icon: FileText,
+    title: "Getting Started",
+    description: "Learn the basics of managing your facility listing",
+    link: "/provider-resources"
+  },
+  {
+    icon: BookOpen,
+    title: "Best Practices",
+    description: "Tips for optimizing your listing and converting leads",
+    link: "/provider-resources"
+  },
+  {
+    icon: AlertCircle,
+    title: "Troubleshooting",
+    description: "Common issues and how to resolve them",
+    link: "/provider-support"
+  },
+];
+
+export default function ProviderHelpPage() {
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactCategory, setContactCategory] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const { toast } = useToast();
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!contactCategory || !contactSubject || !contactMessage) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Log the support request (in production, this would send an email)
+      console.log("Support request submitted:", {
+        userId: session?.user?.id,
+        userEmail: session?.user?.email,
+        category: contactCategory,
+        subject: contactSubject,
+        message: contactMessage,
+      });
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setSubmitted(true);
+      toast({
+        title: "Message sent!",
+        description: "Our support team will respond within 24-48 hours.",
+      });
+
+      // Reset form after success
+      setContactSubject("");
+      setContactCategory("");
+      setContactMessage("");
+      
+      // Reset submitted state after showing success
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (error) {
+      console.error("Error submitting support request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">
+          Help & Support
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Get help with your account, find answers, or contact our support team
+        </p>
+      </div>
+
+      {/* Quick Help Topics */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {helpTopics.map((topic) => (
+          <Card key={topic.title} className="hover:shadow-md transition-shadow cursor-pointer group">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  <topic.icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">{topic.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{topic.description}</p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* FAQs */}
+        <Card className="lg:row-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <HelpCircle className="h-5 w-5 text-primary" />
+              Frequently Asked Questions
+            </CardTitle>
+            <CardDescription>
+              Quick answers to common questions about your provider account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="single" collapsible className="w-full">
+              {faqs.map((faq, index) => (
+                <AccordionItem key={index} value={`item-${index}`}>
+                  <AccordionTrigger className="text-left text-sm font-medium hover:no-underline">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </CardContent>
+        </Card>
+
+        {/* Contact Support Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              Contact Support
+            </CardTitle>
+            <CardDescription>
+              Send us a message and we'll respond within 24-48 hours
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {submitted ? (
+              <div className="text-center py-8">
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="font-semibold text-lg">Message Sent!</h3>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Our support team will get back to you soon.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleContactSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category *</Label>
+                  <Select value={contactCategory} onValueChange={setContactCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="account">Account Issues</SelectItem>
+                      <SelectItem value="billing">Billing & Payments</SelectItem>
+                      <SelectItem value="listing">Listing Help</SelectItem>
+                      <SelectItem value="leads">Leads & Contacts</SelectItem>
+                      <SelectItem value="technical">Technical Support</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="subject">Subject *</Label>
+                  <Input
+                    id="subject"
+                    placeholder="Brief description of your issue"
+                    value={contactSubject}
+                    onChange={(e) => setContactSubject(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="message">Message *</Label>
+                  <Textarea
+                    id="message"
+                    placeholder="Describe your issue in detail..."
+                    rows={5}
+                    value={contactMessage}
+                    onChange={(e) => setContactMessage(e.target.value)}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Send Message
+                    </>
+                  )}
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Direct Contact Options */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Phone className="h-5 w-5 text-primary" />
+              Direct Contact
+            </CardTitle>
+            <CardDescription>
+              Need immediate assistance? Reach us directly
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <Mail className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm font-medium">Email Support</p>
+                <a 
+                  href="mailto:providers@rehablookup.com" 
+                  className="text-sm text-primary hover:underline"
+                >
+                  providers@rehablookup.com
+                </a>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <Phone className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm font-medium">Phone Support</p>
+                <a 
+                  href="tel:1-800-REHAB-HELP" 
+                  className="text-sm text-primary hover:underline"
+                >
+                  1-800-REHAB-HELP
+                </a>
+                <p className="text-xs text-muted-foreground">Mon-Fri, 9am-6pm EST</p>
+              </div>
+            </div>
+            <div className="pt-2 border-t">
+              <p className="text-xs text-muted-foreground">
+                For urgent matters regarding patient inquiries or system outages, 
+                please call our priority support line.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

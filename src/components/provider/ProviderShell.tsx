@@ -62,6 +62,18 @@ function ProviderShellContent() {
   }, [navigate]);
 
   const handleLogout = useCallback(async () => {
+    // Log logout activity before signing out
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      supabase.functions.invoke("log-activity", {
+        body: {
+          user_id: session.user.id,
+          event_type: "logout",
+          event_description: "Signed out of account",
+        },
+      });
+    }
+    
     await supabase.auth.signOut();
     // Clear provider data cache on logout
     queryClient.removeQueries({ queryKey: ["provider-data"] });
