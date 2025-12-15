@@ -1,6 +1,7 @@
 import { useParams, Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
+import { SEO, generateLocalBusinessSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -245,6 +246,27 @@ const CenterProfile = () => {
 
   return (
     <Layout>
+      <SEO
+        title={`${facility.name} - Addiction Treatment in ${facility.city}, ${facility.state}`}
+        description={facility.description || `${facility.name} offers addiction treatment services in ${facility.city}, ${facility.state}. Contact us to learn more about our programs and verify insurance coverage.`}
+        canonical={`/center/${facility.slug}`}
+        structuredData={generateLocalBusinessSchema({
+          name: facility.name,
+          address: facility.address,
+          city: facility.city,
+          state: facility.state,
+          zipCode: facility.zip_code,
+          phone: facility.phone,
+          description: facility.description || "",
+          image: facility.logo_url || undefined,
+          services: services,
+        })}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Find Rehab", url: "/rehab-centers" },
+          { name: facility.name, url: `/center/${facility.slug}` },
+        ]}
+      />
       {/* Sticky Mobile CTA */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card p-3 shadow-lg md:hidden">
         <div className="flex gap-2">

@@ -1,10 +1,17 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 const TermsOfService = () => {
   return (
     <Layout>
+      <SEO
+        title="Terms of Service"
+        description="Read RehabLookup's terms of service. Understand the terms and conditions for using our addiction treatment directory and services."
+        canonical="/terms-of-service"
+        noindex
+      />
       {/* Header */}
       <section className="border-b border-border bg-secondary/30 py-12">
         <div className="container">

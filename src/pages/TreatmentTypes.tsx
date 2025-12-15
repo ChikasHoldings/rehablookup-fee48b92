@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import {
   Pill,
@@ -64,6 +65,15 @@ const treatmentTypes = [
 const TreatmentTypes = () => {
   return (
     <Layout>
+      <SEO
+        title="Types of Addiction Treatment Programs"
+        description="Explore different addiction treatment options including drug rehab, alcohol treatment, dual diagnosis, residential, outpatient, and holistic therapy programs."
+        canonical="/treatment-types"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Treatment Types", url: "/treatment-types" },
+        ]}
+      />
       {/* Hero - Navy background */}
       <section className="bg-primary py-12 md:py-16">
         <div className="container text-center">

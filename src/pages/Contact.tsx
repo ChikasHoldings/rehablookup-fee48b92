@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -45,6 +46,15 @@ const Contact = () => {
 
   return (
     <Layout>
+      <SEO
+        title="Contact Us - Get Help Finding Treatment"
+        description="Contact RehabLookup for assistance finding addiction treatment. Our specialists are available 24/7 to help you or your loved one find the right rehab center."
+        canonical="/contact"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Contact", url: "/contact" },
+        ]}
+      />
       {/* Hero - Navy background */}
       <section className="bg-primary py-12 md:py-16">
         <div className="container text-center">

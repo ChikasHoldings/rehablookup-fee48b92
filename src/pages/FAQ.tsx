@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -262,8 +263,23 @@ const FAQ = () => {
 
   const totalResults = filteredCategories.reduce((acc, cat) => acc + cat.faqs.length, 0);
 
+  // Generate FAQ structured data
+  const allFaqsForSchema = faqCategories.flatMap(cat => 
+    cat.faqs.map(faq => ({ question: faq.question, answer: faq.answer }))
+  );
+
   return (
     <Layout>
+      <SEO
+        title="Frequently Asked Questions About Addiction Treatment"
+        description="Get answers to common questions about addiction treatment, insurance coverage, family support, recovery, and using RehabLookup to find the right rehab center."
+        canonical="/faq"
+        structuredData={generateFAQSchema(allFaqsForSchema)}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "FAQ", url: "/faq" },
+        ]}
+      />
       {/* Hero Section */}
       <section className="relative bg-primary py-16 md:py-20">
         <div className="absolute inset-0 overflow-hidden">
