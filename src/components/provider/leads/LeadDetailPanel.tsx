@@ -203,7 +203,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base font-semibold text-foreground truncate">{lead.name}</h2>
+                <h2 className="text-lg font-semibold text-foreground truncate">{lead.name}</h2>
                 <LeadScoreBadge lead={lead} size="sm" />
                 {lead.email_verified && (
                   <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50 h-5 text-[10px] px-1.5">
