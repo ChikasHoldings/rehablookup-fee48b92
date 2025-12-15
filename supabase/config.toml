@@ -80,3 +80,6 @@ verify_jwt = true
 
 [functions.notify-flagged-image]
 verify_jwt = true
+
+[functions.check-churn-alerts]
+verify_jwt = false
