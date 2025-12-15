@@ -35,6 +35,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { type DateRange } from "@/hooks/useLeadAnalytics";
+import { LeadConversionAnalytics } from "./leads/LeadConversionAnalytics";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface LeadAnalyticsDashboardProps {
   facilityId: string | undefined;
@@ -79,7 +81,13 @@ export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsD
     : 0;
 
   return (
-    <div className="space-y-6">
+    <Tabs defaultValue="overview" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="conversion">Conversion Analysis</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="overview" className="space-y-6">
       {/* Summary Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -409,7 +417,12 @@ export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsD
           </CardContent>
         </Card>
       </div>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="conversion">
+        <LeadConversionAnalytics leads={analytics.leads} />
+      </TabsContent>
+    </Tabs>
   );
 }
 

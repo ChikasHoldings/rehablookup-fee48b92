@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 
-export type LeadStatus = "new" | "contacted" | "in_progress" | "closed";
+export type LeadStatus = "new" | "contacted" | "in_progress" | "converted" | "lost" | "closed";
 
 interface LeadStatusBadgeProps {
   status: LeadStatus;
@@ -19,6 +19,14 @@ const statusConfig: Record<LeadStatus, { label: string; className: string }> = {
   in_progress: {
     label: "In Progress",
     className: "bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20",
+  },
+  converted: {
+    label: "Converted",
+    className: "bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20",
+  },
+  lost: {
+    label: "Lost",
+    className: "bg-red-500/10 text-red-600 hover:bg-red-500/20 border-red-500/20",
   },
   closed: {
     label: "Closed",
@@ -44,6 +52,8 @@ export function getStatusOptions(): { value: LeadStatus; label: string }[] {
     { value: "new", label: "New" },
     { value: "contacted", label: "Contacted" },
     { value: "in_progress", label: "In Progress" },
+    { value: "converted", label: "Converted" },
+    { value: "lost", label: "Lost" },
     { value: "closed", label: "Closed" },
   ];
 }
