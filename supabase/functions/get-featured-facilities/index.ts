@@ -174,11 +174,54 @@ serve(async (req) => {
 
       // Update last_featured_shown_at for facilities shown today
       const today = new Date().toISOString();
+      const todayDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD for checking
+      
       for (const id of homepageFeaturedIds) {
+        // Check if facility was already featured today
+        const facility = eligibleFacilities.find(f => f.id === id);
+        const wasAlreadyFeaturedToday = facility?.last_featured_shown_at?.startsWith(todayDate);
+        
         await supabaseClient
           .from("facilities")
           .update({ last_featured_shown_at: today })
           .eq("id", id);
+        
+        // Send notification only if newly featured today (not already notified)
+        if (!wasAlreadyFeaturedToday) {
+          // Get facility details for notification
+          const { data: facilityData } = await supabaseClient
+            .from("facilities")
+            .select("name, user_id")
+            .eq("id", id)
+            .single();
+          
+          if (facilityData) {
+            // Check if notification already exists for today
+            const { data: existingNotification } = await supabaseClient
+              .from("provider_notifications")
+              .select("id")
+              .eq("user_id", facilityData.user_id)
+              .eq("facility_id", id)
+              .eq("type", "featured_rotation")
+              .gte("created_at", todayDate)
+              .maybeSingle();
+            
+            if (!existingNotification) {
+              await supabaseClient
+                .from("provider_notifications")
+                .insert({
+                  user_id: facilityData.user_id,
+                  facility_id: id,
+                  type: "featured_rotation",
+                  title: "Featured on Homepage! 🌟",
+                  message: `Your facility "${facilityData.name}" is being featured on the homepage today. This increases your visibility to potential clients.`,
+                  metadata: { featured_date: todayDate }
+                });
+              
+              logStep("Sent featured rotation notification", { facilityId: id, facilityName: facilityData.name });
+            }
+          }
+        }
       }
 
       logStep("Updated last_featured_shown_at for homepage featured", { count: homepageFeaturedIds.length });
