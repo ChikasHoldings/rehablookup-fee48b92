@@ -3,7 +3,6 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ProviderHeader } from "./ProviderHeader";
 import { ProviderSidebar } from "./ProviderSidebar";
-import { StatsBar } from "./StatsBar";
 import { useToast } from "@/hooks/use-toast";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,6 @@ import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/Select
 // Memoized sidebar to prevent re-renders
 const MemoizedSidebar = memo(ProviderSidebar);
 const MemoizedHeader = memo(ProviderHeader);
-const MemoizedStatsBar = memo(StatsBar);
 
 function ProviderShellContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -112,8 +110,6 @@ function ProviderShellContent() {
 
   const profile = providerData?.profile;
   const facility = selectedFacility || providerData?.facility;
-  const viewsCount = providerData?.viewsCount ?? 0;
-  const leadsCount = providerData?.leadsCount ?? 0;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -124,14 +120,9 @@ function ProviderShellContent() {
           facilityId={facility?.id}
           facilitySlug={facility?.slug}
           facilityLogo={facility?.logo_url}
+          facilityStatus={facility?.status}
           userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
           onLogout={handleLogout}
-        />
-        {/* Stats Bar */}
-        <MemoizedStatsBar 
-          status={facility?.status || "inactive"} 
-          leadsCount={leadsCount} 
-          viewsCount={viewsCount} 
         />
       </div>
 
