@@ -387,8 +387,31 @@ export default function AdminProviders() {
       updates: Partial<Facility>;
       actionType: string;
     }) => {
+      // Get facility info before update for approval email
+      const { data: facility } = await supabase
+        .from("facilities")
+        .select("name, user_id, status")
+        .eq("id", id)
+        .single();
+
       const { error } = await supabase.from("facilities").update(updates).eq("id", id);
       if (error) throw error;
+
+      // If status changed to approved, send approval email directly
+      if (updates.status === "approved" && facility && facility.status !== "approved") {
+        try {
+          await supabase.functions.invoke("send-approval-email", {
+            body: {
+              facilityId: id,
+              facilityName: facility.name,
+              userId: facility.user_id,
+            },
+          });
+        } catch (emailError) {
+          console.error("Failed to send approval email:", emailError);
+          // Non-blocking - continue even if email fails
+        }
+      }
 
       // Log admin action (non-blocking - don't fail the main operation if audit fails)
       try {
