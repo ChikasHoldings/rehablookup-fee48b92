@@ -109,6 +109,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
   const [activeTab, setActiveTab] = useState("details");
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<LeadStatus | null>(null);
+  const [lostReason, setLostReason] = useState("");
   const queryClient = useQueryClient();
 
   const { data: notes = [] } = useQuery({
@@ -367,7 +368,15 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
       />
 
       {/* Status Change Confirmation Dialog */}
-      <AlertDialog open={!!pendingStatus} onOpenChange={(open) => !open && setPendingStatus(null)}>
+      <AlertDialog 
+        open={!!pendingStatus} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingStatus(null);
+            setLostReason("");
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -397,6 +406,21 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          {pendingStatus === "lost" && (
+            <div className="py-2">
+              <label className="text-sm font-medium text-foreground mb-1.5 block">
+                Reason for losing this lead <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <Textarea
+                placeholder="e.g., Chose a different facility, No longer seeking treatment, Unable to reach..."
+                value={lostReason}
+                onChange={(e) => setLostReason(e.target.value)}
+                className="min-h-[80px] resize-none"
+              />
+            </div>
+          )}
+          
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
@@ -404,10 +428,15 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
                 pendingStatus === "lost" && "bg-red-600 hover:bg-red-700",
                 pendingStatus === "closed" && "bg-slate-600 hover:bg-slate-700"
               )}
-              onClick={() => {
+              onClick={async () => {
                 if (pendingStatus) {
+                  // If there's a lost reason, add it as a note first
+                  if (pendingStatus === "lost" && lostReason.trim()) {
+                    await addNote.mutateAsync(`[Lost Reason] ${lostReason.trim()}`);
+                  }
                   updateStatus.mutate(pendingStatus);
                   setPendingStatus(null);
+                  setLostReason("");
                 }
               }}
             >
