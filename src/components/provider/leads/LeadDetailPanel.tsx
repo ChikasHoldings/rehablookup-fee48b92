@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, addHours, addDays, isPast, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   Phone,
   Mail,
@@ -19,8 +19,6 @@ import {
   Stethoscope,
   CreditCard,
   Sparkles,
-  BellOff,
-  Bell,
   Zap,
   X,
 } from "lucide-react";
@@ -166,17 +164,6 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
       queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
     },
   });
-
-  const snoozeReminder = useMutation({
-    mutationFn: async (snoozeUntil: Date | null) => {
-      if (!lead) return;
-      const { error } = await supabase.from("leads").update({ snooze_until: snoozeUntil?.toISOString() || null }).eq("id", lead.id);
-      if (error) throw error;
-    },
-    onSuccess: (_, val) => { queryClient.invalidateQueries({ queryKey: ["provider-leads"] }); toast.success(val ? "Snoozed" : "Unsnooze"); },
-  });
-
-  const isSnoozed = lead?.snooze_until && !isPast(new Date(lead.snooze_until));
 
   const addNote = useMutation({
     mutationFn: async (note: string) => {
@@ -463,46 +450,46 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Details Tab */}
-          <TabsContent value="details" className="p-4 space-y-6 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="details" className="p-3 space-y-4 mt-0 data-[state=inactive]:hidden">
             {/* Contact */}
             <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contact Information</h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-green-100 flex items-center justify-center">
-                      <Phone className="h-4 w-4 text-green-600" />
+              <h3 className="text-[11px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Contact</h3>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between py-2 px-2.5 rounded-md bg-muted/50 hover:bg-muted/70 transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-md bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <Phone className="h-3.5 w-3.5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{lead.phone}</p>
-                      <p className="text-xs text-muted-foreground">{lead.preferred_contact === "call" ? "Preferred" : "Phone"}</p>
+                      <p className="text-[13px] font-medium text-foreground">{lead.phone}</p>
+                      <p className="text-[10px] text-muted-foreground">{lead.preferred_contact === "call" ? "Preferred method" : "Phone"}</p>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.phone, "phone")}>
-                      {copiedField === "phone" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  <div className="flex gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(lead.phone, "phone")}>
+                      {copiedField === "phone" ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                      <a href={`tel:${lead.phone}`}><ExternalLink className="h-4 w-4" /></a>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                      <a href={`tel:${lead.phone}`}><ExternalLink className="h-3.5 w-3.5" /></a>
                     </Button>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-9 w-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <Mail className="h-4 w-4 text-blue-600" />
+                <div className="flex items-center justify-between py-2 px-2.5 rounded-md bg-muted/50 hover:bg-muted/70 transition-colors">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-7 w-7 rounded-md bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Mail className="h-3.5 w-3.5 text-blue-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{lead.email}</p>
-                      <p className="text-xs text-muted-foreground">{lead.preferred_contact === "email" ? "Preferred" : "Email"}</p>
+                      <p className="text-[13px] font-medium text-foreground truncate">{lead.email}</p>
+                      <p className="text-[10px] text-muted-foreground">{lead.preferred_contact === "email" ? "Preferred method" : "Email"}</p>
                     </div>
                   </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.email, "email")}>
-                      {copiedField === "email" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  <div className="flex gap-0.5 flex-shrink-0">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopy(lead.email, "email")}>
+                      {copiedField === "email" ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                      <a href={`mailto:${lead.email}`}><ExternalLink className="h-4 w-4" /></a>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                      <a href={`mailto:${lead.email}`}><ExternalLink className="h-3.5 w-3.5" /></a>
                     </Button>
                   </div>
                 </div>
@@ -512,11 +499,11 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
             {/* Message */}
             {lead.message && (
               <section>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-3.5 w-3.5" />
+                <h3 className="text-[11px] font-semibold text-foreground/70 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <MessageSquare className="h-3 w-3" />
                   Message
                 </h3>
-                <div className="p-4 rounded-lg bg-muted/40 text-sm leading-relaxed">
+                <div className="py-2.5 px-3 rounded-md bg-muted/50 text-[13px] leading-relaxed text-foreground">
                   {lead.message}
                 </div>
               </section>
@@ -525,99 +512,70 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
             {/* Intake Details */}
             {lead.source === "Request Help Page" && (
               <section>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <h3 className="text-[11px] font-semibold text-foreground/70 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3 text-primary" />
                   Intake Details
                 </h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   {lead.urgency && (
-                    <div className="p-3 rounded-lg bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-1">
-                        <AlertTriangle className="h-3 w-3" /> Urgency
+                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
+                        <AlertTriangle className="h-2.5 w-2.5" /> Urgency
                       </p>
-                      <p className="text-sm font-medium">{formatUrgency(lead.urgency)}</p>
+                      <p className="text-[13px] font-medium text-foreground">{formatUrgency(lead.urgency)}</p>
                     </div>
                   )}
                   {lead.level_of_care && (
-                    <div className="p-3 rounded-lg bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-1">
-                        <Stethoscope className="h-3 w-3" /> Level of Care
+                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
+                        <Stethoscope className="h-2.5 w-2.5" /> Level of Care
                       </p>
-                      <p className="text-sm font-medium">{formatLevel(lead.level_of_care)}</p>
+                      <p className="text-[13px] font-medium text-foreground">{formatLevel(lead.level_of_care)}</p>
                     </div>
                   )}
                   {lead.insurance_type && (
-                    <div className="p-3 rounded-lg bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-1">
-                        <CreditCard className="h-3 w-3" /> Insurance
+                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
+                        <CreditCard className="h-2.5 w-2.5" /> Insurance
                       </p>
-                      <p className="text-sm font-medium">{formatInsurance(lead.insurance_type)}</p>
+                      <p className="text-[13px] font-medium text-foreground">{formatInsurance(lead.insurance_type)}</p>
                     </div>
                   )}
                   {lead.location_city_state && (
-                    <div className="p-3 rounded-lg bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-1">
-                        <MapPin className="h-3 w-3" /> Location
+                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
+                        <MapPin className="h-2.5 w-2.5" /> Location
                       </p>
-                      <p className="text-sm font-medium">{lead.location_city_state}</p>
+                      <p className="text-[13px] font-medium text-foreground">{lead.location_city_state}</p>
                     </div>
                   )}
                   {lead.who_seeking_help && (
-                    <div className="p-3 rounded-lg bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-1">
-                        <User className="h-3 w-3" /> Seeking For
+                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mb-0.5">
+                        <User className="h-2.5 w-2.5" /> Seeking For
                       </p>
-                      <p className="text-sm font-medium capitalize">{lead.who_seeking_help}</p>
+                      <p className="text-[13px] font-medium text-foreground capitalize">{lead.who_seeking_help}</p>
                     </div>
                   )}
                   {lead.dual_diagnosis && (
-                    <div className="p-3 rounded-lg bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase mb-1">Dual Diagnosis</p>
-                      <p className="text-sm font-medium capitalize">{lead.dual_diagnosis}</p>
+                    <div className="py-2 px-2.5 rounded-md bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Dual Diagnosis</p>
+                      <p className="text-[13px] font-medium text-foreground capitalize">{lead.dual_diagnosis}</p>
                     </div>
                   )}
                 </div>
                 {lead.primary_substance && lead.primary_substance.length > 0 && (
-                  <div className="p-3 rounded-lg bg-muted/40 mt-3">
-                    <p className="text-[10px] text-muted-foreground uppercase mb-2">Primary Substance(s)</p>
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="py-2 px-2.5 rounded-md bg-muted/50 mt-2">
+                    <p className="text-[10px] text-muted-foreground uppercase mb-1.5">Primary Substance(s)</p>
+                    <div className="flex flex-wrap gap-1">
                       {lead.primary_substance.map((s, i) => (
-                        <Badge key={i} variant="secondary" className="capitalize">{s}</Badge>
+                        <Badge key={i} variant="secondary" className="capitalize text-[11px] h-5 px-1.5">{s}</Badge>
                       ))}
                     </div>
                   </div>
                 )}
               </section>
             )}
-
-            {/* Snooze */}
-            <section>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                <BellOff className="h-3.5 w-3.5" />
-                Snooze Reminders
-              </h3>
-              {isSnoozed ? (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
-                  <BellOff className="h-5 w-5 text-amber-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-amber-800">Snoozed</p>
-                    <p className="text-xs text-amber-600">Until {format(new Date(lead.snooze_until!), "MMM d, h:mm a")}</p>
-                  </div>
-                  <Button size="sm" variant="outline" className="border-amber-300 text-amber-700" onClick={() => snoozeReminder.mutate(null)} disabled={snoozeReminder.isPending}>
-                    <Bell className="h-4 w-4 mr-1" /> Unsnooze
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {[{ label: "4 hours", fn: () => addHours(new Date(), 4) }, { label: "1 day", fn: () => addDays(new Date(), 1) }, { label: "3 days", fn: () => addDays(new Date(), 3) }, { label: "1 week", fn: () => addDays(new Date(), 7) }].map((opt) => (
-                    <Button key={opt.label} variant="outline" size="sm" className="gap-1.5" onClick={() => snoozeReminder.mutate(opt.fn())} disabled={snoozeReminder.isPending}>
-                      <Clock className="h-3.5 w-3.5" />
-                      {opt.label}
-                    </Button>
-                  ))}
-                </div>
-              )}
-            </section>
           </TabsContent>
 
           {/* Notes Tab */}
