@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -173,12 +173,14 @@ export default function ProviderListingPage() {
   const queryClient = useQueryClient();
   const [facility, setFacility] = useState<Facility | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [newService, setNewService] = useState("");
   const [newInsurance, setNewInsurance] = useState("");
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const { selectedFacility } = useSelectedFacility();
 
@@ -296,8 +298,77 @@ export default function ProviderListingPage() {
     };
   }, [selectedFacility?.id, queryClient, refetchServices, refetchInsurance]);
 
+  // Auto-save function (silent, no toast)
+  const performAutoSave = useCallback(async () => {
+    if (!facility || isSaving) return;
+    
+    // Check for validation errors silently - don't auto-save if there are errors
+    const requiredFields = ["name", "facility_type", "address", "city", "state", "zip_code", "phone"];
+    for (const field of requiredFields) {
+      const error = validateField(field, facility[field as keyof Facility] as string | null);
+      if (error) return; // Don't auto-save if required fields have errors
+    }
+    
+    setIsAutoSaving(true);
+    
+    const { error } = await supabase
+      .from("facilities")
+      .update({
+        name: facility.name,
+        address: facility.address,
+        city: facility.city,
+        state: facility.state,
+        zip_code: facility.zip_code,
+        phone: facility.phone,
+        email: facility.email,
+        website: facility.website,
+        description: facility.description,
+        facility_type: facility.facility_type,
+        gender_served: facility.gender_served,
+        bed_count: facility.bed_count,
+        logo_url: facility.logo_url,
+        gallery_urls: facility.gallery_urls,
+      })
+      .eq("id", facility.id);
+
+    setIsAutoSaving(false);
+
+    if (!error) {
+      queryClient.setQueryData(["facility-listing", selectedFacility?.id], facility);
+      setHasChanges(false);
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 2000);
+    }
+  }, [facility, isSaving, selectedFacility?.id, queryClient]);
+
+  // Auto-save effect - triggers 3 seconds after last change
+  useEffect(() => {
+    if (hasChanges && facility) {
+      // Clear any existing timer
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+      
+      // Set new timer for auto-save after 3 seconds of inactivity
+      autoSaveTimerRef.current = setTimeout(() => {
+        performAutoSave();
+      }, 3000);
+    }
+    
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [hasChanges, facility, performAutoSave]);
+
   const handleSave = async () => {
     if (!facility) return;
+    
+    // Clear auto-save timer when manually saving
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
     
     // Validate all fields before saving
     if (!validateAllFields()) {
@@ -576,6 +647,23 @@ export default function ProviderListingPage() {
           </div>
           
           <div className="flex items-center gap-3">
+            {/* Auto-save indicator */}
+            {isAutoSaving && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Auto-saving...
+              </span>
+            )}
+            {showSaved && !isAutoSaving && !hasChanges && (
+              <span className="text-xs text-green-600 flex items-center gap-1.5">
+                <CheckCircle className="h-3 w-3" />
+                Saved
+              </span>
+            )}
+            {hasChanges && !isAutoSaving && (
+              <span className="text-xs text-muted-foreground">Unsaved changes</span>
+            )}
+            
             {facility.slug && (
               <Button 
                 variant="outline" 
@@ -596,21 +684,12 @@ export default function ProviderListingPage() {
             )}
             <Button 
               onClick={handleSave} 
-              disabled={isSaving || !hasChanges} 
+              disabled={isSaving || isAutoSaving || !hasChanges} 
               size="sm"
               className="gap-2 min-w-[120px]"
             >
-              {showSaved ? (
-                <>
-                  <CheckCircle className="h-4 w-4" />
-                  Saved
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </>
-              )}
+              <Save className="h-4 w-4" />
+              {isSaving ? "Saving..." : "Save Now"}
             </Button>
           </div>
         </div>
