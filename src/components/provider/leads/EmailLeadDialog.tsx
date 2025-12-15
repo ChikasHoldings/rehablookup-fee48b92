@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Mail, 
   Send, 
@@ -12,7 +12,12 @@ import {
   Calendar,
   Eye,
   Lock,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles,
+  Briefcase,
+  User,
+  Star,
+  ListChecks
 } from "lucide-react";
 import {
   Dialog,
@@ -68,46 +73,138 @@ interface EmailTemplate {
   iconColor: string;
   subject: string;
   body: string;
+  isWelcome?: boolean;
 }
 
+// Welcome template IDs - only one can be sent per lead
+const WELCOME_TEMPLATE_IDS = [
+  "welcome_warm",
+  "welcome_professional",
+  "welcome_personal",
+  "welcome_hope",
+  "welcome_practical"
+];
+
 const EMAIL_TEMPLATES: EmailTemplate[] = [
+  // Welcome variants (only one per lead)
   {
-    id: "thanks_reaching_out",
-    name: "Welcome & Thank You",
-    category: "Initial Outreach",
+    id: "welcome_warm",
+    name: "Warm Welcome",
+    category: "Welcome",
     icon: Heart,
     iconColor: "text-rose-500",
-    subject: "Thank you for reaching out to {{provider_name}}",
-    body: `Dear {{lead_first_name}},
+    isWelcome: true,
+    subject: "Thanks for reaching out to {{provider_name}}",
+    body: `Hi {{lead_first_name}},
 
-Thank you for taking this important step toward recovery. We know how much courage it takes to reach out, and we want you to know that you're not alone on this journey.
+Thank you for reaching out to {{provider_name}}. We received your inquiry and want you to know we're here to help.
 
-At {{provider_name}}, our compassionate team is dedicated to providing the support and care you need. We believe in treating every individual with dignity and respect, and we're here to help you find your path to wellness.
+Taking this step takes courage, and we appreciate your trust. Our team is ready to answer your questions about our programs, insurance, and what to expect.
 
-We would love the opportunity to speak with you and learn more about how we can support you. Please don't hesitate to reach out at your convenience.
+We'll be in touch soon.
 
-Warm regards,
+Warmly,
 {{provider_contact_name}}
 {{provider_name}}`,
   },
   {
+    id: "welcome_professional",
+    name: "Professional Introduction",
+    category: "Welcome",
+    icon: Briefcase,
+    iconColor: "text-blue-600",
+    isWelcome: true,
+    subject: "Your inquiry has been received - {{provider_name}}",
+    body: `Hi {{lead_first_name}},
+
+Thank you for contacting {{provider_name}}. Your inquiry has been received by our admissions team.
+
+We specialize in evidence-based treatment programs with experienced clinical staff. Our team will review your information and reach out to discuss how we can best support your recovery goals.
+
+Please feel free to reply to this email with any questions.
+
+Best regards,
+{{provider_contact_name}}
+{{provider_name}}`,
+  },
+  {
+    id: "welcome_personal",
+    name: "Personal Touch",
+    category: "Welcome",
+    icon: User,
+    iconColor: "text-violet-500",
+    isWelcome: true,
+    subject: "A personal note from our team - {{provider_name}}",
+    body: `Hi {{lead_first_name}},
+
+I wanted to personally reach out after receiving your inquiry. At {{provider_name}}, we believe every person's journey is unique, and we're honored you're considering us.
+
+Recovery is possible. I've seen it happen for so many people who started exactly where you are now. We're here to support you every step of the way.
+
+Looking forward to connecting with you,
+{{provider_contact_name}}
+{{provider_name}}`,
+  },
+  {
+    id: "welcome_hope",
+    name: "Message of Hope",
+    category: "Welcome",
+    icon: Star,
+    iconColor: "text-amber-500",
+    isWelcome: true,
+    subject: "Your journey to recovery starts here - {{provider_name}}",
+    body: `Hi {{lead_first_name}},
+
+Thank you for taking this important step. Reaching out is often the hardest part, and we want you to know that hope and healing are absolutely possible.
+
+At {{provider_name}}, we've helped many people transform their lives. You don't have to face this alone. Our compassionate team is ready to walk alongside you on your path to recovery.
+
+With hope,
+{{provider_contact_name}}
+{{provider_name}}`,
+  },
+  {
+    id: "welcome_practical",
+    name: "Practical Next Steps",
+    category: "Welcome",
+    icon: ListChecks,
+    iconColor: "text-emerald-500",
+    isWelcome: true,
+    subject: "Here's what happens next - {{provider_name}}",
+    body: `Hi {{lead_first_name}},
+
+Thanks for your inquiry to {{provider_name}}. Here's what you can expect from us:
+
+1. We'll call within 24 hours to learn about your situation
+2. We'll verify your insurance coverage at no cost
+3. We'll answer all your questions honestly
+4. If we're a good fit, we'll help you get started
+
+No pressure, no obligations. We're simply here to help.
+
+Best,
+{{provider_contact_name}}
+{{provider_name}}`,
+  },
+  // Other templates (can be sent multiple times)
+  {
     id: "next_steps",
     name: "Getting Started Guide",
-    category: "Initial Outreach",
+    category: "Follow-up",
     icon: FileText,
     iconColor: "text-blue-500",
     subject: "Your next steps with {{provider_name}}",
-    body: `Dear {{lead_first_name}},
+    body: `Hi {{lead_first_name}},
 
 We're so glad you've chosen to explore treatment options with us. Here's what you can expect as we work together on your recovery journey:
 
-1. Initial Assessment — We'll schedule a confidential conversation to understand your unique needs and circumstances.
+1. Initial Assessment - We'll schedule a confidential conversation to understand your unique needs and circumstances.
 
-2. Insurance Verification — Our team will work with your insurance provider to determine your coverage and discuss payment options.
+2. Insurance Verification - Our team will work with your insurance provider to determine your coverage and discuss payment options.
 
-3. Personalized Treatment Plan — Based on your assessment, we'll create a customized plan that addresses your specific goals.
+3. Personalized Treatment Plan - Based on your assessment, we'll create a customized plan that addresses your specific goals.
 
-4. Admission Support — We'll guide you through every step of the admission process, answering any questions along the way.
+4. Admission Support - We'll guide you through every step of the admission process, answering any questions along the way.
 
 We're here to make this process as smooth and stress-free as possible. When you're ready, simply reply to this email or give us a call.
 
@@ -121,8 +218,8 @@ With care,
     category: "Logistics",
     icon: Calendar,
     iconColor: "text-emerald-500",
-    subject: "Good news about your coverage — {{provider_name}}",
-    body: `Dear {{lead_first_name}},
+    subject: "Good news about your coverage - {{provider_name}}",
+    body: `Hi {{lead_first_name}},
 
 Great news! We've had a chance to review the information you provided, and we wanted to reach out with some updates about coverage and availability.
 
@@ -146,8 +243,8 @@ Best regards,
     category: "Follow-up",
     icon: PhoneCall,
     iconColor: "text-violet-500",
-    subject: "Let's schedule a time to talk — {{provider_name}}",
-    body: `Dear {{lead_first_name}},
+    subject: "Let's schedule a time to talk - {{provider_name}}",
+    body: `Hi {{lead_first_name}},
 
 I hope this message finds you well. I wanted to personally reach out and see if you'd be available for a brief phone consultation.
 
@@ -171,12 +268,12 @@ Looking forward to speaking with you,
     category: "Follow-up",
     icon: Clock,
     iconColor: "text-amber-500",
-    subject: "Checking in — {{provider_name}}",
-    body: `Dear {{lead_first_name}},
+    subject: "Checking in - {{provider_name}}",
+    body: `Hi {{lead_first_name}},
 
 I wanted to reach out and see how you're doing. Recovery is a journey that happens on your own timeline, and there's no pressure to rush into anything.
 
-I understand that taking the first step can feel daunting, and it's completely okay to have questions or hesitations. We're here whenever you're ready to talk — whether that's today, next week, or whenever feels right for you.
+I understand that taking the first step can feel daunting, and it's completely okay to have questions or hesitations. We're here whenever you're ready to talk - whether that's today, next week, or whenever feels right for you.
 
 If your circumstances have changed or you have new questions, please don't hesitate to reach out. Our door is always open.
 
@@ -197,6 +294,47 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
   const { selectedFacility } = useSelectedFacility();
   const { data: providerData } = useProviderData(selectedFacility?.id || undefined);
   const { data: templateTags = [] } = useTemplateTags();
+
+  // Fetch sent template IDs for this lead (across ALL providers)
+  const { data: sentTemplateIds = [] } = useQuery({
+    queryKey: ["lead-sent-templates", lead?.id],
+    queryFn: async () => {
+      if (!lead?.id) return [];
+      const { data, error } = await supabase
+        .from("lead_emails")
+        .select("template_id")
+        .eq("lead_id", lead.id);
+      
+      if (error) {
+        console.error("Error fetching sent templates:", error);
+        return [];
+      }
+      return data.map(d => d.template_id);
+    },
+    enabled: !!lead?.id && open,
+  });
+
+  // Check if any welcome template has been sent to this lead
+  const welcomeTemplateSent = useMemo(() => {
+    return sentTemplateIds.some(id => WELCOME_TEMPLATE_IDS.includes(id));
+  }, [sentTemplateIds]);
+
+  // Filter templates to hide welcome variants if any welcome was already sent
+  const availableTemplates = useMemo(() => {
+    return EMAIL_TEMPLATES.filter(template => {
+      // If this is a welcome template and any welcome template was already sent, hide it
+      if (template.isWelcome && welcomeTemplateSent) {
+        return false;
+      }
+      return true;
+    });
+  }, [welcomeTemplateSent]);
+
+  // Count available welcome templates
+  const availableWelcomeCount = useMemo(() => {
+    if (welcomeTemplateSent) return 0;
+    return WELCOME_TEMPLATE_IDS.length;
+  }, [welcomeTemplateSent]);
 
   // Build template context from current data
   const templateContext = useMemo((): TemplateContext | null => {
@@ -226,26 +364,18 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
     };
   }, [lead, providerData]);
 
-  // Check if email sending is allowed:
-  // - Account email is always verified (Supabase Auth handles this)
-  // - Custom reply_email only needs verification if it's DIFFERENT from account email
+  // Check if email sending is allowed
   const replyEmailVerified = useMemo(() => {
     const facility = providerData?.facility as any;
     const profile = providerData?.profile as any;
     const accountEmail = profile?.email?.toLowerCase().trim();
     const replyEmail = facility?.reply_email?.toLowerCase().trim();
     
-    // If no custom reply email set, use account email (always verified)
     if (!replyEmail) return true;
-    
-    // If reply email matches account email, it's verified
     if (replyEmail === accountEmail) return true;
-    
-    // If different email, must be explicitly verified
     return !!facility?.reply_email_verified;
   }, [providerData]);
 
-  // For display purposes - has any reply email configured (even if not verified)
   const hasReplyEmail = useMemo(() => {
     const facility = providerData?.facility as any;
     return !!facility?.reply_email;
@@ -270,11 +400,17 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
         throw new Error(response.error.message || "Failed to send email");
       }
 
+      // Check for application-level error in response data
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
       return response.data;
     },
     onSuccess: (data) => {
       setEmailSent(true);
       queryClient.invalidateQueries({ queryKey: ["lead-emails"] });
+      queryClient.invalidateQueries({ queryKey: ["lead-sent-templates", lead?.id] });
       toast({
         title: "Email sent successfully!",
         description: data.message || `Your message has been delivered to ${lead?.name}`,
@@ -312,7 +448,6 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
   // Render template with variables using the tag resolver
   const renderTemplate = (text: string): string => {
     if (!templateContext || templateTags.length === 0) {
-      // Fallback to basic replacement if tags not loaded yet
       if (!lead || !providerData) return text;
       
       const leadFirstName = lead.name.split(" ")[0] || "there";
@@ -360,7 +495,6 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
       return;
     }
 
-    // Check if reply email is configured AND verified
     if (!replyEmailVerified) {
       toast({
         title: "Reply email not verified",
@@ -372,7 +506,6 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
       return;
     }
 
-    // Validate template can be sent
     if (selectedTemplateInfo && templateContext) {
       const fullTemplate = `${selectedTemplateInfo.subject}\n${selectedTemplateInfo.body}`;
       const sendCheck = canSendTemplate(fullTemplate, templateContext, templateTags);
@@ -393,6 +526,16 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
 
   const firstName = lead.name.split(" ")[0];
   const providerName = providerData?.facility?.name || "Your Facility";
+
+  // Group templates by category for display
+  const templatesByCategory = useMemo(() => {
+    const grouped: Record<string, EmailTemplate[]> = {};
+    availableTemplates.forEach(t => {
+      if (!grouped[t.category]) grouped[t.category] = [];
+      grouped[t.category].push(t);
+    });
+    return grouped;
+  }, [availableTemplates]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -435,9 +578,26 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                 </div>
               </div>
 
+              {/* Welcome Template Notice */}
+              {welcomeTemplateSent && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50/50 border border-blue-100 text-xs">
+                  <Sparkles className="h-3.5 w-3.5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-blue-700 leading-relaxed">
+                    A welcome email has already been sent to this lead. Only follow-up templates are available.
+                  </p>
+                </div>
+              )}
+
               {/* Template Selection */}
               <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Template</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Template</Label>
+                  {availableWelcomeCount > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      {availableWelcomeCount} welcome available
+                    </Badge>
+                  )}
+                </div>
                 <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                   <SelectTrigger className="h-auto py-3 px-3 rounded-lg border-border/60 hover:border-primary/40 transition-colors">
                     {selectedTemplateInfo ? (
@@ -455,22 +615,32 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                     )}
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
-                    {EMAIL_TEMPLATES.map((template) => (
-                      <SelectItem 
-                        key={template.id} 
-                        value={template.id}
-                        className="py-3 px-2 cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className={`h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0`}>
-                            <template.icon className={`h-4 w-4 ${template.iconColor}`} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-sm">{template.name}</p>
-                            <p className="text-xs text-muted-foreground">{template.category}</p>
-                          </div>
+                    {Object.entries(templatesByCategory).map(([category, templates]) => (
+                      <div key={category}>
+                        <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30">
+                          {category}
+                          {category === "Welcome" && (
+                            <span className="ml-1 text-emerald-600">({templates.length} available)</span>
+                          )}
                         </div>
-                      </SelectItem>
+                        {templates.map((template) => (
+                          <SelectItem 
+                            key={template.id} 
+                            value={template.id}
+                            className="py-3 px-2 cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className={`h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0`}>
+                                <template.icon className={`h-4 w-4 ${template.iconColor}`} />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm">{template.name}</p>
+                                <p className="text-xs text-muted-foreground">{template.category}</p>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </div>
                     ))}
                   </SelectContent>
                 </Select>

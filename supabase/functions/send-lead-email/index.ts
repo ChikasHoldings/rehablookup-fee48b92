@@ -7,18 +7,29 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Welcome email variants - only one can be sent per lead (across all providers)
+const WELCOME_TEMPLATE_IDS = [
+  "welcome_warm",
+  "welcome_professional", 
+  "welcome_personal",
+  "welcome_hope",
+  "welcome_practical"
+];
+
 // Email templates - shorter, human, no em dashes
-const templates: Record<string, { name: string; subject: string; body: string }> = {
-  thanks_reaching_out: {
-    name: "Thanks for Reaching Out",
-    subject: "Thanks for contacting {{facilityName}}",
+const templates: Record<string, { name: string; subject: string; body: string; category: string }> = {
+  // Welcome variants (only one per lead)
+  welcome_warm: {
+    name: "Warm Welcome",
+    category: "Welcome",
+    subject: "Thanks for reaching out to {{facilityName}}",
     body: `Hi {{leadName}},
 
 Thank you for reaching out to {{facilityName}}. We received your inquiry and want you to know we're here to help.
 
 {{customNote}}
 
-Our team is ready to answer your questions about our programs, insurance, and what to expect. Taking this step takes courage, and we appreciate your trust.
+Taking this step takes courage, and we appreciate your trust. Our team is ready to answer your questions about our programs, insurance, and what to expect.
 
 We'll be in touch soon.
 
@@ -26,8 +37,82 @@ Warmly,
 {{senderName}}
 {{facilityName}}`,
   },
+  welcome_professional: {
+    name: "Professional Introduction",
+    category: "Welcome",
+    subject: "Your inquiry has been received - {{facilityName}}",
+    body: `Hi {{leadName}},
+
+Thank you for contacting {{facilityName}}. Your inquiry has been received by our admissions team.
+
+{{customNote}}
+
+We specialize in evidence-based treatment programs with experienced clinical staff. Our team will review your information and reach out to discuss how we can best support your recovery goals.
+
+Please feel free to reply to this email with any questions.
+
+Best regards,
+{{senderName}}
+{{facilityName}}`,
+  },
+  welcome_personal: {
+    name: "Personal Touch",
+    category: "Welcome",
+    subject: "A personal note from our team - {{facilityName}}",
+    body: `Hi {{leadName}},
+
+I wanted to personally reach out after receiving your inquiry. At {{facilityName}}, we believe every person's journey is unique, and we're honored you're considering us.
+
+{{customNote}}
+
+Recovery is possible. I've seen it happen for so many people who started exactly where you are now. We're here to support you every step of the way.
+
+Looking forward to connecting with you,
+{{senderName}}
+{{facilityName}}`,
+  },
+  welcome_hope: {
+    name: "Message of Hope",
+    category: "Welcome",
+    subject: "Your journey to recovery starts here - {{facilityName}}",
+    body: `Hi {{leadName}},
+
+Thank you for taking this important step. Reaching out is often the hardest part, and we want you to know that hope and healing are absolutely possible.
+
+{{customNote}}
+
+At {{facilityName}}, we've helped many people transform their lives. You don't have to face this alone. Our compassionate team is ready to walk alongside you on your path to recovery.
+
+With hope,
+{{senderName}}
+{{facilityName}}`,
+  },
+  welcome_practical: {
+    name: "Practical Next Steps",
+    category: "Welcome",
+    subject: "Here's what happens next - {{facilityName}}",
+    body: `Hi {{leadName}},
+
+Thanks for your inquiry to {{facilityName}}. Here's what you can expect from us:
+
+1. We'll call within 24 hours to learn about your situation
+2. We'll verify your insurance coverage at no cost
+3. We'll answer all your questions honestly
+4. If we're a good fit, we'll help you get started
+
+{{customNote}}
+
+No pressure, no obligations. We're simply here to help.
+
+Best,
+{{senderName}}
+{{facilityName}}`,
+  },
+
+  // Other templates (can be sent multiple times)
   next_steps: {
     name: "Next Steps",
+    category: "Follow-up",
     subject: "Your next steps with {{facilityName}}",
     body: `Hi {{leadName}},
 
@@ -49,6 +134,7 @@ Best,
   },
   insurance_availability: {
     name: "Insurance & Availability",
+    category: "Logistics",
     subject: "Insurance info from {{facilityName}}",
     body: `Hi {{leadName}},
 
@@ -68,6 +154,7 @@ Best,
   },
   scheduling_call: {
     name: "Schedule a Call",
+    category: "Follow-up",
     subject: "Let's talk - {{facilityName}}",
     body: `Hi {{leadName}},
 
@@ -80,6 +167,24 @@ Are you available for a quick call in the next day or two? Our team is here Mond
 Reply with a few times that work, or just call us when you're ready.
 
 Looking forward to connecting,
+{{senderName}}
+{{facilityName}}`,
+  },
+  gentle_followup: {
+    name: "Gentle Follow-up",
+    category: "Follow-up",
+    subject: "Checking in - {{facilityName}}",
+    body: `Hi {{leadName}},
+
+I wanted to reach out and see how you're doing. Recovery is a journey that happens on your own timeline, and there's no pressure to rush into anything.
+
+{{customNote}}
+
+I understand that taking the first step can feel daunting, and it's completely okay to have questions or hesitations. We're here whenever you're ready to talk.
+
+If your circumstances have changed or you have new questions, please don't hesitate to reach out. Our door is always open.
+
+Wishing you well,
 {{senderName}}
 {{facilityName}}`,
   },
@@ -144,6 +249,27 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: "Invalid template" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // Check if this is a welcome template and if any welcome template was already sent to this lead
+    const isWelcomeTemplate = WELCOME_TEMPLATE_IDS.includes(templateId);
+    if (isWelcomeTemplate) {
+      const { data: existingWelcomeEmails } = await supabase
+        .from("lead_emails")
+        .select("template_id")
+        .eq("lead_id", leadId)
+        .in("template_id", WELCOME_TEMPLATE_IDS);
+
+      if (existingWelcomeEmails && existingWelcomeEmails.length > 0) {
+        const sentTemplate = templates[existingWelcomeEmails[0].template_id];
+        console.log("Welcome template already sent to this lead:", existingWelcomeEmails[0].template_id);
+        return new Response(
+          JSON.stringify({ 
+            error: `A welcome email ("${sentTemplate?.name || 'Welcome'}") has already been sent to this lead. Please choose a different template type.` 
+          }),
+          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
     const { data: profile, error: profileError } = await supabase
