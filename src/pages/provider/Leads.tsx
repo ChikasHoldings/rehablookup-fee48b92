@@ -58,7 +58,8 @@ import {
   LeadUsageIndicator, 
   LeadLimitWarningBanner, 
   LeadLimitReachedBanner,
-  BasicPlanBanner
+  BasicPlanBanner,
+  LeadLimitOverlay
 } from "@/components/provider/LeadUsageIndicator";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -112,9 +113,10 @@ export default function ProviderLeadsPage() {
   const { selectedFacility } = useSelectedFacility();
   const { data: subscription } = useSubscription();
   const facilityId = selectedFacility?.id;
+  const currentPlan = subscription?.plan || "basic";
   
   // Get lead limit from subscription data
-  const leadLimit = subscription?.lead_limit ?? 5;
+  const leadLimit = subscription?.lead_limit ?? 4;
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["provider-leads", facilityId],
@@ -590,7 +592,15 @@ export default function ProviderLeadsPage() {
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="relative overflow-x-auto">
+              {/* Upgrade overlay when limit is reached for Basic plan */}
+              {currentPlan === "basic" && thisMonthLeads.length >= leadLimit && (
+                <LeadLimitOverlay 
+                  usedLeads={thisMonthLeads.length} 
+                  leadLimit={leadLimit} 
+                  hiddenLeadsCount={Math.max(0, thisMonthLeads.length - leadLimit)}
+                />
+              )}
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30">

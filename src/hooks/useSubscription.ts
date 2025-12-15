@@ -14,7 +14,7 @@ const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   subscribed: false,
   plan: "basic",
   plan_name: "Basic Listing",
-  lead_limit: 5, // Basic plan includes 5 leads for display purposes
+  lead_limit: 4, // Basic plan includes 4 leads/month (1 per week)
   subscription_end: null,
 };
 
@@ -36,10 +36,10 @@ export function useSubscription() {
           return DEFAULT_SUBSCRIPTION;
         }
         
-        // Ensure lead_limit is at least 5 for display purposes
+        // For Basic plan, ensure lead_limit is 4
         const result = data as SubscriptionData;
-        if (result.lead_limit === 0) {
-          result.lead_limit = 5;
+        if (result.lead_limit === 0 || (result.plan === "basic" && result.lead_limit !== 4)) {
+          result.lead_limit = 4;
         }
         
         return result;
@@ -62,7 +62,7 @@ export const PLAN_DETAILS = {
     price: "$0",
     period: "/month",
     description: "Public profile with limited leads",
-    lead_limit: 5,
+    lead_limit: 4,
     location_limit: 1,
     featured: false,
     features: [
@@ -70,7 +70,7 @@ export const PLAN_DETAILS = {
       "Public profile listing",
       "Logo and gallery upload",
       "Basic search visibility",
-      "5 leads/month",
+      "4 leads/month (1 per week)",
     ],
   },
   professional: {
