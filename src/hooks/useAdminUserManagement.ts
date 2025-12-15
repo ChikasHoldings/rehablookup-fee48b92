@@ -1,3 +1,4 @@
+import { useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -59,6 +60,64 @@ export type AdminUser = {
 
 export function useAdminUserManagement() {
   const queryClient = useQueryClient();
+
+  // Invalidate admin users query helper
+  const invalidateAdminUsers = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-users-full"] });
+  }, [queryClient]);
+
+  // Real-time subscriptions - always active
+  useEffect(() => {
+    const rolesChannel = supabase
+      .channel("admin-users-roles")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_roles" },
+        (payload) => {
+          console.log("User roles update:", payload.eventType);
+          invalidateAdminUsers();
+          if (payload.eventType === "INSERT") {
+            toast.info("New admin user added", { description: "User list updated" });
+          } else if (payload.eventType === "DELETE") {
+            toast.info("Admin user removed", { description: "User list updated" });
+          }
+        }
+      )
+      .subscribe();
+
+    const profilesChannel = supabase
+      .channel("admin-users-profiles")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "admin_user_profiles" },
+        (payload) => {
+          console.log("Admin profiles update:", payload.eventType);
+          invalidateAdminUsers();
+          if (payload.eventType === "UPDATE") {
+            toast.info("Admin user updated", { description: "Data refreshed" });
+          }
+        }
+      )
+      .subscribe();
+
+    const permissionsChannel = supabase
+      .channel("admin-users-permissions")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "admin_user_permissions" },
+        (payload) => {
+          console.log("Admin permissions update:", payload.eventType);
+          invalidateAdminUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(rolesChannel);
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(permissionsChannel);
+    };
+  }, [invalidateAdminUsers]);
 
   // Fetch all admin users with their roles and permissions
   const { data: adminUsers, isLoading, refetch } = useQuery({
