@@ -51,13 +51,12 @@ serve(async (req) => {
 
     logStep("Received payment failure notification", { userId, facilityName, providerEmail });
 
-    // Create in-app notification for admin
     const { error: adminNotificationError } = await supabase
       .from("admin_notifications")
       .insert({
         type: "payment_failed",
-        title: "Subscription Payment Failed",
-        message: `Payment failed for ${providerName} (${facilityName || "No facility"}).${failureReason ? ` Reason: ${failureReason}` : ""}`,
+        title: "Payment Failed",
+        message: `${providerName} (${facilityName || "No facility"}) payment failed.${failureReason ? ` Reason: ${failureReason}` : ""}`,
         metadata: {
           user_id: userId,
           facility_id: facilityId,
@@ -76,7 +75,6 @@ serve(async (req) => {
       logStep("Admin in-app notification created");
     }
 
-    // Create in-app notification for provider
     if (userId) {
       const { error: providerNotificationError } = await supabase
         .from("provider_notifications")
@@ -85,7 +83,7 @@ serve(async (req) => {
           facility_id: facilityId,
           type: "payment_failed",
           title: "Payment Failed",
-          message: "Your subscription payment could not be processed. Please update your payment method to avoid service interruption.",
+          message: "Your payment could not be processed. Please update your payment method.",
           metadata: {
             amount,
             currency,
@@ -100,52 +98,49 @@ serve(async (req) => {
       }
     }
 
-    // Send email to admin
+    // Admin email
     const adminEmail = "admin@rehablookup.com";
     const adminEmailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-          .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626; }
-          .button { display: inline-block; background: #1B365D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
-          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>⚠️ Payment Failed</h1>
-          </div>
-          <div class="content">
-            <p>A subscription payment has failed for one of your providers:</p>
-            <div class="info-box">
-              <h3 style="margin-top: 0;">${providerName}</h3>
-              ${facilityName ? `<p><strong>Facility:</strong> ${facilityName}</p>` : ""}
-              <p><strong>Email:</strong> ${providerEmail}</p>
-              ${amount ? `<p><strong>Amount:</strong> ${currency?.toUpperCase() || "USD"} ${(amount / 100).toFixed(2)}</p>` : ""}
-              ${failureReason ? `<p><strong>Failure Reason:</strong> ${failureReason}</p>` : ""}
-              <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-            </div>
-            <p>The provider has been notified via email to update their payment method.</p>
-            <a href="https://rehablookup.com/admin/subscriptions" class="button">View Subscriptions</a>
-          </div>
-          <div class="footer">
-            <p>RehabLookup Admin Notifications</p>
-          </div>
-        </div>
-      </body>
-      </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
+  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+    <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 24px; text-align: center;">
+      <h1 style="color: #fff; margin: 0; font-size: 18px; font-weight: 600;">Payment Failed</h1>
+    </div>
+    
+    <div style="padding: 28px;">
+      <div style="background: #fef2f2; border-left: 3px solid #dc2626; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 15px;">${providerName}</p>
+        ${facilityName ? `<p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">${facilityName}</p>` : ""}
+        <p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">${providerEmail}</p>
+        ${amount ? `<p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">Amount: ${currency?.toUpperCase() || "USD"} ${(amount / 100).toFixed(2)}</p>` : ""}
+        ${failureReason ? `<p style="margin: 0; font-size: 13px; color: #dc2626;">Reason: ${failureReason}</p>` : ""}
+      </div>
+      
+      <p style="margin: 0 0 20px 0; font-size: 14px; color: #64748b;">The provider has been notified to update their payment method.</p>
+      
+      <div style="text-align: center;">
+        <a href="https://rehablookup.com/admin/subscriptions" style="display: inline-block; background: #1B365D; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">View Subscriptions</a>
+      </div>
+    </div>
+    
+    <div style="background: #f8fafc; padding: 16px; border-top: 1px solid #e2e8f0;">
+      <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">RehabLookup Admin</p>
+    </div>
+  </div>
+</body>
+</html>
     `;
 
     const { error: adminEmailError } = await resend.emails.send({
       from: "RehabLookup <notifications@rehablookup.com>",
       to: [adminEmail],
-      subject: `Payment Failed: ${providerName}`,
+      subject: `Payment failed: ${providerName}`,
       html: adminEmailHtml,
     });
 
@@ -155,50 +150,56 @@ serve(async (req) => {
       logStep("Admin email sent successfully");
     }
 
-    // Send email to provider
+    // Provider email
     const providerEmailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #1B365D 0%, #2d4a7c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-          .warning-box { background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626; }
-          .button { display: inline-block; background: #1B365D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
-          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Payment Issue</h1>
-          </div>
-          <div class="content">
-            <p>Hi ${providerName},</p>
-            <div class="warning-box">
-              <h3 style="margin-top: 0; color: #dc2626;">⚠️ Your payment could not be processed</h3>
-              <p>We were unable to process your subscription payment. To avoid any interruption to your service, please update your payment method as soon as possible.</p>
-              ${failureReason ? `<p><strong>Reason:</strong> ${failureReason}</p>` : ""}
-            </div>
-            <p>If your payment method is not updated, your subscription may be suspended and your facility listing may become inactive.</p>
-            <a href="https://rehablookup.com/provider/billing" class="button">Update Payment Method</a>
-            <p style="margin-top: 30px;">If you believe this is an error or need assistance, please contact our support team.</p>
-          </div>
-          <div class="footer">
-            <p>RehabLookup - Connecting People with Treatment</p>
-            <p><a href="https://rehablookup.com/provider/help">Get Help</a></p>
-          </div>
-        </div>
-      </body>
-      </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
+  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+    <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 28px; text-align: center;">
+      <h1 style="color: #fff; margin: 0; font-size: 20px; font-weight: 600;">Payment Issue</h1>
+    </div>
+    
+    <div style="padding: 32px;">
+      <p style="margin: 0 0 16px 0; font-size: 15px;">Hi ${providerName},</p>
+      
+      <div style="background: #fef2f2; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #dc2626;">Your payment could not be processed</p>
+        <p style="margin: 0; font-size: 14px; color: #64748b;">
+          Please update your payment method to keep your listing active.
+          ${failureReason ? ` (${failureReason})` : ""}
+        </p>
+      </div>
+      
+      <p style="margin: 0 0 24px 0; font-size: 14px; color: #64748b;">
+        Without a valid payment method, your subscription may be paused and your listing may become inactive.
+      </p>
+      
+      <div style="text-align: center; margin-bottom: 24px;">
+        <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #fff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">Update Payment Method</a>
+      </div>
+      
+      <p style="margin: 0; font-size: 13px; color: #94a3b8;">
+        Questions? Reply to this email or visit our <a href="https://rehablookup.com/provider/help" style="color: #1B365D;">help center</a>.
+      </p>
+    </div>
+    
+    <div style="background: #f8fafc; padding: 16px; border-top: 1px solid #e2e8f0;">
+      <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">RehabLookup</p>
+    </div>
+  </div>
+</body>
+</html>
     `;
 
     const { error: providerEmailError } = await resend.emails.send({
       from: "RehabLookup <billing@rehablookup.com>",
       to: [providerEmail],
-      subject: "Action Required: Payment Failed for Your RehabLookup Subscription",
+      subject: "Action needed: Update your payment method",
       html: providerEmailHtml,
     });
 

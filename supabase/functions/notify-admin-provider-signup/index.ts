@@ -38,13 +38,12 @@ serve(async (req) => {
     const { facilityId, facilityName, providerEmail, city, state }: SignupNotification = await req.json();
     logStep("Received notification request", { facilityId, facilityName, providerEmail });
 
-    // Create in-app notification for admin
     const { error: notificationError } = await supabase
       .from("admin_notifications")
       .insert({
         type: "provider_signup",
-        title: "New Provider Registration",
-        message: `${facilityName} in ${city}, ${state} has signed up and requires verification.`,
+        title: "New Provider",
+        message: `${facilityName} in ${city}, ${state} needs verification.`,
         metadata: {
           facility_id: facilityId,
           facility_name: facilityName,
@@ -60,50 +59,46 @@ serve(async (req) => {
       logStep("In-app notification created successfully");
     }
 
-    // Send email notification to admin
-    const adminEmail = "admin@rehablookup.com"; // Configure this as needed
+    const adminEmail = "admin@rehablookup.com";
     const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #1B365D 0%, #2d4a7c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-          .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1B365D; }
-          .button { display: inline-block; background: #1B365D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
-          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🏥 New Provider Registration</h1>
-          </div>
-          <div class="content">
-            <p>A new treatment facility has registered and requires your verification:</p>
-            <div class="info-box">
-              <h3 style="margin-top: 0;">${facilityName}</h3>
-              <p><strong>Location:</strong> ${city}, ${state}</p>
-              <p><strong>Provider Email:</strong> ${providerEmail}</p>
-              <p><strong>Registration Time:</strong> ${new Date().toLocaleString()}</p>
-            </div>
-            <p>Please review this provider's application and approve or reject their listing.</p>
-            <a href="https://rehablookup.com/admin/providers" class="button">Review Provider</a>
-          </div>
-          <div class="footer">
-            <p>RehabLookup Admin Notifications</p>
-          </div>
-        </div>
-      </body>
-      </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
+  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+    <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 24px; text-align: center;">
+      <h1 style="color: #fff; margin: 0; font-size: 18px; font-weight: 600;">New Provider Registration</h1>
+    </div>
+    
+    <div style="padding: 28px;">
+      <p style="margin: 0 0 20px 0; font-size: 15px;">A new facility signed up and needs review:</p>
+      
+      <div style="background: #f8fafc; border-left: 3px solid #1B365D; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 16px; color: #1B365D;">${facilityName}</p>
+        <p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">${city}, ${state}</p>
+        <p style="margin: 0; font-size: 14px; color: #64748b;">${providerEmail}</p>
+      </div>
+      
+      <div style="text-align: center;">
+        <a href="https://rehablookup.com/admin/providers" style="display: inline-block; background: #1B365D; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Review Now</a>
+      </div>
+    </div>
+    
+    <div style="background: #f8fafc; padding: 16px; border-top: 1px solid #e2e8f0;">
+      <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">RehabLookup Admin</p>
+    </div>
+  </div>
+</body>
+</html>
     `;
 
     const { error: emailError } = await resend.emails.send({
       from: "RehabLookup <notifications@rehablookup.com>",
       to: [adminEmail],
-      subject: `New Provider Registration: ${facilityName}`,
+      subject: `New provider: ${facilityName}`,
       html: emailHtml,
     });
 
