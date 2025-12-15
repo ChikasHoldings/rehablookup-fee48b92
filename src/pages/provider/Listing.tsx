@@ -816,10 +816,12 @@ export default function ProviderListingPage() {
   // Show loading state while data is being fetched OR while facility state is being initialized
   if (isLoading || (facilityData && !facility)) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
-          <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="max-w-5xl mx-auto flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
+            <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
+          </div>
         </div>
       </div>
     );
@@ -828,17 +830,19 @@ export default function ProviderListingPage() {
   // Only show "No Listing Found" when we're sure there's no data (not loading and no facilityData)
   if (!isLoading && !facilityData && !facility) {
     return (
-      <div className="max-w-md mx-auto text-center py-20">
-        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-          <Building2 className="h-8 w-8 text-primary" />
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="max-w-md mx-auto text-center py-20">
+          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Building2 className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground">No Listing Found</h2>
+          <p className="mt-2 text-muted-foreground">
+            Create your facility listing to start receiving inquiries from families.
+          </p>
+          <Button asChild className="mt-6" size="lg">
+            <Link to="/provider-signup">Create Your Listing</Link>
+          </Button>
         </div>
-        <h2 className="text-xl font-semibold text-foreground">No Listing Found</h2>
-        <p className="mt-2 text-muted-foreground">
-          Create your facility listing to start receiving inquiries from families.
-        </p>
-        <Button asChild className="mt-6" size="lg">
-          <Link to="/provider-signup">Create Your Listing</Link>
-        </Button>
       </div>
     );
   }
@@ -846,10 +850,12 @@ export default function ProviderListingPage() {
   // If we still don't have facility data at this point, show loading
   if (!facility) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
-          <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="max-w-5xl mx-auto flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
+            <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
+          </div>
         </div>
       </div>
     );
@@ -859,7 +865,7 @@ export default function ProviderListingPage() {
   const StatusIcon = statusConfig.icon;
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+    <div className="p-4 md:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto space-y-6 pb-6">
         {/* Header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
