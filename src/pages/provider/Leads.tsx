@@ -632,126 +632,156 @@ export default function ProviderLeadsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLeads.map((lead) => (
-                    <TableRow 
-                      key={lead.id} 
-                      className="hover:bg-muted/30 cursor-pointer group"
-                      onClick={() => handleOpenLead(lead)}
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {lead.name}
-                          {lead.message && (
-                            <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <LeadScoreBadge lead={lead} size="sm" />
-                      </TableCell>
-                      <TableCell>
-                        {lead.source === "Request Help Page" ? (
-                          <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-0">
-                            <Sparkles className="h-3 w-3" />
-                            Qualified
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="gap-1 text-xs">
-                            <FileText className="h-3 w-3" />
-                            Direct
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {lead.preferred_contact === "email" ? (
-                            <div className="h-6 w-6 rounded bg-blue-500/10 flex items-center justify-center">
-                              <Mail className="h-3 w-3 text-blue-600" />
+                  {filteredLeads.map((lead, index) => {
+                    // For Basic plan, blur leads beyond the limit
+                    const isLocked = currentPlan === "basic" && index >= leadLimit;
+                    
+                    return (
+                      <TableRow 
+                        key={lead.id} 
+                        className={`hover:bg-muted/30 cursor-pointer group ${isLocked ? "select-none" : ""}`}
+                        onClick={() => !isLocked && handleOpenLead(lead)}
+                      >
+                        <TableCell className="font-medium">
+                          <div className={`flex items-center gap-2 ${isLocked ? "blur-sm" : ""}`}>
+                            {isLocked ? "Hidden Lead" : lead.name}
+                            {lead.message && !isLocked && (
+                              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className={isLocked ? "blur-sm" : ""}>
+                            <LeadScoreBadge lead={lead} size="sm" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className={isLocked ? "blur-sm" : ""}>
+                            {lead.source === "Request Help Page" ? (
+                              <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-0">
+                                <Sparkles className="h-3 w-3" />
+                                Qualified
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="gap-1 text-xs">
+                                <FileText className="h-3 w-3" />
+                                Direct
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className={`flex items-center gap-2 ${isLocked ? "blur-sm" : ""}`}>
+                            {lead.preferred_contact === "email" ? (
+                              <div className="h-6 w-6 rounded bg-blue-500/10 flex items-center justify-center">
+                                <Mail className="h-3 w-3 text-blue-600" />
+                              </div>
+                            ) : (
+                              <div className="h-6 w-6 rounded bg-green-500/10 flex items-center justify-center">
+                                <Phone className="h-3 w-3 text-green-600" />
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className={isLocked ? "blur-sm" : ""}>
+                            {isLocked ? (
+                              <span className="text-sm text-muted-foreground">•••-•••-••••</span>
+                            ) : (
+                              <a 
+                                href={`tel:${lead.phone}`} 
+                                className="text-sm text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {lead.phone}
+                              </a>
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className={`flex items-center gap-1.5 text-xs text-muted-foreground ${isLocked ? "blur-sm" : ""}`}>
+                            <Calendar className="h-3.5 w-3.5" />
+                            {format(new Date(lead.created_at), "MMM d")}
+                          </div>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          {isLocked ? (
+                            <div className="blur-sm">
+                              <Badge variant="outline" className="text-xs">Locked</Badge>
                             </div>
                           ) : (
-                            <div className="h-6 w-6 rounded bg-green-500/10 flex items-center justify-center">
-                              <Phone className="h-3 w-3 text-green-600" />
+                            <Select
+                              value={lead.status}
+                              onValueChange={(value) => 
+                                updateStatus.mutate({ leadId: lead.id, status: value as LeadStatus })
+                              }
+                            >
+                              <SelectTrigger className="w-[120px] h-7 text-xs">
+                                <SelectValue>
+                                  <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getStatusOptions().map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          {isLocked ? (
+                            <div className="blur-sm">
+                              <div className="flex items-center gap-1">
+                                <div className="h-8 w-8 rounded bg-muted" />
+                                <div className="h-8 w-8 rounded bg-muted" />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Email lead"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEmailLead(lead);
+                                  setEmailDialogOpen(true);
+                                }}
+                              >
+                                <Mail className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Copy contact"
+                                onClick={(e) => handleCopyContact(lead, e)}
+                              >
+                                {copiedId === lead.id ? (
+                                  <Check className="h-4 w-4 text-green-600" />
+                                ) : (
+                                  <Copy className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="View details"
+                                onClick={() => handleOpenLead(lead)}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
                             </div>
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <a 
-                          href={`tel:${lead.phone}`} 
-                          className="text-sm text-primary hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {lead.phone}
-                        </a>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {format(new Date(lead.created_at), "MMM d")}
-                        </div>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Select
-                          value={lead.status}
-                          onValueChange={(value) => 
-                            updateStatus.mutate({ leadId: lead.id, status: value as LeadStatus })
-                          }
-                        >
-                          <SelectTrigger className="w-[120px] h-7 text-xs">
-                            <SelectValue>
-                              <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getStatusOptions().map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            title="Email lead"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEmailLead(lead);
-                              setEmailDialogOpen(true);
-                            }}
-                          >
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            title="Copy contact"
-                            onClick={(e) => handleCopyContact(lead, e)}
-                          >
-                            {copiedId === lead.id ? (
-                              <Check className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            title="View details"
-                            onClick={() => handleOpenLead(lead)}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

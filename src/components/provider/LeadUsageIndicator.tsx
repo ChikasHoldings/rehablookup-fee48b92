@@ -223,21 +223,19 @@ export function LeadLimitOverlay({ usedLeads, leadLimit, hiddenLeadsCount }: Lea
   if (!isAtLimit || hiddenLeadsCount === 0) return null;
 
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
       <div className="max-w-md w-full mx-4 p-8 bg-card border border-border rounded-2xl shadow-xl text-center">
         <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
           <Lock className="h-8 w-8 text-primary" />
         </div>
         <h3 className="text-xl font-bold text-foreground mb-2">
-          Monthly Lead Limit Reached
+          {hiddenLeadsCount} {hiddenLeadsCount === 1 ? 'Lead' : 'Leads'} Waiting
         </h3>
-        <p className="text-muted-foreground mb-6">
-          You've used all {leadLimit} leads this month. 
-          {hiddenLeadsCount > 0 && (
-            <span className="block mt-2 font-medium text-foreground">
-              {hiddenLeadsCount} new {hiddenLeadsCount === 1 ? 'lead is' : 'leads are'} waiting for you!
-            </span>
-          )}
+        <p className="text-muted-foreground mb-2">
+          You&apos;ve used all {leadLimit} leads included in your Basic plan this month.
+        </p>
+        <p className="text-sm font-medium text-foreground mb-6">
+          Upgrade now to unlock {hiddenLeadsCount === 1 ? 'this lead' : `these ${hiddenLeadsCount} leads`} and contact them immediately!
         </p>
         
         <div className="space-y-3">
@@ -248,7 +246,7 @@ export function LeadLimitOverlay({ usedLeads, leadLimit, hiddenLeadsCount }: Lea
             </Link>
           </Button>
           <p className="text-xs text-muted-foreground">
-            Professional plan: 25 leads/month • Featured plan: 75 leads/month
+            Professional: 25 leads/month • Featured: 75 leads/month
           </p>
         </div>
       </div>

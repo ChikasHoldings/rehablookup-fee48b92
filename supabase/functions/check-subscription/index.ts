@@ -11,7 +11,7 @@ const corsHeaders = {
 const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number; name: string; featured: boolean }> = {
   basic: {
     product_id: null,
-    lead_limit: 5, // Basic plan includes 5 leads
+    lead_limit: 4, // Basic plan includes 4 leads/month (1 per week)
     name: "Basic Listing",
     featured: false,
   },
