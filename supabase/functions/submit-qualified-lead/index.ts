@@ -10,9 +10,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration matching check-subscription (supports both old and new product IDs)
+// Plan configuration - Basic plan gets NO routed leads (0 qualified_lead_limit)
 const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; qualified_lead_limit: number }> = {
-  basic: { product_ids: [], lead_limit: 4, qualified_lead_limit: 4 },
+  basic: { product_ids: [], lead_limit: 0, qualified_lead_limit: 0 }, // Basic does NOT receive routed leads
   professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 25, qualified_lead_limit: 25 },
   featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 75, qualified_lead_limit: 75 },
 };
@@ -232,6 +232,12 @@ async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> 
       
       const usedLeads = monthlyLeadCount || 0;
       const availableCapacity = leadLimit - usedLeads;
+      
+      // CRITICAL: Skip basic plan providers - they do NOT receive routed leads
+      if (planName === "basic") {
+        console.log(`[getEligibleProviders] Skipping ${facility.name} - Basic plan not eligible for routed leads`);
+        continue;
+      }
       
       // Get last assigned lead timestamp for round-robin
       const { data: lastLead } = await supabase

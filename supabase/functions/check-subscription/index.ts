@@ -7,13 +7,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration with lead limits - updated pricing structure
+// Plan configuration - Basic plan gets NO routed leads
 const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; qualified_lead_limit: number; direct_lead_limit: number; name: string; featured: boolean }> = {
   basic: {
     product_ids: [],
-    lead_limit: 4, // Basic plan includes 4 leads/month (1 per week)
-    qualified_lead_limit: 4,
-    direct_lead_limit: 4, // Limited for Basic
+    lead_limit: 0, // Basic plan does NOT receive routed leads
+    qualified_lead_limit: 0,
+    direct_lead_limit: -1, // Unlimited direct inquiries from profile only
     name: "Basic Listing",
     featured: false,
   },

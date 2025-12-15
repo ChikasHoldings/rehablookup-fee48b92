@@ -305,7 +305,9 @@ export default function ProviderDashboardPage() {
         <Card className="group hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Leads This Month</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {planKey === "basic" ? "Exclusive Leads" : "Leads This Month"}
+              </CardTitle>
               <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
                 <Users className="h-4 w-4 text-green-600" />
               </div>
@@ -314,6 +316,19 @@ export default function ProviderDashboardPage() {
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-9 w-16" />
+            ) : planKey === "basic" ? (
+              <div className="space-y-2">
+                <span className="text-3xl font-bold text-muted-foreground">0</span>
+                <p className="text-xs text-muted-foreground">
+                  Upgrade to receive exclusive qualified leads
+                </p>
+                <Button variant="link" className="h-auto p-0 text-xs text-primary" asChild>
+                  <Link to="/provider/billing">
+                    Upgrade now
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
+              </div>
             ) : (
               <LeadUsageIndicator 
                 usedLeads={monthlyLeadsCount} 

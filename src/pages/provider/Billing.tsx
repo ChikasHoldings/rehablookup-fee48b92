@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Star,
   TrendingUp,
+  X,
   Users,
   Crown,
   Zap,
@@ -486,7 +487,7 @@ export default function ProviderBillingPage() {
                           : "bg-muted text-muted-foreground"
                     }`}>
                       {plan.key === "basic" 
-                        ? `${plan.lead_limit} leads/month (1 per week)`
+                        ? "Direct inquiries only (from your profile)"
                         : `${plan.qualified_lead_limit || plan.lead_limit} exclusive qualified leads/month`
                       }
                     </div>
@@ -524,6 +525,14 @@ export default function ProviderBillingPage() {
                     </p>
                   )}
                   
+                  {/* Upgrade microcopy for basic plan */}
+                  {plan.key === "basic" && (plan as any).upgradeMicrocopy && (
+                    <p className="text-xs text-center text-primary bg-primary/5 rounded-lg py-2 px-3 border border-primary/10">
+                      {(plan as any).upgradeMicrocopy}
+                    </p>
+                  )}
+                  
+                  {/* Features list */}
                   <ul className="space-y-2.5">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-2.5 text-sm">
@@ -538,6 +547,21 @@ export default function ProviderBillingPage() {
                       </li>
                     ))}
                   </ul>
+                  
+                  {/* Not included list for basic plan */}
+                  {plan.key === "basic" && (plan as any).notIncluded && (
+                    <ul className="space-y-2 pt-2 border-t border-border">
+                      <li className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Does not include</li>
+                      {(plan as any).notIncluded.map((item: string) => (
+                        <li key={item} className="flex items-start gap-2.5 text-sm">
+                          <div className="h-5 w-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-destructive/10 text-destructive">
+                            <X className="h-3 w-3" />
+                          </div>
+                          <span className="text-muted-foreground/70">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   
                   {getPlanAction(plan)}
                 </CardContent>
