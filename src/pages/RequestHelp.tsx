@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/layout/Layout";
 import { RequestHelpStepper } from "@/components/request-help/RequestHelpStepper";
 import { StepWhoNeedsHelp } from "@/components/request-help/StepWhoNeedsHelp";
@@ -66,12 +67,29 @@ export default function RequestHelp() {
     }, 50);
   };
 
+  // Get source from URL for analytics
+  const ctaSource = useMemo(() => searchParams.get("source") || "direct", [searchParams]);
+
   useEffect(() => {
     const fId = searchParams.get("facility");
     const fName = searchParams.get("facilityName");
     if (fId) setFacilityId(fId);
     if (fName) setFacilityName(decodeURIComponent(fName));
-  }, [searchParams]);
+
+    // Track page view with source
+    const trackPageView = async () => {
+      try {
+        await supabase.from("request_help_analytics").insert({
+          event_type: "page_view",
+          source: ctaSource,
+          facility_id: fId || null,
+        });
+      } catch (error) {
+        console.error("Failed to track page view:", error);
+      }
+    };
+    trackPageView();
+  }, [searchParams, ctaSource]);
 
   const updateFormData = (updates: Partial<RequestHelpFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
