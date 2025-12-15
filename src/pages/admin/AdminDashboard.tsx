@@ -9,11 +9,11 @@ import {
   Star,
   MapPin,
   TrendingUp,
+  TrendingDown,
   Clock,
   ArrowUpRight,
   DollarSign,
   ShieldCheck,
-  Eye,
   UserPlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +23,37 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 
+interface RevenueStats {
+  monthlyRevenue: number;
+  previousMonthRevenue: number;
+  percentChange: number;
+  activeSubscriptions: number;
+  totalCustomers: number;
+  configured: boolean;
+}
+
 export default function AdminDashboard() {
+  // Fetch revenue stats from Stripe
+  const { data: revenueStats, isLoading: loadingRevenue } = useQuery<RevenueStats>({
+    queryKey: ["admin-revenue-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("get-revenue-stats");
+      if (error) {
+        console.error("Error fetching revenue stats:", error);
+        return {
+          monthlyRevenue: 0,
+          previousMonthRevenue: 0,
+          percentChange: 0,
+          activeSubscriptions: 0,
+          totalCustomers: 0,
+          configured: false,
+        };
+      }
+      return data;
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
   // Fetch providers stats
   const { data: providerStats, isLoading: loadingProviders } = useQuery({
     queryKey: ["admin-provider-stats"],
@@ -175,7 +205,7 @@ export default function AdminDashboard() {
 
       {/* Primary KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Revenue Card - Placeholder for future */}
+        {/* Revenue Card */}
         <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -185,11 +215,31 @@ export default function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">$0</div>
-            <p className="text-xs text-primary-foreground/70 mt-1 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              Revenue tracking coming soon
-            </p>
+            {loadingRevenue ? (
+              <Skeleton className="h-9 w-24 bg-white/20" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold">
+                  ${revenueStats?.monthlyRevenue?.toLocaleString() || "0"}
+                </div>
+                {revenueStats?.configured ? (
+                  <p className="text-xs text-primary-foreground/70 mt-1 flex items-center gap-1">
+                    {revenueStats.percentChange >= 0 ? (
+                      <TrendingUp className="h-3 w-3" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3" />
+                    )}
+                    {revenueStats.percentChange >= 0 ? "+" : ""}
+                    {revenueStats.percentChange}% from last month
+                  </p>
+                ) : (
+                  <p className="text-xs text-primary-foreground/70 mt-1 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    {revenueStats?.activeSubscriptions || 0} active subscriptions
+                  </p>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
 
