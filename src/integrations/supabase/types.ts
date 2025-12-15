@@ -680,6 +680,9 @@ export type Database = {
       }
       leads: {
         Row: {
+          assigned_at: string | null
+          assignment_reason: string | null
+          assignment_status: string | null
           budget_preference: string | null
           created_at: string
           dual_diagnosis: string | null
@@ -699,6 +702,8 @@ export type Database = {
           phone: string
           preferred_contact: string
           primary_substance: string[] | null
+          qualification_reason: string | null
+          qualified: boolean | null
           quality_flag: string | null
           snooze_until: string | null
           source: string | null
@@ -708,6 +713,9 @@ export type Database = {
           who_seeking_help: string | null
         }
         Insert: {
+          assigned_at?: string | null
+          assignment_reason?: string | null
+          assignment_status?: string | null
           budget_preference?: string | null
           created_at?: string
           dual_diagnosis?: string | null
@@ -727,6 +735,8 @@ export type Database = {
           phone: string
           preferred_contact?: string
           primary_substance?: string[] | null
+          qualification_reason?: string | null
+          qualified?: boolean | null
           quality_flag?: string | null
           snooze_until?: string | null
           source?: string | null
@@ -736,6 +746,9 @@ export type Database = {
           who_seeking_help?: string | null
         }
         Update: {
+          assigned_at?: string | null
+          assignment_reason?: string | null
+          assignment_status?: string | null
           budget_preference?: string | null
           created_at?: string
           dual_diagnosis?: string | null
@@ -755,6 +768,8 @@ export type Database = {
           phone?: string
           preferred_contact?: string
           primary_substance?: string[] | null
+          qualification_reason?: string | null
+          qualified?: boolean | null
           quality_flag?: string | null
           snooze_until?: string | null
           source?: string | null

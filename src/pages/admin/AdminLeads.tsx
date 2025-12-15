@@ -1,10 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import {
   Users,
   Search,
-  Filter,
   Mail,
   Phone,
   MapPin,
@@ -12,15 +11,14 @@ import {
   CheckCircle,
   AlertCircle,
   Building2,
-  ArrowRight,
   Clock,
-  Shield,
   Zap,
   TrendingUp,
   MoreHorizontal,
-  CheckSquare,
-  Square,
-  Send,
+  Eye,
+  Bot,
+  UserCheck,
+  XCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,23 +34,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -94,6 +81,11 @@ type Lead = {
   facility_id: string | null;
   snooze_until: string | null;
   budget_preference: string | null;
+  qualified: boolean | null;
+  qualification_reason: string | null;
+  assignment_status: string | null;
+  assignment_reason: string | null;
+  assigned_at: string | null;
 };
 
 type Facility = {
@@ -172,6 +164,59 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+// Assignment Status Badge Component
+function AssignmentStatusBadge({ lead }: { lead: Lead }) {
+  const status = lead.assignment_status || (lead.facility_id ? "assigned" : "pending");
+  
+  const config: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
+    assigned: { 
+      label: "Assigned", 
+      icon: <UserCheck className="h-3 w-3" />, 
+      className: "bg-green-50 text-green-700 border-green-200" 
+    },
+    pending: { 
+      label: "Pending", 
+      icon: <Clock className="h-3 w-3" />, 
+      className: "bg-amber-50 text-amber-700 border-amber-200" 
+    },
+    unassigned_no_capacity: { 
+      label: "No Capacity", 
+      icon: <XCircle className="h-3 w-3" />, 
+      className: "bg-red-50 text-red-700 border-red-200" 
+    },
+    unassigned_no_match: { 
+      label: "No Match", 
+      icon: <AlertCircle className="h-3 w-3" />, 
+      className: "bg-slate-50 text-slate-600 border-slate-200" 
+    },
+    unassigned_not_qualified: { 
+      label: "Not Qualified", 
+      icon: <XCircle className="h-3 w-3" />, 
+      className: "bg-slate-50 text-slate-600 border-slate-200" 
+    },
+  };
+
+  const { label, icon, className } = config[status] || config.pending;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className={`gap-1 ${className}`}>
+            {icon}
+            {label}
+          </Badge>
+        </TooltipTrigger>
+        {lead.assignment_reason && (
+          <TooltipContent>
+            <p className="max-w-xs">{lead.assignment_reason}</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 // Urgency Indicator
 function UrgencyIndicator({ urgency }: { urgency: string | null }) {
   if (!urgency) return null;
@@ -210,13 +255,11 @@ export default function AdminLeads() {
   );
   const [statusFilter, setStatusFilter] = useState("all");
   const [urgencyFilter, setUrgencyFilter] = useState("all");
+  const [qualifiedFilter, setQualifiedFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showAssignDialog, setShowAssignDialog] = useState(false);
-  const [showBulkAssignDialog, setShowBulkAssignDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
 
   // Invalidate leads queries helper
   const invalidateLeadsQueries = useCallback(() => {
@@ -224,7 +267,7 @@ export default function AdminLeads() {
     queryClient.invalidateQueries({ queryKey: ["admin-leads-count"] });
   }, [queryClient]);
 
-  // Real-time subscriptions for leads - always active
+  // Real-time subscriptions for leads
   useEffect(() => {
     const leadsChannel = supabase
       .channel("admin-leads-realtime")
@@ -233,21 +276,15 @@ export default function AdminLeads() {
         { event: "INSERT", schema: "public", table: "leads" },
         (payload) => {
           invalidateLeadsQueries();
+          const newLead = payload.new as Lead;
           toast.success("New lead received", {
-            description: `${(payload.new as Lead).name} submitted a new inquiry`,
+            description: `${newLead.name} - ${newLead.assignment_status === "assigned" ? "Auto-assigned" : "Pending assignment"}`,
           });
         }
       )
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "leads" },
-        () => {
-          invalidateLeadsQueries();
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "leads" },
         () => {
           invalidateLeadsQueries();
         }
@@ -261,7 +298,7 @@ export default function AdminLeads() {
 
   // Fetch total count for pagination
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-leads-count", assignmentFilter, statusFilter, urgencyFilter, searchQuery],
+    queryKey: ["admin-leads-count", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery],
     queryFn: async () => {
       let query = supabase
         .from("leads")
@@ -281,6 +318,10 @@ export default function AdminLeads() {
         query = query.eq("urgency", urgencyFilter);
       }
 
+      if (qualifiedFilter !== "all") {
+        query = query.eq("qualified", qualifiedFilter === "qualified");
+      }
+
       if (searchQuery) {
         query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
       }
@@ -293,7 +334,7 @@ export default function AdminLeads() {
 
   // Fetch leads with pagination
   const { data: leads, isLoading } = useQuery({
-    queryKey: ["admin-leads", assignmentFilter, statusFilter, urgencyFilter, searchQuery, currentPage],
+    queryKey: ["admin-leads", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery, currentPage],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -316,6 +357,10 @@ export default function AdminLeads() {
 
       if (urgencyFilter !== "all") {
         query = query.eq("urgency", urgencyFilter);
+      }
+
+      if (qualifiedFilter !== "all") {
+        query = query.eq("qualified", qualifiedFilter === "qualified");
       }
 
       if (searchQuery) {
@@ -355,155 +400,51 @@ export default function AdminLeads() {
   const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
     setter(value);
     setCurrentPage(1);
-    setSelectedLeads(new Set());
   };
 
-  // Fetch facilities for assignment
+  // Fetch facilities for display (read-only)
   const { data: facilities } = useQuery({
-    queryKey: ["admin-facilities-for-assignment"],
+    queryKey: ["admin-facilities-lookup"],
     queryFn: async () => {
       const { data } = await supabase
         .from("facilities")
         .select("id, name, city, state")
-        .eq("status", "approved")
-        .eq("suspended", false)
-        .order("name");
+        .eq("status", "approved");
       return data as Facility[];
     },
   });
 
-  // Assign lead mutation
-  const assignLead = useMutation({
-    mutationFn: async ({ leadId, facilityId }: { leadId: string; facilityId: string }) => {
-      const { error } = await supabase
-        .from("leads")
-        .update({ facility_id: facilityId })
-        .eq("id", leadId);
-      if (error) throw error;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("admin_audit_log").insert({
-        admin_user_id: user?.id,
-        action_type: "lead_assigned",
-        target_type: "lead",
-        target_id: leadId,
-        details: { facility_id: facilityId },
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
-      toast.success("Lead assigned successfully");
-      setShowAssignDialog(false);
-    },
-    onError: () => {
-      toast.error("Failed to assign lead");
-    },
-  });
-
-  // Bulk assign mutation
-  const bulkAssignLeads = useMutation({
-    mutationFn: async ({ leadIds, facilityId }: { leadIds: string[]; facilityId: string }) => {
-      const { error } = await supabase
-        .from("leads")
-        .update({ facility_id: facilityId })
-        .in("id", leadIds);
-      if (error) throw error;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("admin_audit_log").insert(
-        leadIds.map((leadId) => ({
-          admin_user_id: user?.id,
-          action_type: "lead_bulk_assigned",
-          target_type: "lead",
-          target_id: leadId,
-          details: { facility_id: facilityId },
-        }))
-      );
-    },
-    onSuccess: (_, { leadIds }) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
-      toast.success(`${leadIds.length} leads assigned successfully`);
-      setShowBulkAssignDialog(false);
-      setSelectedLeads(new Set());
-    },
-    onError: () => {
-      toast.error("Failed to assign leads");
-    },
-  });
+  const facilitiesMap = useMemo(() => {
+    if (!facilities) return new Map<string, Facility>();
+    return new Map(facilities.map(f => [f.id, f]));
+  }, [facilities]);
 
   const openLeadProfile = (lead: Lead) => {
     setSelectedLead(lead);
     setShowProfileModal(true);
   };
 
-  const openAssignDialog = (lead: Lead) => {
-    setSelectedLead(lead);
-    setShowAssignDialog(true);
-  };
-
-  const handleAssign = (facilityId: string) => {
-    if (!selectedLead) return;
-    assignLead.mutate({ leadId: selectedLead.id, facilityId });
-  };
-
-  const handleBulkAssign = (facilityId: string) => {
-    const leadIds = Array.from(selectedLeads);
-    bulkAssignLeads.mutate({ leadIds, facilityId });
-  };
-
-  const toggleLeadSelection = (leadId: string) => {
-    const newSelected = new Set(selectedLeads);
-    if (newSelected.has(leadId)) {
-      newSelected.delete(leadId);
-    } else {
-      newSelected.add(leadId);
-    }
-    setSelectedLeads(newSelected);
-  };
-
-  const toggleSelectAll = () => {
-    if (!filteredLeads) return;
-    const unassignedLeads = filteredLeads.filter((l) => !l.facility_id);
-    if (selectedLeads.size === unassignedLeads.length) {
-      setSelectedLeads(new Set());
-    } else {
-      setSelectedLeads(new Set(unassignedLeads.map((l) => l.id)));
-    }
-  };
-
-  const unassignedSelectedCount = useMemo(() => {
-    if (!filteredLeads) return 0;
-    return filteredLeads.filter((l) => !l.facility_id && selectedLeads.has(l.id)).length;
-  }, [filteredLeads, selectedLeads]);
-
   // Stats
   const stats = useMemo(() => {
-    if (!leads) return { totalNew: 0, unassigned: 0, highPriority: 0, gradeA: 0 };
+    if (!leads) return { totalNew: 0, autoAssigned: 0, highPriority: 0, qualified: 0 };
     
-    let gradeA = 0;
+    let qualified = 0;
     let highPriority = 0;
+    let autoAssigned = 0;
     
     leads.forEach((lead) => {
       if (lead.urgency === "immediate") highPriority++;
-      const scoringInput: LeadScoringInput = {
-        insurance_type: lead.insurance_type,
-        urgency: lead.urgency,
-        level_of_care: lead.level_of_care,
-        email_verified: lead.email_verified,
-        preferred_contact: lead.preferred_contact,
-        message: lead.message,
-        who_seeking_help: lead.who_seeking_help,
-        dual_diagnosis: lead.dual_diagnosis,
-        primary_substance: lead.primary_substance,
-      };
-      if (calculateLeadScore(scoringInput).grade === "A") gradeA++;
+      if (lead.qualified) qualified++;
+      if (lead.assignment_status === "assigned" && lead.assignment_reason?.startsWith("Auto")) {
+        autoAssigned++;
+      }
     });
 
     return {
       totalNew: leads.filter((l) => l.status === "new").length,
-      unassigned: leads.filter((l) => !l.facility_id).length,
+      autoAssigned,
       highPriority,
-      gradeA,
+      qualified,
     };
   }, [leads]);
 
@@ -511,16 +452,11 @@ export default function AdminLeads() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Leads Management</h1>
-          <p className="text-muted-foreground">Review, score, and route incoming leads</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {selectedLeads.size > 0 && (
-            <Button onClick={() => setShowBulkAssignDialog(true)}>
-              <Send className="h-4 w-4 mr-2" />
-              Assign {unassignedSelectedCount} Lead{unassignedSelectedCount !== 1 ? "s" : ""}
-            </Button>
-          )}
+          <h1 className="text-2xl font-bold text-foreground">Leads Overview</h1>
+          <p className="text-muted-foreground flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            Leads are automatically qualified and assigned to providers
+          </p>
         </div>
       </div>
 
@@ -542,12 +478,12 @@ export default function AdminLeads() {
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-50">
-                <AlertCircle className="h-5 w-5 text-amber-600" />
+              <div className="p-2 rounded-lg bg-green-50">
+                <Bot className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.unassigned}</p>
-                <p className="text-xs text-muted-foreground">Unassigned</p>
+                <p className="text-2xl font-bold">{stats.autoAssigned}</p>
+                <p className="text-xs text-muted-foreground">Auto-Assigned</p>
               </div>
             </div>
           </CardContent>
@@ -568,12 +504,12 @@ export default function AdminLeads() {
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-50">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <div className="p-2 rounded-lg bg-emerald-50">
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.gradeA}</p>
-                <p className="text-xs text-muted-foreground">Grade A Leads</p>
+                <p className="text-2xl font-bold">{stats.qualified}</p>
+                <p className="text-xs text-muted-foreground">Qualified</p>
               </div>
             </div>
           </CardContent>
@@ -600,8 +536,18 @@ export default function AdminLeads() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Leads</SelectItem>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   <SelectItem value="assigned">Assigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={qualifiedFilter} onValueChange={handleFilterChange(setQualifiedFilter)}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Qualification" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="qualified">Qualified</SelectItem>
+                  <SelectItem value="unqualified">Unqualified</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={handleFilterChange(setStatusFilter)}>
@@ -666,123 +612,124 @@ export default function AdminLeads() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={
-                          filteredLeads.filter((l) => !l.facility_id).length > 0 &&
-                          selectedLeads.size === filteredLeads.filter((l) => !l.facility_id).length
-                        }
-                        onCheckedChange={toggleSelectAll}
-                      />
-                    </TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Score</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Insurance</TableHead>
+                    <TableHead>Qualified</TableHead>
+                    <TableHead>Assignment</TableHead>
+                    <TableHead>Provider</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Submitted</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLeads.map((lead) => (
-                    <TableRow key={lead.id} className="group">
-                      <TableCell>
-                        {!lead.facility_id && (
-                          <Checkbox
-                            checked={selectedLeads.has(lead.id)}
-                            onCheckedChange={() => toggleLeadSelection(lead.id)}
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => openLeadProfile(lead)}
-                              className="font-medium text-primary hover:underline focus:outline-none focus:underline truncate max-w-[200px] text-left"
-                            >
-                              {lead.name}
-                            </button>
-                            {lead.email_verified && (
-                              <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                            )}
-                            <UrgencyIndicator urgency={lead.urgency} />
+                  {filteredLeads.map((lead) => {
+                    const assignedFacility = lead.facility_id ? facilitiesMap.get(lead.facility_id) : null;
+                    
+                    return (
+                      <TableRow key={lead.id} className="group">
+                        <TableCell>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => openLeadProfile(lead)}
+                                className="font-medium text-primary hover:underline focus:outline-none focus:underline truncate max-w-[200px] text-left"
+                              >
+                                {lead.name}
+                              </button>
+                              {lead.email_verified && (
+                                <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                              )}
+                              <UrgencyIndicator urgency={lead.urgency} />
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
+                              <span className="flex items-center gap-1 truncate max-w-[180px]">
+                                <Mail className="h-3 w-3 shrink-0" />
+                                {lead.email}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {lead.phone}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-                            <span className="flex items-center gap-1 truncate max-w-[180px]">
-                              <Mail className="h-3 w-3 shrink-0" />
-                              {lead.email}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {lead.phone}
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <LeadScoreBadge lead={lead} />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          <StatusBadge status={lead.status} />
-                          {!lead.facility_id ? (
-                            <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 text-xs">
-                              Unassigned
+                        </TableCell>
+                        <TableCell>
+                          <LeadScoreBadge lead={lead} />
+                        </TableCell>
+                        <TableCell>
+                          {lead.qualified ? (
+                            <Badge className="bg-green-100 text-green-700 border-green-200">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Qualified
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 text-xs">
-                              Assigned
-                            </Badge>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-muted-foreground">
+                                    <XCircle className="h-3 w-3 mr-1" />
+                                    Unqualified
+                                  </Badge>
+                                </TooltipTrigger>
+                                {lead.qualification_reason && (
+                                  <TooltipContent>
+                                    <p>{lead.qualification_reason}</p>
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {lead.insurance_type || "—"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {lead.location_city_state ? (
-                          <span className="flex items-center gap-1 text-sm">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            {lead.location_city_state}
+                        </TableCell>
+                        <TableCell>
+                          <AssignmentStatusBadge lead={lead} />
+                        </TableCell>
+                        <TableCell>
+                          {assignedFacility ? (
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate max-w-[150px]">{assignedFacility.name}</p>
+                                <p className="text-xs text-muted-foreground">{assignedFacility.city}, {assignedFacility.state}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {lead.location_city_state ? (
+                            <span className="flex items-center gap-1 text-sm">
+                              <MapPin className="h-3 w-3 text-muted-foreground" />
+                              {lead.location_city_state}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(lead.created_at), "MMM d, h:mm a")}
                           </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(lead.created_at), "MMM d, h:mm a")}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openLeadProfile(lead)}>
-                              View Details
-                            </DropdownMenuItem>
-                            {!lead.facility_id && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => openAssignDialog(lead)}>
-                                  <ArrowRight className="h-4 w-4 mr-2" />
-                                  Assign to Provider
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openLeadProfile(lead)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -844,87 +791,14 @@ export default function AdminLeads() {
         </CardContent>
       </Card>
 
-      {/* Lead Profile Modal */}
+      {/* Lead Profile Modal (Read-only for admin) */}
       <LeadProfileModal
         lead={selectedLead}
         open={showProfileModal}
         onOpenChange={setShowProfileModal}
         isAdmin
         facilities={facilities || []}
-        onAssign={(leadId, facilityId) => {
-          assignLead.mutate({ leadId, facilityId });
-          setShowProfileModal(false);
-        }}
-        isAssigning={assignLead.isPending}
       />
-
-      {/* Single Assign Dialog */}
-      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Assign Lead to Provider</DialogTitle>
-            <DialogDescription>
-              Select a provider to receive this lead. They will be notified immediately.
-            </DialogDescription>
-          </DialogHeader>
-
-          <ScrollArea className="max-h-[60vh]">
-            <div className="space-y-2 pr-4">
-              {facilities?.map((facility) => (
-                <button
-                  key={facility.id}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted transition-colors text-left"
-                  onClick={() => handleAssign(facility.id)}
-                  disabled={assignLead.isPending}
-                >
-                  <Building2 className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{facility.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {facility.city}, {facility.state}
-                    </p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      {/* Bulk Assign Dialog */}
-      <Dialog open={showBulkAssignDialog} onOpenChange={setShowBulkAssignDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Bulk Assign {unassignedSelectedCount} Lead{unassignedSelectedCount !== 1 ? "s" : ""}</DialogTitle>
-            <DialogDescription>
-              Select a provider to receive these leads. They will be notified for each lead.
-            </DialogDescription>
-          </DialogHeader>
-
-          <ScrollArea className="max-h-[60vh]">
-            <div className="space-y-2 pr-4">
-              {facilities?.map((facility) => (
-                <button
-                  key={facility.id}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted transition-colors text-left"
-                  onClick={() => handleBulkAssign(facility.id)}
-                  disabled={bulkAssignLeads.isPending}
-                >
-                  <Building2 className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{facility.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {facility.city}, {facility.state}
-                    </p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
