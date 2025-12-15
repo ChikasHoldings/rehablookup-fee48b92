@@ -186,6 +186,8 @@ export default function ProviderSettingsPage() {
       notify_lead_limit_warnings: notifyLeadLimitWarnings,
       notify_facility_views: notifyFacilityViews,
       digest_time: digestTime,
+      followup_reminders_enabled: followupRemindersEnabled,
+      default_snooze_duration: defaultSnoozeDuration,
     };
 
     // Check if preferences exist
@@ -212,6 +214,8 @@ export default function ProviderSettingsPage() {
           notify_lead_limit_warnings: notifyLeadLimitWarnings,
           notify_facility_views: notifyFacilityViews,
           digest_time: digestTime,
+          followup_reminders_enabled: followupRemindersEnabled,
+          default_snooze_duration: defaultSnoozeDuration,
         })
         .eq("user_id", session.user.id);
       error = result.error;
@@ -1146,6 +1150,80 @@ export default function ProviderSettingsPage() {
                   onCheckedChange={setBrowserNotifications}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Follow-up Reminders */}
+          <Card className="border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Follow-up Reminders
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Configure how lead follow-up reminders work
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Enable Follow-up Reminders</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Get reminded to follow up on leads you haven't contacted
+                  </p>
+                </div>
+                <Switch
+                  checked={followupRemindersEnabled}
+                  onCheckedChange={setFollowupRemindersEnabled}
+                />
+              </div>
+              
+              {followupRemindersEnabled && (
+                <div className="pt-2 border-t border-border">
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium">Default Snooze Duration</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+                        When you snooze a lead reminder, how long should it wait?
+                      </p>
+                    </div>
+                    <RadioGroup 
+                      value={defaultSnoozeDuration} 
+                      onValueChange={setDefaultSnoozeDuration}
+                      className="grid grid-cols-2 gap-2"
+                    >
+                      <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="4_hours" id="snooze_4h" />
+                        <Label htmlFor="snooze_4h" className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium">4 hours</span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="1_day" id="snooze_1d" />
+                        <Label htmlFor="snooze_1d" className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium">1 day</span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="3_days" id="snooze_3d" />
+                        <Label htmlFor="snooze_3d" className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium">3 days</span>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="1_week" id="snooze_1w" />
+                        <Label htmlFor="snooze_1w" className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium">1 week</span>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-2">
+                      <BellOff className="h-3 w-3" />
+                      Snoozed leads won't trigger follow-up reminders until the duration passes
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
