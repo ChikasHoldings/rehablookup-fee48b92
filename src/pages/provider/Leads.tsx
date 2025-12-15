@@ -825,7 +825,7 @@ export default function ProviderLeadsPage() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Badge className="gap-1.5 text-xs font-semibold bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30 shadow-sm cursor-help">
+                                    <Badge className="gap-1.5 text-xs font-semibold bg-primary text-white border border-primary shadow-sm cursor-help">
                                       <Sparkles className="h-3.5 w-3.5" />
                                       Qualified
                                     </Badge>
