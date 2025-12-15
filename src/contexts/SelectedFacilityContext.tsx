@@ -16,7 +16,13 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
 
   // Initialize selected facility from localStorage or first available facility
   useEffect(() => {
-    if (facilitiesLoading || facilities.length === 0) return;
+    if (facilitiesLoading) return;
+    
+    // If no facilities, still mark as initialized
+    if (facilities.length === 0) {
+      setIsInitialized(true);
+      return;
+    }
     
     const storedFacilityId = localStorage.getItem("selectedFacilityId");
     
