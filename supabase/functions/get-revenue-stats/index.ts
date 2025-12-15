@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -7,9 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: Record<string, unknown>) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[GET-REVENUE-STATS] ${step}${detailsStr}`);
+const logStep = (step: string, details?: unknown) => {
+  console.log(`[GET-REVENUE-STATS] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
+};
+
+// Product IDs from useSubscription.ts
+const PRODUCT_IDS = {
+  professional: "prod_TbalLOPujTIoUe",
+  featured: "prod_TbalOeJZA2ZoJl",
 };
 
 serve(async (req) => {
@@ -17,77 +22,198 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
   try {
     logStep("Function started");
 
-    // Verify admin access
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
+    // Verify admin role
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header provided");
-    }
+    if (!authHeader) throw new Error("No authorization header provided");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
     
-    if (userError || !userData.user) {
-      throw new Error("User not authenticated");
-    }
+    const adminUser = userData.user;
+    if (!adminUser) throw new Error("User not authenticated");
 
     // Check if user is admin
     const { data: roleData } = await supabaseClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", userData.user.id)
+      .eq("user_id", adminUser.id)
       .eq("role", "admin")
-      .single();
+      .maybeSingle();
 
-    if (!roleData) {
-      throw new Error("Unauthorized - admin access required");
-    }
-
-    logStep("Admin verified", { userId: userData.user.id });
+    if (!roleData) throw new Error("Unauthorized: Admin access required");
+    logStep("Admin verified", { adminId: adminUser.id });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
       logStep("No Stripe key configured");
       return new Response(
         JSON.stringify({ 
-          monthlyRevenue: 0,
-          previousMonthRevenue: 0,
-          percentChange: 0,
-          activeSubscriptions: 0,
-          totalCustomers: 0,
+          total_subscriptions: 0,
+          active_subscriptions: 0,
+          professional_count: 0,
+          featured_count: 0,
+          basic_count: 0,
+          mrr: 0,
+          mrr_growth: 0,
+          new_last_30_days: 0,
+          canceled_last_30_days: 0,
+          churn_rate: 0,
+          subscriptions: [],
+          recent_events: [],
           configured: false
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    logStep("Stripe client initialized");
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Get current month boundaries
+    // Get all subscriptions (paginated)
+    const allSubscriptions: Stripe.Subscription[] = [];
+    let hasMore = true;
+    let startingAfter: string | undefined = undefined;
+
+    while (hasMore) {
+      const subs: Stripe.Response<Stripe.ApiList<Stripe.Subscription>> = await stripe.subscriptions.list({
+        status: "all",
+        limit: 100,
+        starting_after: startingAfter,
+        expand: ["data.customer"],
+      });
+      
+      allSubscriptions.push(...subs.data);
+      hasMore = subs.has_more;
+      if (subs.data.length > 0) {
+        startingAfter = subs.data[subs.data.length - 1].id;
+      }
+    }
+
+    logStep("Fetched all subscriptions", { count: allSubscriptions.length });
+
+    // Calculate stats
     const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    let activeCount = 0;
+    let professionalCount = 0;
+    let featuredCount = 0;
+    let canceledLast30Days = 0;
+    let newLast30Days = 0;
+    let mrr = 0;
+
+    const providerSubscriptions: Array<{
+      customer_id: string;
+      customer_email: string;
+      customer_name: string;
+      plan: string;
+      status: string;
+      current_period_end: string;
+      created: string;
+      cancel_at_period_end: boolean;
+      monthly_amount: number;
+    }> = [];
+
+    // Track recent events
+    const recentEvents: Array<{
+      type: "upgrade" | "downgrade" | "canceled" | "new";
+      customer_email: string;
+      from_plan?: string;
+      to_plan?: string;
+      date: string;
+    }> = [];
+
+    for (const sub of allSubscriptions) {
+      const customer = sub.customer as Stripe.Customer;
+      const productId = sub.items.data[0]?.price?.product as string;
+      const amount = sub.items.data[0]?.price?.unit_amount || 0;
+      const interval = sub.items.data[0]?.price?.recurring?.interval;
+      const monthlyAmount = interval === "year" ? amount / 12 : amount;
+
+      let plan = "basic";
+      if (productId === PRODUCT_IDS.professional) {
+        plan = "professional";
+      } else if (productId === PRODUCT_IDS.featured) {
+        plan = "featured";
+      }
+
+      const createdDate = new Date(sub.created * 1000);
+      const canceledDate = sub.canceled_at ? new Date(sub.canceled_at * 1000) : null;
+
+      if (sub.status === "active") {
+        activeCount++;
+        mrr += monthlyAmount / 100;
+
+        if (productId === PRODUCT_IDS.professional) {
+          professionalCount++;
+        } else if (productId === PRODUCT_IDS.featured) {
+          featuredCount++;
+        }
+
+        // New subscription in last 30 days
+        if (createdDate > thirtyDaysAgo) {
+          newLast30Days++;
+          recentEvents.push({
+            type: "new",
+            customer_email: customer.email || "Unknown",
+            to_plan: plan,
+            date: createdDate.toISOString(),
+          });
+        }
+      }
+
+      // Canceled in last 30 days
+      if (canceledDate && canceledDate > thirtyDaysAgo) {
+        canceledLast30Days++;
+        recentEvents.push({
+          type: "canceled",
+          customer_email: customer.email || "Unknown",
+          from_plan: plan,
+          date: canceledDate.toISOString(),
+        });
+      }
+
+      providerSubscriptions.push({
+        customer_id: customer.id,
+        customer_email: customer.email || "Unknown",
+        customer_name: customer.name || "Unknown",
+        plan,
+        status: sub.status,
+        current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+        created: createdDate.toISOString(),
+        cancel_at_period_end: sub.cancel_at_period_end,
+        monthly_amount: monthlyAmount / 100,
+      });
+    }
+
+    // Calculate churn rate (canceled in last 30 days / active at start of period)
+    const activeAtPeriodStart = activeCount + canceledLast30Days;
+    const churnRate = activeAtPeriodStart > 0 
+      ? Math.round((canceledLast30Days / activeAtPeriodStart) * 100 * 10) / 10
+      : 0;
+
+    // Sort events by date descending
+    recentEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // Get last month's charges for MRR comparison
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    // Fetch charges for current month
     const currentMonthCharges = await stripe.charges.list({
-      created: {
-        gte: Math.floor(startOfMonth.getTime() / 1000),
-      },
+      created: { gte: Math.floor(startOfMonth.getTime() / 1000) },
       limit: 100,
     });
-    logStep("Fetched current month charges", { count: currentMonthCharges.data.length });
 
-    // Fetch charges for previous month
     const prevMonthCharges = await stripe.charges.list({
       created: {
         gte: Math.floor(startOfPrevMonth.getTime() / 1000),
@@ -95,55 +221,59 @@ serve(async (req) => {
       },
       limit: 100,
     });
-    logStep("Fetched previous month charges", { count: prevMonthCharges.data.length });
 
-    // Calculate revenue (only successful charges)
-    const monthlyRevenue = currentMonthCharges.data
+    const currentRevenue = currentMonthCharges.data
       .filter((charge: Stripe.Charge) => charge.status === "succeeded" && !charge.refunded)
       .reduce((sum: number, charge: Stripe.Charge) => sum + charge.amount, 0) / 100;
 
-    const previousMonthRevenue = prevMonthCharges.data
+    const previousRevenue = prevMonthCharges.data
       .filter((charge: Stripe.Charge) => charge.status === "succeeded" && !charge.refunded)
       .reduce((sum: number, charge: Stripe.Charge) => sum + charge.amount, 0) / 100;
 
-    // Calculate percent change
-    const percentChange = previousMonthRevenue > 0 
-      ? Math.round(((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100)
-      : monthlyRevenue > 0 ? 100 : 0;
+    const mrrGrowth = previousRevenue > 0 
+      ? Math.round(((currentRevenue - previousRevenue) / previousRevenue) * 100 * 10) / 10
+      : currentRevenue > 0 ? 100 : 0;
 
-    // Get active subscriptions count
-    const subscriptions = await stripe.subscriptions.list({
-      status: "active",
-      limit: 100,
-    });
-    const activeSubscriptions = subscriptions.data.length;
-    logStep("Fetched active subscriptions", { count: activeSubscriptions });
+    const basicCount = activeCount - professionalCount - featuredCount;
 
-    // Get total customers count
-    const customers = await stripe.customers.list({ limit: 100 });
-    const totalCustomers = customers.data.length;
-    logStep("Fetched customers", { count: totalCustomers });
-
-    const response = {
-      monthlyRevenue,
-      previousMonthRevenue,
-      percentChange,
-      activeSubscriptions,
-      totalCustomers,
+    const stats = {
+      total_subscriptions: allSubscriptions.length,
+      active_subscriptions: activeCount,
+      professional_count: professionalCount,
+      featured_count: featuredCount,
+      basic_count: basicCount > 0 ? basicCount : 0,
+      mrr: Math.round(mrr * 100) / 100,
+      mrr_growth: mrrGrowth,
+      new_last_30_days: newLast30Days,
+      canceled_last_30_days: canceledLast30Days,
+      churn_rate: churnRate,
+      subscriptions: providerSubscriptions,
+      recent_events: recentEvents.slice(0, 20),
       configured: true,
+      // Legacy fields for backwards compatibility
+      monthlyRevenue: currentRevenue,
+      previousMonthRevenue: previousRevenue,
+      percentChange: mrrGrowth,
+      activeSubscriptions: activeCount,
+      totalCustomers: providerSubscriptions.length,
     };
 
-    logStep("Returning stats", response);
+    logStep("Stats calculated", { 
+      active: activeCount, 
+      mrr: stats.mrr,
+      churn: stats.churn_rate 
+    });
 
-    return new Response(JSON.stringify(response), {
+    return new Response(JSON.stringify(stats), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+    );
   }
 });
