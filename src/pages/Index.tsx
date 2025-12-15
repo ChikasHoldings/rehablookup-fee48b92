@@ -251,7 +251,7 @@ const Index = () => {
 
             {/* Quick Help CTA */}
             <div className="mt-5 animate-fade-in" style={{ animationDelay: "250ms" }}>
-              <Link to="/request-help" className="inline-flex items-center gap-2 text-xs sm:text-sm text-foreground/70 hover:text-primary transition-colors">
+              <Link to="/request-help?source=hero" className="inline-flex items-center gap-2 text-xs sm:text-sm text-foreground/70 hover:text-primary transition-colors">
                 <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Need help now? <strong className="text-foreground">Request Help</strong></span>
               </Link>
@@ -743,7 +743,7 @@ const Index = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/request-help">
+              <Link to="/request-help?source=cta_bottom">
                 <Button variant="outline" size="lg" className="gap-2 min-w-[200px]">
                   <Heart className="h-4 w-4" />
                   Request Help

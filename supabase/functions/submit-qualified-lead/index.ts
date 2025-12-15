@@ -36,6 +36,7 @@ interface QualifiedLeadRequest {
   email: string;
   preferredContact: string;
   message?: string;
+  source?: string;
 }
 
 interface ProviderCapacity {
@@ -628,7 +629,7 @@ const handler = async (req: Request): Promise<Response> => {
         message: leadData.message?.trim() || null,
         ip_hash: ipHash,
         email_verified: emailVerified,
-        source: leadData.facilityId ? "Provider Profile" : "Request Help Page",
+        source: leadData.source || (leadData.facilityId ? "provider_profile" : "request_help"),
         who_seeking_help: leadData.whoSeekingHelp,
         location_zip: leadData.locationZip,
         location_city_state: leadData.locationCityState || null,

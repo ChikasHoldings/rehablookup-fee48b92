@@ -470,7 +470,7 @@ const RehabCenters = () => {
                 <Button variant="outline" onClick={clearAllFilters} className="gap-2">
                   Clear Filters
                 </Button>
-                <Link to="/request-help">
+                <Link to="/request-help?source=rehab_empty">
                   <Button className="w-full gap-2 sm:w-auto">
                     <Heart className="h-4 w-4" />
                     Request Help
@@ -495,7 +495,7 @@ const RehabCenters = () => {
               </p>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Link to="/request-help">
+              <Link to="/request-help?source=rehab_cta">
                 <Button className="w-full gap-2 sm:w-auto">
                   <Heart className="h-4 w-4" />
                   Request Help

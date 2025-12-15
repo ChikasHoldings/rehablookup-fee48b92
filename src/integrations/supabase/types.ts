@@ -952,6 +952,44 @@ export type Database = {
           },
         ]
       }
+      request_help_analytics: {
+        Row: {
+          created_at: string
+          event_type: string
+          facility_id: string | null
+          id: string
+          metadata: Json | null
+          source: string
+          step_number: number | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          facility_id?: string | null
+          id?: string
+          metadata?: Json | null
+          source?: string
+          step_number?: number | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          facility_id?: string | null
+          id?: string
+          metadata?: Json | null
+          source?: string
+          step_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_help_analytics_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_alerts: {
         Row: {
           alert_key: string

@@ -240,7 +240,7 @@ const About = () => {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/request-help">
+            <Link to="/request-help?source=about_cta">
               <Button variant="hero-light" size="lg" className="gap-2">
                 <Heart className="h-4 w-4" />
                 Request Help

@@ -187,6 +187,10 @@ export function StepContactVerification({
     try {
       const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
       
+      // Get source from URL for analytics
+      const urlParams = new URLSearchParams(window.location.search);
+      const source = urlParams.get("source") || "direct";
+      
       const { data, error } = await supabase.functions.invoke("submit-qualified-lead", {
         body: {
           facilityId: facilityId || undefined,
@@ -207,11 +211,26 @@ export function StepContactVerification({
           email: formData.email.toLowerCase().trim(),
           preferredContact: formData.preferredContact,
           message: formData.message || undefined,
+          source: source,
         },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+
+      // Track successful form submission
+      try {
+        await supabase.functions.invoke("track-request-help", {
+          body: {
+            eventType: "form_submit",
+            source: source,
+            facilityId: facilityId || null,
+            metadata: { qualified: true },
+          },
+        });
+      } catch (trackError) {
+        console.error("Failed to track form submit:", trackError);
+      }
 
       onSuccess();
     } catch (error: any) {

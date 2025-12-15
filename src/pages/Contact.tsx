@@ -326,7 +326,7 @@ const Contact = () => {
             Our specialists are available 24/7 to help you find the right treatment center.
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to="/request-help">
+            <Link to="/request-help?source=contact_cta">
               <Button variant="hero-light" size="lg" className="gap-2">
                 <Heart className="h-4 w-4" />
                 Request Help

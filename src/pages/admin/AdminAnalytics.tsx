@@ -371,6 +371,67 @@ export default function AdminAnalytics() {
     };
   }, [leadsData]);
 
+  // Calculate CTA source analytics
+  const ctaSourceAnalytics = useMemo(() => {
+    if (!leadsData) return { sources: [], totalLeads: 0, conversionBySource: [] };
+
+    // Group leads by source
+    const sourceMap = new Map<string, { total: number; qualified: number; assigned: number }>();
+    leadsData.forEach(l => {
+      const source = l.source || "direct";
+      const current = sourceMap.get(source) || { total: 0, qualified: 0, assigned: 0 };
+      current.total++;
+      if (l.qualified) current.qualified++;
+      if (l.assignment_status === 'assigned') current.assigned++;
+      sourceMap.set(source, current);
+    });
+
+    const sources = Array.from(sourceMap.entries())
+      .map(([source, stats]) => ({
+        source,
+        displayName: formatSourceName(source),
+        total: stats.total,
+        qualified: stats.qualified,
+        assigned: stats.assigned,
+        qualificationRate: stats.total > 0 ? ((stats.qualified / stats.total) * 100) : 0,
+        assignmentRate: stats.qualified > 0 ? ((stats.assigned / stats.qualified) * 100) : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    return {
+      sources,
+      totalLeads: leadsData.length,
+      topSource: sources[0]?.displayName || "None",
+    };
+  }, [leadsData]);
+
+  // Helper to format source names for display
+  function formatSourceName(source: string): string {
+    const sourceMap: Record<string, string> = {
+      'header': 'Header CTA',
+      'hero': 'Hero Section',
+      'footer': 'Footer',
+      'contact_cta': 'Contact Page',
+      'howitworks_cta': 'How It Works',
+      'faq_cta': 'FAQ Page',
+      'treatment_cta': 'Treatment Types',
+      'resources_cta': 'Resources',
+      'rehab_cta': 'Rehab Centers',
+      'rehab_empty': 'Rehab (No Results)',
+      'about_cta': 'About Page',
+      'article_sidebar': 'Article Sidebar',
+      'article_cta': 'Article CTA',
+      'cta_bottom': 'Homepage Bottom',
+      'provider_profile': 'Provider Profile',
+      'provider_profile_sidebar': 'Provider Sidebar',
+      'direct': 'Direct Visit',
+      'request_help': 'Request Help',
+      'Provider Profile': 'Provider Profile',
+      'Request Help Page': 'Request Help',
+    };
+    return sourceMap[source] || source.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
   // Calculate provider capacity utilization
   const providerCapacity = useMemo(() => {
     if (!facilities || !leadsData) return [];
@@ -849,7 +910,7 @@ export default function AdminAnalytics() {
 
       {/* Charts */}
       <Tabs defaultValue="traffic" className="space-y-4">
-        <TabsList className="bg-muted/50 p-1">
+        <TabsList className="bg-muted/50 p-1 flex-wrap">
           <TabsTrigger value="traffic" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Activity className="h-4 w-4 mr-2" />
             Traffic
@@ -857,6 +918,10 @@ export default function AdminAnalytics() {
           <TabsTrigger value="leads" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <FileText className="h-4 w-4 mr-2" />
             Leads
+          </TabsTrigger>
+          <TabsTrigger value="ctasources" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <MousePointerClick className="h-4 w-4 mr-2" />
+            CTA Sources
           </TabsTrigger>
           <TabsTrigger value="autoassign" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Route className="h-4 w-4 mr-2" />
@@ -1030,6 +1095,55 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* CTA Sources Tab */}
+        <TabsContent value="ctasources" className="space-y-4">
+          <Card className="border-slate-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <MousePointerClick className="h-4 w-4 text-purple-600" />
+                Lead Sources by CTA
+              </CardTitle>
+              <CardDescription>Track which CTAs across the site drive the most qualified leads</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : ctaSourceAnalytics.sources.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Source</TableHead>
+                      <TableHead className="text-right">Total Leads</TableHead>
+                      <TableHead className="text-right">Qualified</TableHead>
+                      <TableHead className="text-right">Qualification Rate</TableHead>
+                      <TableHead className="text-right">Assigned</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {ctaSourceAnalytics.sources.map((s) => (
+                      <TableRow key={s.source}>
+                        <TableCell className="font-medium">{s.displayName}</TableCell>
+                        <TableCell className="text-right">{s.total}</TableCell>
+                        <TableCell className="text-right text-green-600">{s.qualified}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={s.qualificationRate >= 80 ? "default" : s.qualificationRate >= 50 ? "secondary" : "outline"}>
+                            {s.qualificationRate.toFixed(0)}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{s.assigned}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                  <p className="text-sm">No lead source data yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Auto-Assignment Analytics Tab */}

@@ -79,10 +79,12 @@ export default function RequestHelp() {
     // Track page view with source
     const trackPageView = async () => {
       try {
-        await supabase.from("request_help_analytics").insert({
-          event_type: "page_view",
-          source: ctaSource,
-          facility_id: fId || null,
+        await supabase.functions.invoke("track-request-help", {
+          body: {
+            eventType: "page_view",
+            source: ctaSource,
+            facilityId: fId || null,
+          },
         });
       } catch (error) {
         console.error("Failed to track page view:", error);

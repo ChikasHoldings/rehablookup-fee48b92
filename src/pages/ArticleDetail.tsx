@@ -358,7 +358,7 @@ const ArticleDetail = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Our specialists are available 24/7 to help you find the right treatment center.
                 </p>
-                <Link to="/request-help">
+                <Link to="/request-help?source=article_sidebar">
                   <Button className="w-full gap-2">
                     <Heart className="h-4 w-4" />
                     Request Help
@@ -440,7 +440,7 @@ const ArticleDetail = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/request-help">
+              <Link to="/request-help?source=article_cta">
                 <Button variant="outline" size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
                   Request Help
