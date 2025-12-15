@@ -10,6 +10,7 @@ import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { EmailVerificationStep } from "@/components/provider/EmailVerificationStep";
 import {
   Select,
   SelectContent,
@@ -31,6 +32,7 @@ import {
   Globe,
   Lock,
   Image as ImageIcon,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
@@ -43,11 +45,12 @@ const providerNavLinks = [
 
 const steps = [
   { id: 1, name: "Account", icon: User },
-  { id: 2, name: "Facility", icon: Building2 },
-  { id: 3, name: "Branding", icon: ImageIcon },
-  { id: 4, name: "Services", icon: Stethoscope },
-  { id: 5, name: "Insurance", icon: CreditCard },
-  { id: 6, name: "Review", icon: CheckCircle },
+  { id: 2, name: "Verify", icon: ShieldCheck },
+  { id: 3, name: "Facility", icon: Building2 },
+  { id: 4, name: "Branding", icon: ImageIcon },
+  { id: 5, name: "Services", icon: Stethoscope },
+  { id: 6, name: "Insurance", icon: CreditCard },
+  { id: 7, name: "Review", icon: CheckCircle },
 ];
 
 const treatmentTypes = [
@@ -104,6 +107,7 @@ const states = [
 export default function ProviderSignup() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -127,7 +131,7 @@ export default function ProviderSignup() {
     confirmPassword: "",
     jobTitle: "",
 
-    // Step 2: Facility
+    // Step 3: Facility
     facilityName: "",
     facilityType: "",
     facilityPhone: "",
@@ -139,19 +143,19 @@ export default function ProviderSignup() {
     zipCode: "",
     description: "",
 
-    // Step 3: Branding
+    // Step 4: Branding
     logoFile: null as File | null,
     logoPreview: "",
     galleryFiles: [] as File[],
     galleryPreviews: [] as string[],
 
-    // Step 4: Services
+    // Step 5: Services
     selectedTreatments: [] as string[],
     bedCount: "",
     ageGroups: [] as string[],
     genderServed: "",
 
-    // Step 5: Insurance
+    // Step 6: Insurance
     selectedInsurance: [] as string[],
     licensingInfo: "",
     accreditations: "",
@@ -176,11 +180,16 @@ export default function ProviderSignup() {
   };
 
   const nextStep = () => {
-    if (currentStep < 6) setCurrentStep(currentStep + 1);
+    if (currentStep < 7) setCurrentStep(currentStep + 1);
   };
 
   const prevStep = () => {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
+
+  const handleEmailVerified = () => {
+    setEmailVerified(true);
+    setCurrentStep(3); // Move to Facility step
   };
 
   const handleSubmit = async () => {
@@ -366,6 +375,11 @@ export default function ProviderSignup() {
           .eq("id", facilityId);
       }
 
+      // 9. Create notification preferences
+      await supabase.from("notification_preferences").insert({
+        user_id: userId,
+      });
+
       toast({
         title: "Welcome to RehabLookup!",
         description: "Your account and facility have been created successfully.",
@@ -391,12 +405,15 @@ export default function ProviderSignup() {
           formData.firstName &&
           formData.lastName &&
           formData.email &&
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
           formData.phone &&
           formData.password &&
           formData.password.length >= 6 &&
           formData.password === formData.confirmPassword
         );
       case 2:
+        return emailVerified;
+      case 3:
         return (
           formData.facilityName &&
           formData.facilityType &&
@@ -406,13 +423,13 @@ export default function ProviderSignup() {
           formData.state &&
           formData.zipCode
         );
-      case 3:
-        return true; // Branding is optional
       case 4:
-        return formData.selectedTreatments.length > 0;
+        return true; // Branding is optional
       case 5:
-        return formData.selectedInsurance.length > 0;
+        return formData.selectedTreatments.length > 0;
       case 6:
+        return formData.selectedInsurance.length > 0;
+      case 7:
         return formData.agreeToTerms;
       default:
         return false;
@@ -526,15 +543,23 @@ export default function ProviderSignup() {
                 {steps.map((step) => (
                   <button
                     key={step.id}
-                    onClick={() => step.id < currentStep && setCurrentStep(step.id)}
-                    disabled={step.id > currentStep}
+                    onClick={() => {
+                      // Only allow going back to completed steps
+                      if (step.id < currentStep) {
+                        // Don't allow going back to verify step if already verified
+                        if (step.id === 2 && emailVerified) return;
+                        setCurrentStep(step.id);
+                      }
+                    }}
+                    disabled={step.id > currentStep || (step.id === 2 && emailVerified)}
                     className={cn(
                       "flex flex-col items-center gap-1.5 text-xs transition-colors",
                       currentStep === step.id
                         ? "text-primary font-medium"
                         : step.id < currentStep
                         ? "text-accent cursor-pointer hover:text-accent/80"
-                        : "text-muted-foreground cursor-not-allowed"
+                        : "text-muted-foreground cursor-not-allowed",
+                      step.id === 2 && emailVerified && "cursor-not-allowed opacity-50"
                     )}
                   >
                     <div className={cn(
@@ -557,430 +582,418 @@ export default function ProviderSignup() {
               </div>
             </div>
 
-              {/* Step 1: Account Info */}
-              {currentStep === 1 && (
-                <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Create your provider account to manage your facility listing.
-                    </p>
-                  </div>
+            {/* Step 1: Account Info */}
+            {currentStep === 1 && (
+              <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Create your provider account to manage your facility listing.
+                  </p>
+                </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name *</Label>
-                      <Input
-                        id="firstName"
-                        value={formData.firstName}
-                        onChange={(e) => updateFormData("firstName", e.target.value)}
-                        placeholder="John"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name *</Label>
-                      <Input
-                        id="lastName"
-                        value={formData.lastName}
-                        onChange={(e) => updateFormData("lastName", e.target.value)}
-                        placeholder="Smith"
-                      />
-                    </div>
-                  </div>
-
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="jobTitle">Job Title</Label>
+                    <Label htmlFor="firstName">First Name *</Label>
                     <Input
-                      id="jobTitle"
-                      value={formData.jobTitle}
-                      onChange={(e) => updateFormData("jobTitle", e.target.value)}
-                      placeholder="Admissions Director"
+                      id="firstName"
+                      value={formData.firstName}
+                      onChange={(e) => updateFormData("firstName", e.target.value)}
+                      placeholder="John"
                     />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
+                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Input
+                      id="lastName"
+                      value={formData.lastName}
+                      onChange={(e) => updateFormData("lastName", e.target.value)}
+                      placeholder="Smith"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="jobTitle">Job Title</Label>
+                  <Input
+                    id="jobTitle"
+                    value={formData.jobTitle}
+                    onChange={(e) => updateFormData("jobTitle", e.target.value)}
+                    placeholder="Admissions Director"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => {
+                        updateFormData("email", e.target.value);
+                        // Reset email verification if email changes
+                        if (emailVerified) {
+                          setEmailVerified(false);
+                        }
+                      }}
+                      placeholder="john@facility.com"
+                      className="pl-10"
+                    />
+                  </div>
+                  {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                    <p className="text-xs text-destructive">Please enter a valid email address</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => updateFormData("phone", e.target.value)}
+                      placeholder="(555) 123-4567"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password *</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => updateFormData("email", e.target.value)}
-                        placeholder="john@facility.com"
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => updateFormData("password", e.target.value)}
+                        placeholder="••••••••"
                         className="pl-10"
                       />
                     </div>
+                    {formData.password && formData.password.length < 6 && (
+                      <p className="text-xs text-destructive">Password must be at least 6 characters</p>
+                    )}
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={formData.confirmPassword}
+                        onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+                        placeholder="••••••••"
+                        className="pl-10"
+                      />
+                    </div>
+                    {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                      <p className="text-xs text-destructive">Passwords do not match</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Email Verification */}
+            {currentStep === 2 && (
+              <EmailVerificationStep
+                email={formData.email}
+                onVerified={handleEmailVerified}
+                onBack={() => setCurrentStep(1)}
+              />
+            )}
+
+            {/* Step 3: Facility Info */}
+            {currentStep === 3 && (
+              <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Tell us about your treatment facility.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="facilityName">Facility Name *</Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="facilityName"
+                      value={formData.facilityName}
+                      onChange={(e) => updateFormData("facilityName", e.target.value)}
+                      placeholder="Serenity Recovery Center"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="facilityType">Facility Type *</Label>
+                  <Select
+                    value={formData.facilityType}
+                    onValueChange={(value) => updateFormData("facilityType", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select facility type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {facilityTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="facilityPhone">Facility Phone *</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        id="phone"
+                        id="facilityPhone"
                         type="tel"
-                        value={formData.phone}
-                        onChange={(e) => updateFormData("phone", e.target.value)}
+                        value={formData.facilityPhone}
+                        onChange={(e) => updateFormData("facilityPhone", e.target.value)}
                         placeholder="(555) 123-4567"
                         className="pl-10"
                       />
                     </div>
                   </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password *</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          id="password"
-                          type="password"
-                          value={formData.password}
-                          onChange={(e) => updateFormData("password", e.target.value)}
-                          placeholder="••••••••"
-                          className="pl-10"
-                        />
-                      </div>
-                      {formData.password && formData.password.length < 6 && (
-                        <p className="text-xs text-destructive">Password must be at least 6 characters</p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          value={formData.confirmPassword}
-                          onChange={(e) => updateFormData("confirmPassword", e.target.value)}
-                          placeholder="••••••••"
-                          className="pl-10"
-                        />
-                      </div>
-                      {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                        <p className="text-xs text-destructive">Passwords do not match</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 2: Facility Info */}
-              {currentStep === 2 && (
-                <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Tell us about your treatment facility.
-                    </p>
-                  </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="facilityName">Facility Name *</Label>
+                    <Label htmlFor="facilityEmail">Facility Email</Label>
                     <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        id="facilityName"
-                        value={formData.facilityName}
-                        onChange={(e) => updateFormData("facilityName", e.target.value)}
-                        placeholder="Serenity Recovery Center"
+                        id="facilityEmail"
+                        type="email"
+                        value={formData.facilityEmail}
+                        onChange={(e) => updateFormData("facilityEmail", e.target.value)}
+                        placeholder="info@facility.com"
                         className="pl-10"
                       />
                     </div>
                   </div>
+                </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="website"
+                      value={formData.website}
+                      onChange={(e) => updateFormData("website", e.target.value)}
+                      placeholder="https://www.yourfacility.com"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Street Address *</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => updateFormData("address", e.target.value)}
+                      placeholder="123 Recovery Lane"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="facilityType">Facility Type *</Label>
+                    <Label htmlFor="city">City *</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => updateFormData("city", e.target.value)}
+                      placeholder="Los Angeles"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State *</Label>
                     <Select
-                      value={formData.facilityType}
-                      onValueChange={(value) => updateFormData("facilityType", value)}
+                      value={formData.state}
+                      onValueChange={(value) => updateFormData("state", value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select facility type" />
+                        <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent>
-                        {facilityTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
+                        {states.map((state) => (
+                          <SelectItem key={state} value={state}>
+                            {state}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="facilityPhone">Facility Phone *</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          id="facilityPhone"
-                          type="tel"
-                          value={formData.facilityPhone}
-                          onChange={(e) => updateFormData("facilityPhone", e.target.value)}
-                          placeholder="(555) 123-4567"
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="facilityEmail">Facility Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          id="facilityEmail"
-                          type="email"
-                          value={formData.facilityEmail}
-                          onChange={(e) => updateFormData("facilityEmail", e.target.value)}
-                          placeholder="info@facility.com"
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="website">Website</Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="website"
-                        value={formData.website}
-                        onChange={(e) => updateFormData("website", e.target.value)}
-                        placeholder="https://www.yourfacility.com"
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Street Address *</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) => updateFormData("address", e.target.value)}
-                        placeholder="123 Recovery Lane"
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="city">City *</Label>
-                      <Input
-                        id="city"
-                        value={formData.city}
-                        onChange={(e) => updateFormData("city", e.target.value)}
-                        placeholder="Los Angeles"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="state">State *</Label>
-                      <Select
-                        value={formData.state}
-                        onValueChange={(value) => updateFormData("state", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {states.map((state) => (
-                            <SelectItem key={state} value={state}>
-                              {state}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="zipCode">ZIP Code *</Label>
-                      <Input
-                        id="zipCode"
-                        value={formData.zipCode}
-                        onChange={(e) => updateFormData("zipCode", e.target.value)}
-                        placeholder="90210"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Facility Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => updateFormData("description", e.target.value)}
-                      placeholder="Briefly describe your facility, approach to treatment, and what makes you unique..."
-                      rows={4}
+                    <Label htmlFor="zipCode">ZIP Code *</Label>
+                    <Input
+                      id="zipCode"
+                      value={formData.zipCode}
+                      onChange={(e) => updateFormData("zipCode", e.target.value)}
+                      placeholder="90210"
                     />
                   </div>
                 </div>
-              )}
 
-              {/* Step 3: Branding & Photos */}
-              {currentStep === 3 && (
-                <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Upload your facility's logo and photos to stand out in search results.
-                    </p>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Facility Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => updateFormData("description", e.target.value)}
+                    placeholder="Tell potential clients about your facility, treatment philosophy, and what makes you unique..."
+                    rows={4}
+                  />
+                </div>
+              </div>
+            )}
 
-                  {/* Logo Upload */}
-                  <div className="space-y-3">
-                    <Label>Facility Logo</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Your logo will appear on your public profile and in search results.
-                    </p>
-                    {formData.logoPreview ? (
-                      <div className="relative w-32 h-32">
+            {/* Step 4: Branding */}
+            {currentStep === 4 && (
+              <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Add your logo and gallery images to make your listing stand out.
+                  </p>
+                </div>
+
+                {/* Logo Upload */}
+                <div className="space-y-3">
+                  <Label>Facility Logo</Label>
+                  {formData.logoPreview ? (
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={formData.logoPreview}
+                        alt="Logo preview"
+                        className="h-20 w-20 rounded-lg object-cover border"
+                      />
+                      <Button variant="outline" size="sm" onClick={removeLogo}>
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                      <ImageIcon className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
+                      <Label
+                        htmlFor="logo-upload"
+                        className="cursor-pointer text-primary hover:underline"
+                      >
+                        Upload logo
+                      </Label>
+                      <Input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoSelect}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        PNG, JPG, or WebP (max 5MB)
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Gallery Upload */}
+                <div className="space-y-3">
+                  <Label>Gallery Images ({formData.galleryPreviews.length}/5)</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {formData.galleryPreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
                         <img
-                          src={formData.logoPreview}
-                          alt="Logo preview"
-                          className="w-full h-full object-cover rounded-lg border border-border"
+                          src={preview}
+                          alt={`Gallery ${index + 1}`}
+                          className="aspect-video w-full rounded-lg object-cover border"
                         />
                         <button
-                          type="button"
-                          onClick={removeLogo}
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-sm"
+                          onClick={() => removeGalleryImage(index)}
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          ×
+                          <CheckCircle className="h-3 w-3" />
                         </button>
                       </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors">
-                        <input
+                    ))}
+                    {formData.galleryPreviews.length < 5 && (
+                      <label className="border-2 border-dashed border-border rounded-lg aspect-video flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+                        <ImageIcon className="h-8 w-8 text-muted-foreground mb-1" />
+                        <span className="text-xs text-muted-foreground">Add image</span>
+                        <Input
                           type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={handleLogoSelect}
-                          className="sr-only"
+                          accept="image/*"
+                          multiple
+                          onChange={handleGallerySelect}
+                          className="hidden"
                         />
-                        <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
-                        <span className="text-xs text-muted-foreground">Upload logo</span>
                       </label>
                     )}
                   </div>
+                </div>
+              </div>
+            )}
 
-                  {/* Gallery Upload */}
-                  <div className="space-y-3">
-                    <Label>Facility Gallery</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Upload up to 5 photos of your facility. These will appear on your public profile.
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                      {formData.galleryPreviews.map((preview, index) => (
-                        <div key={index} className="relative aspect-square">
-                          <img
-                            src={preview}
-                            alt={`Gallery ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg border border-border"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeGalleryImage(index)}
-                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-sm"
-                          >
-                            ×
-                          </button>
-                          {index === 0 && (
-                            <span className="absolute bottom-1 left-1 px-2 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded">
-                              Primary
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                      {formData.galleryFiles.length < 5 && (
-                        <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors">
-                          <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            multiple
-                            onChange={handleGallerySelect}
-                            className="sr-only"
-                          />
-                          <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
-                          <span className="text-xs text-muted-foreground text-center px-2">
-                            Add ({formData.galleryFiles.length}/5)
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-muted-foreground text-center pt-4 border-t border-border">
-                    You can skip this step and add images later from your dashboard.
+            {/* Step 5: Services */}
+            {currentStep === 5 && (
+              <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Select the treatment services and programs you offer.
                   </p>
                 </div>
-              )}
 
-              {/* Step 4: Services */}
-              {currentStep === 4 && (
-                <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Select the treatments and services your facility offers.
-                    </p>
+                <div className="space-y-3">
+                  <Label>Treatment Types *</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {treatmentTypes.map((treatment) => (
+                      <div
+                        key={treatment}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={treatment}
+                          checked={formData.selectedTreatments.includes(treatment)}
+                          onCheckedChange={() => toggleArrayItem("selectedTreatments", treatment)}
+                        />
+                        <Label htmlFor={treatment} className="text-sm font-normal cursor-pointer">
+                          {treatment}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
+                </div>
 
-                  <div className="space-y-3">
-                    <Label>Treatment Programs Offered *</Label>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {treatmentTypes.map((treatment) => (
-                        <label
-                          key={treatment}
-                          className={cn(
-                            "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all",
-                            formData.selectedTreatments.includes(treatment)
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <Checkbox
-                            checked={formData.selectedTreatments.includes(treatment)}
-                            onCheckedChange={() => toggleArrayItem("selectedTreatments", treatment)}
-                          />
-                          <span className="text-sm">{treatment}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="bedCount">Number of Beds/Capacity</Label>
-                    <Input
-                      id="bedCount"
+                    <Label htmlFor="bedCount">Bed Count</Label>
+                    <Select
                       value={formData.bedCount}
-                      onChange={(e) => updateFormData("bedCount", e.target.value)}
-                      placeholder="e.g., 30"
-                    />
+                      onValueChange={(value) => updateFormData("bedCount", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1-10">1-10</SelectItem>
+                        <SelectItem value="11-25">11-25</SelectItem>
+                        <SelectItem value="26-50">26-50</SelectItem>
+                        <SelectItem value="51-100">51-100</SelectItem>
+                        <SelectItem value="100+">100+</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-
-                  <div className="space-y-3">
-                    <Label>Age Groups Served</Label>
-                    <div className="flex flex-wrap gap-3">
-                      {["Adults (18+)", "Young Adults (18-25)", "Adolescents (13-17)", "Seniors (65+)"].map((age) => (
-                        <label
-                          key={age}
-                          className={cn(
-                            "flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all",
-                            formData.ageGroups.includes(age)
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <Checkbox
-                            checked={formData.ageGroups.includes(age)}
-                            onCheckedChange={() => toggleArrayItem("ageGroups", age)}
-                            className="h-4 w-4"
-                          />
-                          {age}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="genderServed">Gender Served</Label>
                     <Select
@@ -988,238 +1001,229 @@ export default function ProviderSignup() {
                       onValueChange={(value) => updateFormData("genderServed", value)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select gender options" />
+                        <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Genders</SelectItem>
-                        <SelectItem value="men">Men Only</SelectItem>
-                        <SelectItem value="women">Women Only</SelectItem>
+                        <SelectItem value="All Genders">All Genders</SelectItem>
+                        <SelectItem value="Men Only">Men Only</SelectItem>
+                        <SelectItem value="Women Only">Women Only</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-              )}
 
-              {/* Step 5: Insurance */}
-              {currentStep === 5 && (
-                <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Select accepted insurance and provide licensing information.
-                    </p>
+                <div className="space-y-3">
+                  <Label>Age Groups Served</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {["Adults (18+)", "Young Adults (18-25)", "Adolescents (13-17)", "Seniors (65+)"].map((age) => (
+                      <div key={age} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={age}
+                          checked={formData.ageGroups.includes(age)}
+                          onCheckedChange={() => toggleArrayItem("ageGroups", age)}
+                        />
+                        <Label htmlFor={age} className="text-sm font-normal cursor-pointer">
+                          {age}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
+                </div>
+              </div>
+            )}
 
-                  <div className="space-y-3">
-                    <Label>Accepted Insurance *</Label>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {insuranceProviders.map((insurance) => (
-                        <label
-                          key={insurance}
-                          className={cn(
-                            "flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all",
-                            formData.selectedInsurance.includes(insurance)
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <Checkbox
-                            checked={formData.selectedInsurance.includes(insurance)}
-                            onCheckedChange={() => toggleArrayItem("selectedInsurance", insurance)}
-                          />
-                          <span className="text-sm">{insurance}</span>
-                        </label>
+            {/* Step 6: Insurance */}
+            {currentStep === 6 && (
+              <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Select the insurance providers you accept.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Accepted Insurance *</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {insuranceProviders.map((insurance) => (
+                      <div
+                        key={insurance}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={insurance}
+                          checked={formData.selectedInsurance.includes(insurance)}
+                          onCheckedChange={() => toggleArrayItem("selectedInsurance", insurance)}
+                        />
+                        <Label htmlFor={insurance} className="text-sm font-normal cursor-pointer">
+                          {insurance}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="licensingInfo">Licensing Information</Label>
+                  <Textarea
+                    id="licensingInfo"
+                    value={formData.licensingInfo}
+                    onChange={(e) => updateFormData("licensingInfo", e.target.value)}
+                    placeholder="e.g., State License #12345, DEA Registration..."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="accreditations">Accreditations</Label>
+                  <Textarea
+                    id="accreditations"
+                    value={formData.accreditations}
+                    onChange={(e) => updateFormData("accreditations", e.target.value)}
+                    placeholder="e.g., JCAHO, CARF, LegitScript Certified..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 7: Review */}
+            {currentStep === 7 && (
+              <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Review your information before submitting.
+                  </p>
+                </div>
+
+                {/* Account Summary */}
+                <div className="space-y-2">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <User className="h-4 w-4" /> Account
+                  </h3>
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-1">
+                    <p><span className="text-muted-foreground">Name:</span> {formData.firstName} {formData.lastName}</p>
+                    <p><span className="text-muted-foreground">Email:</span> {formData.email} <span className="text-accent text-xs">✓ Verified</span></p>
+                    <p><span className="text-muted-foreground">Phone:</span> {formData.phone}</p>
+                    {formData.jobTitle && <p><span className="text-muted-foreground">Title:</span> {formData.jobTitle}</p>}
+                  </div>
+                </div>
+
+                {/* Facility Summary */}
+                <div className="space-y-2">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Building2 className="h-4 w-4" /> Facility
+                  </h3>
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-1">
+                    <p><span className="text-muted-foreground">Name:</span> {formData.facilityName}</p>
+                    <p><span className="text-muted-foreground">Type:</span> {formData.facilityType}</p>
+                    <p><span className="text-muted-foreground">Address:</span> {formData.address}, {formData.city}, {formData.state} {formData.zipCode}</p>
+                    <p><span className="text-muted-foreground">Phone:</span> {formData.facilityPhone}</p>
+                    {formData.website && <p><span className="text-muted-foreground">Website:</span> {formData.website}</p>}
+                  </div>
+                </div>
+
+                {/* Services Summary */}
+                <div className="space-y-2">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4" /> Services
+                  </h3>
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                    <div className="flex flex-wrap gap-1">
+                      {formData.selectedTreatments.map((t) => (
+                        <span key={t} className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs">
+                          {t}
+                        </span>
                       ))}
                     </div>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="licensingInfo">State Licensing Information</Label>
-                    <Textarea
-                      id="licensingInfo"
-                      value={formData.licensingInfo}
-                      onChange={(e) => updateFormData("licensingInfo", e.target.value)}
-                      placeholder="Enter your state license numbers and issuing authorities..."
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="accreditations">Accreditations</Label>
-                    <Textarea
-                      id="accreditations"
-                      value={formData.accreditations}
-                      onChange={(e) => updateFormData("accreditations", e.target.value)}
-                      placeholder="e.g., Joint Commission, CARF, NAATP..."
-                      rows={2}
-                    />
+                {/* Insurance Summary */}
+                <div className="space-y-2">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" /> Insurance
+                  </h3>
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                    <div className="flex flex-wrap gap-1">
+                      {formData.selectedInsurance.map((i) => (
+                        <span key={i} className="bg-accent/10 text-accent px-2 py-0.5 rounded text-xs">
+                          {i}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {/* Step 6: Review */}
-              {currentStep === 6 && (
-                <div className="space-y-6 animate-fade-in rounded-xl border border-border bg-card p-6 md:p-8 shadow-card">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Review your information before submitting your application.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="rounded-lg border border-border bg-muted/30 p-5">
-                      <h3 className="font-semibold text-foreground flex items-center gap-2">
-                        <User className="h-4 w-4 text-primary" /> Account
-                      </h3>
-                      <div className="mt-3 grid gap-2 text-sm">
-                        <p><span className="text-muted-foreground">Name:</span> {formData.firstName} {formData.lastName}</p>
-                        <p><span className="text-muted-foreground">Email:</span> {formData.email}</p>
-                        <p><span className="text-muted-foreground">Phone:</span> {formData.phone}</p>
-                        {formData.jobTitle && <p><span className="text-muted-foreground">Title:</span> {formData.jobTitle}</p>}
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border border-border bg-muted/30 p-5">
-                      <h3 className="font-semibold text-foreground flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-primary" /> Facility
-                      </h3>
-                      <div className="mt-3 grid gap-2 text-sm">
-                        <p><span className="text-muted-foreground">Name:</span> {formData.facilityName}</p>
-                        <p><span className="text-muted-foreground">Type:</span> {formData.facilityType}</p>
-                        <p><span className="text-muted-foreground">Address:</span> {formData.address}, {formData.city}, {formData.state} {formData.zipCode}</p>
-                        <p><span className="text-muted-foreground">Phone:</span> {formData.facilityPhone}</p>
-                      </div>
-                    </div>
-
-                    {/* Branding Preview */}
-                    {(formData.logoPreview || formData.galleryPreviews.length > 0) && (
-                      <div className="rounded-lg border border-border bg-muted/30 p-5">
-                        <h3 className="font-semibold text-foreground flex items-center gap-2">
-                          <ImageIcon className="h-4 w-4 text-primary" /> Branding
-                        </h3>
-                        <div className="mt-3 flex flex-wrap gap-3">
-                          {formData.logoPreview && (
-                            <div className="text-center">
-                              <img src={formData.logoPreview} alt="Logo" className="h-16 w-16 object-cover rounded-lg border border-border" />
-                              <span className="text-xs text-muted-foreground mt-1 block">Logo</span>
-                            </div>
-                          )}
-                          {formData.galleryPreviews.map((preview, idx) => (
-                            <div key={idx} className="text-center">
-                              <img src={preview} alt={`Gallery ${idx + 1}`} className="h-16 w-16 object-cover rounded-lg border border-border" />
-                              <span className="text-xs text-muted-foreground mt-1 block">Photo {idx + 1}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="rounded-lg border border-border bg-muted/30 p-5">
-                      <h3 className="font-semibold text-foreground flex items-center gap-2">
-                        <Stethoscope className="h-4 w-4 text-primary" /> Services
-                      </h3>
-                      <div className="mt-3">
-                        <p className="text-sm text-muted-foreground mb-2">Treatment Programs:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {formData.selectedTreatments.map((t) => (
-                            <span key={t} className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border border-border bg-muted/30 p-5">
-                      <h3 className="font-semibold text-foreground flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-primary" /> Insurance
-                      </h3>
-                      <div className="mt-3">
-                        <div className="flex flex-wrap gap-2">
-                          {formData.selectedInsurance.map((i) => (
-                            <span key={i} className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">
-                              {i}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <label className="flex items-start gap-3 rounded-lg border-2 border-primary/20 bg-primary/5 p-4 cursor-pointer hover:border-primary/40 transition-colors">
-                    <Checkbox
-                      checked={formData.agreeToTerms}
-                      onCheckedChange={(checked) => updateFormData("agreeToTerms", checked)}
-                      className="mt-0.5"
-                    />
-                    <span className="text-sm text-foreground">
-                      I agree to the{" "}
-                      <Link to="/terms-of-service" className="text-primary hover:underline font-medium">
-                        Terms of Service
-                      </Link>{" "}
-                      and{" "}
-                      <Link to="/privacy-policy" className="text-primary hover:underline font-medium">
-                        Privacy Policy
-                      </Link>
-                      . I confirm that the information provided is accurate and I am authorized to represent this facility.
-                    </span>
-                  </label>
+                {/* Terms */}
+                <div className="flex items-start space-x-3 pt-4 border-t">
+                  <Checkbox
+                    id="terms"
+                    checked={formData.agreeToTerms}
+                    onCheckedChange={(checked) => updateFormData("agreeToTerms", checked)}
+                  />
+                  <Label htmlFor="terms" className="text-sm font-normal leading-relaxed cursor-pointer">
+                    I agree to the{" "}
+                    <Link to="/terms-of-service" className="text-primary hover:underline" target="_blank">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
+                      Privacy Policy
+                    </Link>
+                    . I confirm that all information provided is accurate.
+                  </Label>
                 </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="mt-6 flex justify-between gap-4">
+              {currentStep > 1 && currentStep !== 2 && (
+                <Button
+                  variant="outline"
+                  onClick={prevStep}
+                  disabled={isSubmitting}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              )}
+              {currentStep === 2 && (
+                <div /> // Placeholder for flex spacing
               )}
 
-              {/* Navigation Buttons */}
-              <div className="mt-8 flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-card">
-                {currentStep > 1 ? (
-                  <Button variant="outline" onClick={prevStep} className="gap-2">
-                    <ArrowLeft className="h-4 w-4" />
-                    Back
-                  </Button>
-                ) : (
-                  <div />
-                )}
+              {currentStep < 7 && currentStep !== 2 && (
+                <Button
+                  onClick={nextStep}
+                  disabled={!canProceed()}
+                  className="ml-auto"
+                >
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
 
-                {currentStep < 6 ? (
-                  <Button 
-                    onClick={nextStep} 
-                    disabled={!canProceed()} 
-                    className="gap-2 px-6"
-                    size="lg"
-                  >
-                    Continue
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={!canProceed() || isSubmitting}
-                    className="gap-2 px-6"
-                    size="lg"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      <>
-                        Create Account & Submit
-                        <CheckCircle className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-
-              {/* Already have account */}
-              <div className="mt-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Already have an account?{" "}
-                  <Link to="/provider-login" className="text-primary hover:underline font-semibold">
-                    Sign in here
-                  </Link>
-                </p>
-              </div>
+              {currentStep === 7 && (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!canProceed() || isSubmitting}
+                  className="ml-auto"
+                >
+                  {isSubmitting ? "Creating Account..." : "Create Account"}
+                  <CheckCircle className="ml-2 h-4 w-4" />
+                </Button>
+              )}
             </div>
+
+            {/* Already have account */}
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link to="/provider-login" className="text-primary hover:underline font-medium">
+                Sign in
+              </Link>
+            </p>
           </div>
+        </div>
       </main>
 
       <Footer />
