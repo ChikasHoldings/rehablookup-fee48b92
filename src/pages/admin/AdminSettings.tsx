@@ -490,6 +490,8 @@ export default function AdminSettings() {
   const sessionTimeout = platformSettings?.session_timeout?.setting_value?.minutes?.toString() ?? "30";
   const timestampFormat = platformSettings?.timestamp_display?.setting_value?.format ?? "relative";
   const backupRetentionDays = platformSettings?.backup_retention_days?.setting_value?.days?.toString() ?? "30";
+  const themeMode = platformSettings?.theme_mode?.setting_value?.mode ?? "light";
+  const compactMode = platformSettings?.compact_mode?.setting_value?.enabled ?? false;
 
   // Storage calculations
   const storageUsed = storageData?.totalUsed ?? 0;
@@ -654,9 +656,17 @@ export default function AdminSettings() {
                       icon={<Palette className="h-4 w-4 text-slate-500" />}
                       title="Theme Mode"
                       description="Choose between light and dark themes"
-                      comingSoon
                     >
-                      <Select defaultValue="light" disabled>
+                      <Select 
+                        value={themeMode}
+                        onValueChange={(value) => {
+                          updateSetting.mutate({
+                            key: "theme_mode",
+                            value: { mode: value }
+                          });
+                        }}
+                        disabled={updateSetting.isPending}
+                      >
                         <SelectTrigger className="w-[120px]">
                           <SelectValue />
                         </SelectTrigger>
@@ -672,9 +682,17 @@ export default function AdminSettings() {
                       icon={<Activity className="h-4 w-4 text-slate-500" />}
                       title="Compact Mode"
                       description="Use condensed layouts for data tables"
-                      comingSoon
                     >
-                      <Switch disabled />
+                      <Switch 
+                        checked={compactMode}
+                        onCheckedChange={(checked) => {
+                          updateSetting.mutate({
+                            key: "compact_mode",
+                            value: { enabled: checked }
+                          });
+                        }}
+                        disabled={updateSetting.isPending}
+                      />
                     </SettingRow>
                     <Separator />
                     <SettingRow
