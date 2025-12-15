@@ -15,25 +15,35 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
-  { to: "/admin/providers", icon: Building2, label: "Providers" },
-  { to: "/admin/leads", icon: Users, label: "Leads" },
-  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions" },
-  { to: "/admin/featured", icon: Star, label: "Featured Placement" },
-  { to: "/admin/flagged-images", icon: Image, label: "Flagged Images" },
-  { to: "/admin/users", icon: ShieldCheck, label: "User Management" },
-  { to: "/admin/reviews", icon: MessageSquare, label: "Reviews", disabled: true },
-  { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log" },
-  { to: "/admin/settings", icon: Settings, label: "Settings" },
+  { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
+  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
+  { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
+  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
+  { to: "/admin/featured", icon: Star, label: "Featured Placement", permission: "featured" },
+  { to: "/admin/flagged-images", icon: Image, label: "Flagged Images", permission: "providers" },
+  { to: "/admin/users", icon: ShieldCheck, label: "User Management", permission: "users" },
+  { to: "/admin/reviews", icon: MessageSquare, label: "Reviews", disabled: true, permission: "reviews" },
+  { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
+  { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
 ];
 
-function AdminSidebarComponent() {
+interface AdminSidebarProps {
+  isSuperAdmin: boolean;
+  hasPermission: (permissionKey: string) => boolean;
+}
+
+function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProps) {
   const location = useLocation();
+
+  // Filter nav items based on permissions
+  const visibleNavItems = navItems.filter(
+    (item) => isSuperAdmin || item.permission === "dashboard" || hasPermission(item.permission)
+  );
 
   return (
     <aside className="hidden lg:flex w-64 flex-col border-r bg-slate-50 sticky top-16 h-[calc(100vh-4rem)]">
       <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.end 
             ? location.pathname === item.to 
