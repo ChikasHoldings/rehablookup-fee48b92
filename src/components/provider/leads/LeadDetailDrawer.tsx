@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, addHours, addDays, isPast, formatDistanceToNow } from "date-fns";
 import { 
   Phone, 
   Mail, 
@@ -21,7 +21,9 @@ import {
   AlertTriangle,
   Stethoscope,
   CreditCard,
-  Sparkles
+  Sparkles,
+  BellOff,
+  Bell
 } from "lucide-react";
 import {
   Dialog,
@@ -59,6 +61,7 @@ interface Lead {
   facility_id: string;
   source: string | null;
   email_verified: boolean | null;
+  snooze_until: string | null;
   // Qualified intake fields
   who_seeking_help: string | null;
   location_zip: string | null;
@@ -154,6 +157,31 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
     },
   });
 
+  // Snooze reminder mutation
+  const snoozeReminder = useMutation({
+    mutationFn: async (snoozeUntil: Date | null) => {
+      if (!lead) return;
+      const { error } = await supabase
+        .from("leads")
+        .update({ snooze_until: snoozeUntil?.toISOString() || null })
+        .eq("id", lead.id);
+      if (error) throw error;
+    },
+    onSuccess: (_, snoozeUntil) => {
+      queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
+      if (snoozeUntil) {
+        toast({ title: "Reminders snoozed", description: `Until ${format(snoozeUntil, "MMM d 'at' h:mm a")}` });
+      } else {
+        toast({ title: "Snooze removed", description: "Reminders are now active" });
+      }
+    },
+    onError: () => {
+      toast({ title: "Failed to update snooze", variant: "destructive" });
+    },
+  });
+
+  const isSnoozed = lead?.snooze_until && !isPast(new Date(lead.snooze_until));
+
   // Add note mutation
   const addNote = useMutation({
     mutationFn: async (note: string) => {
@@ -247,6 +275,78 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Snooze Reminders */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <BellOff className="h-4 w-4" />
+                  Snooze Reminders
+                </label>
+                {isSnoozed ? (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                    <BellOff className="h-4 w-4 text-amber-600" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-800">Reminders snoozed</p>
+                      <p className="text-xs text-amber-600">
+                        Until {format(new Date(lead.snooze_until!), "MMM d 'at' h:mm a")} ({formatDistanceToNow(new Date(lead.snooze_until!), { addSuffix: true })})
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => snoozeReminder.mutate(null)}
+                      disabled={snoozeReminder.isPending}
+                      className="gap-1.5 text-amber-700 border-amber-300 hover:bg-amber-100"
+                    >
+                      {snoozeReminder.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />}
+                      Unsnooze
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => snoozeReminder.mutate(addHours(new Date(), 4))}
+                      disabled={snoozeReminder.isPending}
+                      className="gap-1.5"
+                    >
+                      <Clock className="h-3.5 w-3.5" />
+                      4 hours
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => snoozeReminder.mutate(addDays(new Date(), 1))}
+                      disabled={snoozeReminder.isPending}
+                      className="gap-1.5"
+                    >
+                      <Clock className="h-3.5 w-3.5" />
+                      1 day
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => snoozeReminder.mutate(addDays(new Date(), 3))}
+                      disabled={snoozeReminder.isPending}
+                      className="gap-1.5"
+                    >
+                      <Clock className="h-3.5 w-3.5" />
+                      3 days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => snoozeReminder.mutate(addDays(new Date(), 7))}
+                      disabled={snoozeReminder.isPending}
+                      className="gap-1.5"
+                    >
+                      <Clock className="h-3.5 w-3.5" />
+                      1 week
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <Separator />
