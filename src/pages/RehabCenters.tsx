@@ -6,7 +6,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
-import { Phone, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown } from "lucide-react";
+import { Heart, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -470,12 +470,12 @@ const RehabCenters = () => {
                 <Button variant="outline" onClick={clearAllFilters} className="gap-2">
                   Clear Filters
                 </Button>
-                <a href="tel:1-800-555-0199">
+                <Link to="/request-help">
                   <Button className="w-full gap-2 sm:w-auto">
-                    <Phone className="h-4 w-4" />
-                    Call 1-800-555-0199
+                    <Heart className="h-4 w-4" />
+                    Request Help
                   </Button>
-                </a>
+                </Link>
               </div>
             </div>
           )}
@@ -495,12 +495,12 @@ const RehabCenters = () => {
               </p>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <a href="tel:1-800-555-0199">
+              <Link to="/request-help">
                 <Button className="w-full gap-2 sm:w-auto">
-                  <Phone className="h-4 w-4" />
-                  Call Now
+                  <Heart className="h-4 w-4" />
+                  Request Help
                 </Button>
-              </a>
+              </Link>
               <Link to="/contact">
                 <Button variant="outline" className="w-full gap-2 sm:w-auto">
                   Request Callback
