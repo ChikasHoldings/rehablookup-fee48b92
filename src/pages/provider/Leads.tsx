@@ -52,6 +52,8 @@ import { cn } from "@/lib/utils";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
+import { LeadScoreBadge } from "@/components/provider/leads/LeadScoreBadge";
+import { calculateLeadScore } from "@/lib/leadScoring";
 import { 
   LeadUsageIndicator, 
   LeadLimitWarningBanner, 
@@ -175,9 +177,12 @@ export default function ProviderLeadsPage() {
     };
   }, [facilityId, queryClient, toast]);
 
-  // Filtered leads based on search, status, and date range
+  // Sort state
+  const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
+
+  // Filtered and sorted leads
   const filteredLeads = useMemo(() => {
-    return leads.filter(lead => {
+    let result = leads.filter(lead => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -219,7 +224,22 @@ export default function ProviderLeadsPage() {
 
       return true;
     });
-  }, [leads, searchQuery, statusFilter, sourceFilter, dateRange]);
+
+    // Sort by score or date
+    if (sortBy === 'score') {
+      result = [...result].sort((a, b) => {
+        const scoreA = calculateLeadScore(a).total;
+        const scoreB = calculateLeadScore(b).total;
+        return scoreB - scoreA; // Highest score first
+      });
+    } else {
+      result = [...result].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }
+
+    return result;
+  }, [leads, searchQuery, statusFilter, sourceFilter, dateRange, sortBy]);
 
   // Update status mutation
   const updateStatus = useMutation({
@@ -575,11 +595,28 @@ export default function ProviderLeadsPage() {
                 <TableHeader>
                   <TableRow className="bg-muted/30">
                     <TableHead className="font-semibold">Name</TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => setSortBy(sortBy === 'score' ? 'date' : 'score')}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        Score
+                        {sortBy === 'score' && <span className="text-primary">↓</span>}
+                      </button>
+                    </TableHead>
                     <TableHead className="font-semibold">Source</TableHead>
-                    <TableHead className="font-semibold">Contact Method</TableHead>
+                    <TableHead className="font-semibold">Contact</TableHead>
                     <TableHead className="font-semibold">Phone</TableHead>
-                    <TableHead className="font-semibold">Email</TableHead>
-                    <TableHead className="font-semibold">Date</TableHead>
+                    <TableHead className="font-semibold">
+                      <button 
+                        onClick={() => setSortBy(sortBy === 'date' ? 'score' : 'date')}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        Date
+                        {sortBy === 'date' && <span className="text-primary">↓</span>}
+                      </button>
+                    </TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="font-semibold w-[100px]">Actions</TableHead>
                   </TableRow>
@@ -600,6 +637,9 @@ export default function ProviderLeadsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <LeadScoreBadge lead={lead} size="sm" />
+                      </TableCell>
+                      <TableCell>
                         {lead.source === "Request Help Page" ? (
                           <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-0">
                             <Sparkles className="h-3 w-3" />
@@ -615,15 +655,14 @@ export default function ProviderLeadsPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {lead.preferred_contact === "email" ? (
-                            <div className="h-7 w-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                              <Mail className="h-3.5 w-3.5 text-blue-600" />
+                            <div className="h-6 w-6 rounded bg-blue-500/10 flex items-center justify-center">
+                              <Mail className="h-3 w-3 text-blue-600" />
                             </div>
                           ) : (
-                            <div className="h-7 w-7 rounded-lg bg-green-500/10 flex items-center justify-center">
-                              <Phone className="h-3.5 w-3.5 text-green-600" />
+                            <div className="h-6 w-6 rounded bg-green-500/10 flex items-center justify-center">
+                              <Phone className="h-3 w-3 text-green-600" />
                             </div>
                           )}
-                          <span className="text-sm capitalize">{lead.preferred_contact}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -636,18 +675,9 @@ export default function ProviderLeadsPage() {
                         </a>
                       </TableCell>
                       <TableCell>
-                        <a 
-                          href={`mailto:${lead.email}`} 
-                          className="text-sm text-primary hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {lead.email}
-                        </a>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {format(new Date(lead.created_at), "MMM d, yyyy")}
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {format(new Date(lead.created_at), "MMM d")}
                         </div>
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
@@ -657,9 +687,9 @@ export default function ProviderLeadsPage() {
                             updateStatus.mutate({ leadId: lead.id, status: value as LeadStatus })
                           }
                         >
-                          <SelectTrigger className="w-[130px] h-8 text-xs">
+                          <SelectTrigger className="w-[120px] h-7 text-xs">
                             <SelectValue>
-                              <LeadStatusBadge status={lead.status as LeadStatus} />
+                              <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>

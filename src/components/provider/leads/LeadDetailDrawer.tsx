@@ -48,6 +48,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
+import { LeadScoreBadge } from "./LeadScoreBadge";
 
 interface Lead {
   id: string;
@@ -276,6 +277,9 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Lead Score */}
+              <LeadScoreBadge lead={lead} showDetails />
 
               {/* Snooze Reminders */}
               <div className="space-y-2">
