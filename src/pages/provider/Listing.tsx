@@ -122,6 +122,53 @@ const availableInsurance = [
   "Sliding Scale",
 ];
 
+// Validation schema for required fields
+const validateField = (field: string, value: string | null): string | null => {
+  const trimmedValue = value?.trim() || "";
+  
+  switch (field) {
+    case "name":
+      if (!trimmedValue) return "Facility name is required";
+      if (trimmedValue.length < 2) return "Name must be at least 2 characters";
+      if (trimmedValue.length > 100) return "Name must be less than 100 characters";
+      return null;
+    case "facility_type":
+      if (!trimmedValue) return "Facility type is required";
+      return null;
+    case "address":
+      if (!trimmedValue) return "Street address is required";
+      if (trimmedValue.length > 200) return "Address must be less than 200 characters";
+      return null;
+    case "city":
+      if (!trimmedValue) return "City is required";
+      if (trimmedValue.length > 100) return "City must be less than 100 characters";
+      return null;
+    case "state":
+      if (!trimmedValue) return "State is required";
+      return null;
+    case "zip_code":
+      if (!trimmedValue) return "ZIP code is required";
+      if (!/^\d{5}(-\d{4})?$/.test(trimmedValue)) return "Enter a valid ZIP code (e.g., 12345)";
+      return null;
+    case "phone":
+      if (!trimmedValue) return "Phone number is required";
+      if (!/^[\d\s\-\(\)\+]{10,}$/.test(trimmedValue)) return "Enter a valid phone number";
+      return null;
+    case "email":
+      if (trimmedValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
+        return "Enter a valid email address";
+      }
+      return null;
+    case "website":
+      if (trimmedValue && !/^(https?:\/\/)?[\w\-]+(\.[\w\-]+)+/.test(trimmedValue)) {
+        return "Enter a valid website URL";
+      }
+      return null;
+    default:
+      return null;
+  }
+};
+
 export default function ProviderListingPage() {
   const queryClient = useQueryClient();
   const [facility, setFacility] = useState<Facility | null>(null);
@@ -130,6 +177,8 @@ export default function ProviderListingPage() {
   const [showSaved, setShowSaved] = useState(false);
   const [newService, setNewService] = useState("");
   const [newInsurance, setNewInsurance] = useState("");
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
   const { toast } = useToast();
   const { selectedFacility } = useSelectedFacility();
 
@@ -250,6 +299,16 @@ export default function ProviderListingPage() {
   const handleSave = async () => {
     if (!facility) return;
     
+    // Validate all fields before saving
+    if (!validateAllFields()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the highlighted errors before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Optimistic update: immediately update cache and UI state
     const previousData = queryClient.getQueryData(["facility-listing", selectedFacility?.id]);
     
@@ -321,7 +380,46 @@ export default function ProviderListingPage() {
     if (facility) {
       setFacility({ ...facility, [field]: value });
       setHasChanges(true);
+      
+      // Validate on change if field has been touched
+      if (touchedFields.has(field)) {
+        const error = validateField(field, value);
+        setFieldErrors(prev => ({ ...prev, [field]: error }));
+      }
     }
+  };
+
+  const handleFieldBlur = (field: string, value: string | null) => {
+    setTouchedFields(prev => new Set(prev).add(field));
+    const error = validateField(field, value);
+    setFieldErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  const validateAllFields = (): boolean => {
+    if (!facility) return false;
+    
+    const requiredFields = ["name", "facility_type", "address", "city", "state", "zip_code", "phone"];
+    const errors: Record<string, string | null> = {};
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+      const error = validateField(field, facility[field as keyof Facility] as string | null);
+      errors[field] = error;
+      if (error) isValid = false;
+    });
+    
+    // Also validate optional fields for format
+    const optionalFields = ["email", "website"];
+    optionalFields.forEach(field => {
+      const error = validateField(field, facility[field as keyof Facility] as string | null);
+      errors[field] = error;
+      if (error) isValid = false;
+    });
+    
+    setFieldErrors(errors);
+    setTouchedFields(new Set([...requiredFields, ...optionalFields]));
+    
+    return isValid;
   };
 
   // Add service
@@ -591,8 +689,12 @@ export default function ProviderListingPage() {
                     id="name"
                     value={facility.name}
                     onChange={(e) => updateField("name", e.target.value)}
-                    className="h-10"
+                    onBlur={(e) => handleFieldBlur("name", e.target.value)}
+                    className={`h-10 ${fieldErrors.name && touchedFields.has("name") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
+                  {fieldErrors.name && touchedFields.has("name") && (
+                    <p className="text-xs text-destructive">{fieldErrors.name}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -601,9 +703,12 @@ export default function ProviderListingPage() {
                   </Label>
                   <Select
                     value={facility.facility_type}
-                    onValueChange={(value) => updateField("facility_type", value)}
+                    onValueChange={(value) => {
+                      updateField("facility_type", value);
+                      handleFieldBlur("facility_type", value);
+                    }}
                   >
-                    <SelectTrigger className="h-10">
+                    <SelectTrigger className={`h-10 ${fieldErrors.facility_type && touchedFields.has("facility_type") ? "border-destructive focus-visible:ring-destructive" : ""}`}>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent className="bg-card">
@@ -614,6 +719,9 @@ export default function ProviderListingPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {fieldErrors.facility_type && touchedFields.has("facility_type") && (
+                    <p className="text-xs text-destructive">{fieldErrors.facility_type}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -657,8 +765,12 @@ export default function ProviderListingPage() {
                     id="address"
                     value={facility.address}
                     onChange={(e) => updateField("address", e.target.value)}
-                    className="h-10"
+                    onBlur={(e) => handleFieldBlur("address", e.target.value)}
+                    className={`h-10 ${fieldErrors.address && touchedFields.has("address") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
+                  {fieldErrors.address && touchedFields.has("address") && (
+                    <p className="text-xs text-destructive">{fieldErrors.address}</p>
+                  )}
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
@@ -670,8 +782,12 @@ export default function ProviderListingPage() {
                       id="city"
                       value={facility.city}
                       onChange={(e) => updateField("city", e.target.value)}
-                      className="h-10"
+                      onBlur={(e) => handleFieldBlur("city", e.target.value)}
+                      className={`h-10 ${fieldErrors.city && touchedFields.has("city") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
+                    {fieldErrors.city && touchedFields.has("city") && (
+                      <p className="text-xs text-destructive">{fieldErrors.city}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state" className="text-xs font-medium">
@@ -679,9 +795,12 @@ export default function ProviderListingPage() {
                     </Label>
                     <Select
                       value={facility.state}
-                      onValueChange={(value) => updateField("state", value)}
+                      onValueChange={(value) => {
+                        updateField("state", value);
+                        handleFieldBlur("state", value);
+                      }}
                     >
-                      <SelectTrigger className="h-10">
+                      <SelectTrigger className={`h-10 ${fieldErrors.state && touchedFields.has("state") ? "border-destructive focus-visible:ring-destructive" : ""}`}>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent className="bg-card max-h-[200px]">
@@ -692,6 +811,9 @@ export default function ProviderListingPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {fieldErrors.state && touchedFields.has("state") && (
+                      <p className="text-xs text-destructive">{fieldErrors.state}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="zip" className="text-xs font-medium">
@@ -701,8 +823,12 @@ export default function ProviderListingPage() {
                       id="zip"
                       value={facility.zip_code}
                       onChange={(e) => updateField("zip_code", e.target.value)}
-                      className="h-10"
+                      onBlur={(e) => handleFieldBlur("zip_code", e.target.value)}
+                      className={`h-10 ${fieldErrors.zip_code && touchedFields.has("zip_code") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
+                    {fieldErrors.zip_code && touchedFields.has("zip_code") && (
+                      <p className="text-xs text-destructive">{fieldErrors.zip_code}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -733,10 +859,14 @@ export default function ProviderListingPage() {
                         id="phone"
                         value={facility.phone}
                         onChange={(e) => updateField("phone", e.target.value)}
-                        className="h-10 pl-10"
+                        onBlur={(e) => handleFieldBlur("phone", e.target.value)}
+                        className={`h-10 pl-10 ${fieldErrors.phone && touchedFields.has("phone") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                         placeholder="(555) 123-4567"
                       />
                     </div>
+                    {fieldErrors.phone && touchedFields.has("phone") && (
+                      <p className="text-xs text-destructive">{fieldErrors.phone}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-xs font-medium">
@@ -749,10 +879,14 @@ export default function ProviderListingPage() {
                         type="email"
                         value={facility.email || ""}
                         onChange={(e) => updateField("email", e.target.value)}
-                        className="h-10 pl-10"
+                        onBlur={(e) => handleFieldBlur("email", e.target.value)}
+                        className={`h-10 pl-10 ${fieldErrors.email && touchedFields.has("email") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                         placeholder="contact@facility.com"
                       />
                     </div>
+                    {fieldErrors.email && touchedFields.has("email") && (
+                      <p className="text-xs text-destructive">{fieldErrors.email}</p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -766,10 +900,14 @@ export default function ProviderListingPage() {
                       type="url"
                       value={facility.website || ""}
                       onChange={(e) => updateField("website", e.target.value)}
+                      onBlur={(e) => handleFieldBlur("website", e.target.value)}
                       placeholder="https://www.yourfacility.com"
-                      className="h-10 pl-10"
+                      className={`h-10 pl-10 ${fieldErrors.website && touchedFields.has("website") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
                   </div>
+                  {fieldErrors.website && touchedFields.has("website") && (
+                    <p className="text-xs text-destructive">{fieldErrors.website}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
