@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.send-support-request]
 verify_jwt = true
+
+[functions.send-profile-reminders]
+verify_jwt = false
