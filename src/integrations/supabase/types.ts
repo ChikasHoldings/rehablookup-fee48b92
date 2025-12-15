@@ -417,6 +417,7 @@ export type Database = {
           preferred_contact: string
           primary_substance: string[] | null
           quality_flag: string | null
+          snooze_until: string | null
           source: string | null
           status: string
           urgency: string | null
@@ -444,6 +445,7 @@ export type Database = {
           preferred_contact?: string
           primary_substance?: string[] | null
           quality_flag?: string | null
+          snooze_until?: string | null
           source?: string | null
           status?: string
           urgency?: string | null
@@ -471,6 +473,7 @@ export type Database = {
           preferred_contact?: string
           primary_substance?: string[] | null
           quality_flag?: string | null
+          snooze_until?: string | null
           source?: string | null
           status?: string
           urgency?: string | null

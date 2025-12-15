@@ -73,6 +73,7 @@ interface Lead {
   facility_id: string;
   source: string | null;
   email_verified: boolean | null;
+  snooze_until: string | null;
   // Qualified intake fields
   who_seeking_help: string | null;
   location_zip: string | null;

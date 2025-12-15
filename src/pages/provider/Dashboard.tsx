@@ -44,6 +44,7 @@ interface Lead {
   facility_id: string;
   source: string | null;
   email_verified: boolean | null;
+  snooze_until: string | null;
   who_seeking_help: string | null;
   location_zip: string | null;
   location_city_state: string | null;

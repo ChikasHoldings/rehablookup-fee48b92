@@ -23,6 +23,7 @@ interface LeadWithFacility {
   facility_id: string;
   preferred_contact: string;
   follow_up_reminder_sent_at: string | null;
+  snooze_until: string | null;
   facilities: {
     name: string;
     user_id: string;
@@ -35,6 +36,11 @@ interface ProviderLeads {
   facilityName: string;
   leads: { lead: LeadWithFacility; tier: typeof REMINDER_TIERS[0] }[];
   userId: string;
+}
+
+function isLeadSnoozed(snoozeUntil: string | null): boolean {
+  if (!snoozeUntil) return false;
+  return new Date(snoozeUntil).getTime() > Date.now();
 }
 
 function getReminderTier(createdAt: string, lastReminderAt: string | null): typeof REMINDER_TIERS[0] | null {
@@ -151,6 +157,7 @@ const handler = async (req: Request): Promise<Response> => {
         facility_id,
         preferred_contact,
         follow_up_reminder_sent_at,
+        snooze_until,
         facilities!inner (
           name,
           user_id
@@ -173,10 +180,18 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Filter leads that are eligible for a reminder tier
+    // Filter leads that are eligible for a reminder tier (and not snoozed)
     const leadsWithTiers: { lead: LeadWithFacility; tier: typeof REMINDER_TIERS[0] }[] = [];
+    let snoozedCount = 0;
     
     for (const lead of potentialLeads as LeadWithFacility[]) {
+      // Skip snoozed leads
+      if (isLeadSnoozed(lead.snooze_until)) {
+        snoozedCount++;
+        console.log(`[FOLLOWUP-REMINDERS] Skipping snoozed lead ${lead.id} (until ${lead.snooze_until})`);
+        continue;
+      }
+      
       const tier = getReminderTier(lead.created_at, lead.follow_up_reminder_sent_at);
       if (tier) {
         leadsWithTiers.push({ lead, tier });
@@ -184,14 +199,14 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (leadsWithTiers.length === 0) {
-      console.log("[FOLLOWUP-REMINDERS] No leads eligible for reminders at this time");
+      console.log(`[FOLLOWUP-REMINDERS] No leads eligible for reminders at this time (${snoozedCount} snoozed)`);
       return new Response(
-        JSON.stringify({ message: "No reminders needed", count: 0 }),
+        JSON.stringify({ message: "No reminders needed", count: 0, snoozed: snoozedCount }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log(`[FOLLOWUP-REMINDERS] Found ${leadsWithTiers.length} leads needing reminders`);
+    console.log(`[FOLLOWUP-REMINDERS] Found ${leadsWithTiers.length} leads needing reminders (${snoozedCount} snoozed)`);
 
     // Group leads by provider (user_id)
     const providerLeadsMap = new Map<string, ProviderLeads>();
