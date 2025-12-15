@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { RequestHelpStepper } from "@/components/request-help/RequestHelpStepper";
@@ -58,6 +58,13 @@ export default function RequestHelp() {
   const [facilityId, setFacilityId] = useState<string | null>(null);
   const [facilityName, setFacilityName] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const formSectionRef = useRef<HTMLDivElement>(null);
+
+  const scrollToFormSection = () => {
+    setTimeout(() => {
+      formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
 
   useEffect(() => {
     const fId = searchParams.get("facility");
@@ -71,11 +78,17 @@ export default function RequestHelp() {
   };
 
   const nextStep = () => {
-    if (currentStep < 4) setCurrentStep(prev => prev + 1);
+    if (currentStep < 4) {
+      setCurrentStep(prev => prev + 1);
+      scrollToFormSection();
+    }
   };
 
   const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(prev => prev - 1);
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+      scrollToFormSection();
+    }
   };
 
   const handleSuccess = () => {
@@ -115,7 +128,7 @@ export default function RequestHelp() {
           <RequestHelpStepper currentStep={currentStep} totalSteps={4} />
 
           {/* Form Steps */}
-          <div className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm">
+          <div ref={formSectionRef} className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm scroll-mt-4">
             {currentStep === 1 && (
               <StepWhoNeedsHelp
                 formData={formData}
