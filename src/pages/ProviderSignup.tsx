@@ -33,6 +33,10 @@ import {
   Lock,
   Image as ImageIcon,
   ShieldCheck,
+  Sparkles,
+  Users,
+  TrendingUp,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
@@ -535,6 +539,53 @@ export default function ProviderSignup() {
       <main className="flex-1 py-8 md:py-12">
         <div className="container">
           <div className="mx-auto max-w-2xl">
+            {/* Value Proposition Banner */}
+            {currentStep === 1 && (
+              <div className="mb-8 rounded-xl border border-accent/30 bg-gradient-to-br from-accent/5 via-background to-primary/5 p-6 md:p-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/15">
+                    <Sparkles className="h-4 w-4 text-accent" />
+                  </div>
+                  <span className="text-sm font-semibold text-accent uppercase tracking-wide">Exclusive Leads</span>
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-2">
+                  Connect with families seeking treatment
+                </h2>
+                <p className="text-muted-foreground mb-5">
+                  No shared leads. No bidding. No race to call. Each lead is delivered exclusively to one provider.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Users className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-foreground">Exclusive Leads</p>
+                      <p className="text-xs text-muted-foreground">Never shared between providers</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-foreground">Qualified Inquiries</p>
+                      <p className="text-xs text-muted-foreground">Pre-screened and verified</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Shield className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-foreground">No Commitment</p>
+                      <p className="text-xs text-muted-foreground">Free to list, upgrade anytime</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Header & Progress */}
             <div className="mb-8">
               <div className="text-center mb-6">
