@@ -335,6 +335,8 @@ export default function ProviderListingPage() {
 
     if (!error) {
       queryClient.setQueryData(["facility-listing", selectedFacility?.id], facility);
+      // Invalidate provider-data to update onboarding checklist
+      queryClient.invalidateQueries({ queryKey: ["provider-data"] });
       setHasChanges(false);
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);
@@ -440,6 +442,10 @@ export default function ProviderListingPage() {
         variant: "destructive",
       });
     } else {
+      // Invalidate provider-data to update onboarding checklist in real-time
+      queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+      queryClient.invalidateQueries({ queryKey: ["facility-services-count", selectedFacility?.id] });
+      queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", selectedFacility?.id] });
       setTimeout(() => setShowSaved(false), 2000);
       toast({
         title: "Changes saved",
@@ -521,6 +527,7 @@ export default function ProviderListingPage() {
     } else {
       setNewService("");
       refetchServices();
+      queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
       toast({ title: "Service added" });
     }
   };
@@ -536,6 +543,9 @@ export default function ProviderListingPage() {
       toast({ title: "Failed to remove service", variant: "destructive" });
     } else {
       refetchServices();
+      if (facility) {
+        queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
+      }
     }
   };
 
@@ -552,6 +562,7 @@ export default function ProviderListingPage() {
     } else {
       setNewInsurance("");
       refetchInsurance();
+      queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
       toast({ title: "Insurance added" });
     }
   };
@@ -567,6 +578,9 @@ export default function ProviderListingPage() {
       toast({ title: "Failed to remove insurance", variant: "destructive" });
     } else {
       refetchInsurance();
+      if (facility) {
+        queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
+      }
     }
   };
 
