@@ -14,6 +14,7 @@ import {
   Ban,
   BadgeCheck,
   Users,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Facility = {
   id: string;
@@ -73,6 +75,7 @@ export default function AdminProviders() {
   const [adminNotes, setAdminNotes] = useState("");
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Fetch total count for pagination
   const { data: totalCount } = useQuery({
@@ -129,11 +132,36 @@ export default function AdminProviders() {
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
     setCurrentPage(1);
+    setSelectedIds(new Set());
   };
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
+    setSelectedIds(new Set());
+  };
+
+  // Selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && providers) {
+      setSelectedIds(new Set(providers.map((p) => p.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSet = new Set(selectedIds);
+    if (checked) {
+      newSet.add(id);
+    } else {
+      newSet.delete(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
   };
 
   // Fetch lead counts for each provider
@@ -191,6 +219,71 @@ export default function AdminProviders() {
       toast.error("Failed to update provider");
     },
   });
+
+  // Bulk update mutation
+  const bulkUpdateProviders = useMutation({
+    mutationFn: async ({
+      ids,
+      updates,
+      actionType,
+    }: {
+      ids: string[];
+      updates: Partial<Facility>;
+      actionType: string;
+    }) => {
+      const { error } = await supabase
+        .from("facilities")
+        .update(updates)
+        .in("id", ids);
+      if (error) throw error;
+
+      // Log admin action for each provider
+      const { data: { user } } = await supabase.auth.getUser();
+      const auditEntries = ids.map((id) => ({
+        admin_user_id: user?.id,
+        action_type: `bulk_${actionType}`,
+        target_type: "facility",
+        target_id: id,
+        details: updates,
+      }));
+      await supabase.from("admin_audit_log").insert(auditEntries);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-providers"] });
+      toast.success(`${variables.ids.length} providers updated successfully`);
+      setSelectedIds(new Set());
+    },
+    onError: () => {
+      toast.error("Failed to update providers");
+    },
+  });
+
+  const handleBulkApprove = () => {
+    const ids = Array.from(selectedIds);
+    bulkUpdateProviders.mutate({
+      ids,
+      updates: { status: "approved" },
+      actionType: "approved",
+    });
+  };
+
+  const handleBulkSuspend = () => {
+    const ids = Array.from(selectedIds);
+    bulkUpdateProviders.mutate({
+      ids,
+      updates: { suspended: true },
+      actionType: "suspended",
+    });
+  };
+
+  const handleBulkUnsuspend = () => {
+    const ids = Array.from(selectedIds);
+    bulkUpdateProviders.mutate({
+      ids,
+      updates: { suspended: false },
+      actionType: "unsuspended",
+    });
+  };
 
   const handleStatusChange = (id: string, newStatus: string) => {
     updateProvider.mutate({
@@ -276,6 +369,55 @@ export default function AdminProviders() {
         </CardContent>
       </Card>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-4">
+          <span className="text-sm font-medium">
+            {selectedIds.size} selected
+          </span>
+          <div className="h-4 w-px bg-slate-600" />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white hover:bg-slate-800"
+            onClick={handleBulkApprove}
+            disabled={bulkUpdateProviders.isPending}
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Approve
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white hover:bg-slate-800"
+            onClick={handleBulkSuspend}
+            disabled={bulkUpdateProviders.isPending}
+          >
+            <Ban className="h-4 w-4 mr-2" />
+            Suspend
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white hover:bg-slate-800"
+            onClick={handleBulkUnsuspend}
+            disabled={bulkUpdateProviders.isPending}
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Unsuspend
+          </Button>
+          <div className="h-4 w-px bg-slate-600" />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white hover:bg-slate-800"
+            onClick={clearSelection}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
       {/* Providers Table */}
       <Card>
         <CardHeader>
@@ -293,12 +435,30 @@ export default function AdminProviders() {
             </div>
           ) : providers && providers.length > 0 ? (
             <div className="space-y-2">
+              {/* Select All */}
+              <div className="flex items-center gap-3 px-4 py-2 border-b">
+                <Checkbox
+                  checked={providers.length > 0 && selectedIds.size === providers.length}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {selectedIds.size === 0 ? "Select all" : `${selectedIds.size} of ${providers.length} selected`}
+                </span>
+              </div>
               {providers.map((provider) => (
                 <div
                   key={provider.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-muted/50 transition-colors"
+                  className={`flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-muted/50 transition-colors ${
+                    selectedIds.has(provider.id) ? "ring-2 ring-primary bg-primary/5" : ""
+                  }`}
                 >
                   <div className="flex items-center gap-4">
+                    <Checkbox
+                      checked={selectedIds.has(provider.id)}
+                      onCheckedChange={(checked) => handleSelectOne(provider.id, !!checked)}
+                      aria-label={`Select ${provider.name}`}
+                    />
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={provider.logo_url || undefined} />
                       <AvatarFallback className="bg-slate-100 text-slate-600">
