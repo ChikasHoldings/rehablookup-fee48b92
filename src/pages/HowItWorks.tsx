@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import {
   Search,
@@ -80,6 +81,15 @@ const benefits = [
 const HowItWorks = () => {
   return (
     <Layout>
+      <SEO
+        title="How It Works - Find Treatment in 3 Simple Steps"
+        description="Learn how RehabLookup helps you find the right addiction treatment center. Search, compare, and connect with verified facilities in three easy steps."
+        canonical="/how-it-works"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "How It Works", url: "/how-it-works" },
+        ]}
+      />
       {/* Hero - Navy background */}
       <section className="bg-primary py-12 md:py-16">
         <div className="container text-center">

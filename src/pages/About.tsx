@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import {
   Heart,
@@ -44,6 +45,15 @@ const values = [
 const About = () => {
   return (
     <Layout>
+      <SEO
+        title="About RehabLookup - Trusted Addiction Treatment Directory"
+        description="RehabLookup connects families with verified addiction treatment centers. Learn about our mission, values, and commitment to transparency in helping you find recovery."
+        canonical="/about"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "About", url: "/about" },
+        ]}
+      />
       {/* Hero - Navy background */}
       <section className="bg-primary py-16 md:py-20">
         <div className="container">

@@ -1,10 +1,17 @@
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 const PrivacyPolicy = () => {
   return (
     <Layout>
+      <SEO
+        title="Privacy Policy"
+        description="Read RehabLookup's privacy policy. Learn how we collect, use, and protect your personal information when using our addiction treatment directory."
+        canonical="/privacy-policy"
+        noindex
+      />
       {/* Header */}
       <section className="border-b border-border bg-secondary/30 py-12">
         <div className="container">

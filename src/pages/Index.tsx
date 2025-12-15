@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
@@ -187,6 +188,11 @@ const Index = () => {
 
   return (
     <Layout>
+      <SEO
+        title="Find Addiction Treatment Centers Near You | RehabLookup"
+        description="Search verified addiction treatment centers and find the right path to recovery. Compare rehab facilities, check insurance coverage, and get help today. 24/7 support available."
+        canonical="/"
+      />
       {/* Hero Section - Light Background with Image */}
       <section className="relative flex min-h-[70vh] md:min-h-[75vh] lg:min-h-[80vh] overflow-hidden">
         {/* Background Image */}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -190,6 +191,15 @@ const RehabCenters = () => {
 
   return (
     <Layout>
+      <SEO
+        title="Find Rehab Centers Near You"
+        description="Search and compare verified addiction treatment centers. Filter by location, treatment type, and insurance. Find the right rehab facility for your recovery journey."
+        canonical="/rehab-centers"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Find Rehab", url: "/rehab-centers" },
+        ]}
+      />
       {/* Hero Header */}
       <section className="relative overflow-hidden bg-primary py-8 md:py-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/5 via-transparent to-transparent" />

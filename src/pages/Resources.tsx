@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import {
   BookOpen,
@@ -179,6 +180,15 @@ const Resources = () => {
 
   return (
     <Layout>
+      <SEO
+        title="Addiction Recovery Resources & Guides"
+        description="Expert articles and guides on addiction recovery, treatment options, family support, mental health, and relapse prevention. Free educational resources for your recovery journey."
+        canonical="/resources"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Resources", url: "/resources" },
+        ]}
+      />
       {/* Hero */}
       <section className="bg-primary py-12 md:py-16">
         <div className="container text-center">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { SEO, generateLocalBusinessSchema } from "@/components/SEO";
 import { ContactRequestForm } from "@/components/forms/ContactRequestForm";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,28 @@ const TreatmentCenterProfile = () => {
 
   return (
     <Layout>
+      <SEO
+        title={`${center.name} - Addiction Treatment in ${center.city}, ${center.state}`}
+        description={center.description}
+        canonical={`/rehab-centers/${center.id}`}
+        structuredData={generateLocalBusinessSchema({
+          name: center.name,
+          address: center.address,
+          city: center.city,
+          state: center.state,
+          zipCode: center.zipCode,
+          phone: center.phone,
+          description: center.description,
+          rating: center.rating,
+          reviewCount: center.reviewCount,
+          services: center.treatmentTypes,
+        })}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Find Rehab", url: "/rehab-centers" },
+          { name: center.name, url: `/rehab-centers/${center.id}` },
+        ]}
+      />
       {/* Sticky Mobile CTA */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card p-3 shadow-lg md:hidden">
         <div className="flex gap-2">

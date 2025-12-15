@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
+import { SEO } from "@/components/SEO";
 import {
   Building2,
   Users,
@@ -71,6 +72,15 @@ const listingFeatures = [
 const ForProviders = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <SEO
+        title="List Your Treatment Center - For Providers"
+        description="Partner with RehabLookup to increase your treatment center's visibility. Connect with families seeking quality addiction care. Free listing available."
+        canonical="/for-providers"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "For Providers", url: "/for-providers" },
+        ]}
+      />
       <Header
         navLinks={providerNavLinks}
         ctaLink="/provider-signup"
