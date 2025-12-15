@@ -727,6 +727,59 @@ export default function ProviderKnowledgeBasePage() {
                     day: 'numeric' 
                   })}
                 </p>
+
+                {/* Related Articles */}
+                {(() => {
+                  const relatedArticles = articles
+                    .filter(a => 
+                      a.id !== selectedArticle.id && 
+                      (a.category === selectedArticle.category || 
+                       a.tags.some(tag => selectedArticle.tags.includes(tag)))
+                    )
+                    .slice(0, 3);
+                  
+                  if (relatedArticles.length === 0) return null;
+                  
+                  return (
+                    <div className="mt-6 pt-4 border-t">
+                      <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        Related Articles
+                      </h4>
+                      <div className="space-y-2">
+                        {relatedArticles.map((article) => (
+                          <button
+                            key={article.id}
+                            onClick={() => setSelectedArticle(article)}
+                            className="w-full text-left p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                          >
+                            <p className="text-sm font-medium group-hover:text-primary transition-colors line-clamp-1">
+                              {article.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                              {article.excerpt}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-2.5 w-2.5" />
+                                {article.readTime} min
+                              </span>
+                              {(() => {
+                                const cat = getCategoryInfo(article.category);
+                                if (!cat) return null;
+                                return (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                                    {cat.name}
+                                  </Badge>
+                                );
+                              })()}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </ScrollArea>
             </>
           )}
