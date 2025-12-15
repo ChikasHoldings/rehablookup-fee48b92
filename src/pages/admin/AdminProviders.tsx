@@ -885,8 +885,8 @@ export default function AdminProviders() {
 
       {/* Provider Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
+          <DialogHeader className="p-6 pb-0 flex-shrink-0">
             <div className="flex items-start gap-4">
               <Avatar className="h-16 w-16 border-2 border-background shadow-lg">
                 <AvatarImage src={selectedProvider?.logo_url || undefined} />
@@ -900,10 +900,10 @@ export default function AdminProviders() {
                   {selectedProvider?.verified && <BadgeCheck className="h-5 w-5 text-blue-500" />}
                   {selectedProvider?.featured && <Star className="h-5 w-5 text-amber-500 fill-amber-500" />}
                 </div>
-                <p className="text-muted-foreground flex items-center gap-1 mt-1 text-sm">
+                <DialogDescription className="text-muted-foreground flex items-center gap-1 mt-1 text-sm">
                   <MapPin className="h-4 w-4" />
                   {selectedProvider?.city}, {selectedProvider?.state}
-                </p>
+                </DialogDescription>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   {selectedProvider && getStatusBadge(selectedProvider)}
                   {subscriptionData && getPlanBadge(subscriptionData.plan)}
@@ -913,8 +913,8 @@ export default function AdminProviders() {
             </div>
           </DialogHeader>
 
-          <Tabs value={detailTab} onValueChange={setDetailTab} className="flex-1">
-            <div className="px-6 border-b">
+          <Tabs value={detailTab} onValueChange={setDetailTab} className="flex-1 flex flex-col min-h-0">
+            <div className="px-6 border-b flex-shrink-0">
               <TabsList className="h-12 w-full justify-start bg-transparent border-none p-0 gap-4">
                 <TabsTrigger value="overview" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
                   <Eye className="h-4 w-4 mr-2" />
@@ -936,9 +936,9 @@ export default function AdminProviders() {
               </TabsList>
             </div>
 
-            <ScrollArea className="max-h-[calc(90vh-220px)]">
+            <ScrollArea className="flex-1 min-h-0">
               {/* Overview Tab */}
-              <TabsContent value="overview" className="p-6 space-y-6 m-0">
+              <TabsContent value="overview" className="p-6 space-y-6 m-0 data-[state=inactive]:hidden">
                 {/* Quick Actions */}
                 <div className="flex flex-wrap gap-2">
                   {selectedProvider?.status === "pending" && (
@@ -1278,7 +1278,7 @@ export default function AdminProviders() {
               </TabsContent>
 
               {/* Leads Tab */}
-              <TabsContent value="leads" className="p-6 m-0">
+              <TabsContent value="leads" className="p-6 m-0 data-[state=inactive]:hidden">
                 {isLoadingLeads ? (
                   <div className="space-y-3">
                     {[...Array(5)].map((_, i) => (
@@ -1339,7 +1339,7 @@ export default function AdminProviders() {
               </TabsContent>
 
               {/* Subscription Tab */}
-              <TabsContent value="subscription" className="p-6 space-y-6 m-0">
+              <TabsContent value="subscription" className="p-6 space-y-6 m-0 data-[state=inactive]:hidden">
                 {isLoadingSubscription ? (
                   <div className="space-y-4">
                     <Skeleton className="h-24 w-full" />
@@ -1450,7 +1450,7 @@ export default function AdminProviders() {
               </TabsContent>
 
               {/* Contact Tab */}
-              <TabsContent value="contact" className="p-6 space-y-6 m-0">
+              <TabsContent value="contact" className="p-6 space-y-6 m-0 data-[state=inactive]:hidden">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
