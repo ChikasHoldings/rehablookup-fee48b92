@@ -60,7 +60,7 @@ export function StepTreatmentNeeds({ formData, updateFormData, onNext, onBack }:
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-1">Treatment Needs</h2>
         <p className="text-sm text-muted-foreground">Help us understand what type of care is needed.</p>

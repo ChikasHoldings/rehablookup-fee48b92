@@ -39,7 +39,7 @@ export function StepWhoNeedsHelp({ formData, updateFormData, onNext }: StepWhoNe
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-1">Who Needs Help?</h2>
         <p className="text-sm text-muted-foreground">Tell us a bit about the situation so we can find the best options.</p>
