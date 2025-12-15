@@ -11,10 +11,12 @@ const corsHeaders = {
 };
 
 // Plan configuration matching check-subscription
-const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number }> = {
-  basic: { product_id: null, lead_limit: 0 },
-  professional: { product_id: "prod_TbalLOPujTIoUe", lead_limit: 25 },
-  featured: { product_id: "prod_TbalOeJZA2ZoJl", lead_limit: 75 },
+// Note: For qualified leads, Basic plan gets 4 leads/month, but qualified leads are only for paid plans
+// Basic plan users can receive direct leads from their profile but qualified leads go to paid subscribers first
+const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number; qualified_lead_limit: number }> = {
+  basic: { product_id: null, lead_limit: 4, qualified_lead_limit: 4 },
+  professional: { product_id: "prod_TbalLOPujTIoUe", lead_limit: 25, qualified_lead_limit: 25 },
+  featured: { product_id: "prod_TbalOeJZA2ZoJl", lead_limit: 75, qualified_lead_limit: 75 },
 };
 
 interface QualifiedLeadRequest {
@@ -67,7 +69,7 @@ async function checkProviderLeadCap(
     // Find Stripe customer by email
     const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
     
-    let leadLimit = PLAN_CONFIG.basic.lead_limit; // Default to 0
+    let leadLimit = PLAN_CONFIG.basic.qualified_lead_limit; // Default to 4 for Basic
     let planName = "basic";
     
     if (customers.data.length > 0) {
@@ -86,18 +88,19 @@ async function checkProviderLeadCap(
         
         // Determine lead limit based on product
         if (productId === PLAN_CONFIG.professional.product_id) {
-          leadLimit = PLAN_CONFIG.professional.lead_limit;
+          leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
           planName = "professional";
         } else if (productId === PLAN_CONFIG.featured.product_id) {
-          leadLimit = PLAN_CONFIG.featured.lead_limit;
+          leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
           planName = "featured";
         }
       }
     }
     
-    // If no paid plan, they can't receive leads
+    // All plans now have lead limits (Basic: 4, Professional: 25, Featured: 75)
+    // Check if provider has exceeded their limit
     if (leadLimit === 0) {
-      return { canReceiveLeads: false, reason: "Provider on Basic plan (0 leads)", leadLimit: 0, usedLeads: 0, planName };
+      return { canReceiveLeads: false, reason: "Provider plan not configured", leadLimit: 0, usedLeads: 0, planName };
     }
     
     // Count leads this month for all facilities owned by this provider
