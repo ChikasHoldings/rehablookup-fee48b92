@@ -110,7 +110,7 @@ export function AdminShell() {
       <div className="lg:hidden fixed bottom-4 right-4 z-50">
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button size="icon" className="h-14 w-14 rounded-full shadow-lg bg-slate-900 hover:bg-slate-800">
+            <Button size="icon" className="h-14 w-14 rounded-full shadow-lg bg-slate-900 hover:bg-slate-800 text-white">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
