@@ -4,7 +4,6 @@ import { format, addHours, addDays, isPast, formatDistanceToNow } from "date-fns
 import {
   Phone,
   Mail,
-  Calendar,
   MessageSquare,
   Copy,
   ExternalLink,
@@ -24,8 +23,6 @@ import {
   Bell,
   Zap,
   X,
-  Send,
-  ChevronRight,
 } from "lucide-react";
 import {
   Select,
@@ -43,6 +40,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadScoreBadge } from "./LeadScoreBadge";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
+import { EmailLeadDialog } from "./EmailLeadDialog";
 import { cn } from "@/lib/utils";
 
 export interface Lead {
@@ -98,10 +96,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
   const [newNote, setNewNote] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("details");
-  const [showEmailForm, setShowEmailForm] = useState(false);
-  const [emailTemplate, setEmailTemplate] = useState("welcome");
-  const [emailNote, setEmailNote] = useState("");
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: notes = [] } = useQuery({
@@ -173,26 +168,6 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
     toast.success("Copied");
   };
 
-  const handleSendEmail = async () => {
-    if (!lead) return;
-    setIsSendingEmail(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const { data: profile } = await supabase.from("profiles").select("first_name, last_name").eq("user_id", user.id).single();
-      const senderName = profile ? `${profile.first_name} ${profile.last_name}` : "Provider";
-      const templateNames: Record<string, string> = { welcome: "Welcome & Introduction", followup: "Follow-up", info: "Information Request" };
-      const { error } = await supabase.functions.invoke("send-lead-email", {
-        body: { leadId: lead.id, leadEmail: lead.email, leadName: lead.name, facilityId: lead.facility_id, facilityName: facilityName || "Our Facility", templateId: emailTemplate, templateName: templateNames[emailTemplate] || emailTemplate, customNote: emailNote || null, senderName, senderUserId: user.id },
-      });
-      if (error) throw error;
-      toast.success("Email sent");
-      setShowEmailForm(false);
-      setEmailNote("");
-      queryClient.invalidateQueries({ queryKey: ["lead-emails", lead.id] });
-    } catch { toast.error("Failed to send"); } finally { setIsSendingEmail(false); }
-  };
-
   // Empty state
   if (!lead) {
     return (
@@ -219,45 +194,55 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
     <div className="flex-1 flex flex-col bg-background min-h-0 overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 p-4 border-b bg-gradient-to-r from-muted/50 to-transparent">
-        <div className="flex items-start gap-4">
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <span className="text-lg font-semibold text-primary">
-              {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-lg font-semibold text-foreground truncate">{lead.name}</h2>
-              {lead.source === "Request Help Page" && (
-                <Badge className="bg-primary/10 text-primary border-0 gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  Qualified
-                </Badge>
-              )}
-              {lead.urgency === "immediate" && (
-                <Badge variant="destructive" className="gap-1 animate-pulse">
-                  <Zap className="h-3 w-3" />
-                  Urgent
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5" />
-                {format(new Date(lead.created_at), "MMM d, yyyy")}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-sm font-semibold text-primary">
+                {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
               </span>
-              <span className="text-muted-foreground/50">•</span>
-              <span>{formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}</span>
             </div>
-            <div className="flex items-center gap-2 mt-2">
-              <LeadStatusBadge status={lead.status as LeadStatus} />
-              <LeadScoreBadge lead={lead} />
-              {lead.email_verified && (
-                <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50">
-                  <ShieldCheck className="h-3 w-3" />
-                  Verified
-                </Badge>
-              )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base font-semibold text-foreground truncate">{lead.name}</h2>
+                <LeadScoreBadge lead={lead} size="sm" />
+                {lead.email_verified && (
+                  <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50 h-5 text-[10px] px-1.5">
+                    <ShieldCheck className="h-2.5 w-2.5" />
+                    Verified
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1 hover:text-foreground cursor-pointer" onClick={() => handleCopy(lead.phone, "phone")}>
+                  <Phone className="h-3 w-3" />
+                  {lead.phone}
+                  {copiedField === "phone" && <Check className="h-3 w-3 text-green-600" />}
+                </span>
+                <span className="text-muted-foreground/40">•</span>
+                <span className="flex items-center gap-1 hover:text-foreground cursor-pointer truncate" onClick={() => handleCopy(lead.email, "email")}>
+                  <Mail className="h-3 w-3" />
+                  <span className="truncate max-w-[140px]">{lead.email}</span>
+                  {copiedField === "email" && <Check className="h-3 w-3 text-green-600" />}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <LeadStatusBadge status={lead.status as LeadStatus} />
+                {lead.source === "Request Help Page" && (
+                  <Badge className="bg-primary/10 text-primary border-0 gap-1 h-5 text-[10px] px-1.5">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    Qualified
+                  </Badge>
+                )}
+                {lead.urgency === "immediate" && (
+                  <Badge variant="destructive" className="gap-1 h-5 text-[10px] px-1.5 animate-pulse">
+                    <Zap className="h-2.5 w-2.5" />
+                    Urgent
+                  </Badge>
+                )}
+                <span className="text-[10px] text-muted-foreground ml-auto">
+                  {formatDistanceToNow(new Date(lead.created_at), { addSuffix: false }).replace("about ", "")} ago
+                </span>
+              </div>
             </div>
           </div>
           <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={onClose}>
@@ -267,20 +252,20 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
       </div>
 
       {/* Quick Actions */}
-      <div className="flex-shrink-0 px-4 py-3 border-b bg-muted/20 flex items-center gap-2 flex-wrap">
-        <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700" asChild>
+      <div className="flex-shrink-0 px-4 py-2.5 border-b bg-muted/20 flex items-center gap-2 flex-wrap">
+        <Button size="sm" className="gap-2 bg-green-600 hover:bg-green-700 h-8" asChild>
           <a href={`tel:${lead.phone}`}>
-            <Phone className="h-4 w-4" />
-            Call {firstName}
+            <Phone className="h-3.5 w-3.5" />
+            Call
           </a>
         </Button>
-        <Button size="sm" variant={showEmailForm ? "secondary" : "outline"} className="gap-2" onClick={() => setShowEmailForm(!showEmailForm)}>
-          <Mail className="h-4 w-4" />
+        <Button size="sm" variant="outline" className="gap-2 h-8" onClick={() => setShowEmailDialog(true)}>
+          <Mail className="h-3.5 w-3.5" />
           Email
         </Button>
         <div className="flex-1" />
         <Select value={lead.status} onValueChange={(v) => updateStatus.mutate(v as LeadStatus)} disabled={updateStatus.isPending}>
-          <SelectTrigger className="w-[140px] h-9">
+          <SelectTrigger className="w-[130px] h-8 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-background">
@@ -289,29 +274,12 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
         </Select>
       </div>
 
-      {/* Inline Email Form */}
-      {showEmailForm && (
-        <div className="flex-shrink-0 p-4 border-b bg-blue-50/50 space-y-3">
-          <Select value={emailTemplate} onValueChange={setEmailTemplate}>
-            <SelectTrigger className="h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-background">
-              <SelectItem value="welcome">Welcome & Introduction</SelectItem>
-              <SelectItem value="followup">Follow-up</SelectItem>
-              <SelectItem value="info">Information Request</SelectItem>
-            </SelectContent>
-          </Select>
-          <Textarea placeholder="Add a personal note..." value={emailNote} onChange={(e) => setEmailNote(e.target.value)} className="min-h-[80px] resize-none" />
-          <div className="flex gap-2">
-            <Button size="sm" className="gap-2" onClick={handleSendEmail} disabled={isSendingEmail}>
-              {isSendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Send Email
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setShowEmailForm(false)}>Cancel</Button>
-          </div>
-        </div>
-      )}
+      {/* Email Dialog */}
+      <EmailLeadDialog
+        open={showEmailDialog}
+        onOpenChange={setShowEmailDialog}
+        lead={lead}
+      />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
