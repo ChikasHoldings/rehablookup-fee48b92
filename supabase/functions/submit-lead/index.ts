@@ -146,6 +146,221 @@ async function checkProviderLeadCap(
   }
 }
 
+// Tier-based email templates with different urgency levels
+function getLeadEmailTemplate(
+  planName: string,
+  facilityName: string,
+  leadName: string,
+  leadPhone: string,
+  leadEmail: string,
+  preferredContact: string,
+  message: string | null,
+  supabaseUrl: string,
+  usedLeads: number,
+  leadLimit: number
+): { subject: string; html: string } {
+  const currentDate = new Date().toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  
+  const firstName = leadName.split(' ')[0];
+  const dashboardUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/leads`;
+  const billingUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/billing`;
+  
+  // Plan-specific styling and messaging
+  const planConfig = {
+    basic: {
+      headerGradient: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
+      headerEmoji: "📩",
+      headerTitle: "New Lead",
+      urgencyLevel: "standard",
+      showUpgradeCTA: true,
+      tipColor: "#f3f4f6",
+      tipBorderColor: "#d1d5db",
+      tipTextColor: "#374151",
+      ctaColor: "#6b7280",
+      ctaGradient: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
+      leadCounterBg: "#fef3c7",
+      leadCounterBorder: "#fcd34d",
+      leadCounterText: "#92400e",
+    },
+    professional: {
+      headerGradient: "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)",
+      headerEmoji: "🎯",
+      headerTitle: "New Qualified Lead",
+      urgencyLevel: "priority",
+      showUpgradeCTA: true,
+      tipColor: "#dcfce7",
+      tipBorderColor: "#bbf7d0",
+      tipTextColor: "#166534",
+      ctaColor: "#16a34a",
+      ctaGradient: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+      leadCounterBg: "#dbeafe",
+      leadCounterBorder: "#93c5fd",
+      leadCounterText: "#1e40af",
+    },
+    featured: {
+      headerGradient: "linear-gradient(135deg, #C9A227 0%, #b8860b 100%)",
+      headerEmoji: "⭐",
+      headerTitle: "Priority Lead Alert",
+      urgencyLevel: "urgent",
+      showUpgradeCTA: false,
+      tipColor: "#fef3c7",
+      tipBorderColor: "#fcd34d",
+      tipTextColor: "#92400e",
+      ctaColor: "#C9A227",
+      ctaGradient: "linear-gradient(135deg, #C9A227 0%, #b8860b 100%)",
+      leadCounterBg: "#fef3c7",
+      leadCounterBorder: "#fcd34d",
+      leadCounterText: "#92400e",
+    }
+  };
+  
+  const config = planConfig[planName as keyof typeof planConfig] || planConfig.basic;
+  const remainingLeads = leadLimit - usedLeads;
+  const usagePercentage = leadLimit > 0 ? Math.round((usedLeads / leadLimit) * 100) : 0;
+  
+  // Different tip messages based on plan
+  const tipMessages = {
+    basic: "💡 Upgrade to Professional for priority support and 25 qualified leads/month",
+    professional: "⚡ Quick tip: Respond within 5 minutes to increase your conversion rate by 400%!",
+    featured: "🌟 As a Featured provider, you get priority placement and maximum visibility!"
+  };
+  
+  const tip = tipMessages[planName as keyof typeof tipMessages] || tipMessages.basic;
+  
+  // Subject line varies by plan
+  const subjectPrefixes = {
+    basic: "📩 New Lead:",
+    professional: "🎯 Qualified Lead:",
+    featured: "⭐ Priority Lead:"
+  };
+  
+  const subjectPrefix = subjectPrefixes[planName as keyof typeof subjectPrefixes] || subjectPrefixes.basic;
+  const subject = `${subjectPrefix} ${leadName} is interested in ${facilityName}`;
+  
+  // Lead usage section for Basic/Professional
+  const leadUsageSection = config.showUpgradeCTA && leadLimit > 0 ? `
+    <div style="background: ${config.leadCounterBg}; border: 1px solid ${config.leadCounterBorder}; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
+      <p style="margin: 0 0 4px 0; font-size: 12px; color: ${config.leadCounterText}; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Lead Usage</p>
+      <p style="margin: 0; font-size: 24px; font-weight: bold; color: ${config.leadCounterText};">${usedLeads} / ${leadLimit}</p>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: ${config.leadCounterText};">
+        ${remainingLeads} leads remaining${usagePercentage >= 80 ? ' ⚠️' : ''}
+      </p>
+      ${planName === 'basic' ? `
+        <a href="${billingUrl}" style="display: inline-block; margin-top: 12px; background: ${config.ctaGradient}; color: #fff; padding: 8px 20px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500;">
+          🚀 Upgrade for More Leads
+        </a>
+      ` : ''}
+    </div>
+  ` : '';
+  
+  // Featured plan exclusive badge
+  const featuredBadge = planName === 'featured' ? `
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #C9A227; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; text-align: center;">
+      <p style="margin: 0; color: #92400e; font-weight: 600; font-size: 14px;">
+        ⭐ Featured Provider Priority Lead ⭐
+      </p>
+    </div>
+  ` : '';
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+  <div style="background: ${config.headerGradient}; padding: 30px; border-radius: 12px 12px 0 0;">
+    <h1 style="color: #fff; margin: 0; font-size: 24px;">${config.headerEmoji} ${config.headerTitle}!</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">Someone is interested in ${facilityName}</p>
+  </div>
+  
+  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
+    <p style="font-size: 14px; color: #6b7280; margin: 0 0 20px 0;">
+      Received on ${currentDate}
+    </p>
+    
+    ${featuredBadge}
+    
+    <div style="background: ${config.tipColor}; border: 1px solid ${config.tipBorderColor}; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <p style="margin: 0; color: ${config.tipTextColor}; font-weight: 600; font-size: 14px;">
+        ${tip}
+      </p>
+    </div>
+    
+    ${leadUsageSection}
+    
+    <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #1B365D;">Contact Details</h2>
+      
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; width: 140px; vertical-align: top;">Name:</td>
+          <td style="padding: 10px 0; font-weight: 600; font-size: 16px;">${leadName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Phone:</td>
+          <td style="padding: 10px 0;">
+            <a href="tel:${leadPhone}" style="color: #1B365D; text-decoration: none; font-weight: 600; font-size: 16px;">${leadPhone}</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Email:</td>
+          <td style="padding: 10px 0;">
+            <a href="mailto:${leadEmail}" style="color: #1B365D; text-decoration: none;">${leadEmail}</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Prefers:</td>
+          <td style="padding: 10px 0;">
+            <span style="background: ${preferredContact === 'call' ? '#dcfce7' : '#dbeafe'}; color: ${preferredContact === 'call' ? '#166534' : '#1e40af'}; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; text-transform: capitalize;">
+              ${preferredContact === 'call' ? '📞 Phone Call' : '✉️ Email'}
+            </span>
+          </td>
+        </tr>
+      </table>
+    </div>
+    
+    ${message ? `
+    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px;">💬 Their Message</h3>
+      <p style="margin: 0; color: #78350f; font-size: 15px; line-height: 1.6;">${message}</p>
+    </div>
+    ` : ''}
+    
+    <div style="text-align: center; margin-top: 28px;">
+      <a href="tel:${leadPhone}" style="display: inline-block; background: ${config.ctaGradient}; color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
+        📞 Call ${firstName} Now
+      </a>
+    </div>
+    
+    <div style="text-align: center; margin-top: 16px;">
+      <a href="mailto:${leadEmail}" style="display: inline-block; background: #fff; color: #1B365D; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 500; border: 2px solid #1B365D;">
+        ✉️ Send Email
+      </a>
+    </div>
+    
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+    
+    <p style="font-size: 13px; color: #9ca3af; text-align: center; margin: 0;">
+      This lead was submitted via <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a><br>
+      <a href="${dashboardUrl}" style="color: #1B365D; font-weight: 500;">View all leads in your dashboard →</a>
+    </p>
+  </div>
+</body>
+</html>
+  `;
+  
+  return { subject, html };
+}
+
 // Send lead limit warning email
 async function sendLeadLimitWarningEmail(
   providerEmail: string,
@@ -161,6 +376,17 @@ async function sendLeadLimitWarningEmail(
   const percentage = Math.round((usedLeads / leadLimit) * 100);
   const remainingLeads = leadLimit - usedLeads;
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  
+  // Different warning styles based on plan
+  const isBasicPlan = planName === "basic";
+  const headerGradient = isBasicPlan 
+    ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"
+    : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)";
+  const headerEmoji = isBasicPlan ? "🚨" : "⚠️";
+  const headerTitle = isBasicPlan ? "Urgent: Lead Limit Warning" : "Lead Limit Warning";
+  const urgencyMessage = isBasicPlan 
+    ? "Your free plan leads are almost exhausted. Upgrade now to keep receiving inquiries!"
+    : "You're approaching your monthly lead limit";
 
   const emailHtml = `
 <!DOCTYPE html>
@@ -170,9 +396,9 @@ async function sendLeadLimitWarningEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">⚠️ Lead Limit Warning</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You're approaching your monthly lead limit</p>
+  <div style="background: ${headerGradient}; padding: 30px; border-radius: 12px 12px 0 0;">
+    <h1 style="color: #fff; margin: 0; font-size: 24px;">${headerEmoji} ${headerTitle}</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${urgencyMessage}</p>
   </div>
   
   <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
@@ -203,7 +429,10 @@ async function sendLeadLimitWarningEmail(
     </div>
     
     <p style="color: #4b5563; font-size: 15px; margin-bottom: 24px;">
-      Once you reach your limit, new leads will be paused until next month. <strong>Upgrade your plan now</strong> to continue receiving valuable patient inquiries without interruption.
+      ${isBasicPlan 
+        ? "You're on the Basic plan with limited leads. <strong>Upgrade to Professional</strong> to unlock 25 qualified leads per month plus unlimited direct inquiries!"
+        : "Once you reach your limit, new leads will be paused until next month. <strong>Upgrade your plan now</strong> to continue receiving valuable patient inquiries without interruption."
+      }
     </p>
     
     <div style="text-align: center; margin-top: 28px;">
@@ -226,7 +455,7 @@ async function sendLeadLimitWarningEmail(
     await resend.emails.send({
       from: "RehabLookup <noreply@resend.dev>",
       to: [providerEmail],
-      subject: `⚠️ Lead Limit Warning: ${percentage}% used (${remainingLeads} leads remaining)`,
+      subject: `${headerEmoji} Lead Limit Warning: ${percentage}% used (${remainingLeads} leads remaining)`,
       html: emailHtml,
     });
     console.log(`Lead limit warning email sent to ${providerEmail} (${usedLeads}/${leadLimit})`);
@@ -472,108 +701,32 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const resend = new Resend(resendApiKey);
         
-        const currentDate = new Date().toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-
-        const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">🎉 New Lead Alert!</h1>
-    <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0;">Someone is interested in ${body.facilityName}</p>
-  </div>
-  
-  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
-    <p style="font-size: 14px; color: #6b7280; margin: 0 0 20px 0;">
-      Received on ${currentDate}
-    </p>
-    
-    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-      <p style="margin: 0; color: #166534; font-weight: 600; font-size: 14px;">
-        ⚡ Quick tip: Respond within 5 minutes to increase your conversion rate by 400%!
-      </p>
-    </div>
-    
-    <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #1B365D;">Contact Details</h2>
-      
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; width: 140px; vertical-align: top;">Name:</td>
-          <td style="padding: 10px 0; font-weight: 600; font-size: 16px;">${sanitizedName}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Phone:</td>
-          <td style="padding: 10px 0;">
-            <a href="tel:${sanitizedPhone}" style="color: #1B365D; text-decoration: none; font-weight: 600; font-size: 16px;">${sanitizedPhone}</a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Email:</td>
-          <td style="padding: 10px 0;">
-            <a href="mailto:${sanitizedEmail}" style="color: #1B365D; text-decoration: none;">${sanitizedEmail}</a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Prefers:</td>
-          <td style="padding: 10px 0;">
-            <span style="background: ${body.preferredContact === 'call' ? '#dcfce7' : '#dbeafe'}; color: ${body.preferredContact === 'call' ? '#166534' : '#1e40af'}; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; text-transform: capitalize;">
-              ${body.preferredContact === 'call' ? '📞 Phone Call' : '✉️ Email'}
-            </span>
-          </td>
-        </tr>
-      </table>
-    </div>
-    
-    ${sanitizedMessage ? `
-    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px;">💬 Their Message</h3>
-      <p style="margin: 0; color: #78350f; font-size: 15px; line-height: 1.6;">${sanitizedMessage}</p>
-    </div>
-    ` : ''}
-    
-    <div style="text-align: center; margin-top: 28px;">
-      <a href="tel:${sanitizedPhone}" style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);">
-        📞 Call ${sanitizedName.split(' ')[0]} Now
-      </a>
-    </div>
-    
-    <div style="text-align: center; margin-top: 16px;">
-      <a href="mailto:${sanitizedEmail}" style="display: inline-block; background: #fff; color: #1B365D; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 500; border: 2px solid #1B365D;">
-        ✉️ Send Email
-      </a>
-    </div>
-    
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
-    
-    <p style="font-size: 13px; color: #9ca3af; text-align: center; margin: 0;">
-      This lead was submitted via <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a><br>
-      <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/leads" style="color: #1B365D; font-weight: 500;">View all leads in your dashboard →</a>
-    </p>
-  </div>
-</body>
-</html>
-        `;
+        // Get tier-based email template
+        const planName = capCheckResult?.planName || "basic";
+        const usedLeads = capCheckResult?.usedLeads || 0;
+        const leadLimit = capCheckResult?.leadLimit || 4;
+        
+        const { subject: emailSubject, html: emailHtml } = getLeadEmailTemplate(
+          planName,
+          body.facilityName,
+          sanitizedName,
+          sanitizedPhone,
+          sanitizedEmail,
+          body.preferredContact,
+          sanitizedMessage,
+          supabaseUrl,
+          usedLeads + 1, // Account for the lead we just created
+          leadLimit
+        );
 
         const emailResponse = await resend.emails.send({
           from: "RehabLookup <noreply@resend.dev>",
           to: emailRecipients,
-          subject: `🔔 New Lead: ${sanitizedName} is interested in ${body.facilityName}`,
+          subject: emailSubject,
           html: emailHtml,
         });
 
-        console.log("Email notification sent to:", emailRecipients, "Response:", emailResponse);
+        console.log("Email notification sent to:", emailRecipients, "Plan:", planName, "Response:", emailResponse);
       } catch (emailError) {
         console.error("Failed to send email notification:", emailError);
       }
