@@ -402,6 +402,30 @@ export default function ProviderLeadsPage() {
               <div className="space-y-2">
                 {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-[88px] rounded-xl" />)}
               </div>
+            ) : currentPlan === "basic" && leads.length === 0 ? (
+              // Basic plan upgrade CTA - no leads inbox
+              <div className="flex items-center justify-center h-full p-8">
+                <div className="text-center max-w-md">
+                  <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Zap className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-foreground mb-2">Upgrade to Receive Leads</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Your Basic Listing is live and discoverable. Upgrade to Professional to receive exclusive qualified leads delivered directly to you.
+                  </p>
+                  <div className="space-y-3">
+                    <Button asChild className="w-full">
+                      <Link to="/provider/billing">
+                        <Zap className="h-4 w-4 mr-2" />
+                        Upgrade to Professional
+                      </Link>
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Direct inquiries from your profile will still appear here
+                    </p>
+                  </div>
+                </div>
+              </div>
             ) : leads.length === 0 ? (
               <div className="flex items-center justify-center h-full p-8">
                 <div className="text-center">

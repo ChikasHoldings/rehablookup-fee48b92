@@ -16,9 +16,9 @@ const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   subscribed: false,
   plan: "basic",
   plan_name: "Basic Listing",
-  lead_limit: 4, // Basic plan includes 4 leads/month (1 per week)
-  qualified_lead_limit: 4,
-  direct_lead_limit: 4,
+  lead_limit: 0, // Basic plan does NOT receive routed leads
+  qualified_lead_limit: 0,
+  direct_lead_limit: -1, // Unlimited direct inquiries only
   subscription_end: null,
 };
 
@@ -40,13 +40,8 @@ export function useSubscription() {
           return DEFAULT_SUBSCRIPTION;
         }
         
-        // For Basic plan, ensure lead_limit is 4
-        const result = data as SubscriptionData;
-        if (result.lead_limit === 0 || (result.plan === "basic" && result.lead_limit !== 4)) {
-          result.lead_limit = 4;
-        }
-        
-        return result;
+        // Return the result as-is - Basic plan should have lead_limit = 0
+        return data as SubscriptionData;
       } catch (err) {
         console.error("Network error checking subscription:", err);
         return DEFAULT_SUBSCRIPTION;
@@ -63,21 +58,30 @@ export function useSubscription() {
 export const PLAN_DETAILS = {
   basic: {
     name: "Basic Listing",
-    price: "$0",
-    period: "/month",
-    description: "Public profile with limited leads",
-    lead_limit: 4, // 4 qualified leads/month (1 per week)
-    qualified_lead_limit: 4,
-    direct_lead_limit: 4, // Direct leads also limited for Basic
+    price: "Free",
+    period: "",
+    description: "Get listed and be discoverable",
+    lead_limit: 0, // No routed leads for Basic
+    qualified_lead_limit: 0,
+    direct_lead_limit: -1, // Unlimited direct inquiries from profile only
     location_limit: 1,
     featured: false,
     features: [
-      "1 facility location",
-      "Public profile listing",
-      "Logo and gallery upload",
-      "Basic search visibility",
-      "4 leads/month (1 per week)",
+      "Public provider profile",
+      "Listed in search results",
+      "Facility name, location & services",
+      "Website link",
+      "Receive direct inquiries only",
+      "Basic dashboard (views & clicks)",
     ],
+    notIncluded: [
+      "Exclusive qualified leads",
+      "Lead routing",
+      "Priority placement",
+      "Homepage features",
+      "Email lead notifications",
+    ],
+    upgradeMicrocopy: "Upgrade to receive exclusive qualified leads delivered directly to you.",
   },
   professional: {
     name: "Professional",
