@@ -112,7 +112,7 @@ function ProviderShellContent() {
   const facility = selectedFacility || providerData?.facility;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
+    <div className="h-screen flex flex-col bg-background">
       {/* Fixed Header - z-50 to stay on top */}
       <div className="flex-shrink-0 z-50">
         <MemoizedHeader
@@ -126,7 +126,7 @@ function ProviderShellContent() {
         />
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0">
         {/* Fixed Desktop Sidebar - z-40 below header */}
         <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
           <MemoizedSidebar />
