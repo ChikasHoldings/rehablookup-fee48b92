@@ -187,4 +187,18 @@
   .section-primary-tint {
     background: linear-gradient(180deg, hsl(var(--primary) / 0.03) 0%, hsl(var(--background)) 100%);
   }
+
+  /* Professional subtle pulse animation for CTAs */
+  @keyframes subtle-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0);
+    }
+  }
+
+  .animate-subtle-pulse {
+    animation: subtle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }

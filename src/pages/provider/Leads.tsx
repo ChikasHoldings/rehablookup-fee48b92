@@ -274,7 +274,7 @@ export default function ProviderLeadsPage() {
                 size="sm" 
                 className={cn(
                   "h-7 px-2.5 text-xs gap-1.5",
-                  isAtLimit && "animate-pulse"
+                  isAtLimit && "animate-subtle-pulse"
                 )}
                 asChild
               >
