@@ -140,7 +140,25 @@ export default function ProviderLeadsPage() {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
+          schema: "public",
+          table: "leads",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ["provider-leads", facilityId] });
+          // Show toast notification for new lead
+          const newLead = payload.new as Lead;
+          toast({
+            title: "🎉 New Lead Received!",
+            description: `${newLead.name} just submitted a contact request`,
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
           schema: "public",
           table: "leads",
           filter: `facility_id=eq.${facilityId}`,
@@ -154,7 +172,7 @@ export default function ProviderLeadsPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [facilityId, queryClient]);
+  }, [facilityId, queryClient, toast]);
 
   // Filtered leads based on search, status, and date range
   const filteredLeads = useMemo(() => {
