@@ -8,21 +8,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration matching check-subscription
 const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number }> = {
   basic: { product_id: null, lead_limit: 4 },
   professional: { product_id: "prod_TbalLOPujTIoUe", lead_limit: 25 },
   featured: { product_id: "prod_TbalOeJZA2ZoJl", lead_limit: 75 },
 };
-
-interface ProviderDigestInfo {
-  user_id: string;
-  lead_notification_frequency: string;
-  digest_time: string;
-  last_digest_sent_at: string | null;
-  email: string;
-  first_name: string;
-}
 
 interface Lead {
   id: string;
@@ -32,15 +22,14 @@ interface Lead {
   preferred_contact: string;
   message: string | null;
   created_at: string;
-  facility_name: string;
+  facility_id: string;
 }
 
-// Get provider's subscription plan
-async function getProviderPlan(providerEmail: string): Promise<{ planName: string; leadLimit: number; usedLeads: number }> {
+async function getProviderPlan(providerEmail: string): Promise<{ planName: string; leadLimit: number }> {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   
   if (!stripeKey) {
-    return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit, usedLeads: 0 };
+    return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
   }
 
   try {
@@ -48,7 +37,7 @@ async function getProviderPlan(providerEmail: string): Promise<{ planName: strin
     const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
     
     if (customers.data.length === 0) {
-      return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit, usedLeads: 0 };
+      return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
     }
 
     const customerId = customers.data[0].id;
@@ -59,63 +48,22 @@ async function getProviderPlan(providerEmail: string): Promise<{ planName: strin
     });
 
     if (subscriptions.data.length === 0) {
-      return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit, usedLeads: 0 };
+      return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
     }
 
     const productId = subscriptions.data[0].items.data[0].price.product as string;
     
     if (productId === PLAN_CONFIG.professional.product_id) {
-      return { planName: "professional", leadLimit: PLAN_CONFIG.professional.lead_limit, usedLeads: 0 };
+      return { planName: "professional", leadLimit: PLAN_CONFIG.professional.lead_limit };
     } else if (productId === PLAN_CONFIG.featured.product_id) {
-      return { planName: "featured", leadLimit: PLAN_CONFIG.featured.lead_limit, usedLeads: 0 };
+      return { planName: "featured", leadLimit: PLAN_CONFIG.featured.lead_limit };
     }
     
-    return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit, usedLeads: 0 };
+    return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
   } catch (error) {
     console.error("Error checking subscription:", error);
-    return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit, usedLeads: 0 };
+    return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
   }
-}
-
-// Tier-based styling configuration
-function getPlanConfig(planName: string) {
-  const configs = {
-    basic: {
-      headerGradient: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
-      headerEmoji: "📊",
-      planBadge: "",
-      tipMessage: "💡 Upgrade to Professional for priority support and 25 qualified leads/month",
-      tipBg: "#f3f4f6",
-      tipBorder: "#d1d5db",
-      tipText: "#374151",
-      leadBorderColor: "#6b7280",
-      showUpgrade: true,
-    },
-    professional: {
-      headerGradient: "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)",
-      headerEmoji: "🎯",
-      planBadge: '<span style="background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">Professional</span>',
-      tipMessage: "⚡ Pro tip: Follow up within 5 minutes to increase conversion by 400%!",
-      tipBg: "#dcfce7",
-      tipBorder: "#bbf7d0",
-      tipText: "#166534",
-      leadBorderColor: "#1B365D",
-      showUpgrade: true,
-    },
-    featured: {
-      headerGradient: "linear-gradient(135deg, #C9A227 0%, #b8860b 100%)",
-      headerEmoji: "⭐",
-      planBadge: '<span style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #C9A227;">⭐ Featured</span>',
-      tipMessage: "🌟 As a Featured provider, your leads get priority placement and maximum visibility!",
-      tipBg: "#fef3c7",
-      tipBorder: "#fcd34d",
-      tipText: "#92400e",
-      leadBorderColor: "#C9A227",
-      showUpgrade: false,
-    }
-  };
-  
-  return configs[planName as keyof typeof configs] || configs.basic;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -141,19 +89,13 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const now = new Date();
     const currentHour = now.getUTCHours().toString().padStart(2, "0") + ":00";
-    const currentDay = now.getUTCDay(); // 0 = Sunday
+    const currentDay = now.getUTCDay();
 
     console.log(`[LEAD-DIGEST] Running at ${now.toISOString()}, checking for hour: ${currentHour}`);
 
-    // Fetch providers with digest preferences matching current time
     const { data: providers, error: providersError } = await supabase
       .from("notification_preferences")
-      .select(`
-        user_id,
-        lead_notification_frequency,
-        digest_time,
-        last_digest_sent_at
-      `)
+      .select(`user_id, lead_notification_frequency, digest_time, last_digest_sent_at`)
       .in("lead_notification_frequency", ["daily_digest", "weekly_digest"])
       .eq("digest_time", currentHour);
 
@@ -175,13 +117,11 @@ const handler = async (req: Request): Promise<Response> => {
     let digestsSent = 0;
 
     for (const provider of providers) {
-      // For weekly digest, only send on Mondays (day 1)
       if (provider.lead_notification_frequency === "weekly_digest" && currentDay !== 1) {
         console.log(`[LEAD-DIGEST] Skipping weekly digest for ${provider.user_id} - not Monday`);
         continue;
       }
 
-      // Get provider profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("email, first_name")
@@ -193,17 +133,12 @@ const handler = async (req: Request): Promise<Response> => {
         continue;
       }
 
-      // Get provider's subscription plan
       const { planName, leadLimit } = await getProviderPlan(profile.email);
-      const config = getPlanConfig(planName);
-      
       console.log(`[LEAD-DIGEST] Provider ${profile.email} is on ${planName} plan`);
 
-      // Calculate the time window for leads
-      const lookbackHours = provider.lead_notification_frequency === "daily_digest" ? 24 : 168; // 7 days
+      const lookbackHours = provider.lead_notification_frequency === "daily_digest" ? 24 : 168;
       const lookbackDate = new Date(now.getTime() - lookbackHours * 60 * 60 * 1000);
 
-      // Get provider's facilities
       const { data: facilities } = await supabase
         .from("facilities")
         .select("id, name")
@@ -217,7 +152,6 @@ const handler = async (req: Request): Promise<Response> => {
       const facilityIds = facilities.map(f => f.id);
       const facilityNameMap = Object.fromEntries(facilities.map(f => [f.id, f.name]));
 
-      // Get leads since last digest or lookback window
       const sinceDate = provider.last_digest_sent_at 
         ? new Date(Math.max(new Date(provider.last_digest_sent_at).getTime(), lookbackDate.getTime()))
         : lookbackDate;
@@ -236,7 +170,6 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (!leads || leads.length === 0) {
         console.log(`[LEAD-DIGEST] No new leads for user ${provider.user_id}`);
-        // Still update the last_digest_sent_at to prevent re-checking
         await supabase
           .from("notification_preferences")
           .update({ last_digest_sent_at: now.toISOString() })
@@ -244,7 +177,6 @@ const handler = async (req: Request): Promise<Response> => {
         continue;
       }
 
-      // Count total leads this month for usage tracking
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
@@ -257,59 +189,24 @@ const handler = async (req: Request): Promise<Response> => {
       
       const usedLeads = monthlyLeadCount || 0;
       const remainingLeads = leadLimit - usedLeads;
-      const usagePercentage = leadLimit > 0 ? Math.round((usedLeads / leadLimit) * 100) : 0;
 
       console.log(`[LEAD-DIGEST] Sending digest with ${leads.length} leads to ${profile.email}`);
 
-      // Build the email with tier-based styling
       const digestType = provider.lead_notification_frequency === "daily_digest" ? "Daily" : "Weekly";
-      const periodText = provider.lead_notification_frequency === "daily_digest" ? "past 24 hours" : "past week";
+      const periodText = provider.lead_notification_frequency === "daily_digest" ? "24 hours" : "week";
 
-      // Featured plan exclusive badge
-      const featuredBadge = planName === "featured" ? `
-        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #C9A227; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; text-align: center;">
-          <p style="margin: 0; color: #92400e; font-weight: 600; font-size: 14px;">
-            ⭐ Featured Provider Priority Digest ⭐
-          </p>
-        </div>
-      ` : "";
-
-      // Lead usage section
-      const leadUsageSection = leadLimit > 0 ? `
-        <div style="background: ${planName === "featured" ? "#fef3c7" : planName === "professional" ? "#dbeafe" : "#f3f4f6"}; border: 1px solid ${planName === "featured" ? "#fcd34d" : planName === "professional" ? "#93c5fd" : "#d1d5db"}; border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: center;">
-          <p style="margin: 0 0 4px 0; font-size: 12px; color: ${planName === "featured" ? "#92400e" : planName === "professional" ? "#1e40af" : "#374151"}; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Lead Usage</p>
-          <p style="margin: 0; font-size: 24px; font-weight: bold; color: ${planName === "featured" ? "#92400e" : planName === "professional" ? "#1e40af" : "#374151"};">${usedLeads} / ${leadLimit}</p>
-          <p style="margin: 4px 0 0 0; font-size: 13px; color: ${planName === "featured" ? "#92400e" : planName === "professional" ? "#1e40af" : "#374151"};">
-            ${remainingLeads} leads remaining${usagePercentage >= 80 ? " ⚠️" : ""}
-          </p>
-          ${config.showUpgrade && planName !== "featured" ? `
-            <a href="${supabaseUrl.replace(".supabase.co", ".lovable.app")}/provider/billing" style="display: inline-block; margin-top: 12px; background: ${config.headerGradient}; color: #fff; padding: 8px 20px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500;">
-              🚀 ${planName === "basic" ? "Upgrade for More Leads" : "Upgrade to Featured"}
-            </a>
-          ` : ""}
-        </div>
-      ` : "";
-
-      const leadsHtml = leads.map(lead => `
-        <div style="background: #f9fafb; border-radius: 8px; padding: 16px; margin-bottom: 12px; border-left: 4px solid ${config.leadBorderColor};">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-            <h3 style="margin: 0; font-size: 16px; color: #1B365D;">${lead.name}</h3>
-            <span style="font-size: 12px; color: #6b7280;">${new Date(lead.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
-          </div>
-          <p style="margin: 4px 0; font-size: 13px; color: #4b5563;">
-            <strong>Facility:</strong> ${facilityNameMap[lead.facility_id] || "Unknown"}
-          </p>
-          <p style="margin: 4px 0; font-size: 13px; color: #4b5563;">
-            <strong>Phone:</strong> <a href="tel:${lead.phone}" style="color: #1B365D;">${lead.phone}</a>
-          </p>
-          <p style="margin: 4px 0; font-size: 13px; color: #4b5563;">
-            <strong>Email:</strong> <a href="mailto:${lead.email}" style="color: #1B365D;">${lead.email}</a>
-          </p>
-          <p style="margin: 4px 0; font-size: 13px; color: #4b5563;">
-            <strong>Prefers:</strong> ${lead.preferred_contact === "call" ? "📞 Phone Call" : "✉️ Email"}
-          </p>
-          ${lead.message ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #374151; font-style: italic; background: #fff; padding: 8px; border-radius: 4px;">"${lead.message}"</p>` : ""}
-        </div>
+      const leadsHtml = leads.slice(0, 5).map((lead: Lead) => `
+        <tr>
+          <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+            <p style="margin: 0 0 4px 0; font-weight: 600; color: #1B365D;">${lead.name}</p>
+            <p style="margin: 0; font-size: 13px; color: #4b5563;">
+              ${lead.phone} | ${lead.email}
+            </p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280;">
+              ${facilityNameMap[lead.facility_id] || "Facility"} | ${lead.preferred_contact === "call" ? "Prefers call" : "Prefers email"}
+            </p>
+          </td>
+        </tr>
       `).join("");
 
       const emailHtml = `
@@ -319,77 +216,94 @@ const handler = async (req: Request): Promise<Response> => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: ${config.headerGradient}; padding: 30px; border-radius: 12px 12px 0 0;">
-    <div style="display: flex; align-items: center; justify-content: space-between;">
-      <h1 style="color: #fff; margin: 0; font-size: 24px;">${config.headerEmoji} ${digestType} Lead Digest</h1>
-      ${config.planBadge}
-    </div>
-    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You received ${leads.length} new lead${leads.length === 1 ? "" : "s"} in the ${periodText}</p>
-  </div>
-  
-  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
-    ${featuredBadge}
-    
-    <p style="margin: 0 0 20px 0; color: #4b5563;">
-      Hi ${profile.first_name || "there"},
-    </p>
-    
-    <div style="background: ${config.tipBg}; border: 1px solid ${config.tipBorder}; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-      <p style="margin: 0; color: ${config.tipText}; font-weight: 600; font-size: 14px;">
-        ${config.tipMessage}
-      </p>
-    </div>
-    
-    ${leadUsageSection}
-    
-    <p style="margin: 0 0 24px 0; color: #4b5563;">
-      Here is a summary of leads received for your facilit${facilities.length === 1 ? "y" : "ies"} during the ${periodText}:
-    </p>
-    
-    ${leadsHtml}
-    
-    <div style="text-align: center; margin-top: 28px;">
-      <a href="${supabaseUrl.replace(".supabase.co", ".lovable.app")}/provider/leads" style="display: inline-block; background: ${config.headerGradient}; color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
-        View All Leads →
-      </a>
-    </div>
-    
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
-    
-    <p style="font-size: 13px; color: #9ca3af; text-align: center; margin: 0;">
-      This is your ${digestType.toLowerCase()} digest from <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a><br>
-      <a href="${supabaseUrl.replace(".supabase.co", ".lovable.app")}/provider/settings" style="color: #6b7280;">Manage notification preferences</a>
-    </p>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          
+          <tr>
+            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 24px 32px; border-radius: 8px 8px 0 0;">
+              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
+              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
+                ${digestType} Lead Digest
+              </h1>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+              
+              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+                Hi ${profile.first_name || "there"},
+              </p>
+              
+              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+                You received <strong>${leads.length} new lead${leads.length === 1 ? "" : "s"}</strong> in the past ${periodText}.
+              </p>
+              
+              ${leadLimit > 0 ? `
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 6px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Monthly Usage</p>
+                    <p style="margin: 0; font-size: 20px; font-weight: 600; color: #1B365D;">${usedLeads} / ${leadLimit}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280;">${remainingLeads} remaining</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
+              
+              <table width="100%" cellpadding="0" cellspacing="0">
+                ${leadsHtml}
+              </table>
+              
+              ${leads.length > 5 ? `<p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">+ ${leads.length - 5} more leads</p>` : ""}
+              
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
+                <tr>
+                  <td align="center">
+                    <a href="${supabaseUrl.replace(".supabase.co", ".lovable.app")}/provider/leads" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                      View All Leads
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                RehabLookup | <a href="${supabaseUrl.replace(".supabase.co", ".lovable.app")}/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
       `;
-
-      // Subject line varies by plan
-      const subjectPrefixes = {
-        basic: "📊",
-        professional: "🎯",
-        featured: "⭐"
-      };
-      const subjectPrefix = subjectPrefixes[planName as keyof typeof subjectPrefixes] || "📊";
 
       try {
         await resend.emails.send({
           from: "RehabLookup <noreply@resend.dev>",
           to: [profile.email],
-          subject: `${subjectPrefix} ${digestType} Lead Digest: ${leads.length} new lead${leads.length === 1 ? "" : "s"}`,
+          subject: `${digestType} Digest: ${leads.length} new lead${leads.length === 1 ? "" : "s"}`,
           html: emailHtml,
         });
 
-        // Update last_digest_sent_at
         await supabase
           .from("notification_preferences")
           .update({ last_digest_sent_at: now.toISOString() })
           .eq("user_id", provider.user_id);
 
         digestsSent++;
-        console.log(`[LEAD-DIGEST] Successfully sent ${planName} tier digest to ${profile.email}`);
+        console.log(`[LEAD-DIGEST] Successfully sent digest to ${profile.email}`);
       } catch (emailError) {
         console.error(`[LEAD-DIGEST] Failed to send digest to ${profile.email}:`, emailError);
       }
