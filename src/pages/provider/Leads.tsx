@@ -11,6 +11,7 @@ import {
   Clock,
   SlidersHorizontal,
   ChevronDown,
+  MessageSquare,
 } from "lucide-react";
 import {
   Select,
@@ -402,6 +403,12 @@ export default function ProviderLeadsPage() {
                             )}
                             <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
                             <LeadScoreBadge lead={lead} size="sm" />
+                            {/* Message indicator */}
+                            {lead.message && (
+                              <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center" title="Has message">
+                                <MessageSquare className="h-2.5 w-2.5 text-blue-600 dark:text-blue-400" />
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
