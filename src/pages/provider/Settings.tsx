@@ -82,6 +82,7 @@ export default function ProviderSettingsPage() {
     email: string;
     phone: string;
     job_title: string;
+    primary_contact_name: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
@@ -254,6 +255,7 @@ export default function ProviderSettingsPage() {
     email: providerData.profile.email,
     phone: providerData.profile.phone || "",
     job_title: providerData.profile.job_title || "",
+    primary_contact_name: (providerData.profile as any).primary_contact_name || "",
   } : null);
 
   const handleSaveProfile = async () => {
@@ -270,6 +272,7 @@ export default function ProviderSettingsPage() {
         last_name: profile.last_name,
         phone: profile.phone || null,
         job_title: profile.job_title || null,
+        primary_contact_name: profile.primary_contact_name || null,
       })
       .eq("user_id", session.user.id);
 
@@ -585,6 +588,22 @@ export default function ProviderSettingsPage() {
                   placeholder="e.g., Facility Director"
                   className="h-10"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="primaryContactName" className="text-sm font-medium">
+                  Primary Contact Name
+                </Label>
+                <Input
+                  id="primaryContactName"
+                  value={profile?.primary_contact_name || ""}
+                  onChange={(e) => updateField("primary_contact_name", e.target.value)}
+                  placeholder="Name shown in outgoing emails"
+                  className="h-10"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This name will be used in emails sent to leads on your behalf
+                </p>
               </div>
 
               <Separator />
