@@ -14,14 +14,23 @@ const routePermissionMap: Record<string, string> = {
   "/admin/audit-log": "audit_log",
   "/admin/settings": "settings",
   "/admin/notifications": "notifications",
-  "/admin/flagged-images": "providers", // Flagged images falls under providers
+  "/admin/flagged-images": "providers",
 };
+
+interface AdminProfile {
+  force_password_change: boolean | null;
+  status: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
 
 export function useAdminAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
+  const [forcePasswordChange, setForcePasswordChange] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -85,22 +94,58 @@ export function useAdminAuth() {
     }
   }, []);
 
+  const fetchAdminProfile = useCallback(async (userId: string): Promise<AdminProfile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from("admin_user_profiles")
+        .select("force_password_change, status, display_name, avatar_url")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching admin profile:", error);
+        return null;
+      }
+
+      return data;
+    } catch (err) {
+      console.error("Exception fetching admin profile:", err);
+      return null;
+    }
+  }, []);
+
+  const clearForcePasswordChange = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from("admin_user_profiles")
+        .update({ force_password_change: false, temp_password_hash: null, temp_password_expires_at: null })
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error clearing force password change:", error);
+        return;
+      }
+
+      setForcePasswordChange(false);
+      setAdminProfile((prev) => prev ? { ...prev, force_password_change: false } : null);
+    } catch (err) {
+      console.error("Exception clearing force password change:", err);
+    }
+  }, [user]);
+
   const hasPermission = useCallback((permissionKey: string): boolean => {
-    // Super admins have all permissions
     if (isSuperAdmin) return true;
     return permissions[permissionKey] === true;
   }, [isSuperAdmin, permissions]);
 
   const canAccessRoute = useCallback((pathname: string): boolean => {
-    // Super admins have all permissions
     if (isSuperAdmin) return true;
 
-    // Find the matching permission for this route
-    // Check exact match first, then prefix matches
     let permissionKey = routePermissionMap[pathname];
     
     if (!permissionKey) {
-      // Check for prefix matches (e.g., /admin/providers/123)
       for (const [route, perm] of Object.entries(routePermissionMap)) {
         if (pathname.startsWith(route) && route !== "/admin") {
           permissionKey = perm;
@@ -109,7 +154,6 @@ export function useAdminAuth() {
       }
     }
 
-    // Dashboard is always accessible if you're an admin
     if (!permissionKey || permissionKey === "dashboard") return true;
 
     return permissions[permissionKey] === true;
@@ -124,6 +168,8 @@ export function useAdminAuth() {
           setIsAdmin(false);
           setIsSuperAdmin(false);
           setPermissions({});
+          setAdminProfile(null);
+          setForcePasswordChange(false);
           setIsLoading(false);
           navigate("/admin-login", { replace: true });
           return;
@@ -131,15 +177,18 @@ export function useAdminAuth() {
 
         setTimeout(async () => {
           try {
-            const [adminStatus, superAdminStatus, userPermissions] = await Promise.all([
+            const [adminStatus, superAdminStatus, userPermissions, profile] = await Promise.all([
               checkAdminStatus(session.user.id),
               checkSuperAdminStatus(session.user.id),
               fetchPermissions(session.user.id),
+              fetchAdminProfile(session.user.id),
             ]);
             
             setIsAdmin(adminStatus);
             setIsSuperAdmin(superAdminStatus);
             setPermissions(userPermissions);
+            setAdminProfile(profile);
+            setForcePasswordChange(profile?.force_password_change === true);
             
             if (!adminStatus) {
               navigate("/", { replace: true });
@@ -166,15 +215,18 @@ export function useAdminAuth() {
 
       setTimeout(async () => {
         try {
-          const [adminStatus, superAdminStatus, userPermissions] = await Promise.all([
+          const [adminStatus, superAdminStatus, userPermissions, profile] = await Promise.all([
             checkAdminStatus(session.user.id),
             checkSuperAdminStatus(session.user.id),
             fetchPermissions(session.user.id),
+            fetchAdminProfile(session.user.id),
           ]);
           
           setIsAdmin(adminStatus);
           setIsSuperAdmin(superAdminStatus);
           setPermissions(userPermissions);
+          setAdminProfile(profile);
+          setForcePasswordChange(profile?.force_password_change === true);
           
           if (!adminStatus) {
             navigate("/", { replace: true });
@@ -193,7 +245,7 @@ export function useAdminAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, checkAdminStatus, checkSuperAdminStatus, fetchPermissions]);
+  }, [navigate, checkAdminStatus, checkSuperAdminStatus, fetchPermissions, fetchAdminProfile]);
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -205,6 +257,9 @@ export function useAdminAuth() {
     isAdmin, 
     isSuperAdmin, 
     permissions, 
+    adminProfile,
+    forcePasswordChange,
+    clearForcePasswordChange,
     hasPermission, 
     canAccessRoute, 
     isLoading, 

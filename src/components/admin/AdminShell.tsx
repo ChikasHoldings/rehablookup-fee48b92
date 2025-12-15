@@ -4,6 +4,7 @@ import { Menu, ShieldX } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
+import { ForcePasswordChangeDialog } from "./ForcePasswordChangeDialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -51,7 +52,17 @@ function AccessDenied() {
 }
 
 export function AdminShell() {
-  const { user, isAdmin, isSuperAdmin, hasPermission, canAccessRoute, isLoading, logout } = useAdminAuth();
+  const { 
+    user, 
+    isAdmin, 
+    isSuperAdmin, 
+    hasPermission, 
+    canAccessRoute, 
+    forcePasswordChange,
+    clearForcePasswordChange,
+    isLoading, 
+    logout 
+  } = useAdminAuth();
   const mainContentRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -84,6 +95,12 @@ export function AdminShell() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100">
+      {/* Force password change dialog */}
+      <ForcePasswordChangeDialog 
+        open={forcePasswordChange} 
+        onPasswordChanged={clearForcePasswordChange} 
+      />
+      
       <MemoizedHeader userEmail={user?.email} onLogout={logout} />
       
       <div className="flex flex-1">
