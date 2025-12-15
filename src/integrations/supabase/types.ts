@@ -107,6 +107,114 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_user_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          link: string | null
+          message: string
+          metadata: Json | null
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message: string
+          metadata?: Json | null
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message?: string
+          metadata?: Json | null
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_user_permissions: {
+        Row: {
+          created_at: string
+          granted: boolean
+          id: string
+          permission_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted?: boolean
+          id?: string
+          permission_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted?: boolean
+          id?: string
+          permission_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_user_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          created_by: string | null
+          display_name: string | null
+          force_password_change: boolean | null
+          id: string
+          last_login_at: string | null
+          status: string
+          temp_password_expires_at: string | null
+          temp_password_hash: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          force_password_change?: boolean | null
+          id?: string
+          last_login_at?: string | null
+          status?: string
+          temp_password_expires_at?: string | null
+          temp_password_hash?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          force_password_change?: boolean | null
+          id?: string
+          last_login_at?: string | null
+          status?: string
+          temp_password_expires_at?: string | null
+          temp_password_hash?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_verification_codes: {
         Row: {
           attempts: number | null
@@ -900,6 +1008,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_admin_permission: {
+        Args: { _permission_key: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -907,6 +1019,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator"

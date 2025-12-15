@@ -1,19 +1,20 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Shield,
   Search,
   UserPlus,
-  UserMinus,
-  Mail,
-  Calendar,
   MoreHorizontal,
-  AlertTriangle,
   ShieldCheck,
   ShieldAlert,
   Users as UsersIcon,
+  Ban,
+  Trash2,
+  KeyRound,
+  Settings,
+  Mail,
+  Clock,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -25,14 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,223 +43,88 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 import { format } from "date-fns";
-
-type AppRole = "admin" | "moderator";
-
-type UserRole = {
-  user_id: string;
-  role: AppRole;
-};
-
-type UserWithRoles = {
-  user_id: string;
-  email: string;
-  first_name: string | null;
-  last_name: string | null;
-  created_at: string;
-  roles: AppRole[];
-};
+import { useAdminUserManagement, AdminUser, AdminRole } from "@/hooks/useAdminUserManagement";
+import { CreateAdminUserDialog } from "@/components/admin/CreateAdminUserDialog";
+import { AdminUserPermissionsDialog } from "@/components/admin/AdminUserPermissionsDialog";
 
 const ROLE_INFO = {
   admin: {
-    label: "Admin",
-    description: "Full access to all admin features including user management, settings, and billing",
+    label: "Super Admin",
     icon: ShieldAlert,
     badgeClass: "bg-amber-100 text-amber-800 hover:bg-amber-100",
-    permissions: [
-      "Manage all providers and facilities",
-      "View and manage all leads",
-      "Manage subscriptions and billing",
-      "Grant/revoke admin and moderator roles",
-      "Access audit logs and settings",
-      "Manage featured placements",
-    ],
   },
   moderator: {
     label: "Moderator",
-    description: "Limited access for content moderation and provider support",
     icon: ShieldCheck,
     badgeClass: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-    permissions: [
-      "View and approve/reject providers",
-      "View and assign leads",
-      "View facility details",
-      "Add admin notes to providers",
-      "Cannot manage billing or subscriptions",
-      "Cannot manage user roles",
-    ],
   },
 };
 
 export default function AdminUsers() {
-  const queryClient = useQueryClient();
+  const { adminUsers, isLoading, manageAdminUser, isManaging } = useAdminUserManagement();
+  
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterRole, setFilterRole] = useState<"all" | AppRole>("all");
-  const [addRoleDialogOpen, setAddRoleDialogOpen] = useState(false);
-  const [emailToAdd, setEmailToAdd] = useState("");
-  const [roleToAdd, setRoleToAdd] = useState<AppRole>("moderator");
-  const [userToModify, setUserToModify] = useState<{ user: UserWithRoles; action: "revoke"; role: AppRole } | null>(null);
+  const [filterRole, setFilterRole] = useState<"all" | AdminRole>("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "suspended">("all");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    action: "suspend" | "unsuspend" | "delete" | "reset_password";
+    user: AdminUser;
+  } | null>(null);
 
-  // Fetch all profiles with their roles
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["admin-users-management"],
-    queryFn: async () => {
-      // First get all profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, email, first_name, last_name, created_at")
-        .order("created_at", { ascending: false });
+  // Stats
+  const adminCount = adminUsers?.filter(u => u.roles.includes("admin")).length || 0;
+  const moderatorCount = adminUsers?.filter(u => u.roles.includes("moderator")).length || 0;
+  const activeCount = adminUsers?.filter(u => u.status === "active").length || 0;
+  const suspendedCount = adminUsers?.filter(u => u.status === "suspended").length || 0;
 
-      if (profilesError) throw profilesError;
-
-      // Then get all roles
-      const { data: allRoles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-
-      if (rolesError) throw rolesError;
-
-      // Group roles by user
-      const rolesByUser: Record<string, AppRole[]> = {};
-      (allRoles || []).forEach((r) => {
-        if (!rolesByUser[r.user_id]) {
-          rolesByUser[r.user_id] = [];
-        }
-        rolesByUser[r.user_id].push(r.role as AppRole);
-      });
-
-      return (profiles || []).map((profile) => ({
-        ...profile,
-        roles: rolesByUser[profile.user_id] || [],
-      })) as UserWithRoles[];
-    },
-  });
-
-  // Get counts
-  const adminCount = users?.filter((u) => u.roles.includes("admin")).length || 0;
-  const moderatorCount = users?.filter((u) => u.roles.includes("moderator")).length || 0;
-  const usersWithRoles = users?.filter((u) => u.roles.length > 0).length || 0;
-
-  // Filtered users based on search and role filter
-  const filteredUsers = users?.filter((user) => {
+  // Filtered users
+  const filteredUsers = adminUsers?.filter(user => {
     const matchesSearch = !searchQuery || 
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.last_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      user.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.display_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesRole = filterRole === "all" || user.roles.includes(filterRole);
+    const matchesStatus = filterStatus === "all" || user.status === filterStatus;
 
-    return matchesSearch && matchesRole;
+    return matchesSearch && matchesRole && matchesStatus;
   });
 
-  // Grant role mutation
-  const grantRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      const { error } = await supabase.from("user_roles").insert({
-        user_id: userId,
-        role: role,
-      });
-      if (error) throw error;
-
-      // Log admin action
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("admin_audit_log").insert({
-        admin_user_id: user?.id,
-        action_type: `${role}_role_granted`,
-        target_type: "user",
-        target_id: userId,
-        details: { action: `granted ${role} role` },
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users-management"] });
-      toast.success(`${ROLE_INFO[variables.role].label} role granted successfully`);
-    },
-    onError: (error: any) => {
-      if (error.message?.includes("duplicate")) {
-        toast.error("User already has this role");
-      } else {
-        toast.error("Failed to grant role");
-      }
-    },
-  });
-
-  // Revoke role mutation
-  const revokeRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      const { error } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId)
-        .eq("role", role);
-      if (error) throw error;
-
-      // Log admin action
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("admin_audit_log").insert({
-        admin_user_id: user?.id,
-        action_type: `${role}_role_revoked`,
-        target_type: "user",
-        target_id: userId,
-        details: { action: `revoked ${role} role` },
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users-management"] });
-      toast.success(`${ROLE_INFO[variables.role].label} role revoked successfully`);
-      setUserToModify(null);
-    },
-    onError: () => {
-      toast.error("Failed to revoke role");
-    },
-  });
-
-  // Add role by email
-  const handleAddRoleByEmail = async () => {
-    if (!emailToAdd.trim()) {
-      toast.error("Please enter an email address");
-      return;
-    }
-
-    const user = users?.find(
-      (u) => u.email.toLowerCase() === emailToAdd.toLowerCase()
-    );
-
-    if (!user) {
-      toast.error("No user found with that email address");
-      return;
-    }
-
-    if (user.roles.includes(roleToAdd)) {
-      toast.error(`User already has ${ROLE_INFO[roleToAdd].label} role`);
-      return;
-    }
-
-    grantRoleMutation.mutate({ userId: user.user_id, role: roleToAdd });
-    setAddRoleDialogOpen(false);
-    setEmailToAdd("");
-  };
-
-  const handleRevokeRole = (user: UserWithRoles, role: AppRole) => {
-    setUserToModify({ user, action: "revoke", role });
-  };
-
-  const confirmRevokeRole = () => {
-    if (userToModify) {
-      revokeRoleMutation.mutate({ userId: userToModify.user.user_id, role: userToModify.role });
-    }
-  };
-
-  const getUserDisplayName = (user: UserWithRoles) => {
-    if (user.first_name && user.last_name) {
-      return `${user.first_name} ${user.last_name}`;
-    }
+  const getUserDisplayName = (user: AdminUser) => {
+    if (user.display_name) return user.display_name;
+    if (user.first_name && user.last_name) return `${user.first_name} ${user.last_name}`;
     return user.email;
+  };
+
+  const handleAction = async () => {
+    if (!confirmAction) return;
+    
+    await manageAdminUser({
+      action: confirmAction.action,
+      targetUserId: confirmAction.user.user_id,
+    });
+    
+    setConfirmAction(null);
+  };
+
+  const openPermissions = (user: AdminUser) => {
+    setSelectedUser(user);
+    setPermissionsDialogOpen(true);
   };
 
   return (
@@ -274,102 +132,55 @@ export default function AdminUsers() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
-          <p className="text-muted-foreground">Manage admin and moderator roles</p>
+          <p className="text-muted-foreground">Manage admin users, roles and permissions</p>
         </div>
-        <Button onClick={() => setAddRoleDialogOpen(true)}>
+        <Button onClick={() => setCreateDialogOpen(true)}>
           <UserPlus className="h-4 w-4 mr-2" />
-          Add Role
+          Create Admin User
         </Button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold">{users?.length || 0}</div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Admins</CardTitle>
+            <CardTitle className="text-sm font-medium">Super Admins</CardTitle>
             <ShieldAlert className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold">{adminCount}</div>
-            )}
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : adminCount}</div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Moderators</CardTitle>
             <ShieldCheck className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold">{moderatorCount}</div>
-            )}
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : moderatorCount}</div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">With Roles</CardTitle>
-            <UsersIcon className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold">{usersWithRoles}</div>
-            )}
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : activeCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Suspended</CardTitle>
+            <XCircle className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : suspendedCount}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Role Permissions Info */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {(Object.entries(ROLE_INFO) as [AppRole, typeof ROLE_INFO.admin][]).map(([role, info]) => {
-          const Icon = info.icon;
-          return (
-            <Card key={role}>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Icon className={`h-5 w-5 ${role === "admin" ? "text-amber-500" : "text-blue-500"}`} />
-                  {info.label} Role
-                </CardTitle>
-                <CardDescription>{info.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm space-y-1">
-                  {info.permissions.map((perm, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className={`mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 ${role === "admin" ? "bg-amber-500" : "bg-blue-500"}`} />
-                      <span className="text-muted-foreground">{perm}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Search and Filters */}
+      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -382,32 +193,40 @@ export default function AdminUsers() {
                 className="pl-9"
               />
             </div>
-            <Select value={filterRole} onValueChange={(v) => setFilterRole(v as "all" | AppRole)}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by role" />
+            <Select value={filterRole} onValueChange={(v) => setFilterRole(v as any)}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="Role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="admin">Admins Only</SelectItem>
-                <SelectItem value="moderator">Moderators Only</SelectItem>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="admin">Super Admin</SelectItem>
+                <SelectItem value="moderator">Moderator</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as any)}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Users List */}
+      {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
-          <CardDescription>
-            {filteredUsers?.length || 0} users found
-          </CardDescription>
+          <CardTitle>Admin Users</CardTitle>
+          <CardDescription>{filteredUsers?.length || 0} users</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
+              {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-4">
                   <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="flex-1 space-y-2">
@@ -418,197 +237,144 @@ export default function AdminUsers() {
               ))}
             </div>
           ) : filteredUsers?.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No users found
+            <div className="text-center py-12 text-muted-foreground">
+              <UsersIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>No admin users found</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredUsers?.map((user) => {
-                const initials =
-                  (user.first_name?.[0] || "") + (user.last_name?.[0] || "") ||
-                  user.email.slice(0, 2).toUpperCase();
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Login</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers?.map((user) => {
+                  const initials = (user.first_name?.[0] || "") + (user.last_name?.[0] || "") || user.email.slice(0, 2).toUpperCase();
+                  const primaryRole = user.roles.includes("admin") ? "admin" : "moderator";
+                  const roleInfo = ROLE_INFO[primaryRole];
+                  const RoleIcon = roleInfo.icon;
 
-                return (
-                  <div
-                    key={user.user_id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-slate-200 text-slate-700 text-sm font-medium">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium">{getUserDisplayName(user)}</span>
-                          {user.roles.map((role) => {
-                            const info = ROLE_INFO[role];
-                            const Icon = info.icon;
-                            return (
-                              <Badge key={role} className={info.badgeClass}>
-                                <Icon className="h-3 w-3 mr-1" />
-                                {info.label}
-                              </Badge>
-                            );
-                          })}
+                  return (
+                    <TableRow key={user.user_id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
+                            <AvatarImage src={user.avatar_url || undefined} />
+                            <AvatarFallback className="bg-slate-200 text-slate-700 text-sm font-medium">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{getUserDisplayName(user)}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {user.email}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Joined {format(new Date(user.created_at), "MMM d, yyyy")}
-                        </p>
-                      </div>
-                    </div>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {!user.roles.includes("admin") && (
-                          <DropdownMenuItem
-                            onClick={() => grantRoleMutation.mutate({ userId: user.user_id, role: "admin" })}
-                          >
-                            <ShieldAlert className="h-4 w-4 mr-2 text-amber-500" />
-                            Grant Admin
-                          </DropdownMenuItem>
-                        )}
-                        {!user.roles.includes("moderator") && (
-                          <DropdownMenuItem
-                            onClick={() => grantRoleMutation.mutate({ userId: user.user_id, role: "moderator" })}
-                          >
-                            <ShieldCheck className="h-4 w-4 mr-2 text-blue-500" />
-                            Grant Moderator
-                          </DropdownMenuItem>
-                        )}
-                        {user.roles.length > 0 && <DropdownMenuSeparator />}
-                        {user.roles.includes("admin") && (
-                          <DropdownMenuItem
-                            onClick={() => handleRevokeRole(user, "admin")}
-                            className="text-red-600"
-                          >
-                            <UserMinus className="h-4 w-4 mr-2" />
-                            Revoke Admin
-                          </DropdownMenuItem>
-                        )}
-                        {user.roles.includes("moderator") && (
-                          <DropdownMenuItem
-                            onClick={() => handleRevokeRole(user, "moderator")}
-                            className="text-red-600"
-                          >
-                            <UserMinus className="h-4 w-4 mr-2" />
-                            Revoke Moderator
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                );
-              })}
-            </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={roleInfo.badgeClass}>
+                          <RoleIcon className="h-3 w-3 mr-1" />
+                          {roleInfo.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.status === "active" ? "outline" : "destructive"}>
+                          {user.status === "active" ? "Active" : "Suspended"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {user.last_login_at ? format(new Date(user.last_login_at), "MMM d, yyyy") : "Never"}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openPermissions(user)}>
+                              <Settings className="h-4 w-4 mr-2" />
+                              Edit Permissions
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setConfirmAction({ action: "reset_password", user })}>
+                              <KeyRound className="h-4 w-4 mr-2" />
+                              Reset Password
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {user.status === "active" ? (
+                              <DropdownMenuItem 
+                                onClick={() => setConfirmAction({ action: "suspend", user })}
+                                className="text-amber-600"
+                              >
+                                <Ban className="h-4 w-4 mr-2" />
+                                Suspend User
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem 
+                                onClick={() => setConfirmAction({ action: "unsuspend", user })}
+                                className="text-green-600"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Unsuspend User
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem 
+                              onClick={() => setConfirmAction({ action: "delete", user })}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete User
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
 
-      {/* Add Role Dialog */}
-      <Dialog open={addRoleDialogOpen} onOpenChange={setAddRoleDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Role to User</DialogTitle>
-            <DialogDescription>
-              Enter the email address and select the role you want to assign.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email Address</label>
-              <Input
-                placeholder="user@example.com"
-                value={emailToAdd}
-                onChange={(e) => setEmailToAdd(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
-              <Select value={roleToAdd} onValueChange={(v) => setRoleToAdd(v as AppRole)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">
-                    <div className="flex items-center gap-2">
-                      <ShieldAlert className="h-4 w-4 text-amber-500" />
-                      Admin - Full access
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="moderator">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-blue-500" />
-                      Moderator - Limited access
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="bg-muted p-3 rounded-lg">
-              <p className="text-sm font-medium mb-1">{ROLE_INFO[roleToAdd].label}</p>
-              <p className="text-xs text-muted-foreground">{ROLE_INFO[roleToAdd].description}</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setAddRoleDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAddRoleByEmail}
-              disabled={grantRoleMutation.isPending}
-            >
-              {grantRoleMutation.isPending ? "Adding..." : "Add Role"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Dialogs */}
+      <CreateAdminUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <AdminUserPermissionsDialog 
+        open={permissionsDialogOpen} 
+        onOpenChange={setPermissionsDialogOpen}
+        user={selectedUser}
+      />
 
-      {/* Revoke Confirmation Dialog */}
-      <AlertDialog
-        open={!!userToModify}
-        onOpenChange={() => setUserToModify(null)}
-      >
+      {/* Confirmation Dialog */}
+      <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Revoke {userToModify?.role ? ROLE_INFO[userToModify.role].label : ""} Access
+            <AlertDialogTitle>
+              {confirmAction?.action === "suspend" && "Suspend User"}
+              {confirmAction?.action === "unsuspend" && "Unsuspend User"}
+              {confirmAction?.action === "delete" && "Delete User"}
+              {confirmAction?.action === "reset_password" && "Reset Password"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to revoke {userToModify?.role ? ROLE_INFO[userToModify.role].label.toLowerCase() : ""} access for{" "}
-              <strong>{userToModify?.user ? getUserDisplayName(userToModify.user) : ""}</strong>?
-              {userToModify?.role === "admin" && (
-                <span className="block mt-2 text-amber-600">
-                  They will no longer have full admin privileges.
-                </span>
-              )}
-              {userToModify?.role === "moderator" && (
-                <span className="block mt-2">
-                  They will no longer be able to moderate content.
-                </span>
-              )}
+              {confirmAction?.action === "suspend" && `Are you sure you want to suspend ${getUserDisplayName(confirmAction.user)}? They will not be able to access the admin panel.`}
+              {confirmAction?.action === "unsuspend" && `Restore access for ${getUserDisplayName(confirmAction.user)}?`}
+              {confirmAction?.action === "delete" && `Permanently delete ${getUserDisplayName(confirmAction.user)}? This action cannot be undone.`}
+              {confirmAction?.action === "reset_password" && `Generate a new temporary password for ${getUserDisplayName(confirmAction.user)}? They will receive an email with the new credentials.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmRevokeRole}
-              className="bg-red-600 hover:bg-red-700"
+              onClick={handleAction}
+              className={confirmAction?.action === "delete" ? "bg-red-600 hover:bg-red-700" : ""}
+              disabled={isManaging}
             >
-              {revokeRoleMutation.isPending ? "Revoking..." : "Revoke Access"}
+              {isManaging ? "Processing..." : "Confirm"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
