@@ -568,6 +568,7 @@ export default function AdminAnalytics() {
 
     leadsData.forEach(l => {
       const f = l.facilities as any;
+      if (!f) return; // Skip leads without facilities (unassigned)
       const key = `${f.state}-${f.city}`;
       const loc = locationMap.get(key);
       if (loc) {
