@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Lock, Mail, ArrowRight, Eye, EyeOff, AlertTriangle, Clock } from "lucide-react";
+import { Lock, Mail, ArrowRight, Eye, EyeOff, AlertTriangle, Clock, ShieldCheck, RefreshCw } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ const providerNavLinks = [
 const REMEMBER_ME_KEY = "provider_remember_me";
 const LOGIN_ATTEMPTS_KEY = "provider_login_attempts";
 const MAX_ATTEMPTS = 5;
+const CAPTCHA_THRESHOLD = 3;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 interface LoginAttempts {
@@ -27,6 +28,40 @@ interface LoginAttempts {
   lastAttempt: number;
   lockedUntil: number | null;
 }
+
+interface CaptchaChallenge {
+  num1: number;
+  num2: number;
+  operator: "+" | "-" | "×";
+  answer: number;
+}
+
+const generateCaptcha = (): CaptchaChallenge => {
+  const operators: Array<"+" | "-" | "×"> = ["+", "-", "×"];
+  const operator = operators[Math.floor(Math.random() * operators.length)];
+  
+  let num1: number, num2: number, answer: number;
+  
+  switch (operator) {
+    case "+":
+      num1 = Math.floor(Math.random() * 20) + 1;
+      num2 = Math.floor(Math.random() * 20) + 1;
+      answer = num1 + num2;
+      break;
+    case "-":
+      num1 = Math.floor(Math.random() * 20) + 10;
+      num2 = Math.floor(Math.random() * 10) + 1;
+      answer = num1 - num2;
+      break;
+    case "×":
+      num1 = Math.floor(Math.random() * 10) + 1;
+      num2 = Math.floor(Math.random() * 10) + 1;
+      answer = num1 * num2;
+      break;
+  }
+  
+  return { num1, num2, operator, answer };
+};
 
 const getLoginAttempts = (email: string): LoginAttempts => {
   try {
@@ -67,8 +102,39 @@ export default function ProviderLogin() {
   const [isLocked, setIsLocked] = useState(false);
   const [lockoutTimeRemaining, setLockoutTimeRemaining] = useState(0);
   const [failedAttempts, setFailedAttempts] = useState(0);
+  
+  // CAPTCHA state
+  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [captcha, setCaptcha] = useState<CaptchaChallenge | null>(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captchaError, setCaptchaError] = useState(false);
+  
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Generate new CAPTCHA
+  const refreshCaptcha = useCallback(() => {
+    setCaptcha(generateCaptcha());
+    setCaptchaAnswer("");
+    setCaptchaError(false);
+  }, []);
+
+  // Check if CAPTCHA should be shown
+  const requiresCaptcha = useMemo(() => {
+    return failedAttempts >= CAPTCHA_THRESHOLD && failedAttempts < MAX_ATTEMPTS;
+  }, [failedAttempts]);
+
+  // Update CAPTCHA visibility when attempts change
+  useEffect(() => {
+    if (requiresCaptcha && !captcha) {
+      refreshCaptcha();
+      setShowCaptcha(true);
+    } else if (!requiresCaptcha) {
+      setShowCaptcha(false);
+      setCaptcha(null);
+      setCaptchaAnswer("");
+    }
+  }, [requiresCaptcha, captcha, refreshCaptcha]);
 
   // Check lockout status when email changes
   const checkLockoutStatus = useCallback(() => {
@@ -85,7 +151,6 @@ export default function ProviderLogin() {
       setLockoutTimeRemaining(attempts.lockedUntil - Date.now());
       setFailedAttempts(attempts.count);
     } else if (attempts.lockedUntil && Date.now() >= attempts.lockedUntil) {
-      // Lockout expired, clear attempts
       clearLoginAttempts(email);
       setIsLocked(false);
       setFailedAttempts(0);
@@ -120,7 +185,6 @@ export default function ProviderLogin() {
   }, [isLocked, lockoutTimeRemaining, email]);
 
   useEffect(() => {
-    // Check for existing session first
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/provider/dashboard", { replace: true });
@@ -128,7 +192,6 @@ export default function ProviderLogin() {
       setIsCheckingAuth(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_IN" && session) {
@@ -140,7 +203,6 @@ export default function ProviderLogin() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Handle "Remember me" - clear session on browser close if not remembered
   useEffect(() => {
     const handleBeforeUnload = () => {
       const shouldRemember = sessionStorage.getItem(REMEMBER_ME_KEY);
@@ -171,6 +233,11 @@ export default function ProviderLogin() {
       setLockoutTimeRemaining(LOCKOUT_DURATION_MS);
     }
     
+    // Refresh CAPTCHA on failed attempt
+    if (newCount >= CAPTCHA_THRESHOLD && newCount < MAX_ATTEMPTS) {
+      refreshCaptcha();
+    }
+    
     return newCount;
   };
 
@@ -186,7 +253,6 @@ export default function ProviderLogin() {
       return;
     }
 
-    // Check if account is locked
     if (isLocked) {
       toast({
         title: "Account Temporarily Locked",
@@ -194,6 +260,21 @@ export default function ProviderLogin() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Verify CAPTCHA if required
+    if (showCaptcha && captcha) {
+      const userAnswer = parseInt(captchaAnswer, 10);
+      if (isNaN(userAnswer) || userAnswer !== captcha.answer) {
+        setCaptchaError(true);
+        toast({
+          title: "CAPTCHA Failed",
+          description: "Please solve the math problem correctly.",
+          variant: "destructive",
+        });
+        refreshCaptcha();
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -237,14 +318,10 @@ export default function ProviderLogin() {
       }
 
       if (data.session) {
-        // Clear failed attempts on successful login
         clearLoginAttempts(email);
         setFailedAttempts(0);
-        
-        // Store remember me preference
         sessionStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString());
         
-        // Log login activity
         supabase.functions.invoke("log-activity", {
           body: {
             user_id: data.session.user.id,
@@ -270,7 +347,6 @@ export default function ProviderLogin() {
     }
   };
 
-  // Show loading while checking auth
   if (isCheckingAuth) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
@@ -302,7 +378,6 @@ export default function ProviderLogin() {
       
       <main className="flex flex-1 items-center justify-center px-4 py-12 md:py-16">
         <div className="w-full max-w-sm space-y-8">
-          {/* Header */}
           <div className="text-center">
             <h1 className="font-display text-2xl font-bold text-foreground">
               Provider Sign In
@@ -388,6 +463,54 @@ export default function ProviderLogin() {
                 </button>
               </div>
             </div>
+
+            {/* CAPTCHA Challenge */}
+            {showCaptcha && captcha && !isLocked && (
+              <div className="space-y-2 p-4 rounded-lg border border-border bg-muted/30">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  Security Verification
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Please solve this math problem to verify you're human.
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 flex items-center gap-2 p-3 rounded-md bg-background border border-border">
+                    <span className="font-mono text-lg font-bold text-foreground">
+                      {captcha.num1} {captcha.operator} {captcha.num2} =
+                    </span>
+                    <Input
+                      type="number"
+                      value={captchaAnswer}
+                      onChange={(e) => {
+                        setCaptchaAnswer(e.target.value);
+                        setCaptchaError(false);
+                      }}
+                      className={`w-20 h-9 text-center font-mono text-lg ${
+                        captchaError ? "border-destructive" : ""
+                      }`}
+                      placeholder="?"
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={refreshCaptcha}
+                    className="shrink-0"
+                    title="Get new problem"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+                {captchaError && (
+                  <p className="text-xs text-destructive">
+                    Incorrect answer. Please try again.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center space-x-2">
               <Checkbox
