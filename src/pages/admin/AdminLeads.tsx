@@ -21,7 +21,6 @@ import {
   CheckSquare,
   Square,
   Send,
-  Radio,
 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -215,20 +214,15 @@ export default function AdminLeads() {
   const [showBulkAssignDialog, setShowBulkAssignDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
-  const [isLive, setIsLive] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   // Invalidate leads queries helper
   const invalidateLeadsQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
     queryClient.invalidateQueries({ queryKey: ["admin-leads-count"] });
-    setLastUpdate(new Date());
   }, [queryClient]);
 
-  // Real-time subscriptions for leads
+  // Real-time subscriptions for leads - always active
   useEffect(() => {
-    if (!isLive) return;
-
     const leadsChannel = supabase
       .channel("admin-leads-realtime")
       .on(
@@ -260,7 +254,7 @@ export default function AdminLeads() {
     return () => {
       supabase.removeChannel(leadsChannel);
     };
-  }, [isLive, invalidateLeadsQueries]);
+  }, [invalidateLeadsQueries]);
 
   // Fetch total count for pagination
   const { data: totalCount } = useQuery({
@@ -518,24 +512,6 @@ export default function AdminLeads() {
           <p className="text-muted-foreground">Review, score, and route incoming leads</p>
         </div>
         <div className="flex items-center gap-3">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={isLive ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsLive(!isLive)}
-                  className={isLive ? "bg-green-600 hover:bg-green-700" : ""}
-                >
-                  <Radio className={`h-4 w-4 mr-2 ${isLive ? "animate-pulse" : ""}`} />
-                  {isLive ? "Live" : "Paused"}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Last update: {format(lastUpdate, "h:mm:ss a")}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
           {selectedLeads.size > 0 && (
             <Button onClick={() => setShowBulkAssignDialog(true)}>
               <Send className="h-4 w-4 mr-2" />

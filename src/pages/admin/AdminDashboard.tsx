@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import {
   Building2,
   Users,
@@ -16,7 +16,6 @@ import {
   DollarSign,
   ShieldCheck,
   UserPlus,
-  Radio,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,8 +37,6 @@ interface RevenueStats {
 
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
-  const [isLive, setIsLive] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   // Invalidate all dashboard queries
   const invalidateDashboard = useCallback(() => {
@@ -47,13 +44,10 @@ export default function AdminDashboard() {
     queryClient.invalidateQueries({ queryKey: ["admin-lead-stats"] });
     queryClient.invalidateQueries({ queryKey: ["admin-top-cities"] });
     queryClient.invalidateQueries({ queryKey: ["admin-recent-leads"] });
-    setLastUpdate(new Date());
   }, [queryClient]);
 
-  // Real-time subscriptions
+  // Real-time subscriptions - always active
   useEffect(() => {
-    if (!isLive) return;
-
     const facilitiesChannel = supabase
       .channel("dashboard-facilities")
       .on(
@@ -88,7 +82,7 @@ export default function AdminDashboard() {
       supabase.removeChannel(facilitiesChannel);
       supabase.removeChannel(leadsChannel);
     };
-  }, [isLive, invalidateDashboard]);
+  }, [invalidateDashboard]);
 
   // Fetch revenue stats from Stripe
   const { data: revenueStats, isLoading: loadingRevenue } = useQuery<RevenueStats>({
@@ -260,25 +254,6 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">Platform overview and key performance metrics</p>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={isLive ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsLive(!isLive)}
-                className="gap-2 self-start"
-              >
-                <Radio className={`h-3.5 w-3.5 ${isLive ? "animate-pulse" : ""}`} />
-                {isLive ? "Live" : "Paused"}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isLive ? "Receiving real-time updates" : "Real-time updates paused"}</p>
-              <p className="text-xs text-muted-foreground">Last update: {lastUpdate.toLocaleTimeString()}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
 
       {/* Primary KPI Cards */}
