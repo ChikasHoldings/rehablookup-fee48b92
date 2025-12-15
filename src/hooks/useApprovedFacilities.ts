@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { TreatmentCenter } from "@/data/treatmentCenters";
 
@@ -50,7 +51,62 @@ export const useFeaturedFacilityIds = () => {
 };
 
 export const useApprovedFacilities = () => {
+  const queryClient = useQueryClient();
   const { data: featuredIds = [] } = useFeaturedFacilityIds();
+
+  // Real-time subscription for approved facilities updates
+  useEffect(() => {
+    const facilitiesChannel = supabase
+      .channel("approved-facilities-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facilities",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        }
+      )
+      .subscribe();
+
+    const servicesChannel = supabase
+      .channel("approved-facilities-services")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_services",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        }
+      )
+      .subscribe();
+
+    const insuranceChannel = supabase
+      .channel("approved-facilities-insurance")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_insurance",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(facilitiesChannel);
+      supabase.removeChannel(servicesChannel);
+      supabase.removeChannel(insuranceChannel);
+    };
+  }, [queryClient]);
 
   return useQuery({
     queryKey: ["approved-facilities", featuredIds],
@@ -107,5 +163,6 @@ export const useApprovedFacilities = () => {
         };
       });
     },
+    staleTime: 1000 * 60 * 2, // 2 minutes for fresher data
   });
 };
