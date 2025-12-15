@@ -323,7 +323,7 @@ export function LeadProfileModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+        <DialogContent className="max-w-3xl h-[90vh] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
           {/* Header */}
           <DialogHeader className="p-6 pb-4 border-b bg-muted/30">
             <div className="flex items-start justify-between gap-4">
@@ -334,7 +334,7 @@ export function LeadProfileModal({
                   </DialogTitle>
                   <LeadStatusBadge status={lead.status as LeadStatus} />
                   {lead.source === "Request Help Page" ? (
-                    <Badge className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
+                    <Badge className="gap-1 text-xs bg-primary text-white border-primary">
                       <Sparkles className="h-3 w-3" />
                       Qualified
                     </Badge>
@@ -395,7 +395,7 @@ export function LeadProfileModal({
               </TabsList>
             </div>
 
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 overflow-auto">
               {/* Overview Tab */}
               <TabsContent value="overview" className="p-6 space-y-6 mt-0">
                 {/* Status Update */}
