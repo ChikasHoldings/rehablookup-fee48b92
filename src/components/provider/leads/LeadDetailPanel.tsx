@@ -233,7 +233,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-foreground truncate leading-tight">{lead.name}</h2>
+            <h2 className="text-xl font-semibold text-foreground truncate leading-tight">{lead.name}</h2>
             <div className="flex items-center gap-1.5 mt-0.5 text-sm text-muted-foreground">
               {lead.location_city_state && (
                 <>
