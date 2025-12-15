@@ -265,6 +265,10 @@ export default function ProviderLeadsPage() {
     return leadDate >= startOfMonth(new Date());
   });
 
+  // Separate qualified and direct leads for this month
+  const thisMonthQualifiedLeads = thisMonthLeads.filter(lead => lead.source === "Request Help Page");
+  const thisMonthDirectLeads = thisMonthLeads.filter(lead => lead.source !== "Request Help Page");
+
   const todayLeads = leads.filter(lead => isToday(new Date(lead.created_at)));
   const newLeads = leads.filter(lead => lead.status === "new");
 
@@ -303,8 +307,27 @@ export default function ProviderLeadsPage() {
 
       {/* Lead Limit Banners */}
       {leadLimit === 0 && <BasicPlanBanner />}
-      {leadLimit > 0 && <LeadLimitReachedBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />}
-      {leadLimit > 0 && <LeadLimitWarningBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />}
+      {/* Basic plan: all leads count toward limit */}
+      {currentPlan === "basic" && leadLimit > 0 && (
+        <>
+          <LeadLimitReachedBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} plan="basic" />
+          <LeadLimitWarningBanner usedLeads={thisMonthLeads.length} leadLimit={leadLimit} />
+        </>
+      )}
+      {/* Professional plan: only qualified leads count toward limit */}
+      {currentPlan === "professional" && leadLimit > 0 && (
+        <>
+          <LeadLimitReachedBanner usedLeads={thisMonthQualifiedLeads.length} leadLimit={leadLimit} plan="professional" isQualifiedLeads />
+          <LeadLimitWarningBanner usedLeads={thisMonthQualifiedLeads.length} leadLimit={leadLimit} />
+        </>
+      )}
+      {/* Featured plan uses same logic as professional */}
+      {currentPlan === "featured" && leadLimit > 0 && (
+        <>
+          <LeadLimitReachedBanner usedLeads={thisMonthQualifiedLeads.length} leadLimit={leadLimit} plan="featured" isQualifiedLeads />
+          <LeadLimitWarningBanner usedLeads={thisMonthQualifiedLeads.length} leadLimit={leadLimit} />
+        </>
+      )}
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-4">
@@ -593,12 +616,24 @@ export default function ProviderLeadsPage() {
             </div>
           ) : (
             <div className="relative overflow-x-auto">
-              {/* Upgrade overlay when limit is reached for Basic plan */}
+              {/* Upgrade overlay when limit is reached */}
+              {/* Basic plan: all leads count toward limit */}
               {currentPlan === "basic" && thisMonthLeads.length >= leadLimit && (
                 <LeadLimitOverlay 
                   usedLeads={thisMonthLeads.length} 
                   leadLimit={leadLimit} 
                   hiddenLeadsCount={Math.max(0, thisMonthLeads.length - leadLimit)}
+                  plan="basic"
+                />
+              )}
+              {/* Professional plan: only qualified leads count toward limit */}
+              {currentPlan === "professional" && thisMonthQualifiedLeads.length >= leadLimit && (
+                <LeadLimitOverlay 
+                  usedLeads={thisMonthQualifiedLeads.length} 
+                  leadLimit={leadLimit} 
+                  hiddenLeadsCount={Math.max(0, filteredLeads.filter(l => l.source === "Request Help Page").length - leadLimit)}
+                  plan="professional"
+                  isQualifiedOnly
                 />
               )}
               <Table>
@@ -633,12 +668,27 @@ export default function ProviderLeadsPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredLeads.map((lead, index) => {
-                    // For Basic plan, blur leads beyond the limit
-                    const isLocked = currentPlan === "basic" && index >= leadLimit;
+                    const isQualifiedLead = lead.source === "Request Help Page";
+                    
+                    // Calculate if this lead should be locked
+                    // Basic plan: all leads after limit are locked
+                    // Professional plan: only qualified leads after limit are locked, direct leads are always unlocked
+                    let isLocked = false;
+                    if (currentPlan === "basic") {
+                      isLocked = index >= leadLimit;
+                    } else if (currentPlan === "professional") {
+                      if (isQualifiedLead) {
+                        // Count how many qualified leads came before this one
+                        const qualifiedLeadsBeforeThis = filteredLeads.slice(0, index).filter(l => l.source === "Request Help Page").length;
+                        isLocked = qualifiedLeadsBeforeThis >= leadLimit;
+                      }
+                      // Direct leads are never locked for Professional plan
+                    }
+                    // Featured plan: no leads are locked
                     
                     return (
                       <TableRow 
-                        key={lead.id} 
+                        key={lead.id}
                         className={`hover:bg-muted/30 cursor-pointer group ${isLocked ? "select-none" : ""}`}
                         onClick={() => !isLocked && handleOpenLead(lead)}
                       >
