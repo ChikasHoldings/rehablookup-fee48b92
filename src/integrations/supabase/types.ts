@@ -422,6 +422,56 @@ export type Database = {
           },
         ]
       }
+      flagged_images: {
+        Row: {
+          facility_id: string
+          flagged_at: string
+          flagged_by: string
+          id: string
+          image_type: string
+          image_url: string
+          reason: string | null
+          resolution_notes: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          facility_id: string
+          flagged_at?: string
+          flagged_by: string
+          id?: string
+          image_type: string
+          image_url: string
+          reason?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          facility_id?: string
+          flagged_at?: string
+          flagged_by?: string
+          id?: string
+          image_type?: string
+          image_url?: string
+          reason?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flagged_images_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_emails: {
         Row: {
           created_at: string
