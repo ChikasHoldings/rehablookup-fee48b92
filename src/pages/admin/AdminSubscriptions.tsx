@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CreditCard,
   Building2,
@@ -16,6 +16,7 @@ import {
   ChevronUp,
   ChevronDown,
   Minus,
+  Radio,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -159,9 +160,58 @@ function EventIcon({ type }: { type: string }) {
 }
 
 export default function AdminSubscriptions() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isLive, setIsLive] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Invalidate subscription queries helper
+  const invalidateSubscriptionQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-subscription-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-subscriptions-facilities"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-subscription-lead-counts"] });
+    setLastUpdate(new Date());
+  }, [queryClient]);
+
+  // Real-time subscriptions for facilities and leads changes
+  useEffect(() => {
+    if (!isLive) return;
+
+    const facilitiesChannel = supabase
+      .channel("admin-subscriptions-facilities-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "facilities" },
+        (payload) => {
+          invalidateSubscriptionQueries();
+          if (payload.eventType === "INSERT") {
+            toast.info("New provider registered", {
+              description: "Subscription data updated",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    const leadsChannel = supabase
+      .channel("admin-subscriptions-leads-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-subscription-lead-counts"] });
+          setLastUpdate(new Date());
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(facilitiesChannel);
+      supabase.removeChannel(leadsChannel);
+    };
+  }, [isLive, invalidateSubscriptionQueries, queryClient]);
 
   // Fetch subscription stats from Stripe
   const { data: stripeStats, isLoading: isLoadingStripe, refetch } = useQuery({
@@ -305,10 +355,30 @@ export default function AdminSubscriptions() {
           <h1 className="text-2xl font-bold text-foreground">Subscriptions</h1>
           <p className="text-muted-foreground">Monitor revenue, plan distribution, and churn</p>
         </div>
-        <Button variant="outline" onClick={() => refetch()} disabled={isLoadingStripe}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingStripe ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-3">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={isLive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsLive(!isLive)}
+                  className={isLive ? "bg-green-600 hover:bg-green-700" : ""}
+                >
+                  <Radio className={`h-4 w-4 mr-2 ${isLive ? "animate-pulse" : ""}`} />
+                  {isLive ? "Live" : "Paused"}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Last update: {format(lastUpdate, "h:mm:ss a")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button variant="outline" onClick={() => invalidateSubscriptionQueries()} disabled={isLoadingStripe}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingStripe ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Revenue Stats */}
