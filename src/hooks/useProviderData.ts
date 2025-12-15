@@ -18,6 +18,13 @@ interface Facility {
   email: string | null;
   logo_url: string | null;
   gallery_urls: string[] | null;
+  description: string | null;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  website: string | null;
 }
 
 interface ProviderData {
@@ -99,7 +106,7 @@ export function useProviderData(facilityId?: string) {
       if (facilityId) {
         const { data } = await supabase
           .from("facilities")
-          .select("id, name, slug, status, email, logo_url, gallery_urls")
+          .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website")
           .eq("id", facilityId)
           .eq("user_id", session.user.id)
           .maybeSingle();
@@ -107,7 +114,7 @@ export function useProviderData(facilityId?: string) {
       } else {
         const { data } = await supabase
           .from("facilities")
-          .select("id, name, slug, status, email, logo_url, gallery_urls")
+          .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website")
           .eq("user_id", session.user.id)
           .limit(1)
           .maybeSingle();
