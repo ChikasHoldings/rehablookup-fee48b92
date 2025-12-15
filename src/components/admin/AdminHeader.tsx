@@ -25,6 +25,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 interface AdminHeaderProps {
   userEmail?: string;
@@ -304,7 +305,14 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
                       variant="ghost"
                       size="sm"
                       className="h-6 px-2 text-xs"
-                      onClick={() => markAllAsRead()}
+                      onClick={() => {
+                        markAllAsRead();
+                        logAdminAction({
+                          actionType: AdminAuditActions.NOTIFICATIONS_MARKED_READ,
+                          targetType: "admin_notifications",
+                          details: { count: userUnreadCount },
+                        });
+                      }}
                     >
                       <CheckCheck className="h-3 w-3 mr-1" />
                       Mark read
