@@ -224,15 +224,18 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
                   </Badge>
                 )}
               </div>
-              {lead.location_city_state && (
-                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {lead.location_city_state}
-                </p>
-              )}
-              <p className="text-[10px] text-muted-foreground mt-1">
-                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: false }).replace("about ", "")} ago
-              </p>
+              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                {lead.location_city_state && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {lead.location_city_state}
+                  </span>
+                )}
+                {lead.location_city_state && <span className="text-muted-foreground/40">•</span>}
+                <span className="text-[10px]">
+                  {formatDistanceToNow(new Date(lead.created_at), { addSuffix: false }).replace("about ", "")} ago
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
