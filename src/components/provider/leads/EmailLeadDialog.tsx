@@ -175,16 +175,16 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden border-0 shadow-2xl">
         {/* Header */}
-        <DialogHeader className="p-6 pb-4 border-b bg-gradient-to-r from-primary/5 via-primary/3 to-transparent">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+        <DialogHeader className="px-6 py-5 border-b bg-gradient-to-br from-primary/8 via-primary/4 to-transparent">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shadow-sm">
               <Mail className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <DialogTitle className="text-lg">Compose Email</DialogTitle>
-              <DialogDescription className="text-sm">
+            <div className="space-y-0.5">
+              <DialogTitle className="text-xl font-semibold tracking-tight">Compose Email</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
                 Send a professional follow-up to <span className="font-medium text-foreground">{firstName}</span>
               </DialogDescription>
             </div>
@@ -192,38 +192,39 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
         </DialogHeader>
 
         {emailSent ? (
-          <div className="py-16 px-6 text-center">
-            <div className="h-20 w-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5 animate-in zoom-in-50 duration-300">
-              <CheckCircle className="h-10 w-10 text-green-600" />
+          <div className="py-20 px-6 text-center">
+            <div className="h-24 w-24 rounded-full bg-gradient-to-br from-green-100 to-green-50 flex items-center justify-center mx-auto mb-6 animate-in zoom-in-50 duration-500 shadow-lg shadow-green-100/50">
+              <CheckCircle className="h-12 w-12 text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground">Email Sent!</h3>
-            <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
+            <h3 className="text-2xl font-semibold text-foreground tracking-tight">Email Sent!</h3>
+            <p className="text-muted-foreground mt-3 max-w-sm mx-auto leading-relaxed">
               Your message has been delivered to {lead.email}. 
               It will appear in the Communications tab.
             </p>
           </div>
         ) : (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-6">
             {/* Recipient Badge */}
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
-              <span className="text-sm text-muted-foreground">To:</span>
-              <Badge variant="secondary" className="font-normal">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-muted/40 border border-border/50">
+              <span className="text-sm text-muted-foreground font-medium">To:</span>
+              <Badge variant="secondary" className="font-normal px-3 py-1 bg-background shadow-sm">
+                <Mail className="h-3 w-3 mr-1.5 text-muted-foreground" />
                 {lead.email}
               </Badge>
             </div>
 
             {/* Template Selection */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Choose Template</Label>
+              <Label className="text-sm font-semibold">Choose Template</Label>
               <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                <SelectTrigger className="h-auto py-3">
+                <SelectTrigger className="h-auto py-3.5 px-4 rounded-xl border-border/60 hover:border-primary/40 transition-colors">
                   {selectedTemplateInfo ? (
                     <div className="flex items-center gap-3 text-left">
-                      <div className={`h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0`}>
+                      <div className={`h-9 w-9 rounded-xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center flex-shrink-0 shadow-sm`}>
                         <selectedTemplateInfo.icon className={`h-4 w-4 ${selectedTemplateInfo.iconColor}`} />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-sm">{selectedTemplateInfo.name}</p>
+                        <p className="font-semibold text-sm">{selectedTemplateInfo.name}</p>
                         <p className="text-xs text-muted-foreground">{selectedTemplateInfo.category}</p>
                       </div>
                     </div>
@@ -231,25 +232,25 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                     <span className="text-muted-foreground">Select an email template...</span>
                   )}
                 </SelectTrigger>
-                <SelectContent className="max-h-[320px]">
+                <SelectContent className="max-h-[340px] p-1">
                   {EMAIL_TEMPLATES.map((template) => (
                     <SelectItem 
                       key={template.id} 
                       value={template.id}
-                      className="py-3 cursor-pointer"
+                      className="py-3.5 px-3 cursor-pointer rounded-lg data-[highlighted]:bg-muted/60"
                     >
                       <div className="flex items-start gap-3">
-                        <div className={`h-8 w-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                        <div className={`h-9 w-9 rounded-xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm`}>
                           <template.icon className={`h-4 w-4 ${template.iconColor}`} />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">{template.name}</p>
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                            <p className="font-semibold text-sm">{template.name}</p>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-medium">
                               {template.category}
                             </Badge>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1 leading-relaxed">
                             {template.description}
                           </p>
                         </div>
@@ -262,14 +263,14 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
 
             {/* Template Preview */}
             {selectedTemplateInfo && (
-              <div className="space-y-2 animate-in fade-in-50 duration-200">
+              <div className="space-y-2.5 animate-in fade-in-50 slide-in-from-top-2 duration-300">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-3.5 w-3.5 text-primary" />
-                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Email Preview
                   </Label>
                 </div>
-                <div className="p-4 rounded-lg bg-blue-50/50 border border-blue-100 text-sm text-muted-foreground italic">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50/80 to-blue-50/40 border border-blue-100/80 text-sm text-muted-foreground italic leading-relaxed">
                   "{selectedTemplateInfo.preview}"
                 </div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -280,12 +281,12 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
             )}
 
             {/* Custom Note */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="customNote" className="text-sm font-medium">
+                <Label htmlFor="customNote" className="text-sm font-semibold">
                   Add Personal Touch <span className="text-muted-foreground font-normal">(optional)</span>
                 </Label>
-                <span className={`text-xs ${customNote.length > MAX_CUSTOM_NOTE_LENGTH * 0.9 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                <span className={`text-xs font-medium ${customNote.length > MAX_CUSTOM_NOTE_LENGTH * 0.9 ? 'text-amber-600' : 'text-muted-foreground'}`}>
                   {customNote.length}/{MAX_CUSTOM_NOTE_LENGTH}
                 </span>
               </div>
@@ -294,16 +295,18 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                 placeholder={`Add a personalized note for ${firstName}. This appears in the email body and makes your message more genuine...`}
                 value={customNote}
                 onChange={(e) => setCustomNote(e.target.value.slice(0, MAX_CUSTOM_NOTE_LENGTH))}
-                className="min-h-[100px] resize-none"
+                className="min-h-[110px] resize-none rounded-xl border-border/60 focus:border-primary/40"
               />
             </div>
 
             {/* Info Box */}
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border text-sm">
-              <Mail className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-              <div className="text-muted-foreground space-y-1">
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/40 border border-border/50 text-sm">
+              <div className="h-8 w-8 rounded-lg bg-background flex items-center justify-center flex-shrink-0 shadow-sm">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-muted-foreground space-y-1 leading-relaxed">
                 <p>
-                  Emails are sent from <span className="font-medium text-foreground">RehabLookup</span> on your behalf.
+                  Emails are sent from <span className="font-semibold text-foreground">RehabLookup</span> on your behalf.
                 </p>
                 <p>
                   Replies will be delivered to your facility's email. All communications are logged for your records.
@@ -312,18 +315,19 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-2 border-t">
+            <div className="flex justify-end gap-3 pt-3 border-t border-border/50">
               <Button
                 variant="outline"
                 onClick={handleClose}
                 disabled={sendEmail.isPending}
+                className="rounded-xl px-5"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSend}
                 disabled={!selectedTemplate || sendEmail.isPending}
-                className="gap-2 min-w-[120px]"
+                className="gap-2 min-w-[130px] rounded-xl px-5 shadow-md shadow-primary/20"
               >
                 {sendEmail.isPending ? (
                   <>
