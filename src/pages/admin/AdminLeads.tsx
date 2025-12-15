@@ -66,6 +66,8 @@ type Facility = {
   state: string;
 };
 
+const ITEMS_PER_PAGE = 20;
+
 export default function AdminLeads() {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -76,15 +78,15 @@ export default function AdminLeads() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch leads
-  const { data: leads, isLoading } = useQuery({
-    queryKey: ["admin-leads", assignmentFilter, searchQuery],
+  // Fetch total count for pagination
+  const { data: totalCount } = useQuery({
+    queryKey: ["admin-leads-count", assignmentFilter, searchQuery],
     queryFn: async () => {
       let query = supabase
         .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("id", { count: "exact", head: true });
 
       if (assignmentFilter === "unassigned") {
         query = query.is("facility_id", null);
@@ -96,11 +98,53 @@ export default function AdminLeads() {
         query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
       }
 
-      const { data, error } = await query.limit(100);
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch leads with pagination
+  const { data: leads, isLoading } = useQuery({
+    queryKey: ["admin-leads", assignmentFilter, searchQuery, currentPage],
+    queryFn: async () => {
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      let query = supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (assignmentFilter === "unassigned") {
+        query = query.is("facility_id", null);
+      } else if (assignmentFilter === "assigned") {
+        query = query.not("facility_id", "is", null);
+      }
+
+      if (searchQuery) {
+        query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as Lead[];
     },
   });
+
+  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
+
+  // Reset to page 1 when filters change
+  const handleAssignmentFilterChange = (value: string) => {
+    setAssignmentFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
 
   // Fetch facilities for assignment
   const { data: facilities } = useQuery({
@@ -176,11 +220,11 @@ export default function AdminLeads() {
               <Input
                 placeholder="Search by name or email..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-9"
               />
             </div>
-            <Select value={assignmentFilter} onValueChange={setAssignmentFilter}>
+            <Select value={assignmentFilter} onValueChange={handleAssignmentFilterChange}>
               <SelectTrigger className="w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Assignment" />
@@ -200,7 +244,7 @@ export default function AdminLeads() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Leads ({leads?.length || 0})
+            Leads ({totalCount || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -281,6 +325,58 @@ export default function AdminLeads() {
             </div>
           ) : (
             <p className="text-center py-8 text-muted-foreground">No leads found</p>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t mt-4">
+              <p className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} leads
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
