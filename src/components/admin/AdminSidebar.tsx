@@ -9,6 +9,7 @@ import {
   MessageSquare,
   ClipboardList,
   Settings,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ const navItems = [
   { to: "/admin/leads", icon: Users, label: "Leads" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions" },
   { to: "/admin/featured", icon: Star, label: "Featured Placement" },
+  { to: "/admin/users", icon: ShieldCheck, label: "User Management" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Reviews", disabled: true },
   { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log" },
   { to: "/admin/settings", icon: Settings, label: "Settings" },

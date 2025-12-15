@@ -47,6 +47,7 @@ import AdminFeatured from "./pages/admin/AdminFeatured";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="leads" element={<AdminLeads />} />
             <Route path="subscriptions" element={<AdminSubscriptions />} />
             <Route path="featured" element={<AdminFeatured />} />
+            <Route path="users" element={<AdminUsers />} />
             <Route path="audit-log" element={<AdminAuditLog />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="notifications" element={<AdminNotifications />} />
