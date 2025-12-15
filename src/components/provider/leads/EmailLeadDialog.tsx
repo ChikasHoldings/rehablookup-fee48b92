@@ -290,7 +290,7 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden border-0 shadow-2xl max-h-[90vh]">
+      <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden border-0 shadow-2xl max-h-[95vh] h-[680px]">
         {/* Header */}
         <DialogHeader className="px-6 py-4 border-b bg-gradient-to-br from-primary/8 via-primary/4 to-transparent flex-shrink-0">
           <div className="flex items-center gap-4">
