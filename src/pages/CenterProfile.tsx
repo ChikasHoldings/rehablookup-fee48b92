@@ -1,5 +1,5 @@
 import { useParams, Link, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateLocalBusinessSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,7 @@ function getInitials(name: string): string {
 const CenterProfile = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const contactFormRef = useRef<HTMLDivElement>(null);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
@@ -81,6 +82,63 @@ const CenterProfile = () => {
       setCurrentUserId(session?.user?.id ?? null);
     });
   }, []);
+
+  // Real-time subscription for facility updates
+  useEffect(() => {
+    if (!slug) return;
+
+    const facilityChannel = supabase
+      .channel(`center-profile-${slug}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facilities",
+        },
+        (payload) => {
+          // Only invalidate if it might be our facility
+          queryClient.invalidateQueries({ queryKey: ["facility", slug] });
+        }
+      )
+      .subscribe();
+
+    const servicesChannel = supabase
+      .channel(`center-profile-services-${slug}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_services",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["facility", slug] });
+        }
+      )
+      .subscribe();
+
+    const insuranceChannel = supabase
+      .channel(`center-profile-insurance-${slug}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_insurance",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["facility", slug] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(facilityChannel);
+      supabase.removeChannel(servicesChannel);
+      supabase.removeChannel(insuranceChannel);
+    };
+  }, [slug, queryClient]);
 
   // Fetch facility data by slug
   const { data: facility, isLoading, error } = useQuery({

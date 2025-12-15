@@ -335,8 +335,9 @@ export default function ProviderListingPage() {
 
     if (!error) {
       queryClient.setQueryData(["facility-listing", selectedFacility?.id], facility);
-      // Invalidate provider-data to update onboarding checklist
+      // Invalidate all relevant queries for real-time updates
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
       setHasChanges(false);
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);
@@ -442,10 +443,13 @@ export default function ProviderListingPage() {
         variant: "destructive",
       });
     } else {
-      // Invalidate provider-data to update onboarding checklist in real-time
+      // Invalidate all relevant queries to update in real-time across the app
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-facilities"] }); // Header dropdown
       queryClient.invalidateQueries({ queryKey: ["facility-services-count", selectedFacility?.id] });
       queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", selectedFacility?.id] });
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] }); // Public cards
+      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] }); // Public profile
       setTimeout(() => setShowSaved(false), 2000);
       toast({
         title: "Changes saved",
@@ -527,7 +531,10 @@ export default function ProviderListingPage() {
     } else {
       setNewService("");
       refetchServices();
+      // Invalidate all relevant queries for real-time updates
       queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       toast({ title: "Service added" });
     }
   };
@@ -545,6 +552,8 @@ export default function ProviderListingPage() {
       refetchServices();
       if (facility) {
         queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
+        queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       }
     }
   };
@@ -562,7 +571,10 @@ export default function ProviderListingPage() {
     } else {
       setNewInsurance("");
       refetchInsurance();
+      // Invalidate all relevant queries for real-time updates
       queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       toast({ title: "Insurance added" });
     }
   };
@@ -580,6 +592,8 @@ export default function ProviderListingPage() {
       refetchInsurance();
       if (facility) {
         queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
+        queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       }
     }
   };
