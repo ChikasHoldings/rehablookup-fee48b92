@@ -269,6 +269,8 @@ export type Database = {
           profile_reminder_count: number | null
           profile_reminder_sent_at: string | null
           reply_email: string | null
+          reply_email_verified: boolean | null
+          reply_email_verified_at: string | null
           slug: string | null
           state: string
           status: string
@@ -302,6 +304,8 @@ export type Database = {
           profile_reminder_count?: number | null
           profile_reminder_sent_at?: string | null
           reply_email?: string | null
+          reply_email_verified?: boolean | null
+          reply_email_verified_at?: string | null
           slug?: string | null
           state: string
           status?: string
@@ -335,6 +339,8 @@ export type Database = {
           profile_reminder_count?: number | null
           profile_reminder_sent_at?: string | null
           reply_email?: string | null
+          reply_email_verified?: boolean | null
+          reply_email_verified_at?: string | null
           slug?: string | null
           state?: string
           status?: string
@@ -957,6 +963,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "provider_notifications_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reply_email_verification_codes: {
+        Row: {
+          attempts: number | null
+          code: string
+          created_at: string | null
+          email: string
+          expires_at: string
+          facility_id: string
+          id: string
+          status: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          code: string
+          created_at?: string | null
+          email: string
+          expires_at: string
+          facility_id: string
+          id?: string
+          status?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          code?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          facility_id?: string
+          id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reply_email_verification_codes_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"

@@ -25,7 +25,9 @@ import {
   X,
   Loader2,
   Stethoscope,
-  CreditCard
+  CreditCard,
+  ShieldCheck,
+  Send
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +59,8 @@ interface Facility {
   phone: string;
   email: string | null;
   reply_email: string | null;
+  reply_email_verified: boolean | null;
+  reply_email_verified_at: string | null;
   website: string | null;
   description: string | null;
   facility_type: string;
@@ -190,6 +194,13 @@ export default function ProviderListingPage() {
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const { selectedFacility } = useSelectedFacility();
+
+  // Reply email verification state
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
 
   // Fetch facility data with React Query
   const { data: facilityData, isLoading } = useQuery({
@@ -629,6 +640,124 @@ export default function ProviderListingPage() {
     }
   };
 
+  // Send reply email verification code
+  const handleSendVerificationCode = async () => {
+    if (!facility?.reply_email) {
+      toast({
+        title: "Email required",
+        description: "Please enter a reply email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const emailError = validateField("reply_email", facility.reply_email);
+    if (emailError) {
+      toast({
+        title: "Invalid email",
+        description: emailError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingCode(true);
+    setVerificationError(null);
+
+    try {
+      const response = await supabase.functions.invoke("send-reply-email-verification", {
+        body: {
+          facilityId: facility.id,
+          email: facility.reply_email,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to send verification code");
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      setCodeSent(true);
+      setVerificationCode("");
+      toast({
+        title: "Code sent!",
+        description: `Check ${facility.reply_email} for your verification code.`,
+      });
+    } catch (error: any) {
+      setVerificationError(error.message);
+      toast({
+        title: "Failed to send code",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  // Verify reply email code
+  const handleVerifyCode = async () => {
+    if (!facility?.reply_email || !verificationCode.trim()) {
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationError(null);
+
+    try {
+      const response = await supabase.functions.invoke("verify-reply-email-code", {
+        body: {
+          facilityId: facility.id,
+          email: facility.reply_email,
+          code: verificationCode.trim(),
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Verification failed");
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      // Update local state
+      setFacility({
+        ...facility,
+        reply_email_verified: true,
+        reply_email_verified_at: new Date().toISOString(),
+      });
+      setCodeSent(false);
+      setVerificationCode("");
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["facility-listing", selectedFacility?.id] });
+      queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+
+      toast({
+        title: "Email verified!",
+        description: "Your reply email has been verified. You can now send emails to leads.",
+      });
+    } catch (error: any) {
+      setVerificationError(error.message);
+      toast({
+        title: "Verification failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Check if reply email needs re-verification (email changed)
+  const replyEmailNeedsVerification = facility?.reply_email && 
+    (!facility.reply_email_verified || 
+     (facilityData?.reply_email !== facility.reply_email && facility.reply_email !== facilityData?.reply_email));
+
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "approved":
@@ -1045,27 +1174,130 @@ export default function ProviderListingPage() {
                 </div>
                 
                 {/* Reply Email - Important for lead communication */}
-                <div className="space-y-2">
-                  <Label htmlFor="reply_email" className="text-xs font-medium">
-                    Reply Email <span className="text-destructive">*</span>
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="reply_email"
-                      type="email"
-                      value={facility.reply_email || ""}
-                      onChange={(e) => updateField("reply_email", e.target.value)}
-                      onBlur={(e) => handleFieldBlur("reply_email", e.target.value)}
-                      className={`h-10 pl-10 ${fieldErrors.reply_email && touchedFields.has("reply_email") ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                      placeholder="replies@facility.com"
-                    />
+                <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="reply_email" className="text-xs font-medium flex items-center gap-2">
+                      Reply Email <span className="text-destructive">*</span>
+                      {facility.reply_email_verified && (
+                        <Badge variant="outline" className="gap-1 text-green-700 border-green-200 bg-green-500/10">
+                          <ShieldCheck className="h-3 w-3" />
+                          Verified
+                        </Badge>
+                      )}
+                    </Label>
                   </div>
+                  
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="reply_email"
+                        type="email"
+                        value={facility.reply_email || ""}
+                        onChange={(e) => {
+                          updateField("reply_email", e.target.value);
+                          // Reset verification state when email changes
+                          if (facility.reply_email_verified && e.target.value !== facilityData?.reply_email) {
+                            setCodeSent(false);
+                            setVerificationCode("");
+                            setVerificationError(null);
+                          }
+                        }}
+                        onBlur={(e) => handleFieldBlur("reply_email", e.target.value)}
+                        className={`h-10 pl-10 ${fieldErrors.reply_email && touchedFields.has("reply_email") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                        placeholder="replies@facility.com"
+                      />
+                    </div>
+                    {!facility.reply_email_verified && facility.reply_email && !fieldErrors.reply_email && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSendVerificationCode}
+                        disabled={isSendingCode || !facility.reply_email}
+                        className="h-10 gap-2"
+                      >
+                        {isSendingCode ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4" />
+                            {codeSent ? "Resend Code" : "Verify"}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+
                   {fieldErrors.reply_email && touchedFields.has("reply_email") && (
                     <p className="text-xs text-destructive">{fieldErrors.reply_email}</p>
                   )}
+
+                  {/* Verification code input */}
+                  {codeSent && !facility.reply_email_verified && (
+                    <div className="space-y-2 pt-2 border-t">
+                      <Label className="text-xs font-medium">Enter 6-digit verification code</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          value={verificationCode}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                            setVerificationCode(value);
+                            setVerificationError(null);
+                          }}
+                          placeholder="000000"
+                          className="h-10 text-center font-mono text-lg tracking-widest max-w-[140px]"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleVerifyCode}
+                          disabled={isVerifying || verificationCode.length !== 6}
+                          className="h-10 gap-2"
+                        >
+                          {isVerifying ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Verifying...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4" />
+                              Verify Code
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      {verificationError && (
+                        <p className="text-xs text-destructive">{verificationError}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Code sent to {facility.reply_email}. Check your inbox and spam folder.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Warning if email changed and was previously verified */}
+                  {facilityData?.reply_email_verified && 
+                   facility.reply_email !== facilityData?.reply_email && 
+                   facility.reply_email && (
+                    <div className="flex items-start gap-2 p-2 rounded bg-amber-500/10 border border-amber-200">
+                      <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-700">
+                        You've changed your reply email. Please verify the new address to continue sending emails to leads.
+                      </p>
+                    </div>
+                  )}
+
                   <p className="text-xs text-muted-foreground">
-                    Replies from leads will be sent to this email address.
+                    {facility.reply_email_verified 
+                      ? "Lead replies will be sent directly to this verified email address."
+                      : "Verify your email to enable sending messages to leads. Replies will go to this address."}
                   </p>
                 </div>
                 
