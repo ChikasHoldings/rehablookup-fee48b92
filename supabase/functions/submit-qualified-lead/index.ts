@@ -150,20 +150,29 @@ async function checkProviderLeadCap(
 // Get all eligible providers with capacity for auto-assignment
 async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-  if (!stripeKey) return [];
+  
+  // Even without Stripe, we can still find basic plan providers
+  console.log("[getEligibleProviders] Starting to fetch eligible providers...");
 
   try {
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" }) : null;
     
     // Get all approved, non-suspended facilities
-    const { data: facilities } = await supabase
+    const { data: facilities, error: facilitiesError } = await supabase
       .from("facilities")
       .select(`
         id, name, email, user_id, city, state,
         facility_services (service_name)
       `)
       .eq("status", "approved")
-      .or("suspended.is.null,suspended.eq.false");
+      .neq("suspended", true);
+    
+    if (facilitiesError) {
+      console.error("[getEligibleProviders] Error fetching facilities:", facilitiesError);
+      return [];
+    }
+    
+    console.log(`[getEligibleProviders] Found ${facilities?.length || 0} approved facilities`);
     
     if (!facilities || facilities.length === 0) return [];
     
@@ -187,28 +196,30 @@ async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> 
       let planName = "basic";
       let leadLimit = PLAN_CONFIG.basic.qualified_lead_limit;
       
-      try {
-        const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
-        if (customers.data.length > 0) {
-          const subscriptions = await stripe.subscriptions.list({
-            customer: customers.data[0].id,
-            status: "active",
-            limit: 1,
-          });
-          
-          if (subscriptions.data.length > 0) {
-            const productId = subscriptions.data[0].items.data[0].price.product as string;
-            if (productId === PLAN_CONFIG.featured.product_id) {
-              planName = "featured";
-              leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
-            } else if (productId === PLAN_CONFIG.professional.product_id) {
-              planName = "professional";
-              leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
+      if (stripe) {
+        try {
+          const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
+          if (customers.data.length > 0) {
+            const subscriptions = await stripe.subscriptions.list({
+              customer: customers.data[0].id,
+              status: "active",
+              limit: 1,
+            });
+            
+            if (subscriptions.data.length > 0) {
+              const productId = subscriptions.data[0].items.data[0].price.product as string;
+              if (productId === PLAN_CONFIG.featured.product_id) {
+                planName = "featured";
+                leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
+              } else if (productId === PLAN_CONFIG.professional.product_id) {
+                planName = "professional";
+                leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
+              }
             }
           }
+        } catch (e) {
+          console.error(`[getEligibleProviders] Error checking subscription for ${profile.email}:`, e);
         }
-      } catch (e) {
-        console.error(`Error checking subscription for ${profile.email}:`, e);
       }
       
       // Count leads this month for this facility
@@ -591,30 +602,37 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Case 2: No facility specified - auto-assign based on matching
-    if (!assignedFacilityId && isQualified) {
-      console.log("Starting auto-assignment for unassigned qualified lead...");
+    if (!assignedFacilityId) {
+      console.log(`Starting auto-assignment for unassigned lead (qualified: ${isQualified})...`);
       const eligibleProviders = await getEligibleProviders(supabase);
-      console.log(`Found ${eligibleProviders.length} eligible providers`);
+      console.log(`Found ${eligibleProviders.length} eligible providers:`, eligibleProviders.map(p => ({
+        name: p.facilityName,
+        capacity: p.availableCapacity,
+        plan: p.planName
+      })));
       
-      const { provider, reason } = findBestProvider(eligibleProviders, leadData);
-      
-      if (provider) {
-        assignedFacilityId = provider.facilityId;
-        assignedFacilityUserId = provider.facilityUserId;
-        assignedFacilityEmail = provider.facilityEmail;
-        assignedFacilityName = provider.facilityName;
-        assignedProviderEmail = provider.providerEmail;
-        assignmentStatus = "assigned";
-        assignmentReason = reason;
-        console.log(`Auto-assigned to ${provider.facilityName}: ${reason}`);
+      if (eligibleProviders.length > 0) {
+        const { provider, reason } = findBestProvider(eligibleProviders, leadData);
+        
+        if (provider) {
+          assignedFacilityId = provider.facilityId;
+          assignedFacilityUserId = provider.facilityUserId;
+          assignedFacilityEmail = provider.facilityEmail;
+          assignedFacilityName = provider.facilityName;
+          assignedProviderEmail = provider.providerEmail;
+          assignmentStatus = "assigned";
+          assignmentReason = reason;
+          console.log(`Auto-assigned to ${provider.facilityName}: ${reason}`);
+        } else {
+          assignmentStatus = "unassigned_no_capacity";
+          assignmentReason = reason;
+          console.log(`Could not assign - ${reason}`);
+        }
       } else {
-        assignmentStatus = "unassigned_no_capacity";
-        assignmentReason = reason;
-        console.log(`No provider found: ${reason}`);
+        assignmentStatus = "unassigned_no_providers";
+        assignmentReason = "No approved providers available";
+        console.log("No eligible providers found in the system");
       }
-    } else if (!assignedFacilityId && !isQualified) {
-      assignmentStatus = "unassigned_not_qualified";
-      assignmentReason = "Lead not qualified for assignment";
     }
 
     // ============ CREATE THE LEAD ============
@@ -629,7 +647,7 @@ const handler = async (req: Request): Promise<Response> => {
         message: leadData.message?.trim() || null,
         ip_hash: ipHash,
         email_verified: emailVerified,
-        source: leadData.source || (leadData.facilityId ? "provider_profile" : "request_help"),
+        source: leadData.source || (leadData.facilityId ? "Direct Profile" : "Request Help Page"),
         who_seeking_help: leadData.whoSeekingHelp,
         location_zip: leadData.locationZip,
         location_city_state: leadData.locationCityState || null,
