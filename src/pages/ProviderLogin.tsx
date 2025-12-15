@@ -65,6 +65,18 @@ export default function ProviderLogin() {
           });
         }
       } else {
+        // Log login activity
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          supabase.functions.invoke("log-activity", {
+            body: {
+              user_id: session.user.id,
+              event_type: "login",
+              event_description: "Signed in to account",
+            },
+          });
+        }
+        
         toast({
           title: "Welcome back!",
           description: "You've been successfully logged in.",

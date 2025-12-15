@@ -19,8 +19,11 @@ import {
   EyeOff,
   Lock,
   Loader2,
-  LogOut
+  LogOut,
+  Activity
 } from "lucide-react";
+import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
+import { useLogActivity } from "@/hooks/useActivityLog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,6 +113,7 @@ export default function ProviderSettingsPage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const logActivity = useLogActivity();
 
   // Fetch notification preferences
   const { data: notificationPrefs, isLoading: isLoadingNotifications } = useQuery({
@@ -265,6 +269,13 @@ export default function ProviderSettingsPage() {
         variant: "destructive",
       });
     } else {
+      // Log profile update activity
+      logActivity.mutate({
+        userId: session.user.id,
+        eventType: "profile_update",
+        eventDescription: "Profile information was updated",
+      });
+      
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
@@ -318,6 +329,16 @@ export default function ProviderSettingsPage() {
         variant: "destructive",
       });
     } else {
+      // Log password change activity
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        logActivity.mutate({
+          userId: session.user.id,
+          eventType: "password_change",
+          eventDescription: "Password was changed successfully",
+        });
+      }
+      
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -400,6 +421,17 @@ export default function ProviderSettingsPage() {
   const handleSignOutAllSessions = async () => {
     setIsSigningOutAll(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Log session signout activity before signing out
+      if (session) {
+        logActivity.mutate({
+          userId: session.user.id,
+          eventType: "session_signout",
+          eventDescription: "Signed out from all devices",
+        });
+      }
+      
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) throw error;
       
@@ -475,6 +507,13 @@ export default function ProviderSettingsPage() {
           >
             <Bell className="h-4 w-4 mr-2" />
             Notifications
+          </TabsTrigger>
+          <TabsTrigger 
+            value="activity" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 text-sm font-medium"
+          >
+            <Activity className="h-4 w-4 mr-2" />
+            Activity
           </TabsTrigger>
         </TabsList>
 
@@ -1140,6 +1179,11 @@ export default function ProviderSettingsPage() {
               )}
             </Button>
           </div>
+        </TabsContent>
+
+        {/* Activity Tab */}
+        <TabsContent value="activity" className="mt-6">
+          <ActivityLogTab />
         </TabsContent>
       </Tabs>
     </div>
