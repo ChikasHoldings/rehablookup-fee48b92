@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { 
   Save, 
   Building2, 
@@ -348,6 +349,13 @@ export default function ProviderListingPage() {
       toast({
         title: "Changes saved",
         description: "Your public profile has been updated and is now live.",
+        action: facility.slug ? (
+          <ToastAction altText="View Public Profile" asChild>
+            <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
+              View Profile
+            </a>
+          </ToastAction>
+        ) : undefined,
       });
     }
   }, [facility, isSaving, selectedFacility?.id, queryClient]);
@@ -462,6 +470,13 @@ export default function ProviderListingPage() {
       toast({
         title: "Profile updated",
         description: "Your public profile is now live with the latest changes.",
+        action: facility.slug ? (
+          <ToastAction altText="View Public Profile" asChild>
+            <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
+              View Profile
+            </a>
+          </ToastAction>
+        ) : undefined,
       });
     }
   };
