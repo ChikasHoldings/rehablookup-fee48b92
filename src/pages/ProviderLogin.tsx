@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -15,9 +16,12 @@ const providerNavLinks = [
   { href: "/provider-support", label: "Support" },
 ];
 
+const REMEMBER_ME_KEY = "provider_remember_me";
+
 export default function ProviderLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -44,6 +48,20 @@ export default function ProviderLogin() {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Handle "Remember me" - clear session on browser close if not remembered
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const shouldRemember = sessionStorage.getItem(REMEMBER_ME_KEY);
+      if (shouldRemember === "false") {
+        // Sign out if user didn't want to be remembered
+        supabase.auth.signOut();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,12 +107,15 @@ export default function ProviderLogin() {
       }
 
       if (data.session) {
+        // Store remember me preference
+        sessionStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString());
+        
         // Log login activity
         supabase.functions.invoke("log-activity", {
           body: {
             user_id: data.session.user.id,
             event_type: "login",
-            event_description: "Signed in to account",
+            event_description: `Signed in to account${rememberMe ? " (remembered)" : ""}`,
           },
         });
         
@@ -210,6 +231,20 @@ export default function ProviderLogin() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="rememberMe"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+              />
+              <label
+                htmlFor="rememberMe"
+                className="text-sm text-muted-foreground cursor-pointer select-none"
+              >
+                Remember me for 30 days
+              </label>
             </div>
 
             <Button
