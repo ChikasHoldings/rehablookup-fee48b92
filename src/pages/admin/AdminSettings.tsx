@@ -23,6 +23,7 @@ import {
   FileText,
   Activity,
   Download,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +50,15 @@ interface SettingRowProps {
   description: string;
   children: React.ReactNode;
   comingSoon?: boolean;
+}
+
+interface PlatformSetting {
+  id: string;
+  setting_key: string;
+  setting_value: Record<string, any>;
+  description: string | null;
+  updated_at: string;
+  updated_by: string | null;
 }
 
 const SettingRow = ({ icon, title, description, children, comingSoon }: SettingRowProps) => (
@@ -101,6 +111,7 @@ export default function AdminSettings() {
   const invalidateSettingsQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-settings-stats"] });
     queryClient.invalidateQueries({ queryKey: ["admin-edge-functions-count"] });
+    queryClient.invalidateQueries({ queryKey: ["platform-settings"] });
   }, [queryClient]);
 
   // Real-time subscriptions - always active
@@ -138,12 +149,71 @@ export default function AdminSettings() {
       )
       .subscribe();
 
+    // Real-time for platform settings changes
+    const settingsChannel = supabase
+      .channel("admin-platform-settings")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "platform_settings" },
+        (payload) => {
+          invalidateSettingsQueries();
+          toast.info("Settings updated", {
+            description: "Platform settings have been changed",
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(facilitiesChannel);
       supabase.removeChannel(leadsChannel);
       supabase.removeChannel(usersChannel);
+      supabase.removeChannel(settingsChannel);
     };
   }, [invalidateSettingsQueries]);
+
+  // Fetch platform settings
+  const { data: platformSettings, isLoading: loadingSettings } = useQuery({
+    queryKey: ["platform-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_settings")
+        .select("*");
+      
+      if (error) throw error;
+      
+      // Convert to a map for easy access
+      const settingsMap: Record<string, PlatformSetting> = {};
+      (data as PlatformSetting[])?.forEach((setting) => {
+        settingsMap[setting.setting_key] = setting;
+      });
+      return settingsMap;
+    },
+  });
+
+  // Update setting mutation
+  const updateSetting = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: Record<string, any> }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("platform_settings")
+        .update({ 
+          setting_value: value,
+          updated_by: user?.id 
+        })
+        .eq("setting_key", key);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Setting updated");
+      invalidateSettingsQueries();
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update setting", { description: error.message });
+    },
+  });
 
   // Fetch platform stats
   const { data: stats, isLoading: loadingStats, refetch: refetchStats } = useQuery({
@@ -162,6 +232,16 @@ export default function AdminSettings() {
         totalAdminUsers: adminUsersResult.count || 0,
         pendingFlags: flaggedResult.count || 0,
       };
+    },
+  });
+
+  // Count edge functions from supabase config
+  const { data: edgeFunctionsCount } = useQuery({
+    queryKey: ["admin-edge-functions-count"],
+    queryFn: async () => {
+      // This would need an API endpoint to get actual count
+      // For now, count based on known functions
+      return 24; // Based on project structure
     },
   });
 
@@ -222,6 +302,12 @@ export default function AdminSettings() {
     },
   });
 
+  // Get settings values
+  const maintenanceEnabled = platformSettings?.maintenance_mode?.setting_value?.enabled ?? false;
+  const apiRateLevel = platformSettings?.api_rate_limiting?.setting_value?.level ?? "default";
+  const sessionTimeout = platformSettings?.session_timeout?.setting_value?.minutes?.toString() ?? "30";
+  const timestampFormat = platformSettings?.timestamp_display?.setting_value?.format ?? "relative";
+
   // Storage estimation (based on facility images count)
   const storageUsed = 2.4; // This would need actual storage API
   const storageTotal = 10;
@@ -272,164 +358,267 @@ export default function AdminSettings() {
 
         {/* General Tab */}
         <TabsContent value="general" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Platform Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Globe className="h-5 w-5 text-blue-500" />
-                  Platform Settings
-                </CardTitle>
-                <CardDescription>General platform configuration options</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                <SettingRow
-                  icon={<Server className="h-4 w-4 text-slate-500" />}
-                  title="Maintenance Mode"
-                  description="Temporarily disable public access to the platform"
-                >
-                  <Switch />
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<Zap className="h-4 w-4 text-slate-500" />}
-                  title="API Rate Limiting"
-                  description="Control request throttling for API endpoints"
-                >
-                  <Select defaultValue="default">
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="default">Default</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<Clock className="h-4 w-4 text-slate-500" />}
-                  title="Session Timeout"
-                  description="Auto logout after period of inactivity"
-                >
-                  <Select defaultValue="30">
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </SettingRow>
-              </CardContent>
-            </Card>
+          {loadingSettings ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Platform Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Globe className="h-5 w-5 text-blue-500" />
+                      Platform Settings
+                    </CardTitle>
+                    <CardDescription>General platform configuration options</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <SettingRow
+                      icon={<Server className="h-4 w-4 text-slate-500" />}
+                      title="Maintenance Mode"
+                      description="Temporarily disable public access to the platform"
+                    >
+                      <Switch 
+                        checked={maintenanceEnabled}
+                        onCheckedChange={(checked) => {
+                          updateSetting.mutate({
+                            key: "maintenance_mode",
+                            value: { enabled: checked }
+                          });
+                        }}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Zap className="h-4 w-4 text-slate-500" />}
+                      title="API Rate Limiting"
+                      description="Control request throttling for API endpoints"
+                    >
+                      <Select 
+                        value={apiRateLevel}
+                        onValueChange={(value) => {
+                          updateSetting.mutate({
+                            key: "api_rate_limiting",
+                            value: { level: value }
+                          });
+                        }}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="default">Default</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Clock className="h-4 w-4 text-slate-500" />}
+                      title="Session Timeout"
+                      description="Auto logout after period of inactivity"
+                    >
+                      <Select 
+                        value={sessionTimeout}
+                        onValueChange={(value) => {
+                          updateSetting.mutate({
+                            key: "session_timeout",
+                            value: { minutes: parseInt(value) }
+                          });
+                        }}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="120">2 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                  </CardContent>
+                </Card>
 
-            {/* Appearance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Palette className="h-5 w-5 text-purple-500" />
-                  Appearance
-                </CardTitle>
-                <CardDescription>Customize the admin panel look and feel</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                <SettingRow
-                  icon={<Palette className="h-4 w-4 text-slate-500" />}
-                  title="Theme Mode"
-                  description="Choose between light and dark themes"
-                  comingSoon
-                >
-                  <Select defaultValue="light" disabled>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark</SelectItem>
-                      <SelectItem value="system">System</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<Activity className="h-4 w-4 text-slate-500" />}
-                  title="Compact Mode"
-                  description="Use condensed layouts for data tables"
-                  comingSoon
-                >
-                  <Switch disabled />
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<FileText className="h-4 w-4 text-slate-500" />}
-                  title="Show Timestamps"
-                  description="Display relative or absolute timestamps"
-                >
-                  <Select defaultValue="relative">
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="relative">Relative</SelectItem>
-                      <SelectItem value="absolute">Absolute</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </SettingRow>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* System Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Activity className="h-5 w-5 text-green-500" />
-                System Status
-              </CardTitle>
-              <CardDescription>Current platform health and performance</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                  <div className="flex items-center gap-2 text-green-700 mb-1">
-                    <Server className="h-4 w-4" />
-                    <span className="text-sm font-medium">API Server</span>
-                  </div>
-                  <p className="text-2xl font-bold text-green-700">Healthy</p>
-                  <p className="text-xs text-green-600 mt-1">99.9% uptime</p>
-                </div>
-                <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                  <div className="flex items-center gap-2 text-green-700 mb-1">
-                    <Database className="h-4 w-4" />
-                    <span className="text-sm font-medium">Database</span>
-                  </div>
-                  <p className="text-2xl font-bold text-green-700">Connected</p>
-                  <p className="text-xs text-green-600 mt-1">15ms latency</p>
-                </div>
-                <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                  <div className="flex items-center gap-2 text-green-700 mb-1">
-                    <Mail className="h-4 w-4" />
-                    <span className="text-sm font-medium">Email Service</span>
-                  </div>
-                  <p className="text-2xl font-bold text-green-700">Active</p>
-                  <p className="text-xs text-green-600 mt-1">Resend configured</p>
-                </div>
-                <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                  <div className="flex items-center gap-2 text-green-700 mb-1">
-                    <Zap className="h-4 w-4" />
-                    <span className="text-sm font-medium">Edge Functions</span>
-                  </div>
-                  <p className="text-2xl font-bold text-green-700">Running</p>
-                  <p className="text-xs text-green-600 mt-1">24 functions deployed</p>
-                </div>
+                {/* Appearance */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Palette className="h-5 w-5 text-purple-500" />
+                      Appearance
+                    </CardTitle>
+                    <CardDescription>Customize the admin panel look and feel</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <SettingRow
+                      icon={<Palette className="h-4 w-4 text-slate-500" />}
+                      title="Theme Mode"
+                      description="Choose between light and dark themes"
+                      comingSoon
+                    >
+                      <Select defaultValue="light" disabled>
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="light">Light</SelectItem>
+                          <SelectItem value="dark">Dark</SelectItem>
+                          <SelectItem value="system">System</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Activity className="h-4 w-4 text-slate-500" />}
+                      title="Compact Mode"
+                      description="Use condensed layouts for data tables"
+                      comingSoon
+                    >
+                      <Switch disabled />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<FileText className="h-4 w-4 text-slate-500" />}
+                      title="Show Timestamps"
+                      description="Display relative or absolute timestamps"
+                    >
+                      <Select 
+                        value={timestampFormat}
+                        onValueChange={(value) => {
+                          updateSetting.mutate({
+                            key: "timestamp_display",
+                            value: { format: value }
+                          });
+                        }}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="relative">Relative</SelectItem>
+                          <SelectItem value="absolute">Absolute</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* System Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Activity className="h-5 w-5 text-green-500" />
+                    System Status
+                  </CardTitle>
+                  <CardDescription>Current platform health and performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className={cn(
+                      "p-4 rounded-lg border",
+                      maintenanceEnabled 
+                        ? "bg-amber-50 border-amber-100" 
+                        : "bg-green-50 border-green-100"
+                    )}>
+                      <div className={cn(
+                        "flex items-center gap-2 mb-1",
+                        maintenanceEnabled ? "text-amber-700" : "text-green-700"
+                      )}>
+                        <Server className="h-4 w-4" />
+                        <span className="text-sm font-medium">API Server</span>
+                      </div>
+                      <p className={cn(
+                        "text-2xl font-bold",
+                        maintenanceEnabled ? "text-amber-700" : "text-green-700"
+                      )}>
+                        {maintenanceEnabled ? "Maintenance" : "Healthy"}
+                      </p>
+                      <p className={cn(
+                        "text-xs mt-1",
+                        maintenanceEnabled ? "text-amber-600" : "text-green-600"
+                      )}>
+                        {maintenanceEnabled ? "Maintenance mode active" : "99.9% uptime"}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                        <Database className="h-4 w-4" />
+                        <span className="text-sm font-medium">Database</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700">Connected</p>
+                      <p className="text-xs text-green-600 mt-1">{stats?.totalFacilities || 0} facilities, {stats?.totalLeads || 0} leads</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                        <Mail className="h-4 w-4" />
+                        <span className="text-sm font-medium">Email Service</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700">Active</p>
+                      <p className="text-xs text-green-600 mt-1">Resend configured</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                        <Zap className="h-4 w-4" />
+                        <span className="text-sm font-medium">Edge Functions</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700">Running</p>
+                      <p className="text-xs text-green-600 mt-1">{edgeFunctionsCount || 24} functions deployed</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Platform Statistics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Database className="h-5 w-5 text-blue-500" />
+                    Platform Statistics
+                  </CardTitle>
+                  <CardDescription>Real-time platform data overview</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-sm text-muted-foreground">Total Facilities</p>
+                      <p className="text-2xl font-bold">{stats?.totalFacilities || 0}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-sm text-muted-foreground">Total Leads</p>
+                      <p className="text-2xl font-bold">{stats?.totalLeads || 0}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <p className="text-sm text-muted-foreground">Admin Users</p>
+                      <p className="text-2xl font-bold">{stats?.totalAdminUsers || 0}</p>
+                    </div>
+                    <div className={cn(
+                      "p-4 rounded-lg border",
+                      (stats?.pendingFlags || 0) > 0 
+                        ? "bg-amber-50 border-amber-200" 
+                        : "bg-muted/50"
+                    )}>
+                      <p className="text-sm text-muted-foreground">Pending Flags</p>
+                      <p className={cn(
+                        "text-2xl font-bold",
+                        (stats?.pendingFlags || 0) > 0 && "text-amber-700"
+                      )}>
+                        {stats?.pendingFlags || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </TabsContent>
 
         {/* Security Tab */}
