@@ -250,7 +250,17 @@ export default function ProviderListingPage() {
   const handleSave = async () => {
     if (!facility) return;
     
+    // Optimistic update: immediately update cache and UI state
+    const previousData = queryClient.getQueryData(["facility-listing", selectedFacility?.id]);
+    
+    // Optimistically update the cache
+    queryClient.setQueryData(["facility-listing", selectedFacility?.id], facility);
+    
+    // Immediately show saved state for responsive feel
+    setHasChanges(false);
+    setShowSaved(true);
     setIsSaving(true);
+    
     const { error } = await supabase
       .from("facilities")
       .update({
@@ -274,14 +284,17 @@ export default function ProviderListingPage() {
     setIsSaving(false);
 
     if (error) {
+      // Rollback on error
+      queryClient.setQueryData(["facility-listing", selectedFacility?.id], previousData);
+      setFacility(previousData as Facility | null);
+      setHasChanges(true);
+      setShowSaved(false);
       toast({
         title: "Error saving",
         description: "Failed to save changes. Please try again.",
         variant: "destructive",
       });
     } else {
-      setHasChanges(false);
-      setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);
       toast({
         title: "Changes saved",
