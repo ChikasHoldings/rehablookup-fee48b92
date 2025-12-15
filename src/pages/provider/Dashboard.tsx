@@ -16,12 +16,14 @@ import {
   Phone,
   Mail,
   AlertTriangle,
-  BellOff
+  BellOff,
+  MapPin
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useProviderData } from "@/hooks/useProviderData";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, differenceInHours, isPast } from "date-fns";
@@ -67,6 +69,7 @@ export default function ProviderDashboardPage() {
   
   const { data: providerData, isLoading } = useProviderData(facilityId);
   const { data: subscription } = useSubscription();
+  const { facilities } = useProviderFacilities();
   
   const facility = selectedFacility || providerData?.facility;
   const profile = providerData?.profile;
@@ -76,6 +79,11 @@ export default function ProviderDashboardPage() {
   
   // Get lead limit from subscription data
   const leadLimit = subscription?.lead_limit ?? 5;
+  
+  // Get location limit based on plan
+  const planKey = subscription?.plan || "basic";
+  const locationLimit = PLAN_DETAILS[planKey]?.location_limit ?? 1;
+  const usedLocations = facilities?.length ?? 0;
 
   // State for lead detail drawer
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -264,7 +272,7 @@ export default function ProviderDashboardPage() {
       </Card>
 
       {/* Metrics Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Profile Views */}
         <Card className="group hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
@@ -308,6 +316,66 @@ export default function ProviderDashboardPage() {
                 usedLeads={monthlyLeadsCount} 
                 leadLimit={leadLimit}
               />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Facility Locations */}
+        <Card className="group hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Facility Locations</CardTitle>
+              <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                <MapPin className="h-4 w-4 text-purple-600" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              {/* Circular progress ring */}
+              <div className="relative h-12 w-12">
+                <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15"
+                    fill="none"
+                    className="stroke-muted"
+                    strokeWidth="3"
+                  />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15"
+                    fill="none"
+                    className={usedLocations >= locationLimit ? "stroke-red-500" : "stroke-purple-500"}
+                    strokeWidth="3"
+                    strokeDasharray={`${(usedLocations / locationLimit) * 94.2} 94.2`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold text-foreground">{usedLocations}/{locationLimit}</span>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                  {usedLocations} of {locationLimit} used
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {locationLimit - usedLocations > 0 
+                    ? `${locationLimit - usedLocations} available` 
+                    : "Limit reached"}
+                </p>
+              </div>
+            </div>
+            {usedLocations >= locationLimit && planKey !== "featured" && (
+              <Button variant="link" className="h-auto p-0 text-xs text-primary mt-2" asChild>
+                <Link to="/provider/billing">
+                  Upgrade for more
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </Link>
+              </Button>
             )}
           </CardContent>
         </Card>
