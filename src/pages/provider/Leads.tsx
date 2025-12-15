@@ -193,7 +193,7 @@ export default function ProviderLeadsPage() {
     : thisMonthQualified.length >= leadLimit;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden" {...swipeHandlers}>
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col" {...swipeHandlers}>
       {/* Header */}
       <div className="flex-shrink-0 px-4 md:px-6 py-4 bg-background border-b">
         <div className="flex items-center justify-between gap-4">
