@@ -425,9 +425,26 @@ export default function AdminProviders() {
         target_id: selectedProvider.id,
         details: { image_url: flagImageUrl, image_type: flagImageType, reason: flagReason },
       });
+
+      // Send email notification to provider
+      const providerEmail = providerProfile?.email || selectedProvider.email;
+      const providerName = providerProfile?.first_name || selectedProvider.name;
+      
+      if (providerEmail) {
+        await supabase.functions.invoke("notify-flagged-image", {
+          body: {
+            facilityId: selectedProvider.id,
+            facilityName: selectedProvider.name,
+            imageType: flagImageType,
+            reason: flagReason,
+            providerEmail,
+            providerName,
+          },
+        });
+      }
     },
     onSuccess: () => {
-      toast.success("Image flagged successfully");
+      toast.success("Image flagged and provider notified");
       setShowFlagDialog(false);
       setFlagImageUrl("");
       setFlagReason("");

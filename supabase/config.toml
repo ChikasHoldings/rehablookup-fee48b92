@@ -77,3 +77,6 @@ verify_jwt = true
 
 [functions.send-admin-notification]
 verify_jwt = true
+
+[functions.notify-flagged-image]
+verify_jwt = true
