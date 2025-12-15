@@ -1462,6 +1462,33 @@ export default function AdminSettings() {
 
         {/* Data Tab */}
         <TabsContent value="data" className="space-y-6">
+          {/* Quick Actions Bar */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="gap-1">
+                <Activity className="h-3 w-3" />
+                Live Data
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                Last updated: {new Date().toLocaleTimeString()}
+              </span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => {
+                refetchStats();
+                refetchStorage();
+                toast.success("Data refreshed");
+              }}
+              disabled={loadingStats || loadingStorage}
+            >
+              <RefreshCw className={cn("h-4 w-4", (loadingStats || loadingStorage) && "animate-spin")} />
+              Refresh All
+            </Button>
+          </div>
+
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Storage */}
             <Card>
@@ -1649,37 +1676,102 @@ export default function AdminSettings() {
                 <Activity className="h-5 w-5 text-indigo-500" />
                 Data Statistics
               </CardTitle>
-              <CardDescription>Overview of platform data</CardDescription>
+              <CardDescription>Overview of platform data with real-time updates</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
-                  <div className="flex items-center gap-2 text-blue-700 mb-1">
-                    <Users className="h-4 w-4" />
-                    <span className="text-sm font-medium">Total Providers</span>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-700">{stats?.totalFacilities || 0}</p>
+              {loadingStats ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-24 w-full" />
+                  ))}
                 </div>
-                <div className="p-4 rounded-lg bg-green-50 border border-green-100">
-                  <div className="flex items-center gap-2 text-green-700 mb-1">
-                    <FileText className="h-4 w-4" />
-                    <span className="text-sm font-medium">Total Leads</span>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+                    <div className="flex items-center gap-2 text-blue-700 mb-1">
+                      <Users className="h-4 w-4" />
+                      <span className="text-sm font-medium">Total Providers</span>
+                    </div>
+                    <p className="text-2xl font-bold text-blue-700">{stats?.totalFacilities || 0}</p>
                   </div>
-                  <p className="text-2xl font-bold text-green-700">{stats?.totalLeads || 0}</p>
+                  <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                    <div className="flex items-center gap-2 text-green-700 mb-1">
+                      <FileText className="h-4 w-4" />
+                      <span className="text-sm font-medium">Total Leads</span>
+                    </div>
+                    <p className="text-2xl font-bold text-green-700">{stats?.totalLeads || 0}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-purple-50 border border-purple-100">
+                    <div className="flex items-center gap-2 text-purple-700 mb-1">
+                      <Shield className="h-4 w-4" />
+                      <span className="text-sm font-medium">Admin Users</span>
+                    </div>
+                    <p className="text-2xl font-bold text-purple-700">{stats?.totalAdminUsers || 0}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-amber-50 border border-amber-100">
+                    <div className="flex items-center gap-2 text-amber-700 mb-1">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="text-sm font-medium">Pending Flags</span>
+                    </div>
+                    <p className="text-2xl font-bold text-amber-700">{stats?.pendingFlags || 0}</p>
+                  </div>
                 </div>
-                <div className="p-4 rounded-lg bg-purple-50 border border-purple-100">
-                  <div className="flex items-center gap-2 text-purple-700 mb-1">
-                    <Shield className="h-4 w-4" />
-                    <span className="text-sm font-medium">Admin Users</span>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Database Tables Overview */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Database className="h-5 w-5 text-cyan-500" />
+                Database Tables
+              </CardTitle>
+              <CardDescription>Row counts and table health</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="text-sm font-medium">facilities</span>
                   </div>
-                  <p className="text-2xl font-bold text-purple-700">{stats?.totalAdminUsers || 0}</p>
+                  <Badge variant="secondary">{stats?.totalFacilities || 0} rows</Badge>
                 </div>
-                <div className="p-4 rounded-lg bg-amber-50 border border-amber-100">
-                  <div className="flex items-center gap-2 text-amber-700 mb-1">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Pending Flags</span>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="text-sm font-medium">leads</span>
                   </div>
-                  <p className="text-2xl font-bold text-amber-700">{stats?.pendingFlags || 0}</p>
+                  <Badge variant="secondary">{stats?.totalLeads || 0} rows</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="text-sm font-medium">user_roles</span>
+                  </div>
+                  <Badge variant="secondary">{stats?.totalAdminUsers || 0} rows</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="text-sm font-medium">flagged_images</span>
+                  </div>
+                  <Badge variant="secondary">{stats?.pendingFlags || 0} pending</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="text-sm font-medium">platform_settings</span>
+                  </div>
+                  <Badge variant="secondary">{Object.keys(platformSettings || {}).length} settings</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="text-sm font-medium">edge_functions</span>
+                  </div>
+                  <Badge variant="secondary">{edgeFunctionsCount || 0} deployed</Badge>
                 </div>
               </div>
             </CardContent>
@@ -1694,7 +1786,7 @@ export default function AdminSettings() {
               </CardTitle>
               <CardDescription>Irreversible actions that affect the entire platform</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 border border-red-100">
                 <div>
                   <p className="font-medium text-red-800">Clear All Cache</p>
@@ -1731,6 +1823,58 @@ export default function AdminSettings() {
                         className="bg-red-600 hover:bg-red-700"
                       >
                         Clear Cache
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 border border-red-100">
+                <div>
+                  <p className="font-medium text-red-800">Purge Old Data</p>
+                  <p className="text-sm text-red-600">Remove audit logs older than 90 days</p>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      Purge Data
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-red-500" />
+                        Purge Old Audit Logs?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all audit log entries older than 90 days. 
+                        This action cannot be undone and may affect compliance reporting.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={async () => {
+                          const ninetyDaysAgo = new Date();
+                          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+                          
+                          const { error } = await supabase
+                            .from("admin_audit_log")
+                            .delete()
+                            .lt("created_at", ninetyDaysAgo.toISOString());
+                          
+                          if (error) {
+                            toast.error("Failed to purge data", { description: error.message });
+                          } else {
+                            toast.success("Old audit logs purged successfully");
+                            invalidateSettingsQueries();
+                          }
+                        }}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Purge Data
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
