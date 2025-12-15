@@ -14,6 +14,9 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Filter,
+  Calendar,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,31 +46,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { format, formatDistanceToNow } from "date-fns";
 import { useAdminUserManagement, AdminUser, AdminRole } from "@/hooks/useAdminUserManagement";
 import { CreateAdminUserDialog } from "@/components/admin/CreateAdminUserDialog";
 import { AdminUserPermissionsDialog } from "@/components/admin/AdminUserPermissionsDialog";
+import { cn } from "@/lib/utils";
 
-const ROLE_INFO = {
+const ROLE_CONFIG = {
   admin: {
     label: "Super Admin",
     icon: ShieldAlert,
-    badgeClass: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+    gradient: "from-amber-500 to-orange-500",
+    bgColor: "bg-amber-50",
+    textColor: "text-amber-700",
+    borderColor: "border-amber-200",
+    iconColor: "text-amber-500",
   },
   moderator: {
     label: "Moderator",
     icon: ShieldCheck,
-    badgeClass: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+    gradient: "from-blue-500 to-indigo-500",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-700",
+    borderColor: "border-blue-200",
+    iconColor: "text-blue-500",
+  },
+};
+
+const STATUS_CONFIG = {
+  active: {
+    label: "Active",
+    bgColor: "bg-green-50",
+    textColor: "text-green-700",
+    dotColor: "bg-green-500",
+  },
+  suspended: {
+    label: "Suspended",
+    bgColor: "bg-red-50",
+    textColor: "text-red-700",
+    dotColor: "bg-red-500",
   },
 };
 
@@ -76,7 +97,7 @@ export default function AdminUsers() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState<"all" | AdminRole>("all");
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "suspended">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "active" | "suspended">("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -86,6 +107,7 @@ export default function AdminUsers() {
   } | null>(null);
 
   // Stats
+  const totalCount = adminUsers?.length || 0;
   const adminCount = adminUsers?.filter(u => u.roles.includes("admin")).length || 0;
   const moderatorCount = adminUsers?.filter(u => u.roles.includes("moderator")).length || 0;
   const activeCount = adminUsers?.filter(u => u.status === "active").length || 0;
@@ -100,7 +122,7 @@ export default function AdminUsers() {
       user.display_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesRole = filterRole === "all" || user.roles.includes(filterRole);
-    const matchesStatus = filterStatus === "all" || user.status === filterStatus;
+    const matchesStatus = activeTab === "all" || user.status === activeTab;
 
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -108,7 +130,14 @@ export default function AdminUsers() {
   const getUserDisplayName = (user: AdminUser) => {
     if (user.display_name) return user.display_name;
     if (user.first_name && user.last_name) return `${user.first_name} ${user.last_name}`;
-    return user.email;
+    return user.email.split("@")[0];
+  };
+
+  const getInitials = (user: AdminUser) => {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
+    }
+    return user.email.slice(0, 2).toUpperCase();
   };
 
   const handleAction = async () => {
@@ -127,220 +156,349 @@ export default function AdminUsers() {
     setPermissionsDialogOpen(true);
   };
 
+  const UserCard = ({ user }: { user: AdminUser }) => {
+    const primaryRole = user.roles.includes("admin") ? "admin" : "moderator";
+    const roleConfig = ROLE_CONFIG[primaryRole];
+    const statusConfig = STATUS_CONFIG[user.status as keyof typeof STATUS_CONFIG];
+    const RoleIcon = roleConfig.icon;
+
+    return (
+      <Card className={cn(
+        "group relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5",
+        user.status === "suspended" && "opacity-75"
+      )}>
+        {/* Role gradient stripe */}
+        <div className={cn(
+          "absolute top-0 left-0 right-0 h-1 bg-gradient-to-r",
+          roleConfig.gradient
+        )} />
+
+        <CardContent className="pt-6">
+          <div className="flex items-start justify-between gap-4">
+            {/* User Info */}
+            <div className="flex items-start gap-4 flex-1 min-w-0">
+              <div className="relative">
+                <Avatar className="h-14 w-14 ring-2 ring-background shadow-md">
+                  <AvatarImage src={user.avatar_url || undefined} />
+                  <AvatarFallback className={cn(
+                    "text-lg font-semibold bg-gradient-to-br",
+                    roleConfig.gradient,
+                    "text-white"
+                  )}>
+                    {getInitials(user)}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Status indicator */}
+                <div className={cn(
+                  "absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-background",
+                  statusConfig.dotColor
+                )} />
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-semibold text-base truncate">
+                    {getUserDisplayName(user)}
+                  </h3>
+                  <Badge className={cn(
+                    "text-xs font-medium gap-1",
+                    roleConfig.bgColor,
+                    roleConfig.textColor,
+                    "hover:" + roleConfig.bgColor
+                  )}>
+                    <RoleIcon className="h-3 w-3" />
+                    {roleConfig.label}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Mail className="h-3.5 w-3.5" />
+                  <span className="truncate">{user.email}</span>
+                </div>
+
+                <div className="flex items-center gap-4 pt-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span>
+                            {user.last_login_at 
+                              ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true })
+                              : "Never logged in"
+                            }
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Last login: {user.last_login_at 
+                          ? format(new Date(user.last_login_at), "PPpp")
+                          : "Never"
+                        }</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <Badge variant="outline" className={cn(
+                    "text-xs gap-1",
+                    statusConfig.bgColor,
+                    statusConfig.textColor,
+                    "border-transparent"
+                  )}>
+                    <span className={cn("h-1.5 w-1.5 rounded-full", statusConfig.dotColor)} />
+                    {statusConfig.label}
+                  </Badge>
+                </div>
+
+                {user.created_at && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground pt-1">
+                    <Calendar className="h-3 w-3" />
+                    <span>Created {format(new Date(user.created_at), "MMM d, yyyy")}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => openPermissions(user)}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Edit Permissions
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setConfirmAction({ action: "reset_password", user })}>
+                  <KeyRound className="h-4 w-4 mr-2" />
+                  Reset Password
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {user.status === "active" ? (
+                  <DropdownMenuItem 
+                    onClick={() => setConfirmAction({ action: "suspend", user })}
+                    className="text-amber-600 focus:text-amber-600"
+                  >
+                    <Ban className="h-4 w-4 mr-2" />
+                    Suspend User
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem 
+                    onClick={() => setConfirmAction({ action: "unsuspend", user })}
+                    className="text-green-600 focus:text-green-600"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Unsuspend User
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem 
+                  onClick={() => setConfirmAction({ action: "delete", user })}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete User
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
           <p className="text-muted-foreground">Manage admin users, roles and permissions</p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <UserPlus className="h-4 w-4 mr-2" />
+        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+          <UserPlus className="h-4 w-4" />
           Create Admin User
         </Button>
       </div>
 
-      {/* Stats */}
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Super Admins</CardTitle>
-            <ShieldAlert className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : adminCount}</div>
+        <Card className="relative overflow-hidden border-l-4 border-l-slate-500">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-slate-100 to-transparent rounded-bl-full" />
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : totalCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                <UsersIcon className="h-6 w-6 text-slate-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Moderators</CardTitle>
-            <ShieldCheck className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : moderatorCount}</div>
+
+        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-50 to-transparent rounded-bl-full" />
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Super Admins</p>
+                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : adminCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <ShieldAlert className="h-6 w-6 text-amber-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : activeCount}</div>
+
+        <Card className="relative overflow-hidden border-l-4 border-l-green-500">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-50 to-transparent rounded-bl-full" />
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active</p>
+                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : activeCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                <Activity className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Suspended</CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-12" /> : suspendedCount}</div>
+
+        <Card className="relative overflow-hidden border-l-4 border-l-red-500">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-red-50 to-transparent rounded-bl-full" />
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Suspended</p>
+                <p className="text-3xl font-bold">{isLoading ? <Skeleton className="h-9 w-12" /> : suspendedCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                <Ban className="h-6 w-6 text-red-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filters & Tabs */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+        <CardContent className="pt-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={filterRole} onValueChange={(v) => setFilterRole(v as "all" | AdminRole)}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="h-4 w-4 text-amber-500" />
+                      Super Admin
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="moderator">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-blue-500" />
+                      Moderator
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={filterRole} onValueChange={(v) => setFilterRole(v as any)}>
-              <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="admin">Super Admin</SelectItem>
-                <SelectItem value="moderator">Moderator</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as any)}>
-              <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="suspended">Suspended</SelectItem>
-              </SelectContent>
-            </Select>
+
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "active" | "suspended")}>
+              <TabsList className="grid w-full grid-cols-3 max-w-md">
+                <TabsTrigger value="all" className="gap-2">
+                  <UsersIcon className="h-4 w-4" />
+                  All ({totalCount})
+                </TabsTrigger>
+                <TabsTrigger value="active" className="gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Active ({activeCount})
+                </TabsTrigger>
+                <TabsTrigger value="suspended" className="gap-2">
+                  <XCircle className="h-4 w-4" />
+                  Suspended ({suspendedCount})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </CardContent>
       </Card>
 
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Admin Users</CardTitle>
-          <CardDescription>{filteredUsers?.length || 0} users</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <Skeleton className="h-10 w-10 rounded-full" />
+      {/* Users Grid */}
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="h-14 w-14 rounded-full" />
                   <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-32" />
                     <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-3 w-32" />
+                    <Skeleton className="h-3 w-24" />
                   </div>
                 </div>
-              ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredUsers?.length === 0 ? (
+        <Card>
+          <CardContent className="py-16">
+            <div className="text-center text-muted-foreground">
+              <UsersIcon className="h-16 w-16 mx-auto mb-4 opacity-20" />
+              <h3 className="text-lg font-medium mb-1">No admin users found</h3>
+              <p className="text-sm">
+                {searchQuery || filterRole !== "all" || activeTab !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "Create your first admin user to get started"
+                }
+              </p>
+              {!searchQuery && filterRole === "all" && activeTab === "all" && (
+                <Button onClick={() => setCreateDialogOpen(true)} className="mt-4 gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Create Admin User
+                </Button>
+              )}
             </div>
-          ) : filteredUsers?.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <UsersIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>No admin users found</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Login</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers?.map((user) => {
-                  const initials = (user.first_name?.[0] || "") + (user.last_name?.[0] || "") || user.email.slice(0, 2).toUpperCase();
-                  const primaryRole = user.roles.includes("admin") ? "admin" : "moderator";
-                  const roleInfo = ROLE_INFO[primaryRole];
-                  const RoleIcon = roleInfo.icon;
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filteredUsers?.map((user) => (
+            <UserCard key={user.user_id} user={user} />
+          ))}
+        </div>
+      )}
 
-                  return (
-                    <TableRow key={user.user_id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
-                            <AvatarImage src={user.avatar_url || undefined} />
-                            <AvatarFallback className="bg-slate-200 text-slate-700 text-sm font-medium">
-                              {initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{getUserDisplayName(user)}</p>
-                            <p className="text-xs text-muted-foreground">{user.email}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={roleInfo.badgeClass}>
-                          <RoleIcon className="h-3 w-3 mr-1" />
-                          {roleInfo.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={user.status === "active" ? "outline" : "destructive"}>
-                          {user.status === "active" ? "Active" : "Suspended"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {user.last_login_at ? format(new Date(user.last_login_at), "MMM d, yyyy") : "Never"}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openPermissions(user)}>
-                              <Settings className="h-4 w-4 mr-2" />
-                              Edit Permissions
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setConfirmAction({ action: "reset_password", user })}>
-                              <KeyRound className="h-4 w-4 mr-2" />
-                              Reset Password
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {user.status === "active" ? (
-                              <DropdownMenuItem 
-                                onClick={() => setConfirmAction({ action: "suspend", user })}
-                                className="text-amber-600"
-                              >
-                                <Ban className="h-4 w-4 mr-2" />
-                                Suspend User
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem 
-                                onClick={() => setConfirmAction({ action: "unsuspend", user })}
-                                className="text-green-600"
-                              >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Unsuspend User
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem 
-                              onClick={() => setConfirmAction({ action: "delete", user })}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete User
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Results count */}
+      {filteredUsers && filteredUsers.length > 0 && (
+        <p className="text-sm text-muted-foreground text-center">
+          Showing {filteredUsers.length} of {totalCount} admin users
+        </p>
+      )}
 
       {/* Dialogs */}
       <CreateAdminUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
@@ -354,24 +512,69 @@ export default function AdminUsers() {
       <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmAction?.action === "suspend" && "Suspend User"}
-              {confirmAction?.action === "unsuspend" && "Unsuspend User"}
-              {confirmAction?.action === "delete" && "Delete User"}
-              {confirmAction?.action === "reset_password" && "Reset Password"}
+            <AlertDialogTitle className="flex items-center gap-2">
+              {confirmAction?.action === "suspend" && (
+                <>
+                  <Ban className="h-5 w-5 text-amber-500" />
+                  Suspend User
+                </>
+              )}
+              {confirmAction?.action === "unsuspend" && (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  Unsuspend User
+                </>
+              )}
+              {confirmAction?.action === "delete" && (
+                <>
+                  <Trash2 className="h-5 w-5 text-red-500" />
+                  Delete User
+                </>
+              )}
+              {confirmAction?.action === "reset_password" && (
+                <>
+                  <KeyRound className="h-5 w-5 text-blue-500" />
+                  Reset Password
+                </>
+              )}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmAction?.action === "suspend" && `Are you sure you want to suspend ${getUserDisplayName(confirmAction.user)}? They will not be able to access the admin panel.`}
-              {confirmAction?.action === "unsuspend" && `Restore access for ${getUserDisplayName(confirmAction.user)}?`}
-              {confirmAction?.action === "delete" && `Permanently delete ${getUserDisplayName(confirmAction.user)}? This action cannot be undone.`}
-              {confirmAction?.action === "reset_password" && `Generate a new temporary password for ${getUserDisplayName(confirmAction.user)}? They will receive an email with the new credentials.`}
+              {confirmAction?.action === "suspend" && (
+                <>
+                  Are you sure you want to suspend <strong>{confirmAction.user.email}</strong>? 
+                  They will not be able to access the admin panel until unsuspended.
+                </>
+              )}
+              {confirmAction?.action === "unsuspend" && (
+                <>
+                  Restore access for <strong>{confirmAction.user.email}</strong>? 
+                  They will be able to access the admin panel again.
+                </>
+              )}
+              {confirmAction?.action === "delete" && (
+                <>
+                  Permanently delete <strong>{confirmAction.user.email}</strong>? 
+                  This action cannot be undone.
+                </>
+              )}
+              {confirmAction?.action === "reset_password" && (
+                <>
+                  Generate a new temporary password for <strong>{confirmAction.user.email}</strong>? 
+                  They will receive an email with the new credentials and must change it on first login.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleAction}
-              className={confirmAction?.action === "delete" ? "bg-red-600 hover:bg-red-700" : ""}
+              className={cn(
+                confirmAction?.action === "delete" && "bg-red-600 hover:bg-red-700",
+                confirmAction?.action === "suspend" && "bg-amber-600 hover:bg-amber-700",
+                confirmAction?.action === "unsuspend" && "bg-green-600 hover:bg-green-700",
+                confirmAction?.action === "reset_password" && "bg-blue-600 hover:bg-blue-700"
+              )}
               disabled={isManaging}
             >
               {isManaging ? "Processing..." : "Confirm"}
