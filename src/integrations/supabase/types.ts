@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       email_verification_codes: {
         Row: {
           attempts: number | null
@@ -80,6 +110,7 @@ export type Database = {
       facilities: {
         Row: {
           address: string
+          admin_notes: string | null
           bed_count: string | null
           city: string
           created_at: string
@@ -90,6 +121,7 @@ export type Database = {
           gallery_urls: string[] | null
           gender_served: string | null
           id: string
+          lead_limit_override: number | null
           logo_url: string | null
           name: string
           phone: string
@@ -99,13 +131,16 @@ export type Database = {
           slug: string | null
           state: string
           status: string
+          suspended: boolean | null
           updated_at: string
           user_id: string
+          verified: boolean | null
           website: string | null
           zip_code: string
         }
         Insert: {
           address: string
+          admin_notes?: string | null
           bed_count?: string | null
           city: string
           created_at?: string
@@ -116,6 +151,7 @@ export type Database = {
           gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string
+          lead_limit_override?: number | null
           logo_url?: string | null
           name: string
           phone: string
@@ -125,13 +161,16 @@ export type Database = {
           slug?: string | null
           state: string
           status?: string
+          suspended?: boolean | null
           updated_at?: string
           user_id: string
+          verified?: boolean | null
           website?: string | null
           zip_code: string
         }
         Update: {
           address?: string
+          admin_notes?: string | null
           bed_count?: string | null
           city?: string
           created_at?: string
@@ -142,6 +181,7 @@ export type Database = {
           gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string
+          lead_limit_override?: number | null
           logo_url?: string | null
           name?: string
           phone?: string
@@ -151,8 +191,10 @@ export type Database = {
           slug?: string | null
           state?: string
           status?: string
+          suspended?: boolean | null
           updated_at?: string
           user_id?: string
+          verified?: boolean | null
           website?: string | null
           zip_code?: string
         }
@@ -698,6 +740,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           browser: string | null
@@ -751,10 +814,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -881,6 +950,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator"],
+    },
   },
 } as const
