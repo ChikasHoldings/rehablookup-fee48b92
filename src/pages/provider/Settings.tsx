@@ -23,6 +23,7 @@ import {
   Activity
 } from "lucide-react";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
+import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
 import { useLogActivity } from "@/hooks/useActivityLog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -507,6 +508,13 @@ export default function ProviderSettingsPage() {
           >
             <Bell className="h-4 w-4 mr-2" />
             Notifications
+          </TabsTrigger>
+          <TabsTrigger 
+            value="sessions" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 text-sm font-medium"
+          >
+            <Globe className="h-4 w-4 mr-2" />
+            Sessions
           </TabsTrigger>
           <TabsTrigger 
             value="activity" 
@@ -1179,6 +1187,11 @@ export default function ProviderSettingsPage() {
               )}
             </Button>
           </div>
+        </TabsContent>
+
+        {/* Sessions Tab */}
+        <TabsContent value="sessions" className="mt-6">
+          <SessionManagementTab />
         </TabsContent>
 
         {/* Activity Tab */}

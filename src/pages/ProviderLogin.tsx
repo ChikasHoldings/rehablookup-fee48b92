@@ -92,6 +92,37 @@ const formatTimeRemaining = (ms: number): string => {
   return `${seconds}s`;
 };
 
+const getBrowserInfo = (): { browser: string; os: string; device: string } => {
+  const ua = navigator.userAgent;
+  
+  // Detect browser
+  let browser = "Unknown Browser";
+  if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Edg")) browser = "Edge";
+  else if (ua.includes("Chrome")) browser = "Chrome";
+  else if (ua.includes("Safari")) browser = "Safari";
+  else if (ua.includes("Opera") || ua.includes("OPR")) browser = "Opera";
+  
+  // Detect OS
+  let os = "Unknown OS";
+  if (ua.includes("Windows")) os = "Windows";
+  else if (ua.includes("Mac OS")) os = "macOS";
+  else if (ua.includes("Linux")) os = "Linux";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+  
+  // Detect device type
+  let device = "Desktop";
+  if (ua.includes("Mobile") || ua.includes("Android")) device = "Mobile";
+  else if (ua.includes("Tablet") || ua.includes("iPad")) device = "Tablet";
+  
+  return { browser, os, device };
+};
+
+const generateSessionToken = (): string => {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+};
+
 export default function ProviderLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -322,11 +353,37 @@ export default function ProviderLogin() {
         setFailedAttempts(0);
         sessionStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString());
         
+        // Create session tracking record
+        const { browser, os, device } = getBrowserInfo();
+        const sessionToken = generateSessionToken();
+        localStorage.setItem("current_session_token", sessionToken);
+        
+        // Insert session record
+        await supabase.from("user_sessions").insert({
+          user_id: data.session.user.id,
+          session_token: sessionToken,
+          browser,
+          os,
+          device_name: device,
+          is_current: true,
+          last_active_at: new Date().toISOString(),
+          expires_at: rememberMe 
+            ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+            : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 day
+        });
+        
+        // Mark other sessions as not current
+        await supabase
+          .from("user_sessions")
+          .update({ is_current: false })
+          .eq("user_id", data.session.user.id)
+          .neq("session_token", sessionToken);
+        
         supabase.functions.invoke("log-activity", {
           body: {
             user_id: data.session.user.id,
             event_type: "login",
-            event_description: `Signed in to account${rememberMe ? " (remembered)" : ""}`,
+            event_description: `Signed in to account${rememberMe ? " (remembered)" : ""} from ${browser} on ${os}`,
           },
         });
         
