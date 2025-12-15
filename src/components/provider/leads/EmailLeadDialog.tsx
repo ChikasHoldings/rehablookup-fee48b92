@@ -11,7 +11,8 @@ import {
   Heart,
   Calendar,
   Eye,
-  Lock
+  Lock,
+  AlertTriangle
 } from "lucide-react";
 import {
   Dialog,
@@ -37,6 +38,15 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { useTemplateTags } from "@/hooks/useTemplateTags";
+import { 
+  resolveTemplate, 
+  validateTemplate, 
+  canSendTemplate,
+  TemplateContext,
+  LeadData,
+  ProviderData
+} from "@/lib/templateTagResolver";
 
 interface Lead {
   id: string;
@@ -186,6 +196,35 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
   const { data: providerData } = useProviderData(selectedFacility?.id || undefined);
+  const { data: templateTags = [] } = useTemplateTags();
+
+  // Build template context from current data
+  const templateContext = useMemo((): TemplateContext | null => {
+    if (!lead || !providerData?.facility) return null;
+    
+    const leadData: LeadData = {
+      name: lead.name,
+      email: lead.email,
+    };
+
+    const profile = providerData.profile as any;
+    const facility = providerData.facility;
+
+    const providerDataContext: ProviderData = {
+      primary_contact_name: profile?.primary_contact_name || 
+        (profile ? `${profile.first_name} ${profile.last_name}`.trim() : undefined),
+      facility_name: facility.name,
+      city: facility.city,
+      state: facility.state,
+      phone: facility.phone,
+      email: facility.email || undefined,
+    };
+
+    return {
+      lead: leadData,
+      provider: providerDataContext,
+    };
+  }, [lead, providerData]);
 
   const sendEmail = useMutation({
     mutationFn: async () => {
@@ -231,18 +270,6 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
     },
   });
 
-  const handleSend = () => {
-    if (!selectedTemplate) {
-      toast({
-        title: "Select a template",
-        description: "Please choose an email template before sending.",
-        variant: "destructive",
-      });
-      return;
-    }
-    sendEmail.mutate();
-  };
-
   const handleClose = () => {
     if (!sendEmail.isPending) {
       onOpenChange(false);
@@ -252,36 +279,78 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
     }
   };
 
-  // Render template with variables
-  const renderTemplate = (text: string) => {
-    if (!lead || !providerData) return text;
-    
-    const leadFirstName = lead.name.split(" ")[0] || "there";
-    const providerName = providerData.facility?.name || "Our Facility";
-    const providerContactName = providerData.profile 
-      ? `${providerData.profile.first_name} ${providerData.profile.last_name}`.trim() 
-      : "Our Team";
-    
-    return text
-      .replace(/\{\{lead_first_name\}\}/g, leadFirstName)
-      .replace(/\{\{provider_name\}\}/g, providerName)
-      .replace(/\{\{provider_contact_name\}\}/g, providerContactName);
-  };
-
   const selectedTemplateInfo = useMemo(() => 
     EMAIL_TEMPLATES.find(t => t.id === selectedTemplate), 
     [selectedTemplate]
   );
 
+  // Render template with variables using the tag resolver
+  const renderTemplate = (text: string): string => {
+    if (!templateContext || templateTags.length === 0) {
+      // Fallback to basic replacement if tags not loaded yet
+      if (!lead || !providerData) return text;
+      
+      const leadFirstName = lead.name.split(" ")[0] || "there";
+      const providerName = providerData.facility?.name || "Our Facility";
+      const profile = providerData.profile as any;
+      const providerContactName = profile?.primary_contact_name || 
+        (profile ? `${profile.first_name} ${profile.last_name}`.trim() : "Our Team");
+      
+      return text
+        .replace(/\{\{lead_first_name\}\}/g, leadFirstName)
+        .replace(/\{\{provider_name\}\}/g, providerName)
+        .replace(/\{\{provider_contact_name\}\}/g, providerContactName);
+    }
+    
+    const { result } = resolveTemplate(text, templateContext, templateTags);
+    return result;
+  };
+
+  // Validate current template
+  const templateValidation = useMemo(() => {
+    if (!selectedTemplateInfo || templateTags.length === 0) {
+      return { isValid: true, errors: [], warnings: [] };
+    }
+    const fullTemplate = `${selectedTemplateInfo.subject}\n${selectedTemplateInfo.body}`;
+    return validateTemplate(fullTemplate, templateContext, templateTags);
+  }, [selectedTemplateInfo, templateContext, templateTags]);
+
   const renderedSubject = useMemo(() => 
     selectedTemplateInfo ? renderTemplate(selectedTemplateInfo.subject) : "",
-    [selectedTemplateInfo, lead, providerData]
+    [selectedTemplateInfo, templateContext, templateTags]
   );
 
   const renderedBody = useMemo(() => 
     selectedTemplateInfo ? renderTemplate(selectedTemplateInfo.body) : "",
-    [selectedTemplateInfo, lead, providerData]
+    [selectedTemplateInfo, templateContext, templateTags]
   );
+
+  const handleSend = () => {
+    if (!selectedTemplate) {
+      toast({
+        title: "Select a template",
+        description: "Please choose an email template before sending.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate template can be sent
+    if (selectedTemplateInfo && templateContext) {
+      const fullTemplate = `${selectedTemplateInfo.subject}\n${selectedTemplateInfo.body}`;
+      const sendCheck = canSendTemplate(fullTemplate, templateContext, templateTags);
+      if (!sendCheck.canSend) {
+        toast({
+          title: "Cannot send email",
+          description: sendCheck.reason || "Some required fields are missing.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    sendEmail.mutate();
+  };
 
   if (!lead) return null;
 
@@ -390,6 +459,30 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                   Optional. Appears below the template message.
                 </p>
               </div>
+
+              {/* Validation Warnings */}
+              {templateValidation.warnings.length > 0 && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50/50 border border-amber-100 text-xs">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-amber-700 leading-relaxed">
+                    {templateValidation.warnings.map((warning, i) => (
+                      <p key={i}>{warning}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Validation Errors */}
+              {templateValidation.errors.length > 0 && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50/50 border border-red-100 text-xs">
+                  <AlertTriangle className="h-3.5 w-3.5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-red-700 leading-relaxed">
+                    {templateValidation.errors.map((error, i) => (
+                      <p key={i}>{error}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Template Lock Notice */}
               <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50/50 border border-amber-100 text-xs">

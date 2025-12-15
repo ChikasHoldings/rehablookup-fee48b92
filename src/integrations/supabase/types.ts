@@ -887,6 +887,7 @@ export type Database = {
           job_title: string | null
           last_name: string
           phone: string | null
+          primary_contact_name: string | null
           updated_at: string
           user_id: string
         }
@@ -898,6 +899,7 @@ export type Database = {
           job_title?: string | null
           last_name: string
           phone?: string | null
+          primary_contact_name?: string | null
           updated_at?: string
           user_id: string
         }
@@ -909,6 +911,7 @@ export type Database = {
           job_title?: string | null
           last_name?: string
           phone?: string | null
+          primary_contact_name?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1017,6 +1020,42 @@ export type Database = {
           created_at?: string
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      template_tags: {
+        Row: {
+          created_at: string
+          example_value: string
+          fallback: string | null
+          id: string
+          is_required: boolean
+          key: string
+          label: string
+          path: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          example_value: string
+          fallback?: string | null
+          id?: string
+          is_required?: boolean
+          key: string
+          label: string
+          path: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          example_value?: string
+          fallback?: string | null
+          id?: string
+          is_required?: boolean
+          key?: string
+          label?: string
+          path?: string
+          source?: string
         }
         Relationships: []
       }
