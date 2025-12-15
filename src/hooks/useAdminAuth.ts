@@ -35,7 +35,7 @@ export function useAdminAuth() {
         } else {
           setUser(null);
           setIsAdmin(false);
-          navigate("/admin/login", { replace: true });
+          navigate("/admin-login", { replace: true });
         }
         setIsLoading(false);
       }
@@ -50,7 +50,7 @@ export function useAdminAuth() {
           navigate("/", { replace: true });
         }
       } else {
-        navigate("/admin/login", { replace: true });
+        navigate("/admin-login", { replace: true });
       }
       setIsLoading(false);
     });
@@ -60,7 +60,7 @@ export function useAdminAuth() {
 
   const logout = async () => {
     await supabase.auth.signOut();
-    navigate("/admin/login", { replace: true });
+    navigate("/admin-login", { replace: true });
   };
 
   return { user, isAdmin, isLoading, logout };
