@@ -48,6 +48,7 @@ import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminFlaggedImages from "./pages/admin/AdminFlaggedImages";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,6 +106,7 @@ const App = () => (
             <Route path="leads" element={<AdminLeads />} />
             <Route path="subscriptions" element={<AdminSubscriptions />} />
             <Route path="featured" element={<AdminFeatured />} />
+            <Route path="flagged-images" element={<AdminFlaggedImages />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="audit-log" element={<AdminAuditLog />} />
             <Route path="settings" element={<AdminSettings />} />
