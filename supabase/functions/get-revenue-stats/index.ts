@@ -254,7 +254,19 @@ serve(async (req) => {
       monthlyRevenue: currentRevenue,
       previousMonthRevenue: previousRevenue,
       percentChange: mrrGrowth,
+      // Analytics page specific fields
       activeSubscriptions: activeCount,
+      newSubscriptions: newLast30Days,
+      revenue: currentRevenue,
+      churnCount: canceledLast30Days,
+      churnRate: churnRate,
+      upgrades: recentEvents.filter(e => e.type === "upgrade").length,
+      downgrades: recentEvents.filter(e => e.type === "downgrade").length,
+      subscriptionsByPlan: {
+        basic: basicCount > 0 ? basicCount : 0,
+        professional: professionalCount,
+        featured: featuredCount,
+      },
       totalCustomers: providerSubscriptions.length,
     };
 

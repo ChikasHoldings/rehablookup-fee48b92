@@ -11,11 +11,13 @@ import {
   Settings,
   ShieldCheck,
   Image,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
+  { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },

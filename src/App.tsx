@@ -50,6 +50,7 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminFlaggedImages from "./pages/admin/AdminFlaggedImages";
 import AdminProfile from "./pages/admin/AdminProfile";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +104,7 @@ const App = () => (
           <Route path="/admin" element={<AdminShell />}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="providers" element={<AdminProviders />} />
             <Route path="leads" element={<AdminLeads />} />
             <Route path="subscriptions" element={<AdminSubscriptions />} />
