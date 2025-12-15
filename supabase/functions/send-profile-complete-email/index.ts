@@ -14,66 +14,59 @@ function generateCelebrationEmail(
   dashboardUrl: string
 ): string {
   return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 40px 32px; border-radius: 12px 12px 0 0; text-align: center;">
-        <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
-        <h1 style="color: white; margin: 0; font-size: 28px;">Congratulations!</h1>
-        <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 16px;">Your profile is 100% complete</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
+  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+    <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 32px; text-align: center;">
+      <div style="font-size: 40px; margin-bottom: 12px;">🎉</div>
+      <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 600;">Profile Complete!</h1>
+    </div>
+    
+    <div style="padding: 32px;">
+      <p style="margin: 0 0 16px 0; font-size: 15px;">Hi ${firstName},</p>
+      
+      <p style="margin: 0 0 16px 0; font-size: 15px;">
+        Your listing for <strong>${facilityName}</strong> is now fully optimized. You're all set to attract families looking for treatment.
+      </p>
+      
+      <div style="background: #f0fdf4; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
+        <div style="display: inline-block; background: #22c55e; color: white; border-radius: 50%; width: 56px; height: 56px; line-height: 56px; font-weight: bold; font-size: 20px; margin-bottom: 12px;">
+          100%
+        </div>
+        <p style="margin: 0; color: #166534; font-weight: 600;">All checklist items done</p>
       </div>
       
-      <div style="background: #ffffff; padding: 32px; border: 1px solid #e2e8f0; border-top: none;">
-        <p style="margin-top: 0; font-size: 16px;">Hi ${firstName},</p>
-        
-        <p style="font-size: 16px;">
-          Great news! Your listing for <strong>${facilityName}</strong> is now fully optimized and ready to attract families seeking treatment.
-        </p>
-        
-        <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;">
-          <div style="display: inline-block; background: #22c55e; color: white; border-radius: 50%; width: 64px; height: 64px; line-height: 64px; font-weight: bold; font-size: 24px; margin-bottom: 16px;">
-            100%
-          </div>
-          <h3 style="color: #166534; margin: 0 0 8px 0;">Profile Complete</h3>
-          <p style="margin: 0; color: #15803d; font-size: 14px;">All checklist items completed</p>
-        </div>
-        
-        <h3 style="color: #1B365D; margin-bottom: 12px;">What this means for you:</h3>
-        <ul style="padding-left: 20px; margin: 0 0 24px 0;">
-          <li style="margin-bottom: 8px; color: #4a5568;">
-            <strong>Better visibility</strong> — Complete profiles rank higher in search results
-          </li>
-          <li style="margin-bottom: 8px; color: #4a5568;">
-            <strong>More trust</strong> — Families are 3x more likely to contact facilities with complete profiles
-          </li>
-          <li style="margin-bottom: 8px; color: #4a5568;">
-            <strong>Professional appearance</strong> — Your listing now showcases everything families need to know
-          </li>
-        </ul>
-        
-        <div style="text-align: center; margin: 32px 0;">
-          <a href="${dashboardUrl}/listing" style="display: inline-block; background: #1B365D; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-right: 12px;">
-            View Your Listing
-          </a>
-        </div>
-        
-        <p style="color: #64748b; font-size: 14px; margin-bottom: 0;">
-          Keep your listing up to date to maintain your advantage. You can always add more photos, update services, or enhance your description.
-        </p>
+      <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #1B365D;">What this means:</p>
+      <ul style="padding-left: 20px; margin: 0 0 24px 0; font-size: 14px; color: #4b5563;">
+        <li style="margin-bottom: 6px;">Better visibility in search results</li>
+        <li style="margin-bottom: 6px;">More trust from families (3x more likely to contact)</li>
+        <li>Professional appearance that stands out</li>
+      </ul>
+      
+      <div style="text-align: center; margin: 28px 0;">
+        <a href="${dashboardUrl}/listing" style="display: inline-block; background: #1B365D; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+          View Your Listing
+        </a>
       </div>
       
-      <div style="background: #f8fafc; padding: 20px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0; border-top: none; text-align: center;">
-        <p style="margin: 0; color: #64748b; font-size: 12px;">
-          You're receiving this because you completed your profile on RehabLookup.com.<br>
-          <a href="${dashboardUrl}/settings" style="color: #1B365D;">Manage notification preferences</a>
-        </p>
-      </div>
-    </body>
-    </html>
+      <p style="color: #64748b; font-size: 13px; margin: 0;">
+        Keep your listing fresh by updating availability and adding new photos as needed.
+      </p>
+    </div>
+    
+    <div style="background: #f8fafc; padding: 20px 32px; border-top: 1px solid #e2e8f0;">
+      <p style="margin: 0; font-size: 12px; color: #94a3b8; text-align: center;">
+        RehabLookup | <a href="${dashboardUrl}/settings" style="color: #64748b;">Notification settings</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
   `;
 }
 
@@ -101,7 +94,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`[PROFILE-COMPLETE] Processing facility: ${facilityId}`);
 
-    // Fetch facility details
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
       .select("name, user_id, profile_completion_celebrated")
@@ -116,7 +108,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if we already sent a celebration email
     if (facility.profile_completion_celebrated) {
       console.log("[PROFILE-COMPLETE] Already celebrated, skipping");
       return new Response(
@@ -125,7 +116,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Fetch user profile
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("email, first_name")
@@ -140,7 +130,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check notification preferences
     const { data: preferences } = await supabase
       .from("notification_preferences")
       .select("email_product_updates")
@@ -174,7 +163,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "RehabLookup <notifications@resend.dev>",
         to: [profile.email],
-        subject: `🎉 Congratulations! Your ${facility.name} profile is complete`,
+        subject: `Nice work! ${facility.name} profile is 100% complete`,
         html: emailHtml,
       }),
     });
@@ -188,7 +177,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Mark as celebrated to prevent duplicate emails
     await supabase
       .from("facilities")
       .update({ profile_completion_celebrated: true })

@@ -7,79 +7,79 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Email templates
+// Email templates - shorter, human, no em dashes
 const templates: Record<string, { name: string; subject: string; body: string }> = {
   thanks_reaching_out: {
     name: "Thanks for Reaching Out",
-    subject: "Thank you for contacting {{facilityName}}",
-    body: `Dear {{leadName}},
+    subject: "Thanks for contacting {{facilityName}}",
+    body: `Hi {{leadName}},
 
-Thank you for reaching out to {{facilityName}} through RehabLookup. We received your inquiry and are here to help you on your journey to recovery.
+Thank you for reaching out to {{facilityName}}. We received your inquiry and want you to know we're here to help.
 
 {{customNote}}
 
-Our admissions team is available to answer any questions you may have about our treatment programs, insurance coverage, and next steps.
+Our team is ready to answer your questions about our programs, insurance, and what to expect. Taking this step takes courage, and we appreciate your trust.
 
-We understand that taking this step takes courage, and we're honored that you've trusted us with your inquiry. We'll be in touch shortly to discuss how we can best support you.
+We'll be in touch soon.
 
-Warm regards,
+Warmly,
 {{senderName}}
 {{facilityName}}`,
   },
   next_steps: {
-    name: "Next Steps for Treatment",
-    subject: "Your Next Steps with {{facilityName}}",
-    body: `Dear {{leadName}},
+    name: "Next Steps",
+    subject: "Your next steps with {{facilityName}}",
+    body: `Hi {{leadName}},
 
-Thank you for your interest in beginning treatment with {{facilityName}}. We're excited to help you take the next steps toward recovery.
+Thank you for considering {{facilityName}}. We're ready to help you take the next step.
 
 {{customNote}}
 
-Here's what you can expect:
-1. A member of our admissions team will call you to discuss your needs
-2. We'll verify your insurance benefits (if applicable)
-3. We'll answer any questions about our programs and approach
-4. We'll help you choose a start date that works for you
+Here's what happens next:
+1. Our admissions team will call to learn about your needs
+2. We'll check your insurance coverage
+3. We'll answer all your questions
+4. Together, we'll find a start date that works
 
-Recovery is possible, and we're here to support you every step of the way.
+Recovery is possible. We're with you every step.
 
-Best regards,
+Best,
 {{senderName}}
 {{facilityName}}`,
   },
   insurance_availability: {
-    name: "Insurance & Availability Follow-up",
-    subject: "Insurance Information & Availability - {{facilityName}}",
-    body: `Dear {{leadName}},
+    name: "Insurance & Availability",
+    subject: "Insurance info from {{facilityName}}",
+    body: `Hi {{leadName}},
 
-Thank you for your inquiry about treatment at {{facilityName}}. We wanted to follow up regarding insurance coverage and current availability.
+Thanks for asking about treatment at {{facilityName}}. I wanted to follow up on insurance and availability.
 
 {{customNote}}
 
-We work with many major insurance providers and offer various payment options. Our admissions team can help verify your specific coverage and explain any out-of-pocket costs.
+We work with most major insurance plans and offer flexible payment options. Our team can verify your specific coverage and explain any costs upfront.
 
-Current availability: We have openings in our program and can typically accommodate new admissions within a few days.
+Good news: we currently have openings and can often get you started within a few days.
 
-Please don't hesitate to call us if you have any questions. We're here to make this process as smooth as possible.
+Questions? Just reply to this email or give us a call.
 
-Sincerely,
+Best,
 {{senderName}}
 {{facilityName}}`,
   },
   scheduling_call: {
-    name: "Scheduling a Call",
-    subject: "Let's Schedule a Call - {{facilityName}}",
-    body: `Dear {{leadName}},
+    name: "Schedule a Call",
+    subject: "Let's talk - {{facilityName}}",
+    body: `Hi {{leadName}},
 
-We received your inquiry and would love to speak with you directly about how {{facilityName}} can help.
+We'd love to speak with you about how {{facilityName}} can help.
 
 {{customNote}}
 
-Would you be available for a brief phone call in the next day or two? Our admissions specialists are available Monday through Friday from 8 AM to 8 PM, and weekends from 9 AM to 5 PM.
+Are you available for a quick call in the next day or two? Our team is here Monday through Friday, 8am to 8pm, and weekends 9am to 5pm.
 
-Please reply with a few times that work for you, or feel free to call us directly at your convenience.
+Reply with a few times that work, or just call us when you're ready.
 
-Looking forward to connecting with you,
+Looking forward to connecting,
 {{senderName}}
 {{facilityName}}`,
   },
@@ -97,7 +97,6 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Get auth token from request
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return new Response(
@@ -119,7 +118,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create authenticated client to get user
     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -133,7 +131,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Use service role for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body: SendEmailRequest = await req.json();
@@ -141,7 +138,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Send email request:", { leadId, templateId, userId: user.id });
 
-    // Validate template
     const template = templates[templateId];
     if (!template) {
       return new Response(
@@ -150,7 +146,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get provider profile
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("first_name, last_name, email")
@@ -167,7 +162,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const senderName = `${profile.first_name} ${profile.last_name}`;
 
-    // Get facility
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
       .select("id, name, email, reply_email")
@@ -182,7 +176,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Validate reply_email exists
     const replyToEmail = facility.reply_email || facility.email || profile.email;
     if (!replyToEmail) {
       console.error("No reply email configured");
@@ -192,7 +185,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get lead and verify it belongs to this facility
     const { data: lead, error: leadError } = await supabase
       .from("leads")
       .select("id, name, email, facility_id")
@@ -208,7 +200,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Rate limiting: Check emails sent today by this facility
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -221,12 +212,11 @@ const handler = async (req: Request): Promise<Response> => {
     const DAILY_EMAIL_LIMIT = 50;
     if ((emailsToday || 0) >= DAILY_EMAIL_LIMIT) {
       return new Response(
-        JSON.stringify({ error: `Daily email limit (${DAILY_EMAIL_LIMIT}) reached. Please try again tomorrow.` }),
+        JSON.stringify({ error: `Daily email limit (${DAILY_EMAIL_LIMIT}) reached. Try again tomorrow.` }),
         { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Prepare email content
     const customNoteText = customNote?.trim() 
       ? `\n${customNote.trim()}\n` 
       : "";
@@ -240,7 +230,6 @@ const handler = async (req: Request): Promise<Response> => {
     const emailSubject = template.subject
       .replace(/{{facilityName}}/g, facility.name);
 
-    // Build HTML email
     const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -248,24 +237,27 @@ const handler = async (req: Request): Promise<Response> => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.7; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: #fff; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
+  <div style="background: #fff; border-radius: 12px; padding: 36px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+    <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px;">
+      <p style="margin: 0; font-size: 13px; color: #94a3b8;">From ${facility.name} via RehabLookup</p>
+    </div>
+    
     ${emailBody.split('\n').map(line => 
-      line.trim() ? `<p style="margin: 0 0 16px 0;">${line}</p>` : ''
+      line.trim() ? `<p style="margin: 0 0 14px 0; font-size: 15px;">${line}</p>` : ''
     ).join('')}
     
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
-    
-    <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-      This email was sent via <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup</a> on behalf of ${facility.name}.<br>
-      If you no longer wish to receive emails, please reply with "unsubscribe" in the subject line.
-    </p>
+    <div style="border-top: 1px solid #e2e8f0; margin-top: 32px; padding-top: 20px;">
+      <p style="font-size: 12px; color: #94a3b8; margin: 0;">
+        Sent via <a href="https://rehablookup.com" style="color: #64748b;">RehabLookup</a> on behalf of ${facility.name}.<br>
+        To stop receiving emails, reply with "unsubscribe".
+      </p>
+    </div>
   </div>
 </body>
 </html>
     `;
 
-    // Send email via Resend
     const resend = new Resend(resendApiKey);
     
     console.log("Sending email with Reply-To:", replyToEmail);
@@ -280,7 +272,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent:", emailResponse);
 
-    // Log the email in database
     const { data: emailLog, error: logError } = await supabase
       .from("lead_emails")
       .insert({
@@ -300,7 +291,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (logError) {
       console.error("Failed to log email:", logError);
-      // Don't fail the request, email was still sent
     }
 
     return new Response(
