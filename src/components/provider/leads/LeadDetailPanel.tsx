@@ -227,9 +227,8 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
       <div className={cn("flex-shrink-0 border-b border-l-4", gradeAccentColor)}>
         {/* Top row: Avatar, Name, Actions */}
         <div className="p-4 pb-3 flex items-center gap-3">
-          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center flex-shrink-0 relative border border-primary/10">
-            <User className="h-6 w-6 text-primary/20 absolute" />
-            <span className="text-base font-semibold text-primary relative z-10">
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-base font-semibold text-primary">
               {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
             </span>
           </div>
