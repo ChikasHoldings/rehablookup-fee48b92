@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import {
   ClipboardList,
@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Search,
   Calendar,
+  Radio,
   Filter,
   User,
   FileText,
@@ -38,6 +39,8 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type AuditLog = {
@@ -99,11 +102,47 @@ const datePresets = [
 ];
 
 export default function AdminAuditLog() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [targetFilter, setTargetFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: subDays(new Date(), 30), to: new Date() });
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLive, setIsLive] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  const invalidateAuditLog = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-audit-log"] });
+    setLastUpdate(new Date());
+  }, [queryClient]);
+
+  // Real-time subscription for audit log updates
+  useEffect(() => {
+    if (!isLive) return;
+
+    const channel = supabase
+      .channel("audit-log-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "admin_audit_log",
+        },
+        (payload) => {
+          console.log("New audit log entry:", payload);
+          invalidateAuditLog();
+          toast.info("New admin action logged", {
+            description: `Action: ${(payload.new as AuditLog).action_type}`,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isLive, invalidateAuditLog]);
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ["admin-audit-log", dateRange],
@@ -239,6 +278,27 @@ export default function AdminAuditLog() {
           <p className="text-muted-foreground">Track all administrative actions across the platform</p>
         </div>
         <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={isLive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsLive(!isLive)}
+                  className={cn(
+                    "gap-2",
+                    isLive && "bg-green-600 hover:bg-green-700"
+                  )}
+                >
+                  <Radio className={cn("h-3.5 w-3.5", isLive && "animate-pulse")} />
+                  {isLive ? "Live" : "Paused"}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Last update: {format(lastUpdate, "h:mm:ss a")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {datePresets.map((preset) => (
             <Button
               key={preset.label}
@@ -246,7 +306,7 @@ export default function AdminAuditLog() {
               size="sm"
               onClick={() => handlePresetClick(preset.days)}
               className={cn(
-                "text-xs",
+                "text-xs hidden md:inline-flex",
                 dateRange.from && 
                 format(dateRange.from, "yyyy-MM-dd") === format(subDays(new Date(), preset.days), "yyyy-MM-dd") &&
                 "bg-primary text-primary-foreground hover:bg-primary/90"
