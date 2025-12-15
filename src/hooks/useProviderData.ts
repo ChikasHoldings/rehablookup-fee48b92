@@ -25,6 +25,7 @@ interface Facility {
   state: string;
   zip_code: string;
   website: string | null;
+  profile_completion_celebrated: boolean | null;
 }
 
 interface ProviderData {
@@ -122,7 +123,7 @@ export function useProviderData(facilityId?: string) {
       if (facilityId) {
         const { data } = await supabase
           .from("facilities")
-          .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website")
+          .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
           .eq("id", facilityId)
           .eq("user_id", session.user.id)
           .maybeSingle();
@@ -130,7 +131,7 @@ export function useProviderData(facilityId?: string) {
       } else {
         const { data } = await supabase
           .from("facilities")
-          .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website")
+          .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
           .eq("user_id", session.user.id)
           .limit(1)
           .maybeSingle();
