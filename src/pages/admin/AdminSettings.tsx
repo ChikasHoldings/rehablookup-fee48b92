@@ -957,108 +957,308 @@ export default function AdminSettings() {
 
         {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Email Notifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Mail className="h-5 w-5 text-blue-500" />
-                  Email Notifications
-                </CardTitle>
-                <CardDescription>Configure admin email alerts</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                <SettingRow
-                  icon={<Users className="h-4 w-4 text-slate-500" />}
-                  title="New Provider Signups"
-                  description="Get notified when providers register"
-                >
-                  <Switch defaultChecked />
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<AlertTriangle className="h-4 w-4 text-slate-500" />}
-                  title="Payment Failures"
-                  description="Alert when subscription payments fail"
-                >
-                  <Switch defaultChecked />
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<Activity className="h-4 w-4 text-slate-500" />}
-                  title="System Alerts"
-                  description="Critical system status notifications"
-                >
-                  <Switch defaultChecked />
-                </SettingRow>
-              </CardContent>
-            </Card>
+          {settingsLoading ? (
+            <div className="space-y-6">
+              <Skeleton className="h-[280px] w-full" />
+              <Skeleton className="h-[280px] w-full" />
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Email Notifications */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Mail className="h-5 w-5 text-blue-500" />
+                      Email Notifications
+                    </CardTitle>
+                    <CardDescription>Configure admin email alerts</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <SettingRow
+                      icon={<Users className="h-4 w-4 text-slate-500" />}
+                      title="New Provider Signups"
+                      description="Get notified when providers register"
+                    >
+                      <Switch 
+                        checked={getSetting('email_new_provider_signups') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'email_new_provider_signups', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<AlertTriangle className="h-4 w-4 text-slate-500" />}
+                      title="Payment Failures"
+                      description="Alert when subscription payments fail"
+                    >
+                      <Switch 
+                        checked={getSetting('email_payment_failures') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'email_payment_failures', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Activity className="h-4 w-4 text-slate-500" />}
+                      title="System Alerts"
+                      description="Critical system status notifications"
+                    >
+                      <Switch 
+                        checked={getSetting('email_system_alerts') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'email_system_alerts', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                  </CardContent>
+                </Card>
 
-            {/* In-App Notifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Bell className="h-5 w-5 text-purple-500" />
-                  In-App Notifications
-                </CardTitle>
-                <CardDescription>Configure dashboard alerts</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                <SettingRow
-                  icon={<Users className="h-4 w-4 text-slate-500" />}
-                  title="Pending Approvals"
-                  description="Show badge for pending provider reviews"
-                >
-                  <Switch defaultChecked />
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<Zap className="h-4 w-4 text-slate-500" />}
-                  title="Unassigned Leads"
-                  description="Alert when leads need assignment"
-                >
-                  <Switch defaultChecked />
-                </SettingRow>
-                <Separator />
-                <SettingRow
-                  icon={<FileText className="h-4 w-4 text-slate-500" />}
-                  title="Flagged Content"
-                  description="Notify about flagged images or content"
-                >
-                  <Switch defaultChecked />
-                </SettingRow>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Digest Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="h-5 w-5 text-green-500" />
-                Digest & Summary
-              </CardTitle>
-              <CardDescription>Configure periodic summary notifications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div className="space-y-3">
-                  <Label>Daily Summary Email</Label>
-                  <div className="flex items-center gap-3">
-                    <Switch defaultChecked />
-                    <span className="text-sm text-muted-foreground">Send at 9:00 AM</span>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <Label>Weekly Analytics Report</Label>
-                  <div className="flex items-center gap-3">
-                    <Switch defaultChecked />
-                    <span className="text-sm text-muted-foreground">Send every Monday</span>
-                  </div>
-                </div>
+                {/* In-App Notifications */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Bell className="h-5 w-5 text-purple-500" />
+                      In-App Notifications
+                    </CardTitle>
+                    <CardDescription>Configure dashboard alerts</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <SettingRow
+                      icon={<Users className="h-4 w-4 text-slate-500" />}
+                      title="Pending Approvals"
+                      description="Show badge for pending provider reviews"
+                    >
+                      <Switch 
+                        checked={getSetting('inapp_pending_approvals') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'inapp_pending_approvals', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Zap className="h-4 w-4 text-slate-500" />}
+                      title="Unassigned Leads"
+                      description="Alert when leads need assignment"
+                    >
+                      <Switch 
+                        checked={getSetting('inapp_unassigned_leads') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'inapp_unassigned_leads', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<FileText className="h-4 w-4 text-slate-500" />}
+                      title="Flagged Content"
+                      description="Notify about flagged images or content"
+                    >
+                      <Switch 
+                        checked={getSetting('inapp_flagged_content') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'inapp_flagged_content', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Digest Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Clock className="h-5 w-5 text-green-500" />
+                    Digest & Summary
+                  </CardTitle>
+                  <CardDescription>Configure periodic summary notifications</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="space-y-3">
+                      <Label>Daily Summary Email</Label>
+                      <div className="flex items-center gap-3">
+                        <Switch 
+                          checked={getSetting('daily_summary_enabled') === true}
+                          onCheckedChange={(checked) => updateSetting.mutate({ 
+                            key: 'daily_summary_enabled', 
+                            value: checked 
+                          })}
+                          disabled={updateSetting.isPending}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {getSetting('daily_summary_enabled') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Label>Daily Summary Time</Label>
+                      <Select 
+                        value={getSetting('daily_summary_time') || '09:00'}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'daily_summary_time', 
+                          value 
+                        })}
+                        disabled={updateSetting.isPending || !getSetting('daily_summary_enabled')}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="07:00">7:00 AM</SelectItem>
+                          <SelectItem value="08:00">8:00 AM</SelectItem>
+                          <SelectItem value="09:00">9:00 AM</SelectItem>
+                          <SelectItem value="10:00">10:00 AM</SelectItem>
+                          <SelectItem value="12:00">12:00 PM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-3">
+                      <Label>Weekly Analytics Report</Label>
+                      <div className="flex items-center gap-3">
+                        <Switch 
+                          checked={getSetting('weekly_report_enabled') === true}
+                          onCheckedChange={(checked) => updateSetting.mutate({ 
+                            key: 'weekly_report_enabled', 
+                            value: checked 
+                          })}
+                          disabled={updateSetting.isPending}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {getSetting('weekly_report_enabled') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Label>Weekly Report Day</Label>
+                      <Select 
+                        value={getSetting('weekly_report_day') || 'monday'}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'weekly_report_day', 
+                          value 
+                        })}
+                        disabled={updateSetting.isPending || !getSetting('weekly_report_enabled')}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monday">Monday</SelectItem>
+                          <SelectItem value="tuesday">Tuesday</SelectItem>
+                          <SelectItem value="wednesday">Wednesday</SelectItem>
+                          <SelectItem value="thursday">Thursday</SelectItem>
+                          <SelectItem value="friday">Friday</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Notification Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Activity className="h-5 w-5 text-blue-500" />
+                    Notification Status
+                  </CardTitle>
+                  <CardDescription>Current notification system status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                        <Mail className="h-4 w-4" />
+                        <span className="text-sm font-medium">Email Service</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700">Active</p>
+                      <p className="text-xs text-green-600 mt-1">Resend configured</p>
+                    </div>
+                    <div className={cn(
+                      "p-4 rounded-lg border",
+                      getSetting('daily_summary_enabled') 
+                        ? "bg-green-50 border-green-100" 
+                        : "bg-muted/50"
+                    )}>
+                      <div className={cn(
+                        "flex items-center gap-2 mb-1",
+                        getSetting('daily_summary_enabled') ? "text-green-700" : "text-muted-foreground"
+                      )}>
+                        <Clock className="h-4 w-4" />
+                        <span className="text-sm font-medium">Daily Digest</span>
+                      </div>
+                      <p className={cn(
+                        "text-2xl font-bold",
+                        getSetting('daily_summary_enabled') ? "text-green-700" : "text-muted-foreground"
+                      )}>
+                        {getSetting('daily_summary_enabled') ? 'Active' : 'Disabled'}
+                      </p>
+                      <p className={cn(
+                        "text-xs mt-1",
+                        getSetting('daily_summary_enabled') ? "text-green-600" : "text-muted-foreground"
+                      )}>
+                        {getSetting('daily_summary_enabled') 
+                          ? `Sends at ${getSetting('daily_summary_time') || '09:00'}` 
+                          : 'Not scheduled'}
+                      </p>
+                    </div>
+                    <div className={cn(
+                      "p-4 rounded-lg border",
+                      getSetting('weekly_report_enabled') 
+                        ? "bg-green-50 border-green-100" 
+                        : "bg-muted/50"
+                    )}>
+                      <div className={cn(
+                        "flex items-center gap-2 mb-1",
+                        getSetting('weekly_report_enabled') ? "text-green-700" : "text-muted-foreground"
+                      )}>
+                        <FileText className="h-4 w-4" />
+                        <span className="text-sm font-medium">Weekly Report</span>
+                      </div>
+                      <p className={cn(
+                        "text-2xl font-bold",
+                        getSetting('weekly_report_enabled') ? "text-green-700" : "text-muted-foreground"
+                      )}>
+                        {getSetting('weekly_report_enabled') ? 'Active' : 'Disabled'}
+                      </p>
+                      <p className={cn(
+                        "text-xs mt-1",
+                        getSetting('weekly_report_enabled') ? "text-green-600" : "text-muted-foreground"
+                      )}>
+                        {getSetting('weekly_report_enabled') 
+                          ? `Sends every ${(getSetting('weekly_report_day') || 'monday').charAt(0).toUpperCase() + (getSetting('weekly_report_day') || 'monday').slice(1)}` 
+                          : 'Not scheduled'}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                        <Bell className="h-4 w-4" />
+                        <span className="text-sm font-medium">In-App Alerts</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700">Active</p>
+                      <p className="text-xs text-green-600 mt-1">Real-time enabled</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </TabsContent>
 
         {/* Data Tab */}
