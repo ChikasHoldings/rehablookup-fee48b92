@@ -885,10 +885,10 @@ export default function AdminProviders() {
 
       {/* Provider Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
-          <DialogHeader className="p-6 pb-0 flex-shrink-0">
+        <DialogContent className="max-w-4xl h-[90vh] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="p-6 pb-4 flex-shrink-0 border-b">
             <div className="flex items-start gap-4">
-              <Avatar className="h-16 w-16 border-2 border-background shadow-lg">
+              <Avatar className="h-16 w-16 border-2 border-background shadow-lg flex-shrink-0">
                 <AvatarImage src={selectedProvider?.logo_url || undefined} />
                 <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
                   {selectedProvider?.name.slice(0, 2).toUpperCase()}
@@ -913,7 +913,7 @@ export default function AdminProviders() {
             </div>
           </DialogHeader>
 
-          <Tabs value={detailTab} onValueChange={setDetailTab} className="flex-1 flex flex-col min-h-0">
+          <Tabs value={detailTab} onValueChange={setDetailTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="px-6 border-b flex-shrink-0">
               <TabsList className="h-12 w-full justify-start bg-transparent border-none p-0 gap-4">
                 <TabsTrigger value="overview" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
@@ -936,7 +936,7 @@ export default function AdminProviders() {
               </TabsList>
             </div>
 
-            <ScrollArea className="flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto">
               {/* Overview Tab */}
               <TabsContent value="overview" className="p-6 space-y-6 m-0 data-[state=inactive]:hidden">
                 {/* Quick Actions */}
@@ -1555,7 +1555,7 @@ export default function AdminProviders() {
                   </CardContent>
                 </Card>
               </TabsContent>
-            </ScrollArea>
+            </div>
           </Tabs>
         </DialogContent>
       </Dialog>
