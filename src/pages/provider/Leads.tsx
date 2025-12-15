@@ -56,9 +56,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
-import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 import { LeadScoreBadge } from "@/components/provider/leads/LeadScoreBadge";
+import { LeadProfileModal } from "@/components/leads/LeadProfileModal";
 import { calculateLeadScore } from "@/lib/leadScoring";
 import { 
   LeadUsageIndicator, 
@@ -103,7 +103,7 @@ interface DateRange {
 
 export default function ProviderLeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailLead, setEmailLead] = useState<Lead | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -280,7 +280,7 @@ export default function ProviderLeadsPage() {
 
   const handleOpenLead = (lead: Lead) => {
     setSelectedLead(lead);
-    setDrawerOpen(true);
+    setModalOpen(true);
   };
 
   const handleCopyContact = async (lead: Lead, e: React.MouseEvent) => {
@@ -796,7 +796,19 @@ export default function ProviderLeadsPage() {
                       >
                         <TableCell className="font-medium">
                           <div className={`flex items-center gap-2 ${isLocked ? "blur-sm" : ""}`}>
-                            {isLocked ? "Hidden Lead" : lead.name}
+                            {isLocked ? (
+                              <span>Hidden Lead</span>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenLead(lead);
+                                }}
+                                className="text-left font-medium text-primary hover:underline focus:outline-none focus:underline"
+                              >
+                                {lead.name}
+                              </button>
+                            )}
                             {lead.message && !isLocked && (
                               <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                             )}
@@ -965,11 +977,11 @@ export default function ProviderLeadsPage() {
         </CardContent>
       </Card>
 
-      {/* Lead Detail Drawer */}
-      <LeadDetailDrawer
+      {/* Lead Profile Modal */}
+      <LeadProfileModal
         lead={selectedLead}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
       />
 
       {/* Email Dialog */}

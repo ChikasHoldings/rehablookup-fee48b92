@@ -69,6 +69,7 @@ import {
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { calculateLeadScore, getScoreColor, type LeadScoringInput } from "@/lib/leadScoring";
+import { LeadProfileModal } from "@/components/leads/LeadProfileModal";
 
 type Lead = {
   id: string;
@@ -91,6 +92,8 @@ type Lead = {
   source: string | null;
   created_at: string;
   facility_id: string | null;
+  snooze_until: string | null;
+  budget_preference: string | null;
 };
 
 type Facility = {
@@ -209,7 +212,7 @@ export default function AdminLeads() {
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [showBulkAssignDialog, setShowBulkAssignDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -428,9 +431,9 @@ export default function AdminLeads() {
     },
   });
 
-  const openLeadDetail = (lead: Lead) => {
+  const openLeadProfile = (lead: Lead) => {
     setSelectedLead(lead);
-    setShowDetailDialog(true);
+    setShowProfileModal(true);
   };
 
   const openAssignDialog = (lead: Lead) => {
@@ -695,7 +698,12 @@ export default function AdminLeads() {
                       <TableCell>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium truncate max-w-[200px]">{lead.name}</p>
+                            <button
+                              onClick={() => openLeadProfile(lead)}
+                              className="font-medium text-primary hover:underline focus:outline-none focus:underline truncate max-w-[200px] text-left"
+                            >
+                              {lead.name}
+                            </button>
                             {lead.email_verified && (
                               <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
                             )}
@@ -758,7 +766,7 @@ export default function AdminLeads() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openLeadDetail(lead)}>
+                            <DropdownMenuItem onClick={() => openLeadProfile(lead)}>
                               View Details
                             </DropdownMenuItem>
                             {!lead.facility_id && (
@@ -836,109 +844,19 @@ export default function AdminLeads() {
         </CardContent>
       </Card>
 
-      {/* Lead Detail Dialog */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              Lead Details
-              {selectedLead && <LeadScoreBadge lead={selectedLead} />}
-            </DialogTitle>
-            <DialogDescription>
-              Submitted {selectedLead && format(new Date(selectedLead.created_at), "MMMM d, yyyy 'at' h:mm a")}
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedLead && (
-            <ScrollArea className="flex-1 overflow-y-auto">
-              <div className="space-y-6 pr-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Name</p>
-                    <p className="font-medium">{selectedLead.name}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{selectedLead.email}</p>
-                      {selectedLead.email_verified && (
-                        <Badge variant="outline" className="text-green-600">Verified</Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="font-medium">{selectedLead.phone}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Location</p>
-                    <p className="font-medium">
-                      {selectedLead.location_city_state || selectedLead.location_zip || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4 grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Level of Care</p>
-                    <p className="font-medium">{selectedLead.level_of_care || "Not specified"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Urgency</p>
-                    <p className="font-medium">{selectedLead.urgency || "Not specified"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Insurance</p>
-                    <p className="font-medium">
-                      {selectedLead.insurance_type || "Not specified"}
-                      {selectedLead.insurance_provider && ` - ${selectedLead.insurance_provider}`}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Seeking Help For</p>
-                    <p className="font-medium">{selectedLead.who_seeking_help || "Not specified"}</p>
-                  </div>
-                </div>
-
-                {selectedLead.primary_substance && selectedLead.primary_substance.length > 0 && (
-                  <div className="border-t pt-4 space-y-2">
-                    <p className="text-sm text-muted-foreground">Primary Substances</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedLead.primary_substance.map((substance) => (
-                        <Badge key={substance} variant="secondary">
-                          {substance}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedLead.message && (
-                  <div className="border-t pt-4 space-y-2">
-                    <p className="text-sm text-muted-foreground">Message</p>
-                    <p className="text-sm bg-muted p-3 rounded-lg">{selectedLead.message}</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          )}
-
-          {selectedLead && !selectedLead.facility_id && (
-            <DialogFooter className="mt-4">
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setShowDetailDialog(false);
-                  openAssignDialog(selectedLead);
-                }}
-              >
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Assign to Provider
-              </Button>
-            </DialogFooter>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Lead Profile Modal */}
+      <LeadProfileModal
+        lead={selectedLead}
+        open={showProfileModal}
+        onOpenChange={setShowProfileModal}
+        isAdmin
+        facilities={facilities || []}
+        onAssign={(leadId, facilityId) => {
+          assignLead.mutate({ leadId, facilityId });
+          setShowProfileModal(false);
+        }}
+        isAssigning={assignLead.isPending}
+      />
 
       {/* Single Assign Dialog */}
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
