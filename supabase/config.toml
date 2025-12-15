@@ -92,3 +92,9 @@ verify_jwt = false
 
 [functions.track-request-help]
 verify_jwt = false
+
+[functions.send-reply-email-verification]
+verify_jwt = true
+
+[functions.verify-reply-email-code]
+verify_jwt = true

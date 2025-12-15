@@ -226,11 +226,16 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
     };
   }, [lead, providerData]);
 
-  // Check if reply email is configured
-  const replyEmailConfigured = useMemo(() => {
+  // Check if reply email is configured AND verified
+  const replyEmailVerified = useMemo(() => {
     const facility = providerData?.facility as any;
-    const profile = providerData?.profile as any;
-    return !!(facility?.reply_email || facility?.email || profile?.email);
+    return !!(facility?.reply_email && facility?.reply_email_verified);
+  }, [providerData]);
+
+  // For display purposes - has any reply email configured (even if not verified)
+  const hasReplyEmail = useMemo(() => {
+    const facility = providerData?.facility as any;
+    return !!facility?.reply_email;
   }, [providerData]);
 
   const sendEmail = useMutation({
@@ -342,11 +347,13 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
       return;
     }
 
-    // Check if reply email is configured
-    if (!replyEmailConfigured) {
+    // Check if reply email is configured AND verified
+    if (!replyEmailVerified) {
       toast({
-        title: "Reply email required",
-        description: "Please set a reply email in your facility settings before sending emails.",
+        title: "Reply email not verified",
+        description: hasReplyEmail 
+          ? "Please verify your reply email in My Listing settings before sending emails."
+          : "Please set and verify a reply email in My Listing settings before sending emails.",
         variant: "destructive",
       });
       return;
@@ -510,12 +517,16 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
               </div>
 
               {/* Reply Email Warning */}
-              {!replyEmailConfigured && (
+              {!replyEmailVerified && (
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50/50 border border-red-100 text-xs">
                   <AlertTriangle className="h-3.5 w-3.5 text-red-600 mt-0.5 flex-shrink-0" />
                   <div className="text-red-700 leading-relaxed">
-                    <p className="font-medium">Reply email not configured</p>
-                    <p>Set a reply email in My Listing → Contact Information to receive lead replies.</p>
+                    <p className="font-medium">Reply email not verified</p>
+                    <p>
+                      {hasReplyEmail 
+                        ? "Verify your reply email in My Listing → Contact Information to send emails."
+                        : "Set and verify a reply email in My Listing → Contact Information to send emails."}
+                    </p>
                   </div>
                 </div>
               )}
@@ -532,7 +543,7 @@ export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogPro
                 </Button>
                 <Button
                   onClick={handleSend}
-                  disabled={!selectedTemplate || sendEmail.isPending || !replyEmailConfigured}
+                  disabled={!selectedTemplate || sendEmail.isPending || !replyEmailVerified}
                   className="flex-1 gap-2 rounded-lg shadow-md shadow-primary/20"
                 >
                   {sendEmail.isPending ? (
