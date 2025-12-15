@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Building2, 
@@ -31,6 +31,7 @@ const navItems = [
 
 export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { data: subscription, isLoading } = useSubscription();
   const [isUpgrading, setIsUpgrading] = useState(false);
 
@@ -44,7 +45,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
     
     // If basic, go to billing page
     if (isBasic) {
-      window.location.href = "/provider/billing";
+      navigate("/provider/billing");
       return;
     }
     
