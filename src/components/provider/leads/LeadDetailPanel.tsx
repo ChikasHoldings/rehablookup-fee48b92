@@ -266,14 +266,14 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
 
   if (!lead) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-muted/20 border-l">
+      <div className="flex-1 flex items-center justify-center bg-muted/10">
         <div className="text-center p-8">
-          <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-            <User className="h-8 w-8 text-muted-foreground/40" />
+          <div className="h-12 w-12 rounded-xl bg-muted/40 flex items-center justify-center mx-auto mb-3">
+            <User className="h-6 w-6 text-muted-foreground/30" />
           </div>
-          <h3 className="font-medium text-muted-foreground">Select a lead</h3>
-          <p className="text-sm text-muted-foreground/60 mt-1">
-            Click on a lead to view details
+          <h3 className="text-sm font-medium text-muted-foreground">Select a lead</h3>
+          <p className="text-xs text-muted-foreground/60 mt-1">
+            Click to view details
           </p>
         </div>
       </div>

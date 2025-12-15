@@ -1,21 +1,17 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Users, 
   Mail, 
   Phone, 
-  Calendar, 
   MessageSquare, 
   TrendingUp, 
-  Inbox,
   Search,
   X,
   CalendarIcon,
-  Filter,
   Sparkles,
-  FileText
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -28,18 +24,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, isToday, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, startOfMonth, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -51,11 +41,9 @@ import {
   LeadLimitWarningBanner, 
   LeadLimitReachedBanner,
   BasicPlanBanner,
-  LeadLimitOverlay
 } from "@/components/provider/LeadUsageIndicator";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DateRange {
   from: Date | undefined;
@@ -70,6 +58,7 @@ export default function ProviderLeadsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -140,9 +129,6 @@ export default function ProviderLeadsPage() {
     };
   }, [facilityId, queryClient, toast]);
 
-  // Sort state
-  const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
-
   // Filtered and sorted leads
   const filteredLeads = useMemo(() => {
     let result = leads.filter(lead => {
@@ -205,9 +191,6 @@ export default function ProviderLeadsPage() {
   });
 
   const thisMonthQualifiedLeads = thisMonthLeads.filter(lead => lead.source === "Request Help Page");
-  const thisMonthDirectLeads = thisMonthLeads.filter(lead => lead.source !== "Request Help Page");
-  const todayLeads = leads.filter(lead => isToday(new Date(lead.created_at)));
-  const newLeads = leads.filter(lead => lead.status === "new");
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -235,15 +218,19 @@ export default function ProviderLeadsPage() {
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 p-4 pb-0">
-        <h1 className="font-display text-2xl font-bold text-foreground">Leads</h1>
-        <p className="text-muted-foreground mt-1">
-          Patient inquiries received through RehabLookup
-        </p>
+      <div className="flex-shrink-0 px-6 pt-4 pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">Leads</h1>
+            <p className="text-sm text-muted-foreground">
+              {leads.length} total • {thisMonthQualifiedLeads.length}/{leadLimit} qualified this month
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Banners */}
-      <div className="flex-shrink-0 px-4 pt-4 space-y-4">
+      <div className="flex-shrink-0 px-6 pb-3 space-y-2">
         {leadLimit === 0 && <BasicPlanBanner />}
         {currentPlan === "basic" && leadLimit > 0 && (
           <>
@@ -265,118 +252,24 @@ export default function ProviderLeadsPage() {
         )}
       </div>
 
-      {/* Stats */}
-      <div className="flex-shrink-0 px-4 pt-4">
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-1 pt-3 px-3">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                Total
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3">
-              {isLoading ? <Skeleton className="h-7 w-12" /> : (
-                <p className="text-2xl font-bold text-foreground">{leads.length}</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card 
-            className={cn(
-              "relative overflow-hidden cursor-pointer transition-all",
-              sourceFilter === "qualified" 
-                ? "border-primary ring-1 ring-primary/20 bg-primary/5" 
-                : "hover:border-primary/40"
-            )}
-            onClick={() => setSourceFilter(sourceFilter === "qualified" ? "all" : "qualified")}
-          >
-            <CardHeader className="pb-1 pt-3 px-3">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                Qualified
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3">
-              {isLoading ? <Skeleton className="h-7 w-12" /> : (
-                <div className="flex items-baseline gap-1">
-                  <p className="text-2xl font-bold text-primary">{thisMonthQualifiedLeads.length}</p>
-                  <span className="text-xs text-muted-foreground">/ {leadLimit}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card 
-            className={cn(
-              "relative overflow-hidden cursor-pointer transition-all",
-              sourceFilter === "direct" 
-                ? "border-blue-500 ring-1 ring-blue-500/20 bg-blue-500/5" 
-                : "hover:border-blue-500/40"
-            )}
-            onClick={() => setSourceFilter(sourceFilter === "direct" ? "all" : "direct")}
-          >
-            <CardHeader className="pb-1 pt-3 px-3">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5" />
-                Direct
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3">
-              {isLoading ? <Skeleton className="h-7 w-12" /> : (
-                <p className="text-2xl font-bold text-foreground">{thisMonthDirectLeads.length}</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-1 pt-3 px-3">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <Inbox className="h-3.5 w-3.5" />
-                Today
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3">
-              {isLoading ? <Skeleton className="h-7 w-12" /> : (
-                <p className="text-2xl font-bold text-foreground">{todayLeads.length}</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-1 pt-3 px-3">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <MessageSquare className="h-3.5 w-3.5" />
-                New
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3">
-              {isLoading ? <Skeleton className="h-7 w-12" /> : (
-                <p className="text-2xl font-bold text-foreground">{newLeads.length}</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
       {/* CRM Split View */}
-      <div className="flex-1 min-h-0 p-4 pt-4">
-        <Card className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 px-6 pb-4">
+        <Card className="h-full flex flex-col overflow-hidden border-border/60">
           {/* Filters */}
-          <div className="flex-shrink-0 p-3 border-b bg-muted/30">
+          <div className="flex-shrink-0 px-4 py-3 border-b bg-muted/40">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-[180px] max-w-xs">
+              <div className="relative flex-1 min-w-[160px] max-w-[240px]">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   placeholder="Search leads..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 h-8 text-sm"
+                  className="pl-8 h-8 text-sm bg-background"
                 />
               </div>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[120px] h-8 text-xs">
+                <SelectTrigger className="w-[110px] h-8 text-xs bg-background">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -389,9 +282,20 @@ export default function ProviderLeadsPage() {
                 </SelectContent>
               </Select>
 
+              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                <SelectTrigger className="w-[100px] h-8 text-xs bg-background">
+                  <SelectValue placeholder="Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="qualified">Qualified</SelectItem>
+                  <SelectItem value="direct">Direct</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", dateRange.from && "text-primary")}>
+                  <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5 bg-background", dateRange.from && "text-primary border-primary/50")}>
                     <CalendarIcon className="h-3.5 w-3.5" />
                     {dateRange.from ? (
                       dateRange.to ? (
@@ -414,66 +318,64 @@ export default function ProviderLeadsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={cn("h-8 text-xs gap-1", sortBy === 'score' && "text-primary")}
+                className={cn("h-8 text-xs gap-1", sortBy === 'score' && "text-primary bg-primary/10")}
                 onClick={() => setSortBy(sortBy === 'score' ? 'date' : 'score')}
               >
                 <TrendingUp className="h-3.5 w-3.5" />
-                {sortBy === 'score' ? 'By Score' : 'By Date'}
+                {sortBy === 'score' ? 'Score' : 'Date'}
               </Button>
 
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
-                  <X className="h-3.5 w-3.5" />
-                  Clear
-                </Button>
-              )}
-
-              {hasActiveFilters && (
-                <span className="text-xs text-muted-foreground">
-                  {filteredLeads.length} of {leads.length}
-                </span>
+                <>
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1 text-muted-foreground hover:text-foreground">
+                    <X className="h-3.5 w-3.5" />
+                    Clear
+                  </Button>
+                  <Badge variant="secondary" className="text-[10px] h-5">
+                    {filteredLeads.length} of {leads.length}
+                  </Badge>
+                </>
               )}
             </div>
           </div>
 
           {/* Split Pane */}
-          <div className="flex-1 flex min-h-0">
+          <div className="flex-1 flex min-h-0 overflow-hidden">
             {/* Lead List */}
             <div className={cn(
-              "border-r flex flex-col transition-all",
-              selectedLead ? "w-[320px] lg:w-[380px]" : "flex-1"
+              "flex flex-col transition-all overflow-hidden",
+              selectedLead ? "w-[300px] lg:w-[340px] border-r" : "flex-1"
             )}>
               {isLoading ? (
-                <div className="p-4 space-y-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                <div className="p-3 space-y-2 overflow-y-auto">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <Skeleton key={i} className="h-[72px] w-full rounded-lg" />
                   ))}
                 </div>
               ) : leads.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center p-8">
+                <div className="flex-1 flex items-center justify-center p-6">
                   <div className="text-center">
-                    <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-                    <h3 className="font-semibold text-foreground">No leads yet</h3>
-                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                      When families submit contact requests, they'll appear here.
+                    <div className="h-14 w-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
+                      <Users className="h-7 w-7 text-muted-foreground/40" />
+                    </div>
+                    <h3 className="font-medium text-foreground">No leads yet</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-[200px]">
+                      Contact requests will appear here
                     </p>
                   </div>
                 </div>
               ) : filteredLeads.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center p-8">
+                <div className="flex-1 flex items-center justify-center p-6">
                   <div className="text-center">
-                    <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <h3 className="font-semibold text-foreground">No matches</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Try adjusting your filters
-                    </p>
-                    <Button variant="outline" size="sm" className="mt-3" onClick={clearFilters}>
+                    <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                    <h3 className="font-medium text-foreground">No matches</h3>
+                    <Button variant="link" size="sm" onClick={clearFilters} className="mt-1">
                       Clear filters
                     </Button>
                   </div>
                 </div>
               ) : (
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-y-auto">
                   <div className="p-2 space-y-1">
                     {filteredLeads.map((lead, index) => {
                       const isLocked = isLeadLocked(lead, index);
@@ -487,33 +389,31 @@ export default function ProviderLeadsPage() {
                           className={cn(
                             "w-full text-left p-3 rounded-lg transition-all",
                             isSelected 
-                              ? "bg-primary/10 border border-primary/30" 
-                              : "hover:bg-muted/70 border border-transparent",
-                            isLocked && "opacity-50 cursor-not-allowed blur-[2px]"
+                              ? "bg-primary/10 border border-primary/30 shadow-sm" 
+                              : "hover:bg-muted/60 border border-transparent",
+                            isLocked && "opacity-40 cursor-not-allowed blur-[1px]"
                           )}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5">
                                 <span className={cn(
                                   "font-medium text-sm truncate",
                                   isSelected ? "text-primary" : "text-foreground"
                                 )}>
-                                  {isLocked ? "Hidden Lead" : lead.name}
+                                  {isLocked ? "Hidden" : lead.name}
                                 </span>
                                 {lead.source === "Request Help Page" && !isLocked && (
-                                  <Badge className="h-4 px-1 text-[9px] bg-primary text-white flex-shrink-0">
+                                  <Badge className="h-4 px-1 text-[9px] bg-primary text-primary-foreground flex-shrink-0">
                                     <Sparkles className="h-2 w-2 mr-0.5" />
                                     Q
                                   </Badge>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-muted-foreground">
-                                  {format(new Date(lead.created_at), "MMM d")}
-                                </span>
+                              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
+                                <span>{format(new Date(lead.created_at), "MMM d")}</span>
                                 {lead.message && !isLocked && (
-                                  <MessageSquare className="h-3 w-3 text-muted-foreground" />
+                                  <MessageSquare className="h-3 w-3" />
                                 )}
                               </div>
                             </div>
@@ -523,17 +423,16 @@ export default function ProviderLeadsPage() {
                             </div>
                           </div>
                           {!isLocked && (
-                            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 {lead.preferred_contact === "email" ? (
-                                  <Mail className="h-3 w-3" />
+                                  <Mail className="h-2.5 w-2.5" />
                                 ) : (
-                                  <Phone className="h-3 w-3" />
+                                  <Phone className="h-2.5 w-2.5" />
                                 )}
-                                {lead.preferred_contact}
                               </span>
                               {lead.location_city_state && (
-                                <span className="truncate">{lead.location_city_state}</span>
+                                <span className="truncate max-w-[120px]">{lead.location_city_state}</span>
                               )}
                             </div>
                           )}
@@ -541,7 +440,7 @@ export default function ProviderLeadsPage() {
                       );
                     })}
                   </div>
-                </ScrollArea>
+                </div>
               )}
             </div>
 
