@@ -356,12 +356,23 @@ export default function ProviderLeadsPage() {
         </Card>
 
         {/* Qualified Leads This Month */}
-        <Card className="relative overflow-hidden border-primary/20">
+        <Card 
+          className={cn(
+            "relative overflow-hidden cursor-pointer transition-all hover:shadow-md",
+            sourceFilter === "qualified" 
+              ? "border-primary ring-2 ring-primary/20 bg-primary/5" 
+              : "border-primary/20 hover:border-primary/40"
+          )}
+          onClick={() => setSourceFilter(sourceFilter === "qualified" ? "all" : "qualified")}
+        >
           <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-primary/10" />
           <CardHeader className="pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               Qualified
+              {sourceFilter === "qualified" && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-auto">Active</Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="relative">
@@ -373,17 +384,28 @@ export default function ProviderLeadsPage() {
                 <span className="text-sm text-muted-foreground">/ {leadLimit}</span>
               </div>
             )}
-            <p className="text-xs text-muted-foreground mt-1">This month</p>
+            <p className="text-xs text-muted-foreground mt-1">Click to filter</p>
           </CardContent>
         </Card>
 
         {/* Direct Leads This Month */}
-        <Card className="relative overflow-hidden">
+        <Card 
+          className={cn(
+            "relative overflow-hidden cursor-pointer transition-all hover:shadow-md",
+            sourceFilter === "direct" 
+              ? "border-blue-500 ring-2 ring-blue-500/20 bg-blue-500/5" 
+              : "hover:border-blue-500/40"
+          )}
+          onClick={() => setSourceFilter(sourceFilter === "direct" ? "all" : "direct")}
+        >
           <div className="absolute top-0 right-0 w-20 h-20 -mr-6 -mt-6 rounded-full bg-blue-500/5" />
           <CardHeader className="pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Direct
+              {sourceFilter === "direct" && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-auto">Active</Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="relative">
@@ -397,7 +419,7 @@ export default function ProviderLeadsPage() {
                 )}
               </div>
             )}
-            <p className="text-xs text-muted-foreground mt-1">This month</p>
+            <p className="text-xs text-muted-foreground mt-1">Click to filter</p>
           </CardContent>
         </Card>
 
