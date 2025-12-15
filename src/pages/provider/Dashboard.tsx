@@ -239,6 +239,38 @@ export default function ProviderDashboardPage() {
       <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
       <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
 
+      {/* Basic Plan Upgrade Banner - show when Basic users have leads waiting */}
+      {planKey === "basic" && recentLeads.length > 0 && (
+        <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 via-background to-amber-500/5 overflow-hidden">
+          <CardContent className="py-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-primary">{recentLeads.length}</span>
+                    <span className="text-lg font-semibold text-foreground">
+                      Lead{recentLeads.length !== 1 ? 's' : ''} Waiting
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Upgrade to view contact details and respond to inquiries
+                  </p>
+                </div>
+              </div>
+              <Button asChild className="shrink-0 gap-2">
+                <Link to="/provider/billing">
+                  Upgrade to View Leads
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Onboarding Checklist - only show if we have full facility data */}
       {providerData?.facility && (
         <OnboardingChecklist 
