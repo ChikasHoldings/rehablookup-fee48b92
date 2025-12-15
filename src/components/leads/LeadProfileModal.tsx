@@ -26,7 +26,11 @@ import {
   Bell,
   Building2,
   FileText,
-  X,
+  Activity,
+  TrendingUp,
+  Heart,
+  UserCheck,
+  Zap,
 } from "lucide-react";
 import {
   Dialog,
@@ -47,11 +51,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadScoreBadge } from "@/components/provider/leads/LeadScoreBadge";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
+import { calculateLeadScore } from "@/lib/leadScoring";
 
 export interface Lead {
   id: string;
@@ -284,6 +290,9 @@ export function LeadProfileModal({
 
   if (!lead) return null;
 
+  const leadScore = calculateLeadScore(lead);
+  const firstName = lead.name.split(" ")[0];
+
   const formatUrgency = (urgency: string | null) => {
     if (!urgency) return "Not specified";
     const map: Record<string, string> = {
@@ -293,6 +302,16 @@ export function LeadProfileModal({
       researching: "Just Researching",
     };
     return map[urgency] || urgency;
+  };
+
+  const getUrgencyColor = (urgency: string | null) => {
+    const colors: Record<string, string> = {
+      immediate: "text-red-600 bg-red-50 border-red-200",
+      "within-week": "text-amber-600 bg-amber-50 border-amber-200",
+      "within-month": "text-blue-600 bg-blue-50 border-blue-200",
+      researching: "text-slate-600 bg-slate-50 border-slate-200",
+    };
+    return colors[urgency || ""] || "text-muted-foreground bg-muted border-border";
   };
 
   const formatLevelOfCare = (level: string | null) => {
@@ -324,73 +343,110 @@ export function LeadProfileModal({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl h-[90vh] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
-          {/* Header */}
-          <DialogHeader className="p-6 pb-4 border-b bg-muted/30">
-            <div className="flex items-start justify-between gap-4">
+          {/* Enhanced Header */}
+          <DialogHeader className="p-6 pb-5 border-b bg-gradient-to-r from-muted/50 via-muted/30 to-transparent">
+            <div className="flex items-start gap-4">
+              {/* Avatar */}
+              <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-xl font-semibold text-primary">
+                  {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+              
+              {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 flex-wrap">
                   <DialogTitle className="text-xl font-semibold truncate">
                     {lead.name}
                   </DialogTitle>
-                  <LeadStatusBadge status={lead.status as LeadStatus} />
                   {lead.source === "Request Help Page" ? (
-                    <Badge className="gap-1 text-xs bg-primary text-white border-primary">
+                    <Badge className="gap-1.5 text-xs font-semibold bg-primary text-white border-primary shadow-sm">
                       <Sparkles className="h-3 w-3" />
-                      Qualified
+                      Qualified Lead
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="gap-1 text-xs">
+                    <Badge variant="outline" className="gap-1.5 text-xs font-medium">
                       <FileText className="h-3 w-3" />
-                      Direct
+                      Direct Inquiry
                     </Badge>
                   )}
                 </div>
+                
                 <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5" />
-                    {format(new Date(lead.created_at), "MMM d, yyyy 'at' h:mm a")}
+                    {format(new Date(lead.created_at), "MMM d, yyyy")}
+                    <span className="text-muted-foreground/50">•</span>
+                    {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
                   </span>
                   {lead.email_verified && (
-                    <span className="flex items-center gap-1 text-green-600">
+                    <span className="flex items-center gap-1.5 text-green-600">
                       <ShieldCheck className="h-3.5 w-3.5" />
-                      Email Verified
+                      Verified
                     </span>
                   )}
                 </div>
-              </div>
-              <div className="flex-shrink-0">
-                <LeadScoreBadge lead={lead} />
+
+                {/* Quick Stats Row */}
+                <div className="flex items-center gap-3 mt-3">
+                  <LeadStatusBadge status={lead.status as LeadStatus} />
+                  <Separator orientation="vertical" className="h-4" />
+                  <LeadScoreBadge lead={lead} />
+                  {lead.urgency === "immediate" && (
+                    <>
+                      <Separator orientation="vertical" className="h-4" />
+                      <Badge variant="destructive" className="gap-1 text-xs animate-pulse">
+                        <Zap className="h-3 w-3" />
+                        Urgent
+                      </Badge>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </DialogHeader>
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-            <div className="border-b px-6">
-              <TabsList className="h-12 w-full justify-start bg-transparent gap-4 p-0">
+            <div className="border-b px-6 bg-muted/20">
+              <TabsList className="h-11 w-full justify-start bg-transparent gap-1 p-0">
                 <TabsTrigger
                   value="overview"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
+                  className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
                 >
+                  <User className="h-4 w-4" />
                   Overview
                 </TabsTrigger>
                 <TabsTrigger
                   value="intake"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
+                  className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
                 >
-                  Intake Details
+                  <FileText className="h-4 w-4" />
+                  Intake
                 </TabsTrigger>
                 <TabsTrigger
                   value="activity"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
+                  className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
                 >
-                  Activity & Notes
+                  <Activity className="h-4 w-4" />
+                  Notes
+                  {notes.length > 0 && (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                      {notes.length}
+                    </Badge>
+                  )}
                 </TabsTrigger>
                 <TabsTrigger
                   value="communications"
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-3"
+                  className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary"
                 >
-                  Communications
+                  <Mail className="h-4 w-4" />
+                  Emails
+                  {emails.length > 0 && (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                      {emails.length}
+                    </Badge>
+                  )}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -398,41 +454,55 @@ export function LeadProfileModal({
             <ScrollArea className="flex-1 overflow-auto">
               {/* Overview Tab */}
               <TabsContent value="overview" className="p-6 space-y-6 mt-0">
-                {/* Status Update */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Status</label>
-                  <Select
-                    value={lead.status}
-                    onValueChange={(value) => updateStatus.mutate(value as LeadStatus)}
-                    disabled={updateStatus.isPending}
-                  >
-                    <SelectTrigger className="w-full max-w-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getStatusOptions().map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Quick Actions Bar */}
+                <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-muted/30 border">
+                  <Button variant="outline" className="gap-2 flex-1 sm:flex-none" asChild>
+                    <a href={`tel:${lead.phone}`}>
+                      <Phone className="h-4 w-4 text-green-600" />
+                      Call {firstName}
+                    </a>
+                  </Button>
+                  <Button className="gap-2 flex-1 sm:flex-none" onClick={() => setEmailDialogOpen(true)}>
+                    <Mail className="h-4 w-4" />
+                    Send Email
+                  </Button>
+                  <div className="flex-1 sm:flex-none sm:ml-auto">
+                    <Select
+                      value={lead.status}
+                      onValueChange={(value) => updateStatus.mutate(value as LeadStatus)}
+                      disabled={updateStatus.isPending}
+                    >
+                      <SelectTrigger className="w-full sm:w-[160px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getStatusOptions().map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                {/* Contact Information */}
+                {/* Contact Cards */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">Contact Information</h3>
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-primary" />
+                    Contact Information
+                  </h3>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {/* Phone */}
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                    {/* Phone Card */}
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-50/50 border border-green-100">
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center">
-                          <Phone className="h-4 w-4 text-green-600" />
+                        <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                          <Phone className="h-5 w-5 text-green-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{lead.phone}</p>
+                          <p className="font-semibold text-foreground">{lead.phone}</p>
                           <p className="text-xs text-muted-foreground">
-                            {lead.preferred_contact === "call" ? "Preferred" : "Phone"}
+                            {lead.preferred_contact === "call" ? "✓ Preferred contact" : "Phone number"}
                           </p>
                         </div>
                       </div>
@@ -440,46 +510,45 @@ export function LeadProfileModal({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-9 w-9 hover:bg-green-100"
                           onClick={() => handleCopy(lead.phone, "phone")}
                         >
                           {copiedField === "phone" ? (
                             <Check className="h-4 w-4 text-green-600" />
                           ) : (
-                            <Copy className="h-4 w-4" />
+                            <Copy className="h-4 w-4 text-muted-foreground" />
                           )}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-green-100" asChild>
                           <a href={`tel:${lead.phone}`}>
-                            <ExternalLink className="h-4 w-4" />
+                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
                           </a>
                         </Button>
                       </div>
                     </div>
 
-                    {/* Email */}
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+                    {/* Email Card */}
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-100">
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                          <Mail className="h-4 w-4 text-blue-600" />
+                        <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                          <Mail className="h-5 w-5 text-blue-600" />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium truncate">{lead.email}</p>
+                            <p className="font-semibold text-foreground truncate">{lead.email}</p>
                             {lead.email_verified ? (
-                              <Badge variant="secondary" className="gap-1 text-xs bg-green-100 text-green-700 border-0 flex-shrink-0">
+                              <Badge className="gap-1 text-[10px] px-1.5 py-0 h-5 bg-green-100 text-green-700 border-green-200">
                                 <ShieldCheck className="h-3 w-3" />
                                 Verified
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="gap-1 text-xs text-muted-foreground flex-shrink-0">
+                              <Badge variant="outline" className="gap-1 text-[10px] px-1.5 py-0 h-5">
                                 <ShieldX className="h-3 w-3" />
-                                Unverified
                               </Badge>
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {lead.preferred_contact === "email" ? "Preferred" : "Email"}
+                            {lead.preferred_contact === "email" ? "✓ Preferred contact" : "Email address"}
                           </p>
                         </div>
                       </div>
@@ -487,18 +556,18 @@ export function LeadProfileModal({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-9 w-9 hover:bg-blue-100"
                           onClick={() => handleCopy(lead.email, "email")}
                         >
                           {copiedField === "email" ? (
                             <Check className="h-4 w-4 text-green-600" />
                           ) : (
-                            <Copy className="h-4 w-4" />
+                            <Copy className="h-4 w-4 text-muted-foreground" />
                           )}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-blue-100" asChild>
                           <a href={`mailto:${lead.email}`}>
-                            <ExternalLink className="h-4 w-4" />
+                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
                           </a>
                         </Button>
                       </div>
@@ -506,68 +575,96 @@ export function LeadProfileModal({
                   </div>
                 </div>
 
-                {/* Location */}
-                {(lead.location_city_state || lead.location_zip) && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-foreground">Location</h3>
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border w-fit">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
+                {/* Key Details Grid */}
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {/* Location */}
+                  {(lead.location_city_state || lead.location_zip) && (
+                    <div className="p-4 rounded-xl bg-muted/50 border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Location
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium">
                         {lead.location_city_state || lead.location_zip}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Urgency */}
+                  <div className={`p-4 rounded-xl border ${getUrgencyColor(lead.urgency)}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="text-xs font-medium uppercase tracking-wide">
+                        Urgency
                       </span>
                     </div>
+                    <p className="text-sm font-medium">{formatUrgency(lead.urgency)}</p>
                   </div>
-                )}
+
+                  {/* Lead Score Breakdown */}
+                  <div className="p-4 rounded-xl bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Lead Score
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-primary">{leadScore.total}</span>
+                      <span className="text-sm text-muted-foreground">/100</span>
+                      <Badge 
+                        className={`ml-auto ${
+                          leadScore.grade === 'A' ? 'bg-green-100 text-green-700 border-green-200' :
+                          leadScore.grade === 'B' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                          leadScore.grade === 'C' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                          'bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        Grade {leadScore.grade}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Message */}
                 {lead.message && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4" />
-                      Message
+                      <MessageSquare className="h-4 w-4 text-primary" />
+                      Message from {firstName}
                     </h3>
-                    <div className="p-4 rounded-lg bg-muted/50 border text-sm whitespace-pre-wrap">
-                      {lead.message}
+                    <div className="p-4 rounded-xl bg-muted/30 border text-sm leading-relaxed whitespace-pre-wrap">
+                      "{lead.message}"
                     </div>
                   </div>
                 )}
 
-                {/* Admin: Assignment Info (Read-only) */}
+                {/* Admin: Assignment Info */}
                 {isAdmin && (
-                  <div className="space-y-3 p-4 rounded-lg bg-muted/50 border">
+                  <div className="space-y-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
                     <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
                       Assignment Details
                     </h3>
                     {lead.facility_id && assignedFacility ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium">{assignedFacility.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {assignedFacility.city}, {assignedFacility.state}
-                            </p>
-                          </div>
-                          <Badge className="bg-green-100 text-green-700 border-green-200">
-                            Assigned
-                          </Badge>
-                        </div>
-                        {(lead as any).assignment_reason && (
-                          <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                            {(lead as any).assignment_reason}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{assignedFacility.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {assignedFacility.city}, {assignedFacility.state}
                           </p>
-                        )}
+                        </div>
+                        <Badge className="bg-green-100 text-green-700 border-green-200">
+                          Assigned
+                        </Badge>
                       </div>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="flex items-center gap-3">
                         <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">
                           Unassigned
                         </Badge>
-                        {(lead as any).assignment_reason && (
-                          <p className="text-xs text-muted-foreground">
-                            Reason: {(lead as any).assignment_reason}
-                          </p>
-                        )}
                         <p className="text-xs text-muted-foreground italic">
                           Leads are automatically assigned by the system
                         </p>
@@ -578,14 +675,14 @@ export function LeadProfileModal({
 
                 {/* Provider: Snooze Reminders */}
                 {!isAdmin && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <BellOff className="h-4 w-4" />
-                      Snooze Reminders
-                    </label>
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <BellOff className="h-4 w-4 text-muted-foreground" />
+                      Reminder Settings
+                    </h3>
                     {isSnoozed ? (
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
-                        <BellOff className="h-4 w-4 text-amber-600" />
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                        <BellOff className="h-5 w-5 text-amber-600 flex-shrink-0" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-amber-800">Reminders snoozed</p>
                           <p className="text-xs text-amber-600">
@@ -605,83 +702,51 @@ export function LeadProfileModal({
                           ) : (
                             <Bell className="h-3.5 w-3.5" />
                           )}
-                          Unsnooze
+                          Resume
                         </Button>
                       </div>
                     ) : (
                       <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => snoozeReminder.mutate(addHours(new Date(), 4))}
-                          disabled={snoozeReminder.isPending}
-                          className="gap-1.5"
-                        >
-                          <Clock className="h-3.5 w-3.5" />
-                          4 hours
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => snoozeReminder.mutate(addDays(new Date(), 1))}
-                          disabled={snoozeReminder.isPending}
-                          className="gap-1.5"
-                        >
-                          <Clock className="h-3.5 w-3.5" />
-                          1 day
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => snoozeReminder.mutate(addDays(new Date(), 3))}
-                          disabled={snoozeReminder.isPending}
-                          className="gap-1.5"
-                        >
-                          <Clock className="h-3.5 w-3.5" />
-                          3 days
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => snoozeReminder.mutate(addDays(new Date(), 7))}
-                          disabled={snoozeReminder.isPending}
-                          className="gap-1.5"
-                        >
-                          <Clock className="h-3.5 w-3.5" />
-                          1 week
-                        </Button>
+                        <span className="text-sm text-muted-foreground mr-2">Snooze for:</span>
+                        {[
+                          { label: "4 hours", value: addHours(new Date(), 4) },
+                          { label: "1 day", value: addDays(new Date(), 1) },
+                          { label: "3 days", value: addDays(new Date(), 3) },
+                          { label: "1 week", value: addDays(new Date(), 7) },
+                        ].map((option) => (
+                          <Button
+                            key={option.label}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => snoozeReminder.mutate(option.value)}
+                            disabled={snoozeReminder.isPending}
+                            className="gap-1.5"
+                          >
+                            <Clock className="h-3.5 w-3.5" />
+                            {option.label}
+                          </Button>
+                        ))}
                       </div>
                     )}
                   </div>
                 )}
-
-                {/* Quick Actions */}
-                <div className="flex flex-wrap gap-2 pt-4 border-t">
-                  <Button variant="outline" className="gap-2" asChild>
-                    <a href={`tel:${lead.phone}`}>
-                      <Phone className="h-4 w-4" />
-                      Call Lead
-                    </a>
-                  </Button>
-                  <Button className="gap-2" onClick={() => setEmailDialogOpen(true)}>
-                    <Mail className="h-4 w-4" />
-                    Email Lead
-                  </Button>
-                </div>
               </TabsContent>
 
               {/* Intake Details Tab */}
               <TabsContent value="intake" className="p-6 space-y-6 mt-0">
+                {/* Intake Summary Cards */}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {/* Who Seeking Help */}
-                  <div className="p-4 rounded-lg bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
+                  <div className="p-4 rounded-xl bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                        <Heart className="h-4 w-4 text-violet-600" />
+                      </div>
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                         Seeking Help For
                       </span>
                     </div>
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-semibold text-foreground">
                       {lead.who_seeking_help === "self"
                         ? "Themselves"
                         : lead.who_seeking_help === "loved-one"
@@ -691,67 +756,83 @@ export function LeadProfileModal({
                   </div>
 
                   {/* Urgency */}
-                  <div className="p-4 rounded-lg bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Urgency
+                  <div className={`p-4 rounded-xl border ${getUrgencyColor(lead.urgency)}`}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-8 w-8 rounded-lg bg-current/10 flex items-center justify-center">
+                        <AlertTriangle className="h-4 w-4" />
+                      </div>
+                      <span className="text-xs font-medium uppercase tracking-wide">
+                        Timeline
                       </span>
                     </div>
-                    <p className="text-sm font-medium">{formatUrgency(lead.urgency)}</p>
+                    <p className="text-sm font-semibold">{formatUrgency(lead.urgency)}</p>
                   </div>
 
                   {/* Level of Care */}
-                  <div className="p-4 rounded-lg bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Stethoscope className="h-4 w-4 text-muted-foreground" />
+                  <div className="p-4 rounded-xl bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                        <Stethoscope className="h-4 w-4 text-blue-600" />
+                      </div>
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                         Level of Care
                       </span>
                     </div>
-                    <p className="text-sm font-medium">{formatLevelOfCare(lead.level_of_care)}</p>
+                    <p className="text-sm font-semibold text-foreground">{formatLevelOfCare(lead.level_of_care)}</p>
                   </div>
 
                   {/* Insurance */}
-                  <div className="p-4 rounded-lg bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <div className="p-4 rounded-xl bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                        <CreditCard className="h-4 w-4 text-emerald-600" />
+                      </div>
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                         Insurance
                       </span>
                     </div>
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-semibold text-foreground">
                       {formatInsurance(lead.insurance_type)}
-                      {lead.insurance_provider && (
-                        <span className="text-muted-foreground"> ({lead.insurance_provider})</span>
-                      )}
                     </p>
+                    {lead.insurance_provider && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Provider: {lead.insurance_provider}
+                      </p>
+                    )}
                   </div>
 
                   {/* Dual Diagnosis */}
-                  <div className="p-4 rounded-lg bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Stethoscope className="h-4 w-4 text-muted-foreground" />
+                  <div className="p-4 rounded-xl bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-8 w-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
+                        <Activity className="h-4 w-4 text-pink-600" />
+                      </div>
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Mental Health Concern
+                        Mental Health
                       </span>
                     </div>
-                    <p className="text-sm font-medium capitalize">
+                    <p className="text-sm font-semibold text-foreground capitalize">
                       {lead.dual_diagnosis === "not-sure"
-                        ? "Not Sure"
-                        : lead.dual_diagnosis || "Not specified"}
+                        ? "Uncertain"
+                        : lead.dual_diagnosis === "yes"
+                        ? "Co-occurring Concern"
+                        : lead.dual_diagnosis === "no"
+                        ? "No Concern Indicated"
+                        : "Not specified"}
                     </p>
                   </div>
 
                   {/* Budget */}
-                  <div className="p-4 rounded-lg bg-muted/50 border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <div className="p-4 rounded-xl bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                        <CreditCard className="h-4 w-4 text-amber-600" />
+                      </div>
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                         Budget Preference
                       </span>
                     </div>
-                    <p className="text-sm font-medium capitalize">
+                    <p className="text-sm font-semibold text-foreground capitalize">
                       {lead.budget_preference || "Not specified"}
                     </p>
                   </div>
@@ -759,7 +840,7 @@ export function LeadProfileModal({
 
                 {/* Primary Substances */}
                 {lead.primary_substance && lead.primary_substance.length > 0 && (
-                  <div className="p-4 rounded-lg bg-muted/50 border">
+                  <div className="p-4 rounded-xl bg-muted/50 border">
                     <div className="flex items-center gap-2 mb-3">
                       <Stethoscope className="h-4 w-4 text-muted-foreground" />
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -768,7 +849,7 @@ export function LeadProfileModal({
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {lead.primary_substance.map((substance, idx) => (
-                        <Badge key={idx} variant="secondary">
+                        <Badge key={idx} variant="secondary" className="capitalize">
                           {substance}
                         </Badge>
                       ))}
@@ -777,24 +858,36 @@ export function LeadProfileModal({
                 )}
 
                 {/* Metadata */}
-                <div className="p-4 rounded-lg bg-muted/30 border space-y-3">
-                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Submission Metadata
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                    Submission Details
                   </h4>
-                  <div className="grid gap-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Source</span>
-                      <span className="font-medium">{lead.source || "Direct"}</span>
+                  <div className="grid gap-3 text-sm sm:grid-cols-3">
+                    <div>
+                      <span className="text-muted-foreground block text-xs">Source</span>
+                      <span className="font-medium">{lead.source || "Direct Inquiry"}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Submitted</span>
+                    <div>
+                      <span className="text-muted-foreground block text-xs">Submitted</span>
                       <span className="font-medium">
                         {format(new Date(lead.created_at), "MMM d, yyyy 'at' h:mm a")}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Email Verified</span>
-                      <span className="font-medium">{lead.email_verified ? "Yes" : "No"}</span>
+                    <div>
+                      <span className="text-muted-foreground block text-xs">Email Status</span>
+                      <span className="font-medium flex items-center gap-1">
+                        {lead.email_verified ? (
+                          <>
+                            <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
+                            Verified
+                          </>
+                        ) : (
+                          <>
+                            <ShieldX className="h-3.5 w-3.5 text-muted-foreground" />
+                            Unverified
+                          </>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -802,66 +895,87 @@ export function LeadProfileModal({
 
               {/* Activity & Notes Tab */}
               <TabsContent value="activity" className="p-6 space-y-6 mt-0">
-                {/* Add Note */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">Add Note</h3>
+                {/* Add Note Section */}
+                <div className="p-4 rounded-xl bg-muted/30 border space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Plus className="h-4 w-4 text-primary" />
+                    Add Internal Note
+                  </h3>
                   <Textarea
-                    placeholder="Add a note about this lead..."
+                    placeholder={`Add a note about ${firstName}... (e.g., "Called and left voicemail", "Scheduled tour for Friday")`}
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
-                    className="min-h-[100px] resize-none"
+                    className="min-h-[100px] resize-none bg-background"
                   />
-                  <Button
-                    size="sm"
-                    onClick={handleAddNote}
-                    disabled={!newNote.trim() || addNote.isPending}
-                    className="gap-2"
-                  >
-                    {addNote.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Plus className="h-4 w-4" />
-                    )}
-                    Add Note
-                  </Button>
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      onClick={handleAddNote}
+                      disabled={!newNote.trim() || addNote.isPending}
+                      className="gap-2"
+                    >
+                      {addNote.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="h-4 w-4" />
+                      )}
+                      Save Note
+                    </Button>
+                  </div>
                 </div>
 
-                {/* Notes List */}
+                {/* Notes Timeline */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-foreground">
-                    Internal Notes ({notes.length})
+                    Notes Timeline ({notes.length})
                   </h3>
                   {notesLoading ? (
                     <div className="space-y-3">
-                      <Skeleton className="h-20 w-full" />
-                      <Skeleton className="h-20 w-full" />
+                      <Skeleton className="h-24 w-full" />
+                      <Skeleton className="h-24 w-full" />
                     </div>
                   ) : notes.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      No notes yet. Add one above to track your follow-ups.
-                    </p>
+                    <div className="text-center py-12 px-4 rounded-xl bg-muted/30 border border-dashed">
+                      <MessageSquare className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-muted-foreground">No notes yet</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Add your first note to track conversations and follow-ups
+                      </p>
+                    </div>
                   ) : (
                     <div className="space-y-3">
-                      {notes.map((note) => (
+                      {notes.map((note, index) => (
                         <div
                           key={note.id}
-                          className="p-4 rounded-lg bg-muted/50 border group"
+                          className="relative pl-6 pb-4"
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm flex-1 whitespace-pre-wrap">{note.note}</p>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                              onClick={() => deleteNote.mutate(note.id)}
-                              disabled={deleteNote.isPending}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                          {/* Timeline line */}
+                          {index < notes.length - 1 && (
+                            <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-border" />
+                          )}
+                          {/* Timeline dot */}
+                          <div className="absolute left-0 top-1.5 h-6 w-6 rounded-full bg-primary/10 border-2 border-background flex items-center justify-center">
+                            <div className="h-2 w-2 rounded-full bg-primary" />
                           </div>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {format(new Date(note.created_at), "MMM d, yyyy 'at' h:mm a")}
-                          </p>
+                          {/* Note content */}
+                          <div className="p-4 rounded-xl bg-muted/50 border group hover:border-primary/20 transition-colors">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm flex-1 whitespace-pre-wrap leading-relaxed">{note.note}</p>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive flex-shrink-0"
+                                onClick={() => deleteNote.mutate(note.id)}
+                                disabled={deleteNote.isPending}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
+                              <Clock className="h-3 w-3" />
+                              {format(new Date(note.created_at), "MMM d, yyyy 'at' h:mm a")}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -871,71 +985,100 @@ export function LeadProfileModal({
 
               {/* Communications Tab */}
               <TabsContent value="communications" className="p-6 space-y-6 mt-0">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Send className="h-4 w-4" />
-                    Email History ({emails.length})
-                  </h3>
-                  <Button size="sm" className="gap-2" onClick={() => setEmailDialogOpen(true)}>
+                {/* Send Email CTA */}
+                <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Send className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Send a follow-up email</p>
+                      <p className="text-xs text-muted-foreground">
+                        Choose from professional templates
+                      </p>
+                    </div>
+                  </div>
+                  <Button className="gap-2" onClick={() => setEmailDialogOpen(true)}>
                     <Mail className="h-4 w-4" />
-                    Send Email
+                    Compose
                   </Button>
                 </div>
 
-                {emailsLoading ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-24 w-full" />
-                  </div>
-                ) : emails.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Mail className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground">No emails sent yet</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-4 gap-2"
-                      onClick={() => setEmailDialogOpen(true)}
-                    >
-                      <Send className="h-4 w-4" />
-                      Send First Email
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {emails.map((email) => (
-                      <div
-                        key={email.id}
-                        className="p-4 rounded-lg bg-blue-50/50 border border-blue-100"
+                {/* Email History */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Email History ({emails.length})
+                  </h3>
+                  {emailsLoading ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-24 w-full" />
+                      <Skeleton className="h-24 w-full" />
+                    </div>
+                  ) : emails.length === 0 ? (
+                    <div className="text-center py-12 px-4 rounded-xl bg-muted/30 border border-dashed">
+                      <Mail className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-muted-foreground">No emails sent yet</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Start a conversation with {firstName}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-4 gap-2"
+                        onClick={() => setEmailDialogOpen(true)}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">
-                              {email.template_name}
-                            </p>
-                            {email.custom_note && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                "{email.custom_note}"
-                              </p>
-                            )}
+                        <Send className="h-4 w-4" />
+                        Send First Email
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {emails.map((email, index) => (
+                        <div
+                          key={email.id}
+                          className="relative pl-6 pb-4"
+                        >
+                          {/* Timeline line */}
+                          {index < emails.length - 1 && (
+                            <div className="absolute left-[11px] top-6 bottom-0 w-0.5 bg-blue-200" />
+                          )}
+                          {/* Timeline dot */}
+                          <div className="absolute left-0 top-1.5 h-6 w-6 rounded-full bg-blue-100 border-2 border-background flex items-center justify-center">
+                            <Mail className="h-3 w-3 text-blue-600" />
                           </div>
-                          <Badge
-                            variant="outline"
-                            className="text-xs bg-green-50 text-green-700 border-green-200"
-                          >
-                            {email.status}
-                          </Badge>
+                          {/* Email content */}
+                          <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p className="font-medium text-foreground">
+                                  {email.template_name}
+                                </p>
+                                {email.custom_note && (
+                                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2 italic">
+                                    "{email.custom_note}"
+                                  </p>
+                                )}
+                              </div>
+                              <Badge
+                                className="text-xs bg-green-100 text-green-700 border-green-200 capitalize flex-shrink-0"
+                              >
+                                {email.status}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {format(new Date(email.created_at), "MMM d, yyyy 'at' h:mm a")}
+                              </span>
+                              <span className="text-muted-foreground/50">•</span>
+                              <span>by {email.sender_name}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {format(new Date(email.created_at), "MMM d, yyyy 'at' h:mm a")}
-                          <span className="text-muted-foreground/50">•</span>
-                          by {email.sender_name}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </TabsContent>
             </ScrollArea>
           </Tabs>
