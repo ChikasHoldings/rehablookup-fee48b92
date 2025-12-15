@@ -42,6 +42,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -1671,17 +1682,41 @@ export default function AdminSettings() {
                   <p className="font-medium text-red-800">Clear All Cache</p>
                   <p className="text-sm text-red-600">Reset all cached data across the platform</p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  className="text-red-600 border-red-300 hover:bg-red-50"
-                  onClick={() => clearCache.mutate()}
-                  disabled={clearCache.isPending}
-                >
-                  {clearCache.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
-                  Clear Cache
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                      disabled={clearCache.isPending}
+                    >
+                      {clearCache.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      Clear Cache
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-red-500" />
+                        Clear All Cache?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will reset all cached data across the platform. All users may experience 
+                        slower load times temporarily while the cache rebuilds. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => clearCache.mutate()}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Clear Cache
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>
