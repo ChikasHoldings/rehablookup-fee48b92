@@ -708,9 +708,15 @@ export default function ProviderKnowledgeBasePage() {
                     if (line.trim() === '') {
                       return <br key={i} />;
                     }
-                    // Handle bold text
-                    const formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                    return <p key={i} className="text-sm text-muted-foreground mb-2" dangerouslySetInnerHTML={{ __html: formatted }} />;
+                    // Handle bold text safely without dangerouslySetInnerHTML
+                    const parts = line.split(/\*\*(.*?)\*\*/);
+                    return (
+                      <p key={i} className="text-sm text-muted-foreground mb-2">
+                        {parts.map((part, partIndex) => 
+                          partIndex % 2 === 1 ? <strong key={partIndex}>{part}</strong> : part
+                        )}
+                      </p>
+                    );
                   })}
                 </div>
                 <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t">
