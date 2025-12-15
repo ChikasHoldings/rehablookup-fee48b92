@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
 import {
   Building2,
   Users,
@@ -15,6 +16,7 @@ import {
   DollarSign,
   ShieldCheck,
   UserPlus,
+  Radio,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 interface RevenueStats {
   monthlyRevenue: number;
@@ -33,6 +37,59 @@ interface RevenueStats {
 }
 
 export default function AdminDashboard() {
+  const queryClient = useQueryClient();
+  const [isLive, setIsLive] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Invalidate all dashboard queries
+  const invalidateDashboard = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin-provider-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-lead-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-top-cities"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-recent-leads"] });
+    setLastUpdate(new Date());
+  }, [queryClient]);
+
+  // Real-time subscriptions
+  useEffect(() => {
+    if (!isLive) return;
+
+    const facilitiesChannel = supabase
+      .channel("dashboard-facilities")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "facilities" },
+        (payload) => {
+          console.log("Facility change detected:", payload);
+          invalidateDashboard();
+          if (payload.eventType === "INSERT") {
+            toast.info("New provider registered", { description: "Dashboard updated" });
+          }
+        }
+      )
+      .subscribe();
+
+    const leadsChannel = supabase
+      .channel("dashboard-leads")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leads" },
+        (payload) => {
+          console.log("Lead change detected:", payload);
+          invalidateDashboard();
+          if (payload.eventType === "INSERT") {
+            toast.info("New lead received", { description: "Dashboard updated" });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(facilitiesChannel);
+      supabase.removeChannel(leadsChannel);
+    };
+  }, [isLive, invalidateDashboard]);
+
   // Fetch revenue stats from Stripe
   const { data: revenueStats, isLoading: loadingRevenue } = useQuery<RevenueStats>({
     queryKey: ["admin-revenue-stats"],
@@ -198,9 +255,30 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Platform overview and key performance metrics</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">Platform overview and key performance metrics</p>
+        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={isLive ? "default" : "outline"}
+                size="sm"
+                onClick={() => setIsLive(!isLive)}
+                className="gap-2 self-start"
+              >
+                <Radio className={`h-3.5 w-3.5 ${isLive ? "animate-pulse" : ""}`} />
+                {isLive ? "Live" : "Paused"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isLive ? "Receiving real-time updates" : "Real-time updates paused"}</p>
+              <p className="text-xs text-muted-foreground">Last update: {lastUpdate.toLocaleTimeString()}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Primary KPI Cards */}
