@@ -9,10 +9,38 @@ const corsHeaders = {
 
 // Featured plan product ID
 const FEATURED_PRODUCT_ID = "prod_TbalOeJZA2ZoJl";
+const MAX_HOMEPAGE_FEATURED = 6;
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[GET-FEATURED-FACILITIES] ${step}${detailsStr}`);
+};
+
+// Generate a deterministic seed based on date for consistent daily rotation
+const getDailySeed = (): number => {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    const char = dateStr.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
+};
+
+// Deterministic shuffle using seed
+const seededShuffle = <T>(array: T[], seed: number): T[] => {
+  const shuffled = [...array];
+  let currentSeed = seed;
+  
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff;
+    const j = currentSeed % (i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  
+  return shuffled;
 };
 
 serve(async (req) => {
@@ -26,7 +54,11 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
       logStep("No Stripe key, returning empty array");
-      return new Response(JSON.stringify({ featuredFacilityIds: [] }), {
+      return new Response(JSON.stringify({ 
+        featuredFacilityIds: [],
+        homepageFeaturedIds: [],
+        allEligibleIds: []
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -40,11 +72,12 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Get all approved facilities
+    // Get all approved, non-suspended facilities
     const { data: facilities, error: facilitiesError } = await supabaseClient
       .from("facilities")
-      .select("id, user_id")
-      .eq("status", "approved");
+      .select("id, user_id, featured_pinned, last_featured_shown_at, suspended")
+      .eq("status", "approved")
+      .or("suspended.is.null,suspended.eq.false");
 
     if (facilitiesError) {
       logStep("Error fetching facilities", { error: facilitiesError.message });
@@ -53,7 +86,13 @@ serve(async (req) => {
 
     logStep("Fetched facilities", { count: facilities?.length || 0 });
 
-    const featuredFacilityIds: string[] = [];
+    interface EligibleFacility {
+      id: string;
+      featured_pinned: boolean;
+      last_featured_shown_at: string | null;
+    }
+
+    const eligibleFacilities: EligibleFacility[] = [];
 
     // Check each facility's owner for Featured subscription
     for (const facility of facilities || []) {
@@ -87,20 +126,75 @@ serve(async (req) => {
           const productId = subscription.items.data[0].price.product as string;
 
           if (productId === FEATURED_PRODUCT_ID) {
-            featuredFacilityIds.push(facility.id);
+            eligibleFacilities.push({
+              id: facility.id,
+              featured_pinned: facility.featured_pinned || false,
+              last_featured_shown_at: facility.last_featured_shown_at,
+            });
             logStep("Found Featured subscriber", { facilityId: facility.id, email: providerEmail });
           }
         }
       } catch (stripeError) {
-        logStep("Error checking Stripe for facility", { facilityId: facility.id, error: stripeError });
+        logStep("Error checking Stripe for facility", { facilityId: facility.id, error: String(stripeError) });
         // Continue checking other facilities
       }
     }
 
-    logStep("Completed", { featuredCount: featuredFacilityIds.length });
+    logStep("Total eligible Featured facilities", { count: eligibleFacilities.length });
+
+    // All eligible facility IDs (for search priority)
+    const allEligibleIds = eligibleFacilities.map(f => f.id);
+
+    // Select homepage featured (max 6 with rotation)
+    let homepageFeaturedIds: string[] = [];
+
+    if (eligibleFacilities.length <= MAX_HOMEPAGE_FEATURED) {
+      // Show all if 6 or fewer
+      homepageFeaturedIds = allEligibleIds;
+    } else {
+      // Rotation logic: pinned first, then rotate based on last_featured_shown_at with daily seed
+      const pinned = eligibleFacilities.filter(f => f.featured_pinned);
+      const unpinned = eligibleFacilities.filter(f => !f.featured_pinned);
+
+      // Sort unpinned by last_featured_shown_at (oldest/null first for fairness)
+      unpinned.sort((a, b) => {
+        if (!a.last_featured_shown_at && !b.last_featured_shown_at) return 0;
+        if (!a.last_featured_shown_at) return -1;
+        if (!b.last_featured_shown_at) return 1;
+        return new Date(a.last_featured_shown_at).getTime() - new Date(b.last_featured_shown_at).getTime();
+      });
+
+      // Use daily seed to add variation while maintaining fairness
+      const dailySeed = getDailySeed();
+      const shuffledUnpinned = seededShuffle(unpinned, dailySeed);
+
+      // Combine: pinned first (always shown), then shuffled unpinned
+      const combined = [...pinned, ...shuffledUnpinned];
+      homepageFeaturedIds = combined.slice(0, MAX_HOMEPAGE_FEATURED).map(f => f.id);
+
+      // Update last_featured_shown_at for facilities shown today
+      const today = new Date().toISOString();
+      for (const id of homepageFeaturedIds) {
+        await supabaseClient
+          .from("facilities")
+          .update({ last_featured_shown_at: today })
+          .eq("id", id);
+      }
+
+      logStep("Updated last_featured_shown_at for homepage featured", { count: homepageFeaturedIds.length });
+    }
+
+    logStep("Completed", { 
+      totalEligible: allEligibleIds.length,
+      homepageFeatured: homepageFeaturedIds.length 
+    });
 
     return new Response(
-      JSON.stringify({ featuredFacilityIds }),
+      JSON.stringify({ 
+        featuredFacilityIds: allEligibleIds, // All eligible for search priority
+        homepageFeaturedIds, // Max 6 for homepage display
+        allEligibleIds // Alias for clarity
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -109,7 +203,12 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in get-featured-facilities", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage, featuredFacilityIds: [] }), {
+    return new Response(JSON.stringify({ 
+      error: errorMessage, 
+      featuredFacilityIds: [],
+      homepageFeaturedIds: [],
+      allEligibleIds: []
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200, // Return 200 with empty array to not break the UI
     });

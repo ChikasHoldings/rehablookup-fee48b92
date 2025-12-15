@@ -148,9 +148,11 @@ export type Database = {
           email: string | null
           facility_type: string
           featured: boolean
+          featured_pinned: boolean | null
           gallery_urls: string[] | null
           gender_served: string | null
           id: string
+          last_featured_shown_at: string | null
           lead_limit_override: number | null
           logo_url: string | null
           name: string
@@ -178,9 +180,11 @@ export type Database = {
           email?: string | null
           facility_type: string
           featured?: boolean
+          featured_pinned?: boolean | null
           gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string
+          last_featured_shown_at?: string | null
           lead_limit_override?: number | null
           logo_url?: string | null
           name: string
@@ -208,9 +212,11 @@ export type Database = {
           email?: string | null
           facility_type?: string
           featured?: boolean
+          featured_pinned?: boolean | null
           gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string
+          last_featured_shown_at?: string | null
           lead_limit_override?: number | null
           logo_url?: string | null
           name?: string

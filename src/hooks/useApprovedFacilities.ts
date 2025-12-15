@@ -28,31 +28,43 @@ export interface ApprovedFacility extends TreatmentCenter {
   hasFeaturedSubscription?: boolean;
 }
 
+interface FeaturedFacilitiesResponse {
+  featuredFacilityIds: string[];
+  homepageFeaturedIds: string[];
+  allEligibleIds: string[];
+}
+
 // Hook to get featured facility IDs from subscription data
 export const useFeaturedFacilityIds = () => {
   return useQuery({
     queryKey: ["featured-facility-ids"],
-    queryFn: async (): Promise<string[]> => {
+    queryFn: async (): Promise<FeaturedFacilitiesResponse> => {
       try {
         const { data, error } = await supabase.functions.invoke("get-featured-facilities");
         if (error) {
           console.error("Error fetching featured facilities:", error);
-          return [];
+          return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [] };
         }
-        return data?.featuredFacilityIds || [];
+        return {
+          featuredFacilityIds: data?.featuredFacilityIds || [],
+          homepageFeaturedIds: data?.homepageFeaturedIds || [],
+          allEligibleIds: data?.allEligibleIds || [],
+        };
       } catch (err) {
         console.error("Failed to fetch featured facility IDs:", err);
-        return [];
+        return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [] };
       }
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes - cached per session to prevent flickering
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 };
 
 export const useApprovedFacilities = () => {
   const queryClient = useQueryClient();
-  const { data: featuredIds = [] } = useFeaturedFacilityIds();
+  const { data: featuredData } = useFeaturedFacilityIds();
+  const featuredIds = featuredData?.featuredFacilityIds || [];
+  const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
 
   // Real-time subscription for approved facilities updates
   useEffect(() => {
@@ -109,7 +121,7 @@ export const useApprovedFacilities = () => {
   }, [queryClient]);
 
   return useQuery({
-    queryKey: ["approved-facilities", featuredIds],
+    queryKey: ["approved-facilities", featuredIds, homepageFeaturedIds],
     queryFn: async (): Promise<ApprovedFacility[]> => {
       const { data, error } = await supabase
         .from("facilities")
@@ -136,6 +148,7 @@ export const useApprovedFacilities = () => {
       // Transform database facilities to TreatmentCenter format
       return (data as FacilityWithRelations[]).map((facility) => {
         const hasFeaturedSubscription = featuredIds.includes(facility.id);
+        const isHomepageFeatured = homepageFeaturedIds.includes(facility.id);
         
         return {
           id: facility.id,
@@ -153,6 +166,7 @@ export const useApprovedFacilities = () => {
           // Featured if they have Featured subscription OR legacy featured flag
           featured: hasFeaturedSubscription || facility.featured,
           hasFeaturedSubscription,
+          isHomepageFeatured, // New property for homepage rotation
           rating: 4.5,
           reviewCount: 0,
           amenities: [],
@@ -165,4 +179,10 @@ export const useApprovedFacilities = () => {
     },
     staleTime: 1000 * 60 * 2, // 2 minutes for fresher data
   });
+};
+
+// Export homepage featured IDs for components that need just that
+export const useHomepageFeaturedIds = () => {
+  const { data } = useFeaturedFacilityIds();
+  return data?.homepageFeaturedIds || [];
 };

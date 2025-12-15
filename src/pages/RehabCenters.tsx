@@ -114,34 +114,60 @@ const RehabCenters = () => {
     // Apply sorting
     switch (sortParam) {
       case "featured":
-        // Sort by Featured subscription first, then by legacy featured flag, then by rating
+        // Sort by Featured subscription first (search priority), then by rating
         results.sort((a, b) => {
-          // First: Featured subscription holders
+          // First: Featured subscription holders always appear first
           const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
           const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
           if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
           
-          // Second: Legacy featured flag
+          // Second: Legacy featured flag (for static data)
           if (b.featured !== a.featured) return b.featured ? 1 : -1;
           
-          // Third: Rating
+          // Third: Rating for remaining sort
           return b.rating - a.rating;
         });
         break;
       case "rating-high":
-        results.sort((a, b) => b.rating - a.rating);
+        // Still prioritize featured at top, then sort by rating
+        results.sort((a, b) => {
+          const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
+          const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
+          if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
+          return b.rating - a.rating;
+        });
         break;
       case "rating-low":
-        results.sort((a, b) => a.rating - b.rating);
+        results.sort((a, b) => {
+          const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
+          const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
+          if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
+          return a.rating - b.rating;
+        });
         break;
       case "reviews":
-        results.sort((a, b) => b.reviewCount - a.reviewCount);
+        results.sort((a, b) => {
+          const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
+          const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
+          if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
+          return b.reviewCount - a.reviewCount;
+        });
         break;
       case "name-asc":
-        results.sort((a, b) => a.name.localeCompare(b.name));
+        results.sort((a, b) => {
+          const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
+          const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
+          if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
+          return a.name.localeCompare(b.name);
+        });
         break;
       case "name-desc":
-        results.sort((a, b) => b.name.localeCompare(a.name));
+        results.sort((a, b) => {
+          const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
+          const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
+          if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
+          return b.name.localeCompare(a.name);
+        });
         break;
     }
 
