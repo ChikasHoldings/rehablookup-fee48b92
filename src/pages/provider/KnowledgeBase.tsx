@@ -495,7 +495,8 @@ export default function ProviderKnowledgeBasePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+      <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -791,6 +792,7 @@ export default function ProviderKnowledgeBasePage() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

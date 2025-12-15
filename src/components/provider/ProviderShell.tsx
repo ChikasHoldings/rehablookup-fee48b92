@@ -155,11 +155,9 @@ function ProviderShellContent() {
           </SheetContent>
         </Sheet>
 
-        {/* Scrollable Main Content Area - Outlet renders child routes */}
-        <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-muted/30">
-          <div className="p-4 md:p-6 lg:p-8">
-            <Outlet />
-          </div>
+        {/* Main Content Area - Outlet renders child routes */}
+        <main ref={mainContentRef} className="flex-1 flex flex-col overflow-hidden bg-muted/30">
+          <Outlet />
         </main>
       </div>
     </div>
