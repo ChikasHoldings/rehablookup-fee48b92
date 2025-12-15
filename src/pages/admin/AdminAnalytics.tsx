@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfWeek, endOfWeek } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,8 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
-import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin } from "lucide-react";
+import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type DatePreset = "today" | "last7" | "last30" | "thisMonth" | "lastMonth" | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear" | "custom";
 type Grouping = "daily" | "weekly" | "monthly";
@@ -58,6 +59,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function AdminAnalytics() {
+  const queryClient = useQueryClient();
   const [datePreset, setDatePreset] = useState<DatePreset>("last30");
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [grouping, setGrouping] = useState<Grouping>("daily");
@@ -65,6 +67,84 @@ export default function AdminAnalytics() {
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedPlan, setSelectedPlan] = useState<string>("All");
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "leads", direction: "desc" });
+  const [isLive, setIsLive] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Realtime subscription for live updates
+  const invalidateAnalyticsQueries = useCallback(() => {
+    setLastUpdate(new Date());
+    queryClient.invalidateQueries({ queryKey: ["admin-analytics-views"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-analytics-interactions"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-analytics-leads"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-analytics-facilities"] });
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (!isLive) return;
+
+    // Subscribe to leads table changes
+    const leadsChannel = supabase
+      .channel('analytics-leads')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'leads' },
+        (payload) => {
+          console.log('Leads update:', payload.eventType);
+          invalidateAnalyticsQueries();
+          toast.success('Dashboard updated', { 
+            description: `New ${payload.eventType === 'INSERT' ? 'lead received' : 'lead update'}`,
+            duration: 2000 
+          });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to facility_views table changes
+    const viewsChannel = supabase
+      .channel('analytics-views')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'facility_views' },
+        (payload) => {
+          console.log('Views update:', payload.eventType);
+          invalidateAnalyticsQueries();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to facility_interactions table changes
+    const interactionsChannel = supabase
+      .channel('analytics-interactions')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'facility_interactions' },
+        (payload) => {
+          console.log('Interactions update:', payload.eventType);
+          invalidateAnalyticsQueries();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to facilities table changes
+    const facilitiesChannel = supabase
+      .channel('analytics-facilities')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'facilities' },
+        (payload) => {
+          console.log('Facilities update:', payload.eventType);
+          invalidateAnalyticsQueries();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(leadsChannel);
+      supabase.removeChannel(viewsChannel);
+      supabase.removeChannel(interactionsChannel);
+      supabase.removeChannel(facilitiesChannel);
+    };
+  }, [isLive, invalidateAnalyticsQueries]);
 
   // Calculate date range based on preset
   const dateRange = useMemo(() => {
@@ -406,7 +486,28 @@ export default function AdminAnalytics() {
           <h1 className="text-2xl font-bold text-slate-900">Analytics Dashboard</h1>
           <p className="text-muted-foreground mt-1">Platform performance metrics and insights</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Live indicator */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={isLive ? "default" : "outline"}
+                size="sm"
+                onClick={() => setIsLive(!isLive)}
+                className={cn(
+                  "gap-2 transition-all",
+                  isLive && "bg-emerald-600 hover:bg-emerald-700"
+                )}
+              >
+                <Radio className={cn("h-3.5 w-3.5", isLive && "animate-pulse")} />
+                {isLive ? "Live" : "Paused"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isLive ? "Real-time updates enabled" : "Click to enable live updates"}</p>
+              {isLive && <p className="text-xs text-muted-foreground">Last update: {format(lastUpdate, "HH:mm:ss")}</p>}
+            </TooltipContent>
+          </Tooltip>
           <Badge variant="outline" className="text-xs font-normal">
             {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d, yyyy")}
           </Badge>
