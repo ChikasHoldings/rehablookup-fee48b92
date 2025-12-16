@@ -97,7 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "RehabLookup <onboarding@resend.dev>",
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: [normalizedEmail],
       subject: `${code} is your verification code`,
       html: `
