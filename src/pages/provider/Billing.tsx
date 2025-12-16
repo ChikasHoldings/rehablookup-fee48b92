@@ -55,7 +55,11 @@ export default function ProviderBillingPage() {
       setSearchParams({});
       refetch();
       refetchProvider();
+      // Invalidate all plan-related queries so UI updates everywhere
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      queryClient.invalidateQueries({ queryKey: ["facility-plan"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-subscription-check"] });
     } else if (canceled === "true") {
       toast({
         variant: "destructive",
@@ -93,6 +97,9 @@ export default function ProviderBillingPage() {
     try {
       await refetch();
       await refetchProvider();
+      // Also invalidate plan-related queries
+      queryClient.invalidateQueries({ queryKey: ["facility-plan"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-subscription-check"] });
       toast({
         title: "Status Refreshed",
         description: "Your subscription status has been updated.",
@@ -100,7 +107,7 @@ export default function ProviderBillingPage() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetch, refetchProvider, toast]);
+  }, [refetch, refetchProvider, queryClient, toast]);
 
   const handleCheckout = async (plan: "professional" | "featured") => {
     setCheckoutLoading(plan);
