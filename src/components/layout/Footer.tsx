@@ -1,16 +1,69 @@
 import { Link } from "react-router-dom";
 import { Heart, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 
 export function Footer() {
   return (
     <footer className="border-t border-border bg-primary text-primary-foreground">
       <div className="container py-12 md:py-16">
+        {/* Mobile Logo - Centered and Bigger */}
+        <div className="flex flex-col items-center mb-10 md:hidden">
+          <Link to="/" className="inline-block mb-4">
+            <img 
+              src={logo} 
+              alt="RehabLookup" 
+              className="h-12 w-auto brightness-0 invert"
+            />
+          </Link>
+          <p className="text-center text-sm leading-relaxed text-primary-foreground/60 max-w-[280px]">
+            Connecting families with trusted treatment centers nationwide.
+          </p>
+          
+          {/* Social Media - Mobile */}
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <a 
+              href="https://facebook.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+              aria-label="Follow us on Facebook"
+            >
+              <Facebook className="h-5 w-5" />
+            </a>
+            <a 
+              href="https://twitter.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+              aria-label="Follow us on Twitter"
+            >
+              <Twitter className="h-5 w-5" />
+            </a>
+            <a 
+              href="https://instagram.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+              aria-label="Follow us on Instagram"
+            >
+              <Instagram className="h-5 w-5" />
+            </a>
+            <a 
+              href="https://linkedin.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+              aria-label="Follow us on LinkedIn"
+            >
+              <Linkedin className="h-5 w-5" />
+            </a>
+          </div>
+        </div>
+
         {/* Main Footer Grid */}
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
-          {/* Brand & Social */}
-          <div className="space-y-6 sm:col-span-2">
+        <div className="grid gap-8 grid-cols-2 md:grid-cols-6 lg:grid-cols-6">
+          {/* Brand & Social - Desktop Only */}
+          <div className="hidden md:block space-y-6 col-span-2">
             <Link to="/" className="inline-block">
               <img 
                 src={logo} 
@@ -23,7 +76,7 @@ export function Footer() {
               Connecting families with trusted treatment centers nationwide.
             </p>
             
-            {/* Social Media Links */}
+            {/* Social Media Links - Desktop */}
             <div className="flex items-center gap-2">
               <a 
                 href="https://facebook.com" 
@@ -161,10 +214,10 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Contact Bar */}
-        <div className="mt-12 grid gap-4 rounded-xl bg-primary-foreground/5 p-5 sm:grid-cols-3">
+        {/* Contact Bar - Mobile Optimized */}
+        <div className="mt-10 md:mt-12 flex flex-col gap-4 md:grid md:grid-cols-3 rounded-xl bg-primary-foreground/5 p-5">
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
+            <div className="flex h-10 w-10 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
               <Heart className="h-4 w-4 text-accent" />
             </div>
             <div>
@@ -175,7 +228,7 @@ export function Footer() {
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
+            <div className="flex h-10 w-10 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
               <Mail className="h-4 w-4 text-accent" />
             </div>
             <div>
@@ -186,7 +239,7 @@ export function Footer() {
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
+            <div className="flex h-10 w-10 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
               <MapPin className="h-4 w-4 text-accent" />
             </div>
             <div>
@@ -196,12 +249,12 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-primary-foreground/10 pt-8 md:flex-row">
-          <p className="text-sm text-primary-foreground/60">
+        {/* Bottom Bar - Mobile Optimized */}
+        <div className="mt-8 md:mt-10 flex flex-col items-center gap-3 border-t border-primary-foreground/10 pt-6 md:pt-8 md:flex-row md:justify-between md:gap-4">
+          <p className="text-sm text-primary-foreground/60 text-center md:text-left">
             © {new Date().getFullYear()} RehabLookup.com. All rights reserved.
           </p>
-          <p className="text-xs text-primary-foreground/40">
+          <p className="text-xs text-primary-foreground/40 text-center md:text-right">
             RehabLookup is a directory service. We are not a treatment provider.
           </p>
         </div>
