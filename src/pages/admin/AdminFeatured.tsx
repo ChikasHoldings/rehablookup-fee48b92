@@ -48,9 +48,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { FeaturedSettingsTab } from "@/components/admin/FeaturedSettingsTab";
 
 type Facility = {
   id: string;
@@ -881,81 +880,7 @@ export default function AdminFeatured() {
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                  <Settings className="h-5 w-5 text-slate-600" />
-                </div>
-                <div>
-                  <CardTitle>Featured Settings</CardTitle>
-                  <CardDescription>
-                    Configure featured placement behavior and rotation rules
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">Daily Rotation</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Automatically rotate featured providers on the homepage daily
-                    </p>
-                  </div>
-                  <Switch checked disabled />
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">Max Homepage Featured</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Maximum number of featured providers shown on homepage
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-lg px-4">6</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">Featured Plan Price</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Monthly subscription price for automatic featuring
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-lg px-4">$1,099/mo</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">Pinned Priority</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Pinned providers bypass rotation and always appear on homepage
-                    </p>
-                  </div>
-                  <Switch checked disabled />
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label className="text-base font-medium">Fairness Algorithm</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Ensures equal exposure by tracking last featured date
-                    </p>
-                  </div>
-                  <Switch checked disabled />
-                </div>
-              </div>
-
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  Featured placement settings are managed at the platform level. Contact engineering to modify these values.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+          <FeaturedSettingsTab />
         </TabsContent>
       </Tabs>
 
