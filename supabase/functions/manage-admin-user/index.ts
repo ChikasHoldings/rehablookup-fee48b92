@@ -214,7 +214,7 @@ serve(async (req) => {
           const loginUrl = `${req.headers.get("origin")}/admin-login`;
 
           await resend.emails.send({
-            from: "RehabLookup Admin <onboarding@resend.dev>",
+            from: "RehabLookup Admin <no-reply@rehablookup.com>",
             to: [targetProfile.email],
             subject: "Your RehabLookup Admin Password Has Been Reset",
             html: `
