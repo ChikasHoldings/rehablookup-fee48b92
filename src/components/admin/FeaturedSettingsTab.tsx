@@ -53,13 +53,14 @@ export function FeaturedSettingsTab() {
         .maybeSingle();
       
       if (error) throw error;
-      return data?.setting_value as NotificationSettings | null;
+      // Return default settings if no data, never return undefined
+      return (data?.setting_value as NotificationSettings) || defaultSettings;
     },
   });
 
   // Initialize settings when data loads
   useEffect(() => {
-    if (savedSettings) {
+    if (savedSettings && savedSettings !== defaultSettings) {
       setSettings(savedSettings);
     }
   }, [savedSettings]);
