@@ -143,3 +143,6 @@ verify_jwt = true
 
 [functions.send-lead-confirmation]
 verify_jwt = false
+
+[functions.send-security-block-notification]
+verify_jwt = false

@@ -252,6 +252,13 @@ export default function AdminSecurityLogs() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Get admin display name for notification
+      const { data: adminProfile } = await supabase
+        .from("admin_user_profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .single();
+
       const { error } = await supabase
         .from("blocked_identifiers")
         .insert({
@@ -269,6 +276,17 @@ export default function AdminSecurityLogs() {
         }
         throw error;
       }
+
+      // Send email notification (fire and forget)
+      supabase.functions.invoke('send-security-block-notification', {
+        body: {
+          identifier: params.identifier,
+          identifier_type: params.type,
+          reason: params.reason || null,
+          expires_at: params.expiresAt,
+          blocked_by_name: adminProfile?.display_name || user.email || "Admin",
+        },
+      }).catch(err => console.error("Failed to send block notification:", err));
     },
     onSuccess: () => {
       toast.success("Identifier blocked successfully");

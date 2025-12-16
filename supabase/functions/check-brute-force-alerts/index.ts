@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
       try {
         await resend.emails.send({
           from: "RehabLookup Security <no-reply@rehablookup.com>",
-          to: ["admin@rehablookup.com"], // Update with actual admin email
+          to: ["help@rehablookup.com"],
           subject: `⚠️ Security Alert: Potential Brute Force Attack Detected`,
           html: `
             <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
