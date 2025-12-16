@@ -553,13 +553,13 @@ export default function AdminSecurityLogs() {
   );
 
   // Pagination
-  const totalPages = Math.ceil((filteredLogs?.length || 0) / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil((filteredLogs?.length || 0) / ITEMS_PER_PAGE));
   const paginatedLogs = filteredLogs?.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  const totalBlockedPages = Math.ceil((filteredBlocked?.length || 0) / ITEMS_PER_PAGE);
+  const totalBlockedPages = Math.max(1, Math.ceil((filteredBlocked?.length || 0) / ITEMS_PER_PAGE));
   const paginatedBlocked = filteredBlocked?.slice(
     (blockedPage - 1) * ITEMS_PER_PAGE,
     blockedPage * ITEMS_PER_PAGE

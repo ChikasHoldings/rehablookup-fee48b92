@@ -133,4 +133,13 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.lookup-ip-location]
+verify_jwt = false
+
+[functions.create-admin-user]
 verify_jwt = true
+
+[functions.manage-admin-user]
+verify_jwt = true
+
+[functions.send-lead-confirmation]
+verify_jwt = false
