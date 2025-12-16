@@ -19,6 +19,7 @@ import ProviderResetPassword from "./pages/ProviderResetPassword";
 import ProviderSupport from "./pages/ProviderSupport";
 import ProviderSignup from "./pages/ProviderSignup";
 import RequestHelp from "./pages/RequestHelp";
+import AdLanding from "./pages/AdLanding";
 import { ProviderShell } from "./components/provider/ProviderShell";
 import ProviderDashboardPage from "./pages/provider/Dashboard";
 import ProviderListingPage from "./pages/provider/Listing";
@@ -79,6 +80,7 @@ const App = () => (
           <Route path="/treatment-types" element={<TreatmentTypes />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/request-help" element={<RequestHelp />} />
+          <Route path="/lp/treatment" element={<AdLanding />} />
           <Route path="/for-providers" element={<ForProviders />} />
           <Route path="/provider-resources" element={<ProviderResources />} />
           <Route path="/provider-login" element={<ProviderLogin />} />

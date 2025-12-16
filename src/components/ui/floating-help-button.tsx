@@ -11,6 +11,7 @@ const HIDDEN_ROUTES = [
   "/request-help",
   "/provider",
   "/admin",
+  "/lp/",
 ];
 
 export function FloatingHelpButton() {
