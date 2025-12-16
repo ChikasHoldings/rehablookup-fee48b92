@@ -243,8 +243,31 @@ export default function AdminProfile() {
     checkMFAStatus();
   }, []);
 
+  // Fetch recovery codes count
+  const { data: recoveryCodesCount, refetch: refetchRecoveryCodes } = useQuery({
+    queryKey: ["recovery-codes-count", userData?.id],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return 0;
+      
+      const response = await supabase.functions.invoke('manage-mfa-recovery', {
+        body: { action: 'count' },
+      });
+      
+      if (response.error) {
+        console.error('Error fetching recovery codes count:', response.error);
+        return 0;
+      }
+      
+      return response.data?.count ?? 0;
+    },
+    enabled: !!userData?.id && mfaEnabled,
+  });
+
   const handleMFASetupSuccess = () => {
     setMfaEnabled(true);
+    // Refetch recovery codes count after setup (query will be enabled now)
+    setTimeout(() => refetchRecoveryCodes(), 500);
   };
 
   const handleMFADisableSuccess = () => {
@@ -1184,6 +1207,17 @@ export default function AdminProfile() {
                     <p className="text-sm text-green-700">
                       Two-factor authentication is enabled. You'll need your authenticator app to sign in.
                     </p>
+                    {recoveryCodesCount !== undefined && (
+                      <p className={`text-sm mt-2 ${recoveryCodesCount <= 2 ? 'text-amber-700 font-medium' : 'text-green-700'}`}>
+                        {recoveryCodesCount === 0 ? (
+                          <span className="text-red-700 font-medium">⚠️ No recovery codes remaining - regenerate now</span>
+                        ) : recoveryCodesCount <= 2 ? (
+                          <span>⚠️ Only {recoveryCodesCount} recovery code{recoveryCodesCount === 1 ? '' : 's'} remaining</span>
+                        ) : (
+                          <span>{recoveryCodesCount} recovery codes remaining</span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1321,6 +1355,7 @@ export default function AdminProfile() {
       <RegenerateRecoveryCodesDialog
         open={showRegenerateCodes}
         onOpenChange={setShowRegenerateCodes}
+        onSuccess={() => refetchRecoveryCodes()}
       />
     </div>
   );
