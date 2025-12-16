@@ -179,6 +179,7 @@ export type Database = {
           force_password_change: boolean | null
           id: string
           last_login_at: string | null
+          mfa_enabled: boolean | null
           status: string
           temp_password_expires_at: string | null
           temp_password_hash: string | null
@@ -193,6 +194,7 @@ export type Database = {
           force_password_change?: boolean | null
           id?: string
           last_login_at?: string | null
+          mfa_enabled?: boolean | null
           status?: string
           temp_password_expires_at?: string | null
           temp_password_hash?: string | null
@@ -207,6 +209,7 @@ export type Database = {
           force_password_change?: boolean | null
           id?: string
           last_login_at?: string | null
+          mfa_enabled?: boolean | null
           status?: string
           temp_password_expires_at?: string | null
           temp_password_hash?: string | null

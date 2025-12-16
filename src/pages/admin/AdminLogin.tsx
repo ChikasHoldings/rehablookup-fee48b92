@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
+import { TwoFactorVerifyDialog } from "@/components/admin/TwoFactorVerifyDialog";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
@@ -23,6 +24,8 @@ export default function AdminLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [isSuspended, setIsSuspended] = useState(false);
+  const [show2FADialog, setShow2FADialog] = useState(false);
+  const [pendingLoginUserId, setPendingLoginUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkExistingSession = async () => {
@@ -142,7 +145,7 @@ export default function AdminLogin() {
         // Check if admin is suspended
         const { data: profile } = await supabase
           .from('admin_user_profiles')
-          .select('status')
+          .select('status, mfa_enabled')
           .eq('user_id', data.user.id)
           .maybeSingle();
 
@@ -162,37 +165,68 @@ export default function AdminLogin() {
           return;
         }
 
-        // Log successful login with IP capture via edge function
-        await supabase.functions.invoke('log-login-attempt', {
-          body: {
-            identifier: normalizedEmail,
-            success: true,
-            actionType: 'admin_login'
-          }
-        });
+        // Check if MFA is enabled - verify using Supabase MFA API
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const hasVerifiedTotp = factorsData?.totp?.some(f => f.status === 'verified');
 
-        // Update last login timestamp
-        await supabase
-          .from('admin_user_profiles')
-          .update({ last_login_at: new Date().toISOString() })
-          .eq('user_id', data.user.id);
+        if (hasVerifiedTotp) {
+          // MFA is required - show verification dialog
+          setPendingLoginUserId(data.user.id);
+          setShow2FADialog(true);
+          setIsLoading(false);
+          return;
+        }
 
-        // Log to admin audit log for activity tracking
-        await logAdminAction({
-          actionType: "admin_login",
-          targetType: "admin_user",
-          targetId: data.user.id,
-          details: { email: normalizedEmail },
-        });
-
-        toast.success("Welcome back, Admin!");
-        navigate("/admin", { replace: true });
+        // No MFA - proceed with login completion
+        await completeLogin(data.user.id, normalizedEmail);
       }
     } catch (err) {
       toast.error("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const completeLogin = async (userId: string, userEmail: string) => {
+    // Log successful login with IP capture via edge function
+    await supabase.functions.invoke('log-login-attempt', {
+      body: {
+        identifier: userEmail,
+        success: true,
+        actionType: 'admin_login'
+      }
+    });
+
+    // Update last login timestamp
+    await supabase
+      .from('admin_user_profiles')
+      .update({ last_login_at: new Date().toISOString() })
+      .eq('user_id', userId);
+
+    // Log to admin audit log for activity tracking
+    await logAdminAction({
+      actionType: "admin_login",
+      targetType: "admin_user",
+      targetId: userId,
+      details: { email: userEmail },
+    });
+
+    toast.success("Welcome back, Admin!");
+    navigate("/admin", { replace: true });
+  };
+
+  const handle2FASuccess = async () => {
+    setShow2FADialog(false);
+    if (pendingLoginUserId) {
+      await completeLogin(pendingLoginUserId, email.trim().toLowerCase());
+    }
+  };
+
+  const handle2FACancel = async () => {
+    setShow2FADialog(false);
+    setPendingLoginUserId(null);
+    await supabase.auth.signOut();
+    toast.info("Login cancelled");
   };
 
   // Suspended account view
@@ -231,64 +265,72 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-amber-100 flex items-center justify-center">
-            <Shield className="h-8 w-8 text-amber-600" />
-          </div>
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
-          <CardDescription>
-            Enter your credentials to access the admin panel
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={errors.email ? "border-destructive" : ""}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
+    <>
+      <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-amber-100 flex items-center justify-center">
+              <Shield className="h-8 w-8 text-amber-600" />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
+            <CardTitle className="text-2xl">Admin Login</CardTitle>
+            <CardDescription>
+              Enter your credentials to access the admin panel
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={errors.password ? "border-destructive pr-10" : "pr-10"}
+                  id="email"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={errors.email ? "border-destructive" : ""}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
               </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-            </div>
 
-            <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={errors.password ? "border-destructive pr-10" : "pr-10"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white" disabled={isLoading}>
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
+      <TwoFactorVerifyDialog
+        open={show2FADialog}
+        onSuccess={handle2FASuccess}
+        onCancel={handle2FACancel}
+      />
+    </>
   );
 }
