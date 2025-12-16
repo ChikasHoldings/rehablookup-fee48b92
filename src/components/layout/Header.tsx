@@ -87,13 +87,19 @@ export function Header({
           ? "shadow-md backdrop-blur-md bg-card/95" 
           : "shadow-sm"
       )}>
-        <div className="container flex h-16 items-center justify-between md:h-18">
-          {/* Logo - Bigger on mobile */}
+        <div className={cn(
+          "container flex items-center justify-between transition-all duration-300",
+          isScrolled ? "h-12 md:h-16" : "h-16 md:h-18"
+        )}>
+          {/* Logo - Bigger on mobile, shrinks when scrolled */}
           <Link to="/" className="flex items-center gap-2 group">
             <img 
               src={logo} 
               alt="RehabLookup" 
-              className="h-10 w-auto md:h-8 transition-transform group-hover:scale-105"
+              className={cn(
+                "w-auto transition-all duration-300 group-hover:scale-105",
+                isScrolled ? "h-7 md:h-8" : "h-10 md:h-8"
+              )}
             />
             {variant === "provider" && (
               <span className="text-xs font-medium text-muted-foreground">Providers</span>
