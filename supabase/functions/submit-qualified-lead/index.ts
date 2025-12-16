@@ -879,37 +879,111 @@ async function sendUserConfirmationEmail(
 
 // ============ MAIN HANDLER ============
 const handler = async (req: Request): Promise<Response> => {
+  const requestId = generateRequestId();
+  
+  // Log request method and headers for debugging
+  log(requestId, "INFO", "Request received", { 
+    method: req.method,
+    url: req.url,
+    contentType: req.headers.get("content-type"),
+  });
+
   if (req.method === "OPTIONS") {
+    log(requestId, "INFO", "CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
-  const requestId = generateRequestId();
-  log(requestId, "INFO", "Request received");
+  // Validate request method
+  if (req.method !== "POST") {
+    log(requestId, "WARN", "Invalid request method", { method: req.method });
+    return new Response(
+      JSON.stringify({ error: "Method not allowed", details: `Expected POST, got ${req.method}` }),
+      { status: 405, headers: { "Content-Type": "application/json", ...corsHeaders } }
+    );
+  }
 
   try {
-    const leadData: QualifiedLeadRequest = await req.json();
+    // ============ ENVIRONMENT VALIDATION ============
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      log(requestId, "ERROR", "Missing required environment variables", {
+        hasSupabaseUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey,
+      });
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    log(requestId, "INFO", "Environment check", {
+      hasSupabaseUrl: true,
+      hasServiceKey: true,
+      hasStripeKey: !!stripeKey,
+      hasResendKey: !!resendKey,
+    });
+
+    // ============ PARSE REQUEST BODY ============
+    let leadData: QualifiedLeadRequest;
+    try {
+      const rawBody = await req.text();
+      log(requestId, "INFO", "Raw body received", { length: rawBody.length, preview: rawBody.substring(0, 100) });
+      
+      if (!rawBody || rawBody.trim() === "") {
+        log(requestId, "ERROR", "Empty request body");
+        return new Response(
+          JSON.stringify({ error: "Request body is empty" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      
+      leadData = JSON.parse(rawBody);
+      log(requestId, "INFO", "JSON parsed successfully");
+    } catch (parseError) {
+      const errorMsg = parseError instanceof Error ? parseError.message : String(parseError);
+      log(requestId, "ERROR", "Failed to parse request body", { error: errorMsg });
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON in request body", details: errorMsg }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
     
     log(requestId, "INFO", "Lead data parsed", { 
       facilityId: leadData.facilityId || "none",
       location: leadData.locationCityState,
-      email: leadData.email?.substring(0, 3) + "***"
+      email: leadData.email?.substring(0, 3) + "***",
+      hasName: !!leadData.name,
+      hasPhone: !!leadData.phone,
+      hasUrgency: !!leadData.urgency,
+      hasLevelOfCare: !!leadData.levelOfCare,
     });
 
     // ============ VALIDATION ============
     const requiredFields = ["whoSeekingHelp", "locationZip", "urgency", "levelOfCare", "name", "phone", "email", "preferredContact"];
+    const missingFields: string[] = [];
+    
     for (const field of requiredFields) {
-      if (!leadData[field as keyof QualifiedLeadRequest]) {
-        log(requestId, "WARN", "Missing required field", { field });
-        return new Response(
-          JSON.stringify({ error: `Missing required field: ${field}` }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
+      const value = leadData[field as keyof QualifiedLeadRequest];
+      if (!value || (typeof value === "string" && value.trim() === "")) {
+        missingFields.push(field);
       }
+    }
+    
+    if (missingFields.length > 0) {
+      log(requestId, "WARN", "Missing required fields", { missingFields });
+      return new Response(
+        JSON.stringify({ error: `Missing required fields: ${missingFields.join(", ")}` }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadData.email)) {
-      log(requestId, "WARN", "Invalid email format");
+      log(requestId, "WARN", "Invalid email format", { email: leadData.email?.substring(0, 5) + "***" });
       return new Response(
         JSON.stringify({ error: "Invalid email format" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -919,15 +993,27 @@ const handler = async (req: Request): Promise<Response> => {
     // Validate phone format
     const phoneDigits = leadData.phone.replace(/\D/g, "");
     if (phoneDigits.length < 10) {
-      log(requestId, "WARN", "Invalid phone number");
+      log(requestId, "WARN", "Invalid phone number", { digitCount: phoneDigits.length });
       return new Response(
-        JSON.stringify({ error: "Invalid phone number" }),
+        JSON.stringify({ error: "Invalid phone number - must have at least 10 digits" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    // Validate input lengths to prevent abuse
+    if (leadData.name.length > 200 || leadData.email.length > 255 || (leadData.message && leadData.message.length > 2000)) {
+      log(requestId, "WARN", "Input length exceeded", { 
+        nameLen: leadData.name.length, 
+        emailLen: leadData.email.length,
+        messageLen: leadData.message?.length || 0 
+      });
+      return new Response(
+        JSON.stringify({ error: "Input length exceeded maximum allowed" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    log(requestId, "INFO", "Validation passed - creating Supabase client");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // ============ EMAIL VERIFICATION CHECK ============
@@ -1319,10 +1405,36 @@ const handler = async (req: Request): Promise<Response> => {
 
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    log(requestId, "ERROR", "Request failed", { error: errorMsg });
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    log(requestId, "ERROR", "Request failed with exception", { 
+      error: errorMsg,
+      stack: errorStack?.substring(0, 500),
+      type: error instanceof Error ? error.constructor.name : typeof error,
+    });
+    
+    // Determine appropriate error response based on error type
+    let statusCode = 500;
+    let userMessage = "Failed to submit request. Please try again.";
+    
+    if (errorMsg.includes("duplicate") || errorMsg.includes("unique constraint")) {
+      statusCode = 409;
+      userMessage = "A similar request was already submitted recently.";
+    } else if (errorMsg.includes("timeout") || errorMsg.includes("TIMEOUT")) {
+      statusCode = 504;
+      userMessage = "Request timed out. Please try again.";
+    } else if (errorMsg.includes("rate limit") || errorMsg.includes("too many")) {
+      statusCode = 429;
+      userMessage = "Too many requests. Please wait a moment and try again.";
+    }
+    
     return new Response(
-      JSON.stringify({ error: "Failed to submit request" }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      JSON.stringify({ 
+        error: userMessage,
+        requestId: requestId, // Include for support reference
+        timestamp: new Date().toISOString(),
+      }),
+      { status: statusCode, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };
