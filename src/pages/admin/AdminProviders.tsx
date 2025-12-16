@@ -35,7 +35,9 @@ import {
   AlertTriangle,
   X,
   ZoomIn,
+  History,
 } from "lucide-react";
+import { ProviderActivityTimeline } from "@/components/admin/ProviderActivityTimeline";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -1052,6 +1054,10 @@ export default function AdminProviders() {
                   Leads
                   <Badge variant="secondary" className="ml-2 h-5">{providerLeads?.length || 0}</Badge>
                 </TabsTrigger>
+                <TabsTrigger value="activity" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
+                  <History className="h-4 w-4 mr-2" />
+                  Activity
+                </TabsTrigger>
                 <TabsTrigger value="subscription" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none bg-transparent px-1 pb-3">
                   <CreditCard className="h-4 w-4 mr-2" />
                   Subscription
@@ -1460,6 +1466,16 @@ export default function AdminProviders() {
                     <Inbox className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
                     <p className="text-muted-foreground">No leads received yet</p>
                   </div>
+                )}
+              </TabsContent>
+
+              {/* Activity Tab */}
+              <TabsContent value="activity" className="m-0 h-full data-[state=inactive]:hidden">
+                {selectedProvider && (
+                  <ProviderActivityTimeline
+                    facilityId={selectedProvider.id}
+                    userId={selectedProvider.user_id}
+                  />
                 )}
               </TabsContent>
 
