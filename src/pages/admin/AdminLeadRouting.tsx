@@ -15,6 +15,8 @@ import {
   ChevronDown,
   ChevronUp,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +49,8 @@ import {
 } from "@/components/ui/collapsible";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+
+const ITEMS_PER_PAGE = 20;
 
 interface RoutingLog {
   id: string;
@@ -87,6 +91,8 @@ export default function AdminLeadRouting() {
   });
   const [routingSource, setRoutingSource] = useState<string>("all");
   const [resultType, setResultType] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
 
   // Fetch routing statistics
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -154,12 +160,50 @@ export default function AdminLeadRouting() {
     },
   });
 
-  // Fetch routing logs
-  const { data: logs, isLoading: logsLoading, refetch } = useQuery({
-    queryKey: ["routing-logs-detailed", dateRange, routingSource, resultType],
+  // Fetch total count for pagination
+  const { data: totalCount } = useQuery({
+    queryKey: ["routing-logs-count", dateRange, routingSource, resultType],
     queryFn: async () => {
       const fromDate = dateRange.from?.toISOString() || subDays(new Date(), 30).toISOString();
       const toDate = dateRange.to?.toISOString() || new Date().toISOString();
+
+      let query = supabase
+        .from("lead_routing_logs")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", fromDate)
+        .lte("created_at", toDate);
+
+      if (routingSource !== "all") {
+        if (routingSource === "reroute") {
+          query = query.eq("routing_source", "reroute_stale");
+        } else {
+          query = query.neq("routing_source", "reroute_stale");
+        }
+      }
+
+      if (resultType !== "all") {
+        if (resultType === "success") {
+          query = query.not("assigned_provider_id", "is", null);
+        } else {
+          query = query.is("assigned_provider_id", null);
+        }
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch routing logs with pagination
+  const { data: logs, isLoading: logsLoading, refetch } = useQuery({
+    queryKey: ["routing-logs-detailed", dateRange, routingSource, resultType, currentPage, itemsPerPage],
+    queryFn: async () => {
+      const fromDate = dateRange.from?.toISOString() || subDays(new Date(), 30).toISOString();
+      const toDate = dateRange.to?.toISOString() || new Date().toISOString();
+
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
 
       let query = supabase
         .from("lead_routing_logs")
@@ -172,7 +216,7 @@ export default function AdminLeadRouting() {
         .gte("created_at", fromDate)
         .lte("created_at", toDate)
         .order("created_at", { ascending: false })
-        .limit(100);
+        .range(from, to);
 
       if (routingSource !== "all") {
         if (routingSource === "reroute") {
@@ -196,11 +240,19 @@ export default function AdminLeadRouting() {
     },
   });
 
+  const totalPages = Math.ceil((totalCount || 0) / itemsPerPage);
+
+  const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
+    setter(value);
+    setCurrentPage(1);
+  };
+
   const handlePresetClick = (days: number) => {
     setDateRange({
       from: subDays(new Date(), days),
       to: new Date(),
     });
+    setCurrentPage(1);
   };
 
   return (
@@ -374,7 +426,7 @@ export default function AdminLeadRouting() {
               </Popover>
 
               {/* Source Filter */}
-              <Select value={routingSource} onValueChange={setRoutingSource}>
+              <Select value={routingSource} onValueChange={handleFilterChange(setRoutingSource)}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Source" />
                 </SelectTrigger>
@@ -386,7 +438,7 @@ export default function AdminLeadRouting() {
               </Select>
 
               {/* Result Filter */}
-              <Select value={resultType} onValueChange={setResultType}>
+              <Select value={resultType} onValueChange={handleFilterChange(setResultType)}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Result" />
                 </SelectTrigger>
@@ -407,29 +459,145 @@ export default function AdminLeadRouting() {
               ))}
             </div>
           ) : logs && logs.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-8"></TableHead>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Lead</TableHead>
-                    <TableHead>Original Provider</TableHead>
-                    <TableHead className="text-center">→</TableHead>
-                    <TableHead>Assigned Provider</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Capacity</TableHead>
-                    <TableHead>Reason</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logs.map((log) => (
-                    <RoutingLogRow key={log.id} log={log} />
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-8"></TableHead>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>Lead</TableHead>
+                      <TableHead>Original Provider</TableHead>
+                      <TableHead className="text-center">→</TableHead>
+                      <TableHead>Assigned Provider</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Capacity</TableHead>
+                      <TableHead>Reason</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.map((log) => (
+                      <RoutingLogRow key={log.id} log={log} />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Showing</span>
+                    <Select 
+                      value={itemsPerPage.toString()} 
+                      onValueChange={(value) => {
+                        setItemsPerPage(Number(value));
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-[70px] h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span>of {totalCount} results</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {totalPages <= 7 ? (
+                        [...Array(totalPages)].map((_, i) => (
+                          <Button
+                            key={i + 1}
+                            variant={currentPage === i + 1 ? "default" : "outline"}
+                            size="sm"
+                            className="w-8 h-8 p-0"
+                            onClick={() => setCurrentPage(i + 1)}
+                          >
+                            {i + 1}
+                          </Button>
+                        ))
+                      ) : (
+                        <>
+                          {currentPage > 3 && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-8 h-8 p-0"
+                                onClick={() => setCurrentPage(1)}
+                              >
+                                1
+                              </Button>
+                              {currentPage > 4 && <span className="px-1 text-muted-foreground">...</span>}
+                            </>
+                          )}
+                          {[...Array(5)].map((_, i) => {
+                            let pageNum: number;
+                            if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+                            if (pageNum < 1 || pageNum > totalPages) return null;
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "outline"}
+                                size="sm"
+                                className="w-8 h-8 p-0"
+                                onClick={() => setCurrentPage(pageNum)}
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          })}
+                          {currentPage < totalPages - 2 && (
+                            <>
+                              {currentPage < totalPages - 3 && <span className="px-1 text-muted-foreground">...</span>}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-8 h-8 p-0"
+                                onClick={() => setCurrentPage(totalPages)}
+                              >
+                                {totalPages}
+                              </Button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-12">
               <RotateCcw className="h-12 w-12 text-slate-300 mx-auto mb-4" />
