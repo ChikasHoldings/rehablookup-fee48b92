@@ -666,16 +666,61 @@ export default function ProviderDashboardPage() {
                 <p className="text-xs text-muted-foreground">Families interested in your facility</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" asChild className="text-xs">
-              <Link to="/provider/leads">
-                View All
-                <ArrowRight className="ml-1 h-3 w-3" />
-              </Link>
-            </Button>
+            {planKey !== "basic" && (
+              <Button variant="ghost" size="sm" asChild className="text-xs">
+                <Link to="/provider/leads">
+                  View All
+                  <ArrowRight className="ml-1 h-3 w-3" />
+                </Link>
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          {leadsLoading ? (
+          {planKey === "basic" ? (
+            <div className="relative">
+              {/* Blurred placeholder leads */}
+              <div className="space-y-2 blur-sm pointer-events-none select-none" aria-hidden="true">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-semibold text-primary">J</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground text-sm">John D.</p>
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">New</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                        <span className="flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          (555) 123-4567
+                        </span>
+                        <span>•</span>
+                        <span>2 hours ago</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Upgrade overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-[2px] rounded-lg">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <p className="font-semibold text-foreground text-sm">Upgrade to View Leads</p>
+                <p className="text-xs text-muted-foreground mt-1 text-center max-w-xs">
+                  Contact details are hidden on the Basic plan. Upgrade to see and respond to inquiries.
+                </p>
+                <Button asChild size="sm" className="mt-4 gap-2">
+                  <Link to="/provider/billing">
+                    Upgrade Now
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ) : leadsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border">
