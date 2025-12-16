@@ -6,6 +6,7 @@ import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminErrorBoundary } from "./AdminErrorBoundary";
 import { ForcePasswordChangeDialog } from "./ForcePasswordChangeDialog";
+import { TwoFactorEnforcementDialog } from "./TwoFactorEnforcementDialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,8 @@ export function AdminShell() {
     canAccessRoute, 
     forcePasswordChange,
     clearForcePasswordChange,
+    requireMfaSetup,
+    completeMfaSetup,
     isLoading, 
     logout 
   } = useAdminAuth();
@@ -92,6 +95,12 @@ export function AdminShell() {
       <ForcePasswordChangeDialog 
         open={forcePasswordChange} 
         onPasswordChanged={clearForcePasswordChange} 
+      />
+
+      {/* 2FA enforcement dialog - shown after password change if needed */}
+      <TwoFactorEnforcementDialog
+        open={requireMfaSetup && !forcePasswordChange}
+        onSuccess={completeMfaSetup}
       />
       
       <MemoizedHeader userEmail={user?.email} onLogout={logout} />

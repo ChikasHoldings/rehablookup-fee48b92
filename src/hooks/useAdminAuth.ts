@@ -26,6 +26,7 @@ interface AdminProfile {
   status: string;
   display_name: string | null;
   avatar_url: string | null;
+  mfa_enabled: boolean | null;
 }
 
 export function useAdminAuth() {
@@ -35,6 +36,7 @@ export function useAdminAuth() {
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
   const [forcePasswordChange, setForcePasswordChange] = useState(false);
+  const [requireMfaSetup, setRequireMfaSetup] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -102,7 +104,7 @@ export function useAdminAuth() {
     try {
       const { data, error } = await supabase
         .from("admin_user_profiles")
-        .select("force_password_change, status, display_name, avatar_url")
+        .select("force_password_change, status, display_name, avatar_url, mfa_enabled")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -117,6 +119,37 @@ export function useAdminAuth() {
       return null;
     }
   }, []);
+
+  const checkMfaStatus = useCallback(async (): Promise<boolean> => {
+    try {
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      return factorsData?.totp?.some(f => f.status === 'verified') ?? false;
+    } catch (err) {
+      console.error("Error checking MFA status:", err);
+      return false;
+    }
+  }, []);
+
+  const completeMfaSetup = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from("admin_user_profiles")
+        .update({ mfa_enabled: true })
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error updating MFA status:", error);
+        return;
+      }
+
+      setRequireMfaSetup(false);
+      setAdminProfile((prev) => prev ? { ...prev, mfa_enabled: true } : null);
+    } catch (err) {
+      console.error("Exception updating MFA status:", err);
+    }
+  }, [user]);
 
   const clearForcePasswordChange = useCallback(async () => {
     if (!user) return;
@@ -174,6 +207,7 @@ export function useAdminAuth() {
           setPermissions({});
           setAdminProfile(null);
           setForcePasswordChange(false);
+          setRequireMfaSetup(false);
           setIsLoading(false);
           navigate("/admin-login", { replace: true });
           return;
@@ -181,11 +215,12 @@ export function useAdminAuth() {
 
         setTimeout(async () => {
           try {
-            const [adminStatus, superAdminStatus, userPermissions, profile] = await Promise.all([
+            const [adminStatus, superAdminStatus, userPermissions, profile, hasMfa] = await Promise.all([
               checkAdminStatus(session.user.id),
               checkSuperAdminStatus(session.user.id),
               fetchPermissions(session.user.id),
               fetchAdminProfile(session.user.id),
+              checkMfaStatus(),
             ]);
             
             setIsAdmin(adminStatus);
@@ -193,6 +228,8 @@ export function useAdminAuth() {
             setPermissions(userPermissions);
             setAdminProfile(profile);
             setForcePasswordChange(profile?.force_password_change === true);
+            // Require MFA setup if admin but no verified TOTP factor
+            setRequireMfaSetup(adminStatus && !hasMfa);
             
             if (!adminStatus) {
               navigate("/", { replace: true });
@@ -219,11 +256,12 @@ export function useAdminAuth() {
 
       setTimeout(async () => {
         try {
-          const [adminStatus, superAdminStatus, userPermissions, profile] = await Promise.all([
+          const [adminStatus, superAdminStatus, userPermissions, profile, hasMfa] = await Promise.all([
             checkAdminStatus(session.user.id),
             checkSuperAdminStatus(session.user.id),
             fetchPermissions(session.user.id),
             fetchAdminProfile(session.user.id),
+            checkMfaStatus(),
           ]);
           
           setIsAdmin(adminStatus);
@@ -231,6 +269,8 @@ export function useAdminAuth() {
           setPermissions(userPermissions);
           setAdminProfile(profile);
           setForcePasswordChange(profile?.force_password_change === true);
+          // Require MFA setup if admin but no verified TOTP factor
+          setRequireMfaSetup(adminStatus && !hasMfa);
           
           if (!adminStatus) {
             navigate("/", { replace: true });
@@ -249,7 +289,7 @@ export function useAdminAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, checkAdminStatus, checkSuperAdminStatus, fetchPermissions, fetchAdminProfile]);
+  }, [navigate, checkAdminStatus, checkSuperAdminStatus, fetchPermissions, fetchAdminProfile, checkMfaStatus]);
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -264,6 +304,8 @@ export function useAdminAuth() {
     adminProfile,
     forcePasswordChange,
     clearForcePasswordChange,
+    requireMfaSetup,
+    completeMfaSetup,
     hasPermission, 
     canAccessRoute, 
     isLoading, 
