@@ -20,13 +20,14 @@ import {
   UserCheck,
   XCircle,
   CalendarIcon,
+  PieChart,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -66,6 +67,30 @@ import { calculateLeadScore, getScoreColor, type LeadScoringInput } from "@/lib/
 import { LeadProfileModal } from "@/components/leads/LeadProfileModal";
 import { RoutingLogsTable } from "@/components/admin/RoutingLogsTable";
 import { cn } from "@/lib/utils";
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
+
+// Source label mapping
+const SOURCE_LABELS: Record<string, string> = {
+  direct: "Direct",
+  request_help: "Request Help",
+  provider_profile_direct: "Provider Profile",
+  request_info_modal: "Request Info Modal",
+  social_landing: "Social Ads",
+  ads_landing: "Google Ads",
+  organic: "Organic",
+  referral: "Referral",
+};
+
+const SOURCE_COLORS = [
+  "hsl(221, 83%, 53%)", // blue
+  "hsl(142, 71%, 45%)", // green
+  "hsl(262, 83%, 58%)", // purple
+  "hsl(24, 95%, 53%)",  // orange
+  "hsl(340, 82%, 52%)", // pink
+  "hsl(47, 96%, 53%)",  // yellow
+  "hsl(174, 72%, 46%)", // teal
+  "hsl(0, 72%, 51%)",   // red
+];
 
 type DateRange = {
   from: Date | undefined;
@@ -469,6 +494,44 @@ export default function AdminLeads() {
     },
   });
 
+  // Fetch lead source breakdown (all leads, respects date filter)
+  const { data: sourceBreakdown } = useQuery({
+    queryKey: ["admin-leads-source-breakdown", dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryFn: async () => {
+      let query = supabase
+        .from("leads")
+        .select("source");
+
+      // Date range filter
+      if (dateRange.from) {
+        query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+      }
+      if (dateRange.to) {
+        query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Count by source
+      const counts: Record<string, number> = {};
+      (data || []).forEach((lead) => {
+        const source = lead.source || "direct";
+        counts[source] = (counts[source] || 0) + 1;
+      });
+
+      // Convert to chart format
+      return Object.entries(counts)
+        .map(([source, count], index) => ({
+          name: SOURCE_LABELS[source] || source,
+          value: count,
+          source,
+          color: SOURCE_COLORS[index % SOURCE_COLORS.length],
+        }))
+        .sort((a, b) => b.value - a.value);
+    },
+  });
+
   const facilitiesMap = useMemo(() => {
     if (!facilities) return new Map<string, Facility>();
     return new Map(facilities.map(f => [f.id, f]));
@@ -502,6 +565,10 @@ export default function AdminLeads() {
       qualified,
     };
   }, [leads]);
+
+  const totalSourceLeads = useMemo(() => {
+    return (sourceBreakdown || []).reduce((sum, item) => sum + item.value, 0);
+  }, [sourceBreakdown]);
 
   return (
     <div className="space-y-6">
@@ -570,6 +637,98 @@ export default function AdminLeads() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Lead Source Breakdown Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <PieChart className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-lg">Lead Sources</CardTitle>
+          </div>
+          <CardDescription>
+            Breakdown of leads by acquisition source {dateRange.from || dateRange.to ? "(filtered by date)" : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Pie Chart */}
+            <div className="h-[250px]">
+              {sourceBreakdown && sourceBreakdown.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={sourceBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {sourceBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      formatter={(value: number, name: string) => [
+                        `${value} leads (${((value / totalSourceLeads) * 100).toFixed(1)}%)`,
+                        name
+                      ]}
+                    />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No lead data available
+                </div>
+              )}
+            </div>
+            {/* Source List */}
+            <div className="space-y-3">
+              {sourceBreakdown && sourceBreakdown.length > 0 ? (
+                sourceBreakdown.map((source, index) => {
+                  const percentage = totalSourceLeads > 0 ? (source.value / totalSourceLeads) * 100 : 0;
+                  return (
+                    <div key={source.source} className="flex items-center gap-3">
+                      <div 
+                        className="w-3 h-3 rounded-full shrink-0" 
+                        style={{ backgroundColor: source.color }} 
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium truncate">{source.name}</span>
+                          <span className="text-sm text-muted-foreground ml-2">
+                            {source.value} ({percentage.toFixed(1)}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-1.5">
+                          <div 
+                            className="h-1.5 rounded-full transition-all" 
+                            style={{ width: `${percentage}%`, backgroundColor: source.color }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  No source data available
+                </div>
+              )}
+              {sourceBreakdown && sourceBreakdown.length > 0 && (
+                <div className="pt-3 border-t">
+                  <div className="flex items-center justify-between text-sm font-semibold">
+                    <span>Total Leads</span>
+                    <span>{totalSourceLeads}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>
