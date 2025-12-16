@@ -105,8 +105,8 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <nav className="p-3 flex-1">
-        <ul className="space-y-1">
+      <nav className="p-2 sm:p-3 flex-1">
+        <ul className="space-y-0.5 sm:space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;
@@ -119,31 +119,31 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                   to={item.href}
                   onClick={onNavigate}
                   className={cn(
-                    "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                    "group flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-sm font-medium transition-all duration-200",
                     isActive 
                       ? "bg-primary text-white shadow-sm" 
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <div className={cn(
-                    "flex items-center justify-center h-8 w-8 rounded-lg transition-colors relative",
+                    "flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 rounded-md sm:rounded-lg transition-colors relative",
                     isActive 
                       ? "bg-white/20" 
                       : "bg-muted group-hover:bg-background"
                   )}>
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {showBadge && (
-                      <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                      <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 sm:h-4 sm:min-w-4 px-0.5 sm:px-1 flex items-center justify-center rounded-full bg-destructive text-[9px] sm:text-[10px] font-bold text-white">
                         {newLeadsCount > 99 ? "99+" : newLeadsCount}
                       </span>
                     )}
                   </div>
-                  <span className="truncate flex-1">{item.label}</span>
+                  <span className="truncate flex-1 text-xs sm:text-sm">{item.label}</span>
                   {showBadge && (
                     <Badge 
                       variant="secondary" 
                       className={cn(
-                        "h-5 px-1.5 text-[10px] font-semibold",
+                        "h-4 sm:h-5 px-1 sm:px-1.5 text-[9px] sm:text-[10px] font-semibold",
                         isActive 
                           ? "bg-white/20 text-white" 
                           : "bg-primary/10 text-primary"
@@ -160,24 +160,24 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
       </nav>
 
       {/* Plan Card */}
-      <div className="p-3 border-t border-border">
+      <div className="p-2 sm:p-3 border-t border-border">
         <div className={cn(
-          "rounded-xl p-4 transition-all",
+          "rounded-lg sm:rounded-xl p-3 sm:p-4 transition-all",
           isFeatured 
             ? "bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20" 
             : "bg-gradient-to-br from-primary/5 to-primary/10"
         )}>
           <div className="flex items-center gap-2 mb-2">
             {isFeatured ? (
-              <Sparkles className="h-4 w-4 text-amber-500" />
+              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" />
             ) : (
-              <Zap className="h-4 w-4 text-primary" />
+              <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
             )}
             <span className="text-xs font-semibold text-foreground">
               {isLoading ? "Loading..." : planDetails.name}
             </span>
             {isFeatured && (
-              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-amber-500/20 text-amber-600 border-0">
+              <Badge variant="secondary" className="text-[9px] sm:text-[10px] h-3.5 sm:h-4 px-1 sm:px-1.5 bg-amber-500/20 text-amber-600 border-0">
                 Active
               </Badge>
             )}
@@ -185,7 +185,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
           
           {!isFeatured && (
             <>
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-[11px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 line-clamp-2">
                 {isBasic 
                   ? "Upgrade to start receiving exclusive leads" 
                   : "Get priority access & more exclusive leads"
@@ -194,7 +194,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
               <Button 
                 size="sm" 
                 className={cn(
-                  "w-full h-8 text-xs font-medium gap-1.5",
+                  "w-full h-7 sm:h-8 text-[11px] sm:text-xs font-medium gap-1 sm:gap-1.5",
                   isBasic 
                     ? "bg-primary hover:bg-primary/90 text-white" 
                     : "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
@@ -207,7 +207,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                 ) : (
                   <>
                     <Sparkles className="h-3 w-3" />
-                    {isBasic ? "View Plans" : "Upgrade to Featured"}
+                    {isBasic ? "View Plans" : "Upgrade"}
                   </>
                 )}
               </Button>
@@ -215,7 +215,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
           )}
           
           {isFeatured && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-2">
               You're on our top-tier plan with maximum visibility.
             </p>
           )}
