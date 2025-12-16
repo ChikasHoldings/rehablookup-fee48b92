@@ -1121,6 +1121,33 @@ export type Database = {
           },
         ]
       }
+      rate_limit_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          identifier: string
+          metadata: Json | null
+          success: boolean | null
+        }
+        Insert: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          identifier: string
+          metadata?: Json | null
+          success?: boolean | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          identifier?: string
+          metadata?: Json | null
+          success?: boolean | null
+        }
+        Relationships: []
+      }
       reply_email_verification_codes: {
         Row: {
           attempts: number | null
@@ -1434,6 +1461,15 @@ export type Database = {
       }
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          p_action_type?: string
+          p_identifier: string
+          p_max_attempts?: number
+          p_window_minutes?: number
+        }
+        Returns: Json
+      }
       has_admin_permission: {
         Args: { _permission_key: string; _user_id: string }
         Returns: boolean
@@ -1446,6 +1482,15 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_rate_limit_event: {
+        Args: {
+          p_action_type?: string
+          p_identifier: string
+          p_metadata?: Json
+          p_success?: boolean
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator"
