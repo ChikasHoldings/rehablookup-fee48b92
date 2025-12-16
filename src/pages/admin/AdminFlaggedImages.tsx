@@ -14,6 +14,7 @@ import {
   X,
   Filter,
   ExternalLink,
+  ImageOff,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -58,6 +69,7 @@ type FlaggedImage = {
     city: string;
     state: string;
     logo_url: string | null;
+    gallery_urls: string[] | null;
     slug: string | null;
   };
 };
@@ -78,6 +90,7 @@ export default function AdminFlaggedImages() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<FlaggedImage | null>(null);
   const [showResolveDialog, setShowResolveDialog] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [resolutionNotes, setResolutionNotes] = useState("");
 
   // Invalidate all flagged images queries helper
@@ -119,7 +132,7 @@ export default function AdminFlaggedImages() {
         .from("flagged_images")
         .select(`
           *,
-          facility:facilities(name, city, state, logo_url, slug)
+          facility:facilities(name, city, state, logo_url, gallery_urls, slug)
         `)
         .order("flagged_at", { ascending: false });
 
@@ -240,10 +253,84 @@ export default function AdminFlaggedImages() {
     },
   });
 
+  // Remove image from facility profile
+  const removeImage = useMutation({
+    mutationFn: async () => {
+      if (!selectedImage) throw new Error("No image selected");
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Determine what to update based on image type
+      if (selectedImage.image_type === "logo") {
+        // Remove logo
+        const { error } = await supabase
+          .from("facilities")
+          .update({ logo_url: null })
+          .eq("id", selectedImage.facility_id);
+
+        if (error) throw error;
+      } else if (selectedImage.image_type === "gallery") {
+        // Remove from gallery array
+        const currentGallery = selectedImage.facility?.gallery_urls || [];
+        const updatedGallery = currentGallery.filter(
+          (url) => url !== selectedImage.image_url
+        );
+
+        const { error } = await supabase
+          .from("facilities")
+          .update({ gallery_urls: updatedGallery })
+          .eq("id", selectedImage.facility_id);
+
+        if (error) throw error;
+      }
+
+      // Mark the flag as resolved with removal note
+      await supabase
+        .from("flagged_images")
+        .update({
+          resolved: true,
+          resolved_at: new Date().toISOString(),
+          resolved_by: user.id,
+          resolution_notes: "Image removed from facility profile by admin",
+        })
+        .eq("id", selectedImage.id);
+
+      // Log admin action
+      await supabase.from("admin_audit_log").insert({
+        admin_user_id: user.id,
+        action_type: "remove_flagged_image",
+        target_type: "facility",
+        target_id: selectedImage.facility_id,
+        details: {
+          flagged_image_id: selectedImage.id,
+          image_type: selectedImage.image_type,
+          image_url: selectedImage.image_url,
+          reason: selectedImage.reason,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Image removed from facility profile");
+      setShowRemoveDialog(false);
+      setSelectedImage(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-flagged-images"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-flagged-images-counts"] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to remove image: ${error.message}`);
+    },
+  });
+
   const openResolveDialog = (image: FlaggedImage) => {
     setSelectedImage(image);
     setResolutionNotes("");
     setShowResolveDialog(true);
+  };
+
+  const openRemoveDialog = (image: FlaggedImage) => {
+    setSelectedImage(image);
+    setShowRemoveDialog(true);
   };
 
   return (
@@ -426,33 +513,48 @@ export default function AdminFlaggedImages() {
                     )}
 
                     {/* Actions */}
-                    <div className="flex gap-2 pt-2">
-                      {image.facility?.slug && (
-                        <Button size="sm" variant="outline" asChild className="flex-1">
-                          <a href={`/center/${image.facility.slug}`} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-4 w-4 mr-1" />
-                            View Profile
-                          </a>
-                        </Button>
-                      )}
-                      {!image.resolved ? (
+                    <div className="flex flex-col gap-2 pt-2">
+                      <div className="flex gap-2">
+                        {image.facility?.slug && (
+                          <Button size="sm" variant="outline" asChild className="flex-1">
+                            <a href={`/center/${image.facility.slug}`} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              View
+                            </a>
+                          </Button>
+                        )}
+                        {!image.resolved ? (
+                          <>
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                              onClick={() => openResolveDialog(image)}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Resolve
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 text-destructive"
+                            onClick={() => deleteFlag.mutate(image.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                      {!image.resolved && (
                         <Button
                           size="sm"
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                          onClick={() => openResolveDialog(image)}
+                          variant="destructive"
+                          className="w-full"
+                          onClick={() => openRemoveDialog(image)}
                         >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Resolve
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-destructive"
-                          onClick={() => deleteFlag.mutate(image.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
+                          <ImageOff className="h-4 w-4 mr-1" />
+                          Remove from Profile
                         </Button>
                       )}
                     </div>
@@ -556,6 +658,52 @@ export default function AdminFlaggedImages() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Remove Image Confirmation Dialog */}
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <ImageOff className="h-5 w-5" />
+              Remove Image from Profile
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this {selectedImage?.image_type === "logo" ? "logo" : "gallery image"} from{" "}
+              <span className="font-medium">{selectedImage?.facility?.name}</span>'s profile and mark this flag as resolved.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {selectedImage && (
+            <div className="flex justify-center py-4">
+              <img
+                src={selectedImage.image_url}
+                alt="Image to remove"
+                className="max-w-48 max-h-48 object-contain rounded-lg border"
+              />
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => removeImage.mutate()}
+              disabled={removeImage.isPending}
+            >
+              {removeImage.isPending ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                <>
+                  <ImageOff className="h-4 w-4 mr-2" />
+                  Remove Image
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
