@@ -118,14 +118,23 @@ export function StepContactVerification({
       });
     } catch (error: any) {
       const errorMessage = error.message || "Please try again";
+      const errorCode = error.errorCode;
       
-      if (errorMessage.includes("Too many")) {
+      if (errorMessage.includes("Too many") || errorCode === "RATE_LIMITED") {
         setResendCount(3); // Max out resends
+      }
+      
+      // Show specific guidance based on error type
+      let description = errorMessage;
+      if (errorCode === "INVALID_EMAIL") {
+        description = "Please double-check your email address is correct.";
+      } else if (errorCode === "EMAIL_BLOCKED") {
+        description = "Try using a different email address (Gmail, Outlook, etc.).";
       }
       
       toast({
         title: "Failed to send code",
-        description: errorMessage,
+        description,
         variant: "destructive",
       });
     } finally {

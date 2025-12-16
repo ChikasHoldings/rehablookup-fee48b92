@@ -51,10 +51,22 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
       if (fnError) throw fnError;
 
       if (data?.error) {
-        setError(data.error);
+        const errorCode = data?.errorCode;
+        let description = data.error;
+        
+        // Provide specific guidance based on error type
+        if (errorCode === "INVALID_EMAIL") {
+          description = "Please go back and check your email address is correct.";
+        } else if (errorCode === "EMAIL_BLOCKED") {
+          description = "This email cannot receive messages. Please use a different email address.";
+        } else if (errorCode === "RATE_LIMITED") {
+          description = "Too many attempts. Please wait a few minutes before trying again.";
+        }
+        
+        setError(description);
         toast({
-          title: "Error",
-          description: data.error,
+          title: "Unable to send code",
+          description,
           variant: "destructive",
         });
       } else {
