@@ -389,16 +389,16 @@ export function RetentionDashboard() {
                       <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">Delivered</p>
                     </div>
-                    <p className="text-lg font-semibold">{data?.metrics.emailTracking.delivered || 0}</p>
+                    <p className="text-lg font-semibold">{data?.metrics?.emailTracking?.delivered ?? 0}</p>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-muted/50">
                     <div className="flex items-center justify-center gap-1 mb-1">
                       <Eye className="h-3.5 w-3.5 text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">Opened</p>
                     </div>
-                    <p className="text-lg font-semibold">{data?.metrics.emailTracking.opened || 0}</p>
+                    <p className="text-lg font-semibold">{data?.metrics?.emailTracking?.opened ?? 0}</p>
                     <p className="text-xs text-green-600 font-medium">
-                      {(data?.metrics.emailTracking.openRate || 0).toFixed(1)}% rate
+                      {(data?.metrics?.emailTracking?.openRate ?? 0).toFixed(1)}% rate
                     </p>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-muted/50">
@@ -406,9 +406,9 @@ export function RetentionDashboard() {
                       <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">Clicked</p>
                     </div>
-                    <p className="text-lg font-semibold">{data?.metrics.emailTracking.clicked || 0}</p>
+                    <p className="text-lg font-semibold">{data?.metrics?.emailTracking?.clicked ?? 0}</p>
                     <p className="text-xs text-blue-600 font-medium">
-                      {(data?.metrics.emailTracking.clickRate || 0).toFixed(1)}% CTR
+                      {(data?.metrics?.emailTracking?.clickRate ?? 0).toFixed(1)}% CTR
                     </p>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-muted/50">
@@ -416,7 +416,7 @@ export function RetentionDashboard() {
                       <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">Bounced</p>
                     </div>
-                    <p className="text-lg font-semibold">{data?.metrics.emailTracking.bounced || 0}</p>
+                    <p className="text-lg font-semibold">{data?.metrics?.emailTracking?.bounced ?? 0}</p>
                   </div>
                 </div>
               </CardContent>
