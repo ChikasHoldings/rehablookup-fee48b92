@@ -5,6 +5,7 @@ import { MapPin, Phone, Star, ArrowRight, Shield, Crown } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TreatmentCenterCardProps {
   center: TreatmentCenter & { 
@@ -38,6 +39,19 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
   
   // Show featured badge if they have a Featured subscription
   const showFeaturedBadge = center.hasFeaturedSubscription || featured;
+
+  // Track click for featured facilities
+  const handleFeaturedClick = async () => {
+    if (showFeaturedBadge && center.isFromDatabase && center.id) {
+      try {
+        await supabase.functions.invoke("track-featured-analytics", {
+          body: { facility_id: center.id, event_type: "click" }
+        });
+      } catch (error) {
+        console.error("Failed to track featured click:", error);
+      }
+    }
+  };
 
   return (
     <article
@@ -146,6 +160,7 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
             to={detailsUrl} 
             state={{ fromSearch: true }}
             className="flex-1"
+            onClick={handleFeaturedClick}
           >
             <Button 
               variant="default" 

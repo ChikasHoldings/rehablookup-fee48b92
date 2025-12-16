@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { FeaturedSettingsTab } from "@/components/admin/FeaturedSettingsTab";
+import { FeaturedAnalyticsDashboard } from "@/components/admin/FeaturedAnalyticsDashboard";
 
 type Facility = {
   id: string;
@@ -525,7 +526,7 @@ export default function AdminFeatured() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 max-w-xl">
+        <TabsList className="grid w-full grid-cols-5 max-w-2xl">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             Overview
@@ -533,6 +534,10 @@ export default function AdminFeatured() {
           <TabsTrigger value="auto-featured" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             Auto-Featured
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Analytics
           </TabsTrigger>
           <TabsTrigger value="legacy" className="flex items-center gap-2">
             <Star className="h-4 w-4" />
@@ -743,6 +748,11 @@ export default function AdminFeatured() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-6">
+          <FeaturedAnalyticsDashboard />
         </TabsContent>
 
         {/* Legacy Tab */}
