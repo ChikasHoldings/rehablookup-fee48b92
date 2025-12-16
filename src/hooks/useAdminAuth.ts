@@ -10,6 +10,7 @@ const routePermissionMap: Record<string, string> = {
   "/admin/analytics": "analytics",
   "/admin/providers": "providers",
   "/admin/leads": "leads",
+  "/admin/lead-routing": "leads",
   "/admin/subscriptions": "subscriptions",
   "/admin/featured": "featured",
   "/admin/users": "users",

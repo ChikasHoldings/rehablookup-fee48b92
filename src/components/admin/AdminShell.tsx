@@ -4,6 +4,7 @@ import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, Cli
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
+import { AdminErrorBoundary } from "./AdminErrorBoundary";
 import { ForcePasswordChangeDialog } from "./ForcePasswordChangeDialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -102,7 +103,9 @@ export function AdminShell() {
           ref={mainContentRef}
           className="flex-1 overflow-y-auto h-[calc(100vh-4rem)] p-4 lg:p-6"
         >
-          {hasRouteAccess ? <Outlet /> : <AccessDenied />}
+          <AdminErrorBoundary>
+            {hasRouteAccess ? <Outlet /> : <AccessDenied />}
+          </AdminErrorBoundary>
         </main>
       </div>
 
