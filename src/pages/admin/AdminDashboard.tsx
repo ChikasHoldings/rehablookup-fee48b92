@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useCallback } from "react";
 import {
   Building2,
@@ -16,6 +16,9 @@ import {
   DollarSign,
   ShieldCheck,
   UserPlus,
+  Sparkles,
+  ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +40,7 @@ interface RevenueStats {
 
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Invalidate all dashboard queries
   const invalidateDashboard = useCallback(() => {
@@ -44,6 +48,7 @@ export default function AdminDashboard() {
     queryClient.invalidateQueries({ queryKey: ["admin-lead-stats"] });
     queryClient.invalidateQueries({ queryKey: ["admin-top-cities"] });
     queryClient.invalidateQueries({ queryKey: ["admin-recent-leads"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-revenue-stats"] });
   }, [queryClient]);
 
   // Real-time subscriptions - always active
@@ -166,6 +171,12 @@ export default function AdminDashboard() {
         .eq("email_verified", true)
         .gte("created_at", startOfMonth.toISOString());
 
+      const { count: qualified } = await supabase
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .eq("qualified", true)
+        .gte("created_at", startOfMonth.toISOString());
+
       const { count: unassigned } = await supabase
         .from("leads")
         .select("*", { count: "exact", head: true })
@@ -180,7 +191,9 @@ export default function AdminDashboard() {
         totalMonth: totalMonth || 0,
         totalAll: totalAll || 0,
         verified: verified || 0,
+        qualified: qualified || 0,
         verificationRate: totalMonth ? Math.round(((verified || 0) / totalMonth) * 100) : 0,
+        qualificationRate: totalMonth ? Math.round(((qualified || 0) / totalMonth) * 100) : 0,
         unassigned: unassigned || 0,
         newLeads: newLeads || 0,
       };
@@ -226,7 +239,7 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("leads")
-        .select("id, name, email, created_at, facility_id, email_verified, source")
+        .select("id, name, email, created_at, facility_id, email_verified, source, qualified, status")
         .order("created_at", { ascending: false })
         .limit(5);
       return data || [];
@@ -254,6 +267,24 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">Platform overview and key performance metrics</p>
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={invalidateDashboard}
+                className="shadow-none"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Refresh all dashboard data</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Primary KPI Cards */}
@@ -379,7 +410,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Secondary Stats Row */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         {/* Total Leads */}
         <Card className="border-0 shadow-card bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -402,12 +433,34 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
+        {/* Qualified Leads */}
+        <Card className="border-0 shadow-card bg-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Qualified Leads</CardTitle>
+            <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-emerald-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingLeads ? (
+              <Skeleton className="h-9 w-20" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-foreground">{leadStats?.qualified}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {leadStats?.qualificationRate}% qualification rate
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Verification Rate */}
         <Card className="border-0 shadow-card bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Verification Rate</CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-              <CheckCircle className="h-4 w-4 text-emerald-600" />
+            <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
+              <CheckCircle className="h-4 w-4 text-blue-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -424,7 +477,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* New Leads */}
+        {/* Awaiting Response */}
         <Card className="border-0 shadow-card bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Awaiting Response</CardTitle>
@@ -609,22 +662,33 @@ export default function AdminDashboard() {
               recentLeads.map((lead) => (
                 <div
                   key={lead.id}
-                  className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
+                  onClick={() => navigate(`/admin/leads?highlight=${lead.id}`)}
+                  className="flex items-center justify-between py-4 first:pt-0 last:pb-0 cursor-pointer hover:bg-muted/50 -mx-6 px-6 transition-colors group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-sm font-semibold text-primary">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ${
+                      lead.qualified 
+                        ? "bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-700" 
+                        : "bg-gradient-to-br from-primary/20 to-primary/5 text-primary"
+                    }`}>
                       {lead.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">{lead.name}</p>
+                      <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{lead.name}</p>
                       <p className="text-xs text-muted-foreground">{lead.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-2">
-                        {lead.email_verified && (
+                        {lead.qualified && (
                           <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 text-[10px] px-1.5 py-0">
+                            <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                            Qualified
+                          </Badge>
+                        )}
+                        {lead.email_verified && !lead.qualified && (
+                          <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 text-[10px] px-1.5 py-0">
                             <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
                             Verified
                           </Badge>
@@ -640,6 +704,7 @@ export default function AdminDashboard() {
                         {formatTimeAgo(lead.created_at)}
                       </span>
                     </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
               ))
