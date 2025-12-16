@@ -788,12 +788,14 @@ const CenterProfile = () => {
                   </Button>
                 </Link>
                 
-                <div className="mt-4 pt-4 border-t border-border text-center">
-                  <p className="text-xs text-muted-foreground mb-2">Or call directly:</p>
-                  <a href={`tel:${facility.phone}`} className="text-sm font-semibold text-primary hover:underline">
-                    {facility.phone}
-                  </a>
-                </div>
+                {showContactDetails && (
+                  <div className="mt-4 pt-4 border-t border-border text-center">
+                    <p className="text-xs text-muted-foreground mb-2">Or call directly:</p>
+                    <a href={`tel:${facility.phone}`} className="text-sm font-semibold text-primary hover:underline">
+                      {facility.phone}
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </div>
