@@ -6,7 +6,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
-import { Heart, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown } from "lucide-react";
+import { Heart, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -268,10 +268,112 @@ const RehabCenters = () => {
       </section>
 
       {/* Results */}
-      <section id="results" className="scroll-mt-4 bg-muted/30 py-12 md:py-16">
-        <div className="container">
-          {/* Results header with count, filters, and view toggle */}
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+      <section id="results" className="scroll-mt-4 bg-muted/30 py-8 md:py-16">
+        <div className="container px-4 md:px-6">
+          {/* Mobile Results Header */}
+          <div className="mb-6 md:hidden">
+            {/* Results Count */}
+            <p className="text-base font-medium text-foreground mb-4">
+              <span className="text-primary">{filteredCenters.length}</span> treatment centers found
+            </p>
+
+            {/* Mobile Active Filters - Horizontal scroll */}
+            {hasFilters && (
+              <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center gap-2 pb-2">
+                  {location && (
+                    <button
+                      onClick={() => clearFilter("location")}
+                      className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors active:bg-primary/20 shrink-0"
+                    >
+                      <MapPin className="h-4 w-4" />
+                      {location}
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                  {treatment && (
+                    <button
+                      onClick={() => clearFilter("treatment")}
+                      className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors active:bg-primary/20 shrink-0"
+                    >
+                      {treatment}
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                  {insurance && (
+                    <button
+                      onClick={() => clearFilter("insurance")}
+                      className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors active:bg-primary/20 shrink-0"
+                    >
+                      {insurance}
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                  {activeTypeFilter && (
+                    <button
+                      onClick={() => clearFilter("type")}
+                      className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors active:bg-primary/20 shrink-0"
+                    >
+                      {activeTypeFilter}
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-sm font-medium text-muted-foreground underline shrink-0 px-2"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Mobile Sort & View Controls - Full width buttons */}
+            <div className="flex items-center gap-3">
+              <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
+                <SelectTrigger className="h-12 flex-1 gap-2 bg-card rounded-xl text-base">
+                  <ArrowUpDown className="h-5 w-5 text-muted-foreground" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent className="bg-card">
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="text-base py-3">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Mobile View Toggle - Larger touch targets */}
+              <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1.5">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`rounded-lg p-3 transition-colors ${
+                    viewMode === "grid" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground active:text-foreground"
+                  }`}
+                  aria-label="Grid view"
+                >
+                  <Grid3X3 className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`rounded-lg p-3 transition-colors ${
+                    viewMode === "list" 
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground active:text-foreground"
+                  }`}
+                  aria-label="List view"
+                >
+                  <List className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Results Header */}
+          <div className="mb-8 hidden md:flex md:flex-wrap md:items-center md:justify-between md:gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-sm text-muted-foreground">
                 <span className="font-semibold text-foreground">{filteredCenters.length}</span> treatment centers found
@@ -336,7 +438,7 @@ const RehabCenters = () => {
                   <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-card">
                   {sortOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -374,17 +476,17 @@ const RehabCenters = () => {
           </div>
 
           {isLoading ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-96 animate-pulse rounded-2xl bg-card" />
+                <div key={i} className="h-[420px] md:h-96 animate-pulse rounded-2xl bg-card" />
               ))}
             </div>
           ) : paginatedCenters.length > 0 ? (
             <>
               <div className={
                 viewMode === "grid" 
-                  ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" 
-                  : "flex flex-col gap-4"
+                  ? "grid gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3" 
+                  : "flex flex-col gap-5 md:gap-4"
               }>
                 {paginatedCenters.map((center, index) => (
                   <div 
@@ -400,57 +502,83 @@ const RehabCenters = () => {
                 ))}
               </div>
 
-              {/* Pagination */}
+              {/* Pagination - Mobile optimized */}
               {totalPages > 1 && (
-                <div className="mt-12">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {[...Array(totalPages)].map((_, i) => {
-                        const page = i + 1;
-                        // Show first, last, current, and adjacent pages
-                        if (
-                          page === 1 ||
-                          page === totalPages ||
-                          (page >= currentPage - 1 && page <= currentPage + 1)
-                        ) {
-                          return (
-                            <PaginationItem key={page}>
-                              <PaginationLink
-                                onClick={() => handlePageChange(page)}
-                                isActive={currentPage === page}
-                                className="cursor-pointer"
-                              >
-                                {page}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        }
-                        // Show ellipsis
-                        if (page === 2 || page === totalPages - 1) {
-                          return (
-                            <PaginationItem key={page}>
-                              <span className="px-2 text-muted-foreground">...</span>
-                            </PaginationItem>
-                          );
-                        }
-                        return null;
-                      })}
-                      
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
+                <div className="mt-10 md:mt-12">
+                  {/* Mobile Pagination - Simpler with larger touch targets */}
+                  <div className="flex items-center justify-center gap-4 md:hidden">
+                    <button
+                      onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="flex h-12 items-center gap-2 rounded-xl bg-card px-5 text-base font-medium shadow-sm border border-border disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                      Prev
+                    </button>
+                    <span className="text-base font-medium text-foreground">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <button
+                      onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="flex h-12 items-center gap-2 rounded-xl bg-card px-5 text-base font-medium shadow-sm border border-border disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      Next
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  {/* Desktop Pagination */}
+                  <div className="hidden md:block">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                        
+                        {[...Array(totalPages)].map((_, i) => {
+                          const page = i + 1;
+                          // Show first, last, current, and adjacent pages
+                          if (
+                            page === 1 ||
+                            page === totalPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          ) {
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => handlePageChange(page)}
+                                  isActive={currentPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          }
+                          // Show ellipsis
+                          if (page === 2 || page === totalPages - 1) {
+                            return (
+                              <PaginationItem key={page}>
+                                <span className="px-2 text-muted-foreground">...</span>
+                              </PaginationItem>
+                            );
+                          }
+                          return null;
+                        })}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
                 </div>
               )}
             </>

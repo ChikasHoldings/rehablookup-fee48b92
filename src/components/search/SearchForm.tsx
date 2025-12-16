@@ -98,63 +98,70 @@ export function SearchForm({
     );
   }
 
-  // Compact variant for search results page
+  // Compact variant for search results page - Mobile optimized
   if (variant === "compact") {
     return (
-      <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-        <div className="min-w-[200px] flex-1">
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:gap-3">
+        {/* Location - Full width on mobile */}
+        <div className="w-full md:min-w-[200px] md:flex-1">
+          <label className="mb-2 block text-sm font-medium text-muted-foreground md:mb-1.5 md:text-xs">
             Location
           </label>
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground md:left-3 md:h-4 md:w-4" />
             <input
               type="text"
               placeholder="City, State, or ZIP"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="h-10 w-full rounded-lg border border-input bg-card pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-12 w-full rounded-xl border border-input bg-card pl-12 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:h-10 md:rounded-lg md:pl-9 md:pr-3 md:text-sm"
             />
           </div>
         </div>
-        <div className="min-w-[180px] flex-1">
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-            Treatment Type
-          </label>
-          <div className="relative">
-            <Stethoscope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <select
-              value={treatmentType}
-              onChange={(e) => setTreatmentType(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-input bg-card pl-9 pr-8 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="">All Types</option>
-              {treatmentTypes.map((type) => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
+
+        {/* Treatment & Insurance - Side by side on mobile */}
+        <div className="grid grid-cols-2 gap-3 md:contents">
+          <div className="md:min-w-[180px] md:flex-1">
+            <label className="mb-2 block text-sm font-medium text-muted-foreground md:mb-1.5 md:text-xs">
+              Treatment
+            </label>
+            <div className="relative">
+              <Stethoscope className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground md:left-3 md:h-4 md:w-4" />
+              <select
+                value={treatmentType}
+                onChange={(e) => setTreatmentType(e.target.value)}
+                className="h-12 w-full appearance-none rounded-xl border border-input bg-card pl-12 pr-4 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:h-10 md:rounded-lg md:pl-9 md:pr-8 md:text-sm"
+              >
+                <option value="">All Types</option>
+                {treatmentTypes.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="md:min-w-[180px] md:flex-1">
+            <label className="mb-2 block text-sm font-medium text-muted-foreground md:mb-1.5 md:text-xs">
+              Insurance
+            </label>
+            <div className="relative">
+              <Shield className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground md:left-3 md:h-4 md:w-4" />
+              <select
+                value={insurance}
+                onChange={(e) => setInsurance(e.target.value)}
+                className="h-12 w-full appearance-none rounded-xl border border-input bg-card pl-12 pr-4 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:h-10 md:rounded-lg md:pl-9 md:pr-8 md:text-sm"
+              >
+                <option value="">Any</option>
+                {insuranceProviders.map((provider) => (
+                  <option key={provider} value={provider}>{provider}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
-        <div className="min-w-[180px] flex-1">
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-            Insurance
-          </label>
-          <div className="relative">
-            <Shield className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <select
-              value={insurance}
-              onChange={(e) => setInsurance(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-input bg-card pl-9 pr-8 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="">Any Insurance</option>
-              {insuranceProviders.map((provider) => (
-                <option key={provider} value={provider}>{provider}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <Button type="submit" className="h-10 gap-2">
-          <Search className="h-4 w-4" />
+
+        {/* Search Button - Full width on mobile */}
+        <Button type="submit" className="h-12 w-full gap-2 text-base font-medium md:h-10 md:w-auto md:text-sm">
+          <Search className="h-5 w-5 md:h-4 md:w-4" />
           Search
         </Button>
       </form>
