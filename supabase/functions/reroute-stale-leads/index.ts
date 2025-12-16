@@ -391,12 +391,14 @@ serve(async (req) => {
   try {
     // Find leads that:
     // 1. Are assigned to a facility
-    // 2. Still have status = "new"
+    // 2. Still have status = "new" (not contacted, not in progress, etc.)
     // 3. Were assigned more than 24 hours ago
     // 4. Are qualified leads
+    // 5. Have NOT been viewed (no lead_notes, no lead_emails sent)
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: staleLeads, error: fetchError } = await supabase
+    // First get potentially stale leads
+    const { data: potentialStaleLeads, error: fetchError } = await supabase
       .from("leads")
       .select("id, facility_id, name, email, phone, location_city_state, location_zip, level_of_care, insurance_type, insurance_provider, assigned_at, status")
       .not("facility_id", "is", null)
@@ -406,6 +408,29 @@ serve(async (req) => {
 
     if (fetchError) {
       throw new Error(`Failed to fetch stale leads: ${fetchError.message}`);
+    }
+
+    // Filter out leads that have been interacted with (notes or emails)
+    const staleLeads: StaleLead[] = [];
+    for (const lead of (potentialStaleLeads || []) as StaleLead[]) {
+      // Check if any notes exist
+      const { count: notesCount } = await supabase
+        .from("lead_notes")
+        .select("*", { count: "exact", head: true })
+        .eq("lead_id", lead.id);
+
+      // Check if any emails sent
+      const { count: emailsCount } = await supabase
+        .from("lead_emails")
+        .select("*", { count: "exact", head: true })
+        .eq("lead_id", lead.id);
+
+      // Only include if no notes AND no emails (truly untouched)
+      if ((notesCount || 0) === 0 && (emailsCount || 0) === 0) {
+        staleLeads.push(lead);
+      } else {
+        console.log(`[reroute-stale-leads] Lead ${lead.id} has been interacted with (notes: ${notesCount}, emails: ${emailsCount}) - skipping`);
+      }
     }
 
     console.log(`[reroute-stale-leads] Found ${staleLeads?.length || 0} stale leads to process`);
