@@ -140,6 +140,7 @@ export default function ProviderDashboardPage() {
         () => {
           queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
           queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
+          queryClient.invalidateQueries({ queryKey: ["total-leads-count", facilityId] });
         }
       )
       .subscribe();
