@@ -12,6 +12,9 @@ import {
   RotateCcw,
   Filter,
   Calendar,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +40,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
@@ -403,6 +411,7 @@ export default function AdminLeadRouting() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-8"></TableHead>
                     <TableHead>Timestamp</TableHead>
                     <TableHead>Lead</TableHead>
                     <TableHead>Original Provider</TableHead>
@@ -410,97 +419,13 @@ export default function AdminLeadRouting() {
                     <TableHead>Assigned Provider</TableHead>
                     <TableHead>Source</TableHead>
                     <TableHead>Plan</TableHead>
+                    <TableHead>Capacity</TableHead>
                     <TableHead>Reason</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {logs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-slate-400" />
-                          <div>
-                            <p className="text-sm font-medium">
-                              {format(new Date(log.created_at), "MMM d, h:mm a")}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {log.lead ? (
-                          <div>
-                            <p className="font-medium text-slate-900">{log.lead.name}</p>
-                            <p className="text-xs text-slate-500">
-                              {log.lead.location_city_state || "—"}
-                            </p>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {log.requested_facility ? (
-                          <span className="text-slate-700">{log.requested_facility.name}</span>
-                        ) : (
-                          <span className="text-slate-400">None (auto-routed)</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <ArrowRight
-                          className={cn(
-                            "h-4 w-4 mx-auto",
-                            log.assigned_provider_id ? "text-emerald-500" : "text-red-400"
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {log.assigned_facility ? (
-                          <span className="font-medium text-emerald-700">
-                            {log.assigned_facility.name}
-                          </span>
-                        ) : (
-                          <Badge variant="destructive" className="text-xs">
-                            Unassigned
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            log.routing_source === "reroute_stale"
-                              ? "border-amber-500 bg-amber-50 text-amber-700"
-                              : "border-blue-500 bg-blue-50 text-blue-700"
-                          )}
-                        >
-                          {log.routing_source === "reroute_stale" ? "Re-route" : "Initial"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {log.plan_tier ? (
-                          <Badge
-                            variant="secondary"
-                            className={cn(
-                              "text-xs",
-                              log.plan_tier === "featured" && "bg-amber-100 text-amber-800",
-                              log.plan_tier === "professional" && "bg-blue-100 text-blue-800"
-                            )}
-                          >
-                            {log.plan_tier}
-                          </Badge>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-[200px]">
-                        <p className="text-xs text-slate-600 truncate" title={log.assignment_reason}>
-                          {log.assignment_reason}
-                        </p>
-                      </TableCell>
-                    </TableRow>
+                    <RoutingLogRow key={log.id} log={log} />
                   ))}
                 </TableBody>
               </Table>
@@ -509,10 +434,230 @@ export default function AdminLeadRouting() {
             <div className="text-center py-12">
               <RotateCcw className="h-12 w-12 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-500">No routing logs found for the selected filters</p>
+              <p className="text-xs text-slate-400 mt-2">
+                Logs will appear here when leads are submitted through the Request Help form
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// Expandable row component for showing scoring breakdown
+function RoutingLogRow({ log }: { log: RoutingLog }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const eligibility = log.eligibility_check_result as Record<string, any> | null;
+  const hasScoring = eligibility && Object.keys(eligibility).length > 0;
+
+  return (
+    <>
+      <TableRow className="cursor-pointer hover:bg-slate-50" onClick={() => hasScoring && setIsOpen(!isOpen)}>
+        <TableCell className="w-8">
+          {hasScoring && (
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4 text-slate-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-slate-500" />
+              )}
+            </Button>
+          )}
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-slate-400" />
+            <div>
+              <p className="text-sm font-medium">
+                {format(new Date(log.created_at), "MMM d, h:mm a")}
+              </p>
+              <p className="text-xs text-slate-500">
+                {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+              </p>
+            </div>
+          </div>
+        </TableCell>
+        <TableCell>
+          {log.lead ? (
+            <div>
+              <p className="font-medium text-slate-900">{log.lead.name}</p>
+              <p className="text-xs text-slate-500">
+                {log.lead.location_city_state || "—"}
+              </p>
+            </div>
+          ) : (
+            <span className="text-slate-400">—</span>
+          )}
+        </TableCell>
+        <TableCell>
+          {log.requested_facility ? (
+            <span className="text-slate-700">{log.requested_facility.name}</span>
+          ) : (
+            <span className="text-slate-400">None (auto-routed)</span>
+          )}
+        </TableCell>
+        <TableCell className="text-center">
+          <ArrowRight
+            className={cn(
+              "h-4 w-4 mx-auto",
+              log.assigned_provider_id ? "text-emerald-500" : "text-red-400"
+            )}
+          />
+        </TableCell>
+        <TableCell>
+          {log.assigned_facility ? (
+            <span className="font-medium text-emerald-700">
+              {log.assigned_facility.name}
+            </span>
+          ) : (
+            <Badge variant="destructive" className="text-xs">
+              Unassigned
+            </Badge>
+          )}
+        </TableCell>
+        <TableCell>
+          <Badge
+            variant="outline"
+            className={cn(
+              log.routing_source === "reroute_stale"
+                ? "border-amber-500 bg-amber-50 text-amber-700"
+                : "border-blue-500 bg-blue-50 text-blue-700"
+            )}
+          >
+            {log.routing_source === "reroute_stale" ? "Re-route" : "Initial"}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          {log.plan_tier ? (
+            <Badge
+              variant="secondary"
+              className={cn(
+                "text-xs",
+                log.plan_tier === "featured" && "bg-amber-100 text-amber-800",
+                log.plan_tier === "professional" && "bg-blue-100 text-blue-800"
+              )}
+            >
+              {log.plan_tier}
+            </Badge>
+          ) : (
+            <span className="text-slate-400">—</span>
+          )}
+        </TableCell>
+        <TableCell>
+          {log.used_leads !== null && log.lead_limit !== null ? (
+            <div className="text-xs">
+              <span className={cn(
+                "font-medium",
+                log.used_leads >= log.lead_limit ? "text-red-600" : "text-slate-700"
+              )}>
+                {log.used_leads}/{log.lead_limit}
+              </span>
+            </div>
+          ) : (
+            <span className="text-slate-400">—</span>
+          )}
+        </TableCell>
+        <TableCell className="max-w-[200px]">
+          <p className="text-xs text-slate-600 truncate" title={log.assignment_reason}>
+            {log.assignment_reason}
+          </p>
+        </TableCell>
+      </TableRow>
+      
+      {/* Expanded Scoring Breakdown Row */}
+      {isOpen && hasScoring && (
+        <TableRow className="bg-slate-50 border-t-0">
+          <TableCell colSpan={10} className="py-4">
+            <ScoringBreakdown eligibility={eligibility} />
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+}
+
+// Scoring breakdown component
+function ScoringBreakdown({ eligibility }: { eligibility: Record<string, any> | null }) {
+  if (!eligibility) return null;
+
+  const scoreFields = [
+    { key: "total_score", label: "Total Score", highlight: true },
+    { key: "location_score", label: "Location Match" },
+    { key: "insurance_score", label: "Insurance Match" },
+    { key: "service_score", label: "Service Match" },
+    { key: "lead_capacity_score", label: "Lead Capacity" },
+    { key: "response_time_score", label: "Response Time" },
+    { key: "plan_tier_score", label: "Plan Tier Bonus" },
+  ];
+
+  const metaFields = [
+    { key: "subscription_status", label: "Subscription Status" },
+    { key: "is_eligible", label: "Eligible" },
+    { key: "rejection_reason", label: "Rejection Reason" },
+    { key: "candidates_evaluated", label: "Candidates Evaluated" },
+    { key: "winning_provider_name", label: "Winner" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+        <BarChart3 className="h-4 w-4" />
+        Scoring Breakdown
+      </div>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        {scoreFields.map(({ key, label, highlight }) => {
+          const value = eligibility[key];
+          if (value === undefined) return null;
+          return (
+            <div
+              key={key}
+              className={cn(
+                "rounded-lg p-3 text-center",
+                highlight ? "bg-slate-900 text-white" : "bg-white border border-slate-200"
+              )}
+            >
+              <p className={cn("text-2xl font-bold", highlight ? "text-white" : "text-slate-900")}>
+                {typeof value === "number" ? value.toFixed(1) : value}
+              </p>
+              <p className={cn("text-xs", highlight ? "text-slate-300" : "text-slate-500")}>
+                {label}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Meta information */}
+      <div className="flex flex-wrap gap-4 pt-2 border-t border-slate-200">
+        {metaFields.map(({ key, label }) => {
+          const value = eligibility[key];
+          if (value === undefined || value === null) return null;
+          return (
+            <div key={key} className="text-xs">
+              <span className="text-slate-500">{label}:</span>{" "}
+              <span className="font-medium text-slate-700">
+                {typeof value === "boolean" ? (value ? "Yes" : "No") : String(value)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Raw JSON for debugging */}
+      <Collapsible>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-600">
+            View Raw Data
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <pre className="mt-2 p-3 bg-slate-100 rounded text-xs overflow-auto max-h-40">
+            {JSON.stringify(eligibility, null, 2)}
+          </pre>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
