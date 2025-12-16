@@ -51,37 +51,16 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Get facility with lead_limit_override for admin testing
+    // Get facility owner
     const { data: facility, error: facilityError } = await supabaseClient
       .from("facilities")
-      .select("user_id, lead_limit_override")
+      .select("user_id")
       .eq("id", facilityId)
       .maybeSingle();
 
     if (facilityError || !facility) {
       logStep("Facility not found", { facilityId, error: facilityError?.message });
       return new Response(JSON.stringify({ plan: "basic" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    // Check for admin override first (allows testing without Stripe subscription)
-    if (facility.lead_limit_override !== null && facility.lead_limit_override > 0) {
-      let overridePlan = "basic";
-      if (facility.lead_limit_override >= 75) {
-        overridePlan = "featured";
-      } else if (facility.lead_limit_override >= 25) {
-        overridePlan = "professional";
-      }
-      logStep("Using admin lead_limit_override", { 
-        override: facility.lead_limit_override, 
-        plan: overridePlan 
-      });
-      return new Response(JSON.stringify({ 
-        plan: overridePlan,
-        lead_limit_override: facility.lead_limit_override 
-      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
