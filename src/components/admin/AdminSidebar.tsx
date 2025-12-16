@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Image,
   BarChart3,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ const navItems = [
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
+  { to: "/admin/lead-routing", icon: RotateCcw, label: "Lead Routing", permission: "leads" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/featured", icon: Star, label: "Featured Placement", permission: "featured" },
   { to: "/admin/flagged-images", icon: Image, label: "Flagged Images", permission: "providers" },
