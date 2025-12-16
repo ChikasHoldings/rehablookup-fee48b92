@@ -117,6 +117,14 @@ export default {
           "0%": { opacity: "0", transform: "translateY(100%)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "wiggle": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "15%": { transform: "rotate(-15deg)" },
+          "30%": { transform: "rotate(10deg)" },
+          "45%": { transform: "rotate(-10deg)" },
+          "60%": { transform: "rotate(5deg)" },
+          "75%": { transform: "rotate(-5deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -125,6 +133,7 @@ export default {
         "fade-in-up": "fade-in-up 0.6s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
         "slide-up": "slide-up 0.4s ease-out forwards",
+        "wiggle": "wiggle 0.5s ease-in-out",
       },
     },
   },
