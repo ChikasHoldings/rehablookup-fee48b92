@@ -26,10 +26,12 @@ import {
   ChevronRight,
   Image as ImageIcon,
   MessageSquare,
+  Flag,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 
 interface FacilityData {
   id: string;
@@ -76,6 +78,9 @@ const CenterProfile = () => {
   const [logoError, setLogoError] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [reportImageOpen, setReportImageOpen] = useState(false);
+  const [reportImageUrl, setReportImageUrl] = useState<string>("");
+  const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
   
   // Navigation state for prefill and auto-open
   const fromSearch = location.state?.fromSearch;
@@ -549,11 +554,27 @@ const CenterProfile = () => {
               {/* Gallery Section - Only show if images exist */}
               {galleryImages.length > 0 && (
                 <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:rounded-xl">
-                  <div className="flex items-center gap-2 mb-4">
-                    <ImageIcon className="h-5 w-5 text-primary md:h-4 md:w-4" />
-                    <h2 className="font-display text-lg font-semibold text-foreground md:text-base">
-                      Facility Photos
-                    </h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                      <h2 className="font-display text-lg font-semibold text-foreground md:text-base">
+                        Facility Photos
+                      </h2>
+                    </div>
+                    {!isOwner && (
+                      <button
+                        onClick={() => {
+                          setReportImageUrl(galleryImages[activeGalleryIndex]);
+                          setReportImageType("gallery");
+                          setReportImageOpen(true);
+                        }}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                        title="Report this image"
+                      >
+                        <Flag className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Report</span>
+                      </button>
+                    )}
                   </div>
                   
                   {/* Main Image */}
@@ -857,6 +878,15 @@ const CenterProfile = () => {
           logo_url: facility.logo_url,
         }}
         prefillData={prefillDataFromNav}
+      />
+
+      {/* Report Image Dialog */}
+      <ReportImageDialog
+        open={reportImageOpen}
+        onOpenChange={setReportImageOpen}
+        facilityId={facility.id}
+        imageUrl={reportImageUrl}
+        imageType={reportImageType}
       />
     </Layout>
   );
