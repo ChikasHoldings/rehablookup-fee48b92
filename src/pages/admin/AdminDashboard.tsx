@@ -21,7 +21,7 @@ import {
   RefreshCw,
   PieChart as PieChartIcon,
 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip, AreaChart, Area } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,11 @@ interface SubscriptionBreakdown {
   color: string;
 }
 
+interface TrendDataPoint {
+  date: string;
+  value: number;
+}
+
 interface RevenueStats {
   monthlyRevenue: number;
   previousMonthRevenue: number;
@@ -52,6 +57,34 @@ interface RevenueStats {
   totalCustomers: number;
   configured: boolean;
 }
+
+// Sparkline component for KPI cards
+const Sparkline = ({ data, color = "hsl(var(--primary))", height = 40 }: { data: TrendDataPoint[]; color?: string; height?: number }) => {
+  if (!data || data.length === 0) return null;
+  
+  return (
+    <div className="w-full" style={{ height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id={`gradient-${color.replace(/[^a-zA-Z0-9]/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={color}
+            strokeWidth={1.5}
+            fill={`url(#gradient-${color.replace(/[^a-zA-Z0-9]/g, '')})`}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
 
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
@@ -65,6 +98,7 @@ export default function AdminDashboard() {
     queryClient.invalidateQueries({ queryKey: ["admin-recent-leads"] });
     queryClient.invalidateQueries({ queryKey: ["admin-revenue-stats"] });
     queryClient.invalidateQueries({ queryKey: ["admin-subscription-breakdown"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-weekly-trends"] });
   }, [queryClient]);
 
   // Real-time subscriptions - always active
@@ -145,6 +179,69 @@ export default function AdminDashboard() {
         { name: "Professional", value: data.subscriptionsByPlan.professional || 0, color: PLAN_COLORS.professional },
         { name: "Featured", value: data.subscriptionsByPlan.featured || 0, color: PLAN_COLORS.featured },
       ];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch weekly trend data for sparklines
+  const { data: weeklyTrends } = useQuery({
+    queryKey: ["admin-weekly-trends"],
+    queryFn: async () => {
+      // Get last 7 days of data
+      const days = 7;
+      const now = new Date();
+      const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      
+      // Fetch leads created in the last 7 days
+      const { data: leadsData } = await supabase
+        .from("leads")
+        .select("created_at")
+        .gte("created_at", startDate.toISOString())
+        .order("created_at", { ascending: true });
+      
+      // Fetch facilities created in the last 7 days
+      const { data: facilitiesData } = await supabase
+        .from("facilities")
+        .select("created_at")
+        .gte("created_at", startDate.toISOString())
+        .order("created_at", { ascending: true });
+      
+      // Group by day
+      const leadsByDay: Record<string, number> = {};
+      const providersByDay: Record<string, number> = {};
+      
+      // Initialize all days with 0
+      for (let i = 0; i < days; i++) {
+        const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+        const dateKey = date.toISOString().split('T')[0];
+        leadsByDay[dateKey] = 0;
+        providersByDay[dateKey] = 0;
+      }
+      
+      // Count leads per day
+      leadsData?.forEach((lead) => {
+        const dateKey = new Date(lead.created_at).toISOString().split('T')[0];
+        if (leadsByDay[dateKey] !== undefined) {
+          leadsByDay[dateKey]++;
+        }
+      });
+      
+      // Count providers per day
+      facilitiesData?.forEach((facility) => {
+        const dateKey = new Date(facility.created_at).toISOString().split('T')[0];
+        if (providersByDay[dateKey] !== undefined) {
+          providersByDay[dateKey]++;
+        }
+      });
+      
+      // Convert to array format for charts
+      const leadsTrend: TrendDataPoint[] = Object.entries(leadsByDay).map(([date, value]) => ({ date, value }));
+      const providersTrend: TrendDataPoint[] = Object.entries(providersByDay).map(([date, value]) => ({ date, value }));
+      
+      return {
+        leads: leadsTrend,
+        providers: providersTrend,
+      };
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -367,14 +464,14 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Total Providers */}
-        <Card className="border-0 shadow-card bg-card">
+        <Card className="border-0 shadow-card bg-card overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Providers</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
               <Building2 className="h-4 w-4 text-blue-600" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-0">
             {loadingProviders ? (
               <Skeleton className="h-9 w-20" />
             ) : (
@@ -391,6 +488,11 @@ export default function AdminDashboard() {
               </>
             )}
           </CardContent>
+          {weeklyTrends?.providers && (
+            <div className="mt-3 -mx-6 -mb-6">
+              <Sparkline data={weeklyTrends.providers} color="hsl(217, 91%, 60%)" height={50} />
+            </div>
+          )}
         </Card>
 
         {/* Featured Providers */}
@@ -451,14 +553,14 @@ export default function AdminDashboard() {
       {/* Secondary Stats Row */}
       <div className="grid gap-4 md:grid-cols-4">
         {/* Total Leads */}
-        <Card className="border-0 shadow-card bg-card">
+        <Card className="border-0 shadow-card bg-card overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Leads</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-violet-50 flex items-center justify-center">
               <Users className="h-4 w-4 text-violet-600" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-0">
             {loadingLeads ? (
               <Skeleton className="h-9 w-20" />
             ) : (
@@ -470,6 +572,11 @@ export default function AdminDashboard() {
               </>
             )}
           </CardContent>
+          {weeklyTrends?.leads && (
+            <div className="mt-3 -mx-6 -mb-6">
+              <Sparkline data={weeklyTrends.leads} color="hsl(263, 70%, 50%)" height={50} />
+            </div>
+          )}
         </Card>
 
         {/* Qualified Leads */}
