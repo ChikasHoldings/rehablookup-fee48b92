@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
@@ -167,12 +168,26 @@ export default function AdminLogin() {
           return;
         }
 
-        // Log successful login
+        // Log successful login to rate limit log
         await supabase.rpc('log_rate_limit_event', {
           p_identifier: normalizedEmail,
           p_action_type: 'admin_login',
           p_success: true,
           p_metadata: { user_id: data.user.id }
+        });
+
+        // Update last login timestamp
+        await supabase
+          .from('admin_user_profiles')
+          .update({ last_login_at: new Date().toISOString() })
+          .eq('user_id', data.user.id);
+
+        // Log to admin audit log for activity tracking
+        await logAdminAction({
+          actionType: "admin_login",
+          targetType: "admin_user",
+          targetId: data.user.id,
+          details: { email: normalizedEmail },
         });
 
         toast.success("Welcome back, Admin!");
