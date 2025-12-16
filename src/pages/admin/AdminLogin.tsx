@@ -71,14 +71,44 @@ export default function AdminLogin() {
     }
 
     setIsLoading(true);
+    const normalizedEmail = email.trim().toLowerCase();
 
     try {
+      // Server-side rate limit check
+      const { data: rateLimitResult, error: rateLimitError } = await supabase
+        .rpc('check_rate_limit', {
+          p_identifier: normalizedEmail,
+          p_action_type: 'admin_login',
+          p_max_attempts: 5,
+          p_window_minutes: 15
+        });
+
+      if (rateLimitError) {
+        console.error('Rate limit check error:', rateLimitError);
+      } else if (rateLimitResult) {
+        const rateLimitData = rateLimitResult as { is_limited: boolean; retry_after_seconds: number; attempts: number };
+        if (rateLimitData.is_limited) {
+          const retryAfter = rateLimitData.retry_after_seconds || 0;
+          toast.error(`Too many attempts. Please wait ${Math.ceil(retryAfter / 60)} minute(s).`);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
       if (error) {
+        // Log failed attempt to server
+        await supabase.rpc('log_rate_limit_event', {
+          p_identifier: normalizedEmail,
+          p_action_type: 'admin_login',
+          p_success: false,
+          p_metadata: { error_type: 'invalid_credentials' }
+        });
+
         toast.error("Invalid credentials");
         setIsLoading(false);
         return;
@@ -91,6 +121,14 @@ export default function AdminLogin() {
         });
 
         if (roleError || !isAdmin) {
+          // Log failed attempt (not admin)
+          await supabase.rpc('log_rate_limit_event', {
+            p_identifier: normalizedEmail,
+            p_action_type: 'admin_login',
+            p_success: false,
+            p_metadata: { error_type: 'not_admin' }
+          });
+
           await supabase.auth.signOut();
           toast.error("Access denied. Admin privileges required.");
           setIsLoading(false);
@@ -105,11 +143,27 @@ export default function AdminLogin() {
           .maybeSingle();
 
         if (profile?.status === 'suspended') {
+          // Log failed attempt (suspended)
+          await supabase.rpc('log_rate_limit_event', {
+            p_identifier: normalizedEmail,
+            p_action_type: 'admin_login',
+            p_success: false,
+            p_metadata: { error_type: 'suspended' }
+          });
+
           await supabase.auth.signOut();
           setIsSuspended(true);
           setIsLoading(false);
           return;
         }
+
+        // Log successful login
+        await supabase.rpc('log_rate_limit_event', {
+          p_identifier: normalizedEmail,
+          p_action_type: 'admin_login',
+          p_success: true,
+          p_metadata: { user_id: data.user.id }
+        });
 
         toast.success("Welcome back, Admin!");
         navigate("/admin", { replace: true });
