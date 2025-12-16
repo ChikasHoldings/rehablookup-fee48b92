@@ -547,8 +547,9 @@ export function RequestInfoModal({
                   Want help finding the right fit?
                 </h4>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Submit a general request and we'll match you with providers
-                  based on your specific needs.
+                  <span className="font-bold text-foreground">Need help urgently?</span>
+                  <br />
+                  Complete this request and we'll prioritize connecting you based on your needs.
                 </p>
                 <Button
                   variant="outline"
