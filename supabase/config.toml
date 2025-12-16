@@ -116,3 +116,6 @@ verify_jwt = false
 
 [functions.send-contact-form]
 verify_jwt = false
+
+[functions.check-provider-health-alerts]
+verify_jwt = true

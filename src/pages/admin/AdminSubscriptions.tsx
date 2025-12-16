@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { PLAN_DETAILS } from "@/hooks/useSubscription";
+import { AtRiskProvidersCard } from "@/components/admin/AtRiskProvidersCard";
 
 type SubscriptionStats = {
   total_subscriptions: number;
@@ -470,6 +471,9 @@ export default function AdminSubscriptions() {
           </div>
         </CardContent>
       </Card>
+
+      {/* At-Risk Providers */}
+      <AtRiskProvidersCard />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Recent Activity */}
