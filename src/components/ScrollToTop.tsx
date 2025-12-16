@@ -5,17 +5,17 @@ export function ScrollToTop() {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    // If there's a hash (anchor link), scroll to that element
+    // If there's a hash (anchor link), scroll to that element instantly
     if (hash) {
       const element = document.getElementById(hash.slice(1));
       if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+        element.scrollIntoView({ behavior: "instant" });
         return;
       }
     }
     
-    // Otherwise, scroll to top instantly
-    window.scrollTo(0, 0);
+    // Scroll to top instantly
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname, hash]);
 
   return null;
