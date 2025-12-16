@@ -13,7 +13,6 @@ import {
 import { 
   Search, 
   HelpCircle, 
-  Phone, 
   ArrowRight,
   Pill,
   DollarSign,
@@ -281,7 +280,7 @@ const FAQ = () => {
         ]}
       />
       {/* Hero Section */}
-      <section className="relative bg-primary py-16 md:py-20">
+      <section className="relative bg-primary py-12 px-4 md:py-20 md:px-6">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
           <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-primary-foreground/5 blur-3xl" />
@@ -289,26 +288,26 @@ const FAQ = () => {
         
         <div className="container relative">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <HelpCircle className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Frequently Asked Questions</span>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 md:px-4 md:py-1.5 md:mb-4">
+              <HelpCircle className="h-5 w-5 text-accent md:h-4 md:w-4" />
+              <span className="text-base font-medium text-primary-foreground md:text-sm">Frequently Asked Questions</span>
             </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
+            <h1 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl md:mb-4">
               How Can We Help You?
             </h1>
-            <p className="mb-8 text-primary-foreground/70">
+            <p className="mb-8 text-lg text-primary-foreground/70 leading-relaxed md:text-base">
               Find answers to common questions about addiction treatment, insurance, family support, and recovery.
             </p>
             
             {/* Search Bar */}
             <div className="relative mx-auto max-w-xl">
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground md:h-5 md:w-5" />
               <Input
                 type="text"
                 placeholder="Search for answers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-14 rounded-xl border-0 bg-card pl-12 pr-4 text-base shadow-lg placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-16 rounded-2xl border-0 bg-card pl-14 pr-4 text-lg shadow-lg placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent md:h-14 md:rounded-xl md:pl-12 md:text-base"
               />
             </div>
           </div>
@@ -316,14 +315,13 @@ const FAQ = () => {
       </section>
 
       {/* Category Filters */}
-      <section className="border-b border-border bg-card py-6">
+      <section className="border-b border-border bg-card py-5 px-4 md:py-6 md:px-6">
         <div className="container">
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0 md:mx-0 md:px-0">
             <Button
               variant={selectedCategory === null ? "default" : "outline"}
-              size="sm"
               onClick={() => setSelectedCategory(null)}
-              className="rounded-full"
+              className="h-12 rounded-full px-5 text-base whitespace-nowrap md:h-9 md:px-4 md:text-sm"
             >
               All Categories
             </Button>
@@ -331,11 +329,10 @@ const FAQ = () => {
               <Button
                 key={category.id}
                 variant={selectedCategory === category.id ? "default" : "outline"}
-                size="sm"
                 onClick={() => setSelectedCategory(category.id)}
-                className="gap-2 rounded-full"
+                className="h-12 gap-2 rounded-full px-5 text-base whitespace-nowrap md:h-9 md:px-4 md:text-sm"
               >
-                <category.icon className="h-4 w-4" />
+                <category.icon className="h-5 w-5 md:h-4 md:w-4" />
                 {category.name}
               </Button>
             ))}
@@ -344,41 +341,44 @@ const FAQ = () => {
       </section>
 
       {/* FAQ Content */}
-      <section className="py-16 md:py-20">
+      <section className="py-10 px-4 md:py-20 md:px-6">
         <div className="container">
           {searchQuery && (
-            <p className="mb-8 text-center text-muted-foreground">
+            <p className="mb-8 text-center text-base text-muted-foreground md:text-base">
               Found <span className="font-semibold text-foreground">{totalResults}</span> result{totalResults !== 1 ? 's' : ''} for "{searchQuery}"
             </p>
           )}
 
           {filteredCategories.length === 0 ? (
             <div className="mx-auto max-w-md text-center py-12">
-              <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <Search className="h-8 w-8 text-muted-foreground" />
+              <div className="mb-5 inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted md:h-16 md:w-16 md:mb-4">
+                <Search className="h-10 w-10 text-muted-foreground md:h-8 md:w-8" />
               </div>
-              <h3 className="mb-2 font-display text-xl font-semibold text-foreground">No Results Found</h3>
-              <p className="mb-6 text-muted-foreground">
+              <h3 className="mb-3 font-display text-2xl font-semibold text-foreground md:text-xl md:mb-2">No Results Found</h3>
+              <p className="mb-8 text-base text-muted-foreground md:text-base md:mb-6">
                 We couldn't find any questions matching your search. Try different keywords or browse by category.
               </p>
-              <Button onClick={() => { setSearchQuery(""); setSelectedCategory(null); }}>
+              <Button 
+                onClick={() => { setSearchQuery(""); setSelectedCategory(null); }}
+                className="h-14 px-8 text-base font-semibold md:h-auto md:px-6"
+              >
                 Clear Filters
               </Button>
             </div>
           ) : (
-            <div className="mx-auto max-w-4xl space-y-12">
+            <div className="mx-auto max-w-4xl space-y-10 md:space-y-12">
               {filteredCategories.map((category) => (
                 <div key={category.id} className="animate-fade-in">
                   {/* Category Header */}
                   <div className="mb-6 flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/15 ring-1 ring-accent/25">
-                      <category.icon className="h-6 w-6 text-accent" />
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/15 ring-1 ring-accent/25 md:h-12 md:w-12 md:rounded-xl">
+                      <category.icon className="h-7 w-7 text-accent md:h-6 md:w-6" />
                     </div>
                     <div>
-                      <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+                      <h2 className="font-display text-xl font-bold text-foreground md:text-xl">
                         {category.name}
                       </h2>
-                      <p className="text-sm text-muted-foreground">{category.description}</p>
+                      <p className="text-base text-muted-foreground md:text-sm">{category.description}</p>
                     </div>
                   </div>
 
@@ -388,12 +388,12 @@ const FAQ = () => {
                       <AccordionItem
                         key={index}
                         value={`${category.id}-${index}`}
-                        className="rounded-xl border border-border bg-card px-0 shadow-card overflow-hidden transition-all duration-300 hover:border-accent/30 hover:shadow-elevated data-[state=open]:border-accent/40"
+                        className="rounded-2xl border border-border bg-card px-0 shadow-card overflow-hidden transition-all duration-300 hover:border-accent/30 hover:shadow-elevated data-[state=open]:border-accent/40 md:rounded-xl"
                       >
-                        <AccordionTrigger className="text-left font-semibold text-foreground hover:no-underline py-5 px-6 gap-4 [&>svg]:shrink-0">
+                        <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline py-5 px-5 gap-4 [&>svg]:shrink-0 [&>svg]:h-6 [&>svg]:w-6 md:py-5 md:px-6 md:text-base md:[&>svg]:h-5 md:[&>svg]:w-5">
                           {faq.question}
                         </AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground pb-6 px-6 leading-relaxed">
+                        <AccordionContent className="text-base text-muted-foreground pb-6 px-5 leading-relaxed md:pb-6 md:px-6 md:text-base">
                           {faq.answer}
                         </AccordionContent>
                       </AccordionItem>
@@ -407,26 +407,26 @@ const FAQ = () => {
       </section>
 
       {/* Help CTA */}
-      <section className="py-16 md:py-20 bg-muted/30">
+      <section className="py-12 px-4 bg-muted/30 md:py-20 md:px-6">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-4 font-display text-xl font-bold text-foreground md:text-2xl">
+            <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-2xl">
               Still Have Questions?
             </h2>
-            <p className="mb-8 text-muted-foreground max-w-xl mx-auto">
+            <p className="mb-8 text-base text-muted-foreground max-w-xl mx-auto leading-relaxed md:text-base md:mb-8">
               Our compassionate support team is available 24/7 to answer your questions and help you find the right treatment.
             </p>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link to="/request-help?source=faq_cta">
-                <Button size="lg" className="gap-2 min-w-[200px]">
-                  <Heart className="h-4 w-4" />
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
+              <Link to="/request-help?source=faq_cta" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full h-14 gap-2 text-base font-semibold min-w-[200px] sm:w-auto sm:h-auto">
+                  <Heart className="h-5 w-5 md:h-4 md:w-4" />
                   Request Help
                 </Button>
               </Link>
-              <Link to="/contact">
-                <Button variant="outline" size="lg" className="gap-2 min-w-[200px]">
+              <Link to="/contact" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full h-14 gap-2 text-base font-semibold min-w-[200px] sm:w-auto sm:h-auto">
                   Contact Us
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
                 </Button>
               </Link>
             </div>
