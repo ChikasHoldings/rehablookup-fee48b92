@@ -215,6 +215,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_tracking_events: {
+        Row: {
+          created_at: string
+          email_id: string
+          email_type: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          recipient_email: string
+        }
+        Insert: {
+          created_at?: string
+          email_id: string
+          email_type?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          recipient_email: string
+        }
+        Update: {
+          created_at?: string
+          email_id?: string
+          email_type?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          recipient_email?: string
+        }
+        Relationships: []
+      }
       email_verification_codes: {
         Row: {
           attempts: number | null
@@ -1247,6 +1277,7 @@ export type Database = {
           alert_type: string
           created_at: string
           id: string
+          resend_id: string | null
           user_id: string
         }
         Insert: {
@@ -1254,6 +1285,7 @@ export type Database = {
           alert_type: string
           created_at?: string
           id?: string
+          resend_id?: string | null
           user_id: string
         }
         Update: {
@@ -1261,6 +1293,7 @@ export type Database = {
           alert_type?: string
           created_at?: string
           id?: string
+          resend_id?: string | null
           user_id?: string
         }
         Relationships: []

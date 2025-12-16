@@ -32,6 +32,8 @@ import {
   RefreshCw,
   Calendar,
   BarChart3,
+  Eye,
+  MousePointerClick,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format, formatDistanceToNow, subDays, differenceInHours } from "date-fns";
@@ -49,11 +51,21 @@ interface OutreachRecord {
   hoursToReEngage: number | null;
 }
 
+interface EmailTrackingStats {
+  delivered: number;
+  opened: number;
+  clicked: number;
+  bounced: number;
+  openRate: number;
+  clickRate: number;
+}
+
 interface OutreachMetrics {
   totalSent: number;
   reEngaged: number;
   reEngagementRate: number;
   avgHoursToReEngage: number;
+  emailTracking: EmailTrackingStats;
   byPeriod: {
     last7Days: { sent: number; reEngaged: number };
     last30Days: { sent: number; reEngaged: number };
@@ -77,6 +89,30 @@ export function RetentionDashboard() {
 
       if (alertsError) throw alertsError;
 
+      // Fetch email tracking events
+      const { data: trackingEvents } = await supabase
+        .from("email_tracking_events")
+        .select("*")
+        .eq("email_type", "retention_outreach");
+
+      // Calculate email tracking stats
+      const delivered = trackingEvents?.filter(e => e.event_type === "email.delivered").length || 0;
+      const opened = trackingEvents?.filter(e => e.event_type === "email.opened").length || 0;
+      const clicked = trackingEvents?.filter(e => e.event_type === "email.clicked").length || 0;
+      const bounced = trackingEvents?.filter(e => e.event_type === "email.bounced").length || 0;
+      const totalTracked = delivered || (alerts?.length || 0);
+      const openRate = totalTracked > 0 ? (opened / totalTracked) * 100 : 0;
+      const clickRate = opened > 0 ? (clicked / opened) * 100 : 0;
+
+      const emailTracking: EmailTrackingStats = {
+        delivered,
+        opened,
+        clicked,
+        bounced,
+        openRate,
+        clickRate,
+      };
+
       // Get unique user IDs from alerts
       const userIds = [...new Set(alerts?.map(a => a.user_id) || [])];
       
@@ -88,6 +124,7 @@ export function RetentionDashboard() {
             reEngaged: 0,
             reEngagementRate: 0,
             avgHoursToReEngage: 0,
+            emailTracking,
             byPeriod: {
               last7Days: { sent: 0, reEngaged: 0 },
               last30Days: { sent: 0, reEngaged: 0 },
@@ -169,6 +206,7 @@ export function RetentionDashboard() {
         reEngaged,
         reEngagementRate,
         avgHoursToReEngage,
+        emailTracking,
         byPeriod: {
           last7Days: {
             sent: last7Days.length,
@@ -338,6 +376,51 @@ export function RetentionDashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Email Engagement Metrics */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Email Engagement</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Delivered</p>
+                    </div>
+                    <p className="text-lg font-semibold">{data?.metrics.emailTracking.delivered || 0}</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Opened</p>
+                    </div>
+                    <p className="text-lg font-semibold">{data?.metrics.emailTracking.opened || 0}</p>
+                    <p className="text-xs text-green-600 font-medium">
+                      {(data?.metrics.emailTracking.openRate || 0).toFixed(1)}% rate
+                    </p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Clicked</p>
+                    </div>
+                    <p className="text-lg font-semibold">{data?.metrics.emailTracking.clicked || 0}</p>
+                    <p className="text-xs text-blue-600 font-medium">
+                      {(data?.metrics.emailTracking.clickRate || 0).toFixed(1)}% CTR
+                    </p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Bounced</p>
+                    </div>
+                    <p className="text-lg font-semibold">{data?.metrics.emailTracking.bounced || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Period Comparison */}
             <Card>
