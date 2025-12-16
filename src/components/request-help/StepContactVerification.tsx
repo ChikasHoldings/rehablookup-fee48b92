@@ -273,15 +273,15 @@ export function StepContactVerification({
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 md:space-y-8 animate-fade-in">
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-1">Contact & Verification</h2>
-        <p className="text-sm text-muted-foreground">We'll need to verify your email before submitting.</p>
+        <h2 className="text-xl md:text-lg font-semibold text-foreground mb-2">Contact & Verification</h2>
+        <p className="text-base md:text-sm text-muted-foreground">We'll need to verify your email before submitting.</p>
       </div>
 
-      {/* First Name */}
+      {/* First Name & Last Name */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label htmlFor="firstName" className="text-base font-medium">
             First Name <span className="text-destructive">*</span>
           </Label>
@@ -293,14 +293,13 @@ export function StepContactVerification({
               updateFormData({ firstName: e.target.value });
               setErrors(prev => ({ ...prev, firstName: "" }));
             }}
-            className={errors.firstName ? "border-destructive" : ""}
+            className={`h-12 md:h-10 text-base ${errors.firstName ? "border-destructive" : ""}`}
             disabled={codeSent}
           />
           {errors.firstName && <p className="text-sm text-destructive">{errors.firstName}</p>}
         </div>
 
-        {/* Last Name */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label htmlFor="lastName" className="text-base font-medium">
             Last Name <span className="text-destructive">*</span>
           </Label>
@@ -312,7 +311,7 @@ export function StepContactVerification({
               updateFormData({ lastName: e.target.value });
               setErrors(prev => ({ ...prev, lastName: "" }));
             }}
-            className={errors.lastName ? "border-destructive" : ""}
+            className={`h-12 md:h-10 text-base ${errors.lastName ? "border-destructive" : ""}`}
             disabled={codeSent}
           />
           {errors.lastName && <p className="text-sm text-destructive">{errors.lastName}</p>}
@@ -320,7 +319,7 @@ export function StepContactVerification({
       </div>
 
       {/* Phone */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label htmlFor="phone" className="text-base font-medium">
           Phone Number <span className="text-destructive">*</span>
         </Label>
@@ -333,25 +332,25 @@ export function StepContactVerification({
             updateFormData({ phone: formatPhone(e.target.value) });
             setErrors(prev => ({ ...prev, phone: "" }));
           }}
-          className={errors.phone ? "border-destructive" : ""}
+          className={`h-12 md:h-10 text-base ${errors.phone ? "border-destructive" : ""}`}
           disabled={codeSent}
         />
         {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
       </div>
 
       {/* Email */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label htmlFor="email" className="text-base font-medium">
           Email Address <span className="text-destructive">*</span>
         </Label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Input
             id="email"
             type="email"
             placeholder="you@example.com"
             value={formData.email}
             onChange={handleEmailChange}
-            className={`flex-1 ${errors.email ? "border-destructive" : ""}`}
+            className={`flex-1 h-12 md:h-10 text-base ${errors.email ? "border-destructive" : ""}`}
             disabled={isEmailVerified}
           />
           {!isEmailVerified && (
@@ -360,36 +359,36 @@ export function StepContactVerification({
               variant={codeSent ? "outline" : "secondary"}
               onClick={handleSendCode}
               disabled={isSendingCode || !formData.email || resendCooldown > 0 || resendCount >= 3}
-              className="shrink-0 min-w-[100px]"
+              className="shrink-0 h-12 md:h-10 min-w-[120px] text-base"
             >
               {isSendingCode ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : resendCooldown > 0 ? (
-                <span className="text-sm">{resendCooldown}s</span>
+                <span className="text-base">{resendCooldown}s</span>
               ) : codeSent ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-1" />
+                  <RefreshCw className="h-5 w-5 mr-2" />
                   Resend
                 </>
               ) : (
                 <>
-                  <Mail className="h-4 w-4 mr-2" />
+                  <Mail className="h-5 w-5 mr-2" />
                   Verify
                 </>
               )}
             </Button>
           )}
           {isEmailVerified && (
-            <div className="flex items-center text-green-600 shrink-0 px-3">
-              <CheckCircle2 className="h-5 w-5 mr-1" />
-              <span className="text-sm font-medium">Verified</span>
+            <div className="flex items-center justify-center text-green-600 shrink-0 px-4 h-12 md:h-10 bg-green-50 rounded-xl border-2 border-green-200">
+              <CheckCircle2 className="h-5 w-5 mr-2" />
+              <span className="text-base font-medium">Verified</span>
             </div>
           )}
         </div>
         {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
         {resendCount >= 3 && !isEmailVerified && (
-          <p className="text-sm text-amber-600 flex items-center gap-1">
-            <AlertCircle className="h-4 w-4" />
+          <p className="text-sm text-amber-600 flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" />
             Maximum attempts reached. Please wait 10 minutes.
           </p>
         )}
@@ -397,10 +396,10 @@ export function StepContactVerification({
 
       {/* Verification Code Input */}
       {codeSent && !isEmailVerified && (
-        <div className="space-y-3 p-4 bg-muted/50 rounded-lg border">
+        <div className="space-y-4 p-5 bg-muted/50 rounded-xl border-2">
           <Label className="text-base font-medium">Enter Verification Code</Label>
-          <p className="text-sm text-muted-foreground">We sent a 6-digit code to {formData.email}</p>
-          <div className="flex flex-col items-center gap-4">
+          <p className="text-base text-muted-foreground">We sent a 6-digit code to {formData.email}</p>
+          <div className="flex flex-col items-center gap-5">
             <InputOTP
               value={verificationCode}
               onChange={(value) => {
@@ -408,19 +407,20 @@ export function StepContactVerification({
                 setErrors(prev => ({ ...prev, code: "" }));
               }}
               maxLength={6}
+              className="gap-2"
             >
-              <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-                <InputOTPSlot index={3} />
-                <InputOTPSlot index={4} />
-                <InputOTPSlot index={5} />
+              <InputOTPGroup className="gap-2">
+                <InputOTPSlot index={0} className="h-14 w-12 md:h-12 md:w-10 text-xl rounded-xl" />
+                <InputOTPSlot index={1} className="h-14 w-12 md:h-12 md:w-10 text-xl rounded-xl" />
+                <InputOTPSlot index={2} className="h-14 w-12 md:h-12 md:w-10 text-xl rounded-xl" />
+                <InputOTPSlot index={3} className="h-14 w-12 md:h-12 md:w-10 text-xl rounded-xl" />
+                <InputOTPSlot index={4} className="h-14 w-12 md:h-12 md:w-10 text-xl rounded-xl" />
+                <InputOTPSlot index={5} className="h-14 w-12 md:h-12 md:w-10 text-xl rounded-xl" />
               </InputOTPGroup>
             </InputOTP>
             {errors.code && (
-              <p className="text-sm text-destructive flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
+              <p className="text-sm text-destructive flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
                 {errors.code}
               </p>
             )}
@@ -428,14 +428,14 @@ export function StepContactVerification({
               type="button"
               onClick={handleVerifyCode}
               disabled={isVerifying || verificationCode.length !== 6}
-              className="w-full max-w-[200px]"
+              className="w-full max-w-[240px] h-12 text-base"
             >
               {isVerifying ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
               ) : null}
               Verify Code
             </Button>
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-sm text-muted-foreground text-center">
               Code expires in 10 minutes. {resendCount < 3 && `Resends remaining: ${3 - resendCount}`}
             </p>
           </div>
@@ -443,7 +443,7 @@ export function StepContactVerification({
       )}
 
       {/* Preferred Contact */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Label className="text-base font-medium">Preferred contact method</Label>
         <RadioGroup
           value={formData.preferredContact}
@@ -451,30 +451,30 @@ export function StepContactVerification({
           className="grid grid-cols-2 gap-3"
         >
           <label
-            className={`flex items-center justify-center px-4 py-3 border rounded-lg cursor-pointer transition-colors ${
+            className={`flex items-center justify-center px-4 py-4 md:py-3 border-2 rounded-xl cursor-pointer transition-all active:scale-[0.98] ${
               formData.preferredContact === "call"
-                ? "border-primary bg-primary/5 text-primary"
+                ? "border-primary bg-primary/5 text-primary shadow-sm"
                 : "border-border hover:border-primary/50"
             }`}
           >
             <RadioGroupItem value="call" className="sr-only" />
-            <span className="font-medium">Phone Call</span>
+            <span className="font-medium text-base">Phone Call</span>
           </label>
           <label
-            className={`flex items-center justify-center px-4 py-3 border rounded-lg cursor-pointer transition-colors ${
+            className={`flex items-center justify-center px-4 py-4 md:py-3 border-2 rounded-xl cursor-pointer transition-all active:scale-[0.98] ${
               formData.preferredContact === "email"
-                ? "border-primary bg-primary/5 text-primary"
+                ? "border-primary bg-primary/5 text-primary shadow-sm"
                 : "border-border hover:border-primary/50"
             }`}
           >
             <RadioGroupItem value="email" className="sr-only" />
-            <span className="font-medium">Email</span>
+            <span className="font-medium text-base">Email</span>
           </label>
         </RadioGroup>
       </div>
 
       {/* Message */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label htmlFor="message" className="text-base font-medium">
           Additional message <span className="text-muted-foreground font-normal">(optional)</span>
         </Label>
@@ -483,18 +483,19 @@ export function StepContactVerification({
           placeholder="Is there anything else you'd like us to know?"
           value={formData.message}
           onChange={(e) => updateFormData({ message: e.target.value })}
-          rows={3}
+          rows={4}
+          className="text-base min-h-[120px] md:min-h-[100px]"
         />
       </div>
 
-      <div className="flex gap-3 pt-4">
-        <Button variant="outline" onClick={onBack} className="flex-1" size="lg" disabled={isSubmitting}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
+      <div className="flex gap-3 pt-4 md:pt-4">
+        <Button variant="outline" onClick={onBack} className="flex-1 h-14 md:h-12 text-base" size="lg" disabled={isSubmitting}>
+          <ArrowLeft className="mr-2 h-5 w-5" />
           Back
         </Button>
         <Button
           onClick={handleSubmit}
-          className="flex-1"
+          className="flex-1 h-14 md:h-12 text-base"
           size="lg"
           disabled={!isEmailVerified || isSubmitting}
         >

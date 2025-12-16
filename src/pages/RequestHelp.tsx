@@ -125,20 +125,20 @@ export default function RequestHelp() {
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-200px)] bg-background py-8 md:py-12">
-        <div className="container max-w-2xl mx-auto px-4">
+      <div className="min-h-[calc(100vh-200px)] bg-background py-6 md:py-12">
+        <div className="container max-w-2xl mx-auto px-4 md:px-4">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 md:mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
               Get Help Now
             </h1>
             {facilityName && (
-              <p className="text-muted-foreground">
+              <p className="text-base md:text-base text-muted-foreground">
                 Requesting information from <span className="font-medium text-foreground">{facilityName}</span>
               </p>
             )}
             {!facilityName && (
-              <p className="text-muted-foreground">
+              <p className="text-base md:text-base text-muted-foreground">
                 Complete this form and we'll connect you with the right treatment center
               </p>
             )}
@@ -148,7 +148,7 @@ export default function RequestHelp() {
           <RequestHelpStepper currentStep={currentStep} totalSteps={4} />
 
           {/* Form Steps */}
-          <div ref={formSectionRef} className="bg-card rounded-xl border border-border p-6 md:p-8 shadow-sm scroll-mt-4">
+          <div ref={formSectionRef} className="bg-card rounded-2xl border border-border p-5 md:p-8 shadow-sm scroll-mt-4">
             {currentStep === 1 && (
               <StepWhoNeedsHelp
                 formData={formData}
