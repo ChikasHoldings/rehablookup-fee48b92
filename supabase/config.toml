@@ -128,3 +128,6 @@ verify_jwt = false
 
 [functions.track-featured-analytics]
 verify_jwt = false
+
+[functions.report-image]
+verify_jwt = false
