@@ -101,3 +101,9 @@ verify_jwt = true
 
 [functions.reroute-stale-leads]
 verify_jwt = false
+
+[functions.submit-direct-lead]
+verify_jwt = false
+
+[functions.get-facility-plan]
+verify_jwt = false
