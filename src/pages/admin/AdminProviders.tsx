@@ -57,6 +57,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -80,6 +90,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 type Facility = {
   id: string;
@@ -177,6 +188,12 @@ export default function AdminProviders() {
   const [flagImageType, setFlagImageType] = useState<"logo" | "gallery">("gallery");
   const [flagReason, setFlagReason] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  
+  // Confirmation dialog state
+  const [confirmAction, setConfirmAction] = useState<{
+    action: "suspend" | "reactivate" | "reject";
+    provider: Facility;
+  } | null>(null);
 
   // Invalidate all provider queries for real-time updates
   const invalidateProviderQueries = useCallback(() => {
@@ -598,20 +615,33 @@ export default function AdminProviders() {
     });
   };
 
-  const handleSuspend = (id: string) => {
-    updateProvider.mutate({
-      id,
-      updates: { suspended: true },
-      actionType: "suspended",
-    });
+  const handleSuspend = (provider: Facility) => {
+    setConfirmAction({ action: "suspend", provider });
   };
 
-  const handleReactivate = (id: string) => {
-    updateProvider.mutate({
-      id,
-      updates: { suspended: false, status: "approved" },
-      actionType: "reactivated",
-    });
+  const handleReactivate = (provider: Facility) => {
+    setConfirmAction({ action: "reactivate", provider });
+  };
+
+  const handleConfirmAction = () => {
+    if (!confirmAction) return;
+    
+    if (confirmAction.action === "suspend") {
+      updateProvider.mutate({
+        id: confirmAction.provider.id,
+        updates: { suspended: true },
+        actionType: "suspended",
+      });
+    } else if (confirmAction.action === "reactivate") {
+      updateProvider.mutate({
+        id: confirmAction.provider.id,
+        updates: { suspended: false, status: "approved" },
+        actionType: "reactivated",
+      });
+    }
+    
+    setConfirmAction(null);
+    setShowDetailDialog(false);
   };
 
   const handleSaveNotes = () => {
@@ -902,12 +932,12 @@ export default function AdminProviders() {
                         
                         <DropdownMenuSeparator />
                         {provider.suspended ? (
-                          <DropdownMenuItem onClick={() => handleReactivate(provider.id)} className="text-emerald-600">
+                          <DropdownMenuItem onClick={() => handleReactivate(provider)} className="text-emerald-600">
                             <RefreshCw className="h-4 w-4 mr-2" />
                             Reactivate Provider
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem onClick={() => handleSuspend(provider.id)} className="text-destructive">
+                          <DropdownMenuItem onClick={() => handleSuspend(provider)} className="text-destructive">
                             <Ban className="h-4 w-4 mr-2" />
                             Suspend Provider
                           </DropdownMenuItem>
@@ -1049,16 +1079,14 @@ export default function AdminProviders() {
                   )}
                   {selectedProvider?.suspended ? (
                     <Button size="sm" variant="outline" className="text-emerald-600 border-emerald-300" onClick={() => {
-                      handleReactivate(selectedProvider.id);
-                      setShowDetailDialog(false);
+                      handleReactivate(selectedProvider);
                     }}>
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Reactivate
                     </Button>
                   ) : selectedProvider && (
                     <Button size="sm" variant="outline" className="text-destructive border-destructive/30" onClick={() => {
-                      handleSuspend(selectedProvider.id);
-                      setShowDetailDialog(false);
+                      handleSuspend(selectedProvider);
                     }}>
                       <Ban className="h-4 w-4 mr-2" />
                       Suspend
@@ -1742,6 +1770,55 @@ export default function AdminProviders() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog for Destructive Actions */}
+      <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {confirmAction?.action === "suspend" && (
+                <>
+                  <Ban className="h-5 w-5 text-destructive" />
+                  Suspend Provider
+                </>
+              )}
+              {confirmAction?.action === "reactivate" && (
+                <>
+                  <RefreshCw className="h-5 w-5 text-emerald-500" />
+                  Reactivate Provider
+                </>
+              )}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.action === "suspend" && (
+                <>
+                  Are you sure you want to suspend <strong>{confirmAction.provider.name}</strong>?
+                  Their listing will be hidden from search results and they will not receive any leads.
+                </>
+              )}
+              {confirmAction?.action === "reactivate" && (
+                <>
+                  Reactivate <strong>{confirmAction?.provider.name}</strong>?
+                  Their listing will be visible again and they can receive leads.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              className={cn(
+                confirmAction?.action === "suspend" && "bg-destructive hover:bg-destructive/90",
+                confirmAction?.action === "reactivate" && "bg-emerald-600 hover:bg-emerald-700"
+              )}
+              disabled={updateProvider.isPending}
+            >
+              {updateProvider.isPending ? "Processing..." : "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
