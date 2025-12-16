@@ -74,6 +74,16 @@ export default function AdminLogin() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
+      // Check if email is blocked
+      const { data: isBlocked, error: blockError } = await supabase
+        .rpc('is_identifier_blocked', { p_identifier: normalizedEmail });
+
+      if (!blockError && isBlocked) {
+        toast.error("This account has been blocked. Please contact support if you believe this is an error.");
+        setIsLoading(false);
+        return;
+      }
+
       // Server-side rate limit check
       const { data: rateLimitResult, error: rateLimitError } = await supabase
         .rpc('check_rate_limit', {
