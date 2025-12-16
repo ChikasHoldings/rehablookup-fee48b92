@@ -52,6 +52,7 @@ import AdminFlaggedImages from "./pages/admin/AdminFlaggedImages";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminLeadRouting from "./pages/admin/AdminLeadRouting";
+import AdminSecurityLogs from "./pages/admin/AdminSecurityLogs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -114,6 +115,7 @@ const App = () => (
             <Route path="flagged-images" element={<AdminFlaggedImages />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="audit-log" element={<AdminAuditLog />} />
+            <Route path="security-logs" element={<AdminSecurityLogs />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="notifications" element={<AdminNotifications />} />
             <Route path="profile" element={<AdminProfile />} />
