@@ -20,6 +20,8 @@ import {
   Info,
   RefreshCw,
   Palette,
+  Trash2,
+  History,
   FileText,
   Activity,
   Download,
@@ -242,11 +244,12 @@ export default function AdminSettings() {
   const { data: stats, isLoading: loadingStats, refetch: refetchStats } = useQuery({
     queryKey: ["admin-settings-stats"],
     queryFn: async () => {
-      const [facilitiesResult, leadsResult, adminUsersResult, flaggedResult] = await Promise.all([
+      const [facilitiesResult, leadsResult, adminUsersResult, flaggedResult, auditLogsResult] = await Promise.all([
         supabase.from("facilities").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }),
         supabase.from("user_roles").select("id", { count: "exact", head: true }),
         supabase.from("flagged_images").select("id", { count: "exact", head: true }).eq("resolved", false),
+        supabase.from("admin_audit_log").select("id", { count: "exact", head: true }),
       ]);
 
       return {
@@ -254,6 +257,7 @@ export default function AdminSettings() {
         totalLeads: leadsResult.count || 0,
         totalAdminUsers: adminUsersResult.count || 0,
         pendingFlags: flaggedResult.count || 0,
+        totalAuditLogs: auditLogsResult.count || 0,
       };
     },
   });
@@ -484,12 +488,56 @@ export default function AdminSettings() {
     },
   });
 
+  // Update audit log retention mutation
+  const updateAuditLogRetention = useMutation({
+    mutationFn: async (days: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("platform_settings")
+        .upsert({
+          setting_key: "audit_log_retention_days",
+          setting_value: { days: parseInt(days) },
+          updated_by: user?.id,
+        }, { onConflict: "setting_key" });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Audit log retention updated");
+      invalidateSettingsQueries();
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update retention", { description: error.message });
+    },
+  });
+
+  // Run audit log cleanup mutation
+  const runAuditLogCleanup = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("cleanup-audit-logs");
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success("Audit log cleanup complete", {
+        description: `Deleted ${data.deleted || 0} old audit log entries`,
+      });
+      invalidateSettingsQueries();
+      refetchStats();
+    },
+    onError: (error: Error) => {
+      toast.error("Cleanup failed", { description: error.message });
+    },
+  });
+
   // Get settings values
   const maintenanceEnabled = platformSettings?.maintenance_mode?.setting_value?.enabled ?? false;
   const apiRateLevel = platformSettings?.api_rate_limiting?.setting_value?.level ?? "default";
   const sessionTimeout = platformSettings?.session_timeout?.setting_value?.minutes?.toString() ?? "30";
   const timestampFormat = platformSettings?.timestamp_display?.setting_value?.format ?? "relative";
   const backupRetentionDays = platformSettings?.backup_retention_days?.setting_value?.days?.toString() ?? "30";
+  const auditLogRetentionDays = platformSettings?.audit_log_retention_days?.setting_value?.days?.toString() ?? "90";
   const themeMode = platformSettings?.theme_mode?.setting_value?.mode ?? "light";
   const compactMode = platformSettings?.compact_mode?.setting_value?.enabled ?? false;
 
@@ -1598,6 +1646,96 @@ export default function AdminSettings() {
             </Card>
           </div>
 
+          {/* Audit Log Retention */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <History className="h-5 w-5 text-amber-500" />
+                Audit Log Retention
+              </CardTitle>
+              <CardDescription>Configure how long audit logs are retained before automatic cleanup</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-3">
+                  <SettingRow
+                    icon={<Clock className="h-4 w-4 text-slate-500" />}
+                    title="Retention Period"
+                    description="Logs older than this will be automatically cleaned up"
+                  >
+                    <Select 
+                      value={auditLogRetentionDays}
+                      onValueChange={(value) => updateAuditLogRetention.mutate(value)}
+                      disabled={updateAuditLogRetention.isPending}
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30">30 days</SelectItem>
+                        <SelectItem value="60">60 days</SelectItem>
+                        <SelectItem value="90">90 days</SelectItem>
+                        <SelectItem value="180">180 days</SelectItem>
+                        <SelectItem value="365">1 year</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingRow>
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border">
+                  <div>
+                    <p className="text-sm font-medium">Current Audit Logs</p>
+                    <p className="text-2xl font-bold">{stats?.totalAuditLogs || 0}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Total entries stored</p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="gap-2"
+                        disabled={runAuditLogCleanup.isPending}
+                      >
+                        {runAuditLogCleanup.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                        Run Cleanup Now
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                          <Trash2 className="h-5 w-5 text-amber-500" />
+                          Run Audit Log Cleanup?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will delete all audit log entries older than {auditLogRetentionDays} days based on your 
+                          current retention setting. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => runAuditLogCleanup.mutate()}
+                          className="bg-amber-600 hover:bg-amber-700"
+                        >
+                          Run Cleanup
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                <Info className="h-4 w-4 text-blue-600 shrink-0" />
+                <p className="text-sm text-blue-700">
+                  Audit logs are automatically cleaned up based on the retention period. Run manual cleanup to immediately remove old entries.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Data Export */}
           <Card>
             <CardHeader>
@@ -1831,14 +1969,18 @@ export default function AdminSettings() {
               <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 border border-red-100">
                 <div>
                   <p className="font-medium text-red-800">Purge Old Data</p>
-                  <p className="text-sm text-red-600">Remove audit logs older than 90 days</p>
+                  <p className="text-sm text-red-600">Remove audit logs older than {auditLogRetentionDays} days</p>
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 
                       variant="outline" 
                       className="text-red-600 border-red-300 hover:bg-red-50"
+                      disabled={runAuditLogCleanup.isPending}
                     >
+                      {runAuditLogCleanup.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
                       Purge Data
                     </Button>
                   </AlertDialogTrigger>
@@ -1849,29 +1991,14 @@ export default function AdminSettings() {
                         Purge Old Audit Logs?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete all audit log entries older than 90 days. 
+                        This will permanently delete all audit log entries older than {auditLogRetentionDays} days.
                         This action cannot be undone and may affect compliance reporting.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={async () => {
-                          const ninetyDaysAgo = new Date();
-                          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-                          
-                          const { error } = await supabase
-                            .from("admin_audit_log")
-                            .delete()
-                            .lt("created_at", ninetyDaysAgo.toISOString());
-                          
-                          if (error) {
-                            toast.error("Failed to purge data", { description: error.message });
-                          } else {
-                            toast.success("Old audit logs purged successfully");
-                            invalidateSettingsQueries();
-                          }
-                        }}
+                        onClick={() => runAuditLogCleanup.mutate()}
                         className="bg-red-600 hover:bg-red-700"
                       >
                         Purge Data

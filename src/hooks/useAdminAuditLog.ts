@@ -99,4 +99,5 @@ export const AdminAuditActions = {
   
   // Settings actions
   PLATFORM_SETTINGS_UPDATED: "platform_settings_updated",
+  AUDIT_LOGS_CLEANED: "audit_logs_cleaned",
 } as const;

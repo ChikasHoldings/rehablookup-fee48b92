@@ -149,3 +149,6 @@ verify_jwt = false
 
 [functions.log-login-attempt]
 verify_jwt = false
+
+[functions.cleanup-audit-logs]
+verify_jwt = false
