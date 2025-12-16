@@ -1045,8 +1045,12 @@ const handler = async (req: Request): Promise<Response> => {
     if (duplicateCount && duplicateCount > 0) {
       log(requestId, "WARN", "Duplicate submission blocked", { email: leadData.email });
       return new Response(
-        JSON.stringify({ error: "You've already submitted a request recently. Please wait before submitting again." }),
-        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ 
+          success: false, 
+          error: "You've already submitted a request recently. Please wait before submitting again.",
+          isDuplicate: true 
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -1060,8 +1064,12 @@ const handler = async (req: Request): Promise<Response> => {
     if (ipCount && ipCount >= 5) {
       log(requestId, "WARN", "IP rate limit exceeded", { ipHash });
       return new Response(
-        JSON.stringify({ error: "Too many submissions. Please try again later." }),
-        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ 
+          success: false, 
+          error: "Too many submissions. Please try again later.",
+          isRateLimited: true 
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
