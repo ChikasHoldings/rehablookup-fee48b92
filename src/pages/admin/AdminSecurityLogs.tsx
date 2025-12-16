@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow, subDays, startOfDay, endOfDay } from "date-fns";
 import { 
@@ -15,7 +15,10 @@ import {
   Ban,
   Eye,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MapPin,
+  Globe,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +51,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 
@@ -68,7 +72,20 @@ interface SuspiciousActivity {
   first_attempt: string;
 }
 
+interface IpLocation {
+  ip: string;
+  city: string;
+  regionName: string;
+  country: string;
+  countryCode: string;
+  isp: string;
+  status: string;
+}
+
 const ITEMS_PER_PAGE = 25;
+
+// Cache for IP locations to avoid repeated lookups
+const ipLocationCache = new Map<string, IpLocation>();
 
 export default function AdminSecurityLogs() {
   const queryClient = useQueryClient();
@@ -81,6 +98,10 @@ export default function AdminSecurityLogs() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("activity");
   const [selectedLog, setSelectedLog] = useState<RateLimitLog | null>(null);
+  const [ipLocations, setIpLocations] = useState<Map<string, IpLocation>>(new Map());
+  const [loadingLocations, setLoadingLocations] = useState<Set<string>>(new Set());
+  const [selectedLogLocation, setSelectedLogLocation] = useState<IpLocation | null>(null);
+  const [loadingSelectedLocation, setLoadingSelectedLocation] = useState(false);
 
   // Calculate date range
   const getDateRange = () => {
@@ -171,6 +192,126 @@ export default function AdminSecurityLogs() {
     },
   });
 
+  // Look up IP location
+  const lookupIpLocation = useCallback(async (ip: string): Promise<IpLocation | null> => {
+    // Check cache first
+    if (ipLocationCache.has(ip)) {
+      return ipLocationCache.get(ip)!;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('lookup-ip-location', {
+        body: { ip }
+      });
+
+      if (error) {
+        console.error('IP lookup error:', error);
+        return null;
+      }
+
+      const location = data as IpLocation;
+      ipLocationCache.set(ip, location);
+      return location;
+    } catch (error) {
+      console.error('IP lookup failed:', error);
+      return null;
+    }
+  }, []);
+
+  // Extract IP from identifier (email or IP)
+  const extractIp = (identifier: string, metadata: Record<string, any> | null): string | null => {
+    // Check if metadata contains IP
+    if (metadata?.ip_address) return metadata.ip_address;
+    if (metadata?.ip) return metadata.ip;
+    
+    // Check if identifier itself is an IP
+    const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+    if (ipPattern.test(identifier)) return identifier;
+    
+    return null;
+  };
+
+  // Batch lookup locations for visible logs
+  useEffect(() => {
+    if (!logs || logs.length === 0) return;
+
+    const logsToLookup = logs.slice(0, 50); // Limit to first 50 to avoid rate limiting
+    const ipsToLookup: string[] = [];
+
+    for (const log of logsToLookup) {
+      const ip = extractIp(log.identifier, log.metadata);
+      if (ip && !ipLocations.has(ip) && !loadingLocations.has(ip)) {
+        ipsToLookup.push(ip);
+      }
+    }
+
+    if (ipsToLookup.length === 0) return;
+
+    // Mark as loading
+    setLoadingLocations(prev => {
+      const newSet = new Set(prev);
+      ipsToLookup.forEach(ip => newSet.add(ip));
+      return newSet;
+    });
+
+    // Lookup IPs with rate limiting (one every 100ms to stay under 45/min limit)
+    const lookupQueue = async () => {
+      for (const ip of ipsToLookup) {
+        const location = await lookupIpLocation(ip);
+        if (location) {
+          setIpLocations(prev => {
+            const newMap = new Map(prev);
+            newMap.set(ip, location);
+            return newMap;
+          });
+        }
+        setLoadingLocations(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(ip);
+          return newSet;
+        });
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    };
+
+    lookupQueue();
+  }, [logs, lookupIpLocation]);
+
+  // Lookup location for selected log
+  useEffect(() => {
+    if (!selectedLog) {
+      setSelectedLogLocation(null);
+      return;
+    }
+
+    const ip = extractIp(selectedLog.identifier, selectedLog.metadata);
+    if (!ip) {
+      setSelectedLogLocation(null);
+      return;
+    }
+
+    // Check if we already have it
+    if (ipLocations.has(ip)) {
+      setSelectedLogLocation(ipLocations.get(ip)!);
+      return;
+    }
+
+    // Lookup
+    setLoadingSelectedLocation(true);
+    lookupIpLocation(ip).then(location => {
+      setSelectedLogLocation(location);
+      if (location) {
+        setIpLocations(prev => {
+          const newMap = new Map(prev);
+          newMap.set(ip, location);
+          return newMap;
+        });
+      }
+      setLoadingSelectedLocation(false);
+    });
+  }, [selectedLog, ipLocations, lookupIpLocation]);
+
   // Real-time subscription
   useEffect(() => {
     const channel = supabase
@@ -221,16 +362,20 @@ export default function AdminSecurityLogs() {
   const exportLogs = () => {
     if (!filteredLogs) return;
     const csv = [
-      ["Timestamp", "Identifier", "Action", "Success", "Metadata"].join(","),
-      ...filteredLogs.map((log) =>
-        [
+      ["Timestamp", "Identifier", "Action", "Success", "Location", "Metadata"].join(","),
+      ...filteredLogs.map((log) => {
+        const ip = extractIp(log.identifier, log.metadata);
+        const location = ip ? ipLocations.get(ip) : null;
+        const locationStr = location ? `${location.city}, ${location.country}` : "";
+        return [
           log.created_at,
           `"${log.identifier}"`,
           log.action_type,
           log.success ? "Yes" : "No",
+          `"${locationStr}"`,
           `"${JSON.stringify(log.metadata || {}).replace(/"/g, '""')}"`,
-        ].join(",")
-      ),
+        ].join(",");
+      }),
     ].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -245,6 +390,81 @@ export default function AdminSecurityLogs() {
   const handleRefresh = () => {
     refetchLogs();
     refetchSuspicious();
+  };
+
+  // Get location display for a log
+  const getLocationDisplay = (log: RateLimitLog) => {
+    const ip = extractIp(log.identifier, log.metadata);
+    if (!ip) return null;
+
+    const location = ipLocations.get(ip);
+    const isLoading = loadingLocations.has(ip);
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span className="text-xs">Loading...</span>
+        </div>
+      );
+    }
+
+    if (!location) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 text-muted-foreground hover:text-foreground"
+                onClick={async () => {
+                  setLoadingLocations(prev => new Set(prev).add(ip));
+                  const loc = await lookupIpLocation(ip);
+                  if (loc) {
+                    setIpLocations(prev => {
+                      const newMap = new Map(prev);
+                      newMap.set(ip, loc);
+                      return newMap;
+                    });
+                  }
+                  setLoadingLocations(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(ip);
+                    return newSet;
+                  });
+                }}
+              >
+                <Globe className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Click to lookup location</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-1.5 text-sm">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="truncate max-w-[120px]">
+                {location.city !== 'Unknown' ? `${location.city}, ${location.countryCode}` : location.country}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="space-y-1">
+              <p className="font-medium">{location.city}, {location.regionName}</p>
+              <p>{location.country}</p>
+              {location.isp && <p className="text-xs text-muted-foreground">{location.isp}</p>}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   };
 
   return (
@@ -423,6 +643,7 @@ export default function AdminSecurityLogs() {
                         <TableRow>
                           <TableHead>Timestamp</TableHead>
                           <TableHead>Identifier</TableHead>
+                          <TableHead>Location</TableHead>
                           <TableHead>Action</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="w-[80px]">Details</TableHead>
@@ -431,7 +652,7 @@ export default function AdminSecurityLogs() {
                       <TableBody>
                         {paginatedLogs?.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                               No logs found for the selected filters
                             </TableCell>
                           </TableRow>
@@ -455,6 +676,9 @@ export default function AdminSecurityLogs() {
                                 <code className="text-sm bg-muted px-1.5 py-0.5 rounded break-all">
                                   {log.identifier}
                                 </code>
+                              </TableCell>
+                              <TableCell>
+                                {getLocationDisplay(log)}
                               </TableCell>
                               <TableCell>
                                 <Badge variant="outline" className="capitalize">
@@ -630,7 +854,7 @@ export default function AdminSecurityLogs() {
 
       {/* Log Detail Dialog */}
       <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Log Details</DialogTitle>
             <DialogDescription>
@@ -664,6 +888,40 @@ export default function AdminSecurityLogs() {
                   <p className="text-sm font-medium text-muted-foreground">Action Type</p>
                   <p className="text-sm capitalize">{selectedLog.action_type.replace(/_/g, " ")}</p>
                 </div>
+                
+                {/* Location Section */}
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Location</p>
+                  {loadingSelectedLocation ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Looking up location...</span>
+                    </div>
+                  ) : selectedLogLocation ? (
+                    <div className="bg-muted rounded-lg p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <span className="font-medium">
+                          {selectedLogLocation.city}, {selectedLogLocation.regionName}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{selectedLogLocation.country}</span>
+                      </div>
+                      {selectedLogLocation.isp && (
+                        <p className="text-xs text-muted-foreground">
+                          ISP: {selectedLogLocation.isp}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No IP address available for location lookup
+                    </p>
+                  )}
+                </div>
+
                 {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
                   <div className="col-span-2">
                     <p className="text-sm font-medium text-muted-foreground">Metadata</p>
