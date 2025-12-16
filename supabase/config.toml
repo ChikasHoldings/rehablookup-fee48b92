@@ -113,3 +113,6 @@ verify_jwt = false
 
 [functions.check-brute-force-alerts]
 verify_jwt = false
+
+[functions.send-contact-form]
+verify_jwt = false

@@ -4,6 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Mail,
   MapPin,
@@ -32,16 +33,28 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const { data, error } = await supabase.functions.invoke("send-contact-form", {
+        body: formData,
+      });
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+      if (error) throw error;
 
-    toast({
-      title: "Message Sent",
-      description: "We'll get back to you within 1-2 business days.",
-    });
+      setIsSubmitted(true);
+      toast({
+        title: "Message Sent",
+        description: "We'll get back to you within 1-2 business days.",
+      });
+    } catch (error) {
+      console.error("Contact form error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again or email us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
