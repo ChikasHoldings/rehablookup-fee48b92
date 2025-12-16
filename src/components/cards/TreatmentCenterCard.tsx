@@ -43,7 +43,7 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
     <article
       className={cn(
         "group relative flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-all duration-300",
-        "hover:shadow-xl hover:-translate-y-0.5",
+        "hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.99]",
         showFeaturedBadge 
           ? "border-accent/40 shadow-lg ring-1 ring-accent/20" 
           : "border-border shadow-sm"
@@ -51,7 +51,7 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
     >
       {/* Featured Badge - Gold for subscription-based featured */}
       {showFeaturedBadge && (
-        <div className="absolute right-3 top-3 z-20">
+        <div className="absolute right-3 top-3 z-20 md:right-3 md:top-3">
           <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-md px-2.5 py-1 text-xs font-semibold">
             <Crown className="h-3 w-3" />
             Featured
@@ -59,12 +59,12 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
         </div>
       )}
 
-      {/* Header with Logo */}
-      <div className="flex items-start gap-4 p-4">
-        {/* Logo Container - Fixed size with reserved space */}
+      {/* Header with Logo - Larger on mobile */}
+      <div className="flex items-start gap-4 p-5 md:p-4">
+        {/* Logo Container - Larger on mobile for better visibility */}
         <div 
           className={cn(
-            "relative h-14 w-14 shrink-0 overflow-hidden rounded-lg",
+            "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl md:h-14 md:w-14 md:rounded-lg",
             showFeaturedBadge ? "ring-2 ring-accent/30" : "ring-1 ring-border"
           )}
         >
@@ -78,49 +78,49 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-muted">
-              <span className="font-display text-base font-semibold text-primary">
+              <span className="font-display text-lg font-semibold text-primary md:text-base">
                 {initials}
               </span>
             </div>
           )}
         </div>
 
-        {/* Name and Location */}
+        {/* Name and Location - Larger text on mobile */}
         <div className="min-w-0 flex-1 pt-0.5">
-          <h3 className="font-display text-base font-semibold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-2">
+          <h3 className="font-display text-lg font-semibold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-2 md:text-base">
             {center.name}
           </h3>
-          <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
+          <p className="mt-1.5 flex items-center gap-1.5 text-base text-muted-foreground md:mt-1 md:gap-1 md:text-sm">
+            <MapPin className="h-4 w-4 shrink-0 md:h-3.5 md:w-3.5" />
             <span className="truncate">{center.city}, {center.state}</span>
           </p>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex flex-1 flex-col px-4 pb-4">
-        {/* Rating Row */}
-        <div className="mb-3 flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 fill-accent text-accent" />
-            <span className="text-sm font-semibold text-foreground">{center.rating}</span>
+      {/* Content - Better spacing on mobile */}
+      <div className="flex flex-1 flex-col px-5 pb-5 md:px-4 md:pb-4">
+        {/* Rating Row - Larger touch targets */}
+        <div className="mb-4 flex items-center gap-4 md:mb-3 md:gap-3">
+          <div className="flex items-center gap-1.5 md:gap-1">
+            <Star className="h-5 w-5 fill-accent text-accent md:h-4 md:w-4" />
+            <span className="text-base font-semibold text-foreground md:text-sm">{center.rating}</span>
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground md:text-xs">
             {center.reviewCount} reviews
           </span>
-          <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-            <Shield className="h-3.5 w-3.5 text-accent" />
+          <div className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground md:gap-1 md:text-xs">
+            <Shield className="h-4 w-4 text-accent md:h-3.5 md:w-3.5" />
             Verified
           </div>
         </div>
 
-        {/* Treatment Type Tags */}
-        <div className="mb-3 flex flex-wrap gap-1.5">
+        {/* Treatment Type Tags - Larger on mobile */}
+        <div className="mb-4 flex flex-wrap gap-2 md:mb-3 md:gap-1.5">
           {center.treatmentTypes.slice(0, 3).map((type) => (
             <Badge 
               key={type} 
               variant="secondary" 
-              className="text-xs font-medium px-2 py-0.5 bg-secondary/60"
+              className="text-sm font-medium px-3 py-1 bg-secondary/60 md:text-xs md:px-2 md:py-0.5"
             >
               {type}
             </Badge>
@@ -128,20 +128,20 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
           {center.treatmentTypes.length > 3 && (
             <Badge 
               variant="outline" 
-              className="text-xs px-2 py-0.5 text-muted-foreground"
+              className="text-sm px-3 py-1 text-muted-foreground md:text-xs md:px-2 md:py-0.5"
             >
               +{center.treatmentTypes.length - 3}
             </Badge>
           )}
         </div>
 
-        {/* Description */}
-        <p className="mb-4 line-clamp-2 flex-1 text-sm text-muted-foreground leading-relaxed">
+        {/* Description - Better readability on mobile */}
+        <p className="mb-5 line-clamp-2 flex-1 text-base text-muted-foreground leading-relaxed md:mb-4 md:text-sm">
           {center.description}
         </p>
 
-        {/* Actions */}
-        <div className="flex gap-2 mt-auto">
+        {/* Actions - Larger touch targets (48px height on mobile) */}
+        <div className="flex gap-3 mt-auto md:gap-2">
           <Link 
             to={detailsUrl} 
             state={{ fromSearch: true }}
@@ -149,20 +149,18 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
           >
             <Button 
               variant="default" 
-              size="sm"
-              className="w-full gap-1 text-sm font-medium"
+              className="w-full gap-2 h-12 text-base font-medium md:h-9 md:text-sm md:gap-1"
             >
               View Profile
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight className="h-4 w-4 md:h-3.5 md:w-3.5" />
             </Button>
           </Link>
           <a href={`tel:${center.phone}`}>
             <Button 
               variant="outline" 
-              size="sm"
-              className="gap-1.5 text-sm font-medium"
+              className="gap-2 h-12 px-5 text-base font-medium md:h-9 md:px-3 md:text-sm md:gap-1.5"
             >
-              <Phone className="h-3.5 w-3.5" />
+              <Phone className="h-4 w-4 md:h-3.5 md:w-3.5" />
               Call
             </Button>
           </a>
