@@ -14,6 +14,7 @@ import { toast } from "sonner";
 interface RegenerateRecoveryCodesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 type DialogStep = "confirm" | "codes";
@@ -21,6 +22,7 @@ type DialogStep = "confirm" | "codes";
 export function RegenerateRecoveryCodesDialog({
   open,
   onOpenChange,
+  onSuccess,
 }: RegenerateRecoveryCodesDialogProps) {
   const [step, setStep] = useState<DialogStep>("confirm");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -43,6 +45,7 @@ export function RegenerateRecoveryCodesDialog({
       setRecoveryCodes(response.data.codes || []);
       setStep("codes");
       toast.success("New recovery codes generated");
+      onSuccess?.();
     } catch (err) {
       console.error("Error regenerating recovery codes:", err);
       toast.error("Failed to generate recovery codes");
