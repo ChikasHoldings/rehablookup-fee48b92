@@ -39,42 +39,42 @@ export function StepWhoNeedsHelp({ formData, updateFormData, onNext }: StepWhoNe
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 md:space-y-8 animate-fade-in">
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-1">Who Needs Help?</h2>
-        <p className="text-sm text-muted-foreground">Tell us a bit about the situation so we can find the best options.</p>
+        <h2 className="text-xl md:text-lg font-semibold text-foreground mb-2">Who Needs Help?</h2>
+        <p className="text-base md:text-sm text-muted-foreground">Tell us a bit about the situation so we can find the best options.</p>
       </div>
 
       {/* Who is seeking help */}
-      <div className="space-y-3">
-        <Label className="text-base font-medium">Who is seeking help?</Label>
+      <div className="space-y-4">
+        <Label className="text-base md:text-base font-medium">Who is seeking help?</Label>
         <RadioGroup
           value={formData.whoSeekingHelp}
           onValueChange={(value) => {
             updateFormData({ whoSeekingHelp: value });
             setErrors(prev => ({ ...prev, whoSeekingHelp: "" }));
           }}
-          className="grid grid-cols-2 gap-3"
+          className="grid grid-cols-2 gap-3 md:gap-3"
         >
           <label
-            className={`flex items-center justify-center px-4 py-3 border rounded-lg cursor-pointer transition-colors ${
+            className={`flex items-center justify-center px-4 py-4 md:py-3 border-2 rounded-xl cursor-pointer transition-all active:scale-[0.98] ${
               formData.whoSeekingHelp === "self"
-                ? "border-primary bg-primary/5 text-primary"
+                ? "border-primary bg-primary/5 text-primary shadow-sm"
                 : "border-border hover:border-primary/50"
             }`}
           >
             <RadioGroupItem value="self" className="sr-only" />
-            <span className="font-medium">Myself</span>
+            <span className="font-medium text-base">Myself</span>
           </label>
           <label
-            className={`flex items-center justify-center px-4 py-3 border rounded-lg cursor-pointer transition-colors ${
+            className={`flex items-center justify-center px-4 py-4 md:py-3 border-2 rounded-xl cursor-pointer transition-all active:scale-[0.98] ${
               formData.whoSeekingHelp === "loved-one"
-                ? "border-primary bg-primary/5 text-primary"
+                ? "border-primary bg-primary/5 text-primary shadow-sm"
                 : "border-border hover:border-primary/50"
             }`}
           >
             <RadioGroupItem value="loved-one" className="sr-only" />
-            <span className="font-medium">A Loved One</span>
+            <span className="font-medium text-base">A Loved One</span>
           </label>
         </RadioGroup>
         {errors.whoSeekingHelp && (
@@ -83,9 +83,9 @@ export function StepWhoNeedsHelp({ formData, updateFormData, onNext }: StepWhoNe
       </div>
 
       {/* Location */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Label htmlFor="locationZip" className="text-base font-medium">Location</Label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <Input
               id="locationZip"
@@ -96,7 +96,7 @@ export function StepWhoNeedsHelp({ formData, updateFormData, onNext }: StepWhoNe
                 updateFormData({ locationZip: value });
                 setErrors(prev => ({ ...prev, locationZip: "" }));
               }}
-              className={errors.locationZip ? "border-destructive" : ""}
+              className={`h-12 md:h-10 text-base ${errors.locationZip ? "border-destructive" : ""}`}
             />
           </div>
           <div>
@@ -104,6 +104,7 @@ export function StepWhoNeedsHelp({ formData, updateFormData, onNext }: StepWhoNe
               placeholder="City, State (optional)"
               value={formData.locationCityState}
               onChange={(e) => updateFormData({ locationCityState: e.target.value })}
+              className="h-12 md:h-10 text-base"
             />
           </div>
         </div>
@@ -113,7 +114,7 @@ export function StepWhoNeedsHelp({ formData, updateFormData, onNext }: StepWhoNe
       </div>
 
       {/* Urgency */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Label className="text-base font-medium">How urgent is the need?</Label>
         <RadioGroup
           value={formData.urgency}
@@ -121,7 +122,7 @@ export function StepWhoNeedsHelp({ formData, updateFormData, onNext }: StepWhoNe
             updateFormData({ urgency: value });
             setErrors(prev => ({ ...prev, urgency: "" }));
           }}
-          className="space-y-2"
+          className="space-y-3"
         >
           {[
             { value: "immediate", label: "Immediate — I need help today" },
@@ -130,14 +131,14 @@ export function StepWhoNeedsHelp({ formData, updateFormData, onNext }: StepWhoNe
           ].map((option) => (
             <label
               key={option.value}
-              className={`flex items-center px-4 py-3 border rounded-lg cursor-pointer transition-colors ${
+              className={`flex items-center px-4 py-4 md:py-3 border-2 rounded-xl cursor-pointer transition-all active:scale-[0.99] ${
                 formData.urgency === option.value
-                  ? "border-primary bg-primary/5"
+                  ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border hover:border-primary/50"
               }`}
             >
-              <RadioGroupItem value={option.value} className="mr-3" />
-              <span className={formData.urgency === option.value ? "text-primary font-medium" : ""}>
+              <RadioGroupItem value={option.value} className="mr-3 h-5 w-5" />
+              <span className={`text-base ${formData.urgency === option.value ? "text-primary font-medium" : ""}`}>
                 {option.label}
               </span>
             </label>
@@ -148,10 +149,10 @@ export function StepWhoNeedsHelp({ formData, updateFormData, onNext }: StepWhoNe
         )}
       </div>
 
-      <div className="pt-4">
-        <Button onClick={handleNext} className="w-full" size="lg">
+      <div className="pt-4 md:pt-4">
+        <Button onClick={handleNext} className="w-full h-14 md:h-12 text-base" size="lg">
           Continue
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
       </div>
     </div>

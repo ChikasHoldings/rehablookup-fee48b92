@@ -10,12 +10,21 @@ const stepLabels = ["About You", "Treatment", "Insurance", "Contact"];
 
 export function RequestHelpStepper({ currentStep, totalSteps }: RequestHelpStepperProps) {
   return (
-    <div className="mb-8">
-      {/* Mobile: Simple text indicator */}
-      <div className="md:hidden text-center mb-4">
-        <span className="text-sm text-muted-foreground">
-          Step {currentStep} of {totalSteps}: <span className="font-medium text-foreground">{stepLabels[currentStep - 1]}</span>
-        </span>
+    <div className="mb-6 md:mb-8">
+      {/* Mobile: Progress bar with step indicator */}
+      <div className="md:hidden">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-base font-medium text-foreground">{stepLabels[currentStep - 1]}</span>
+          <span className="text-sm text-muted-foreground">
+            {currentStep} of {totalSteps}
+          </span>
+        </div>
+        <div className="w-full bg-muted rounded-full h-2">
+          <div 
+            className="bg-primary h-2 rounded-full transition-all duration-300"
+            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+          />
+        </div>
       </div>
 
       {/* Desktop: Full stepper */}
