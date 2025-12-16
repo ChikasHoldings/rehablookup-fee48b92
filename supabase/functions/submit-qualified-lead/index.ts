@@ -983,9 +983,72 @@ const handler = async (req: Request): Promise<Response> => {
             console.log(`[Routing] Provider ${facility.name} NOT eligible: ${eligibility.reason}`);
             
             if (eligibility.planName === "basic" || !PAID_PLANS.includes(eligibility.planName)) {
-              assignmentStatus = "unassigned_provider_ineligible";
-              assignmentReason = `Requested provider (${facility.name}) does not accept routed inquiries - Basic plan`;
-              console.log(`[Routing] Basic plan provider requested - will attempt auto-assignment`);
+              // CRITICAL: Basic plan provider direct request - DO NOT auto-assign elsewhere
+              // Return specific response so frontend can show appropriate message
+              console.log(`[Routing] Basic plan provider requested directly - blocking with fallback message`);
+              
+              // Still create the lead but mark as unassigned with specific reason
+              const { data: blockedLead, error: blockedInsertError } = await supabase
+                .from("leads")
+                .insert({
+                  facility_id: null, // NOT assigned to any provider
+                  name: leadData.name.trim(),
+                  phone: leadData.phone.trim(),
+                  email: leadData.email.toLowerCase().trim(),
+                  preferred_contact: leadData.preferredContact,
+                  message: leadData.message?.trim() || null,
+                  ip_hash: ipHash,
+                  email_verified: emailVerified,
+                  source: "Direct Profile (Blocked)",
+                  who_seeking_help: leadData.whoSeekingHelp,
+                  location_zip: leadData.locationZip,
+                  location_city_state: leadData.locationCityState || null,
+                  urgency: leadData.urgency,
+                  primary_substance: leadData.primarySubstance || [],
+                  level_of_care: leadData.levelOfCare,
+                  dual_diagnosis: leadData.dualDiagnosis,
+                  insurance_type: leadData.insuranceType,
+                  insurance_provider: leadData.insuranceProvider || null,
+                  budget_preference: leadData.budgetPreference || null,
+                  status: "new",
+                  quality_flag: isQualified ? "qualified" : "unqualified",
+                  validation_status: "valid",
+                  qualified: isQualified,
+                  qualification_reason: qualificationReason,
+                  assignment_status: "blocked_basic_provider",
+                  assignment_reason: `Requested provider (${facility.name}) is on Basic plan - does not accept routed inquiries`,
+                  assigned_at: null,
+                })
+                .select()
+                .single();
+
+              if (blockedInsertError) {
+                console.error("Failed to insert blocked lead:", blockedInsertError);
+              } else {
+                // Log the routing decision
+                await supabase.from("lead_routing_logs").insert({
+                  lead_id: blockedLead?.id,
+                  assigned_provider_id: null,
+                  assignment_reason: `Blocked: Basic plan provider (${facility.name}) cannot receive routed leads`,
+                  plan_tier: "basic",
+                  routing_source: "direct_blocked",
+                  requested_facility_id: facility.id,
+                  eligibility_check_result: {
+                    blocked_reason: "basic_plan_direct_request",
+                    requested_facility_name: facility.name,
+                  },
+                });
+              }
+
+              return new Response(
+                JSON.stringify({ 
+                  success: false,
+                  error: "provider_unavailable",
+                  message: "This provider does not currently accept direct inquiries. Please use our Request Help form to be matched with an available provider.",
+                  showFallback: true,
+                }),
+                { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+              );
             } else if (eligibility.isSuspended) {
               assignmentStatus = "unassigned_provider_suspended";
               assignmentReason = `Requested provider (${facility.name}) is currently suspended`;
