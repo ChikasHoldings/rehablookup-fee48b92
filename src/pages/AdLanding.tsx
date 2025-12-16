@@ -239,10 +239,10 @@ export default function AdLanding() {
           preferredContact: "call",
           urgency: formData.isUrgent ? "urgent" : "this_week",
           whoSeekingHelp: "myself",
-          locationZip: "",
-          locationCityState: "",
+          locationZip: "00000", // Default for ad landing - location not collected
+          locationCityState: "Unknown",
           primarySubstance: [],
-          levelOfCare: "",
+          levelOfCare: "unknown", // Default for ad landing - not collected
           dualDiagnosis: "unknown",
           insuranceType: "unknown",
           source: "ad_landing",
