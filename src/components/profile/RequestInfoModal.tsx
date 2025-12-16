@@ -83,6 +83,26 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
+// Analytics tracking helper
+const trackAnalyticsEvent = async (
+  eventType: string,
+  facilityId: string,
+  metadata?: Record<string, unknown>
+) => {
+  try {
+    await supabase.functions.invoke("track-request-help", {
+      body: {
+        eventType,
+        source: "request_info_modal",
+        facilityId,
+        metadata,
+      },
+    });
+  } catch (err) {
+    console.error("Analytics tracking error:", err);
+  }
+};
+
 export function RequestInfoModal({
   open,
   onOpenChange,
@@ -104,6 +124,16 @@ export function RequestInfoModal({
     message: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Track modal open
+  useEffect(() => {
+    if (open) {
+      trackAnalyticsEvent("modal_open", facility.id, {
+        facilityName: facility.name,
+        hasPrefill: !!prefillData,
+      });
+    }
+  }, [open, facility.id, facility.name, prefillData]);
 
   // Update form when prefill data changes
   useEffect(() => {
@@ -220,6 +250,12 @@ export function RequestInfoModal({
       setIsSubmitted(true);
       fetchNearbyFacilities();
       
+      // Track form submission
+      trackAnalyticsEvent("form_submission", facility.id, {
+        facilityName: facility.name,
+        hasMessage: !!formData.message?.trim(),
+      });
+      
       toast.success("Request sent!", {
         description: `${facility.name} will contact you soon.`,
       });
@@ -234,6 +270,14 @@ export function RequestInfoModal({
   };
 
   const handleNearbyRequest = (nearbyFacility: NearbyFacility) => {
+    // Track nearby facility click
+    trackAnalyticsEvent("nearby_facility_click", nearbyFacility.id, {
+      fromFacilityId: facility.id,
+      fromFacilityName: facility.name,
+      targetFacilityName: nearbyFacility.name,
+      isFeatured: nearbyFacility.featured,
+    });
+    
     // Navigate to that facility's profile with prefill data
     navigate(`/center/${nearbyFacility.slug}`, {
       state: {
@@ -252,6 +296,12 @@ export function RequestInfoModal({
   };
 
   const handleRequestHelp = () => {
+    // Track Request Help conversion
+    trackAnalyticsEvent("request_help_conversion", facility.id, {
+      fromFacilityName: facility.name,
+      hasPrefillData: !!submittedData,
+    });
+    
     const params = new URLSearchParams();
     if (submittedData) {
       params.set("firstName", submittedData.firstName);
