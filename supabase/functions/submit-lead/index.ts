@@ -771,6 +771,38 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Lead created successfully:", lead.id, "Validation: valid");
 
+    // ============ CREATE ROUTING LOG FOR DIRECT INQUIRIES ============
+    try {
+      const planName = capCheckResult?.planName || "basic";
+      const usedLeads = capCheckResult?.usedLeads || 0;
+      const leadLimit = capCheckResult?.leadLimit || 1;
+      
+      await supabase.from("lead_routing_logs").insert({
+        lead_id: lead.id,
+        assigned_provider_id: body.facilityId,
+        assignment_reason: `Direct profile inquiry to ${body.facilityName} (${planName} plan)`,
+        plan_tier: planName,
+        subscription_status: planName !== "basic" ? "active" : "none",
+        lead_limit: leadLimit,
+        used_leads: usedLeads,
+        routing_source: "direct_inquiry",
+        requested_facility_id: body.facilityId,
+        eligibility_check_result: {
+          source: "direct_profile_form",
+          facility_name: body.facilityName,
+          lead_email: sanitizedEmail.substring(0, 3) + "***",
+          plan_name: planName,
+          can_receive_leads: capCheckResult?.canReceiveLeads ?? true,
+          lead_cap_status: `${usedLeads}/${leadLimit}`,
+          timestamp: new Date().toISOString(),
+        },
+      });
+      console.log("Routing log created for direct inquiry:", lead.id);
+    } catch (routingLogError) {
+      console.error("Failed to create routing log:", routingLogError);
+      // Non-blocking - continue with email notification
+    }
+
     // ============ EMAIL NOTIFICATION ============
     
     // Check notification preferences - respect provider settings
