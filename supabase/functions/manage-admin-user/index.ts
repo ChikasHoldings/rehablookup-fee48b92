@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface ManageAdminUserRequest {
-  action: "suspend" | "unsuspend" | "delete" | "reset_password" | "update_role" | "update_permissions";
+  action: "suspend" | "unsuspend" | "delete" | "reset_password" | "update_role" | "update_permissions" | "resend_invitation";
   targetUserId: string;
   newRole?: "admin" | "moderator";
   permissions?: Record<string, boolean>;
@@ -348,6 +348,118 @@ serve(async (req) => {
         });
 
         result.message = "Permissions updated successfully";
+        break;
+      }
+
+      case "resend_invitation": {
+        // Check if user is in pending_password_reset status
+        const { data: adminProfile } = await supabase
+          .from("admin_user_profiles")
+          .select("status, display_name")
+          .eq("user_id", targetUserId)
+          .single();
+
+        if (adminProfile?.status !== "pending_password_reset") {
+          throw new Error("Can only resend invitation to pending users");
+        }
+
+        // Generate new temp password
+        const tempPassword = generateTempPassword();
+        const tempPasswordExpiry = new Date();
+        tempPasswordExpiry.setHours(tempPasswordExpiry.getHours() + 72);
+
+        // Update password in auth
+        await supabase.auth.admin.updateUserById(targetUserId, {
+          password: tempPassword,
+        });
+
+        // Update expiry in admin profile
+        await supabase
+          .from("admin_user_profiles")
+          .update({
+            temp_password_expires_at: tempPasswordExpiry.toISOString(),
+          })
+          .eq("user_id", targetUserId);
+
+        // Send invitation email
+        if (resendApiKey && targetProfile?.email) {
+          const resend = new Resend(resendApiKey);
+          const loginUrl = `${req.headers.get("origin")}/admin-login`;
+          const displayName = adminProfile.display_name || targetProfile.first_name || "Admin";
+
+          await resend.emails.send({
+            from: "RehabLookup Admin <no-reply@rehablookup.com>",
+            to: [targetProfile.email],
+            subject: "Your RehabLookup Admin Invitation (Resent)",
+            html: `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1a1a1a; }
+                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                  .header { background: linear-gradient(135deg, #1B365D 0%, #2d4a7c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+                  .content { background: #f6f8fb; padding: 30px; border-radius: 0 0 8px 8px; }
+                  .credentials { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin: 20px 0; }
+                  .credential-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+                  .credential-row:last-child { border-bottom: none; }
+                  .credential-label { color: #64748b; font-size: 14px; }
+                  .credential-value { font-weight: 600; color: #1B365D; font-family: monospace; }
+                  .warning { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0; }
+                  .btn { display: inline-block; background: #1B365D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <h1 style="margin: 0; font-size: 24px;">🔑 Admin Invitation (Resent)</h1>
+                  </div>
+                  <div class="content">
+                    <p>Hello ${displayName},</p>
+                    <p>Your invitation to the RehabLookup Admin Panel has been resent. Here are your new login credentials:</p>
+                    
+                    <div class="credentials">
+                      <div class="credential-row">
+                        <span class="credential-label">Email:</span>
+                        <span class="credential-value">${targetProfile.email}</span>
+                      </div>
+                      <div class="credential-row">
+                        <span class="credential-label">Temporary Password:</span>
+                        <span class="credential-value">${tempPassword}</span>
+                      </div>
+                    </div>
+
+                    <div class="warning">
+                      <strong>⚠️ Important</strong>
+                      <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                        <li>This temporary password expires in <strong>72 hours</strong></li>
+                        <li>You must change your password upon first login</li>
+                        <li>Keep these credentials secure</li>
+                      </ul>
+                    </div>
+
+                    <p style="text-align: center; margin-top: 30px;">
+                      <a href="${loginUrl}" class="btn">Login to Admin Panel →</a>
+                    </p>
+                  </div>
+                </div>
+              </body>
+              </html>
+            `,
+          });
+        }
+
+        // Log action
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: requestingUser.id,
+          action_type: "admin_invitation_resent",
+          target_type: "admin_user",
+          target_id: targetUserId,
+          details: { email: targetProfile?.email },
+        });
+
+        result.message = "Invitation resent successfully";
+        result.tempPassword = tempPassword;
         break;
       }
 

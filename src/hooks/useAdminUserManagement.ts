@@ -242,10 +242,10 @@ export function useAdminUserManagement() {
     },
   });
 
-  // Manage admin user mutation (suspend, unsuspend, delete, reset password, update role, update permissions)
+  // Manage admin user mutation (suspend, unsuspend, delete, reset password, update role, update permissions, resend invitation)
   const manageAdminUserMutation = useMutation({
     mutationFn: async (data: {
-      action: "suspend" | "unsuspend" | "delete" | "reset_password" | "update_role" | "update_permissions";
+      action: "suspend" | "unsuspend" | "delete" | "reset_password" | "update_role" | "update_permissions" | "resend_invitation";
       targetUserId: string;
       newRole?: AdminRole;
       permissions?: Record<string, boolean>;
@@ -270,6 +270,7 @@ export function useAdminUserManagement() {
         reset_password: "Password reset successfully. New credentials sent via email.",
         update_role: "Role updated successfully",
         update_permissions: "Permissions updated successfully",
+        resend_invitation: "Invitation resent successfully",
       };
 
       toast.success(messages[variables.action] || "Action completed");
