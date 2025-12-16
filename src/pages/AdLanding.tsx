@@ -1,16 +1,23 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Play, Shield, Lock, Heart, CheckCircle2, Loader2, Phone } from "lucide-react";
+import { Shield, Lock, Heart, CheckCircle2, Loader2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { LazyVideoEmbed } from "@/components/ui/lazy-video-embed";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import logoImage from "@/assets/logo.png";
+
+// Configure your video here - replace with your actual video ID
+const VIDEO_CONFIG = {
+  platform: "youtube" as const, // or "vimeo"
+  videoId: "dQw4w9WgXcQ", // Replace with your actual YouTube/Vimeo video ID
+};
 
 interface FormData {
   firstName: string;
@@ -63,9 +70,6 @@ export default function AdLanding() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  
-  // Video state
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   
   // Track page view on mount with UTM params
   useEffect(() => {
@@ -267,8 +271,7 @@ export default function AdLanding() {
   };
   
   const handleVideoPlay = () => {
-    setIsVideoPlaying(true);
-    trackEvent("video_play");
+    trackEvent("video_play", { utm: utmParams.current });
   };
   
   const handleEmailChange = (value: string) => {
@@ -386,23 +389,12 @@ export default function AdLanding() {
           
           {/* Video Section */}
           <section className="space-y-3 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-100">
-            <div 
-              className="relative aspect-video bg-card rounded-2xl overflow-hidden border border-border cursor-pointer group shadow-sm hover:shadow-md transition-shadow"
-              onClick={handleVideoPlay}
-            >
-              {/* Video placeholder - replace with actual video embed */}
-              {!isVideoPlaying ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
-                  <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-200">
-                    <Play className="w-8 h-8 text-primary-foreground ml-1" fill="currentColor" />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                  <p className="text-muted-foreground">Video player placeholder</p>
-                </div>
-              )}
-            </div>
+            <LazyVideoEmbed
+              platform={VIDEO_CONFIG.platform}
+              videoId={VIDEO_CONFIG.videoId}
+              title="How RehabLookup helps connect people with treatment"
+              onPlay={handleVideoPlay}
+            />
             <p className="text-sm text-muted-foreground text-center">
               A brief overview of how we help connect people with treatment options in a respectful, confidential way.
             </p>
