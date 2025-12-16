@@ -126,6 +126,29 @@ serve(async (req) => {
       metadata: { facility_id, image_type, reason },
     });
 
+    // Send notification email to facility owner
+    logStep("Triggering owner notification email");
+    try {
+      const notifyResponse = await fetch(
+        `${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-flagged-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({ facility_id, image_type, reason: reasonWithDetails, image_url }),
+        }
+      );
+      if (!notifyResponse.ok) {
+        logStep("Owner notification failed (non-blocking)", { status: notifyResponse.status });
+      } else {
+        logStep("Owner notification sent");
+      }
+    } catch (notifyError) {
+      logStep("Owner notification error (non-blocking)", { error: String(notifyError) });
+    }
+
     logStep("Report created successfully");
 
     return new Response(

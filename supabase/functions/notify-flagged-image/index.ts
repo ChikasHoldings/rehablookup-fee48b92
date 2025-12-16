@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -8,89 +8,87 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface FlaggedImageNotificationRequest {
-  facilityId: string;
-  facilityName: string;
-  imageType: "logo" | "gallery";
-  reason: string;
-  providerEmail: string;
-  providerName: string;
-}
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
+  console.log(`[NOTIFY-FLAGGED-IMAGE] ${step}${detailsStr}`);
+};
 
 const REASON_LABELS: Record<string, string> = {
   inappropriate: "Inappropriate content",
   misleading: "Misleading or fake image",
   low_quality: "Low quality / unprofessional",
   copyright: "Copyright violation",
-  other: "Policy violation",
+  other: "Other",
 };
 
-const handler = async (req: Request): Promise<Response> => {
-  console.log("notify-flagged-image function called");
-
-  // Handle CORS preflight requests
+serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    logStep("Function started");
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
-    // Verify the request is from an authenticated admin
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("No authorization header");
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+    const body = await req.json();
+    
+    // Support both new format (from report-image) and legacy format (from admin panel)
+    const facility_id = body.facility_id || body.facilityId;
+    const image_type = body.image_type || body.imageType;
+    const reason = body.reason;
+    const image_url = body.image_url;
+
+    if (!facility_id) {
+      return new Response(
+        JSON.stringify({ error: "facility_id is required" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    logStep("Fetching facility and owner details", { facility_id });
 
-    if (authError || !user) {
-      console.error("Auth error:", authError);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+    // Fetch facility with owner info
+    const { data: facility, error: facilityError } = await supabaseClient
+      .from("facilities")
+      .select("id, name, user_id, city, state")
+      .eq("id", facility_id)
+      .single();
+
+    if (facilityError || !facility) {
+      logStep("Facility not found", { error: facilityError?.message });
+      return new Response(
+        JSON.stringify({ error: "Facility not found" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+      );
     }
 
-    // Check if user is admin
-    const { data: roleData } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle();
+    // Get owner's email from profiles
+    const { data: profile, error: profileError } = await supabaseClient
+      .from("profiles")
+      .select("email, first_name")
+      .eq("user_id", facility.user_id)
+      .single();
 
-    if (!roleData) {
-      console.error("User is not an admin");
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+    if (profileError || !profile?.email) {
+      logStep("Owner profile/email not found", { error: profileError?.message });
+      return new Response(
+        JSON.stringify({ error: "Owner email not found" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+      );
     }
 
-    const {
-      facilityId,
-      facilityName,
-      imageType,
-      reason,
-      providerEmail,
-      providerName,
-    }: FlaggedImageNotificationRequest = await req.json();
+    const reasonBase = reason?.split(":")?.[0] || reason;
+    const reasonLabel = REASON_LABELS[reasonBase] || reason || "Unspecified";
+    const imageTypeLabel = image_type === "logo" ? "logo" : "gallery image";
 
-    console.log("Sending flagged image notification to:", providerEmail);
+    logStep("Sending notification email", { to: profile.email });
 
-    const reasonText = REASON_LABELS[reason] || reason || "Policy violation";
-    const imageTypeText = imageType === "logo" ? "facility logo" : "gallery image";
-
-    // Send email notification using Resend API directly
+    // Send email notification via Resend API
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -99,83 +97,127 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "RehabLookup <no-reply@rehablookup.com>",
-        to: [providerEmail],
-        subject: `Action Required: Your ${imageTypeText} has been flagged`,
+        to: [profile.email],
+        subject: `Image Flagged for Review - ${facility.name}`,
         html: `
-        <!DOCTYPE html>
-        <html>
+          <!DOCTYPE html>
+          <html>
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
           </head>
-          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #1B365D 0%, #2d4a7c 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Image Review Notice</h1>
-            </div>
-            
-            <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
-              <p style="font-size: 16px; margin-bottom: 20px;">Hi ${providerName},</p>
-              
-              <p style="margin-bottom: 20px;">Our admin team has reviewed your facility listing for <strong>${facilityName}</strong> and flagged your <strong>${imageTypeText}</strong> for the following reason:</p>
-              
-              <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-                <p style="margin: 0; color: #92400e; font-weight: 600;">
-                  ⚠️ ${reasonText}
-                </p>
-              </div>
-              
-              <p style="margin-bottom: 20px;">To maintain the quality and professionalism of your listing, please upload a replacement image that meets our guidelines.</p>
-              
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="https://rehablookup.com/provider/listing" 
-                   style="display: inline-block; background: #1B365D; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                  Update Your Images
-                </a>
-              </div>
-              
-              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-top: 25px;">
-                <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #64748b;">Image Guidelines</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px;">
-                  <li>Use high-quality, professional photos</li>
-                  <li>Ensure images accurately represent your facility</li>
-                  <li>Avoid stock photos or misleading imagery</li>
-                  <li>Logos should be clear and properly sized</li>
-                </ul>
-              </div>
-              
-              <p style="margin-top: 25px; color: #64748b; font-size: 14px;">
-                If you believe this flag was made in error, please contact our support team.
-              </p>
-              
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-              
-              <p style="color: #9ca3af; font-size: 12px; margin: 0; text-align: center;">
-                This is an automated message from RehabLookup.<br>
-                Please do not reply directly to this email.
-              </p>
-            </div>
+          <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                      <td style="background: linear-gradient(135deg, #1B365D 0%, #2a4a7a 100%); padding: 32px 40px; text-align: center;">
+                        <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">Image Flagged for Review</h1>
+                      </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                      <td style="padding: 40px;">
+                        <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">
+                          Hello${profile.first_name ? ` ${profile.first_name}` : ''},
+                        </p>
+                        
+                        <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">
+                          We wanted to let you know that a ${imageTypeLabel} on your facility profile for <strong>${facility.name}</strong> has been flagged for review by a visitor.
+                        </p>
+                        
+                        <!-- Alert Box -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                          <tr>
+                            <td style="padding: 16px 20px;">
+                              <p style="margin: 0 0 8px; color: #92400e; font-size: 14px; font-weight: 600;">
+                                Reason for flag:
+                              </p>
+                              <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                ${reasonLabel}
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">
+                          <strong>What happens next?</strong>
+                        </p>
+                        
+                        <ul style="margin: 0 0 24px; padding-left: 20px; color: #374151; font-size: 16px; line-height: 1.8;">
+                          <li>Our team will review the flagged image</li>
+                          <li>If the image violates our guidelines, we may remove it from your profile</li>
+                          <li>You can proactively update your images via your provider dashboard</li>
+                        </ul>
+                        
+                        <!-- CTA Button -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
+                          <tr>
+                            <td align="center">
+                              <a href="https://rehablookup.com/provider/listing" style="display: inline-block; background-color: #1B365D; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-size: 16px; font-weight: 600;">
+                                Review Your Listing
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                          If you have any questions or believe this flag was made in error, please contact our support team at <a href="mailto:help@rehablookup.com" style="color: #1B365D;">help@rehablookup.com</a>.
+                        </p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                          This email was sent by RehabLookup regarding your facility listing.
+                        </p>
+                        <p style="margin: 8px 0 0; color: #9ca3af; font-size: 12px;">
+                          © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                        </p>
+                      </td>
+                    </tr>
+                    
+                  </table>
+                </td>
+              </tr>
+            </table>
           </body>
-        </html>
-      `,
+          </html>
+        `,
       }),
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    const emailResult = await emailResponse.json();
+    logStep("Email sent", { status: emailResponse.status, result: emailResult });
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+    // Create provider notification
+    await supabaseClient.from("provider_notifications").insert({
+      user_id: facility.user_id,
+      facility_id: facility.id,
+      title: "Image Flagged for Review",
+      message: `Your ${imageTypeLabel} was flagged for: ${reasonLabel}`,
+      type: "flagged_image",
+      metadata: { image_type, reason, image_url },
     });
-  } catch (error: any) {
-    console.error("Error in notify-flagged-image function:", error);
+
+    logStep("Provider notification created");
+
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      JSON.stringify({ success: true, emailResult }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
-};
-
-serve(handler);
+});
