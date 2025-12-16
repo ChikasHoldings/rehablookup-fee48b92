@@ -31,6 +31,7 @@ import ProviderSettingsPage from "./pages/provider/Settings";
 import ProviderNotificationsPage from "./pages/provider/Notifications";
 import ProviderHelpPage from "./pages/provider/Help";
 import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
+import ProviderImageGuidelines from "./pages/provider/ImageGuidelines";
 import Resources from "./pages/Resources";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
@@ -103,6 +104,7 @@ const App = () => (
             <Route path="notifications" element={<ProviderNotificationsPage />} />
             <Route path="help" element={<ProviderHelpPage />} />
             <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
+            <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
           </Route>
           
           {/* Admin Panel Routes - Nested under admin shell */}

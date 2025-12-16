@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Loader2, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
 
@@ -239,6 +240,15 @@ export function FacilityImageUpload({
           Maximum of {maxImages} gallery images reached.
         </p>
       )}
+
+      {/* Guidelines link */}
+      <Link 
+        to="/provider/image-guidelines" 
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+      >
+        <Info className="h-3.5 w-3.5" />
+        View image guidelines
+      </Link>
     </div>
   );
 }
