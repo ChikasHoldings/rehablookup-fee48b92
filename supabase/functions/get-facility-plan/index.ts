@@ -7,9 +7,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Product IDs for plans
-const PROFESSIONAL_PRODUCT_ID = "prod_Tbyz1bf6iYyzYd";
-const FEATURED_PRODUCT_ID = "prod_TbalOeJZA2ZoJl";
+// Product IDs for plans - support both old and new IDs for backward compatibility
+const PROFESSIONAL_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"];
+const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"];
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -25,6 +25,7 @@ serve(async (req) => {
     const { facilityId } = await req.json();
     
     if (!facilityId) {
+      logStep("No facility ID provided, returning basic");
       return new Response(JSON.stringify({ plan: "basic" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -58,7 +59,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (facilityError || !facility) {
-      logStep("Facility not found", { facilityId });
+      logStep("Facility not found", { facilityId, error: facilityError?.message });
       return new Response(JSON.stringify({ plan: "basic" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -82,6 +83,8 @@ serve(async (req) => {
       });
     }
 
+    logStep("Found provider email", { email: providerEmail });
+
     // Find Stripe customer
     const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
     if (customers.data.length === 0) {
@@ -93,6 +96,7 @@ serve(async (req) => {
     }
 
     const customerId = customers.data[0].id;
+    logStep("Found Stripe customer", { customerId });
 
     // Check for active subscription
     const subscriptions = await stripe.subscriptions.list({
@@ -112,10 +116,11 @@ serve(async (req) => {
     const subscription = subscriptions.data[0];
     const productId = subscription.items.data[0].price.product as string;
 
+    // Determine plan based on product ID (supports both old and new IDs)
     let plan = "basic";
-    if (productId === FEATURED_PRODUCT_ID) {
+    if (FEATURED_PRODUCT_IDS.includes(productId)) {
       plan = "featured";
-    } else if (productId === PROFESSIONAL_PRODUCT_ID) {
+    } else if (PROFESSIONAL_PRODUCT_IDS.includes(productId)) {
       plan = "professional";
     }
 
