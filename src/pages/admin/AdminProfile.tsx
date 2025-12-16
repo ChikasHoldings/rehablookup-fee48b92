@@ -9,9 +9,11 @@ import {
   UserCog, Bell, KeyRound, Image, CheckCircle, UserPlus, Ban, 
   BadgeCheck, Star, FileText, Settings, RefreshCw, Shield, 
   Clock, AlertTriangle, Lock, Monitor, Smartphone, Laptop, Tablet,
-  Globe, MapPin, LogOut, Trash2
+  Globe, MapPin, LogOut, Trash2, ShieldOff
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
+import { TwoFactorSetupDialog } from "@/components/admin/TwoFactorSetupDialog";
+import { DisableTwoFactorDialog } from "@/components/admin/DisableTwoFactorDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +109,10 @@ export default function AdminProfile() {
   const [avatarKey, setAvatarKey] = useState(Date.now());
   const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
   const [isRevokingAll, setIsRevokingAll] = useState(false);
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [show2FADisable, setShow2FADisable] = useState(false);
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [isCheckingMFA, setIsCheckingMFA] = useState(true);
 
   // Fetch current user and profile
   const { data: userData } = useQuery({
@@ -216,6 +222,32 @@ export default function AdminProfile() {
       setDisplayName(profile.display_name);
     }
   }, [profile]);
+
+  // Check MFA status
+  useEffect(() => {
+    const checkMFAStatus = async () => {
+      setIsCheckingMFA(true);
+      try {
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const hasVerifiedTotp = factorsData?.totp?.some(f => f.status === 'verified');
+        setMfaEnabled(!!hasVerifiedTotp);
+      } catch (err) {
+        console.error('Error checking MFA status:', err);
+      } finally {
+        setIsCheckingMFA(false);
+      }
+    };
+    
+    checkMFAStatus();
+  }, []);
+
+  const handleMFASetupSuccess = () => {
+    setMfaEnabled(true);
+  };
+
+  const handleMFADisableSuccess = () => {
+    setMfaEnabled(false);
+  };
 
   const getActionIcon = (actionType: string) => {
     const iconMap: Record<string, React.ReactNode> = {
@@ -1119,6 +1151,76 @@ export default function AdminProfile() {
         </CardContent>
       </Card>
 
+      {/* Two-Factor Authentication */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Two-Factor Authentication
+              </CardTitle>
+              <CardDescription>Add an extra layer of security to your account</CardDescription>
+            </div>
+            {isCheckingMFA ? (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            ) : mfaEnabled ? (
+              <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+            ) : (
+              <Badge variant="secondary">Disabled</Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {mfaEnabled ? (
+            <div className="space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <ShieldCheck className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-medium text-green-800">Your account is protected</p>
+                    <p className="text-sm text-green-700">
+                      Two-factor authentication is enabled. You'll need your authenticator app to sign in.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <Button
+                variant="outline"
+                className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={() => setShow2FADisable(true)}
+              >
+                <ShieldOff className="h-4 w-4 mr-2" />
+                Disable Two-Factor Authentication
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-medium text-amber-800">Recommended for admin accounts</p>
+                    <p className="text-sm text-amber-700">
+                      Two-factor authentication adds an extra layer of security by requiring a code from your authenticator app when signing in.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <Button
+                className="w-full"
+                onClick={() => setShow2FASetup(true)}
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Enable Two-Factor Authentication
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Activity Timeline */}
       <Card>
         <CardHeader>
@@ -1192,6 +1294,18 @@ export default function AdminProfile() {
           )}
         </CardContent>
       </Card>
+
+      {/* 2FA Dialogs */}
+      <TwoFactorSetupDialog
+        open={show2FASetup}
+        onOpenChange={setShow2FASetup}
+        onSuccess={handleMFASetupSuccess}
+      />
+      <DisableTwoFactorDialog
+        open={show2FADisable}
+        onOpenChange={setShow2FADisable}
+        onSuccess={handleMFADisableSuccess}
+      />
     </div>
   );
 }
