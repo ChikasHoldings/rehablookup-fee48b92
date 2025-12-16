@@ -49,12 +49,19 @@ export const AdminAuditActions = {
   // Notification actions
   NOTIFICATIONS_MARKED_READ: "notifications_marked_read",
   NOTIFICATIONS_CLEARED: "notifications_cleared",
+  ADMIN_NOTIFICATION_SENT: "admin_notification_sent",
   
   // Provider actions
-  PROVIDER_APPROVED: "provider_approved",
-  PROVIDER_SUSPENDED: "provider_suspended",
-  PROVIDER_VERIFIED: "provider_verified",
-  PROVIDER_FEATURED: "provider_featured",
+  PROVIDER_APPROVED: "status_changed_to_approved",
+  PROVIDER_PENDING: "status_changed_to_pending",
+  PROVIDER_REJECTED: "status_changed_to_rejected",
+  PROVIDER_SUSPENDED: "suspended",
+  PROVIDER_UNSUSPENDED: "unsuspended",
+  PROVIDER_VERIFIED: "verified",
+  PROVIDER_UNVERIFIED: "unverified",
+  PROVIDER_FEATURED: "featured",
+  PROVIDER_UNFEATURED: "unfeatured",
+  NOTES_UPDATED: "notes_updated",
   
   // Lead actions
   LEAD_ASSIGNED: "lead_assigned",
@@ -62,6 +69,34 @@ export const AdminAuditActions = {
   
   // User management
   ADMIN_USER_CREATED: "admin_user_created",
+  ADMIN_USER_DELETED: "admin_user_deleted",
   ADMIN_USER_DEACTIVATED: "admin_user_deactivated",
+  ADMIN_USER_SUSPENDED: "admin_user_suspended",
+  ADMIN_USER_UNSUSPENDED: "admin_user_unsuspended",
   ADMIN_PERMISSIONS_UPDATED: "admin_permissions_updated",
+  ADMIN_ROLE_UPDATED: "admin_role_updated",
+  ADMIN_PASSWORD_RESET: "admin_password_reset",
+  ADMIN_INVITATION_RESENT: "admin_invitation_resent",
+  ADMIN_MFA_SKIP_TOGGLED: "admin_mfa_skip_toggled",
+  
+  // Subscription actions
+  SUBSCRIPTION_OVERRIDE: "subscription_override",
+  SUBSCRIPTION_CANCELED: "subscription_canceled",
+  
+  // Featured placement actions
+  FEATURED_PINNED: "featured_pinned",
+  FEATURED_UNPINNED: "featured_unpinned",
+  FEATURED_SETTINGS_UPDATED: "featured_settings_updated",
+  
+  // Image moderation
+  IMAGE_FLAGGED: "image_flagged",
+  IMAGE_RESOLVED: "image_resolved",
+  IMAGE_REMOVED: "image_removed",
+  
+  // Security actions
+  SECURITY_BLOCK_ADDED: "security_block_added",
+  SECURITY_BLOCK_REMOVED: "security_block_removed",
+  
+  // Settings actions
+  PLATFORM_SETTINGS_UPDATED: "platform_settings_updated",
 } as const;
