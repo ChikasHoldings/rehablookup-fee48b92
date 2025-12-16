@@ -163,7 +163,7 @@ serve(async (req) => {
 
       try {
         await resend.emails.send({
-          from: "RehabLookup Admin <onboarding@resend.dev>",
+          from: "RehabLookup Admin <no-reply@rehablookup.com>",
           to: [email],
           subject: "Your RehabLookup Admin Account Has Been Created",
           html: `
