@@ -37,6 +37,7 @@ import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/Le
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { OnboardingChecklist } from "@/components/provider/OnboardingChecklist";
+import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 
 interface Lead {
   id: string;
@@ -374,6 +375,11 @@ export default function ProviderDashboardPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Featured Analytics Widget - only for Featured plan subscribers */}
+      {planKey === "featured" && facility?.id && (
+        <FeaturedAnalyticsWidget facilityId={facility.id} />
       )}
 
       {/* Metrics Grid */}
