@@ -25,8 +25,8 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Get user from auth header (optional - anonymous reports allowed)
-    let reporterId = "anonymous";
+    // Get user from auth header (optional - anonymous reports use nil UUID)
+    let reporterId = "00000000-0000-0000-0000-000000000000"; // Nil UUID for anonymous
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
       const token = authHeader.replace("Bearer ", "");
