@@ -110,3 +110,6 @@ verify_jwt = false
 
 [functions.cleanup-rate-limit-logs]
 verify_jwt = false
+
+[functions.check-brute-force-alerts]
+verify_jwt = false
