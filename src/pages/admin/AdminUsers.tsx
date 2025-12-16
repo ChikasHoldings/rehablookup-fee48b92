@@ -90,6 +90,12 @@ const STATUS_CONFIG = {
     textColor: "text-red-700",
     dotColor: "bg-red-500",
   },
+  pending_password_reset: {
+    label: "Pending Setup",
+    bgColor: "bg-amber-50",
+    textColor: "text-amber-700",
+    dotColor: "bg-amber-500",
+  },
 };
 
 export default function AdminUsers() {
