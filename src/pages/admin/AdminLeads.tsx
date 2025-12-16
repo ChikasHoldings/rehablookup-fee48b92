@@ -19,8 +19,9 @@ import {
   Bot,
   UserCheck,
   XCircle,
+  CalendarIcon,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,10 +55,33 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { calculateLeadScore, getScoreColor, type LeadScoringInput } from "@/lib/leadScoring";
 import { LeadProfileModal } from "@/components/leads/LeadProfileModal";
 import { RoutingLogsTable } from "@/components/admin/RoutingLogsTable";
+import { cn } from "@/lib/utils";
+
+type DateRange = {
+  from: Date | undefined;
+  to: Date | undefined;
+};
+
+const DATE_PRESETS = [
+  { label: "All Time", value: "all", getRange: () => ({ from: undefined, to: undefined }) },
+  { label: "Today", value: "today", getRange: () => ({ from: new Date(), to: new Date() }) },
+  { label: "Last 7 Days", value: "7days", getRange: () => ({ from: subDays(new Date(), 7), to: new Date() }) },
+  { label: "Last 14 Days", value: "14days", getRange: () => ({ from: subDays(new Date(), 14), to: new Date() }) },
+  { label: "Last 30 Days", value: "30days", getRange: () => ({ from: subDays(new Date(), 30), to: new Date() }) },
+  { label: "This Month", value: "thisMonth", getRange: () => ({ from: startOfMonth(new Date()), to: new Date() }) },
+  { label: "Last Month", value: "lastMonth", getRange: () => ({ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) }) },
+  { label: "Custom", value: "custom", getRange: () => ({ from: undefined, to: undefined }) },
+];
 
 type Lead = {
   id: string;
@@ -258,9 +282,23 @@ export default function AdminLeads() {
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [qualifiedFilter, setQualifiedFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
+  const [datePreset, setDatePreset] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Handle date preset changes
+  const handleDatePresetChange = (value: string) => {
+    setDatePreset(value);
+    if (value !== "custom") {
+      const preset = DATE_PRESETS.find(p => p.value === value);
+      if (preset) {
+        setDateRange(preset.getRange());
+      }
+    }
+    setCurrentPage(1);
+  };
 
   // Invalidate leads queries helper
   const invalidateLeadsQueries = useCallback(() => {
@@ -299,7 +337,7 @@ export default function AdminLeads() {
 
   // Fetch total count for pagination
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-leads-count", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery],
+    queryKey: ["admin-leads-count", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       let query = supabase
         .from("leads")
@@ -327,6 +365,14 @@ export default function AdminLeads() {
         query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
       }
 
+      // Date range filter
+      if (dateRange.from) {
+        query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+      }
+      if (dateRange.to) {
+        query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
+      }
+
       const { count, error } = await query;
       if (error) throw error;
       return count || 0;
@@ -335,7 +381,7 @@ export default function AdminLeads() {
 
   // Fetch leads with pagination
   const { data: leads, isLoading } = useQuery({
-    queryKey: ["admin-leads", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery, currentPage],
+    queryKey: ["admin-leads", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -366,6 +412,14 @@ export default function AdminLeads() {
 
       if (searchQuery) {
         query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+      }
+
+      // Date range filter
+      if (dateRange.from) {
+        query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+      }
+      if (dateRange.to) {
+        query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
       }
 
       const { data, error } = await query;
@@ -520,74 +574,141 @@ export default function AdminLeads() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => handleFilterChange(setSearchQuery)(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or email..."
+                  value={searchQuery}
+                  onChange={(e) => handleFilterChange(setSearchQuery)(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Select value={assignmentFilter} onValueChange={handleFilterChange(setAssignmentFilter)}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Assignment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Leads</SelectItem>
+                    <SelectItem value="assigned">Assigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={qualifiedFilter} onValueChange={handleFilterChange(setQualifiedFilter)}>
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="Qualification" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="qualified">Qualified</SelectItem>
+                    <SelectItem value="unqualified">Unqualified</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={handleFilterChange(setStatusFilter)}>
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="contacted">Contacted</SelectItem>
+                    <SelectItem value="qualified">Qualified</SelectItem>
+                    <SelectItem value="converted">Converted</SelectItem>
+                    <SelectItem value="lost">Lost</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={urgencyFilter} onValueChange={handleFilterChange(setUrgencyFilter)}>
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="Urgency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Urgency</SelectItem>
+                    <SelectItem value="immediate">Immediate</SelectItem>
+                    <SelectItem value="within-week">This Week</SelectItem>
+                    <SelectItem value="within-month">This Month</SelectItem>
+                    <SelectItem value="researching">Researching</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={scoreFilter} onValueChange={handleFilterChange(setScoreFilter)}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Score" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Grades</SelectItem>
+                    <SelectItem value="A">Grade A</SelectItem>
+                    <SelectItem value="B">Grade B</SelectItem>
+                    <SelectItem value="C">Grade C</SelectItem>
+                    <SelectItem value="D">Grade D</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Select value={assignmentFilter} onValueChange={handleFilterChange(setAssignmentFilter)}>
+            {/* Date Range Filter */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={datePreset} onValueChange={handleDatePresetChange}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Assignment" />
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Date Range" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Leads</SelectItem>
-                  <SelectItem value="assigned">Assigned</SelectItem>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {DATE_PRESETS.map((preset) => (
+                    <SelectItem key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <Select value={qualifiedFilter} onValueChange={handleFilterChange(setQualifiedFilter)}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Qualification" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="qualified">Qualified</SelectItem>
-                  <SelectItem value="unqualified">Unqualified</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={handleFilterChange(setStatusFilter)}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="contacted">Contacted</SelectItem>
-                  <SelectItem value="qualified">Qualified</SelectItem>
-                  <SelectItem value="converted">Converted</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={urgencyFilter} onValueChange={handleFilterChange(setUrgencyFilter)}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Urgency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Urgency</SelectItem>
-                  <SelectItem value="immediate">Immediate</SelectItem>
-                  <SelectItem value="within-week">This Week</SelectItem>
-                  <SelectItem value="within-month">This Month</SelectItem>
-                  <SelectItem value="researching">Researching</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={scoreFilter} onValueChange={handleFilterChange(setScoreFilter)}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Score" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Grades</SelectItem>
-                  <SelectItem value="A">Grade A</SelectItem>
-                  <SelectItem value="B">Grade B</SelectItem>
-                  <SelectItem value="C">Grade C</SelectItem>
-                  <SelectItem value="D">Grade D</SelectItem>
-                </SelectContent>
-              </Select>
+              {datePreset === "custom" && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !dateRange.from && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateRange.from ? (
+                        dateRange.to ? (
+                          <>
+                            {format(dateRange.from, "MMM d, yyyy")} - {format(dateRange.to, "MMM d, yyyy")}
+                          </>
+                        ) : (
+                          format(dateRange.from, "MMM d, yyyy")
+                        )
+                      ) : (
+                        <span>Pick a date range</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      initialFocus
+                      mode="range"
+                      defaultMonth={dateRange.from}
+                      selected={{ from: dateRange.from, to: dateRange.to }}
+                      onSelect={(range) => {
+                        setDateRange({ from: range?.from, to: range?.to });
+                        setCurrentPage(1);
+                      }}
+                      numberOfMonths={2}
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+              {(dateRange.from || dateRange.to) && (
+                <Badge variant="secondary" className="text-xs">
+                  {dateRange.from && dateRange.to
+                    ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`
+                    : dateRange.from
+                    ? `From ${format(dateRange.from, "MMM d, yyyy")}`
+                    : `Until ${format(dateRange.to!, "MMM d, yyyy")}`}
+                </Badge>
+              )}
             </div>
           </div>
         </CardContent>
