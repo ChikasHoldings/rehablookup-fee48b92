@@ -10,16 +10,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration - mirrors submit-qualified-lead
-const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; priority_score: number }> = {
-  basic: { product_ids: [], lead_limit: 0, priority_score: 0 },
-  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 25, priority_score: 15 },
-  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 75, priority_score: 30 },
+// ============ PLAN CONFIGURATION ============
+const PLAN_CONFIG: Record<string, { product_ids: string[]; qualified_lead_limit: number; priority_score: number }> = {
+  basic: { product_ids: [], qualified_lead_limit: 0, priority_score: 0 },
+  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], qualified_lead_limit: 25, priority_score: 15 },
+  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], qualified_lead_limit: 75, priority_score: 30 },
 };
 
 const PAID_PLANS = ["professional", "featured"];
 
-// Scoring weights
+// ============ SCORING WEIGHTS ============
 const SCORING_WEIGHTS = {
   PLAN_FEATURED: 30,
   PLAN_PROFESSIONAL: 15,
@@ -35,6 +35,16 @@ const SCORING_WEIGHTS = {
   PENALTY_REASSIGNED: -10,
 };
 
+// ============ LOGGING ============
+const generateRequestId = () => crypto.randomUUID().slice(0, 8);
+
+const log = (requestId: string, level: "INFO" | "WARN" | "ERROR", step: string, details?: unknown) => {
+  const timestamp = new Date().toISOString();
+  const detailsStr = details ? ` | ${JSON.stringify(details)}` : "";
+  console.log(`[${timestamp}] [${requestId}] [REROUTE] [${level}] ${step}${detailsStr}`);
+};
+
+// ============ INTERFACES ============
 interface StaleLead {
   id: string;
   facility_id: string;
@@ -82,14 +92,23 @@ interface ProviderScore {
   };
 }
 
-// Get eligible providers (excluding the current one)
+function getStartOfMonth(): Date {
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+  return startOfMonth;
+}
+
+// ============ GET ELIGIBLE PROVIDERS (excluding current) ============
+// deno-lint-ignore no-explicit-any
 async function getEligibleProviders(
   supabase: any,
-  stripe: any,
+  stripe: Stripe,
   lead: StaleLead,
-  excludeFacilityId: string
+  excludeFacilityId: string,
+  requestId: string
 ): Promise<ProviderCapacity[]> {
-  console.log(`[getEligibleProviders] Finding alternatives for lead ${lead.id}, excluding ${excludeFacilityId}`);
+  log(requestId, "INFO", "Finding alternative providers", { leadId: lead.id, excludeFacilityId });
 
   const { data: facilities, error } = await supabase
     .from("facilities")
@@ -103,14 +122,11 @@ async function getEligibleProviders(
     .neq("id", excludeFacilityId);
 
   if (error || !facilities || facilities.length === 0) {
-    console.log(`[getEligibleProviders] No facilities found or error:`, error);
+    log(requestId, "WARN", "No alternative facilities found", { error: error?.message });
     return [];
   }
 
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
+  const startOfMonth = getStartOfMonth();
   const leadState = lead.location_city_state?.split(",").pop()?.trim().toUpperCase() || "";
   const providers: ProviderCapacity[] = [];
 
@@ -141,22 +157,22 @@ async function getEligibleProviders(
           const productId = subscriptions.data[0].items.data[0].price.product as string;
           if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
             planName = "featured";
-            leadLimit = PLAN_CONFIG.featured.lead_limit;
+            leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
           } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
             planName = "professional";
-            leadLimit = PLAN_CONFIG.professional.lead_limit;
+            leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
           }
         }
       }
     } catch (e) {
-      console.error(`[getEligibleProviders] Stripe error for ${profile.email}:`, e);
+      log(requestId, "WARN", "Stripe error", { email: profile.email, error: String(e) });
       continue;
     }
 
     // Skip non-paid plans
     if (!PAID_PLANS.includes(planName)) continue;
 
-    // Check state match
+    // Check state match (hard filter)
     const providerState = facility.state?.toUpperCase() || "";
     if (leadState && providerState !== leadState) continue;
 
@@ -209,19 +225,19 @@ async function getEligibleProviders(
       usedLeads,
       availableCapacity: leadLimit - usedLeads,
       lastAssignedAt: lastLead?.assigned_at || null,
-      serviceTypes: (facility.facility_services || []).map((s: any) => s.service_name.toLowerCase()),
-      insuranceTypes: (facility.facility_insurance || []).map((i: any) => i.insurance_name.toLowerCase()),
+      serviceTypes: (facility.facility_services || []).map((s: { service_name: string }) => s.service_name.toLowerCase()),
+      insuranceTypes: (facility.facility_insurance || []).map((i: { insurance_name: string }) => i.insurance_name.toLowerCase()),
       leadsThisCycle: usedLeads,
       nonResponseCount: nonResponseCount || 0,
       reassignedCount: reassignedCount || 0,
     });
   }
 
-  console.log(`[getEligibleProviders] Found ${providers.length} eligible alternatives`);
+  log(requestId, "INFO", "Alternative providers found", { count: providers.length });
   return providers;
 }
 
-// Score provider for lead
+// ============ SCORING MODEL ============
 function calculateProviderScore(
   provider: ProviderCapacity,
   lead: StaleLead,
@@ -248,7 +264,7 @@ function calculateProviderScore(
   const providerState = provider.state?.toUpperCase() || "";
   const providerCity = provider.city?.toLowerCase() || "";
 
-  if (providerCity === leadCity && providerState === leadState) {
+  if (providerCity && leadCity && providerCity === leadCity && providerState === leadState) {
     breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_CITY_MATCH;
   } else if (providerState === leadState) {
     breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_METRO_MATCH;
@@ -321,10 +337,11 @@ function calculateProviderScore(
   return { provider, totalScore, breakdown };
 }
 
-// Send notification email to new provider
+// ============ SEND REASSIGNMENT NOTIFICATION ============
 async function sendReassignmentNotification(
   provider: ProviderCapacity,
-  lead: StaleLead
+  lead: StaleLead,
+  requestId: string
 ): Promise<void> {
   const recipientEmail = provider.providerEmail || provider.facilityEmail;
   if (!recipientEmail) return;
@@ -359,16 +376,20 @@ async function sendReassignmentNotification(
         </div>
       `,
     });
-    console.log(`[sendReassignmentNotification] Email sent to ${recipientEmail}`);
+    log(requestId, "INFO", "Reassignment email sent", { to: recipientEmail });
   } catch (error) {
-    console.error(`[sendReassignmentNotification] Failed to send email:`, error);
+    log(requestId, "ERROR", "Failed to send reassignment email", { error: String(error) });
   }
 }
 
+// ============ MAIN HANDLER ============
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const requestId = generateRequestId();
+  log(requestId, "INFO", "Stale lead check starting");
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -377,7 +398,7 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   if (!stripeKey) {
-    console.error("[reroute-stale-leads] STRIPE_SECRET_KEY not set");
+    log(requestId, "ERROR", "STRIPE_SECRET_KEY not set");
     return new Response(JSON.stringify({ error: "Configuration error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -386,18 +407,10 @@ serve(async (req) => {
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-  console.log("[reroute-stale-leads] Starting stale lead check...");
-
   try {
-    // Find leads that:
-    // 1. Are assigned to a facility
-    // 2. Still have status = "new" (not contacted, not in progress, etc.)
-    // 3. Were assigned more than 24 hours ago
-    // 4. Are qualified leads
-    // 5. Have NOT been viewed (no lead_notes, no lead_emails sent)
+    // Find leads that are stale (assigned > 24h ago, still status="new", no interaction)
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    // First get potentially stale leads
     const { data: potentialStaleLeads, error: fetchError } = await supabase
       .from("leads")
       .select("id, facility_id, name, email, phone, location_city_state, location_zip, level_of_care, insurance_type, insurance_provider, assigned_at, status")
@@ -410,32 +423,34 @@ serve(async (req) => {
       throw new Error(`Failed to fetch stale leads: ${fetchError.message}`);
     }
 
-    // Filter out leads that have been interacted with (notes or emails)
+    // Filter out leads that have been interacted with
     const staleLeads: StaleLead[] = [];
     for (const lead of (potentialStaleLeads || []) as StaleLead[]) {
-      // Check if any notes exist
       const { count: notesCount } = await supabase
         .from("lead_notes")
         .select("*", { count: "exact", head: true })
         .eq("lead_id", lead.id);
 
-      // Check if any emails sent
       const { count: emailsCount } = await supabase
         .from("lead_emails")
         .select("*", { count: "exact", head: true })
         .eq("lead_id", lead.id);
 
-      // Only include if no notes AND no emails (truly untouched)
+      // Only include if truly untouched
       if ((notesCount || 0) === 0 && (emailsCount || 0) === 0) {
         staleLeads.push(lead);
       } else {
-        console.log(`[reroute-stale-leads] Lead ${lead.id} has been interacted with (notes: ${notesCount}, emails: ${emailsCount}) - skipping`);
+        log(requestId, "INFO", "Lead has activity - skipping", { 
+          leadId: lead.id, 
+          notes: notesCount, 
+          emails: emailsCount 
+        });
       }
     }
 
-    console.log(`[reroute-stale-leads] Found ${staleLeads?.length || 0} stale leads to process`);
+    log(requestId, "INFO", "Stale leads identified", { count: staleLeads.length });
 
-    if (!staleLeads || staleLeads.length === 0) {
+    if (staleLeads.length === 0) {
       return new Response(JSON.stringify({ 
         success: true, 
         message: "No stale leads to process",
@@ -448,23 +463,26 @@ serve(async (req) => {
     let rerouted = 0;
     let failed = 0;
 
-    for (const lead of staleLeads as StaleLead[]) {
-      console.log(`[reroute-stale-leads] Processing lead ${lead.id} (assigned to ${lead.facility_id})`);
+    for (const lead of staleLeads) {
+      log(requestId, "INFO", "Processing stale lead", { leadId: lead.id, originalFacilityId: lead.facility_id });
 
-      // Get eligible providers (excluding current)
-      const eligibleProviders = await getEligibleProviders(supabase, stripe, lead, lead.facility_id);
+      // Get eligible alternative providers
+      const eligibleProviders = await getEligibleProviders(supabase, stripe, lead, lead.facility_id, requestId);
 
       if (eligibleProviders.length === 0) {
-        console.log(`[reroute-stale-leads] No eligible alternatives for lead ${lead.id} - marking as system unassigned`);
+        log(requestId, "WARN", "No alternatives for lead", { leadId: lead.id });
         
-        // Log the failed re-route
         await supabase.from("lead_routing_logs").insert({
           lead_id: lead.id,
           requested_facility_id: lead.facility_id,
           assigned_provider_id: null,
           assignment_reason: "Re-route failed: No eligible alternative providers",
           routing_source: "reroute_stale",
-          eligibility_check_result: { stale_hours: 24, original_provider: lead.facility_id },
+          eligibility_check_result: { 
+            stale_hours: 24, 
+            original_provider: lead.facility_id,
+            request_id: requestId
+          },
         });
 
         failed++;
@@ -480,65 +498,81 @@ serve(async (req) => {
         return aTime - bTime;
       });
 
-      const best = scoredProviders[0];
-      console.log(`[reroute-stale-leads] Best alternative: ${best.provider.facilityName} (score: ${best.totalScore})`);
+      const bestProvider = scoredProviders[0];
+      
+      log(requestId, "INFO", "Best alternative found", { 
+        leadId: lead.id,
+        newProvider: bestProvider.provider.facilityName,
+        score: bestProvider.totalScore,
+        breakdown: bestProvider.breakdown
+      });
 
       // Update lead assignment
-      const now = new Date().toISOString();
       const { error: updateError } = await supabase
         .from("leads")
         .update({
-          facility_id: best.provider.facilityId,
-          assigned_at: now,
-          assignment_status: "reassigned",
-          assignment_reason: `Re-routed after 24h non-response: ${best.provider.facilityName} (score: ${best.totalScore})`,
+          facility_id: bestProvider.provider.facilityId,
+          assigned_at: new Date().toISOString(),
+          assignment_status: "rerouted",
+          assignment_reason: `Re-routed: Original provider non-responsive (24h). Score: ${bestProvider.totalScore}`,
         })
         .eq("id", lead.id);
 
       if (updateError) {
-        console.error(`[reroute-stale-leads] Failed to update lead ${lead.id}:`, updateError);
+        log(requestId, "ERROR", "Failed to update lead", { leadId: lead.id, error: updateError.message });
         failed++;
         continue;
       }
 
-      // Log the re-routing
+      // Log routing decision
       await supabase.from("lead_routing_logs").insert({
         lead_id: lead.id,
         requested_facility_id: lead.facility_id,
-        assigned_provider_id: best.provider.facilityId,
-        assignment_reason: `Re-routed after 24h non-response (score: ${best.totalScore})`,
+        assigned_provider_id: bestProvider.provider.facilityId,
+        assignment_reason: `Re-routed from non-responsive provider after 24h (score: ${bestProvider.totalScore})`,
         routing_source: "reroute_stale",
-        plan_tier: best.provider.planName,
-        lead_limit: best.provider.leadLimit,
-        used_leads: best.provider.usedLeads,
+        plan_tier: bestProvider.provider.planName,
+        lead_limit: bestProvider.provider.leadLimit,
+        used_leads: bestProvider.provider.usedLeads,
         eligibility_check_result: {
+          request_id: requestId,
           stale_hours: 24,
           original_provider: lead.facility_id,
-          scoring_breakdown: best.breakdown,
+          scoring_breakdown: bestProvider.breakdown,
+          new_provider: {
+            id: bestProvider.provider.facilityId,
+            name: bestProvider.provider.facilityName,
+            plan: bestProvider.provider.planName,
+            capacity: `${bestProvider.provider.usedLeads}/${bestProvider.provider.leadLimit}`,
+          },
         },
       });
 
-      // Create notification for new provider
+      // Create notifications
       await supabase.from("provider_notifications").insert({
-        user_id: best.provider.facilityUserId,
-        facility_id: best.provider.facilityId,
-        type: "lead_reassigned",
-        title: "New Lead Assigned",
-        message: `A lead (${lead.name}) has been re-assigned to you. Please respond promptly.`,
-        metadata: { lead_id: lead.id, from_facility: lead.facility_id },
+        user_id: bestProvider.provider.facilityUserId,
+        facility_id: bestProvider.provider.facilityId,
+        type: "lead_received",
+        title: `Re-assigned Lead: ${lead.name}`,
+        message: `A lead has been re-assigned to you because the original provider did not respond.`,
+        metadata: {
+          lead_id: lead.id,
+          lead_name: lead.name,
+          reassigned: true,
+        },
       });
 
       // Send email notification
-      await sendReassignmentNotification(best.provider, lead);
+      await sendReassignmentNotification(bestProvider.provider, lead, requestId);
 
       rerouted++;
-      console.log(`[reroute-stale-leads] Successfully re-routed lead ${lead.id} to ${best.provider.facilityName}`);
+      log(requestId, "INFO", "Lead rerouted successfully", { leadId: lead.id, to: bestProvider.provider.facilityName });
     }
 
-    console.log(`[reroute-stale-leads] Complete. Rerouted: ${rerouted}, Failed: ${failed}`);
+    log(requestId, "INFO", "Stale lead check complete", { rerouted, failed });
 
-    return new Response(JSON.stringify({
-      success: true,
+    return new Response(JSON.stringify({ 
+      success: true, 
       processed: staleLeads.length,
       rerouted,
       failed,
@@ -547,9 +581,9 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("[reroute-stale-leads] Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    log(requestId, "ERROR", "Stale lead check failed", { error: errorMsg });
+    return new Response(JSON.stringify({ error: errorMsg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
