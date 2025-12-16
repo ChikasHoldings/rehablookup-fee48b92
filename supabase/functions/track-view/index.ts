@@ -13,7 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { facility_id } = await req.json();
+    const body = await req.json();
+    // Accept both snake_case and camelCase
+    const facility_id = body.facility_id || body.facilityId;
 
     if (!facility_id) {
       console.error('Missing facility_id');
