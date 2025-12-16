@@ -30,6 +30,13 @@ const US_STATES = [
 
 const PLAN_OPTIONS = ["All", "Basic", "Professional", "Featured"];
 
+// Plan lead limits
+const PLAN_LIMITS: Record<string, number> = {
+  basic: 4,
+  professional: 25,
+  featured: 75,
+};
+
 const CHART_COLORS = {
   primary: "#1B365D",
   secondary: "#3B82F6",
@@ -174,13 +181,13 @@ export default function AdminAnalytics() {
     }
   }, [datePreset, customDateRange]);
 
-  // Fetch facilities for location filtering
+  // Fetch facilities for location filtering (with lead_limit_override)
   const { data: facilities } = useQuery({
     queryKey: ["admin-analytics-facilities"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facilities")
-        .select("id, name, city, state, status");
+        .select("id, name, city, state, status, lead_limit_override");
       if (error) throw error;
       return data || [];
     },
@@ -449,8 +456,8 @@ export default function AdminAnalytics() {
           new Date(l.created_at) >= monthStart
         ).length;
 
-        // Default limits by plan (would be fetched from subscription in real implementation)
-        const leadLimit = 25; // Default - would come from subscription data
+        // Use facility's lead_limit_override if set, otherwise default to Professional plan limit
+        const leadLimit = (facility as any).lead_limit_override || PLAN_LIMITS.professional;
         const usagePercentage = leadLimit > 0 ? (monthlyLeads / leadLimit) * 100 : 0;
 
         return {
@@ -529,8 +536,8 @@ export default function AdminAnalytics() {
         visitors: views,
         clicks,
         leads: leads.length,
-        qualifiedLeads: leads.filter(l => l.email_verified).length,
-        unqualifiedLeads: leads.filter(l => !l.email_verified).length,
+        qualifiedLeads: leads.filter(l => l.qualified === true).length,
+        unqualifiedLeads: leads.filter(l => l.qualified !== true).length,
       };
     });
   }, [dateRange, grouping, viewsData, interactionsData, leadsData]);
@@ -573,7 +580,7 @@ export default function AdminAnalytics() {
       const loc = locationMap.get(key);
       if (loc) {
         loc.leads += 1;
-        if (l.email_verified) loc.qualifiedLeads += 1;
+        if (l.qualified === true) loc.qualifiedLeads += 1;
       }
     });
 
@@ -630,7 +637,7 @@ export default function AdminAnalytics() {
         
         const facilityLeads = leadsData?.filter(l => l.facility_id === facility.id) || [];
         const leads = facilityLeads.length;
-        const qualifiedLeads = facilityLeads.filter(l => l.email_verified).length;
+        const qualifiedLeads = facilityLeads.filter(l => l.qualified === true).length;
         const conversionRate = views > 0 ? ((leads / views) * 100).toFixed(2) : "0.00";
         const clickToLeadRate = clicks > 0 ? ((leads / clicks) * 100).toFixed(2) : "0.00";
 
