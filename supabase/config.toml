@@ -98,3 +98,6 @@ verify_jwt = true
 
 [functions.verify-reply-email-code]
 verify_jwt = true
+
+[functions.reroute-stale-leads]
+verify_jwt = false
