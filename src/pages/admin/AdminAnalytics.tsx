@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
-import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Route, ShieldCheck, Gauge, AlertTriangle } from "lucide-react";
+import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Route, ShieldCheck, Gauge, AlertTriangle, GitCompare, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -74,6 +74,7 @@ export default function AdminAnalytics() {
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedPlan, setSelectedPlan] = useState<string>("All");
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "leads", direction: "desc" });
+  const [compareMode, setCompareMode] = useState<boolean>(false);
 
   // Realtime subscription for live updates - always active
   const invalidateAnalyticsQueries = useCallback(() => {
@@ -180,6 +181,15 @@ export default function AdminAnalytics() {
         return { from: subDays(today, 30), to: today };
     }
   }, [datePreset, customDateRange]);
+
+  // Calculate previous period date range for comparison
+  const previousDateRange = useMemo(() => {
+    const periodLength = Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return {
+      from: subDays(dateRange.from, periodLength),
+      to: subDays(dateRange.from, 1),
+    };
+  }, [dateRange]);
 
   // Fetch facilities for location filtering (with lead_limit_override)
   const { data: facilities } = useQuery({
@@ -298,7 +308,79 @@ export default function AdminAnalytics() {
     },
   });
 
-  // Calculate KPIs
+  // Previous period data queries (only fetch when compare mode is enabled)
+  const { data: prevViewsData } = useQuery({
+    queryKey: ["admin-analytics-prev-views", previousDateRange, selectedState, selectedCity],
+    queryFn: async () => {
+      let query = supabase
+        .from("facility_views")
+        .select("*, facilities!inner(city, state)")
+        .gte("view_date", format(previousDateRange.from, "yyyy-MM-dd"))
+        .lte("view_date", format(previousDateRange.to, "yyyy-MM-dd"));
+      
+      if (selectedState !== "all") {
+        query = query.eq("facilities.state", selectedState);
+      }
+      if (selectedCity !== "all") {
+        query = query.eq("facilities.city", selectedCity);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: compareMode,
+  });
+
+  const { data: prevInteractionsData } = useQuery({
+    queryKey: ["admin-analytics-prev-interactions", previousDateRange, selectedState, selectedCity],
+    queryFn: async () => {
+      let query = supabase
+        .from("facility_interactions")
+        .select("*, facilities!inner(city, state)")
+        .gte("interaction_date", format(previousDateRange.from, "yyyy-MM-dd"))
+        .lte("interaction_date", format(previousDateRange.to, "yyyy-MM-dd"));
+      
+      if (selectedState !== "all") {
+        query = query.eq("facilities.state", selectedState);
+      }
+      if (selectedCity !== "all") {
+        query = query.eq("facilities.city", selectedCity);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: compareMode,
+  });
+
+  const { data: prevLeadsData } = useQuery({
+    queryKey: ["admin-analytics-prev-leads", previousDateRange, selectedState, selectedCity],
+    queryFn: async () => {
+      let query = supabase
+        .from("leads")
+        .select("*, facilities(city, state)")
+        .gte("created_at", previousDateRange.from.toISOString())
+        .lte("created_at", previousDateRange.to.toISOString());
+
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      let filtered = data || [];
+      if (selectedState !== "all") {
+        filtered = filtered.filter(l => l.facilities?.state === selectedState);
+      }
+      if (selectedCity !== "all") {
+        filtered = filtered.filter(l => l.facilities?.city === selectedCity);
+      }
+      
+      return filtered;
+    },
+    enabled: compareMode,
+  });
+
+  // Calculate KPIs with comparison
   const kpis = useMemo(() => {
     const totalViews = viewsData?.reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
     const totalClicks = interactionsData?.reduce((sum, i) => sum + (i.interaction_count || 0), 0) || 0;
@@ -306,12 +388,31 @@ export default function AdminAnalytics() {
     const qualifiedLeads = leadsData?.filter(l => l.qualified === true)?.length || 0;
     const conversionRate = totalViews > 0 ? ((totalLeads / totalViews) * 100).toFixed(2) : "0.00";
 
+    // Previous period calculations
+    const prevTotalViews = prevViewsData?.reduce((sum, v) => sum + (v.view_count || 0), 0) || 0;
+    const prevTotalClicks = prevInteractionsData?.reduce((sum, i) => sum + (i.interaction_count || 0), 0) || 0;
+    const prevTotalLeads = prevLeadsData?.length || 0;
+    const prevQualifiedLeads = prevLeadsData?.filter(l => l.qualified === true)?.length || 0;
+    const prevConversionRate = prevTotalViews > 0 ? ((prevTotalLeads / prevTotalViews) * 100) : 0;
+
+    // Calculate percentage changes
+    const calcChange = (current: number, previous: number): number | null => {
+      if (!compareMode) return null;
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return ((current - previous) / previous) * 100;
+    };
+
     return {
       visitors: totalViews,
+      visitorsChange: calcChange(totalViews, prevTotalViews),
       clicks: totalClicks,
+      clicksChange: calcChange(totalClicks, prevTotalClicks),
       totalLeads,
+      totalLeadsChange: calcChange(totalLeads, prevTotalLeads),
       qualifiedLeads,
+      qualifiedLeadsChange: calcChange(qualifiedLeads, prevQualifiedLeads),
       conversionRate: parseFloat(conversionRate),
+      conversionRateChange: calcChange(parseFloat(conversionRate), prevConversionRate),
       activeSubscriptions: subscriptionData?.activeSubscriptions || 0,
       newSubscriptions: subscriptionData?.newSubscriptions || 0,
       revenue: subscriptionData?.revenue || 0,
@@ -321,7 +422,7 @@ export default function AdminAnalytics() {
       upgrades: subscriptionData?.upgrades || 0,
       downgrades: subscriptionData?.downgrades || 0,
     };
-  }, [viewsData, interactionsData, leadsData, subscriptionData]);
+  }, [viewsData, interactionsData, leadsData, subscriptionData, prevViewsData, prevInteractionsData, prevLeadsData, compareMode]);
 
   // Calculate auto-assignment analytics
   const assignmentAnalytics = useMemo(() => {
@@ -672,6 +773,7 @@ export default function AdminAnalytics() {
     setSelectedCity("all");
     setSelectedPlan("All");
     setCustomDateRange({ from: undefined, to: undefined });
+    setCompareMode(false);
   };
 
   const isLoading = isLoadingViews || isLoadingInteractions || isLoadingLeads || isLoadingSubscriptions;
@@ -814,6 +916,22 @@ export default function AdminAnalytics() {
               </Select>
             </div>
 
+            <div className="h-9 w-px bg-border mx-1" />
+
+            {/* Compare Mode Toggle */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Compare</label>
+              <Button
+                variant={compareMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCompareMode(!compareMode)}
+                className={cn("h-9 gap-1.5", compareMode && "bg-primary")}
+              >
+                <GitCompare className="h-4 w-4" />
+                {compareMode ? "On" : "Off"}
+              </Button>
+            </div>
+
             <div className="flex gap-2 ml-auto">
               <Button variant="ghost" size="sm" onClick={handleReset} className="h-9">
                 <RotateCcw className="h-4 w-4 mr-1.5" />
@@ -828,11 +946,22 @@ export default function AdminAnalytics() {
         </CardContent>
       </Card>
 
+      {/* Comparison Period Badge */}
+      {compareMode && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-slate-50 rounded-lg px-4 py-2 border border-slate-200">
+          <GitCompare className="h-4 w-4" />
+          <span>
+            Comparing to previous period: <span className="font-medium">{format(previousDateRange.from, "MMM d")} - {format(previousDateRange.to, "MMM d, yyyy")}</span>
+          </span>
+        </div>
+      )}
+
       {/* KPI Cards - Primary Row */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <KPICard
           title="Visitors"
           value={kpis.visitors}
+          change={kpis.visitorsChange}
           icon={<Users className="h-5 w-5" />}
           tooltip="Total page views across all facility profiles"
           isLoading={isLoading}
@@ -841,6 +970,7 @@ export default function AdminAnalytics() {
         <KPICard
           title="Clicks"
           value={kpis.clicks}
+          change={kpis.clicksChange}
           icon={<MousePointerClick className="h-5 w-5" />}
           tooltip="CTA clicks: Call Now, View Profile, Request Help"
           isLoading={isLoading}
@@ -849,6 +979,7 @@ export default function AdminAnalytics() {
         <KPICard
           title="Total Leads"
           value={kpis.totalLeads}
+          change={kpis.totalLeadsChange}
           icon={<FileText className="h-5 w-5" />}
           tooltip="Total lead submissions from all sources"
           isLoading={isLoading}
@@ -857,6 +988,7 @@ export default function AdminAnalytics() {
         <KPICard
           title="Qualified"
           value={kpis.qualifiedLeads}
+          change={kpis.qualifiedLeadsChange}
           icon={<CheckCircle className="h-5 w-5" />}
           tooltip="Leads with verified email addresses"
           isLoading={isLoading}
@@ -865,6 +997,7 @@ export default function AdminAnalytics() {
         <KPICard
           title="Conversion"
           value={`${kpis.conversionRate}%`}
+          change={kpis.conversionRateChange}
           icon={<Target className="h-5 w-5" />}
           tooltip="Leads divided by Visitors"
           isLoading={isLoading}
@@ -1757,6 +1890,7 @@ export default function AdminAnalytics() {
 interface KPICardProps {
   title: string;
   value: string | number;
+  change?: number | null;
   icon: React.ReactNode;
   tooltip: string;
   isLoading: boolean;
@@ -1774,8 +1908,33 @@ const colorClasses = {
   slate: { bg: "bg-slate-50", icon: "text-slate-600", border: "border-slate-100" },
 };
 
-function KPICard({ title, value, icon, tooltip, isLoading, color }: KPICardProps) {
+function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPICardProps) {
   const colors = colorClasses[color];
+  
+  const renderChange = () => {
+    if (change === null || change === undefined) return null;
+    
+    const isPositive = change > 0;
+    const isNeutral = change === 0;
+    
+    return (
+      <div className={cn(
+        "flex items-center gap-0.5 text-xs font-medium mt-1",
+        isPositive && "text-green-600",
+        !isPositive && !isNeutral && "text-red-600",
+        isNeutral && "text-slate-500"
+      )}>
+        {isPositive ? (
+          <TrendingUp className="h-3 w-3" />
+        ) : isNeutral ? (
+          <Minus className="h-3 w-3" />
+        ) : (
+          <TrendingDown className="h-3 w-3" />
+        )}
+        <span>{isPositive ? "+" : ""}{change.toFixed(1)}%</span>
+      </div>
+    );
+  };
   
   return (
     <Card className={cn("border-slate-200 hover:shadow-md transition-shadow", colors.border)}>
@@ -1797,7 +1956,10 @@ function KPICard({ title, value, icon, tooltip, isLoading, color }: KPICardProps
           {isLoading ? (
             <Skeleton className="h-7 w-16" />
           ) : (
-            <div className="text-2xl font-bold text-slate-900">{value}</div>
+            <>
+              <div className="text-2xl font-bold text-slate-900">{value}</div>
+              {renderChange()}
+            </>
           )}
           <p className="text-xs text-muted-foreground mt-0.5 font-medium uppercase tracking-wide">{title}</p>
         </div>
