@@ -70,9 +70,12 @@ export const PLAN_DETAILS = {
       "Public provider profile",
       "Listed in search results",
       "Facility name, location & services",
-      "Website link",
       "1 direct inquiry (lifetime)",
       "Basic dashboard (views & clicks)",
+    ],
+    notIncludedDetails: [
+      "Phone number hidden on profile",
+      "Website link hidden on profile",
     ],
     notIncluded: [
       "Exclusive qualified leads",
@@ -96,6 +99,8 @@ export const PLAN_DETAILS = {
     features: [
       "25 exclusive qualified leads/month",
       "Unlimited direct profile inquiries",
+      "Unlimited calls from profile",
+      "Unlimited website visits from profile",
       "Up to 3 facility locations",
       "Standard search placement",
       "Email lead notifications",
@@ -119,6 +124,8 @@ export const PLAN_DETAILS = {
     features: [
       "75 exclusive qualified leads/month",
       "Unlimited direct profile inquiries",
+      "Unlimited calls from profile",
+      "Unlimited website visits from profile",
       "Up to 5 facility locations",
       "Homepage featured placement",
       "Priority search placement",

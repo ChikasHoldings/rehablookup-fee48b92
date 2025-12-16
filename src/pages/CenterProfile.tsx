@@ -233,6 +233,22 @@ const CenterProfile = () => {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Check facility's subscription plan (to show/hide phone & website for basic plan)
+  const { data: facilityPlan = "basic" } = useQuery({
+    queryKey: ["facility-plan", facility?.id],
+    queryFn: async (): Promise<string> => {
+      if (!facility?.id) return "basic";
+      const { data } = await supabase.functions.invoke("get-facility-plan", {
+        body: { facilityId: facility.id },
+      });
+      return data?.plan || "basic";
+    },
+    enabled: !!facility?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Determine if phone/website should be shown (paid plans only) - computed in JSX after isOwner is defined
+
   // Track view
   useEffect(() => {
     if (facility?.id) {
@@ -310,6 +326,7 @@ const CenterProfile = () => {
   const hasValidLogo = facility.logo_url && !logoError;
   const isOwner = currentUserId === facility.user_id;
   const isPending = facility.status === "pending";
+  const showContactDetails = facilityPlan !== "basic" || isOwner;
 
   return (
     <Layout>
@@ -337,16 +354,25 @@ const CenterProfile = () => {
       {/* Sticky Mobile CTA */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card p-3 shadow-lg md:hidden">
         <div className="flex gap-2">
-          <a 
-            href={`tel:${facility.phone}`} 
-            className="flex-1"
-            onClick={() => trackInteraction("call")}
-          >
-            <Button size="sm" className="w-full gap-2">
-              <Phone className="h-4 w-4" />
-              Call Now
-            </Button>
-          </a>
+          {showContactDetails ? (
+            <a 
+              href={`tel:${facility.phone}`} 
+              className="flex-1"
+              onClick={() => trackInteraction("call")}
+            >
+              <Button size="sm" className="w-full gap-2">
+                <Phone className="h-4 w-4" />
+                Call Now
+              </Button>
+            </a>
+          ) : (
+            <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}&source=provider_profile`} className="flex-1">
+              <Button size="sm" className="w-full gap-2">
+                <Phone className="h-4 w-4" />
+                Request Call
+              </Button>
+            </Link>
+          )}
           <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}&source=provider_profile`} className="flex-1">
             <Button variant="outline" size="sm" className="w-full">
               Contact
@@ -430,17 +456,26 @@ const CenterProfile = () => {
 
               {/* Desktop Actions */}
               <div className="hidden md:flex flex-col gap-2 shrink-0">
-                <a 
-                  href={`tel:${facility.phone}`}
-                  onClick={() => trackInteraction("call")}
-                >
-                  <Button size="sm" className="w-full gap-2">
-                    <Phone className="h-4 w-4" />
-                    Call Now
-                  </Button>
-                </a>
+                {showContactDetails ? (
+                  <a 
+                    href={`tel:${facility.phone}`}
+                    onClick={() => trackInteraction("call")}
+                  >
+                    <Button size="sm" className="w-full gap-2">
+                      <Phone className="h-4 w-4" />
+                      Call Now
+                    </Button>
+                  </a>
+                ) : (
+                  <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}&source=provider_profile`}>
+                    <Button size="sm" className="w-full gap-2">
+                      <Phone className="h-4 w-4" />
+                      Request Call
+                    </Button>
+                  </Link>
+                )}
                 <div className="flex gap-2">
-                  {facility.website && (
+                  {showContactDetails && facility.website && (
                     <a 
                       href={facility.website} 
                       target="_blank" 
@@ -577,16 +612,26 @@ const CenterProfile = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <Phone className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-medium text-foreground">Phone</p>
-                      <a href={`tel:${facility.phone}`} className="text-xs text-primary hover:underline">
-                        {facility.phone}
-                      </a>
+                  {showContactDetails ? (
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <Phone className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-medium text-foreground">Phone</p>
+                        <a href={`tel:${facility.phone}`} className="text-xs text-primary hover:underline">
+                          {facility.phone}
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                  {facility.website && (
+                  ) : (
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <Phone className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-medium text-foreground">Phone</p>
+                        <p className="text-xs text-muted-foreground">Use contact form to request a call</p>
+                      </div>
+                    </div>
+                  )}
+                  {showContactDetails && facility.website && (
                     <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
                       <Globe className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                       <div>
