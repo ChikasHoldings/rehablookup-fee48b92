@@ -71,7 +71,7 @@ export function Header({
 
   return (
     <>
-      <header className="z-50 w-full border-b border-border bg-card shadow-sm">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-card shadow-sm">
         <div className="container flex h-16 items-center justify-between md:h-18">
           {/* Logo - Bigger on mobile */}
           <Link to="/" className="flex items-center gap-2 group">
