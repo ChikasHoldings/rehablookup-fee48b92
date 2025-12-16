@@ -321,44 +321,34 @@ export default function ProviderLogin() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      // Check if email is blocked
-      const { data: isBlocked, error: blockError } = await supabase
-        .rpc('is_identifier_blocked', { p_identifier: normalizedEmail });
+      // Check if email or IP is blocked and rate limited using edge function
+      const { data: preCheckResult, error: preCheckError } = await supabase.functions.invoke('log-login-attempt', {
+        body: {
+          identifier: normalizedEmail,
+          success: false, // Pre-check doesn't count as attempt
+          actionType: 'provider_login_precheck'
+        }
+      });
 
-      if (!blockError && isBlocked) {
+      if (preCheckError) {
+        console.error('Pre-check error:', preCheckError);
+      } else if (preCheckResult?.blocked) {
         toast({
           title: "Access Denied",
-          description: "This account has been blocked. Please contact support if you believe this is an error.",
+          description: preCheckResult.message || "Your IP address has been blocked. Please contact support.",
           variant: "destructive",
         });
         setIsLoading(false);
         return;
-      }
-
-      // Server-side rate limit check
-      const { data: rateLimitResult, error: rateLimitError } = await supabase
-        .rpc('check_rate_limit', {
-          p_identifier: normalizedEmail,
-          p_action_type: 'provider_login',
-          p_max_attempts: MAX_ATTEMPTS,
-          p_window_minutes: 15
+      } else if (preCheckResult?.rate_limited) {
+        const retryAfter = preCheckResult.retry_after_seconds || 0;
+        toast({
+          title: "Too Many Attempts",
+          description: `Please wait ${Math.ceil(retryAfter / 60)} minute(s) before trying again.`,
+          variant: "destructive",
         });
-
-      if (rateLimitError) {
-        console.error('Rate limit check error:', rateLimitError);
-        // Continue with login attempt if rate limit check fails
-      } else if (rateLimitResult) {
-        const rateLimitData = rateLimitResult as { is_limited: boolean; retry_after_seconds: number; attempts: number };
-        if (rateLimitData.is_limited) {
-          const retryAfter = rateLimitData.retry_after_seconds || 0;
-          toast({
-            title: "Too Many Attempts",
-            description: `Please wait ${Math.ceil(retryAfter / 60)} minute(s) before trying again.`,
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
+        setIsLoading(false);
+        return;
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -367,12 +357,13 @@ export default function ProviderLogin() {
       });
 
       if (error) {
-        // Log failed attempt to server
-        await supabase.rpc('log_rate_limit_event', {
-          p_identifier: normalizedEmail,
-          p_action_type: 'provider_login',
-          p_success: false,
-          p_metadata: { error_type: error.message.includes('Invalid') ? 'invalid_credentials' : 'other' }
+        // Log failed attempt with IP capture via edge function
+        await supabase.functions.invoke('log-login-attempt', {
+          body: {
+            identifier: normalizedEmail,
+            success: false,
+            actionType: 'provider_login'
+          }
         });
 
         const attemptCount = recordFailedAttempt();
@@ -407,12 +398,13 @@ export default function ProviderLogin() {
       }
 
       if (data.session) {
-        // Log successful login to server
-        await supabase.rpc('log_rate_limit_event', {
-          p_identifier: normalizedEmail,
-          p_action_type: 'provider_login',
-          p_success: true,
-          p_metadata: { user_id: data.session.user.id }
+        // Log successful login with IP capture via edge function
+        await supabase.functions.invoke('log-login-attempt', {
+          body: {
+            identifier: normalizedEmail,
+            success: true,
+            actionType: 'provider_login'
+          }
         });
 
         clearLoginAttempts(email);
