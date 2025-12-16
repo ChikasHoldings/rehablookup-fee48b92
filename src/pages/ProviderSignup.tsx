@@ -191,11 +191,17 @@ export default function ProviderSignup() {
   };
 
   const nextStep = () => {
-    if (currentStep < 8) setCurrentStep(currentStep + 1);
+    if (currentStep < 8) {
+      setCurrentStep(currentStep + 1);
+      window.scrollTo(0, 0);
+    }
   };
 
   const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      window.scrollTo(0, 0);
+    }
   };
 
   const handleEmailVerified = () => {
