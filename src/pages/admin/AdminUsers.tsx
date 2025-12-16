@@ -55,6 +55,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { useAdminUserManagement, AdminUser, AdminRole } from "@/hooks/useAdminUserManagement";
 import { CreateAdminUserDialog } from "@/components/admin/CreateAdminUserDialog";
 import { AdminUserPermissionsDialog } from "@/components/admin/AdminUserPermissionsDialog";
+import { UserActivityLog } from "@/components/admin/UserActivityLog";
 import { cn } from "@/lib/utils";
 
 const ROLE_CONFIG = {
@@ -515,6 +516,9 @@ export default function AdminUsers() {
           Showing {filteredUsers.length} of {totalCount} admin users
         </p>
       )}
+
+      {/* Activity Log Section */}
+      <UserActivityLog />
 
       {/* Dialogs */}
       <CreateAdminUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
