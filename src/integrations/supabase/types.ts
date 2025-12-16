@@ -687,6 +687,73 @@ export type Database = {
           },
         ]
       }
+      lead_routing_logs: {
+        Row: {
+          assigned_provider_id: string | null
+          assignment_reason: string
+          created_at: string
+          eligibility_check_result: Json | null
+          id: string
+          lead_id: string | null
+          lead_limit: number | null
+          plan_tier: string | null
+          requested_facility_id: string | null
+          routing_source: string
+          subscription_status: string | null
+          used_leads: number | null
+        }
+        Insert: {
+          assigned_provider_id?: string | null
+          assignment_reason: string
+          created_at?: string
+          eligibility_check_result?: Json | null
+          id?: string
+          lead_id?: string | null
+          lead_limit?: number | null
+          plan_tier?: string | null
+          requested_facility_id?: string | null
+          routing_source?: string
+          subscription_status?: string | null
+          used_leads?: number | null
+        }
+        Update: {
+          assigned_provider_id?: string | null
+          assignment_reason?: string
+          created_at?: string
+          eligibility_check_result?: Json | null
+          id?: string
+          lead_id?: string | null
+          lead_limit?: number | null
+          plan_tier?: string | null
+          requested_facility_id?: string | null
+          routing_source?: string
+          subscription_status?: string | null
+          used_leads?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_routing_logs_assigned_provider_id_fkey"
+            columns: ["assigned_provider_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_routing_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_routing_logs_requested_facility_id_fkey"
+            columns: ["requested_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_at: string | null
