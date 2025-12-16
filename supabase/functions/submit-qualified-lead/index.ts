@@ -1030,24 +1030,34 @@ const handler = async (req: Request): Promise<Response> => {
     log(requestId, "INFO", "Email verification status", { verified: emailVerified });
 
     // ============ DUPLICATE CHECK ============
+    // Only check for duplicate qualified lead submissions (not direct leads from provider profiles)
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0] || 
                      req.headers.get("cf-connecting-ip") || 
                      "unknown";
     const ipHash = await hashIP(clientIP);
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count: duplicateCount } = await supabase
+    
+    // Check for duplicate qualified lead submissions only
+    // Exclude direct leads (source patterns: provider_profile_direct, request_info_modal, etc.)
+    const { data: recentLeads } = await supabase
       .from("leads")
-      .select("*", { count: "exact", head: true })
+      .select("source")
       .eq("email", leadData.email.toLowerCase())
       .gte("created_at", oneHourAgo);
+    
+    // Filter to only count qualified lead submissions (not direct profile leads)
+    const directLeadSources = ["provider_profile_direct", "request_info_modal", "provider_profile"];
+    const qualifiedSubmissions = (recentLeads || []).filter(
+      (lead: { source: string | null }) => !directLeadSources.includes(lead.source || "")
+    );
 
-    if (duplicateCount && duplicateCount > 0) {
-      log(requestId, "WARN", "Duplicate submission blocked", { email: leadData.email });
+    if (qualifiedSubmissions.length > 0) {
+      log(requestId, "WARN", "Duplicate qualified submission blocked", { email: leadData.email });
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "You've already submitted a request recently. Please wait before submitting again.",
+          error: "You've already submitted a help request recently. Please wait before submitting again.",
           isDuplicate: true 
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
