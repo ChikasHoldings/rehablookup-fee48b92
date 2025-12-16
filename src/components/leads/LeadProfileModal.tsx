@@ -1086,7 +1086,7 @@ export function LeadProfileModal({
       </Dialog>
 
       {/* Email Dialog */}
-      <EmailLeadDialog lead={lead} open={emailDialogOpen} onOpenChange={setEmailDialogOpen} />
+      <EmailLeadDialog lead={lead} open={emailDialogOpen} onOpenChange={setEmailDialogOpen} facilityId={lead.facility_id} />
     </>
   );
 }

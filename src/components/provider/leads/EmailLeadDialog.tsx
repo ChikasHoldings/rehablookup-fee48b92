@@ -42,7 +42,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderData } from "@/hooks/useProviderData";
-import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { useSelectedFacilityOptional } from "@/contexts/SelectedFacilityContext";
 import { useTemplateTags } from "@/hooks/useTemplateTags";
 import { 
   resolveTemplate, 
@@ -63,6 +63,7 @@ interface EmailLeadDialogProps {
   lead: Lead | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  facilityId?: string | null; // Optional - for admin context where there's no SelectedFacilityProvider
 }
 
 interface EmailTemplate {
@@ -298,14 +299,16 @@ Wishing you well,
 
 const MAX_CUSTOM_NOTE_LENGTH = 300;
 
-export function EmailLeadDialog({ lead, open, onOpenChange }: EmailLeadDialogProps) {
+export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailLeadDialogProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [customNote, setCustomNote] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { selectedFacility } = useSelectedFacility();
-  const { data: providerData } = useProviderData(selectedFacility?.id || undefined);
+  const { selectedFacility } = useSelectedFacilityOptional();
+  // Use provided facilityId (admin context) or fall back to selected facility from provider context
+  const effectiveFacilityId = facilityId || selectedFacility?.id;
+  const { data: providerData } = useProviderData(effectiveFacilityId || undefined);
   const { data: templateTags = [] } = useTemplateTags();
 
   // Fetch sent template IDs and timestamps for this lead (across ALL providers)

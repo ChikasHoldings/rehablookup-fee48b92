@@ -76,3 +76,9 @@ export function useSelectedFacility() {
   }
   return context;
 }
+
+// Optional version that doesn't throw - returns null if not in provider context
+export function useSelectedFacilityOptional() {
+  const context = useContext(SelectedFacilityContext);
+  return context ?? { selectedFacility: null, setSelectedFacility: () => {}, isLoading: false };
+}
