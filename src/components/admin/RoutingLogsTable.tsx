@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import {
   ChevronDown,
   ChevronUp,
@@ -10,12 +10,28 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  CalendarIcon,
+  Filter,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -61,39 +77,90 @@ type Lead = {
   name: string;
 };
 
+type DateRange = {
+  from: Date | undefined;
+  to: Date | undefined;
+};
+
 const ITEMS_PER_PAGE = 10;
+
+const DATE_PRESETS = [
+  { label: "Today", getValue: () => ({ from: startOfDay(new Date()), to: endOfDay(new Date()) }) },
+  { label: "Last 7 Days", getValue: () => ({ from: startOfDay(subDays(new Date(), 7)), to: endOfDay(new Date()) }) },
+  { label: "Last 30 Days", getValue: () => ({ from: startOfDay(subDays(new Date(), 30)), to: endOfDay(new Date()) }) },
+  { label: "All Time", getValue: () => ({ from: undefined, to: undefined }) },
+];
 
 export function RoutingLogsTable() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [resultFilter, setResultFilter] = useState("all");
+  const [planFilter, setPlanFilter] = useState("all");
+
+  // Determine result type from assignment_reason
+  const getResultType = (reason: string): string => {
+    if (reason.includes("Auto-assigned") || reason.includes("assigned")) return "assigned";
+    if (reason.includes("ineligible") || reason.includes("Basic")) return "ineligible";
+    if (reason.includes("Unassigned") || reason.includes("No eligible")) return "unassigned";
+    return "other";
+  };
 
   // Fetch routing logs
   const { data: logs, isLoading } = useQuery({
-    queryKey: ["admin-routing-logs", currentPage],
+    queryKey: ["admin-routing-logs", currentPage, dateRange, resultFilter, planFilter],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("lead_routing_logs")
         .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, to);
+        .order("created_at", { ascending: false });
 
+      if (dateRange.from) {
+        query = query.gte("created_at", dateRange.from.toISOString());
+      }
+      if (dateRange.to) {
+        query = query.lte("created_at", dateRange.to.toISOString());
+      }
+      if (planFilter !== "all") {
+        query = query.eq("plan_tier", planFilter);
+      }
+
+      const { data, error } = await query.range(from, to);
       if (error) throw error;
-      return data as RoutingLog[];
+
+      // Client-side filter for result type (based on assignment_reason text)
+      let filtered = data as RoutingLog[];
+      if (resultFilter !== "all") {
+        filtered = filtered.filter((log) => getResultType(log.assignment_reason) === resultFilter);
+      }
+
+      return filtered;
     },
     enabled: isOpen,
   });
 
   // Fetch total count
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-routing-logs-count"],
+    queryKey: ["admin-routing-logs-count", dateRange, planFilter],
     queryFn: async () => {
-      const { count, error } = await supabase
+      let query = supabase
         .from("lead_routing_logs")
         .select("id", { count: "exact", head: true });
 
+      if (dateRange.from) {
+        query = query.gte("created_at", dateRange.from.toISOString());
+      }
+      if (dateRange.to) {
+        query = query.lte("created_at", dateRange.to.toISOString());
+      }
+      if (planFilter !== "all") {
+        query = query.eq("plan_tier", planFilter);
+      }
+
+      const { count, error } = await query;
       if (error) throw error;
       return count || 0;
     },
@@ -125,6 +192,10 @@ export function RoutingLogsTable() {
   });
 
   const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
+
+  const handleFilterChange = () => {
+    setCurrentPage(1);
+  };
 
   const getReasonBadge = (reason: string) => {
     if (reason.includes("Auto-assigned") || reason.includes("assigned")) {
@@ -199,6 +270,120 @@ export function RoutingLogsTable() {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <CardContent className="p-0">
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-3 p-4 border-b bg-muted/30">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Filter className="h-4 w-4" />
+                Filters:
+              </div>
+              
+              {/* Date Range */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-2">
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateRange.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d")}
+                        </>
+                      ) : (
+                        format(dateRange.from, "MMM d, yyyy")
+                      )
+                    ) : (
+                      "All Time"
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <div className="p-2 border-b">
+                    <div className="flex flex-wrap gap-1">
+                      {DATE_PRESETS.map((preset) => (
+                        <Button
+                          key={preset.label}
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            const range = preset.getValue();
+                            setDateRange(range);
+                            handleFilterChange();
+                          }}
+                        >
+                          {preset.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateRange.from, to: dateRange.to }}
+                    onSelect={(range) => {
+                      setDateRange({ from: range?.from, to: range?.to });
+                      handleFilterChange();
+                    }}
+                    numberOfMonths={1}
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {/* Result Type */}
+              <Select
+                value={resultFilter}
+                onValueChange={(v) => {
+                  setResultFilter(v);
+                  handleFilterChange();
+                }}
+              >
+                <SelectTrigger className="h-8 w-[130px]">
+                  <SelectValue placeholder="Result" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Results</SelectItem>
+                  <SelectItem value="assigned">Assigned</SelectItem>
+                  <SelectItem value="ineligible">Ineligible</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Plan Tier */}
+              <Select
+                value={planFilter}
+                onValueChange={(v) => {
+                  setPlanFilter(v);
+                  handleFilterChange();
+                }}
+              >
+                <SelectTrigger className="h-8 w-[130px]">
+                  <SelectValue placeholder="Plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Plans</SelectItem>
+                  <SelectItem value="Featured">Featured</SelectItem>
+                  <SelectItem value="Professional">Professional</SelectItem>
+                  <SelectItem value="Basic">Basic</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Clear Filters */}
+              {(dateRange.from || resultFilter !== "all" || planFilter !== "all") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs text-muted-foreground"
+                  onClick={() => {
+                    setDateRange({ from: undefined, to: undefined });
+                    setResultFilter("all");
+                    setPlanFilter("all");
+                    handleFilterChange();
+                  }}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+
             {isLoading ? (
               <div className="p-6 space-y-3">
                 {[...Array(3)].map((_, i) => (
