@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Shield, Copy, Check, Loader2, AlertTriangle, Smartphone, QrCode } from "lucide-react";
+import { Shield, Copy, Check, Loader2, Smartphone, QrCode, Download, Key } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -20,7 +20,7 @@ interface TwoFactorSetupDialogProps {
   onSuccess?: () => void;
 }
 
-type SetupStep = "intro" | "qr" | "verify" | "success";
+type SetupStep = "intro" | "qr" | "verify" | "recovery" | "success";
 
 export function TwoFactorSetupDialog({
   open,
@@ -35,6 +35,8 @@ export function TwoFactorSetupDialog({
   const [verificationCode, setVerificationCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [recoveryCodesCopied, setRecoveryCodesCopied] = useState(false);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -45,6 +47,8 @@ export function TwoFactorSetupDialog({
       setFactorId(null);
       setVerificationCode("");
       setCopied(false);
+      setRecoveryCodes([]);
+      setRecoveryCodesCopied(false);
     }
   }, [open]);
 
@@ -97,6 +101,20 @@ export function TwoFactorSetupDialog({
         return;
       }
 
+      // Generate recovery codes
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke("manage-mfa-recovery", {
+        body: { action: "generate" },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+
+      if (response.error) {
+        console.error("Error generating recovery codes:", response.error);
+        toast.error("Failed to generate recovery codes");
+      } else {
+        setRecoveryCodes(response.data.codes || []);
+      }
+
       // Update admin_user_profiles to mark MFA as enabled
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -106,14 +124,7 @@ export function TwoFactorSetupDialog({
           .eq("user_id", user.id);
       }
 
-      setStep("success");
-      toast.success("Two-factor authentication enabled successfully!");
-      
-      // Delay closing to show success state
-      setTimeout(() => {
-        onOpenChange(false);
-        onSuccess?.();
-      }, 2000);
+      setStep("recovery");
     } catch (err) {
       console.error("Error verifying MFA:", err);
       toast.error("Verification failed. Please try again.");
@@ -129,6 +140,35 @@ export function TwoFactorSetupDialog({
       toast.success("Secret copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleCopyRecoveryCodes = () => {
+    const codesText = recoveryCodes.join("\n");
+    navigator.clipboard.writeText(codesText);
+    setRecoveryCodesCopied(true);
+    toast.success("Recovery codes copied to clipboard");
+    setTimeout(() => setRecoveryCodesCopied(false), 2000);
+  };
+
+  const handleDownloadRecoveryCodes = () => {
+    const codesText = `RehabLookup Admin Recovery Codes\n================================\n\nSave these codes in a secure place. Each code can only be used once.\n\n${recoveryCodes.join("\n")}\n\nGenerated: ${new Date().toISOString()}`;
+    const blob = new Blob([codesText], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "rehablookup-recovery-codes.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Recovery codes downloaded");
+  };
+
+  const handleComplete = () => {
+    setStep("success");
+    toast.success("Two-factor authentication enabled successfully!");
+    setTimeout(() => {
+      onOpenChange(false);
+      onSuccess?.();
+    }, 2000);
   };
 
   const renderStep = () => {
@@ -164,6 +204,15 @@ export function TwoFactorSetupDialog({
                   <p className="text-sm font-medium">Scan QR Code</p>
                   <p className="text-xs text-muted-foreground">
                     Scan a QR code with your app to link your account
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Key className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Recovery Codes</p>
+                  <p className="text-xs text-muted-foreground">
+                    You'll receive backup codes in case you lose your device
                   </p>
                 </div>
               </div>
@@ -290,6 +339,66 @@ export function TwoFactorSetupDialog({
                 )}
               </Button>
             </div>
+          </div>
+        );
+
+      case "recovery":
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold">Save Your Recovery Codes</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Store these codes securely. Each can only be used once.
+              </p>
+            </div>
+
+            <div className="bg-muted/50 rounded-lg p-4">
+              <div className="grid grid-cols-2 gap-2 font-mono text-sm">
+                {recoveryCodes.map((code, idx) => (
+                  <div key={idx} className="bg-background px-2 py-1 rounded text-center">
+                    {code}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleCopyRecoveryCodes}
+                className="flex-1"
+              >
+                {recoveryCodesCopied ? (
+                  <>
+                    <Check className="mr-2 h-4 w-4 text-green-500" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleDownloadRecoveryCodes}
+                className="flex-1"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-800">
+                <strong>Important:</strong> If you lose access to your authenticator app and don't have these codes, you won't be able to access your account.
+              </p>
+            </div>
+
+            <Button onClick={handleComplete} className="w-full">
+              I've Saved My Codes
+            </Button>
           </div>
         );
 
