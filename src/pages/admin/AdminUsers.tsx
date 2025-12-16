@@ -50,7 +50,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, formatDistanceToNow } from "date-fns";
 import { useAdminUserManagement, AdminUser, AdminRole } from "@/hooks/useAdminUserManagement";
 import { CreateAdminUserDialog } from "@/components/admin/CreateAdminUserDialog";
@@ -225,27 +225,25 @@ export default function AdminUsers() {
                 </div>
 
                 <div className="flex items-center gap-4 pt-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>
-                            {user.last_login_at 
-                              ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true })
-                              : "Never logged in"
-                            }
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Last login: {user.last_login_at 
-                          ? format(new Date(user.last_login_at), "PPpp")
-                          : "Never"
-                        }</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {user.last_login_at 
+                            ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true })
+                            : "Never logged in"
+                          }
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Last login: {user.last_login_at 
+                        ? format(new Date(user.last_login_at), "PPpp")
+                        : "Never"
+                      }</p>
+                    </TooltipContent>
+                  </Tooltip>
 
                   <Badge variant="outline" className={cn(
                     "text-xs gap-1",
