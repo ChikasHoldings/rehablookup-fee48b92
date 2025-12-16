@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Play, Shield, Lock, Heart, CheckCircle2, Loader2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,14 @@ interface FormData {
   isUrgent: boolean;
 }
 
+interface UTMParams {
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_term: string | null;
+  utm_content: string | null;
+}
+
 const initialFormData: FormData = {
   firstName: "",
   lastName: "",
@@ -32,11 +40,21 @@ const initialFormData: FormData = {
 
 export default function AdLanding() {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const hasTrackedFormStart = useRef(false);
+  
+  // UTM parameters
+  const utmParams = useRef<UTMParams>({
+    utm_source: searchParams.get("utm_source"),
+    utm_medium: searchParams.get("utm_medium"),
+    utm_campaign: searchParams.get("utm_campaign"),
+    utm_term: searchParams.get("utm_term"),
+    utm_content: searchParams.get("utm_content"),
+  });
   
   // Email verification state
   const [codeSent, setCodeSent] = useState(false);
@@ -49,9 +67,9 @@ export default function AdLanding() {
   // Video state
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   
-  // Track page view on mount
+  // Track page view on mount with UTM params
   useEffect(() => {
-    trackEvent("page_view");
+    trackEvent("page_view", { utm: utmParams.current });
   }, []);
   
   // Resend cooldown timer
@@ -196,6 +214,16 @@ export default function AdLanding() {
     trackEvent("form_submit_start");
     
     try {
+      // Build metadata with UTM params
+      const utm = utmParams.current;
+      const metadata = {
+        ...(utm.utm_source && { utm_source: utm.utm_source }),
+        ...(utm.utm_medium && { utm_medium: utm.utm_medium }),
+        ...(utm.utm_campaign && { utm_campaign: utm.utm_campaign }),
+        ...(utm.utm_term && { utm_term: utm.utm_term }),
+        ...(utm.utm_content && { utm_content: utm.utm_content }),
+      };
+      
       const { error } = await supabase.functions.invoke("submit-qualified-lead", {
         body: {
           firstName: formData.firstName.trim(),
@@ -214,19 +242,20 @@ export default function AdLanding() {
           dualDiagnosis: "unknown",
           insuranceType: "unknown",
           source: "ad_landing",
+          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         },
       });
       
       if (error) throw error;
       
       setIsSubmitted(true);
-      trackEvent("form_submit_success");
+      trackEvent("form_submit_success", { utm: utmParams.current });
       
       // Scroll to top to show thank you
       window.scrollTo({ top: 0, behavior: "instant" });
     } catch (error) {
       console.error("Error submitting lead:", error);
-      trackEvent("form_submit_error", { error: String(error) });
+      trackEvent("form_submit_error", { error: String(error), utm: utmParams.current });
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
