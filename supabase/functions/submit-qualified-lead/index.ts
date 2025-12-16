@@ -11,11 +11,15 @@ const corsHeaders = {
 };
 
 // Plan configuration - Basic plan gets NO routed leads (0 qualified_lead_limit)
+// CRITICAL: Basic plan is NEVER eligible for routed qualified leads
 const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; qualified_lead_limit: number }> = {
   basic: { product_ids: [], lead_limit: 0, qualified_lead_limit: 0 }, // Basic does NOT receive routed leads
   professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 25, qualified_lead_limit: 25 },
   featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 75, qualified_lead_limit: 75 },
 };
+
+// CRITICAL: Only these plans can receive routed qualified leads
+const PAID_PLANS = ["professional", "featured"];
 
 interface QualifiedLeadRequest {
   facilityId?: string;
@@ -53,6 +57,18 @@ interface ProviderCapacity {
   availableCapacity: number;
   lastAssignedAt: string | null;
   serviceTypes: string[];
+  subscriptionStatus: string;
+  isSuspended: boolean;
+}
+
+interface ProviderEligibility {
+  isEligible: boolean;
+  planName: string;
+  subscriptionStatus: string;
+  leadLimit: number;
+  usedLeads: number;
+  isSuspended: boolean;
+  reason?: string;
 }
 
 async function hashIP(ip: string): Promise<string> {
@@ -63,49 +79,104 @@ async function hashIP(ip: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").substring(0, 16);
 }
 
-// Check provider's subscription and lead cap
-async function checkProviderLeadCap(
+// CRITICAL: Check provider eligibility for routed qualified leads
+// This is the single source of truth for whether a provider can receive routed leads
+async function checkProviderEligibility(
   supabase: any,
   facilityUserId: string,
-  providerEmail: string
-): Promise<{ canReceiveLeads: boolean; reason?: string; leadLimit: number; usedLeads: number; planName: string }> {
+  providerEmail: string,
+  facilityId: string
+): Promise<ProviderEligibility> {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   
+  console.log(`[checkProviderEligibility] Checking eligibility for facility ${facilityId}`);
+  
+  // Check if facility is suspended
+  const { data: facility } = await supabase
+    .from("facilities")
+    .select("suspended")
+    .eq("id", facilityId)
+    .maybeSingle();
+  
+  const isSuspended = facility?.suspended === true;
+  
+  if (isSuspended) {
+    console.log(`[checkProviderEligibility] Facility ${facilityId} is SUSPENDED - NOT eligible`);
+    return {
+      isEligible: false,
+      planName: "unknown",
+      subscriptionStatus: "unknown",
+      leadLimit: 0,
+      usedLeads: 0,
+      isSuspended: true,
+      reason: "Facility is suspended"
+    };
+  }
+
+  // Default to basic plan (NOT eligible for routed leads)
+  let planName = "basic";
+  let leadLimit = PLAN_CONFIG.basic.qualified_lead_limit;
+  let subscriptionStatus = "none";
+  
   if (!stripeKey) {
-    console.error("STRIPE_SECRET_KEY not set - defaulting to basic plan");
-    return { canReceiveLeads: true, reason: undefined, leadLimit: 4, usedLeads: 0, planName: "basic" };
+    console.error("[checkProviderEligibility] STRIPE_SECRET_KEY not set - defaulting to basic (NOT eligible)");
+    return {
+      isEligible: false,
+      planName: "basic",
+      subscriptionStatus: "none",
+      leadLimit: 0,
+      usedLeads: 0,
+      isSuspended: false,
+      reason: "No active subscription (Basic plan)"
+    };
   }
 
   try {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
+    // Find Stripe customer by email
     const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
-    
-    let leadLimit = PLAN_CONFIG.basic.qualified_lead_limit;
-    let planName = "basic";
     
     if (customers.data.length > 0) {
       const customerId = customers.data[0].id;
+      
+      // Check for active subscription ONLY
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
-        status: "active",
+        status: "active", // CRITICAL: Only active subscriptions count
         limit: 1,
       });
       
       if (subscriptions.data.length > 0) {
+        subscriptionStatus = "active";
         const subscription = subscriptions.data[0];
         const productId = subscription.items.data[0].price.product as string;
         
         if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-          leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
           planName = "professional";
+          leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
         } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-          leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
           planName = "featured";
+          leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
         }
       }
     }
     
+    // CRITICAL: Basic plan is NEVER eligible for routed leads
+    if (!PAID_PLANS.includes(planName)) {
+      console.log(`[checkProviderEligibility] Provider on ${planName} plan - NOT eligible for routed leads`);
+      return {
+        isEligible: false,
+        planName,
+        subscriptionStatus,
+        leadLimit: 0,
+        usedLeads: 0,
+        isSuspended: false,
+        reason: `Basic plan providers do not receive routed qualified leads`
+      };
+    }
+    
+    // For paid plans, check lead capacity
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -117,51 +188,76 @@ async function checkProviderLeadCap(
     
     const facilityIds = (userFacilities as { id: string }[] || []).map(f => f.id);
     
-    if (facilityIds.length === 0) {
-      return { canReceiveLeads: true, leadLimit, usedLeads: 0, planName };
+    let usedLeads = 0;
+    if (facilityIds.length > 0) {
+      const { count: monthlyLeadCount } = await supabase
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .in("facility_id", facilityIds)
+        .gte("created_at", startOfMonth.toISOString())
+        .eq("qualified", true);
+      
+      usedLeads = monthlyLeadCount || 0;
     }
     
-    const { count: monthlyLeadCount } = await supabase
-      .from("leads")
-      .select("*", { count: "exact", head: true })
-      .in("facility_id", facilityIds)
-      .gte("created_at", startOfMonth.toISOString())
-      .eq("qualified", true);
-    
-    const usedLeads = monthlyLeadCount || 0;
-    
     if (usedLeads >= leadLimit) {
-      return { 
-        canReceiveLeads: false, 
-        reason: `Provider has reached monthly lead limit (${usedLeads}/${leadLimit})`,
+      console.log(`[checkProviderEligibility] Provider at capacity (${usedLeads}/${leadLimit}) - NOT eligible`);
+      return {
+        isEligible: false,
+        planName,
+        subscriptionStatus,
         leadLimit,
         usedLeads,
-        planName
+        isSuspended: false,
+        reason: `Provider has reached monthly lead limit (${usedLeads}/${leadLimit})`
       };
     }
     
-    return { canReceiveLeads: true, leadLimit, usedLeads, planName };
+    console.log(`[checkProviderEligibility] Provider ELIGIBLE: ${planName} plan, ${usedLeads}/${leadLimit} leads used`);
+    return {
+      isEligible: true,
+      planName,
+      subscriptionStatus,
+      leadLimit,
+      usedLeads,
+      isSuspended: false
+    };
+    
   } catch (error) {
-    console.error("Error checking lead cap:", error);
-    return { canReceiveLeads: true, leadLimit: 999, usedLeads: 0, planName: "unknown" };
+    console.error("[checkProviderEligibility] Error checking eligibility:", error);
+    // On error, default to NOT eligible to prevent leaking leads to free accounts
+    return {
+      isEligible: false,
+      planName: "unknown",
+      subscriptionStatus: "error",
+      leadLimit: 0,
+      usedLeads: 0,
+      isSuspended: false,
+      reason: "Error checking subscription status"
+    };
   }
 }
 
 // Get all eligible providers with capacity for auto-assignment
+// CRITICAL: Only returns paid, active, non-suspended providers with available capacity
 async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   
-  // Even without Stripe, we can still find basic plan providers
   console.log("[getEligibleProviders] Starting to fetch eligible providers...");
 
+  if (!stripeKey) {
+    console.error("[getEligibleProviders] STRIPE_SECRET_KEY not set - cannot verify subscriptions, returning empty");
+    return [];
+  }
+
   try {
-    const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" }) : null;
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     // Get all approved, non-suspended facilities
     const { data: facilities, error: facilitiesError } = await supabase
       .from("facilities")
       .select(`
-        id, name, email, user_id, city, state,
+        id, name, email, user_id, city, state, suspended,
         facility_services (service_name)
       `)
       .eq("status", "approved")
@@ -172,7 +268,7 @@ async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> 
       return [];
     }
     
-    console.log(`[getEligibleProviders] Found ${facilities?.length || 0} approved facilities`);
+    console.log(`[getEligibleProviders] Found ${facilities?.length || 0} approved, non-suspended facilities`);
     
     if (!facilities || facilities.length === 0) return [];
     
@@ -183,6 +279,12 @@ async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> 
     const providers: ProviderCapacity[] = [];
     
     for (const facility of facilities) {
+      // Double-check suspended status
+      if (facility.suspended === true) {
+        console.log(`[getEligibleProviders] Skipping ${facility.name} - suspended`);
+        continue;
+      }
+      
       // Get provider profile email
       const { data: profile } = await supabase
         .from("profiles")
@@ -190,36 +292,46 @@ async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> 
         .eq("user_id", facility.user_id)
         .maybeSingle();
       
-      if (!profile?.email) continue;
+      if (!profile?.email) {
+        console.log(`[getEligibleProviders] Skipping ${facility.name} - no profile email`);
+        continue;
+      }
       
-      // Get subscription plan
+      // Get subscription plan - MUST be active paid plan
       let planName = "basic";
       let leadLimit = PLAN_CONFIG.basic.qualified_lead_limit;
+      let subscriptionStatus = "none";
       
-      if (stripe) {
-        try {
-          const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
-          if (customers.data.length > 0) {
-            const subscriptions = await stripe.subscriptions.list({
-              customer: customers.data[0].id,
-              status: "active",
-              limit: 1,
-            });
-            
-            if (subscriptions.data.length > 0) {
-              const productId = subscriptions.data[0].items.data[0].price.product as string;
-              if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-                planName = "featured";
-                leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
-              } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-                planName = "professional";
-                leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
-              }
+      try {
+        const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
+        if (customers.data.length > 0) {
+          const subscriptions = await stripe.subscriptions.list({
+            customer: customers.data[0].id,
+            status: "active", // CRITICAL: Only active subscriptions
+            limit: 1,
+          });
+          
+          if (subscriptions.data.length > 0) {
+            subscriptionStatus = "active";
+            const productId = subscriptions.data[0].items.data[0].price.product as string;
+            if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
+              planName = "featured";
+              leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
+            } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
+              planName = "professional";
+              leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
             }
           }
-        } catch (e) {
-          console.error(`[getEligibleProviders] Error checking subscription for ${profile.email}:`, e);
         }
+      } catch (e) {
+        console.error(`[getEligibleProviders] Error checking subscription for ${profile.email}:`, e);
+        continue; // Skip on error - don't leak leads to potentially free accounts
+      }
+      
+      // CRITICAL GUARDRAIL: Skip basic plan providers - they NEVER receive routed leads
+      if (!PAID_PLANS.includes(planName)) {
+        console.log(`[getEligibleProviders] Skipping ${facility.name} - ${planName} plan not eligible for routed leads`);
+        continue;
       }
       
       // Count leads this month for this facility
@@ -233,9 +345,9 @@ async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> 
       const usedLeads = monthlyLeadCount || 0;
       const availableCapacity = leadLimit - usedLeads;
       
-      // CRITICAL: Skip basic plan providers - they do NOT receive routed leads
-      if (planName === "basic") {
-        console.log(`[getEligibleProviders] Skipping ${facility.name} - Basic plan not eligible for routed leads`);
+      // Skip providers at capacity
+      if (availableCapacity <= 0) {
+        console.log(`[getEligibleProviders] Skipping ${facility.name} - at capacity (${usedLeads}/${leadLimit})`);
         continue;
       }
       
@@ -265,26 +377,30 @@ async function getEligibleProviders(supabase: any): Promise<ProviderCapacity[]> 
         availableCapacity,
         lastAssignedAt: lastLead?.assigned_at || null,
         serviceTypes,
+        subscriptionStatus,
+        isSuspended: false,
       });
     }
     
+    console.log(`[getEligibleProviders] Returning ${providers.length} eligible paid providers`);
     return providers;
   } catch (error) {
-    console.error("Error getting eligible providers:", error);
+    console.error("[getEligibleProviders] Error:", error);
     return [];
   }
 }
 
 // Auto-assign lead to best matching provider
+// CRITICAL: Only operates on already-filtered eligible providers
 function findBestProvider(
   providers: ProviderCapacity[],
   leadData: QualifiedLeadRequest
 ): { provider: ProviderCapacity | null; reason: string } {
-  // Filter to only providers with available capacity
-  const available = providers.filter(p => p.availableCapacity > 0);
+  // Filter to only providers with available capacity (double-check)
+  const available = providers.filter(p => p.availableCapacity > 0 && PAID_PLANS.includes(p.planName));
   
   if (available.length === 0) {
-    return { provider: null, reason: "No providers with available capacity" };
+    return { provider: null, reason: "No eligible paid providers with available capacity" };
   }
   
   // Parse lead location for matching
@@ -305,7 +421,7 @@ function findBestProvider(
       score += 20;
     }
     
-    // Plan priority (Featured > Professional > Basic)
+    // Plan priority (Featured > Professional)
     if (p.planName === "featured") score += 15;
     else if (p.planName === "professional") score += 10;
     
@@ -329,7 +445,7 @@ function findBestProvider(
   
   const best = scored[0];
   if (!best) {
-    return { provider: null, reason: "No matching providers found" };
+    return { provider: null, reason: "No matching eligible providers found" };
   }
   
   // Build reason string
@@ -635,14 +751,17 @@ const handler = async (req: Request): Promise<Response> => {
     let assignedFacilityEmail: string | null = null;
     let assignedFacilityName: string | null = null;
     let assignedProviderEmail: string | null = null;
+    let assignedPlanName: string | null = null;
     let assignmentStatus = "pending";
     let assignmentReason = "";
 
-    // Case 1: Lead came from a specific provider's profile
+    // Case 1: Lead came from a specific provider's profile (provider-specific request)
     if (leadData.facilityId) {
+      console.log(`[Routing] Provider-specific request for facility ${leadData.facilityId}`);
+      
       const { data: facility } = await supabase
         .from("facilities")
-        .select("id, name, email, status, user_id")
+        .select("id, name, email, status, user_id, suspended")
         .eq("id", leadData.facilityId)
         .eq("status", "approved")
         .maybeSingle();
@@ -655,40 +774,61 @@ const handler = async (req: Request): Promise<Response> => {
           .maybeSingle();
 
         if (profile?.email) {
-          // Check if provider has capacity
-          const capCheck = await checkProviderLeadCap(supabase, facility.user_id, profile.email);
+          // CRITICAL: Check provider eligibility BEFORE assignment
+          const eligibility = await checkProviderEligibility(
+            supabase, 
+            facility.user_id, 
+            profile.email,
+            facility.id
+          );
           
-          if (capCheck.canReceiveLeads) {
-            assignedFacilityId = facility.id;
-            assignedFacilityUserId = facility.user_id;
-            assignedFacilityEmail = facility.email;
-            assignedFacilityName = facility.name;
-            assignedProviderEmail = profile.email;
-            assignmentStatus = "assigned";
-            assignmentReason = "Direct: Provider profile submission";
+          // CRITICAL GUARDRAIL: Basic plan providers do NOT receive routed qualified leads
+          if (!eligibility.isEligible) {
+            console.log(`[Routing] Provider ${facility.name} NOT eligible: ${eligibility.reason}`);
+            
+            // If provider is Basic plan, show user fallback message
+            if (eligibility.planName === "basic" || !PAID_PLANS.includes(eligibility.planName)) {
+              // Don't block the lead, but route to eligible providers instead
+              assignmentStatus = "unassigned_provider_ineligible";
+              assignmentReason = `Requested provider (${facility.name}) does not accept routed inquiries - Basic plan`;
+              console.log(`[Routing] Basic plan provider requested - will attempt auto-assignment to eligible providers`);
+            } else if (eligibility.isSuspended) {
+              assignmentStatus = "unassigned_provider_suspended";
+              assignmentReason = `Requested provider (${facility.name}) is currently suspended`;
+            } else {
+              assignmentStatus = "unassigned_provider_at_capacity";
+              assignmentReason = `Requested provider (${facility.name}) at capacity (${eligibility.usedLeads}/${eligibility.leadLimit})`;
+            }
           } else {
-            // Provider at capacity - still assign but note the reason
+            // Provider is eligible - assign directly
             assignedFacilityId = facility.id;
             assignedFacilityUserId = facility.user_id;
             assignedFacilityEmail = facility.email;
             assignedFacilityName = facility.name;
             assignedProviderEmail = profile.email;
+            assignedPlanName = eligibility.planName;
             assignmentStatus = "assigned";
-            assignmentReason = `Direct submission (provider at ${capCheck.usedLeads}/${capCheck.leadLimit} capacity)`;
+            assignmentReason = `Direct: Provider profile submission (${eligibility.planName} plan, ${eligibility.usedLeads}/${eligibility.leadLimit} capacity)`;
+            console.log(`[Routing] Assigned to requested provider ${facility.name}`);
           }
         }
+      } else {
+        assignmentStatus = "unassigned_facility_not_found";
+        assignmentReason = "Requested facility not found or not approved";
       }
     }
 
-    // Case 2: No facility specified - auto-assign based on matching
+    // Case 2: No facility specified OR requested facility was ineligible - auto-assign to best eligible provider
     if (!assignedFacilityId) {
-      console.log(`Starting auto-assignment for unassigned lead (qualified: ${isQualified})...`);
+      console.log(`[Routing] Starting auto-assignment (qualified: ${isQualified})...`);
       const eligibleProviders = await getEligibleProviders(supabase);
-      console.log(`Found ${eligibleProviders.length} eligible providers:`, eligibleProviders.map(p => ({
-        name: p.facilityName,
-        capacity: p.availableCapacity,
-        plan: p.planName
-      })));
+      console.log(`[Routing] Found ${eligibleProviders.length} eligible paid providers:`, 
+        eligibleProviders.map(p => ({
+          name: p.facilityName,
+          capacity: p.availableCapacity,
+          plan: p.planName
+        }))
+      );
       
       if (eligibleProviders.length > 0) {
         const { provider, reason } = findBestProvider(eligibleProviders, leadData);
@@ -699,18 +839,23 @@ const handler = async (req: Request): Promise<Response> => {
           assignedFacilityEmail = provider.facilityEmail;
           assignedFacilityName = provider.facilityName;
           assignedProviderEmail = provider.providerEmail;
+          assignedPlanName = provider.planName;
           assignmentStatus = "assigned";
           assignmentReason = reason;
-          console.log(`Auto-assigned to ${provider.facilityName}: ${reason}`);
+          console.log(`[Routing] Auto-assigned to ${provider.facilityName}: ${reason}`);
         } else {
-          assignmentStatus = "unassigned_no_capacity";
-          assignmentReason = reason;
-          console.log(`Could not assign - ${reason}`);
+          if (!assignmentReason) {
+            assignmentStatus = "unassigned_no_capacity";
+            assignmentReason = reason;
+          }
+          console.log(`[Routing] Could not auto-assign: ${reason}`);
         }
       } else {
-        assignmentStatus = "unassigned_no_providers";
-        assignmentReason = "No approved providers available";
-        console.log("No eligible providers found in the system");
+        if (!assignmentReason) {
+          assignmentStatus = "unassigned_no_providers";
+          assignmentReason = "No eligible paid providers available";
+        }
+        console.log(`[Routing] No eligible paid providers found in the system`);
       }
     }
 
@@ -740,7 +885,7 @@ const handler = async (req: Request): Promise<Response> => {
         status: "new",
         quality_flag: isQualified ? "qualified" : "unqualified",
         validation_status: "valid",
-        // New columns for tracking
+        // Tracking columns
         qualified: isQualified,
         qualification_reason: qualificationReason,
         assignment_status: assignmentStatus,
@@ -755,7 +900,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to submit request");
     }
 
-    console.log(`Lead created: ${lead.id}, qualified: ${isQualified}, assignment: ${assignmentStatus}`);
+    console.log(`[Routing] Lead created: ${lead.id}, qualified: ${isQualified}, assignment: ${assignmentStatus}, plan: ${assignedPlanName || 'none'}`);
 
     // ============ SEND USER CONFIRMATION EMAIL ============
     if (isQualified && emailVerified) {
@@ -767,8 +912,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // ============ SEND NOTIFICATIONS IF ASSIGNED ============
-    if (assignedFacilityEmail && assignedFacilityName) {
+    // ============ SEND NOTIFICATIONS IF ASSIGNED TO PAID PROVIDER ============
+    if (assignedFacilityEmail && assignedFacilityName && assignedPlanName && PAID_PLANS.includes(assignedPlanName)) {
       await sendLeadNotificationEmail(
         assignedFacilityEmail,
         assignedFacilityName,
@@ -777,7 +922,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create in-app notification
+    // Create in-app notification for assigned provider
     if (assignedFacilityUserId && assignedFacilityId) {
       try {
         await supabase
@@ -798,27 +943,28 @@ const handler = async (req: Request): Promise<Response> => {
               urgency: leadData.urgency,
               quality_flag: isQualified ? "qualified" : "unqualified",
               assignment_reason: assignmentReason,
+              plan_name: assignedPlanName,
             },
           });
-        console.log("In-app notification created for user:", assignedFacilityUserId);
+        console.log("[Routing] In-app notification created for user:", assignedFacilityUserId);
       } catch (notifError) {
         console.error("Failed to create in-app notification:", notifError);
       }
     }
 
     // ============ LEAD LIMIT WARNING ============
-    if (assignedProviderEmail && assignedFacilityName && isQualified) {
-      const capCheck = await checkProviderLeadCap(supabase, assignedFacilityUserId!, assignedProviderEmail);
-      const newUsedLeads = capCheck.usedLeads + 1;
-      const usagePercentage = (newUsedLeads / capCheck.leadLimit) * 100;
+    if (assignedProviderEmail && assignedFacilityName && isQualified && assignedPlanName && PAID_PLANS.includes(assignedPlanName)) {
+      const eligibility = await checkProviderEligibility(supabase, assignedFacilityUserId!, assignedProviderEmail, assignedFacilityId!);
+      const newUsedLeads = eligibility.usedLeads + 1;
+      const usagePercentage = (newUsedLeads / eligibility.leadLimit) * 100;
       
       if (usagePercentage >= 80) {
         await sendLeadLimitWarningEmail(
           assignedProviderEmail,
           assignedFacilityName,
           newUsedLeads,
-          capCheck.leadLimit,
-          capCheck.planName
+          eligibility.leadLimit,
+          eligibility.planName
         );
         
         if (assignedFacilityUserId && assignedFacilityId) {
@@ -830,11 +976,11 @@ const handler = async (req: Request): Promise<Response> => {
                 facility_id: assignedFacilityId,
                 type: "lead_limit_warning",
                 title: `${Math.round(usagePercentage)}% of monthly leads used`,
-                message: `You've used ${newUsedLeads} of ${capCheck.leadLimit} leads this month. Consider upgrading to receive more leads.`,
+                message: `You've used ${newUsedLeads} of ${eligibility.leadLimit} leads this month. Consider upgrading to receive more leads.`,
                 metadata: {
                   used_leads: newUsedLeads,
-                  lead_limit: capCheck.leadLimit,
-                  plan_name: capCheck.planName,
+                  lead_limit: eligibility.leadLimit,
+                  plan_name: eligibility.planName,
                   percentage: usagePercentage,
                 },
               });
@@ -852,14 +998,15 @@ const handler = async (req: Request): Promise<Response> => {
         qualified: isQualified,
         assigned: !!assignedFacilityId,
         assignmentStatus,
-        assignmentReason,
+        // Don't expose internal routing details to users
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
-  } catch (error: any) {
+
+  } catch (error) {
     console.error("Error in submit-qualified-lead:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to submit request" }),
+      JSON.stringify({ error: "Failed to submit request" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
