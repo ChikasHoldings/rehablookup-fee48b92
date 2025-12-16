@@ -9,11 +9,12 @@ import {
   UserCog, Bell, KeyRound, Image, CheckCircle, UserPlus, Ban, 
   BadgeCheck, Star, FileText, Settings, RefreshCw, Shield, 
   Clock, AlertTriangle, Lock, Monitor, Smartphone, Laptop, Tablet,
-  Globe, MapPin, LogOut, Trash2, ShieldOff
+  Globe, MapPin, LogOut, Trash2, ShieldOff, Key
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { TwoFactorSetupDialog } from "@/components/admin/TwoFactorSetupDialog";
 import { DisableTwoFactorDialog } from "@/components/admin/DisableTwoFactorDialog";
+import { RegenerateRecoveryCodesDialog } from "@/components/admin/RegenerateRecoveryCodesDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,6 +112,7 @@ export default function AdminProfile() {
   const [isRevokingAll, setIsRevokingAll] = useState(false);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [show2FADisable, setShow2FADisable] = useState(false);
+  const [showRegenerateCodes, setShowRegenerateCodes] = useState(false);
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [isCheckingMFA, setIsCheckingMFA] = useState(true);
 
@@ -1186,14 +1188,24 @@ export default function AdminProfile() {
                 </div>
               </div>
               
-              <Button
-                variant="outline"
-                className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={() => setShow2FADisable(true)}
-              >
-                <ShieldOff className="h-4 w-4 mr-2" />
-                Disable Two-Factor Authentication
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowRegenerateCodes(true)}
+                >
+                  <Key className="h-4 w-4 mr-2" />
+                  Regenerate Recovery Codes
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => setShow2FADisable(true)}
+                >
+                  <ShieldOff className="h-4 w-4 mr-2" />
+                  Disable 2FA
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -1305,6 +1317,10 @@ export default function AdminProfile() {
         open={show2FADisable}
         onOpenChange={setShow2FADisable}
         onSuccess={handleMFADisableSuccess}
+      />
+      <RegenerateRecoveryCodesDialog
+        open={showRegenerateCodes}
+        onOpenChange={setShowRegenerateCodes}
       />
     </div>
   );
