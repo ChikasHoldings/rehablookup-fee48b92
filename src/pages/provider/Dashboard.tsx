@@ -107,6 +107,22 @@ export default function ProviderDashboardPage() {
     staleTime: 1000 * 60,
   });
 
+  // Fetch total leads count for Basic plan upgrade banner
+  const { data: totalLeadsCount = 0 } = useQuery({
+    queryKey: ["total-leads-count", facilityId],
+    queryFn: async (): Promise<number> => {
+      if (!facilityId) return 0;
+      const { count, error } = await supabase
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .eq("facility_id", facilityId);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!facilityId && planKey === "basic",
+    staleTime: 1000 * 60,
+  });
+
   // Real-time subscription for leads and views
   useEffect(() => {
     if (!facilityId) return;
@@ -240,7 +256,7 @@ export default function ProviderDashboardPage() {
       <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
 
       {/* Basic Plan Upgrade Banner - show when Basic users have leads waiting */}
-      {planKey === "basic" && recentLeads.length > 0 && (
+      {planKey === "basic" && totalLeadsCount > 0 && (
         <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 via-background to-amber-500/5 overflow-hidden">
           <CardContent className="py-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -250,9 +266,9 @@ export default function ProviderDashboardPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-primary">{recentLeads.length}</span>
+                    <span className="text-2xl font-bold text-primary">{totalLeadsCount}</span>
                     <span className="text-lg font-semibold text-foreground">
-                      Lead{recentLeads.length !== 1 ? 's' : ''} Waiting
+                      Lead{totalLeadsCount !== 1 ? 's' : ''} Waiting
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
