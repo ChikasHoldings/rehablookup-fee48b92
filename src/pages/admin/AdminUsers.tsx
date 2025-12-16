@@ -17,6 +17,7 @@ import {
   Filter,
   Calendar,
   Activity,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,7 +109,7 @@ export default function AdminUsers() {
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
-    action: "suspend" | "unsuspend" | "delete" | "reset_password";
+    action: "suspend" | "unsuspend" | "delete" | "reset_password" | "resend_invitation";
     user: AdminUser;
   } | null>(null);
 
@@ -281,6 +282,15 @@ export default function AdminUsers() {
                   <Settings className="h-4 w-4 mr-2" />
                   Edit Permissions
                 </DropdownMenuItem>
+                {user.status === "pending_password_reset" && (
+                  <DropdownMenuItem 
+                    onClick={() => setConfirmAction({ action: "resend_invitation", user })}
+                    className="text-blue-600 focus:text-blue-600"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Resend Invitation
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => setConfirmAction({ action: "reset_password", user })}>
                   <KeyRound className="h-4 w-4 mr-2" />
                   Reset Password
@@ -543,6 +553,12 @@ export default function AdminUsers() {
                   Reset Password
                 </>
               )}
+              {confirmAction?.action === "resend_invitation" && (
+                <>
+                  <Send className="h-5 w-5 text-blue-500" />
+                  Resend Invitation
+                </>
+              )}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmAction?.action === "suspend" && (
@@ -569,6 +585,12 @@ export default function AdminUsers() {
                   They will receive an email with the new credentials and must change it on first login.
                 </>
               )}
+              {confirmAction?.action === "resend_invitation" && (
+                <>
+                  Resend the invitation email to <strong>{confirmAction.user.email}</strong>? 
+                  A new temporary password will be generated and sent to them.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -579,7 +601,7 @@ export default function AdminUsers() {
                 confirmAction?.action === "delete" && "bg-red-600 hover:bg-red-700",
                 confirmAction?.action === "suspend" && "bg-amber-600 hover:bg-amber-700",
                 confirmAction?.action === "unsuspend" && "bg-green-600 hover:bg-green-700",
-                confirmAction?.action === "reset_password" && "bg-blue-600 hover:bg-blue-700"
+                (confirmAction?.action === "reset_password" || confirmAction?.action === "resend_invitation") && "bg-blue-600 hover:bg-blue-700"
               )}
               disabled={isManaging}
             >
