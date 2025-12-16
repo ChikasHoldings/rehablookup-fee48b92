@@ -51,6 +51,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminFlaggedImages from "./pages/admin/AdminFlaggedImages";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminLeadRouting from "./pages/admin/AdminLeadRouting";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -107,6 +108,7 @@ const App = () => (
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="providers" element={<AdminProviders />} />
             <Route path="leads" element={<AdminLeads />} />
+            <Route path="lead-routing" element={<AdminLeadRouting />} />
             <Route path="subscriptions" element={<AdminSubscriptions />} />
             <Route path="featured" element={<AdminFeatured />} />
             <Route path="flagged-images" element={<AdminFlaggedImages />} />
