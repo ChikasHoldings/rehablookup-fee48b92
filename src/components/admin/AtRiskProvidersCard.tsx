@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ interface AtRiskProvider {
   daysInactive: number;
 }
 
-export function AtRiskProvidersCard() {
+export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function AtRiskProvidersCard(_, ref) {
   const [isExpanded, setIsExpanded] = useState(true);
   const queryClient = useQueryClient();
 
@@ -108,7 +108,7 @@ export function AtRiskProvidersCard() {
   const highRiskCount = atRiskProviders.filter(p => p.riskScore >= 50).length;
 
   return (
-    <Card className={highRiskCount > 0 ? "border-amber-500/50" : ""}>
+    <Card ref={ref} className={highRiskCount > 0 ? "border-amber-500/50" : ""}>
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -264,4 +264,6 @@ export function AtRiskProvidersCard() {
       </Collapsible>
     </Card>
   );
-}
+});
+
+AtRiskProvidersCard.displayName = "AtRiskProvidersCard";

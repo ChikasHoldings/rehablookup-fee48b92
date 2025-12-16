@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, forwardRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,7 +73,7 @@ interface OutreachMetrics {
   };
 }
 
-export function RetentionDashboard() {
+export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function RetentionDashboard(_, ref) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [dateRange, setDateRange] = useState("30");
 
@@ -266,7 +266,7 @@ export function RetentionDashboard() {
   }
 
   return (
-    <Card>
+    <Card ref={ref}>
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -532,4 +532,6 @@ export function RetentionDashboard() {
       </Collapsible>
     </Card>
   );
-}
+});
+
+RetentionDashboard.displayName = "RetentionDashboard";
