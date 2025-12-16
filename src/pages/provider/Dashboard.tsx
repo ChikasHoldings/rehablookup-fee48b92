@@ -100,6 +100,14 @@ export default function ProviderDashboardPage() {
     localStorage.setItem("contact-hidden-warning-dismissed", "true");
   };
 
+  // Reset warning dismissed state when upgrading from basic plan
+  useEffect(() => {
+    if (planKey !== "basic") {
+      localStorage.removeItem("contact-hidden-warning-dismissed");
+      setContactWarningDismissed(false);
+    }
+  }, [planKey]);
+
   // Fetch recent leads for dashboard
   const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ["recent-leads", facilityId],
