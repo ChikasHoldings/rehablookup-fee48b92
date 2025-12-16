@@ -2,20 +2,19 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CreditCard,
-  Building2,
-  Users,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
   Search,
-  DollarSign,
   ArrowUpRight,
   ArrowDownRight,
   RefreshCw,
-  Calendar,
   ChevronUp,
   ChevronDown,
   Minus,
+  LayoutDashboard,
+  List,
+  BarChart3,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -162,6 +162,7 @@ function EventIcon({ type }: { type: string }) {
 
 export default function AdminSubscriptions() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -358,302 +359,324 @@ export default function AdminSubscriptions() {
         </div>
       </div>
 
-      {/* Revenue Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Monthly Revenue</p>
-                <p className="text-2xl font-bold">
-                  ${stripeStats?.mrr?.toLocaleString() || "0"}
-                </p>
-              </div>
-              <div className={`flex items-center gap-1 text-sm ${(stripeStats?.mrr_growth || 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {(stripeStats?.mrr_growth || 0) >= 0 ? (
-                  <TrendingUp className="h-4 w-4" />
-                ) : (
-                  <TrendingDown className="h-4 w-4" />
-                )}
-                {stripeStats?.mrr_growth || 0}%
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <LayoutDashboard className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            All Subscriptions
+          </TabsTrigger>
+          <TabsTrigger value="retention" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Retention
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active Subscriptions</p>
-                <p className="text-2xl font-bold">{stripeStats?.active_subscriptions || 0}</p>
-              </div>
-              <div className="flex items-center gap-1 text-sm text-green-600">
-                <ArrowUpRight className="h-4 w-4" />
-                +{stripeStats?.new_last_30_days || 0}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Churn Rate (30d)</p>
-                <p className="text-2xl font-bold">{stripeStats?.churn_rate || 0}%</p>
-              </div>
-              <div className="flex items-center gap-1 text-sm text-red-600">
-                <ArrowDownRight className="h-4 w-4" />
-                {stripeStats?.canceled_last_30_days || 0}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">At-Risk</p>
-                <p className="text-2xl font-bold">
-                  {enrichedSubscriptions.filter((s) => s.cancel_at_period_end).length}
-                </p>
-              </div>
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Plan Distribution */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Plan Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Basic</span>
-                <span className="text-sm text-muted-foreground">{stripeStats?.basic_count || 0}</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-slate-400 rounded-full transition-all duration-500"
-                  style={{ width: `${planDistribution.basic}%` }}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Professional</span>
-                <span className="text-sm text-muted-foreground">{stripeStats?.professional_count || 0}</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                  style={{ width: `${planDistribution.professional}%` }}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Featured</span>
-                <span className="text-sm text-muted-foreground">{stripeStats?.featured_count || 0}</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                  style={{ width: `${planDistribution.featured}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* At-Risk Providers */}
-      <AtRiskProvidersCard />
-
-      {/* Retention Dashboard */}
-      <RetentionDashboard />
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Activity */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
-            <CardDescription>Upgrades, downgrades & cancellations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : stripeStats?.recent_events && stripeStats.recent_events.length > 0 ? (
-              <div className="space-y-3">
-                {stripeStats.recent_events.slice(0, 8).map((event, i) => (
-                  <div key={i} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="mt-0.5">
-                      <EventIcon type={event.type} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{event.customer_email}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {event.type === "new" && `Subscribed to ${event.to_plan}`}
-                        {event.type === "canceled" && `Canceled ${event.from_plan}`}
-                        {event.type === "upgrade" && `Upgraded to ${event.to_plan}`}
-                        {event.type === "downgrade" && `Downgraded to ${event.to_plan}`}
-                      </p>
-                    </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {formatDistanceToNow(new Date(event.date), { addSuffix: true })}
-                    </span>
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Revenue Stats */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Monthly Revenue</p>
+                    <p className="text-2xl font-bold">
+                      ${stripeStats?.mrr?.toLocaleString() || "0"}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center py-4 text-sm text-muted-foreground">No recent activity</p>
-            )}
-          </CardContent>
-        </Card>
+                  <div className={`flex items-center gap-1 text-sm ${(stripeStats?.mrr_growth || 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {(stripeStats?.mrr_growth || 0) >= 0 ? (
+                      <TrendingUp className="h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4" />
+                    )}
+                    {stripeStats?.mrr_growth || 0}%
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Subscriptions Table */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Subscriptions
-                </CardTitle>
-                <CardDescription>
-                  {filteredSubscriptions.length} of {enrichedSubscriptions.length} providers
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={planFilter} onValueChange={setPlanFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Plans</SelectItem>
-                  <SelectItem value="basic">Basic</SelectItem>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="featured">Featured</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="canceling">Canceling</SelectItem>
-                  <SelectItem value="canceled">Canceled</SelectItem>
-                  <SelectItem value="past_due">Past Due</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active Subscriptions</p>
+                    <p className="text-2xl font-bold">{stripeStats?.active_subscriptions || 0}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-green-600">
+                    <ArrowUpRight className="h-4 w-4" />
+                    +{stripeStats?.new_last_30_days || 0}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-            {isLoading ? (
-              <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Churn Rate (30d)</p>
+                    <p className="text-2xl font-bold">{stripeStats?.churn_rate || 0}%</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-red-600">
+                    <ArrowDownRight className="h-4 w-4" />
+                    {stripeStats?.canceled_last_30_days || 0}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">At-Risk</p>
+                    <p className="text-2xl font-bold">
+                      {enrichedSubscriptions.filter((s) => s.cancel_at_period_end).length}
+                    </p>
+                  </div>
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Plan Distribution */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Plan Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Basic</span>
+                    <span className="text-sm text-muted-foreground">{stripeStats?.basic_count || 0}</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-slate-400 rounded-full transition-all duration-500"
+                      style={{ width: `${planDistribution.basic}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Professional</span>
+                    <span className="text-sm text-muted-foreground">{stripeStats?.professional_count || 0}</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                      style={{ width: `${planDistribution.professional}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Featured</span>
+                    <span className="text-sm text-muted-foreground">{stripeStats?.featured_count || 0}</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                      style={{ width: `${planDistribution.featured}%` }}
+                    />
+                  </div>
+                </div>
               </div>
-            ) : filteredSubscriptions.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead>Provider</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Leads</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Renews</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSubscriptions.map((sub) => (
-                      <TableRow key={sub.customer_id}>
-                        <TableCell>
-                          <div className="min-w-0">
-                            <p className="font-medium truncate max-w-[200px]">{sub.facility_name}</p>
-                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                              {sub.customer_email}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <PlanBadge plan={sub.plan} />
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={sub.status} cancelAtPeriodEnd={sub.cancel_at_period_end} />
-                        </TableCell>
-                        <TableCell>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                    <div 
-                                      className={`h-full rounded-full transition-all ${
-                                        sub.leads_used >= sub.lead_limit ? "bg-red-500" : 
-                                        sub.leads_used >= sub.lead_limit * 0.8 ? "bg-amber-500" : "bg-green-500"
-                                      }`}
-                                      style={{ width: `${Math.min((sub.leads_used / sub.lead_limit) * 100, 100)}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">
-                                    {sub.leads_used}/{sub.lead_limit}
-                                  </span>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{sub.leads_used} of {sub.lead_limit} leads used this month</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-medium">${sub.monthly_amount}</span>
-                          <span className="text-muted-foreground">/mo</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(sub.current_period_end), "MMM d, yyyy")}
-                          </span>
-                        </TableCell>
+            </CardContent>
+          </Card>
+
+          {/* At-Risk Providers */}
+          <AtRiskProvidersCard />
+
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+              <CardDescription>Upgrades, downgrades & cancellations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : stripeStats?.recent_events && stripeStats.recent_events.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {stripeStats.recent_events.slice(0, 9).map((event, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                      <div className="mt-0.5">
+                        <EventIcon type={event.type} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{event.customer_email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {event.type === "new" && `Subscribed to ${event.to_plan}`}
+                          {event.type === "canceled" && `Canceled ${event.from_plan}`}
+                          {event.type === "upgrade" && `Upgraded to ${event.to_plan}`}
+                          {event.type === "downgrade" && `Downgraded to ${event.to_plan}`}
+                        </p>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(event.date), { addSuffix: true })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center py-4 text-sm text-muted-foreground">No recent activity</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* All Subscriptions Tab */}
+        <TabsContent value="subscriptions" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    All Subscriptions
+                  </CardTitle>
+                  <CardDescription>
+                    {filteredSubscriptions.length} of {enrichedSubscriptions.length} providers
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name or email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Select value={planFilter} onValueChange={setPlanFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Plans</SelectItem>
+                    <SelectItem value="basic">Basic</SelectItem>
+                    <SelectItem value="professional">Professional</SelectItem>
+                    <SelectItem value="featured">Featured</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="canceling">Canceling</SelectItem>
+                    <SelectItem value="canceled">Canceled</SelectItem>
+                    <SelectItem value="past_due">Past Due</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : filteredSubscriptions.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead>Provider</TableHead>
+                        <TableHead>Plan</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Leads</TableHead>
+                        <TableHead>Revenue</TableHead>
+                        <TableHead>Renews</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <p className="text-center py-8 text-muted-foreground">No subscriptions found</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredSubscriptions.map((sub) => (
+                        <TableRow key={sub.customer_id}>
+                          <TableCell>
+                            <div className="min-w-0">
+                              <p className="font-medium truncate max-w-[200px]">{sub.facility_name}</p>
+                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                {sub.customer_email}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <PlanBadge plan={sub.plan} />
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge status={sub.status} cancelAtPeriodEnd={sub.cancel_at_period_end} />
+                          </TableCell>
+                          <TableCell>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full rounded-full transition-all ${
+                                          sub.leads_used >= sub.lead_limit ? "bg-red-500" : 
+                                          sub.leads_used >= sub.lead_limit * 0.8 ? "bg-amber-500" : "bg-green-500"
+                                        }`}
+                                        style={{ width: `${Math.min((sub.leads_used / sub.lead_limit) * 100, 100)}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-sm text-muted-foreground">
+                                      {sub.leads_used}/{sub.lead_limit}
+                                    </span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{sub.leads_used} of {sub.lead_limit} leads used this month</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium">${sub.monthly_amount}</span>
+                            <span className="text-muted-foreground">/mo</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {format(new Date(sub.current_period_end), "MMM d, yyyy")}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-center py-8 text-muted-foreground">No subscriptions found</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Retention Analytics Tab */}
+        <TabsContent value="retention" className="space-y-6">
+          <RetentionDashboard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
