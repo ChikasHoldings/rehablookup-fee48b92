@@ -373,24 +373,34 @@ serve(async (req) => {
       const { subject, html } = generateRetentionEmail(provider);
 
       try {
-        const { error } = await resend.emails.send({
+        const emailResult = await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [provider.email],
           subject,
           html,
         });
 
-        if (error) {
-          logStep("Failed to send email", { email: provider.email, error: error.message });
+        if (emailResult.error) {
+          logStep("Failed to send email", { email: provider.email, error: emailResult.error.message });
           emailsFailed.push(provider.email);
           continue;
         }
 
-        // Record that we sent this email
+        // Get the resend email ID for tracking
+        const resendId = emailResult.data?.id || null;
+
+        // Record that we sent this email with the resend_id for tracking
+        const { data: profileData } = await supabaseClient
+          .from("profiles")
+          .select("user_id")
+          .eq("email", provider.email)
+          .single();
+
         await supabaseClient.from("subscription_alerts").insert({
           alert_type: "retention_outreach",
           alert_key: alertKey,
-          user_id: (await supabaseClient.from("profiles").select("user_id").eq("email", provider.email).single()).data?.user_id || "system",
+          user_id: profileData?.user_id || "00000000-0000-0000-0000-000000000000",
+          resend_id: resendId,
         });
 
         emailsSent.push(provider.email);
