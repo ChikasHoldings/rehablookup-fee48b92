@@ -617,6 +617,54 @@ export type Database = {
           },
         ]
       }
+      featured_placement_analytics: {
+        Row: {
+          created_at: string
+          event_count: number
+          event_date: string
+          event_type: string
+          facility_id: string
+          id: string
+          metadata: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_count?: number
+          event_date?: string
+          event_type: string
+          facility_id: string
+          id?: string
+          metadata?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_count?: number
+          event_date?: string
+          event_type?: string
+          facility_id?: string
+          id?: string
+          metadata?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_placement_analytics_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "featured_placement_analytics_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flagged_images: {
         Row: {
           facility_id: string

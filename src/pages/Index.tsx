@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo } from "react";
+import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -7,6 +7,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-recovery.jpg";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
@@ -155,7 +156,38 @@ const Index = () => {
     
     return combined.slice(0, 6);
   }, [approvedFacilities]);
+
+  // Track impressions for featured facilities (once per session)
+  const hasTrackedImpressions = useRef(false);
   
+  const trackFeaturedImpressions = useCallback(async () => {
+    if (hasTrackedImpressions.current) return;
+    
+    const featuredDbFacilities = featuredCenters.filter(
+      (c: any) => c.isFromDatabase && c.hasFeaturedSubscription && c.id
+    );
+    
+    if (featuredDbFacilities.length === 0) return;
+    
+    hasTrackedImpressions.current = true;
+    
+    // Track impression for each featured facility
+    for (const facility of featuredDbFacilities) {
+      try {
+        await supabase.functions.invoke("track-featured-analytics", {
+          body: { facility_id: facility.id, event_type: "impression" }
+        });
+      } catch (error) {
+        console.error("Failed to track impression:", error);
+      }
+    }
+  }, [featuredCenters]);
+
+  useEffect(() => {
+    if (featuredCenters.length > 0) {
+      trackFeaturedImpressions();
+    }
+  }, [featuredCenters, trackFeaturedImpressions]);
   // Parallax effect for Why Choose Us image
   const parallaxRef = useRef<HTMLDivElement>(null);
   const [parallaxOffset, setParallaxOffset] = useState(0);

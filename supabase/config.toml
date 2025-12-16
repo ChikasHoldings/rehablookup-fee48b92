@@ -125,3 +125,6 @@ verify_jwt = true
 
 [functions.resend-webhook]
 verify_jwt = false
+
+[functions.track-featured-analytics]
+verify_jwt = false
