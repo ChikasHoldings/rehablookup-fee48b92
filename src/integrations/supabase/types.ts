@@ -215,6 +215,39 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_identifiers: {
+        Row: {
+          blocked_at: string
+          blocked_by: string
+          expires_at: string | null
+          id: string
+          identifier: string
+          identifier_type: string
+          is_active: boolean
+          reason: string | null
+        }
+        Insert: {
+          blocked_at?: string
+          blocked_by: string
+          expires_at?: string | null
+          id?: string
+          identifier: string
+          identifier_type: string
+          is_active?: boolean
+          reason?: string | null
+        }
+        Update: {
+          blocked_at?: string
+          blocked_by?: string
+          expires_at?: string | null
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          is_active?: boolean
+          reason?: string | null
+        }
+        Relationships: []
+      }
       email_tracking_events: {
         Row: {
           created_at: string
@@ -1560,6 +1593,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_identifier_blocked: {
+        Args: { p_identifier: string }
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
