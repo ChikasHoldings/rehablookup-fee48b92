@@ -318,14 +318,49 @@ export default function ProviderLogin() {
     }
 
     setIsLoading(true);
+    const normalizedEmail = email.trim().toLowerCase();
 
     try {
+      // Server-side rate limit check
+      const { data: rateLimitResult, error: rateLimitError } = await supabase
+        .rpc('check_rate_limit', {
+          p_identifier: normalizedEmail,
+          p_action_type: 'provider_login',
+          p_max_attempts: MAX_ATTEMPTS,
+          p_window_minutes: 15
+        });
+
+      if (rateLimitError) {
+        console.error('Rate limit check error:', rateLimitError);
+        // Continue with login attempt if rate limit check fails
+      } else if (rateLimitResult) {
+        const rateLimitData = rateLimitResult as { is_limited: boolean; retry_after_seconds: number; attempts: number };
+        if (rateLimitData.is_limited) {
+          const retryAfter = rateLimitData.retry_after_seconds || 0;
+          toast({
+            title: "Too Many Attempts",
+            description: `Please wait ${Math.ceil(retryAfter / 60)} minute(s) before trying again.`,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
       if (error) {
+        // Log failed attempt to server
+        await supabase.rpc('log_rate_limit_event', {
+          p_identifier: normalizedEmail,
+          p_action_type: 'provider_login',
+          p_success: false,
+          p_metadata: { error_type: error.message.includes('Invalid') ? 'invalid_credentials' : 'other' }
+        });
+
         const attemptCount = recordFailedAttempt();
         const remainingAttempts = MAX_ATTEMPTS - attemptCount;
         
@@ -358,6 +393,14 @@ export default function ProviderLogin() {
       }
 
       if (data.session) {
+        // Log successful login to server
+        await supabase.rpc('log_rate_limit_event', {
+          p_identifier: normalizedEmail,
+          p_action_type: 'provider_login',
+          p_success: true,
+          p_metadata: { user_id: data.session.user.id }
+        });
+
         clearLoginAttempts(email);
         setFailedAttempts(0);
         sessionStorage.setItem(REMEMBER_ME_KEY, rememberMe.toString());
