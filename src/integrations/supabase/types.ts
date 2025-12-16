@@ -380,6 +380,13 @@ export type Database = {
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "facility_age_groups_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
         ]
       }
       facility_credentials: {
@@ -412,6 +419,13 @@ export type Database = {
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "facility_credentials_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
         ]
       }
       facility_insurance: {
@@ -439,6 +453,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_insurance_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -479,6 +500,13 @@ export type Database = {
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "facility_interactions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
         ]
       }
       facility_services: {
@@ -506,6 +534,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_services_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -541,6 +576,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_views_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -591,6 +633,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flagged_images_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -644,6 +693,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_emails_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
             referencedColumns: ["id"]
           },
           {
@@ -739,6 +795,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lead_routing_logs_assigned_provider_id_fkey"
+            columns: ["assigned_provider_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lead_routing_logs_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
@@ -750,6 +813,13 @@ export type Database = {
             columns: ["requested_facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_routing_logs_requested_facility_id_fkey"
+            columns: ["requested_facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -860,6 +930,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -1035,6 +1112,13 @@ export type Database = {
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "provider_notifications_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reply_email_verification_codes: {
@@ -1076,6 +1160,13 @@ export type Database = {
             referencedRelation: "facilities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reply_email_verification_codes_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
         ]
       }
       request_help_analytics: {
@@ -1112,6 +1203,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_help_analytics_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
             referencedColumns: ["id"]
           },
         ]
@@ -1247,9 +1345,119 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_facilities: {
+        Row: {
+          address: string | null
+          bed_count: string | null
+          city: string | null
+          created_at: string | null
+          description: string | null
+          email: string | null
+          facility_type: string | null
+          featured: boolean | null
+          featured_pinned: boolean | null
+          gallery_urls: string[] | null
+          gender_served: string | null
+          id: string | null
+          last_featured_shown_at: string | null
+          logo_url: string | null
+          name: string | null
+          phone: string | null
+          reply_email: string | null
+          reply_email_verified: boolean | null
+          reply_email_verified_at: string | null
+          slug: string | null
+          state: string | null
+          status: string | null
+          updated_at: string | null
+          verified: boolean | null
+          website: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          bed_count?: string | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          facility_type?: string | null
+          featured?: boolean | null
+          featured_pinned?: boolean | null
+          gallery_urls?: string[] | null
+          gender_served?: string | null
+          id?: string | null
+          last_featured_shown_at?: string | null
+          logo_url?: string | null
+          name?: string | null
+          phone?: string | null
+          reply_email?: string | null
+          reply_email_verified?: boolean | null
+          reply_email_verified_at?: string | null
+          slug?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          website?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          bed_count?: string | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          facility_type?: string | null
+          featured?: boolean | null
+          featured_pinned?: boolean | null
+          gallery_urls?: string[] | null
+          gender_served?: string | null
+          id?: string | null
+          last_featured_shown_at?: string | null
+          logo_url?: string | null
+          name?: string | null
+          phone?: string | null
+          reply_email?: string | null
+          reply_email_verified?: boolean | null
+          reply_email_verified_at?: string | null
+          slug?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          website?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_public_facility_by_slug: {
+        Args: { facility_slug: string }
+        Returns: {
+          address: string
+          bed_count: string
+          city: string
+          description: string
+          email: string
+          facility_type: string
+          featured: boolean
+          gallery_urls: string[]
+          gender_served: string
+          id: string
+          logo_url: string
+          name: string
+          phone: string
+          slug: string
+          state: string
+          status: string
+          verified: boolean
+          website: string
+          zip_code: string
+        }[]
+      }
       has_admin_permission: {
         Args: { _permission_key: string; _user_id: string }
         Returns: boolean
