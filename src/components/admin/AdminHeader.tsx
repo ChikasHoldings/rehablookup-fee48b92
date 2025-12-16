@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useCallback } from "react";
+import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck } from "lucide-react";
 import {
@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
+import { toast } from "sonner";
 
 interface AdminHeaderProps {
   userEmail?: string;
@@ -46,6 +47,9 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [bellAnimating, setBellAnimating] = useState(false);
+  const lastPendingCountRef = useRef<number | null>(null);
+  const lastLeadsCountRef = useRef<number | null>(null);
   
   // Get user-specific admin notifications
   const { 
@@ -62,14 +66,42 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
     queryClient.invalidateQueries({ queryKey: ["admin-notifications-approvals"] });
   }, [queryClient]);
 
-  // Set up realtime subscriptions for notifications
+  // Bell animation trigger
+  const triggerBellAnimation = useCallback(() => {
+    setBellAnimating(true);
+    setTimeout(() => setBellAnimating(false), 1000);
+  }, []);
+
+  // Set up realtime subscriptions for notifications with toast alerts
   useEffect(() => {
     const facilitiesChannel = supabase
-      .channel("admin-facilities-notifications")
+      .channel("admin-facilities-notifications-live")
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
+          schema: "public",
+          table: "facilities",
+        },
+        (payload) => {
+          invalidateNotifications();
+          triggerBellAnimation();
+          const facility = payload.new as { name?: string; city?: string; state?: string; status?: string };
+          if (facility.status === "pending") {
+            toast.info("New Provider Signup", {
+              description: `${facility.name || "A new provider"} (${facility.city || ""}, ${facility.state || ""}) is pending review`,
+              action: {
+                label: "Review",
+                onClick: () => navigate("/admin/providers?status=pending"),
+              },
+            });
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
           schema: "public",
           table: "facilities",
         },
@@ -80,11 +112,37 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
       .subscribe();
 
     const leadsChannel = supabase
-      .channel("admin-leads-notifications")
+      .channel("admin-leads-notifications-live")
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
+          schema: "public",
+          table: "leads",
+        },
+        (payload) => {
+          invalidateNotifications();
+          triggerBellAnimation();
+          const lead = payload.new as { name?: string; facility_id?: string | null };
+          if (!lead.facility_id) {
+            toast.info("New Unassigned Lead", {
+              description: `${lead.name || "A new lead"} needs assignment`,
+              action: {
+                label: "View",
+                onClick: () => navigate("/admin/leads?unassigned=true"),
+              },
+            });
+          } else {
+            toast.success("New Lead Assigned", {
+              description: `${lead.name || "A lead"} was automatically assigned`,
+            });
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
           schema: "public",
           table: "leads",
         },
@@ -98,7 +156,7 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
       supabase.removeChannel(facilitiesChannel);
       supabase.removeChannel(leadsChannel);
     };
-  }, [invalidateNotifications]);
+  }, [invalidateNotifications, navigate, triggerBellAnimation]);
 
   // Fetch pending providers
   const { data: pendingProviders } = useQuery({
@@ -288,9 +346,9 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative hover:bg-slate-800">
-                <Bell className="h-5 w-5" />
+                <Bell className={`h-5 w-5 transition-transform ${bellAnimating ? "animate-wiggle" : ""}`} />
                 {unreadCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
+                  <Badge className={`absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs ${bellAnimating ? "animate-pulse" : ""}`}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}
