@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Play, Shield, Lock, Heart, CheckCircle2, Loader2 } from "lucide-react";
+import { Play, Shield, Lock, Heart, CheckCircle2, Loader2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +36,7 @@ export default function AdLanding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const hasTrackedFormStart = useRef(false);
   
   // Email verification state
   const [codeSent, setCodeSent] = useState(false);
@@ -70,6 +71,13 @@ export default function AdLanding() {
       }]);
     } catch (error) {
       console.error("Analytics tracking error:", error);
+    }
+  };
+
+  const trackFormStart = () => {
+    if (!hasTrackedFormStart.current) {
+      hasTrackedFormStart.current = true;
+      trackEvent("form_start");
     }
   };
   
@@ -235,6 +243,7 @@ export default function AdLanding() {
   };
   
   const handleEmailChange = (value: string) => {
+    trackFormStart();
     setFormData(prev => ({ ...prev, email: value }));
     // Reset verification state if email changes
     if (isEmailVerified || codeSent) {
@@ -250,42 +259,65 @@ export default function AdLanding() {
     if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
   };
+
+  const handleFieldChange = (field: keyof FormData, value: string | boolean) => {
+    trackFormStart();
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
   
   // Thank you state
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 flex flex-col">
         <Helmet>
           <title>Thank You | RehabLookup</title>
           <meta name="robots" content="noindex, nofollow" />
         </Helmet>
         
         {/* Minimal header with logo */}
-        <header className="py-6 px-4 border-b border-border/50">
+        <header className="py-6 px-4">
           <div className="max-w-md mx-auto">
-            <img src={logoImage} alt="RehabLookup" className="h-8" />
+            <img src={logoImage} alt="RehabLookup" className="h-10" />
           </div>
         </header>
         
         <main className="flex-1 flex items-center justify-center px-4 py-12">
-          <div className="max-w-md w-full text-center space-y-6">
-            <div className="w-16 h-16 mx-auto rounded-full bg-accent/10 flex items-center justify-center">
-              <CheckCircle2 className="w-8 h-8 text-accent" />
+          <div className="max-w-md w-full text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-primary" />
             </div>
             
-            <div className="space-y-3">
-              <h1 className="text-2xl font-semibold text-foreground">
+            <div className="space-y-4">
+              <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
                 Thank you. Your request has been received.
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-lg">
                 A treatment provider may reach out using your preferred contact method.
               </p>
             </div>
+
+            <div className="bg-card border border-border rounded-xl p-6 text-left space-y-3">
+              <h2 className="font-medium text-foreground">What happens next?</h2>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                  <span>Your request has been securely forwarded to a matching provider</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Phone className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                  <span>Expect a call or email within 24-48 hours</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Heart className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                  <span>There's absolutely no obligation — this is just information</span>
+                </li>
+              </ul>
+            </div>
             
-            <div className="pt-4">
+            <div className="pt-2">
               <Link to="/request-help">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  Explore Treatment Options
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  Explore More Treatment Options
                 </Button>
               </Link>
             </div>
@@ -296,7 +328,7 @@ export default function AdLanding() {
   }
   
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 flex flex-col">
       <Helmet>
         <title>Find Treatment Options | RehabLookup</title>
         <meta name="description" content="Get help exploring treatment options today. Share a few details and we'll help connect you with appropriate treatment options — no obligation." />
@@ -304,36 +336,36 @@ export default function AdLanding() {
       </Helmet>
       
       {/* Minimal header with logo only */}
-      <header className="py-6 px-4 border-b border-border/50">
+      <header className="py-6 px-4">
         <div className="max-w-2xl mx-auto">
-          <img src={logoImage} alt="RehabLookup" className="h-8" />
+          <img src={logoImage} alt="RehabLookup" className="h-10" />
         </div>
       </header>
       
-      <main className="flex-1 px-4 py-8 md:py-12">
-        <div className="max-w-2xl mx-auto space-y-10">
+      <main className="flex-1 px-4 py-6 md:py-10">
+        <div className="max-w-2xl mx-auto space-y-8">
           
           {/* Hero Section */}
-          <section className="text-center space-y-4">
-            <h1 className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight">
+          <section className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground tracking-tight leading-tight">
               Find treatment options that fit your needs
             </h1>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto">
               Share a few details and we'll help connect you with appropriate treatment options — no obligation.
             </p>
           </section>
           
           {/* Video Section */}
-          <section className="space-y-3">
+          <section className="space-y-3 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-100">
             <div 
-              className="relative aspect-video bg-muted rounded-xl overflow-hidden border border-border cursor-pointer group"
+              className="relative aspect-video bg-card rounded-2xl overflow-hidden border border-border cursor-pointer group shadow-sm hover:shadow-md transition-shadow"
               onClick={handleVideoPlay}
             >
               {/* Video placeholder - replace with actual video embed */}
               {!isVideoPlaying ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-card to-muted">
-                  <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                    <Play className="w-6 h-6 text-accent-foreground ml-1" />
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+                  <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-200">
+                    <Play className="w-8 h-8 text-primary-foreground ml-1" fill="currentColor" />
                   </div>
                 </div>
               ) : (
@@ -348,9 +380,9 @@ export default function AdLanding() {
           </section>
           
           {/* Lead Form */}
-          <section className="space-y-6">
+          <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
             <div className="text-center space-y-2">
-              <h2 className="text-xl font-semibold text-foreground">
+              <h2 className="text-xl md:text-2xl font-semibold text-foreground">
                 Request Information
               </h2>
               <p className="text-muted-foreground">
@@ -358,30 +390,30 @@ export default function AdLanding() {
               </p>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-5 bg-card border border-border rounded-xl p-6 shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-5 bg-card border border-border rounded-2xl p-6 md:p-8 shadow-sm">
               {/* Name fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name *</Label>
+                  <Label htmlFor="firstName" className="text-foreground">First Name *</Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                    onChange={(e) => handleFieldChange("firstName", e.target.value)}
                     placeholder="First name"
-                    className={cn(errors.firstName && "border-destructive")}
+                    className={cn("h-11", errors.firstName && "border-destructive focus-visible:ring-destructive")}
                   />
                   {errors.firstName && (
                     <p className="text-sm text-destructive">{errors.firstName}</p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Label htmlFor="lastName" className="text-foreground">Last Name *</Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                    onChange={(e) => handleFieldChange("lastName", e.target.value)}
                     placeholder="Last name"
-                    className={cn(errors.lastName && "border-destructive")}
+                    className={cn("h-11", errors.lastName && "border-destructive focus-visible:ring-destructive")}
                   />
                   {errors.lastName && (
                     <p className="text-sm text-destructive">{errors.lastName}</p>
@@ -391,7 +423,7 @@ export default function AdLanding() {
               
               {/* Email with verification */}
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email" className="text-foreground">Email *</Label>
                 <div className="flex gap-2">
                   <Input
                     id="email"
@@ -399,7 +431,7 @@ export default function AdLanding() {
                     value={formData.email}
                     onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="your@email.com"
-                    className={cn("flex-1", errors.email && "border-destructive")}
+                    className={cn("flex-1 h-11", errors.email && "border-destructive focus-visible:ring-destructive")}
                     disabled={isEmailVerified}
                   />
                   {!isEmailVerified && (
@@ -408,7 +440,7 @@ export default function AdLanding() {
                       variant="outline"
                       onClick={handleSendCode}
                       disabled={isSendingCode || resendCooldown > 0 || !formData.email}
-                      className="shrink-0"
+                      className="shrink-0 h-11 px-4"
                     >
                       {isSendingCode ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -426,7 +458,7 @@ export default function AdLanding() {
                   <p className="text-sm text-destructive">{errors.email}</p>
                 )}
                 {isEmailVerified && (
-                  <p className="text-sm text-accent flex items-center gap-1">
+                  <p className="text-sm text-primary flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" /> Email verified
                   </p>
                 )}
@@ -434,8 +466,8 @@ export default function AdLanding() {
               
               {/* Verification code input */}
               {codeSent && !isEmailVerified && (
-                <div className="space-y-2">
-                  <Label htmlFor="code">Verification Code</Label>
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Label htmlFor="code" className="text-foreground">Verification Code</Label>
                   <div className="flex gap-2">
                     <Input
                       id="code"
@@ -443,13 +475,13 @@ export default function AdLanding() {
                       onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                       placeholder="Enter 6-digit code"
                       maxLength={6}
-                      className="flex-1"
+                      className="flex-1 h-11 font-mono text-center tracking-widest"
                     />
                     <Button
                       type="button"
                       onClick={handleVerifyCode}
                       disabled={isVerifying || verificationCode.length !== 6}
-                      className="shrink-0"
+                      className="shrink-0 h-11 px-6"
                     >
                       {isVerifying ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -466,14 +498,17 @@ export default function AdLanding() {
               
               {/* Phone */}
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number *</Label>
+                <Label htmlFor="phone" className="text-foreground">Phone Number *</Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhone(e.target.value) }))}
+                  onChange={(e) => {
+                    trackFormStart();
+                    setFormData(prev => ({ ...prev, phone: formatPhone(e.target.value) }));
+                  }}
                   placeholder="(555) 123-4567"
-                  className={cn(errors.phone && "border-destructive")}
+                  className={cn("h-11", errors.phone && "border-destructive focus-visible:ring-destructive")}
                 />
                 {errors.phone && (
                   <p className="text-sm text-destructive">{errors.phone}</p>
@@ -482,19 +517,20 @@ export default function AdLanding() {
               
               {/* Request details */}
               <div className="space-y-2">
-                <Label htmlFor="message">Request Details</Label>
+                <Label htmlFor="message" className="text-foreground">Request Details <span className="text-muted-foreground font-normal">(optional)</span></Label>
                 <Textarea
                   id="message"
                   value={formData.message}
-                  onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                  onChange={(e) => handleFieldChange("message", e.target.value)}
                   placeholder="Share any details about what you're looking for..."
                   rows={4}
+                  className="resize-none"
                 />
               </div>
               
               {/* Urgency toggle */}
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
-                <div className="space-y-0.5">
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl border border-border">
+                <div className="space-y-0.5 pr-4">
                   <p className="font-medium text-foreground">Need help urgently?</p>
                   <p className="text-sm text-muted-foreground">
                     If this is time-sensitive, we'll prioritize available options.
@@ -502,7 +538,8 @@ export default function AdLanding() {
                 </div>
                 <Switch
                   checked={formData.isUrgent}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isUrgent: checked }))}
+                  onCheckedChange={(checked) => handleFieldChange("isUrgent", checked)}
+                  className="shrink-0"
                 />
               </div>
               
@@ -510,7 +547,7 @@ export default function AdLanding() {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full"
+                className="w-full h-12 text-base font-medium"
                 disabled={isSubmitting || !isEmailVerified}
               >
                 {isSubmitting ? (
@@ -522,27 +559,33 @@ export default function AdLanding() {
                   "Get Information"
                 )}
               </Button>
+
+              {!isEmailVerified && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Please verify your email to submit
+                </p>
+              )}
             </form>
           </section>
           
           {/* Trust badges */}
-          <section className="pt-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-              <div className="flex flex-col items-center gap-2 p-3">
+          <section className="pt-4 pb-8 animate-in fade-in duration-500 delay-300">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
+              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card/50 border border-border/50">
                 <Lock className="w-5 h-5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Confidential & Private</span>
+                <span className="text-xs text-center text-muted-foreground">Confidential & Private</span>
               </div>
-              <div className="flex flex-col items-center gap-2 p-3">
+              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card/50 border border-border/50">
                 <Heart className="w-5 h-5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">No Obligation</span>
+                <span className="text-xs text-center text-muted-foreground">No Obligation</span>
               </div>
-              <div className="flex flex-col items-center gap-2 p-3">
+              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card/50 border border-border/50">
                 <Shield className="w-5 h-5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">No Shared Leads</span>
+                <span className="text-xs text-center text-muted-foreground">No Shared Leads</span>
               </div>
-              <div className="flex flex-col items-center gap-2 p-3">
+              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card/50 border border-border/50">
                 <CheckCircle2 className="w-5 h-5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Healthcare Support</span>
+                <span className="text-xs text-center text-muted-foreground">Healthcare Support</span>
               </div>
             </div>
           </section>
