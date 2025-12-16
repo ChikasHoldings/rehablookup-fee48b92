@@ -120,6 +120,8 @@ const actionConfig: Record<string, { icon: React.ReactNode; label: string; color
   
   // Settings actions
   platform_settings_updated: { icon: <Settings className="h-4 w-4" />, label: "Updated Platform Settings", color: "text-blue-500 bg-blue-50" },
+  audit_logs_cleaned: { icon: <ClipboardList className="h-4 w-4" />, label: "Cleaned Audit Logs", color: "text-amber-500 bg-amber-50" },
+  clear_cache: { icon: <Settings className="h-4 w-4" />, label: "Cleared Platform Cache", color: "text-slate-500 bg-slate-50" },
 };
 
 const targetTypeConfig: Record<string, { icon: React.ReactNode; label: string }> = {
@@ -132,6 +134,7 @@ const targetTypeConfig: Record<string, { icon: React.ReactNode; label: string }>
   image: { icon: <Image className="h-3.5 w-3.5" />, label: "Image" },
   settings: { icon: <Settings className="h-3.5 w-3.5" />, label: "Settings" },
   security: { icon: <Shield className="h-3.5 w-3.5" />, label: "Security" },
+  platform: { icon: <Settings className="h-3.5 w-3.5" />, label: "Platform" },
 };
 
 const ITEMS_PER_PAGE = 20;
