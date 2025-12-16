@@ -104,3 +104,72 @@ export function validateImageFile(file: File): { valid: boolean; error?: string 
 
   return { valid: true };
 }
+
+/**
+ * Image quality assessment result
+ */
+export interface ImageQualityResult {
+  width: number;
+  height: number;
+  isLowResolution: boolean;
+  warning?: string;
+  recommendation?: string;
+}
+
+/**
+ * Minimum recommended dimensions for quality images
+ */
+const MIN_LOGO_DIMENSION = 200;
+const MIN_GALLERY_WIDTH = 800;
+const MIN_GALLERY_HEIGHT = 600;
+
+/**
+ * Check image quality and resolution
+ */
+export function checkImageQuality(
+  file: File,
+  type: "logo" | "gallery"
+): Promise<ImageQualityResult> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+
+    img.onload = () => {
+      const { width, height } = img;
+      let isLowResolution = false;
+      let warning: string | undefined;
+      let recommendation: string | undefined;
+
+      if (type === "logo") {
+        if (width < MIN_LOGO_DIMENSION || height < MIN_LOGO_DIMENSION) {
+          isLowResolution = true;
+          warning = `Logo resolution (${width}×${height}px) is below recommended minimum.`;
+          recommendation = `For best quality, use an image at least ${MIN_LOGO_DIMENSION}×${MIN_LOGO_DIMENSION}px.`;
+        }
+      } else {
+        if (width < MIN_GALLERY_WIDTH || height < MIN_GALLERY_HEIGHT) {
+          isLowResolution = true;
+          warning = `Image resolution (${width}×${height}px) is below recommended minimum.`;
+          recommendation = `For best quality, use images at least ${MIN_GALLERY_WIDTH}×${MIN_GALLERY_HEIGHT}px.`;
+        }
+      }
+
+      // Clean up
+      URL.revokeObjectURL(img.src);
+
+      resolve({
+        width,
+        height,
+        isLowResolution,
+        warning,
+        recommendation,
+      });
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error("Failed to load image for quality check"));
+    };
+
+    img.src = URL.createObjectURL(file);
+  });
+}
