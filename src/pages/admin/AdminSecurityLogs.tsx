@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { format, formatDistanceToNow, subDays, startOfDay, endOfDay } from "date-fns";
 import { 
   Shield, 
@@ -18,7 +18,11 @@ import {
   ChevronRight,
   MapPin,
   Globe,
-  Loader2
+  Loader2,
+  Plus,
+  Trash2,
+  ShieldOff,
+  ShieldCheck
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,15 +49,29 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
+import { toast } from "sonner";
 
 interface RateLimitLog {
   id: string;
@@ -82,6 +100,17 @@ interface IpLocation {
   status: string;
 }
 
+interface BlockedIdentifier {
+  id: string;
+  identifier: string;
+  identifier_type: 'ip' | 'email';
+  reason: string | null;
+  blocked_by: string;
+  blocked_at: string;
+  expires_at: string | null;
+  is_active: boolean;
+}
+
 const ITEMS_PER_PAGE = 25;
 
 // Cache for IP locations to avoid repeated lookups
@@ -96,12 +125,23 @@ export default function AdminSecurityLogs() {
   const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
   const [customDateTo, setCustomDateTo] = useState<Date | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [blockedPage, setBlockedPage] = useState(1);
   const [activeTab, setActiveTab] = useState("activity");
   const [selectedLog, setSelectedLog] = useState<RateLimitLog | null>(null);
   const [ipLocations, setIpLocations] = useState<Map<string, IpLocation>>(new Map());
   const [loadingLocations, setLoadingLocations] = useState<Set<string>>(new Set());
   const [selectedLogLocation, setSelectedLogLocation] = useState<IpLocation | null>(null);
   const [loadingSelectedLocation, setLoadingSelectedLocation] = useState(false);
+  
+  // Block dialog state
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [blockIdentifier, setBlockIdentifier] = useState("");
+  const [blockType, setBlockType] = useState<'ip' | 'email'>('email');
+  const [blockReason, setBlockReason] = useState("");
+  const [blockExpiry, setBlockExpiry] = useState<string>("never");
+  const [unblockConfirmOpen, setUnblockConfirmOpen] = useState(false);
+  const [selectedBlockedItem, setSelectedBlockedItem] = useState<BlockedIdentifier | null>(null);
+  const [blockedSearchQuery, setBlockedSearchQuery] = useState("");
 
   // Calculate date range
   const getDateRange = () => {
@@ -192,6 +232,149 @@ export default function AdminSecurityLogs() {
     },
   });
 
+  // Fetch blocked identifiers
+  const { data: blockedIdentifiers, isLoading: blockedLoading, refetch: refetchBlocked } = useQuery({
+    queryKey: ["blocked-identifiers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blocked_identifiers")
+        .select("*")
+        .order("blocked_at", { ascending: false });
+
+      if (error) throw error;
+      return data as BlockedIdentifier[];
+    },
+  });
+
+  // Block identifier mutation
+  const blockMutation = useMutation({
+    mutationFn: async (params: { identifier: string; type: 'ip' | 'email'; reason: string; expiresAt: string | null }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("blocked_identifiers")
+        .insert({
+          identifier: params.identifier,
+          identifier_type: params.type,
+          reason: params.reason || null,
+          blocked_by: user.id,
+          expires_at: params.expiresAt,
+          is_active: true,
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error("This identifier is already blocked");
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Identifier blocked successfully");
+      queryClient.invalidateQueries({ queryKey: ["blocked-identifiers"] });
+      setBlockDialogOpen(false);
+      resetBlockForm();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to block identifier");
+    },
+  });
+
+  // Unblock identifier mutation
+  const unblockMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("blocked_identifiers")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Identifier unblocked successfully");
+      queryClient.invalidateQueries({ queryKey: ["blocked-identifiers"] });
+      setUnblockConfirmOpen(false);
+      setSelectedBlockedItem(null);
+    },
+    onError: () => {
+      toast.error("Failed to unblock identifier");
+    },
+  });
+
+  // Toggle block active status mutation
+  const toggleBlockMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const { error } = await supabase
+        .from("blocked_identifiers")
+        .update({ is_active: isActive })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      toast.success(variables.isActive ? "Block reactivated" : "Block deactivated");
+      queryClient.invalidateQueries({ queryKey: ["blocked-identifiers"] });
+    },
+    onError: () => {
+      toast.error("Failed to update block status");
+    },
+  });
+
+  const resetBlockForm = () => {
+    setBlockIdentifier("");
+    setBlockType("email");
+    setBlockReason("");
+    setBlockExpiry("never");
+  };
+
+  const handleBlock = () => {
+    if (!blockIdentifier.trim()) {
+      toast.error("Please enter an identifier to block");
+      return;
+    }
+
+    let expiresAt: string | null = null;
+    const now = new Date();
+    switch (blockExpiry) {
+      case "1h":
+        expiresAt = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+        break;
+      case "24h":
+        expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+        break;
+      case "7d":
+        expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        break;
+      case "30d":
+        expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        break;
+      case "never":
+      default:
+        expiresAt = null;
+    }
+
+    blockMutation.mutate({
+      identifier: blockIdentifier.trim(),
+      type: blockType,
+      reason: blockReason.trim(),
+      expiresAt,
+    });
+  };
+
+  const openBlockDialog = (identifier?: string, type?: 'ip' | 'email') => {
+    if (identifier) setBlockIdentifier(identifier);
+    if (type) setBlockType(type);
+    setBlockDialogOpen(true);
+  };
+
+  // Check if identifier is blocked
+  const isIdentifierBlocked = (identifier: string): boolean => {
+    return blockedIdentifiers?.some(
+      (b) => b.identifier === identifier && b.is_active && (!b.expires_at || new Date(b.expires_at) > new Date())
+    ) || false;
+  };
+
   // Look up IP location
   const lookupIpLocation = useCallback(async (ip: string): Promise<IpLocation | null> => {
     // Check cache first
@@ -229,6 +412,12 @@ export default function AdminSecurityLogs() {
     if (ipPattern.test(identifier)) return identifier;
     
     return null;
+  };
+
+  // Detect identifier type
+  const detectIdentifierType = (identifier: string): 'ip' | 'email' => {
+    const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+    return ipPattern.test(identifier) ? 'ip' : 'email';
   };
 
   // Batch lookup locations for visible logs
@@ -324,6 +513,13 @@ export default function AdminSecurityLogs() {
           queryClient.invalidateQueries({ queryKey: ["suspicious-activity"] });
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "blocked_identifiers" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["blocked-identifiers"] });
+        }
+      )
       .subscribe();
 
     return () => {
@@ -337,6 +533,7 @@ export default function AdminSecurityLogs() {
     failedAttempts: logs?.filter((l) => l.success === false).length || 0,
     successfulLogins: logs?.filter((l) => l.success === true).length || 0,
     suspiciousCount: suspiciousActivity?.length || 0,
+    blockedCount: blockedIdentifiers?.filter(b => b.is_active).length || 0,
   };
 
   // Filter logs by search
@@ -347,6 +544,14 @@ export default function AdminSecurityLogs() {
       : true
   );
 
+  // Filter blocked identifiers by search
+  const filteredBlocked = blockedIdentifiers?.filter((item) =>
+    blockedSearchQuery
+      ? item.identifier.toLowerCase().includes(blockedSearchQuery.toLowerCase()) ||
+        (item.reason?.toLowerCase().includes(blockedSearchQuery.toLowerCase()))
+      : true
+  );
+
   // Pagination
   const totalPages = Math.ceil((filteredLogs?.length || 0) / ITEMS_PER_PAGE);
   const paginatedLogs = filteredLogs?.slice(
@@ -354,10 +559,20 @@ export default function AdminSecurityLogs() {
     currentPage * ITEMS_PER_PAGE
   );
 
+  const totalBlockedPages = Math.ceil((filteredBlocked?.length || 0) / ITEMS_PER_PAGE);
+  const paginatedBlocked = filteredBlocked?.slice(
+    (blockedPage - 1) * ITEMS_PER_PAGE,
+    blockedPage * ITEMS_PER_PAGE
+  );
+
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, actionFilter, successFilter, dateRange]);
+
+  useEffect(() => {
+    setBlockedPage(1);
+  }, [blockedSearchQuery]);
 
   const exportLogs = () => {
     if (!filteredLogs) return;
@@ -390,6 +605,7 @@ export default function AdminSecurityLogs() {
   const handleRefresh = () => {
     refetchLogs();
     refetchSuspicious();
+    refetchBlocked();
   };
 
   // Get location display for a log
@@ -473,7 +689,7 @@ export default function AdminSecurityLogs() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Security Logs</h1>
           <p className="text-muted-foreground">
-            Monitor login attempts and detect suspicious activity
+            Monitor login attempts and manage blocked identifiers
           </p>
         </div>
         <div className="flex gap-2">
@@ -485,11 +701,15 @@ export default function AdminSecurityLogs() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
+          <Button size="sm" onClick={() => openBlockDialog()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Block IP/Email
+          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5">
@@ -526,6 +746,15 @@ export default function AdminSecurityLogs() {
             <CardTitle className="text-2xl text-amber-600">{stats.suspiciousCount}</CardTitle>
           </CardHeader>
         </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center gap-1.5">
+              <Ban className="h-3.5 w-3.5" />
+              Blocked Identifiers
+            </CardDescription>
+            <CardTitle className="text-2xl text-red-600">{stats.blockedCount}</CardTitle>
+          </CardHeader>
+        </Card>
       </div>
 
       {/* Tabs */}
@@ -541,6 +770,15 @@ export default function AdminSecurityLogs() {
             {stats.suspiciousCount > 0 && (
               <Badge variant="destructive" className="ml-1 h-5 px-1.5">
                 {stats.suspiciousCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="blocked" className="gap-2">
+            <Ban className="h-4 w-4" />
+            Blocked List
+            {stats.blockedCount > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                {stats.blockedCount}
               </Badge>
             )}
           </TabsTrigger>
@@ -646,7 +884,7 @@ export default function AdminSecurityLogs() {
                           <TableHead>Location</TableHead>
                           <TableHead>Action</TableHead>
                           <TableHead>Status</TableHead>
-                          <TableHead className="w-[80px]">Details</TableHead>
+                          <TableHead className="w-[120px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -657,60 +895,97 @@ export default function AdminSecurityLogs() {
                             </TableCell>
                           </TableRow>
                         ) : (
-                          paginatedLogs?.map((log) => (
-                            <TableRow key={log.id}>
-                              <TableCell className="whitespace-nowrap">
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                  <div>
-                                    <p className="text-sm">
-                                      {format(new Date(log.created_at), "MMM d, HH:mm:ss")}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
-                                    </p>
+                          paginatedLogs?.map((log) => {
+                            const blocked = isIdentifierBlocked(log.identifier);
+                            return (
+                              <TableRow key={log.id} className={blocked ? "bg-red-50/50 dark:bg-red-950/20" : ""}>
+                                <TableCell className="whitespace-nowrap">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <div>
+                                      <p className="text-sm">
+                                        {format(new Date(log.created_at), "MMM d, HH:mm:ss")}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+                                      </p>
+                                    </div>
                                   </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <code className="text-sm bg-muted px-1.5 py-0.5 rounded break-all">
-                                  {log.identifier}
-                                </code>
-                              </TableCell>
-                              <TableCell>
-                                {getLocationDisplay(log)}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="capitalize">
-                                  {log.action_type.replace(/_/g, " ")}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {log.success === true ? (
-                                  <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-                                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                                    Success
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <code className="text-sm bg-muted px-1.5 py-0.5 rounded break-all">
+                                      {log.identifier}
+                                    </code>
+                                    {blocked && (
+                                      <Badge variant="destructive" className="text-xs">
+                                        <Ban className="h-3 w-3 mr-1" />
+                                        Blocked
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {getLocationDisplay(log)}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className="capitalize">
+                                    {log.action_type.replace(/_/g, " ")}
                                   </Badge>
-                                ) : log.success === false ? (
-                                  <Badge variant="destructive">
-                                    <XCircle className="h-3 w-3 mr-1" />
-                                    Failed
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="secondary">Unknown</Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setSelectedLog(log)}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
+                                </TableCell>
+                                <TableCell>
+                                  {log.success === true ? (
+                                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                                      Success
+                                    </Badge>
+                                  ) : log.success === false ? (
+                                    <Badge variant="destructive">
+                                      <XCircle className="h-3 w-3 mr-1" />
+                                      Failed
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary">Unknown</Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-1">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setSelectedLog(log)}
+                                          >
+                                            <Eye className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>View Details</TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                    {!blocked && (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="text-destructive hover:text-destructive"
+                                              onClick={() => openBlockDialog(log.identifier, detectIdentifierType(log.identifier))}
+                                            >
+                                              <Ban className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>Block this identifier</TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
                         )}
                       </TableBody>
                     </Table>
@@ -774,69 +1049,104 @@ export default function AdminSecurityLogs() {
                 </div>
               ) : suspiciousActivity && suspiciousActivity.length > 0 ? (
                 <div className="space-y-3">
-                  {suspiciousActivity.map((activity, index) => (
-                    <div
-                      key={index}
-                      className={cn(
-                        "flex items-center justify-between rounded-lg p-4 border",
-                        activity.failed_count >= 10
-                          ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
-                          : activity.failed_count >= 5
-                          ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900"
-                          : "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900"
-                      )}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={cn(
-                          "p-2 rounded-full",
-                          activity.failed_count >= 10
-                            ? "bg-red-100 dark:bg-red-900"
+                  {suspiciousActivity.map((activity, index) => {
+                    const blocked = isIdentifierBlocked(activity.identifier);
+                    return (
+                      <div
+                        key={index}
+                        className={cn(
+                          "flex items-center justify-between rounded-lg p-4 border",
+                          blocked
+                            ? "bg-red-100 border-red-300 dark:bg-red-950/40 dark:border-red-800"
+                            : activity.failed_count >= 10
+                            ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
                             : activity.failed_count >= 5
-                            ? "bg-amber-100 dark:bg-amber-900"
-                            : "bg-yellow-100 dark:bg-yellow-900"
-                        )}>
-                          <Shield className={cn(
-                            "h-5 w-5",
-                            activity.failed_count >= 10
-                              ? "text-red-600"
-                              : activity.failed_count >= 5
-                              ? "text-amber-600"
-                              : "text-yellow-600"
-                          )} />
-                        </div>
-                        <div>
-                          <p className="font-medium">{activity.identifier}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {activity.action_type.replace(/_/g, " ")}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            First attempt: {format(new Date(activity.first_attempt), "HH:mm:ss")}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge
-                          variant={activity.failed_count >= 10 ? "destructive" : "secondary"}
-                          className={cn(
-                            activity.failed_count >= 10 ? "" : 
-                            activity.failed_count >= 5 ? "bg-amber-100 text-amber-700" :
-                            "bg-yellow-100 text-yellow-700"
-                          )}
-                        >
-                          {activity.failed_count} failed attempts
-                        </Badge>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Last: {formatDistanceToNow(new Date(activity.last_attempt), { addSuffix: true })}
-                        </p>
-                        {activity.failed_count >= 5 && (
-                          <Badge variant="outline" className="mt-2 text-xs">
-                            <Ban className="h-3 w-3 mr-1" />
-                            Rate Limited
-                          </Badge>
+                            ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900"
+                            : "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900"
                         )}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={cn(
+                            "p-2 rounded-full",
+                            blocked
+                              ? "bg-red-200 dark:bg-red-800"
+                              : activity.failed_count >= 10
+                              ? "bg-red-100 dark:bg-red-900"
+                              : activity.failed_count >= 5
+                              ? "bg-amber-100 dark:bg-amber-900"
+                              : "bg-yellow-100 dark:bg-yellow-900"
+                          )}>
+                            {blocked ? (
+                              <Ban className="h-5 w-5 text-red-600" />
+                            ) : (
+                              <Shield className={cn(
+                                "h-5 w-5",
+                                activity.failed_count >= 10
+                                  ? "text-red-600"
+                                  : activity.failed_count >= 5
+                                  ? "text-amber-600"
+                                  : "text-yellow-600"
+                              )} />
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{activity.identifier}</p>
+                              {blocked && (
+                                <Badge variant="destructive" className="text-xs">Blocked</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {activity.action_type.replace(/_/g, " ")}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              First attempt: {format(new Date(activity.first_attempt), "HH:mm:ss")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <Badge
+                              variant={activity.failed_count >= 10 ? "destructive" : "secondary"}
+                              className={cn(
+                                activity.failed_count >= 10 ? "" : 
+                                activity.failed_count >= 5 ? "bg-amber-100 text-amber-700" :
+                                "bg-yellow-100 text-yellow-700"
+                              )}
+                            >
+                              {activity.failed_count} failed attempts
+                            </Badge>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Last: {formatDistanceToNow(new Date(activity.last_attempt), { addSuffix: true })}
+                            </p>
+                            {activity.failed_count >= 5 && (
+                              <Badge variant="outline" className="mt-2 text-xs">
+                                <Ban className="h-3 w-3 mr-1" />
+                                Rate Limited
+                              </Badge>
+                            )}
+                          </div>
+                          {!blocked && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => openBlockDialog(activity.identifier, detectIdentifierType(activity.identifier))}
+                                  >
+                                    <Ban className="h-4 w-4 mr-1" />
+                                    Block
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Block this identifier</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -845,6 +1155,219 @@ export default function AdminSecurityLogs() {
                   <p className="text-muted-foreground mt-1">
                     No identifiers with 3+ failed attempts in the last hour
                   </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Blocked List Tab */}
+        <TabsContent value="blocked" className="mt-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Ban className="h-5 w-5 text-red-500" />
+                    Blocked Identifiers
+                  </CardTitle>
+                  <CardDescription>
+                    Manage blocked IP addresses and email addresses
+                  </CardDescription>
+                </div>
+                <Button size="sm" onClick={() => openBlockDialog()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Block
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* Search */}
+              <div className="relative mb-4 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search blocked identifiers..."
+                  value={blockedSearchQuery}
+                  onChange={(e) => setBlockedSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              {blockedLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : paginatedBlocked && paginatedBlocked.length > 0 ? (
+                <>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Identifier</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Reason</TableHead>
+                          <TableHead>Blocked At</TableHead>
+                          <TableHead>Expires</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-[120px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedBlocked.map((item) => {
+                          const isExpired = item.expires_at && new Date(item.expires_at) < new Date();
+                          const isActive = item.is_active && !isExpired;
+                          return (
+                            <TableRow key={item.id} className={!isActive ? "opacity-60" : ""}>
+                              <TableCell>
+                                <code className="text-sm bg-muted px-1.5 py-0.5 rounded break-all">
+                                  {item.identifier}
+                                </code>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="capitalize">
+                                  {item.identifier_type === 'ip' ? (
+                                    <Globe className="h-3 w-3 mr-1" />
+                                  ) : (
+                                    <Activity className="h-3 w-3 mr-1" />
+                                  )}
+                                  {item.identifier_type}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm text-muted-foreground">
+                                  {item.reason || "—"}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <div>
+                                  <p className="text-sm">{format(new Date(item.blocked_at), "MMM d, yyyy")}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(item.blocked_at), "HH:mm")}
+                                  </p>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {item.expires_at ? (
+                                  <div>
+                                    <p className="text-sm">{format(new Date(item.expires_at), "MMM d, yyyy")}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {isExpired ? "Expired" : formatDistanceToNow(new Date(item.expires_at), { addSuffix: true })}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <Badge variant="secondary">Never</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {isActive ? (
+                                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                                    <ShieldOff className="h-3 w-3 mr-1" />
+                                    Active
+                                  </Badge>
+                                ) : isExpired ? (
+                                  <Badge variant="outline" className="text-muted-foreground">
+                                    Expired
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-muted-foreground">
+                                    Inactive
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => toggleBlockMutation.mutate({ id: item.id, isActive: !item.is_active })}
+                                        >
+                                          {item.is_active ? (
+                                            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                                          ) : (
+                                            <ShieldOff className="h-4 w-4 text-red-600" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {item.is_active ? "Deactivate block" : "Reactivate block"}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="text-destructive hover:text-destructive"
+                                          onClick={() => {
+                                            setSelectedBlockedItem(item);
+                                            setUnblockConfirmOpen(true);
+                                          }}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Remove block</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Pagination */}
+                  {totalBlockedPages > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Showing {((blockedPage - 1) * ITEMS_PER_PAGE) + 1} to{" "}
+                        {Math.min(blockedPage * ITEMS_PER_PAGE, filteredBlocked?.length || 0)} of{" "}
+                        {filteredBlocked?.length || 0} blocked identifiers
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setBlockedPage((p) => Math.max(1, p - 1))}
+                          disabled={blockedPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm">
+                          Page {blockedPage} of {totalBlockedPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setBlockedPage((p) => Math.min(totalBlockedPages, p + 1))}
+                          disabled={blockedPage === totalBlockedPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <ShieldCheck className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground">No Blocked Identifiers</h3>
+                  <p className="text-muted-foreground mt-1">
+                    No IP addresses or emails are currently blocked
+                  </p>
+                  <Button className="mt-4" onClick={() => openBlockDialog()}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Block
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -880,9 +1403,31 @@ export default function AdminSecurityLogs() {
                 </div>
                 <div className="col-span-2">
                   <p className="text-sm font-medium text-muted-foreground">Identifier</p>
-                  <code className="text-sm bg-muted px-2 py-1 rounded block mt-1">
-                    {selectedLog.identifier}
-                  </code>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="text-sm bg-muted px-2 py-1 rounded flex-1">
+                      {selectedLog.identifier}
+                    </code>
+                    {!isIdentifierBlocked(selectedLog.identifier) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive border-destructive/50 hover:bg-destructive/10"
+                        onClick={() => {
+                          setSelectedLog(null);
+                          openBlockDialog(selectedLog.identifier, detectIdentifierType(selectedLog.identifier));
+                        }}
+                      >
+                        <Ban className="h-3.5 w-3.5 mr-1" />
+                        Block
+                      </Button>
+                    )}
+                    {isIdentifierBlocked(selectedLog.identifier) && (
+                      <Badge variant="destructive">
+                        <Ban className="h-3 w-3 mr-1" />
+                        Blocked
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="col-span-2">
                   <p className="text-sm font-medium text-muted-foreground">Action Type</p>
@@ -935,6 +1480,114 @@ export default function AdminSecurityLogs() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Block Dialog */}
+      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ban className="h-5 w-5 text-red-500" />
+              Block Identifier
+            </DialogTitle>
+            <DialogDescription>
+              Block an IP address or email from accessing the platform
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Identifier Type</Label>
+              <Select value={blockType} onValueChange={(v) => setBlockType(v as 'ip' | 'email')}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email Address</SelectItem>
+                  <SelectItem value="ip">IP Address</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>
+                {blockType === 'ip' ? 'IP Address' : 'Email Address'}
+              </Label>
+              <Input
+                placeholder={blockType === 'ip' ? '192.168.1.1' : 'user@example.com'}
+                value={blockIdentifier}
+                onChange={(e) => setBlockIdentifier(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Reason (Optional)</Label>
+              <Textarea
+                placeholder="Enter reason for blocking..."
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Block Duration</Label>
+              <Select value={blockExpiry} onValueChange={setBlockExpiry}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1h">1 Hour</SelectItem>
+                  <SelectItem value="24h">24 Hours</SelectItem>
+                  <SelectItem value="7d">7 Days</SelectItem>
+                  <SelectItem value="30d">30 Days</SelectItem>
+                  <SelectItem value="never">Permanent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleBlock}
+              disabled={blockMutation.isPending}
+            >
+              {blockMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Ban className="h-4 w-4 mr-2" />
+              )}
+              Block
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unblock Confirmation Dialog */}
+      <AlertDialog open={unblockConfirmOpen} onOpenChange={setUnblockConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Block</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove the block on{" "}
+              <span className="font-mono font-medium">{selectedBlockedItem?.identifier}</span>?
+              This will allow the identifier to access the platform again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => selectedBlockedItem && unblockMutation.mutate(selectedBlockedItem.id)}
+            >
+              {unblockMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Remove Block
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
