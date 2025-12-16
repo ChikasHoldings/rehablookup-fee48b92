@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ProviderHeader } from "./ProviderHeader";
 import { ProviderSidebar } from "./ProviderSidebar";
+import { ProviderErrorBoundary } from "./ProviderErrorBoundary";
 import { useToast } from "@/hooks/use-toast";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -157,7 +158,9 @@ function ProviderShellContent() {
 
         {/* Main Content Area - Outlet renders child routes */}
         <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-muted/30">
-          <Outlet />
+          <ProviderErrorBoundary>
+            <Outlet />
+          </ProviderErrorBoundary>
         </main>
       </div>
     </div>
