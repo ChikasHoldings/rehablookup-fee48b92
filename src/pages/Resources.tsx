@@ -191,15 +191,15 @@ const Resources = () => {
       />
       {/* Hero */}
       <section className="bg-primary py-12 md:py-16">
-        <div className="container text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-            <BookOpen className="h-4 w-4 text-accent" />
-            <span className="text-sm font-medium text-primary-foreground">Resources & Guides</span>
+        <div className="container text-center px-5 md:px-6">
+          <div className="mb-4 md:mb-4 inline-flex items-center gap-2.5 md:gap-2 rounded-full bg-white/10 px-5 md:px-4 py-2.5 md:py-1.5">
+            <BookOpen className="h-5 w-5 md:h-4 md:w-4 text-accent" />
+            <span className="text-base md:text-sm font-medium text-primary-foreground">Resources & Guides</span>
           </div>
-          <h1 className="mb-3 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+          <h1 className="mb-4 md:mb-3 font-display text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground">
             Recovery Resources
           </h1>
-          <p className="text-primary-foreground/80 max-w-2xl mx-auto">
+          <p className="text-lg md:text-base text-primary-foreground/80 max-w-2xl mx-auto">
             Expert articles, guides, and insights to support you and your loved ones on the journey to recovery.
           </p>
         </div>
@@ -207,9 +207,9 @@ const Resources = () => {
 
       {/* Featured Articles */}
       <section className="py-12 md:py-16 border-b border-border">
-        <div className="container">
+        <div className="container px-5 md:px-6">
           <div className="mb-8 flex items-center justify-between">
-            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+            <h2 className="font-display text-2xl md:text-xl lg:text-2xl font-bold text-foreground">
               Featured Articles
             </h2>
           </div>
@@ -222,33 +222,33 @@ const Resources = () => {
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-full rounded-2xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
-                  <div className="relative h-48 overflow-hidden">
+                <div className="h-full rounded-2xl md:rounded-xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
+                  <div className="relative h-52 md:h-48 overflow-hidden">
                     <img
                       src={article.image}
                       alt={article.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-xs font-medium text-foreground shadow-sm">
-                      <BookOpen className="h-3 w-3 text-accent" />
+                    <span className="absolute bottom-4 md:bottom-3 left-4 md:left-3 inline-flex items-center gap-2 md:gap-1.5 rounded-full bg-white/90 backdrop-blur-sm px-4 md:px-3 py-2 md:py-1 text-sm md:text-xs font-medium text-foreground shadow-sm">
+                      <BookOpen className="h-4 w-4 md:h-3 md:w-3 text-accent" />
                       {article.categoryLabel}
                     </span>
                   </div>
-                  <div className="p-5">
-                    <div className="mb-3 flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
+                  <div className="p-6 md:p-5">
+                    <div className="mb-3 flex items-center gap-2 md:gap-1 text-sm md:text-xs text-muted-foreground">
+                      <Clock className="h-4 w-4 md:h-3 md:w-3" />
                       {article.readTime}
                     </div>
-                    <h3 className="mb-2 font-display text-lg font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
+                    <h3 className="mb-3 md:mb-2 font-display text-xl md:text-lg font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
                       {article.title}
                     </h3>
-                    <p className="mb-4 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                    <p className="mb-5 md:mb-4 text-base md:text-sm text-muted-foreground leading-relaxed line-clamp-2">
                       {article.excerpt}
                     </p>
-                    <div className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                    <div className="flex items-center gap-2 md:gap-1.5 text-base md:text-sm font-medium text-primary">
                       Read article
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      <ArrowRight className="h-5 w-5 md:h-4 md:w-4 transition-transform group-hover:translate-x-1" />
                     </div>
                   </div>
                 </div>
@@ -260,44 +260,46 @@ const Resources = () => {
 
       {/* All Articles with Filters */}
       <section className="py-12 md:py-16">
-        <div className="container">
+        <div className="container px-5 md:px-6">
           {/* Search and Filters */}
           <div className="mb-10 space-y-6">
             {/* Search */}
             <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search articles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-12 md:pl-10 h-14 md:h-10 text-lg md:text-base rounded-2xl md:rounded-lg"
               />
             </div>
 
-            {/* Category Filters */}
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setActiveCategory(category.id)}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                    activeCategory === category.id
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "bg-secondary text-foreground hover:bg-secondary/80"
-                  }`}
-                >
-                  <category.icon className="h-4 w-4" />
-                  {category.label}
-                </button>
-              ))}
+            {/* Category Filters - Horizontally scrollable on mobile */}
+            <div className="overflow-x-auto -mx-5 md:mx-0 px-5 md:px-0 pb-2 md:pb-0 scrollbar-hide">
+              <div className="flex gap-3 md:flex-wrap md:gap-2 min-w-max md:min-w-0">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setActiveCategory(category.id)}
+                    className={`inline-flex items-center gap-2.5 md:gap-2 rounded-full px-5 md:px-4 py-3 md:py-2 text-base md:text-sm font-medium transition-all whitespace-nowrap min-h-[48px] md:min-h-0 ${
+                      activeCategory === category.id
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "bg-secondary text-foreground hover:bg-secondary/80"
+                    }`}
+                  >
+                    <category.icon className="h-5 w-5 md:h-4 md:w-4" />
+                    {category.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Results */}
           {filteredArticles.length > 0 ? (
             <>
-              <p className="mb-6 text-sm text-muted-foreground">
+              <p className="mb-6 text-base md:text-sm text-muted-foreground">
                 <span className="font-semibold text-foreground">{filteredArticles.length}</span> articles found
               </p>
 
@@ -309,8 +311,8 @@ const Resources = () => {
                     className="group animate-fade-in"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <div className="h-full rounded-2xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
-                      <div className="relative h-40 overflow-hidden">
+                    <div className="h-full rounded-2xl md:rounded-xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
+                      <div className="relative h-48 md:h-40 overflow-hidden">
                         <img
                           src={article.image}
                           alt={article.title}
@@ -318,25 +320,25 @@ const Resources = () => {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                       </div>
-                      <div className="p-5">
+                      <div className="p-6 md:p-5">
                         <div className="mb-3 flex items-center justify-between">
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
+                          <span className="inline-flex items-center gap-2 md:gap-1.5 rounded-full bg-accent/10 px-4 md:px-2.5 py-1.5 md:py-0.5 text-sm md:text-xs font-medium text-accent">
                             {article.categoryLabel}
                           </span>
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
+                          <span className="flex items-center gap-1.5 md:gap-1 text-sm md:text-xs text-muted-foreground">
+                            <Clock className="h-4 w-4 md:h-3 md:w-3" />
                             {article.readTime}
                           </span>
                         </div>
-                        <h3 className="mb-2 font-display text-base font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                        <h3 className="mb-3 md:mb-2 font-display text-lg md:text-base font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
                           {article.title}
                         </h3>
-                        <p className="mb-4 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                        <p className="mb-5 md:mb-4 text-base md:text-sm text-muted-foreground leading-relaxed line-clamp-2">
                           {article.excerpt}
                         </p>
-                        <div className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                        <div className="flex items-center gap-2 md:gap-1.5 text-base md:text-sm font-medium text-primary">
                           Read more
-                          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                          <ArrowRight className="h-4 w-4 md:h-3.5 md:w-3.5 transition-transform group-hover:translate-x-1" />
                         </div>
                       </div>
                     </div>
@@ -346,13 +348,13 @@ const Resources = () => {
             </>
           ) : (
             <div className="py-16 text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <Search className="h-8 w-8 text-muted-foreground" />
+              <div className="mx-auto mb-6 flex h-20 w-20 md:h-16 md:w-16 items-center justify-center rounded-full bg-muted">
+                <Search className="h-10 w-10 md:h-8 md:w-8 text-muted-foreground" />
               </div>
-              <h3 className="mb-2 font-display text-xl font-semibold text-foreground">
+              <h3 className="mb-3 md:mb-2 font-display text-2xl md:text-xl font-semibold text-foreground">
                 No articles found
               </h3>
-              <p className="mb-6 text-muted-foreground">
+              <p className="mb-6 text-lg md:text-base text-muted-foreground">
                 Try adjusting your search or filter to find what you're looking for.
               </p>
               <Button
@@ -361,6 +363,7 @@ const Resources = () => {
                   setActiveCategory("all");
                   setSearchQuery("");
                 }}
+                className="h-14 md:h-10 px-8 md:px-4 text-lg md:text-base rounded-2xl md:rounded-lg"
               >
                 Clear filters
               </Button>
@@ -371,25 +374,25 @@ const Resources = () => {
 
       {/* CTA */}
       <section className="py-16 md:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+        <div className="container px-5 md:px-6">
+          <div className="mx-auto max-w-3xl rounded-2xl md:rounded-xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-8 lg:p-12 text-center">
+            <h2 className="mb-4 md:mb-3 font-display text-2xl md:text-2xl lg:text-3xl font-bold text-foreground">
               Need Personalized Guidance?
             </h2>
-            <p className="mb-6 text-muted-foreground max-w-xl mx-auto">
+            <p className="mb-8 md:mb-6 text-lg md:text-base text-muted-foreground max-w-xl mx-auto">
               Our specialists are available 24/7 to answer your questions and help you find the right treatment.
             </p>
-            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/request-help?source=resources_cta">
-                <Button size="lg" className="gap-2">
-                  <Heart className="h-4 w-4" />
+            <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
+              <Link to="/request-help?source=resources_cta" className="w-full sm:w-auto">
+                <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+                  <Heart className="h-5 w-5 md:h-4 md:w-4" />
                   Request Help
                 </Button>
               </Link>
-              <Link to="/contact">
-                <Button variant="outline" size="lg" className="gap-2">
+              <Link to="/contact" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
                   Request a Callback
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
                 </Button>
               </Link>
             </div>
