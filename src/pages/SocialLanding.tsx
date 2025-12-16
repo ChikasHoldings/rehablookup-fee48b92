@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { CheckCircle2, Loader2, ChevronDown } from "lucide-react";
+import { CheckCircle2, Loader2, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -59,6 +59,14 @@ export default function SocialLanding() {
   const hasTrackedVideoPlay = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  // Email verification state
+  const [codeSent, setCodeSent] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  
   // UTM parameters
   const utmParams = useRef<UTMParams>({
     utm_source: searchParams.get("utm_source"),
@@ -82,6 +90,14 @@ export default function SocialLanding() {
       (window as any).ttq.track("ViewContent");
     }
   }, []);
+  
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
   
   const trackEvent = async (eventType: string, metadata?: Record<string, unknown>) => {
     try {
@@ -119,6 +135,93 @@ export default function SocialLanding() {
     }
   };
   
+  const handleSendCode = async () => {
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setErrors(prev => ({ ...prev, email: "Please enter a valid email" }));
+      return;
+    }
+    
+    setIsSendingCode(true);
+    setErrors(prev => ({ ...prev, email: undefined }));
+    
+    try {
+      const { error } = await supabase.functions.invoke("send-verification-code", {
+        body: { email: formData.email },
+      });
+      
+      if (error) throw error;
+      
+      setCodeSent(true);
+      setResendCooldown(60);
+      trackEvent("verification_code_sent");
+      toast({
+        title: "Verification code sent",
+        description: "Please check your email for the 6-digit code.",
+      });
+    } catch (error) {
+      console.error("Error sending code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send verification code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+  
+  const handleVerifyCode = async () => {
+    if (verificationCode.length !== 6) return;
+    
+    setIsVerifying(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-code", {
+        body: { email: formData.email, code: verificationCode },
+      });
+      
+      if (error) throw error;
+      
+      if (data?.verified) {
+        setIsEmailVerified(true);
+        trackEvent("email_verified");
+        toast({
+          title: "Email verified",
+          description: "Your email has been verified successfully.",
+        });
+      } else {
+        toast({
+          title: "Invalid code",
+          description: "The verification code is incorrect. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error verifying code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to verify code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+  
+  const handleEmailChange = (value: string) => {
+    trackFormStart();
+    setFormData(prev => ({ ...prev, email: value }));
+    // Reset verification state if email changes
+    if (isEmailVerified || codeSent) {
+      setIsEmailVerified(false);
+      setCodeSent(false);
+      setVerificationCode("");
+    }
+    if (errors.email) {
+      setErrors(prev => ({ ...prev, email: undefined }));
+    }
+  };
+  
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
     
@@ -147,6 +250,15 @@ export default function SocialLanding() {
     e.preventDefault();
     
     if (!validateForm()) return;
+    
+    if (!isEmailVerified) {
+      toast({
+        title: "Email verification required",
+        description: "Please verify your email before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSubmitting(true);
     
@@ -358,20 +470,74 @@ export default function SocialLanding() {
                 )}
               </div>
               
-              {/* Email */}
+              {/* Email with verification */}
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-sm text-foreground">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleFieldChange("email", e.target.value)}
-                  placeholder="your@email.com"
-                  className={cn("h-12 text-base", errors.email && "border-destructive")}
-                  autoComplete="email"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleEmailChange(e.target.value)}
+                    placeholder="your@email.com"
+                    className={cn("flex-1 h-12 text-base", errors.email && "border-destructive")}
+                    autoComplete="email"
+                    disabled={isEmailVerified}
+                  />
+                  {!isEmailVerified && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSendCode}
+                      disabled={isSendingCode || resendCooldown > 0 || !formData.email}
+                      className="shrink-0 h-12 px-4"
+                    >
+                      {isSendingCode ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : resendCooldown > 0 ? (
+                        `${resendCooldown}s`
+                      ) : codeSent ? (
+                        "Resend"
+                      ) : (
+                        "Verify"
+                      )}
+                    </Button>
+                  )}
+                  {isEmailVerified && (
+                    <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                      <Check className="w-5 h-5 text-primary" />
+                    </div>
+                  )}
+                </div>
                 {errors.email && (
                   <p className="text-xs text-destructive">{errors.email}</p>
+                )}
+                
+                {/* Verification code input */}
+                {codeSent && !isEmailVerified && (
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
+                      placeholder="Enter 6-digit code"
+                      className="flex-1 h-12 text-base text-center tracking-widest"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleVerifyCode}
+                      disabled={verificationCode.length !== 6 || isVerifying}
+                      className="shrink-0 h-12 px-6"
+                    >
+                      {isVerifying ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Submit"
+                      )}
+                    </Button>
+                  </div>
                 )}
               </div>
               
