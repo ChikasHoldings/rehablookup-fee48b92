@@ -256,6 +256,33 @@ export default function ProviderDashboardPage() {
       <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
       <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
 
+      {/* Basic Plan Contact Hidden Warning */}
+      {planKey === "basic" && (
+        <Card className="border-2 border-amber-500/30 bg-gradient-to-r from-amber-500/5 via-background to-amber-500/5 overflow-hidden">
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Phone & Website Hidden</p>
+                  <p className="text-sm text-muted-foreground">
+                    Your contact details are hidden on your public profile. Upgrade to allow direct calls and website visits.
+                  </p>
+                </div>
+              </div>
+              <Button asChild size="sm" className="shrink-0 gap-2">
+                <Link to="/provider/billing">
+                  Upgrade Now
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Basic Plan Upgrade Banner - show when Basic users have leads waiting */}
       {planKey === "basic" && totalLeadsCount > 0 && (
         <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 via-background to-amber-500/5 overflow-hidden">
