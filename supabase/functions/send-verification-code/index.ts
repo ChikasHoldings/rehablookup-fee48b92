@@ -145,6 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (emailError) {
       console.error("Failed to send verification email:", emailError);
       
+      // Clean up the stored code since email failed
       await supabase
         .from("email_verification_codes")
         .delete()
@@ -152,14 +153,34 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("code", code);
       
       const errorMessage = emailError.message || JSON.stringify(emailError);
-      const isDomainIssue = errorMessage.includes("verify a domain") || errorMessage.includes("validation_error");
       
-      const userMessage = isDomainIssue 
-        ? "Email service is being configured. Please try again later."
-        : "Failed to send verification email. Please check your email and try again.";
+      // Categorize error types for better user messaging
+      let userMessage: string;
+      let errorCode: string;
+      
+      if (errorMessage.includes("verify a domain") || errorMessage.includes("validation_error")) {
+        userMessage = "Our email service needs configuration. Please contact support or try again in a few minutes.";
+        errorCode = "DOMAIN_NOT_VERIFIED";
+      } else if (errorMessage.includes("rate limit") || errorMessage.includes("too many")) {
+        userMessage = "Too many emails sent. Please wait a few minutes before trying again.";
+        errorCode = "RATE_LIMITED";
+      } else if (errorMessage.includes("invalid") && errorMessage.includes("email")) {
+        userMessage = "This email address appears to be invalid. Please check and try again.";
+        errorCode = "INVALID_EMAIL";
+      } else if (errorMessage.includes("blocked") || errorMessage.includes("spam")) {
+        userMessage = "This email address cannot receive messages. Please use a different email.";
+        errorCode = "EMAIL_BLOCKED";
+      } else {
+        userMessage = "Unable to send verification email. Please check your email address and try again.";
+        errorCode = "SEND_FAILED";
+      }
       
       return new Response(
-        JSON.stringify({ error: userMessage }),
+        JSON.stringify({ 
+          error: userMessage,
+          errorCode,
+          retryable: errorCode !== "INVALID_EMAIL" && errorCode !== "EMAIL_BLOCKED"
+        }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
