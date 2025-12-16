@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface AdminUserNotification {
   id: string;
@@ -78,10 +79,13 @@ export function useAdminUserNotifications() {
         .from("admin_user_notifications")
         .update({ read: true })
         .eq("id", notificationId);
-      if (error) console.error("Error marking notification as read:", error);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to mark as read", { description: error.message });
     },
   });
 
@@ -95,10 +99,14 @@ export function useAdminUserNotifications() {
         .update({ read: true })
         .eq("user_id", user.id)
         .eq("read", false);
-      if (error) console.error("Error marking all as read:", error);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
+      toast.success("All notifications marked as read");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to mark all as read", { description: error.message });
     },
   });
 
@@ -108,10 +116,14 @@ export function useAdminUserNotifications() {
         .from("admin_user_notifications")
         .delete()
         .eq("id", notificationId);
-      if (error) console.error("Error deleting notification:", error);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
+      toast.success("Notification deleted");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to delete notification", { description: error.message });
     },
   });
 
@@ -124,10 +136,14 @@ export function useAdminUserNotifications() {
         .from("admin_user_notifications")
         .delete()
         .eq("user_id", user.id);
-      if (error) console.error("Error deleting all notifications:", error);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
+      toast.success("All notifications cleared");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to clear notifications", { description: error.message });
     },
   });
 
