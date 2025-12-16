@@ -162,6 +162,9 @@ function EventIcon({ type }: { type: string }) {
   }
 }
 
+type SortColumn = "name" | "plan" | "status" | "revenue" | "renews";
+type SortDirection = "asc" | "desc";
+
 export default function AdminSubscriptions() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
@@ -170,6 +173,8 @@ export default function AdminSubscriptions() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState<SortColumn>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   // Invalidate subscription queries helper
   const invalidateSubscriptionQueries = useCallback(() => {
@@ -335,16 +340,59 @@ export default function AdminSubscriptions() {
     });
   }, [enrichedSubscriptions, searchQuery, planFilter, statusFilter]);
 
+  // Sort subscriptions
+  const sortedSubscriptions = useMemo(() => {
+    const planOrder = { basic: 0, professional: 1, featured: 2 };
+    const statusOrder = { active: 0, trialing: 1, past_due: 2, incomplete: 3, canceled: 4 };
+
+    return [...filteredSubscriptions].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortColumn) {
+        case "name":
+          comparison = a.facility_name.localeCompare(b.facility_name);
+          break;
+        case "plan":
+          comparison = (planOrder[a.plan as keyof typeof planOrder] || 0) - (planOrder[b.plan as keyof typeof planOrder] || 0);
+          break;
+        case "status":
+          const aStatus = a.cancel_at_period_end ? "canceling" : a.status;
+          const bStatus = b.cancel_at_period_end ? "canceling" : b.status;
+          comparison = (statusOrder[aStatus as keyof typeof statusOrder] || 0) - (statusOrder[bStatus as keyof typeof statusOrder] || 0);
+          break;
+        case "revenue":
+          comparison = a.monthly_amount - b.monthly_amount;
+          break;
+        case "renews":
+          comparison = new Date(a.current_period_end).getTime() - new Date(b.current_period_end).getTime();
+          break;
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [filteredSubscriptions, sortColumn, sortDirection]);
+
+  // Handle column sort click
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+    setCurrentPage(1);
+  };
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, planFilter, statusFilter]);
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredSubscriptions.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedSubscriptions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedSubscriptions = filteredSubscriptions.slice(startIndex, endIndex);
+  const paginatedSubscriptions = sortedSubscriptions.slice(startIndex, endIndex);
 
   const isLoading = isLoadingStripe || isLoadingFacilities;
 
@@ -563,7 +611,7 @@ export default function AdminSubscriptions() {
                     All Subscriptions
                   </CardTitle>
                   <CardDescription>
-                    {filteredSubscriptions.length} of {enrichedSubscriptions.length} providers
+                    {sortedSubscriptions.length} of {enrichedSubscriptions.length} providers
                   </CardDescription>
                 </div>
               </div>
@@ -611,18 +659,68 @@ export default function AdminSubscriptions() {
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : filteredSubscriptions.length > 0 ? (
+              ) : sortedSubscriptions.length > 0 ? (
                 <>
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="hover:bg-transparent">
-                          <TableHead>Provider</TableHead>
-                          <TableHead>Plan</TableHead>
-                          <TableHead>Status</TableHead>
+                          <TableHead 
+                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                            onClick={() => handleSort("name")}
+                          >
+                            <div className="flex items-center gap-1">
+                              Provider
+                              {sortColumn === "name" && (
+                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                              )}
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                            onClick={() => handleSort("plan")}
+                          >
+                            <div className="flex items-center gap-1">
+                              Plan
+                              {sortColumn === "plan" && (
+                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                              )}
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                            onClick={() => handleSort("status")}
+                          >
+                            <div className="flex items-center gap-1">
+                              Status
+                              {sortColumn === "status" && (
+                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                              )}
+                            </div>
+                          </TableHead>
                           <TableHead>Leads</TableHead>
-                          <TableHead>Revenue</TableHead>
-                          <TableHead>Renews</TableHead>
+                          <TableHead 
+                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                            onClick={() => handleSort("revenue")}
+                          >
+                            <div className="flex items-center gap-1">
+                              Revenue
+                              {sortColumn === "revenue" && (
+                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                              )}
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                            onClick={() => handleSort("renews")}
+                          >
+                            <div className="flex items-center gap-1">
+                              Renews
+                              {sortColumn === "renews" && (
+                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                              )}
+                            </div>
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -703,7 +801,7 @@ export default function AdminSubscriptions() {
                           <SelectItem value="100">100</SelectItem>
                         </SelectContent>
                       </Select>
-                      <span>of {filteredSubscriptions.length} results</span>
+                      <span>of {sortedSubscriptions.length} results</span>
                     </div>
 
                     <div className="flex items-center gap-2">
