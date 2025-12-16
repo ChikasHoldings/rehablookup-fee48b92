@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfWeek, endOfWeek, formatDistanceToNow } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
-import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Route, ShieldCheck, Gauge, AlertTriangle, GitCompare, Minus, Clock, UserPlus, Mail, Phone, Sparkles } from "lucide-react";
+import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Route, ShieldCheck, Gauge, AlertTriangle, GitCompare, Minus, Clock, UserPlus, Mail, Phone, Sparkles, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -2103,6 +2104,8 @@ function KPICard({ title, value, change, icon, tooltip, isLoading, color }: KPIC
 
 // Activity Feed Item Component
 function ActivityFeedItem({ activity }: { activity: ActivityItem }) {
+  const navigate = useNavigate();
+
   const getActivityIcon = () => {
     switch (activity.type) {
       case "qualified_lead":
@@ -2153,12 +2156,23 @@ function ActivityFeedItem({ activity }: { activity: ActivityItem }) {
     }
   };
 
+  const handleClick = () => {
+    if (activity.type === "new_lead" || activity.type === "qualified_lead") {
+      navigate(`/admin/leads?highlight=${activity.id}`);
+    } else if (activity.type === "provider_signup" || activity.type === "provider_approved") {
+      navigate(`/admin/providers?highlight=${activity.id}`);
+    }
+  };
+
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+    <div 
+      onClick={handleClick}
+      className="flex items-start gap-3 p-3 rounded-lg bg-slate-50/50 hover:bg-slate-100/50 transition-colors cursor-pointer group"
+    >
       {getActivityIcon()}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-medium text-sm text-slate-900 truncate">
+          <span className="font-medium text-sm text-slate-900 truncate group-hover:text-primary transition-colors">
             {activity.description}
           </span>
           <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 h-4 font-medium", getBadgeVariant())}>
@@ -2180,8 +2194,11 @@ function ActivityFeedItem({ activity }: { activity: ActivityItem }) {
           )}
         </div>
       </div>
-      <div className="text-xs text-muted-foreground whitespace-nowrap">
-        {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+        </span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     </div>
   );
