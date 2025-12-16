@@ -63,40 +63,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // No valid code found - check why
+    // No valid code found - use consistent error message to prevent email enumeration
+    // This prevents attackers from determining if an email exists in the system
     if (!verificationRecord) {
-      // Check if there's an expired code
-      const { data: expiredRecord } = await supabase
-        .from("email_verification_codes")
-        .select("*")
-        .eq("email", normalizedEmail)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (!expiredRecord) {
-        return new Response(
-          JSON.stringify({ error: "No verification code found. Please request a new code." }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-
-      if (expiredRecord.verified) {
-        return new Response(
-          JSON.stringify({ error: "This code has already been used. Please request a new code." }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-
-      if (new Date(expiredRecord.expires_at) < new Date()) {
-        return new Response(
-          JSON.stringify({ error: "This code has expired. Please request a new code." }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-
+      // Log internally for debugging but return generic message
+      console.log(`No valid verification code found for email: ${normalizedEmail.substring(0, 3)}***`);
+      
       return new Response(
-        JSON.stringify({ error: "No valid verification code found. Please request a new code." }),
+        JSON.stringify({ error: "Invalid or expired verification code. Please request a new code." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

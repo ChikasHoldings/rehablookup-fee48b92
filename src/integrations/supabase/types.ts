@@ -1434,30 +1434,6 @@ export type Database = {
       }
     }
     Functions: {
-      get_public_facility_by_slug: {
-        Args: { facility_slug: string }
-        Returns: {
-          address: string
-          bed_count: string
-          city: string
-          description: string
-          email: string
-          facility_type: string
-          featured: boolean
-          gallery_urls: string[]
-          gender_served: string
-          id: string
-          logo_url: string
-          name: string
-          phone: string
-          slug: string
-          state: string
-          status: string
-          verified: boolean
-          website: string
-          zip_code: string
-        }[]
-      }
       has_admin_permission: {
         Args: { _permission_key: string; _user_id: string }
         Returns: boolean
