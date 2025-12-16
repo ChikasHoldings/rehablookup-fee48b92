@@ -301,13 +301,33 @@ export default function AdminSecurityLogs() {
 
   // Unblock identifier mutation
   const unblockMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (item: BlockedIdentifier) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Get admin display name for notification
+      const { data: adminProfile } = await supabase
+        .from("admin_user_profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .single();
+
       const { error } = await supabase
         .from("blocked_identifiers")
         .delete()
-        .eq("id", id);
+        .eq("id", item.id);
 
       if (error) throw error;
+
+      // Send email notification (fire and forget)
+      supabase.functions.invoke('send-security-block-notification', {
+        body: {
+          identifier: item.identifier,
+          identifier_type: item.identifier_type,
+          action: "unblock",
+          unblocked_by_name: adminProfile?.display_name || user.email || "Admin",
+        },
+      }).catch(err => console.error("Failed to send unblock notification:", err));
     },
     onSuccess: () => {
       toast.success("Identifier unblocked successfully");
@@ -1594,7 +1614,7 @@ export default function AdminSecurityLogs() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => selectedBlockedItem && unblockMutation.mutate(selectedBlockedItem.id)}
+              onClick={() => selectedBlockedItem && unblockMutation.mutate(selectedBlockedItem)}
             >
               {unblockMutation.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
