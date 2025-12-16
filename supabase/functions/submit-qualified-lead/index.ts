@@ -902,6 +902,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`[Routing] Lead created: ${lead.id}, qualified: ${isQualified}, assignment: ${assignmentStatus}, plan: ${assignedPlanName || 'none'}`);
 
+    // ============ LOG ROUTING DECISION (Internal Only) ============
+    try {
+      await supabase
+        .from("lead_routing_logs")
+        .insert({
+          lead_id: lead.id,
+          assigned_provider_id: assignedFacilityId,
+          assignment_reason: assignmentReason,
+          plan_tier: assignedPlanName,
+          subscription_status: assignedFacilityId ? "active" : null,
+          lead_limit: assignedPlanName ? PLAN_CONFIG[assignedPlanName as keyof typeof PLAN_CONFIG]?.qualified_lead_limit : null,
+          used_leads: null, // Will be calculated if needed
+          routing_source: leadData.facilityId ? "direct" : "system",
+          requested_facility_id: leadData.facilityId || null,
+          eligibility_check_result: {
+            qualified: isQualified,
+            email_verified: emailVerified,
+            assignment_status: assignmentStatus,
+          },
+        });
+      console.log(`[Routing] Routing log created for lead ${lead.id}`);
+    } catch (logError) {
+      console.error("Failed to create routing log:", logError);
+      // Don't fail the lead submission if logging fails
+    }
+
     // ============ SEND USER CONFIRMATION EMAIL ============
     if (isQualified && emailVerified) {
       try {
