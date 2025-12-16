@@ -75,35 +75,26 @@ export default function AdminLogin() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      // Check if email is blocked
-      const { data: isBlocked, error: blockError } = await supabase
-        .rpc('is_identifier_blocked', { p_identifier: normalizedEmail });
+      // Check if email or IP is blocked and rate limited using edge function
+      const { data: preCheckResult, error: preCheckError } = await supabase.functions.invoke('log-login-attempt', {
+        body: {
+          identifier: normalizedEmail,
+          success: false,
+          actionType: 'admin_login_precheck'
+        }
+      });
 
-      if (!blockError && isBlocked) {
-        toast.error("This account has been blocked. Please contact support if you believe this is an error.");
+      if (preCheckError) {
+        console.error('Pre-check error:', preCheckError);
+      } else if (preCheckResult?.blocked) {
+        toast.error(preCheckResult.message || "Your IP address has been blocked. Please contact support.");
         setIsLoading(false);
         return;
-      }
-
-      // Server-side rate limit check
-      const { data: rateLimitResult, error: rateLimitError } = await supabase
-        .rpc('check_rate_limit', {
-          p_identifier: normalizedEmail,
-          p_action_type: 'admin_login',
-          p_max_attempts: 5,
-          p_window_minutes: 15
-        });
-
-      if (rateLimitError) {
-        console.error('Rate limit check error:', rateLimitError);
-      } else if (rateLimitResult) {
-        const rateLimitData = rateLimitResult as { is_limited: boolean; retry_after_seconds: number; attempts: number };
-        if (rateLimitData.is_limited) {
-          const retryAfter = rateLimitData.retry_after_seconds || 0;
-          toast.error(`Too many attempts. Please wait ${Math.ceil(retryAfter / 60)} minute(s).`);
-          setIsLoading(false);
-          return;
-        }
+      } else if (preCheckResult?.rate_limited) {
+        const retryAfter = preCheckResult.retry_after_seconds || 0;
+        toast.error(`Too many attempts. Please wait ${Math.ceil(retryAfter / 60)} minute(s).`);
+        setIsLoading(false);
+        return;
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -112,12 +103,13 @@ export default function AdminLogin() {
       });
 
       if (error) {
-        // Log failed attempt to server
-        await supabase.rpc('log_rate_limit_event', {
-          p_identifier: normalizedEmail,
-          p_action_type: 'admin_login',
-          p_success: false,
-          p_metadata: { error_type: 'invalid_credentials' }
+        // Log failed attempt with IP capture via edge function
+        await supabase.functions.invoke('log-login-attempt', {
+          body: {
+            identifier: normalizedEmail,
+            success: false,
+            actionType: 'admin_login'
+          }
         });
 
         toast.error("Invalid credentials");
@@ -132,12 +124,13 @@ export default function AdminLogin() {
         });
 
         if (roleError || !isAdmin) {
-          // Log failed attempt (not admin)
-          await supabase.rpc('log_rate_limit_event', {
-            p_identifier: normalizedEmail,
-            p_action_type: 'admin_login',
-            p_success: false,
-            p_metadata: { error_type: 'not_admin' }
+          // Log failed attempt (not admin) with IP capture
+          await supabase.functions.invoke('log-login-attempt', {
+            body: {
+              identifier: normalizedEmail,
+              success: false,
+              actionType: 'admin_login'
+            }
           });
 
           await supabase.auth.signOut();
@@ -154,12 +147,13 @@ export default function AdminLogin() {
           .maybeSingle();
 
         if (profile?.status === 'suspended') {
-          // Log failed attempt (suspended)
-          await supabase.rpc('log_rate_limit_event', {
-            p_identifier: normalizedEmail,
-            p_action_type: 'admin_login',
-            p_success: false,
-            p_metadata: { error_type: 'suspended' }
+          // Log failed attempt (suspended) with IP capture
+          await supabase.functions.invoke('log-login-attempt', {
+            body: {
+              identifier: normalizedEmail,
+              success: false,
+              actionType: 'admin_login'
+            }
           });
 
           await supabase.auth.signOut();
@@ -168,12 +162,13 @@ export default function AdminLogin() {
           return;
         }
 
-        // Log successful login to rate limit log
-        await supabase.rpc('log_rate_limit_event', {
-          p_identifier: normalizedEmail,
-          p_action_type: 'admin_login',
-          p_success: true,
-          p_metadata: { user_id: data.user.id }
+        // Log successful login with IP capture via edge function
+        await supabase.functions.invoke('log-login-attempt', {
+          body: {
+            identifier: normalizedEmail,
+            success: true,
+            actionType: 'admin_login'
+          }
         });
 
         // Update last login timestamp
