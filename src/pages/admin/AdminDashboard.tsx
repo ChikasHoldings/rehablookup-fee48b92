@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, memo } from "react";
 import {
   Building2,
   Users,
@@ -58,16 +58,27 @@ interface RevenueStats {
   configured: boolean;
 }
 
-// Sparkline component for KPI cards
-const Sparkline = ({ data, color = "hsl(var(--primary))", height = 40 }: { data: TrendDataPoint[]; color?: string; height?: number }) => {
+// Sparkline component for KPI cards - memoized to prevent ref warnings
+const Sparkline = memo(function Sparkline({ 
+  data, 
+  color = "hsl(var(--primary))", 
+  height = 40 
+}: { 
+  data: TrendDataPoint[]; 
+  color?: string; 
+  height?: number; 
+}) {
   if (!data || data.length === 0) return null;
+  
+  // Generate unique gradient ID based on color
+  const gradientId = `sparkline-gradient-${color.replace(/[^a-zA-Z0-9]/g, '')}`;
   
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
           <defs>
-            <linearGradient id={`gradient-${color.replace(/[^a-zA-Z0-9]/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.3} />
               <stop offset="100%" stopColor={color} stopOpacity={0} />
             </linearGradient>
@@ -77,14 +88,14 @@ const Sparkline = ({ data, color = "hsl(var(--primary))", height = 40 }: { data:
             dataKey="value"
             stroke={color}
             strokeWidth={1.5}
-            fill={`url(#gradient-${color.replace(/[^a-zA-Z0-9]/g, '')})`}
+            fill={`url(#${gradientId})`}
             isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
     </div>
   );
-};
+});
 
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
