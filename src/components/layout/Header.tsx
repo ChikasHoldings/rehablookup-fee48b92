@@ -33,8 +33,18 @@ export function Header({
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Track scroll position for header styling
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     if (variant === "provider") {
@@ -71,7 +81,12 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-card shadow-sm">
+      <header className={cn(
+        "sticky top-0 z-50 w-full border-b border-border bg-card transition-all duration-300",
+        isScrolled 
+          ? "shadow-md backdrop-blur-md bg-card/95" 
+          : "shadow-sm"
+      )}>
         <div className="container flex h-16 items-center justify-between md:h-18">
           {/* Logo - Bigger on mobile */}
           <Link to="/" className="flex items-center gap-2 group">
