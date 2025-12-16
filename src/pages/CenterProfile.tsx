@@ -5,7 +5,7 @@ import { SEO, generateLocalBusinessSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { LeadSubmissionForm } from "@/components/forms/LeadSubmissionForm";
+import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import {
   MapPin,
   Phone,
@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
+  MessageSquare,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useRef, useState } from "react";
@@ -74,7 +75,21 @@ const CenterProfile = () => {
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [logoError, setLogoError] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
+  
+  // Navigation state for prefill and auto-open
   const fromSearch = location.state?.fromSearch;
+  const openModalFromNav = location.state?.openRequestModal;
+  const prefillDataFromNav = location.state?.prefillData;
+  
+  // Auto-open modal if navigating with openRequestModal state
+  useEffect(() => {
+    if (openModalFromNav) {
+      setRequestModalOpen(true);
+      // Clear the state to prevent re-opening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [openModalFromNav]);
 
   // Get current user for owner check
   useEffect(() => {
@@ -366,18 +381,24 @@ const CenterProfile = () => {
               </Button>
             </a>
           ) : (
-            <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}&source=provider_profile`} className="flex-1">
-              <Button size="sm" className="w-full gap-2">
-                <Phone className="h-4 w-4" />
-                Request Call
-              </Button>
-            </Link>
-          )}
-          <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}&source=provider_profile`} className="flex-1">
-            <Button variant="outline" size="sm" className="w-full">
-              Contact
+            <Button 
+              size="sm" 
+              className="flex-1 gap-2"
+              onClick={() => setRequestModalOpen(true)}
+            >
+              <Phone className="h-4 w-4" />
+              Request Call
             </Button>
-          </Link>
+          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1 gap-2"
+            onClick={() => setRequestModalOpen(true)}
+          >
+            <MessageSquare className="h-4 w-4" />
+            Contact
+          </Button>
         </div>
       </div>
 
@@ -467,12 +488,14 @@ const CenterProfile = () => {
                     </Button>
                   </a>
                 ) : (
-                  <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}&source=provider_profile`}>
-                    <Button size="sm" className="w-full gap-2">
-                      <Phone className="h-4 w-4" />
-                      Request Call
-                    </Button>
-                  </Link>
+                  <Button 
+                    size="sm" 
+                    className="w-full gap-2"
+                    onClick={() => setRequestModalOpen(true)}
+                  >
+                    <Phone className="h-4 w-4" />
+                    Request Call
+                  </Button>
                 )}
                 <div className="flex gap-2">
                   {showContactDetails && facility.website && (
@@ -489,11 +512,15 @@ const CenterProfile = () => {
                       </Button>
                     </a>
                   )}
-                  <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}&source=provider_profile`}>
-                    <Button variant="outline" size="sm">
-                      Contact
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setRequestModalOpen(true)}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Contact
+                  </Button>
                 </div>
               </div>
             </div>
@@ -778,15 +805,18 @@ const CenterProfile = () => {
                     <span className="text-xs font-medium text-foreground">Quick Response</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Complete our intake form and a specialist will contact you within 24 hours.
+                    Share your details and a specialist may contact you within 24 hours.
                   </p>
                 </div>
 
-                <Link to={`/request-help?facility=${facility.id}&facilityName=${encodeURIComponent(facility.name)}&source=provider_profile_sidebar`}>
-                  <Button className="w-full" size="lg">
-                    Request Information
-                  </Button>
-                </Link>
+                <Button 
+                  className="w-full gap-2" 
+                  size="lg"
+                  onClick={() => setRequestModalOpen(true)}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Request a Call Back
+                </Button>
                 
                 {showContactDetails && (
                   <div className="mt-4 pt-4 border-t border-border text-center">
@@ -801,6 +831,22 @@ const CenterProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Request Information Modal */}
+      <RequestInfoModal
+        open={requestModalOpen}
+        onOpenChange={setRequestModalOpen}
+        facility={{
+          id: facility.id,
+          name: facility.name,
+          city: facility.city,
+          state: facility.state,
+          slug: facility.slug,
+          email: facility.email,
+          logo_url: facility.logo_url,
+        }}
+        prefillData={prefillDataFromNav}
+      />
     </Layout>
   );
 };
