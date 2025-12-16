@@ -204,6 +204,7 @@ export type Database = {
           id: string
           last_login_at: string | null
           mfa_enabled: boolean | null
+          mfa_skip: boolean | null
           status: string
           temp_password_expires_at: string | null
           temp_password_hash: string | null
@@ -219,6 +220,7 @@ export type Database = {
           id?: string
           last_login_at?: string | null
           mfa_enabled?: boolean | null
+          mfa_skip?: boolean | null
           status?: string
           temp_password_expires_at?: string | null
           temp_password_hash?: string | null
@@ -234,6 +236,7 @@ export type Database = {
           id?: string
           last_login_at?: string | null
           mfa_enabled?: boolean | null
+          mfa_skip?: boolean | null
           status?: string
           temp_password_expires_at?: string | null
           temp_password_hash?: string | null

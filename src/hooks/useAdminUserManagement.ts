@@ -68,6 +68,7 @@ export type AdminUser = {
   avatar_url: string | null;
   last_login_at: string | null;
   permissions: Record<string, boolean>;
+  mfa_skip: boolean;
 };
 
 export function useAdminUserManagement() {
@@ -214,6 +215,7 @@ export function useAdminUserManagement() {
           avatar_url: adminProfile?.avatar_url || null,
           last_login_at: adminProfile?.last_login_at || null,
           permissions: userPermissions,
+          mfa_skip: adminProfile?.mfa_skip || false,
         };
       }) as AdminUser[];
     },
@@ -251,10 +253,10 @@ export function useAdminUserManagement() {
     },
   });
 
-  // Manage admin user mutation (suspend, unsuspend, delete, reset password, update role, update permissions, resend invitation)
+  // Manage admin user mutation (suspend, unsuspend, delete, reset password, update role, update permissions, resend invitation, toggle mfa skip)
   const manageAdminUserMutation = useMutation({
     mutationFn: async (data: {
-      action: "suspend" | "unsuspend" | "delete" | "reset_password" | "update_role" | "update_permissions" | "resend_invitation";
+      action: "suspend" | "unsuspend" | "delete" | "reset_password" | "update_role" | "update_permissions" | "resend_invitation" | "toggle_mfa_skip";
       targetUserId: string;
       newRole?: AdminRole;
       permissions?: Record<string, boolean>;
@@ -280,6 +282,7 @@ export function useAdminUserManagement() {
         update_role: "Role updated successfully",
         update_permissions: "Permissions updated successfully",
         resend_invitation: "Invitation resent successfully",
+        toggle_mfa_skip: "2FA enforcement setting updated",
       };
 
       toast.success(messages[variables.action] || "Action completed");

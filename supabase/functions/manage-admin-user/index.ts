@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface ManageAdminUserRequest {
-  action: "suspend" | "unsuspend" | "delete" | "reset_password" | "update_role" | "update_permissions" | "resend_invitation";
+  action: "suspend" | "unsuspend" | "delete" | "reset_password" | "update_role" | "update_permissions" | "resend_invitation" | "toggle_mfa_skip";
   targetUserId: string;
   newRole?: "admin" | "moderator";
   permissions?: Record<string, boolean>;
@@ -460,6 +460,38 @@ serve(async (req) => {
 
         result.message = "Invitation resent successfully";
         result.tempPassword = tempPassword;
+        break;
+      }
+
+      case "toggle_mfa_skip": {
+        // Get current mfa_skip status
+        const { data: adminProfile } = await supabase
+          .from("admin_user_profiles")
+          .select("mfa_skip")
+          .eq("user_id", targetUserId)
+          .single();
+
+        const newMfaSkip = !(adminProfile?.mfa_skip || false);
+
+        // Update mfa_skip
+        await supabase
+          .from("admin_user_profiles")
+          .upsert({
+            user_id: targetUserId,
+            mfa_skip: newMfaSkip,
+          }, { onConflict: "user_id" });
+
+        // Log action
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: requestingUser.id,
+          action_type: "admin_mfa_skip_toggled",
+          target_type: "admin_user",
+          target_id: targetUserId,
+          details: { email: targetProfile?.email, mfa_skip: newMfaSkip },
+        });
+
+        result.message = newMfaSkip ? "2FA enforcement skipped" : "2FA enforcement enabled";
+        result.mfa_skip = newMfaSkip;
         break;
       }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Loader2, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Settings, Loader2, ShieldCheck, ShieldAlert, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -44,12 +44,14 @@ export function AdminUserPermissionsDialog({
   
   const [role, setRole] = useState<AdminRole>("moderator");
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [mfaSkip, setMfaSkip] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     if (user) {
       const primaryRole = user.roles.includes("admin") ? "admin" : "moderator";
       setRole(primaryRole);
+      setMfaSkip(user.mfa_skip || false);
       
       // Merge defaults with user permissions
       const merged = { ...ROLE_DEFAULTS[primaryRole], ...user.permissions };
@@ -94,6 +96,14 @@ export function AdminUserPermissionsDialog({
         targetUserId: user.user_id,
         permissions,
       });
+
+      // Update MFA skip if changed
+      if (mfaSkip !== user.mfa_skip) {
+        await manageAdminUser({
+          action: "toggle_mfa_skip",
+          targetUserId: user.user_id,
+        });
+      }
 
       onOpenChange(false);
     } catch (error) {
@@ -147,9 +157,10 @@ export function AdminUserPermissionsDialog({
         </div>
 
         <Tabs defaultValue="role" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="role">Role</TabsTrigger>
             <TabsTrigger value="permissions">Page Access</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
           </TabsList>
 
           <TabsContent value="role" className="space-y-4 mt-4">
@@ -230,6 +241,42 @@ export function AdminUserPermissionsDialog({
                   </div>
                 );
               })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="security" className="space-y-4 mt-4">
+            <p className="text-sm text-muted-foreground">
+              Configure security settings for this user.
+            </p>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <ShieldOff className="h-4 w-4 text-amber-500" />
+                    <Label className="font-medium">Skip 2FA Enforcement</Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    When enabled, this user will not be required to set up two-factor authentication on login.
+                  </p>
+                </div>
+                <Switch
+                  checked={mfaSkip}
+                  onCheckedChange={(checked) => {
+                    setMfaSkip(checked);
+                    setHasChanges(true);
+                  }}
+                />
+              </div>
+
+              {mfaSkip && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-sm text-amber-800">
+                    <strong>Warning:</strong> Skipping 2FA enforcement reduces account security. 
+                    Only use this for accounts that require special access or during initial setup.
+                  </p>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

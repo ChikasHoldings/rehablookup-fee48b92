@@ -27,6 +27,7 @@ interface AdminProfile {
   display_name: string | null;
   avatar_url: string | null;
   mfa_enabled: boolean | null;
+  mfa_skip: boolean | null;
 }
 
 export function useAdminAuth() {
@@ -104,7 +105,7 @@ export function useAdminAuth() {
     try {
       const { data, error } = await supabase
         .from("admin_user_profiles")
-        .select("force_password_change, status, display_name, avatar_url, mfa_enabled")
+        .select("force_password_change, status, display_name, avatar_url, mfa_enabled, mfa_skip")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -228,8 +229,8 @@ export function useAdminAuth() {
             setPermissions(userPermissions);
             setAdminProfile(profile);
             setForcePasswordChange(profile?.force_password_change === true);
-            // Require MFA setup if admin but no verified TOTP factor
-            setRequireMfaSetup(adminStatus && !hasMfa);
+            // Require MFA setup if admin but no verified TOTP factor and not skipped
+            setRequireMfaSetup(adminStatus && !hasMfa && profile?.mfa_skip !== true);
             
             if (!adminStatus) {
               navigate("/", { replace: true });
@@ -269,8 +270,8 @@ export function useAdminAuth() {
           setPermissions(userPermissions);
           setAdminProfile(profile);
           setForcePasswordChange(profile?.force_password_change === true);
-          // Require MFA setup if admin but no verified TOTP factor
-          setRequireMfaSetup(adminStatus && !hasMfa);
+          // Require MFA setup if admin but no verified TOTP factor and not skipped
+          setRequireMfaSetup(adminStatus && !hasMfa && profile?.mfa_skip !== true);
           
           if (!adminStatus) {
             navigate("/", { replace: true });
