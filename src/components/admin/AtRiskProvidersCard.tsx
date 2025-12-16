@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, TrendingDown, Clock, Mail, RefreshCw, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { AlertTriangle, TrendingDown, Clock, Mail, RefreshCw, ChevronDown, ChevronUp, ExternalLink, Send } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 interface AtRiskProvider {
   facilityId: string;
@@ -24,6 +25,7 @@ interface AtRiskProvider {
 
 export function AtRiskProvidersCard() {
   const [isExpanded, setIsExpanded] = useState(true);
+  const queryClient = useQueryClient();
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["at-risk-providers"],
@@ -34,6 +36,31 @@ export function AtRiskProvidersCard() {
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
+  });
+
+  const sendRetentionMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("send-retention-outreach");
+      if (error) throw error;
+      return data as { emailsSent: number; emailsFailed: number; sentTo: string[] };
+    },
+    onSuccess: (result) => {
+      if (result.emailsSent > 0) {
+        toast.success(`Sent ${result.emailsSent} retention email(s)`, {
+          description: result.sentTo.slice(0, 3).join(", ") + (result.sentTo.length > 3 ? ` +${result.sentTo.length - 3} more` : ""),
+        });
+      } else {
+        toast.info("No emails sent", {
+          description: "All at-risk providers have received outreach recently",
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
+    },
+    onError: (error) => {
+      toast.error("Failed to send retention emails", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    },
   });
 
   const getRiskBadgeColor = (score: number) => {
@@ -95,6 +122,24 @@ export function AtRiskProvidersCard() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {highRiskCount > 0 && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => sendRetentionMutation.mutate()}
+                        disabled={sendRetentionMutation.isPending}
+                      >
+                        <Send className={`h-4 w-4 mr-1.5 ${sendRetentionMutation.isPending ? "animate-pulse" : ""}`} />
+                        {sendRetentionMutation.isPending ? "Sending..." : "Send Outreach"}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Send personalized re-engagement emails</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
