@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,6 +44,144 @@ const seededShuffle = <T>(array: T[], seed: number): T[] => {
   return shuffled;
 };
 
+// Notification settings type
+type NotificationSettings = {
+  rotation_notifications_enabled: boolean;
+  notify_on_featured: boolean;
+  notify_on_unfeatured: boolean;
+  notification_timing: "immediate" | "daily_digest" | "weekly_digest";
+  admin_email_recipients: string[];
+};
+
+const defaultNotificationSettings: NotificationSettings = {
+  rotation_notifications_enabled: true,
+  notify_on_featured: true,
+  notify_on_unfeatured: false,
+  notification_timing: "immediate",
+  admin_email_recipients: ["help@rehablookup.com"],
+};
+
+// Send featured notification email
+async function sendFeaturedEmail(
+  resend: Resend | null,
+  providerEmail: string,
+  providerName: string,
+  facilityName: string,
+  adminRecipients: string[]
+) {
+  if (!resend) {
+    logStep("Resend not configured, skipping email");
+    return;
+  }
+
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f6f8fb;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f6f8fb; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+              <!-- Header -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #1B365D 0%, #2D4A7C 100%); padding: 40px 40px 30px; text-align: center;">
+                  <div style="display: inline-block; background-color: rgba(201, 162, 39, 0.2); padding: 12px 24px; border-radius: 50px; margin-bottom: 16px;">
+                    <span style="font-size: 28px;">🌟</span>
+                  </div>
+                  <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0 0 8px;">You're Featured!</h1>
+                  <p style="color: rgba(255, 255, 255, 0.85); font-size: 16px; margin: 0;">Your facility is on the homepage today</p>
+                </td>
+              </tr>
+              
+              <!-- Content -->
+              <tr>
+                <td style="padding: 40px;">
+                  <p style="color: #1A1A1A; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                    Hi${providerName ? ` ${providerName}` : ''},
+                  </p>
+                  <p style="color: #1A1A1A; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                    Great news! <strong>${facilityName}</strong> is being featured on the RehabLookup homepage today. This premium placement increases your visibility to families and individuals searching for treatment options.
+                  </p>
+                  
+                  <!-- Highlight Box -->
+                  <div style="background-color: #FEF9E7; border-left: 4px solid #C9A227; padding: 20px; border-radius: 0 8px 8px 0; margin: 24px 0;">
+                    <h3 style="color: #1B365D; font-size: 16px; font-weight: 600; margin: 0 0 8px;">What This Means For You</h3>
+                    <ul style="color: #5E6B7A; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                      <li>Priority visibility on the homepage</li>
+                      <li>Increased profile views from potential clients</li>
+                      <li>Higher chance of receiving qualified leads</li>
+                    </ul>
+                  </div>
+                  
+                  <p style="color: #5E6B7A; font-size: 14px; line-height: 1.6; margin: 24px 0 0;">
+                    Featured facilities rotate daily to ensure fair exposure for all providers on our Featured plan. Keep your profile updated to maximize the impact of your featured placement!
+                  </p>
+                  
+                  <!-- CTA Button -->
+                  <div style="text-align: center; margin-top: 32px;">
+                    <a href="https://rehablookup.com/provider/listing" style="display: inline-block; background-color: #1B365D; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View Your Listing
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              
+              <!-- Footer -->
+              <tr>
+                <td style="background-color: #f6f8fb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+                  <p style="color: #9CA3AF; font-size: 12px; line-height: 1.6; margin: 0;">
+                    This email was sent because you have an active Featured plan subscription.<br>
+                    <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Manage notification preferences</a>
+                  </p>
+                  <p style="color: #9CA3AF; font-size: 12px; margin: 16px 0 0;">
+                    © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    // Send to provider
+    const providerResult = await resend.emails.send({
+      from: "RehabLookup <no-reply@rehablookup.com>",
+      to: [providerEmail],
+      subject: `🌟 ${facilityName} is Featured on Homepage Today!`,
+      html: emailHtml,
+    });
+    logStep("Sent featured email to provider", { email: providerEmail, result: providerResult });
+
+    // Send copies to admin recipients
+    if (adminRecipients.length > 0) {
+      const adminHtml = `
+        <div style="background: #FEF3C7; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px;">
+          <strong>Admin Copy:</strong> This email was sent to ${providerEmail} for facility "${facilityName}"
+        </div>
+        ${emailHtml}
+      `;
+      
+      await resend.emails.send({
+        from: "RehabLookup <no-reply@rehablookup.com>",
+        to: adminRecipients,
+        subject: `[Admin] Featured Rotation: ${facilityName}`,
+        html: adminHtml,
+      });
+      logStep("Sent featured email to admins", { recipients: adminRecipients });
+    }
+  } catch (emailError) {
+    logStep("Error sending featured email", { error: String(emailError) });
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -52,6 +191,8 @@ serve(async (req) => {
     logStep("Function started");
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    
     if (!stripeKey) {
       logStep("No Stripe key, returning empty array");
       return new Response(JSON.stringify({ 
@@ -71,6 +212,26 @@ serve(async (req) => {
     );
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const resend = resendApiKey ? new Resend(resendApiKey) : null;
+
+    // Fetch notification settings
+    let notificationSettings = defaultNotificationSettings;
+    try {
+      const { data: settingsData } = await supabaseClient
+        .from("platform_settings")
+        .select("setting_value")
+        .eq("setting_key", "featured_notification_settings")
+        .maybeSingle();
+      
+      if (settingsData?.setting_value) {
+        notificationSettings = settingsData.setting_value as NotificationSettings;
+        logStep("Loaded notification settings", notificationSettings);
+      } else {
+        logStep("Using default notification settings");
+      }
+    } catch (settingsError) {
+      logStep("Error loading notification settings, using defaults", { error: String(settingsError) });
+    }
 
     // Get all approved, non-suspended facilities
     const { data: facilities, error: facilitiesError } = await supabaseClient
@@ -88,8 +249,12 @@ serve(async (req) => {
 
     interface EligibleFacility {
       id: string;
+      user_id: string;
       featured_pinned: boolean;
       last_featured_shown_at: string | null;
+      provider_email?: string;
+      provider_name?: string;
+      facility_name?: string;
     }
 
     const eligibleFacilities: EligibleFacility[] = [];
@@ -99,7 +264,7 @@ serve(async (req) => {
       // Get provider email from profiles table
       const { data: profile } = await supabaseClient
         .from("profiles")
-        .select("email")
+        .select("email, first_name, last_name")
         .eq("user_id", facility.user_id)
         .maybeSingle();
       
@@ -126,10 +291,21 @@ serve(async (req) => {
           const productId = subscription.items.data[0].price.product as string;
 
           if (productId === FEATURED_PRODUCT_ID) {
+            // Get facility name
+            const { data: facilityData } = await supabaseClient
+              .from("facilities")
+              .select("name")
+              .eq("id", facility.id)
+              .single();
+
             eligibleFacilities.push({
               id: facility.id,
+              user_id: facility.user_id,
               featured_pinned: facility.featured_pinned || false,
               last_featured_shown_at: facility.last_featured_shown_at,
+              provider_email: providerEmail,
+              provider_name: profile?.first_name || "",
+              facility_name: facilityData?.name || "",
             });
             logStep("Found Featured subscriber", { facilityId: facility.id, email: providerEmail });
           }
@@ -147,6 +323,7 @@ serve(async (req) => {
 
     // Select homepage featured (max 6 with rotation)
     let homepageFeaturedIds: string[] = [];
+    const newlyFeaturedFacilities: EligibleFacility[] = [];
 
     if (eligibleFacilities.length <= MAX_HOMEPAGE_FEATURED) {
       // Show all if 6 or fewer
@@ -170,56 +347,49 @@ serve(async (req) => {
 
       // Combine: pinned first (always shown), then shuffled unpinned
       const combined = [...pinned, ...shuffledUnpinned];
-      homepageFeaturedIds = combined.slice(0, MAX_HOMEPAGE_FEATURED).map(f => f.id);
+      const selectedFacilities = combined.slice(0, MAX_HOMEPAGE_FEATURED);
+      homepageFeaturedIds = selectedFacilities.map(f => f.id);
 
       // Update last_featured_shown_at for facilities shown today
       const today = new Date().toISOString();
       const todayDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD for checking
       
-      for (const id of homepageFeaturedIds) {
+      for (const facility of selectedFacilities) {
         // Check if facility was already featured today
-        const facility = eligibleFacilities.find(f => f.id === id);
-        const wasAlreadyFeaturedToday = facility?.last_featured_shown_at?.startsWith(todayDate);
+        const wasAlreadyFeaturedToday = facility.last_featured_shown_at?.startsWith(todayDate);
         
         await supabaseClient
           .from("facilities")
           .update({ last_featured_shown_at: today })
-          .eq("id", id);
+          .eq("id", facility.id);
         
-        // Send notification only if newly featured today (not already notified)
+        // Track newly featured facilities for notifications
         if (!wasAlreadyFeaturedToday) {
-          // Get facility details for notification
-          const { data: facilityData } = await supabaseClient
-            .from("facilities")
-            .select("name, user_id")
-            .eq("id", id)
-            .single();
+          newlyFeaturedFacilities.push(facility);
           
-          if (facilityData) {
-            // Check if notification already exists for today
-            const { data: existingNotification } = await supabaseClient
+          // Create in-app notification
+          const { data: existingNotification } = await supabaseClient
+            .from("provider_notifications")
+            .select("id")
+            .eq("user_id", facility.user_id)
+            .eq("facility_id", facility.id)
+            .eq("type", "featured_rotation")
+            .gte("created_at", todayDate)
+            .maybeSingle();
+          
+          if (!existingNotification) {
+            await supabaseClient
               .from("provider_notifications")
-              .select("id")
-              .eq("user_id", facilityData.user_id)
-              .eq("facility_id", id)
-              .eq("type", "featured_rotation")
-              .gte("created_at", todayDate)
-              .maybeSingle();
+              .insert({
+                user_id: facility.user_id,
+                facility_id: facility.id,
+                type: "featured_rotation",
+                title: "Featured on Homepage! 🌟",
+                message: `Your facility "${facility.facility_name}" is being featured on the homepage today. This increases your visibility to potential clients.`,
+                metadata: { featured_date: todayDate }
+              });
             
-            if (!existingNotification) {
-              await supabaseClient
-                .from("provider_notifications")
-                .insert({
-                  user_id: facilityData.user_id,
-                  facility_id: id,
-                  type: "featured_rotation",
-                  title: "Featured on Homepage! 🌟",
-                  message: `Your facility "${facilityData.name}" is being featured on the homepage today. This increases your visibility to potential clients.`,
-                  metadata: { featured_date: todayDate }
-                });
-              
-              logStep("Sent featured rotation notification", { facilityId: id, facilityName: facilityData.name });
-            }
+            logStep("Created featured rotation notification", { facilityId: facility.id, facilityName: facility.facility_name });
           }
         }
       }
@@ -227,9 +397,39 @@ serve(async (req) => {
       logStep("Updated last_featured_shown_at for homepage featured", { count: homepageFeaturedIds.length });
     }
 
+    // Send email notifications for newly featured facilities (if enabled)
+    if (
+      notificationSettings.rotation_notifications_enabled && 
+      notificationSettings.notify_on_featured &&
+      notificationSettings.notification_timing === "immediate" &&
+      newlyFeaturedFacilities.length > 0
+    ) {
+      logStep("Sending featured emails", { count: newlyFeaturedFacilities.length });
+      
+      for (const facility of newlyFeaturedFacilities) {
+        if (facility.provider_email) {
+          await sendFeaturedEmail(
+            resend,
+            facility.provider_email,
+            facility.provider_name || "",
+            facility.facility_name || "Your facility",
+            notificationSettings.admin_email_recipients
+          );
+        }
+      }
+    } else if (newlyFeaturedFacilities.length > 0) {
+      logStep("Skipping email notifications", { 
+        enabled: notificationSettings.rotation_notifications_enabled,
+        notifyOnFeatured: notificationSettings.notify_on_featured,
+        timing: notificationSettings.notification_timing,
+        newlyFeaturedCount: newlyFeaturedFacilities.length
+      });
+    }
+
     logStep("Completed", { 
       totalEligible: allEligibleIds.length,
-      homepageFeatured: homepageFeaturedIds.length 
+      homepageFeatured: homepageFeaturedIds.length,
+      newlyFeatured: newlyFeaturedFacilities.length
     });
 
     return new Response(
