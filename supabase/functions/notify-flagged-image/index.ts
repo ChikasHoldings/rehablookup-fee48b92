@@ -98,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "RehabLookup <onboarding@resend.dev>",
+        from: "RehabLookup <no-reply@rehablookup.com>",
         to: [providerEmail],
         subject: `Action Required: Your ${imageTypeText} has been flagged`,
         html: `
