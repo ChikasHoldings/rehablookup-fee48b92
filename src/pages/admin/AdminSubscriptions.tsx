@@ -15,6 +15,8 @@ import {
   LayoutDashboard,
   List,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -166,6 +168,8 @@ export default function AdminSubscriptions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Invalidate subscription queries helper
   const invalidateSubscriptionQueries = useCallback(() => {
@@ -330,6 +334,17 @@ export default function AdminSubscriptions() {
       return true;
     });
   }, [enrichedSubscriptions, searchQuery, planFilter, statusFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, planFilter, statusFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredSubscriptions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedSubscriptions = filteredSubscriptions.slice(startIndex, endIndex);
 
   const isLoading = isLoadingStripe || isLoadingFacilities;
 
@@ -597,74 +612,188 @@ export default function AdminSubscriptions() {
                   ))}
                 </div>
               ) : filteredSubscriptions.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead>Provider</TableHead>
-                        <TableHead>Plan</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Leads</TableHead>
-                        <TableHead>Revenue</TableHead>
-                        <TableHead>Renews</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredSubscriptions.map((sub) => (
-                        <TableRow key={sub.customer_id}>
-                          <TableCell>
-                            <div className="min-w-0">
-                              <p className="font-medium truncate max-w-[200px]">{sub.facility_name}</p>
-                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                {sub.customer_email}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <PlanBadge plan={sub.plan} />
-                          </TableCell>
-                          <TableCell>
-                            <StatusBadge status={sub.status} cancelAtPeriodEnd={sub.cancel_at_period_end} />
-                          </TableCell>
-                          <TableCell>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                      <div 
-                                        className={`h-full rounded-full transition-all ${
-                                          sub.leads_used >= sub.lead_limit ? "bg-red-500" : 
-                                          sub.leads_used >= sub.lead_limit * 0.8 ? "bg-amber-500" : "bg-green-500"
-                                        }`}
-                                        style={{ width: `${Math.min((sub.leads_used / sub.lead_limit) * 100, 100)}%` }}
-                                      />
-                                    </div>
-                                    <span className="text-sm text-muted-foreground">
-                                      {sub.leads_used}/{sub.lead_limit}
-                                    </span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{sub.leads_used} of {sub.lead_limit} leads used this month</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-medium">${sub.monthly_amount}</span>
-                            <span className="text-muted-foreground">/mo</span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(sub.current_period_end), "MMM d, yyyy")}
-                            </span>
-                          </TableCell>
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead>Provider</TableHead>
+                          <TableHead>Plan</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Leads</TableHead>
+                          <TableHead>Revenue</TableHead>
+                          <TableHead>Renews</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedSubscriptions.map((sub) => (
+                          <TableRow key={sub.customer_id}>
+                            <TableCell>
+                              <div className="min-w-0">
+                                <p className="font-medium truncate max-w-[200px]">{sub.facility_name}</p>
+                                <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                  {sub.customer_email}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <PlanBadge plan={sub.plan} />
+                            </TableCell>
+                            <TableCell>
+                              <StatusBadge status={sub.status} cancelAtPeriodEnd={sub.cancel_at_period_end} />
+                            </TableCell>
+                            <TableCell>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                                        <div 
+                                          className={`h-full rounded-full transition-all ${
+                                            sub.leads_used >= sub.lead_limit ? "bg-red-500" : 
+                                            sub.leads_used >= sub.lead_limit * 0.8 ? "bg-amber-500" : "bg-green-500"
+                                          }`}
+                                          style={{ width: `${Math.min((sub.leads_used / sub.lead_limit) * 100, 100)}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-sm text-muted-foreground">
+                                        {sub.leads_used}/{sub.lead_limit}
+                                      </span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{sub.leads_used} of {sub.lead_limit} leads used this month</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium">${sub.monthly_amount}</span>
+                              <span className="text-muted-foreground">/mo</span>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm text-muted-foreground">
+                                {format(new Date(sub.current_period_end), "MMM d, yyyy")}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>Showing</span>
+                      <Select 
+                        value={itemsPerPage.toString()} 
+                        onValueChange={(value) => {
+                          setItemsPerPage(Number(value));
+                          setCurrentPage(1);
+                        }}
+                      >
+                        <SelectTrigger className="w-[70px] h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="25">25</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <span>of {filteredSubscriptions.length} results</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {totalPages <= 7 ? (
+                          [...Array(totalPages)].map((_, i) => (
+                            <Button
+                              key={i + 1}
+                              variant={currentPage === i + 1 ? "default" : "outline"}
+                              size="sm"
+                              className="w-8 h-8 p-0"
+                              onClick={() => setCurrentPage(i + 1)}
+                            >
+                              {i + 1}
+                            </Button>
+                          ))
+                        ) : (
+                          <>
+                            {currentPage > 3 && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-8 h-8 p-0"
+                                  onClick={() => setCurrentPage(1)}
+                                >
+                                  1
+                                </Button>
+                                {currentPage > 4 && <span className="px-1 text-muted-foreground">...</span>}
+                              </>
+                            )}
+                            {[...Array(5)].map((_, i) => {
+                              let pageNum: number;
+                              if (currentPage <= 3) {
+                                pageNum = i + 1;
+                              } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                              } else {
+                                pageNum = currentPage - 2 + i;
+                              }
+                              if (pageNum < 1 || pageNum > totalPages) return null;
+                              return (
+                                <Button
+                                  key={pageNum}
+                                  variant={currentPage === pageNum ? "default" : "outline"}
+                                  size="sm"
+                                  className="w-8 h-8 p-0"
+                                  onClick={() => setCurrentPage(pageNum)}
+                                >
+                                  {pageNum}
+                                </Button>
+                              );
+                            })}
+                            {currentPage < totalPages - 2 && (
+                              <>
+                                {currentPage < totalPages - 3 && <span className="px-1 text-muted-foreground">...</span>}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-8 h-8 p-0"
+                                  onClick={() => setCurrentPage(totalPages)}
+                                >
+                                  {totalPages}
+                                </Button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <p className="text-center py-8 text-muted-foreground">No subscriptions found</p>
               )}
