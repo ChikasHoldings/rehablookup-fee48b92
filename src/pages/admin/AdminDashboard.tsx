@@ -19,7 +19,9 @@ import {
   Sparkles,
   ChevronRight,
   RefreshCw,
+  PieChart as PieChartIcon,
 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +30,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+
+// Subscription plan colors
+const PLAN_COLORS = {
+  basic: "hsl(215, 16%, 47%)", // slate
+  professional: "hsl(217, 91%, 60%)", // blue
+  featured: "hsl(45, 93%, 47%)", // amber/gold
+};
+
+interface SubscriptionBreakdown {
+  name: string;
+  value: number;
+  color: string;
+}
 
 interface RevenueStats {
   monthlyRevenue: number;
@@ -49,6 +64,7 @@ export default function AdminDashboard() {
     queryClient.invalidateQueries({ queryKey: ["admin-top-cities"] });
     queryClient.invalidateQueries({ queryKey: ["admin-recent-leads"] });
     queryClient.invalidateQueries({ queryKey: ["admin-revenue-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-subscription-breakdown"] });
   }, [queryClient]);
 
   // Real-time subscriptions - always active
@@ -108,6 +124,29 @@ export default function AdminDashboard() {
       return data;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Fetch subscription breakdown by plan (uses data from revenue stats)
+  const { data: subscriptionBreakdown, isLoading: loadingBreakdown } = useQuery<SubscriptionBreakdown[]>({
+    queryKey: ["admin-subscription-breakdown"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("get-revenue-stats");
+      
+      if (error || !data?.subscriptionsByPlan) {
+        return [
+          { name: "Basic", value: 0, color: PLAN_COLORS.basic },
+          { name: "Professional", value: 0, color: PLAN_COLORS.professional },
+          { name: "Featured", value: 0, color: PLAN_COLORS.featured },
+        ];
+      }
+      
+      return [
+        { name: "Basic", value: data.subscriptionsByPlan.basic || 0, color: PLAN_COLORS.basic },
+        { name: "Professional", value: data.subscriptionsByPlan.professional || 0, color: PLAN_COLORS.professional },
+        { name: "Featured", value: data.subscriptionsByPlan.featured || 0, color: PLAN_COLORS.featured },
+      ];
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   // Fetch providers stats
@@ -500,15 +539,103 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Main Content Grid */}
+      {/* Subscription Breakdown Row */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Quick Actions */}
-        <Card className="border-0 shadow-card bg-card lg:col-span-1">
+        {/* Subscription Pie Chart */}
+        <Card className="border-0 shadow-card bg-card">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-violet-50 flex items-center justify-center">
+                <PieChartIcon className="h-4 w-4 text-violet-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold">Subscription Breakdown</CardTitle>
+                <CardDescription>Distribution by plan tier</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingBreakdown ? (
+              <div className="h-[200px] flex items-center justify-center">
+                <Skeleton className="h-32 w-32 rounded-full" />
+              </div>
+            ) : subscriptionBreakdown && subscriptionBreakdown.some(item => item.value > 0) ? (
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={subscriptionBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      nameKey="name"
+                    >
+                      {subscriptionBreakdown.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload as SubscriptionBreakdown;
+                          return (
+                            <div className="bg-card border border-border rounded-lg shadow-lg px-3 py-2">
+                              <p className="text-sm font-medium text-foreground">{data.name}</p>
+                              <p className="text-xs text-muted-foreground">{data.value} subscribers</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend 
+                      content={({ payload }) => (
+                        <ul className="flex flex-wrap justify-center gap-4 mt-4">
+                          {payload?.map((entry, index) => (
+                            <li key={`legend-${index}`} className="flex items-center gap-1.5 text-xs">
+                              <span 
+                                className="w-2.5 h-2.5 rounded-full" 
+                                style={{ backgroundColor: entry.color }}
+                              />
+                              <span className="text-muted-foreground">{entry.value}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[200px] flex flex-col items-center justify-center text-muted-foreground">
+                <PieChartIcon className="h-10 w-10 mb-2 opacity-40" />
+                <p className="text-sm">No subscription data available</p>
+              </div>
+            )}
+            {/* Summary stats below chart */}
+            {subscriptionBreakdown && subscriptionBreakdown.some(item => item.value > 0) && (
+              <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-border">
+                {subscriptionBreakdown.map((plan) => (
+                  <div key={plan.name} className="text-center">
+                    <p className="text-lg font-bold text-foreground">{plan.value}</p>
+                    <p className="text-xs text-muted-foreground">{plan.name}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions - moved into this row */}
+        <Card className="border-0 shadow-card bg-card lg:col-span-2">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
             <CardDescription>Common administrative tasks</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-2">
+          <CardContent className="grid gap-2 sm:grid-cols-2">
             {providerStats?.pending && providerStats.pending > 0 && (
               <Button 
                 variant="ghost" 
@@ -590,52 +717,52 @@ export default function AdminDashboard() {
             </Button>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Top Cities */}
-        <Card className="border-0 shadow-card bg-card lg:col-span-2">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <MapPin className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-semibold">Top Cities by Leads</CardTitle>
-                <CardDescription>Geographic distribution of inquiries</CardDescription>
-              </div>
+      {/* Top Cities Row */}
+      <Card className="border-0 shadow-card bg-card">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <MapPin className="h-4 w-4 text-primary" />
             </div>
-          </CardHeader>
-          <CardContent>
-            {topCities && topCities.length > 0 ? (
-              <div className="space-y-4">
-                {topCities.map((item, index) => (
-                  <div key={item.city} className="flex items-center gap-4">
-                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-secondary text-sm font-semibold text-muted-foreground">
-                      {index + 1}
+            <div>
+              <CardTitle className="text-lg font-semibold">Top Cities by Leads</CardTitle>
+              <CardDescription>Geographic distribution of inquiries</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {topCities && topCities.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              {topCities.map((item, index) => (
+                <div key={item.city} className="flex items-center gap-3">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-secondary text-sm font-semibold text-muted-foreground shrink-0">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium truncate">{item.city}</span>
+                      <span className="text-sm font-semibold text-foreground">{item.count}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm font-medium truncate">{item.city}</span>
-                        <span className="text-sm font-semibold text-foreground">{item.count}</span>
-                      </div>
-                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary rounded-full transition-all duration-500"
-                          style={{ width: `${item.percentage}%` }}
-                        />
-                      </div>
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary rounded-full transition-all duration-500"
+                        style={{ width: `${item.percentage}%` }}
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                <MapPin className="h-10 w-10 mb-2 opacity-40" />
-                <p className="text-sm">No location data available yet</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+              <MapPin className="h-10 w-10 mb-2 opacity-40" />
+              <p className="text-sm">No location data available yet</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Leads */}
       <Card className="border-0 shadow-card bg-card">
