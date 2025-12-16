@@ -57,6 +57,7 @@ import {
 import { toast } from "sonner";
 import { calculateLeadScore, getScoreColor, type LeadScoringInput } from "@/lib/leadScoring";
 import { LeadProfileModal } from "@/components/leads/LeadProfileModal";
+import { RoutingLogsTable } from "@/components/admin/RoutingLogsTable";
 
 type Lead = {
   id: string;
@@ -790,6 +791,9 @@ export default function AdminLeads() {
           )}
         </CardContent>
       </Card>
+
+      {/* Routing Logs (Collapsible) */}
+      <RoutingLogsTable />
 
       {/* Lead Profile Modal (Read-only for admin) */}
       <LeadProfileModal
