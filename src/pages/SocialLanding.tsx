@@ -173,10 +173,10 @@ export default function SocialLanding() {
           preferredContact: "call",
           urgency: formData.isUrgent ? "urgent" : "this_week",
           whoSeekingHelp: "myself",
-          locationZip: "",
-          locationCityState: "",
+          locationZip: "00000", // Default for social landing - location not collected
+          locationCityState: "Unknown",
           primarySubstance: [],
-          levelOfCare: "",
+          levelOfCare: "unknown", // Default for social landing - not collected
           dualDiagnosis: "unknown",
           insuranceType: "unknown",
           source: "social_landing",
