@@ -61,6 +61,8 @@ import {
   XCircle,
   Users,
   CalendarIcon,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,6 +90,7 @@ type PromoCode = {
   active: boolean;
   times_redeemed: number;
   max_redemptions: number | null;
+  expires_at: number | null;
   created: number;
 };
 
@@ -577,6 +580,7 @@ export function PlanSettingsTab() {
                   <TableHead>Code</TableHead>
                   <TableHead>Discount</TableHead>
                   <TableHead>Duration</TableHead>
+                  <TableHead>Expires</TableHead>
                   <TableHead>Usage</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
@@ -586,6 +590,10 @@ export function PlanSettingsTab() {
               <TableBody>
                 {couponData.promoCodes.map((promo) => {
                   const coupon = couponData.coupons.find((c) => c.id === promo.coupon.id);
+                  const now = Date.now();
+                  const expiresAt = promo.expires_at ? promo.expires_at * 1000 : null;
+                  const isExpired = expiresAt && expiresAt < now;
+                  const isExpiringSoon = expiresAt && !isExpired && expiresAt < now + 7 * 24 * 60 * 60 * 1000; // 7 days
                   return (
                     <TableRow key={promo.id}>
                       <TableCell>
@@ -616,6 +624,40 @@ export function PlanSettingsTab() {
                       </TableCell>
                       <TableCell>
                         {coupon ? formatDuration(coupon) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {expiresAt ? (
+                          <div className={cn(
+                            "flex items-center gap-1.5 text-sm",
+                            isExpired && "text-red-600",
+                            isExpiringSoon && !isExpired && "text-amber-600"
+                          )}>
+                            {isExpired ? (
+                              <XCircle className="h-3.5 w-3.5" />
+                            ) : isExpiringSoon ? (
+                              <AlertTriangle className="h-3.5 w-3.5" />
+                            ) : (
+                              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                            )}
+                            <span className={cn(
+                              isExpired && "line-through",
+                            )}>
+                              {format(new Date(expiresAt), "MMM d, yyyy")}
+                            </span>
+                            {isExpired && (
+                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-red-50 text-red-600 border-red-200">
+                                Expired
+                              </Badge>
+                            )}
+                            {isExpiringSoon && !isExpired && (
+                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 bg-amber-50 text-amber-600 border-amber-200">
+                                Soon
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Never</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
