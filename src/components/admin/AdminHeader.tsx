@@ -367,7 +367,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
     <>
       <header className="sticky top-0 z-50 h-16 border-b border-slate-700 bg-slate-900 text-white flex items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
-          <Link to="/admin" className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <img 
               src="/logo-admin.svg" 
               alt="Rehab-Lookup" 
@@ -376,7 +376,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
             <span className="text-xs bg-amber-400 text-slate-900 px-2 py-0.5 rounded font-semibold uppercase">
               Admin
             </span>
-          </Link>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 lg:gap-4">
