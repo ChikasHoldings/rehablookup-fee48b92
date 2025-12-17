@@ -203,6 +203,47 @@ export default function AdminFeatured() {
   
   // Combined featured facilities for ordering (auto + legacy)
   const allFeaturedFacilities = [...(autoFeaturedFacilities || []), ...(legacyFeaturedFacilities || [])];
+
+  // Fetch facility stats (views and leads) - MUST be before totalFeaturedLeads calculation
+  const { data: facilityStats } = useQuery({
+    queryKey: ["admin-facility-stats"],
+    queryFn: async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const dateStr = thirtyDaysAgo.toISOString().split("T")[0];
+
+      const [viewsRes, leadsRes] = await Promise.all([
+        supabase
+          .from("facility_views")
+          .select("facility_id, view_count")
+          .gte("view_date", dateStr),
+        supabase
+          .from("leads")
+          .select("facility_id")
+          .gte("created_at", thirtyDaysAgo.toISOString()),
+      ]);
+
+      const stats: Record<string, FacilityStats> = {};
+      
+      viewsRes.data?.forEach((v) => {
+        if (!stats[v.facility_id]) {
+          stats[v.facility_id] = { facility_id: v.facility_id, total_views: 0, total_leads: 0 };
+        }
+        stats[v.facility_id].total_views += v.view_count;
+      });
+
+      leadsRes.data?.forEach((l) => {
+        if (l.facility_id) {
+          if (!stats[l.facility_id]) {
+            stats[l.facility_id] = { facility_id: l.facility_id, total_views: 0, total_leads: 0 };
+          }
+          stats[l.facility_id].total_leads += 1;
+        }
+      });
+
+      return stats;
+    },
+  });
   
   // Calculate total leads for featured facilities - with safe access
   const safeAutoFeaturedFacilities = autoFeaturedFacilities || [];
@@ -292,46 +333,6 @@ export default function AdminFeatured() {
     setOrderedFacilities(items);
     setHasOrderChanges(true);
   };
-
-  const { data: facilityStats } = useQuery({
-    queryKey: ["admin-facility-stats"],
-    queryFn: async () => {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const dateStr = thirtyDaysAgo.toISOString().split("T")[0];
-
-      const [viewsRes, leadsRes] = await Promise.all([
-        supabase
-          .from("facility_views")
-          .select("facility_id, view_count")
-          .gte("view_date", dateStr),
-        supabase
-          .from("leads")
-          .select("facility_id")
-          .gte("created_at", thirtyDaysAgo.toISOString()),
-      ]);
-
-      const stats: Record<string, FacilityStats> = {};
-      
-      viewsRes.data?.forEach((v) => {
-        if (!stats[v.facility_id]) {
-          stats[v.facility_id] = { facility_id: v.facility_id, total_views: 0, total_leads: 0 };
-        }
-        stats[v.facility_id].total_views += v.view_count;
-      });
-
-      leadsRes.data?.forEach((l) => {
-        if (l.facility_id) {
-          if (!stats[l.facility_id]) {
-            stats[l.facility_id] = { facility_id: l.facility_id, total_views: 0, total_leads: 0 };
-          }
-          stats[l.facility_id].total_leads += 1;
-        }
-      });
-
-      return stats;
-    },
-  });
 
   // Toggle pinned status
   const togglePinned = useMutation({
