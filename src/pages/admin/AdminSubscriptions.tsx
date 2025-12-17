@@ -204,9 +204,11 @@ export default function AdminSubscriptions() {
     queryClient.invalidateQueries({ queryKey: ["admin-subscription-stats"] });
     queryClient.invalidateQueries({ queryKey: ["admin-subscriptions-facilities"] });
     queryClient.invalidateQueries({ queryKey: ["admin-subscription-lead-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
+    queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
   }, [queryClient]);
 
-  // Real-time subscriptions for facilities and leads changes - always active
+  // Real-time subscriptions for facilities, leads, and retention changes - always active
   useEffect(() => {
     const facilitiesChannel = supabase
       .channel("admin-subscriptions-facilities-realtime")
@@ -231,6 +233,32 @@ export default function AdminSubscriptions() {
         { event: "INSERT", schema: "public", table: "leads" },
         () => {
           queryClient.invalidateQueries({ queryKey: ["admin-subscription-lead-counts"] });
+          queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
+        }
+      )
+      .subscribe();
+
+    // Real-time for retention outreach alerts
+    const alertsChannel = supabase
+      .channel("admin-retention-alerts-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "subscription_alerts" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
+        }
+      )
+      .subscribe();
+
+    // Real-time for activity log (login events affect re-engagement metrics)
+    const activityChannel = supabase
+      .channel("admin-retention-activity-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "account_activity_log" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
+          queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });
         }
       )
       .subscribe();
@@ -238,6 +266,8 @@ export default function AdminSubscriptions() {
     return () => {
       supabase.removeChannel(facilitiesChannel);
       supabase.removeChannel(leadsChannel);
+      supabase.removeChannel(alertsChannel);
+      supabase.removeChannel(activityChannel);
     };
   }, [invalidateSubscriptionQueries, queryClient]);
 
@@ -938,6 +968,10 @@ export default function AdminSubscriptions() {
 
         {/* Retention Analytics Tab */}
         <TabsContent value="retention" className="space-y-6">
+          {/* At-Risk Providers Section */}
+          <AtRiskProvidersCard />
+          
+          {/* Retention Dashboard with Outreach Analytics */}
           <RetentionDashboard />
         </TabsContent>
 
