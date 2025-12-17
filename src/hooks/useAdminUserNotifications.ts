@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logAdminError } from "@/lib/adminErrorLogger";
 
 export interface AdminUserNotification {
   id: string;
@@ -32,7 +33,7 @@ export function useAdminUserNotifications() {
         .limit(50);
 
       if (error) {
-        console.error("Error fetching admin user notifications:", error);
+        logAdminError("useAdminUserNotifications", "fetch_notifications", error, { queryKey: "admin-user-notifications" });
         return [];
       }
       return (data || []) as AdminUserNotification[];
@@ -40,6 +41,13 @@ export function useAdminUserNotifications() {
     staleTime: 30 * 1000,
     retry: false,
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (error) {
+      logAdminError("useAdminUserNotifications", "query_error", error, { queryKey: "admin-user-notifications" });
+    }
+  }, [error]);
 
   // Real-time subscription for instant updates
   useEffect(() => {
@@ -85,6 +93,7 @@ export function useAdminUserNotifications() {
       queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
     },
     onError: (error: Error) => {
+      logAdminError("useAdminUserNotifications", "mark_as_read", error, { mutation: "markAsRead" });
       toast.error("Failed to mark as read", { description: error.message });
     },
   });
@@ -106,6 +115,7 @@ export function useAdminUserNotifications() {
       toast.success("All notifications marked as read");
     },
     onError: (error: Error) => {
+      logAdminError("useAdminUserNotifications", "mark_all_as_read", error, { mutation: "markAllAsRead" });
       toast.error("Failed to mark all as read", { description: error.message });
     },
   });
@@ -123,6 +133,7 @@ export function useAdminUserNotifications() {
       toast.success("Notification deleted");
     },
     onError: (error: Error) => {
+      logAdminError("useAdminUserNotifications", "delete_notification", error, { mutation: "deleteNotification" });
       toast.error("Failed to delete notification", { description: error.message });
     },
   });
@@ -143,6 +154,7 @@ export function useAdminUserNotifications() {
       toast.success("All notifications cleared");
     },
     onError: (error: Error) => {
+      logAdminError("useAdminUserNotifications", "delete_all", error, { mutation: "deleteAll" });
       toast.error("Failed to clear notifications", { description: error.message });
     },
   });

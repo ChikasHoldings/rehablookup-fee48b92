@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logAdminError } from "@/lib/adminErrorLogger";
 
 export interface AdminNotification {
   id: string;
@@ -26,7 +27,7 @@ export function useAdminNotifications() {
         .limit(100);
 
       if (error) {
-        console.error("Error fetching admin notifications:", error);
+        logAdminError("useAdminNotifications", "fetch_notifications", error, { queryKey: "admin-notifications" });
         return [];
       }
       return (data || []) as AdminNotification[];
@@ -34,6 +35,13 @@ export function useAdminNotifications() {
     staleTime: 30 * 1000,
     retry: false,
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (error) {
+      logAdminError("useAdminNotifications", "query_error", error, { queryKey: "admin-notifications" });
+    }
+  }, [error]);
 
   // Real-time subscription for instant updates
   useEffect(() => {
@@ -79,6 +87,7 @@ export function useAdminNotifications() {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
     },
     onError: (error: Error) => {
+      logAdminError("useAdminNotifications", "mark_as_read", error, { mutation: "markAsRead" });
       toast.error("Failed to mark as read", { description: error.message });
     },
   });
@@ -96,6 +105,7 @@ export function useAdminNotifications() {
       toast.success("All notifications marked as read");
     },
     onError: (error: Error) => {
+      logAdminError("useAdminNotifications", "mark_all_as_read", error, { mutation: "markAllAsRead" });
       toast.error("Failed to mark all as read", { description: error.message });
     },
   });
@@ -112,6 +122,7 @@ export function useAdminNotifications() {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
     },
     onError: (error: Error) => {
+      logAdminError("useAdminNotifications", "delete_notification", error, { mutation: "deleteNotification" });
       toast.error("Failed to delete notification", { description: error.message });
     },
   });
@@ -129,6 +140,7 @@ export function useAdminNotifications() {
       toast.success("All notifications cleared");
     },
     onError: (error: Error) => {
+      logAdminError("useAdminNotifications", "delete_all", error, { mutation: "deleteAll" });
       toast.error("Failed to clear notifications", { description: error.message });
     },
   });
@@ -150,6 +162,7 @@ export function useAdminNotifications() {
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
     },
     onError: (error: Error) => {
+      logAdminError("useAdminNotifications", "create_notification", error, { mutation: "createNotification" });
       toast.error("Failed to create notification", { description: error.message });
     },
   });
