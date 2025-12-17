@@ -63,6 +63,7 @@ import { cn } from "@/lib/utils";
 import { IPWhitelistDialog } from "@/components/admin/IPWhitelistDialog";
 import { BlockedIdentifiersDialog } from "@/components/admin/BlockedIdentifiersDialog";
 import { SecurityAlertsPanel } from "@/components/admin/SecurityAlertsPanel";
+import { RecentNotificationsPanel } from "@/components/admin/RecentNotificationsPanel";
 
 interface SettingRowProps {
   icon: React.ReactNode;
@@ -1840,6 +1841,67 @@ export default function AdminSettings() {
                       </Select>
                     </div>
                   </div>
+                  
+                  {/* Send Now Buttons */}
+                  <div className="flex gap-3 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      disabled={!getSetting('daily_summary_enabled')}
+                      onClick={async () => {
+                        try {
+                          toast.info("Sending daily summary...");
+                          const response = await supabase.functions.invoke("send-admin-daily-summary");
+                          if (response.error) throw response.error;
+                          await logAdminAction({
+                            actionType: AdminAuditActions.PLATFORM_SETTINGS_UPDATED,
+                            targetType: "notifications",
+                            details: { action: "manual_daily_summary_sent" }
+                          });
+                          toast.success("Daily summary sent", {
+                            description: response.data?.message || "Email delivered successfully"
+                          });
+                        } catch (error: any) {
+                          toast.error("Failed to send daily summary", {
+                            description: error.message
+                          });
+                        }
+                      }}
+                    >
+                      <Mail className="h-4 w-4" />
+                      Send Daily Summary Now
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      disabled={!getSetting('weekly_report_enabled')}
+                      onClick={async () => {
+                        try {
+                          toast.info("Sending weekly report...");
+                          const response = await supabase.functions.invoke("send-admin-weekly-report");
+                          if (response.error) throw response.error;
+                          await logAdminAction({
+                            actionType: AdminAuditActions.PLATFORM_SETTINGS_UPDATED,
+                            targetType: "notifications",
+                            details: { action: "manual_weekly_report_sent" }
+                          });
+                          toast.success("Weekly report sent", {
+                            description: response.data?.message || "Email delivered successfully"
+                          });
+                        } catch (error: any) {
+                          toast.error("Failed to send weekly report", {
+                            description: error.message
+                          });
+                        }
+                      }}
+                    >
+                      <FileText className="h-4 w-4" />
+                      Send Weekly Report Now
+                    </Button>
+                  </div>
+                  
                   <Separator className="my-6" />
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="space-y-3">
@@ -2177,6 +2239,9 @@ export default function AdminSettings() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Recent Notifications Panel */}
+              <RecentNotificationsPanel />
             </>
           )}
         </TabsContent>
