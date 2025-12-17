@@ -329,7 +329,7 @@ serve(async (req) => {
                         </ul>
 
                         <div style="text-align: center;">
-                          <a href="${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app')}/admin/subscriptions" class="cta-button">
+                          <a href="https://rehablookup.com/admin/subscriptions" class="cta-button">
                             View At-Risk Providers
                           </a>
                         </div>

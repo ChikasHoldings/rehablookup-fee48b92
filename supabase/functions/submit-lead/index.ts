@@ -173,8 +173,8 @@ function getBasicPlanUpgradeEmail(
   supabaseUrl: string,
   totalLeadsCount: number
 ): { subject: string; html: string } {
-  const billingUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/billing`;
-  const dashboardUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/leads`;
+  const billingUrl = "https://rehablookup.com/provider/billing";
+  const dashboardUrl = "https://rehablookup.com/provider/leads";
   
   const subject = `🔒 New Lead Waiting - Upgrade to View & Contact`;
   
@@ -280,8 +280,8 @@ function getLeadEmailTemplate(
   });
   
   const firstName = leadName.split(' ')[0];
-  const dashboardUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/leads`;
-  const billingUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/billing`;
+  const dashboardUrl = "https://rehablookup.com/provider/leads";
+  const billingUrl = "https://rehablookup.com/provider/billing";
   
   // Plan-specific styling and messaging (Professional and Featured only now)
   const planConfig = {
@@ -525,7 +525,7 @@ async function sendLeadLimitWarningEmail(
     </p>
     
     <div style="text-align: center; margin-top: 28px;">
-      <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/billing" style="display: inline-block; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(27, 54, 93, 0.3);">
+      <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(27, 54, 93, 0.3);">
         🚀 Upgrade Your Plan
       </a>
     </div>
