@@ -222,7 +222,7 @@ export function FacilityLocationDropdown() {
         {canAddMore ? (
           <DropdownMenuItem asChild>
             <Link 
-              to="/provider-signup" 
+              to="/provider/add-location" 
               className="flex items-center gap-2.5 cursor-pointer text-primary py-2.5 px-3"
             >
               <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
