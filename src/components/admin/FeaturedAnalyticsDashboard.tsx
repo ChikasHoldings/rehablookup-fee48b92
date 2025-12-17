@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Eye, 
   MousePointerClick, 
@@ -9,7 +9,11 @@ import {
   Calendar,
   BarChart3,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  RefreshCw,
+  Info,
+  Target,
+  Percent
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +35,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 type DateRange = "7d" | "30d" | "90d";
 
 type FacilityMetrics = {
@@ -45,6 +51,7 @@ type FacilityMetrics = {
 };
 
 export function FeaturedAnalyticsDashboard() {
+  const queryClient = useQueryClient();
   const [dateRange, setDateRange] = useState<DateRange>("30d");
 
   const getDaysFromRange = (range: DateRange) => {
@@ -54,6 +61,48 @@ export function FeaturedAnalyticsDashboard() {
       case "90d": return 90;
     }
   };
+
+  // Real-time subscriptions for live updates
+  useEffect(() => {
+    const analyticsChannel = supabase
+      .channel("featured-analytics-updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "featured_placement_analytics" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["featured-analytics", dateRange] });
+        }
+      )
+      .subscribe();
+
+    const leadsChannel = supabase
+      .channel("featured-leads-updates")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["featured-analytics", dateRange] });
+        }
+      )
+      .subscribe();
+
+    const viewsChannel = supabase
+      .channel("featured-views-updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "facility_views" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["featured-analytics", dateRange] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(analyticsChannel);
+      supabase.removeChannel(leadsChannel);
+      supabase.removeChannel(viewsChannel);
+    };
+  }, [queryClient, dateRange]);
 
   // Fetch analytics data
   const { data: analytics, isLoading } = useQuery({
@@ -182,6 +231,10 @@ export function FeaturedAnalyticsDashboard() {
       // Estimate revenue: $1,099/month per Featured subscriber * number of subscribers
       const estimatedRevenue = featuredIds.length * 1099;
 
+      // Calculate comparison metrics
+      const avgLeadsPerProvider = featuredIds.length > 0 ? totalLeads / featuredIds.length : 0;
+      const topPerformer = facilityMetrics.length > 0 ? facilityMetrics[0] : null;
+
       return {
         totalImpressions,
         totalClicks,
@@ -190,10 +243,18 @@ export function FeaturedAnalyticsDashboard() {
         avgConversion,
         estimatedRevenue,
         facilityMetrics,
+        avgLeadsPerProvider,
+        topPerformer,
+        subscriberCount: featuredIds.length,
       };
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2, // 2 min stale time for faster updates
+    refetchOnWindowFocus: true,
   });
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["featured-analytics", dateRange] });
+  };
 
   if (isLoading) {
     return (
@@ -216,11 +277,23 @@ export function FeaturedAnalyticsDashboard() {
     avgConversion: 0,
     estimatedRevenue: 0,
     facilityMetrics: [],
+    avgLeadsPerProvider: 0,
+    topPerformer: null,
+    subscriberCount: 0,
   };
 
   return (
     <div className="space-y-6">
-      {/* Header with date range selector */}
+      {/* Info Alert */}
+      <Alert className="bg-emerald-50 border-emerald-200">
+        <Info className="h-4 w-4 text-emerald-600" />
+        <AlertDescription className="text-emerald-800">
+          Analytics tracks impressions, clicks, and conversions for Featured plan subscribers. 
+          Data updates in real-time as users interact with featured listings.
+        </AlertDescription>
+      </Alert>
+
+      {/* Header with date range selector and refresh */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -229,93 +302,179 @@ export function FeaturedAnalyticsDashboard() {
           <div>
             <h3 className="font-semibold text-lg">Featured Placement Analytics</h3>
             <p className="text-sm text-muted-foreground">
-              Track performance metrics for Featured plan subscribers
+              Track performance metrics for {data.subscriberCount} Featured plan subscriber{data.subscriberCount !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
-        <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
-          <SelectTrigger className="w-[140px]">
-            <Calendar className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7d">Last 7 Days</SelectItem>
-            <SelectItem value="30d">Last 30 Days</SelectItem>
-            <SelectItem value="90d">Last 90 Days</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+          <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
+            <SelectTrigger className="w-[140px]">
+              <Calendar className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="90d">Last 90 Days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Impressions</p>
-                <p className="text-2xl font-bold">{data.totalImpressions.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">Homepage views</p>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Eye className="h-5 w-5 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Profile Clicks</p>
-                <p className="text-2xl font-bold">{data.totalClicks.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">Click-throughs</p>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                <MousePointerClick className="h-5 w-5 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Leads Generated</p>
-                <p className="text-2xl font-bold">{data.totalLeads.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">Conversions</p>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                <Users className="h-5 w-5 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg CTR</p>
-                <p className="text-2xl font-bold">{data.avgCTR.toFixed(1)}%</p>
-                <div className="flex items-center gap-1 mt-1">
-                  {data.avgCTR >= 2 ? (
-                    <ArrowUpRight className="h-3 w-3 text-green-600" />
-                  ) : (
-                    <ArrowDownRight className="h-3 w-3 text-red-600" />
-                  )}
-                  <span className={`text-xs ${data.avgCTR >= 2 ? "text-green-600" : "text-red-600"}`}>
-                    {data.avgCTR >= 2 ? "Good" : "Below avg"}
-                  </span>
+      <TooltipProvider>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-medium text-muted-foreground">Impressions</p>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Number of times featured listings were shown on the homepage</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold">{data.totalImpressions.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Homepage views</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Eye className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
-              <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-amber-600" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-medium text-muted-foreground">Profile Clicks</p>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Users who clicked through to view provider profiles</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold">{data.totalClicks.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Click-throughs</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <MousePointerClick className="h-5 w-5 text-purple-600" />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-medium text-muted-foreground">Leads Generated</p>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Total leads submitted to featured providers</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold">{data.totalLeads.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Conversions</p>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-medium text-muted-foreground">Avg CTR</p>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Click-through rate: clicks / impressions × 100</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold">{data.avgCTR.toFixed(1)}%</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    {data.avgCTR >= 2 ? (
+                      <ArrowUpRight className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3 text-red-600" />
+                    )}
+                    <span className={`text-xs ${data.avgCTR >= 2 ? "text-green-600" : "text-red-600"}`}>
+                      {data.avgCTR >= 2 ? "Good" : "Below avg"}
+                    </span>
+                  </div>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-amber-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-medium text-muted-foreground">Conv. Rate</p>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Conversion rate: leads / clicks × 100</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold">{data.avgConversion.toFixed(1)}%</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    {data.avgConversion >= 5 ? (
+                      <ArrowUpRight className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3 text-amber-600" />
+                    )}
+                    <span className={`text-xs ${data.avgConversion >= 5 ? "text-green-600" : "text-amber-600"}`}>
+                      {data.avgConversion >= 5 ? "Strong" : "Average"}
+                    </span>
+                  </div>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <Target className="h-5 w-5 text-indigo-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
         <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200">
           <CardContent className="pt-6">
@@ -333,7 +492,8 @@ export function FeaturedAnalyticsDashboard() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </TooltipProvider>
 
       {/* Performance Breakdown Table */}
       <Card>
