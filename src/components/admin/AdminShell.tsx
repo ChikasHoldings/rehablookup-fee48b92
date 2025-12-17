@@ -10,6 +10,7 @@ import { TwoFactorEnforcementDialog } from "./TwoFactorEnforcementDialog";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 
 const MemoizedHeader = memo(AdminHeader);
 const MemoizedSidebar = memo(AdminSidebar);
@@ -63,6 +64,9 @@ export function AdminShell() {
   const mainContentRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Track navigation for Sentry breadcrumbs
+  useSentryBreadcrumbs();
 
   useEffect(() => {
     if (mainContentRef.current) {

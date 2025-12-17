@@ -12,6 +12,7 @@ import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
 import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
+import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 
 // Memoized sidebar to prevent re-renders
 const MemoizedSidebar = memo(ProviderSidebar);
@@ -28,6 +29,9 @@ function ProviderShellContent() {
   const { selectedFacility, isLoading: facilityLoading } = useSelectedFacility();
 
   const { data: providerData, isLoading, error } = useProviderData(selectedFacility?.id);
+  
+  // Track navigation for Sentry breadcrumbs
+  useSentryBreadcrumbs();
 
   // Scroll content area to top on route change
   useEffect(() => {
