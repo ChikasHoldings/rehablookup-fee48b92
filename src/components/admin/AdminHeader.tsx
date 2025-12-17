@@ -365,11 +365,15 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
 
   return (
     <>
-      <header className="sticky top-0 z-50 h-16 border-b bg-slate-900 text-white flex items-center justify-between px-4 lg:px-6">
+      <header className="sticky top-0 z-50 h-16 border-b border-slate-700 bg-slate-900 text-white flex items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
           <Link to="/admin" className="flex items-center gap-2">
-            <Shield className="h-7 w-7 text-amber-400" />
-            <span className="text-xl font-bold hidden sm:inline">RehabLookup</span>
+            <img 
+              src="/logo.svg" 
+              alt="RehabLookup" 
+              className="h-8 w-8 brightness-0 invert"
+            />
+            <span className="text-xl font-bold hidden sm:inline text-white">RehabLookup</span>
             <span className="text-xs bg-amber-400 text-slate-900 px-2 py-0.5 rounded font-semibold uppercase">
               Admin
             </span>
@@ -381,12 +385,12 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
           <div className="hidden md:block">
             <Button
               variant="ghost"
-              className="relative h-9 w-64 justify-start text-sm text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-700"
+              className="relative h-9 w-64 justify-start text-sm text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-600"
               onClick={() => setSearchOpen(true)}
             >
-              <Search className="h-4 w-4 mr-2" />
+              <Search className="h-4 w-4 mr-2 text-slate-300" />
               <span>Search...</span>
-              <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border border-slate-600 bg-slate-800 px-1.5 font-mono text-[10px] font-medium text-slate-400 sm:flex">
+              <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border border-slate-600 bg-slate-800 px-1.5 font-mono text-[10px] font-medium text-slate-300 sm:flex">
                 ⌘K
               </kbd>
             </Button>
@@ -396,7 +400,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden hover:bg-slate-800"
+            className="md:hidden text-white hover:bg-slate-800 hover:text-white"
             onClick={() => setSearchOpen(true)}
           >
             <Search className="h-5 w-5" />
@@ -405,10 +409,14 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
           {/* Notifications Bell */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative hover:bg-slate-800">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative text-white hover:bg-slate-700 hover:text-white transition-colors"
+              >
                 <Bell className={`h-5 w-5 transition-transform ${bellAnimating ? "animate-wiggle" : ""}`} />
                 {unreadCount > 0 && (
-                  <Badge className={`absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs ${bellAnimating ? "animate-pulse" : ""}`}>
+                  <Badge className={`absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs border-2 border-slate-900 ${bellAnimating ? "animate-pulse" : ""}`}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}
@@ -512,8 +520,8 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
           {/* Account Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-slate-800 p-0">
-                <Avatar className="h-9 w-9 ring-2 ring-amber-400/30">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-slate-700 p-0 transition-colors">
+                <Avatar className="h-9 w-9 ring-2 ring-white/20 hover:ring-white/40 transition-all">
                   <AvatarImage 
                     src={adminProfile?.avatar_url || undefined} 
                     alt={adminProfile?.display_name || userEmail || "Admin"} 
