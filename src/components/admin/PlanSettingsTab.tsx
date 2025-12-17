@@ -1,4 +1,4 @@
-import { useState, forwardRef } from "react";
+import { useState, forwardRef, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,6 +88,7 @@ export const PlanSettingsTab = forwardRef<HTMLDivElement>((_, ref) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const previousPromoCodesRef = useRef<string[]>([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -100,7 +101,7 @@ export const PlanSettingsTab = forwardRef<HTMLDivElement>((_, ref) => {
     maxRedemptions: "",
   });
 
-  // Fetch coupons and promo codes
+  // Fetch coupons and promo codes with auto-refresh
   const { data: couponData, isLoading, refetch } = useQuery({
     queryKey: ["admin-coupons"],
     queryFn: async () => {
@@ -110,7 +111,31 @@ export const PlanSettingsTab = forwardRef<HTMLDivElement>((_, ref) => {
       if (error) throw error;
       return data as { coupons: Coupon[]; promoCodes: PromoCode[] };
     },
+    refetchInterval: 15000, // Auto-refresh every 15 seconds for real-time updates
   });
+
+  // Detect new promo codes and show notification
+  useEffect(() => {
+    if (couponData?.promoCodes) {
+      const currentCodes = couponData.promoCodes.map(p => p.id);
+      const previousCodes = previousPromoCodesRef.current;
+      
+      // Only check if we have previous data (not initial load)
+      if (previousCodes.length > 0) {
+        const newCodes = currentCodes.filter(id => !previousCodes.includes(id));
+        if (newCodes.length > 0) {
+          const newPromo = couponData.promoCodes.find(p => newCodes.includes(p.id));
+          if (newPromo) {
+            toast.info(`New promo code detected: ${newPromo.code}`, {
+              description: "The list has been updated automatically",
+            });
+          }
+        }
+      }
+      
+      previousPromoCodesRef.current = currentCodes;
+    }
+  }, [couponData?.promoCodes]);
 
   // Create coupon mutation
   const createMutation = useMutation({
