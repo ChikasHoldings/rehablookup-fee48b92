@@ -560,7 +560,7 @@ export default function AdminProfile() {
       
       // Log audit action
       await logAdminAction({
-        actionType: "session_revoked",
+        actionType: AdminAuditActions.SESSION_REVOKED,
         targetType: "user_session",
         targetId: sessionId,
         details: { revokedAt: new Date().toISOString() },
@@ -614,7 +614,7 @@ export default function AdminProfile() {
       
       // Log audit action
       await logAdminAction({
-        actionType: "session_revoked",
+        actionType: AdminAuditActions.SESSION_REVOKED,
         targetType: "user_sessions",
         targetId: userData.id,
         details: { 
