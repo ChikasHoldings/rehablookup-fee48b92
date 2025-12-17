@@ -40,7 +40,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type AuditLog = {
@@ -180,12 +179,8 @@ export default function AdminAuditLog() {
           schema: "public",
           table: "admin_audit_log",
         },
-        (payload) => {
-          console.log("New audit log entry:", payload.eventType);
+        () => {
           invalidateAuditLog();
-          toast.info("New admin action logged", {
-            description: `Action: ${(payload.new as AuditLog).action_type.replace(/_/g, " ")}`,
-          });
         }
       )
       .subscribe();

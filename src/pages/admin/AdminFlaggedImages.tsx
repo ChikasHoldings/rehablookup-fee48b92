@@ -106,15 +106,8 @@ export default function AdminFlaggedImages() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "flagged_images" },
-        (payload) => {
-          console.log("Flagged images update:", payload.eventType);
+        () => {
           invalidateFlaggedQueries();
-          
-          if (payload.eventType === "INSERT") {
-            toast.info("New image flagged", { description: "Review queue updated" });
-          } else if (payload.eventType === "UPDATE") {
-            toast.info("Flag status updated", { description: "Data refreshed" });
-          }
         }
       )
       .subscribe();

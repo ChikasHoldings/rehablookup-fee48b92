@@ -18,7 +18,6 @@ import {
   UserPlus,
   Sparkles,
   ChevronRight,
-  RefreshCw,
   PieChart as PieChartIcon,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip, AreaChart, Area } from "recharts";
@@ -29,7 +28,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { toast } from "sonner";
 import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityWidget";
 
 // Subscription plan colors
@@ -121,12 +119,8 @@ export default function AdminDashboard() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "facilities" },
-        (payload) => {
-          console.log("Facility change detected:", payload);
+        () => {
           invalidateDashboard();
-          if (payload.eventType === "INSERT") {
-            toast.info("New provider registered", { description: "Dashboard updated" });
-          }
         }
       )
       .subscribe();
@@ -136,12 +130,8 @@ export default function AdminDashboard() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "leads" },
-        (payload) => {
-          console.log("Lead change detected:", payload);
+        () => {
           invalidateDashboard();
-          if (payload.eventType === "INSERT") {
-            toast.info("New lead received", { description: "Dashboard updated" });
-          }
         }
       )
       .subscribe();
