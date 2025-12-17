@@ -68,6 +68,7 @@ import { LeadProfileModal } from "@/components/leads/LeadProfileModal";
 import { RoutingLogsTable } from "@/components/admin/RoutingLogsTable";
 import { cn } from "@/lib/utils";
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 
 // Source label mapping
 const SOURCE_LABELS: Record<string, string> = {
@@ -299,6 +300,7 @@ function UrgencyIndicator({ urgency }: { urgency: string | null }) {
 export default function AdminLeads() {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const { logError, logInfo } = useAdminErrorHandler("AdminLeads");
   const [searchQuery, setSearchQuery] = useState("");
   const [assignmentFilter, setAssignmentFilter] = useState(
     searchParams.get("unassigned") === "true" ? "unassigned" : "all"
@@ -364,43 +366,48 @@ export default function AdminLeads() {
   const { data: totalCount } = useQuery({
     queryKey: ["admin-leads-count", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
-      let query = supabase
-        .from("leads")
-        .select("id", { count: "exact", head: true });
+      try {
+        let query = supabase
+          .from("leads")
+          .select("id", { count: "exact", head: true });
 
-      if (assignmentFilter === "unassigned") {
-        query = query.is("facility_id", null);
-      } else if (assignmentFilter === "assigned") {
-        query = query.not("facility_id", "is", null);
-      }
+        if (assignmentFilter === "unassigned") {
+          query = query.is("facility_id", null);
+        } else if (assignmentFilter === "assigned") {
+          query = query.not("facility_id", "is", null);
+        }
 
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
+        if (statusFilter !== "all") {
+          query = query.eq("status", statusFilter);
+        }
 
-      if (urgencyFilter !== "all") {
-        query = query.eq("urgency", urgencyFilter);
-      }
+        if (urgencyFilter !== "all") {
+          query = query.eq("urgency", urgencyFilter);
+        }
 
-      if (qualifiedFilter !== "all") {
-        query = query.eq("qualified", qualifiedFilter === "qualified");
-      }
+        if (qualifiedFilter !== "all") {
+          query = query.eq("qualified", qualifiedFilter === "qualified");
+        }
 
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
-      }
+        if (searchQuery) {
+          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+        }
 
-      // Date range filter
-      if (dateRange.from) {
-        query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
-      }
-      if (dateRange.to) {
-        query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
-      }
+        // Date range filter
+        if (dateRange.from) {
+          query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+        }
+        if (dateRange.to) {
+          query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
+        }
 
-      const { count, error } = await query;
-      if (error) throw error;
-      return count || 0;
+        const { count, error } = await query;
+        if (error) throw error;
+        return count || 0;
+      } catch (error) {
+        logError("fetch_leads_count", error, { assignmentFilter, statusFilter });
+        throw error;
+      }
     },
   });
 
@@ -408,48 +415,53 @@ export default function AdminLeads() {
   const { data: leads, isLoading } = useQuery({
     queryKey: ["admin-leads", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      try {
+        const from = (currentPage - 1) * ITEMS_PER_PAGE;
+        const to = from + ITEMS_PER_PAGE - 1;
 
-      let query = supabase
-        .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, to);
+        let query = supabase
+          .from("leads")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, to);
 
-      if (assignmentFilter === "unassigned") {
-        query = query.is("facility_id", null);
-      } else if (assignmentFilter === "assigned") {
-        query = query.not("facility_id", "is", null);
+        if (assignmentFilter === "unassigned") {
+          query = query.is("facility_id", null);
+        } else if (assignmentFilter === "assigned") {
+          query = query.not("facility_id", "is", null);
+        }
+
+        if (statusFilter !== "all") {
+          query = query.eq("status", statusFilter);
+        }
+
+        if (urgencyFilter !== "all") {
+          query = query.eq("urgency", urgencyFilter);
+        }
+
+        if (qualifiedFilter !== "all") {
+          query = query.eq("qualified", qualifiedFilter === "qualified");
+        }
+
+        if (searchQuery) {
+          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+        }
+
+        // Date range filter
+        if (dateRange.from) {
+          query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+        }
+        if (dateRange.to) {
+          query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data as Lead[];
+      } catch (error) {
+        logError("fetch_leads", error, { assignmentFilter, statusFilter, currentPage });
+        throw error;
       }
-
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-
-      if (urgencyFilter !== "all") {
-        query = query.eq("urgency", urgencyFilter);
-      }
-
-      if (qualifiedFilter !== "all") {
-        query = query.eq("qualified", qualifiedFilter === "qualified");
-      }
-
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
-      }
-
-      // Date range filter
-      if (dateRange.from) {
-        query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
-      }
-      if (dateRange.to) {
-        query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Lead[];
     },
   });
 

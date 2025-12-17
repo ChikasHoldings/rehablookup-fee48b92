@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityWidget";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 
 // Subscription plan colors
 const PLAN_COLORS = {
@@ -101,6 +102,7 @@ const Sparkline = memo(forwardRef<HTMLDivElement, SparklineProps>(function Spark
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { logError, logInfo } = useAdminErrorHandler("AdminDashboard");
 
   // Invalidate all dashboard queries
   const invalidateDashboard = useCallback(() => {
@@ -148,9 +150,22 @@ export default function AdminDashboard() {
   const { data: revenueStats, isLoading: loadingRevenue } = useQuery<RevenueStats>({
     queryKey: ["admin-revenue-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("get-revenue-stats");
-      if (error) {
-        console.error("Error fetching revenue stats:", error);
+      try {
+        const { data, error } = await supabase.functions.invoke("get-revenue-stats");
+        if (error) {
+          logError("fetch_revenue_stats", error);
+          return {
+            monthlyRevenue: 0,
+            previousMonthRevenue: 0,
+            percentChange: 0,
+            activeSubscriptions: 0,
+            totalCustomers: 0,
+            configured: false,
+          };
+        }
+        return data;
+      } catch (error) {
+        logError("fetch_revenue_stats", error);
         return {
           monthlyRevenue: 0,
           previousMonthRevenue: 0,
@@ -160,7 +175,6 @@ export default function AdminDashboard() {
           configured: false,
         };
       }
-      return data;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });

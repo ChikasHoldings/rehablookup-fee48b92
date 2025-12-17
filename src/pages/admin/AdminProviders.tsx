@@ -93,6 +93,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 
 type Facility = {
   id: string;
@@ -170,6 +171,7 @@ const ITEMS_PER_PAGE = 15;
 
 export default function AdminProviders() {
   const queryClient = useQueryClient();
+  const { logError, logInfo } = useAdminErrorHandler("AdminProviders");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [selectedProvider, setSelectedProvider] = useState<Facility | null>(null);
@@ -240,19 +242,24 @@ export default function AdminProviders() {
   const { data: statusCounts } = useQuery({
     queryKey: ["admin-providers-status-counts"],
     queryFn: async () => {
-      const [allResult, approvedResult, pendingResult, suspendedResult] = await Promise.all([
-        supabase.from("facilities").select("id", { count: "exact", head: true }),
-        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved").neq("suspended", true),
-        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
-      ]);
+      try {
+        const [allResult, approvedResult, pendingResult, suspendedResult] = await Promise.all([
+          supabase.from("facilities").select("id", { count: "exact", head: true }),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved").neq("suspended", true),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
+        ]);
 
-      return {
-        all: allResult.count || 0,
-        approved: approvedResult.count || 0,
-        pending: pendingResult.count || 0,
-        suspended: suspendedResult.count || 0,
-      };
+        return {
+          all: allResult.count || 0,
+          approved: approvedResult.count || 0,
+          pending: pendingResult.count || 0,
+          suspended: suspendedResult.count || 0,
+        };
+      } catch (error) {
+        logError("fetch_status_counts", error);
+        throw error;
+      }
     },
   });
 
@@ -260,30 +267,35 @@ export default function AdminProviders() {
   const { data: providers, isLoading } = useQuery({
     queryKey: ["admin-providers", activeTab, searchQuery, currentPage],
     queryFn: async () => {
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      try {
+        const from = (currentPage - 1) * ITEMS_PER_PAGE;
+        const to = from + ITEMS_PER_PAGE - 1;
 
-      let query = supabase
-        .from("facilities")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, to);
+        let query = supabase
+          .from("facilities")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, to);
 
-      if (activeTab === "approved") {
-        query = query.eq("status", "approved").neq("suspended", true);
-      } else if (activeTab === "pending") {
-        query = query.eq("status", "pending");
-      } else if (activeTab === "suspended") {
-        query = query.eq("suspended", true);
+        if (activeTab === "approved") {
+          query = query.eq("status", "approved").neq("suspended", true);
+        } else if (activeTab === "pending") {
+          query = query.eq("status", "pending");
+        } else if (activeTab === "suspended") {
+          query = query.eq("suspended", true);
+        }
+
+        if (searchQuery) {
+          query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data as Facility[];
+      } catch (error) {
+        logError("fetch_providers", error, { activeTab, searchQuery, currentPage });
+        throw error;
       }
-
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Facility[];
     },
   });
 
