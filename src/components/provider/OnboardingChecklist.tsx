@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, forwardRef } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -82,8 +82,7 @@ function triggerCelebration() {
   }, 250);
 }
 
-export const OnboardingChecklist = forwardRef<HTMLDivElement, OnboardingChecklistProps>(
-  function OnboardingChecklist({ facilityId, facilityData }, ref) {
+export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChecklistProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [showCelebration, setShowCelebration] = useState(false);
   const celebrationTriggeredRef = useRef(false);
@@ -434,6 +433,4 @@ export const OnboardingChecklist = forwardRef<HTMLDivElement, OnboardingChecklis
       </Card>
     </Collapsible>
   );
-});
-
-OnboardingChecklist.displayName = "OnboardingChecklist";
+}
