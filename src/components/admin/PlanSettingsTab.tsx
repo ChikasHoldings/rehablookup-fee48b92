@@ -103,7 +103,6 @@ type PromoRedemption = {
   customerName: string;
   redeemedAt: number;
   subscriptionId?: string;
-  sessionId?: string;
 };
 
 type PromoAnalytics = {
