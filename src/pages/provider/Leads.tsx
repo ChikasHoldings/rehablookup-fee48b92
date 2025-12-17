@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   Users, 
@@ -17,6 +17,8 @@ import {
   ChevronLeft,
   Zap,
   Building2,
+  Phone,
+  Mail,
 } from "lucide-react";
 import {
   Select,
@@ -37,16 +39,18 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, isWithinInterval, startOfDay, endOfDay, formatDistanceToNow } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { LeadScoreBadge } from "@/components/provider/leads/LeadScoreBadge";
 import { LeadDetailPanel, type Lead } from "@/components/provider/leads/LeadDetailPanel";
+import { MobileLeadCard } from "@/components/provider/leads/MobileLeadCard";
 import { calculateLeadScore } from "@/lib/leadScoring";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { toast } from "sonner";
+import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 
 interface DateRange {
   from: Date | undefined;
@@ -73,8 +77,9 @@ export default function ProviderLeadsPage() {
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailLead, setEmailLead] = useState<LeadWithFacility | null>(null);
   
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { facilities } = useProviderFacilities();
   const { data: subscription } = useSubscription();
@@ -163,7 +168,7 @@ export default function ProviderLeadsPage() {
           if (facilityIds.includes(newLead.facility_id)) {
             queryClient.invalidateQueries({ queryKey: ["provider-leads-all"] });
             const facilityName = facilityMap.get(newLead.facility_id)?.name || "your facility";
-            toast({ title: "🎉 New Lead!", description: `${newLead.name} submitted a request to ${facilityName}` });
+            toast.success(`🎉 New Lead! ${newLead.name} submitted a request to ${facilityName}`);
           }
         }
       )
@@ -177,7 +182,7 @@ export default function ProviderLeadsPage() {
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [facilityIds, facilityMap, queryClient, toast]);
+  }, [facilityIds, facilityMap, queryClient]);
 
   // Sync selectedLead with leads data to reflect real-time updates
   useEffect(() => {
@@ -235,6 +240,41 @@ export default function ProviderLeadsPage() {
   const clearFilters = () => { setSearchQuery(""); setStatusFilter("all"); setSourceFilter("all"); setFacilityFilter("all"); setDateRange({ from: undefined, to: undefined }); };
   const hasFilters = searchQuery || statusFilter !== "all" || sourceFilter !== "all" || facilityFilter !== "all" || dateRange.from || dateRange.to;
 
+  // Status update mutation for mobile swipe actions
+  const updateStatus = useMutation({
+    mutationFn: async ({ leadId, newStatus }: { leadId: string; newStatus: LeadStatus }) => {
+      const { error } = await supabase.from("leads").update({ status: newStatus }).eq("id", leadId);
+      if (error) throw error;
+      return newStatus;
+    },
+    onSuccess: (newStatus) => {
+      toast.success(`Status changed to ${newStatus?.replace("_", " ")}`);
+      queryClient.invalidateQueries({ queryKey: ["provider-leads-all"] });
+    },
+    onError: () => {
+      toast.error("Failed to update status");
+    },
+  });
+
+  // Mobile action handlers
+  const handleMobileCall = useCallback((lead: LeadWithFacility) => {
+    window.location.href = `tel:${lead.phone}`;
+    // Auto-update status to contacted if new
+    if (lead.status === 'new') {
+      updateStatus.mutate({ leadId: lead.id, newStatus: 'contacted' });
+    }
+  }, [updateStatus]);
+
+  const handleMobileEmail = useCallback((lead: LeadWithFacility) => {
+    setEmailLead(lead);
+    setShowEmailDialog(true);
+  }, []);
+
+  const handleMobileMarkContacted = useCallback((lead: LeadWithFacility) => {
+    const nextStatus: LeadStatus = lead.status === 'contacted' ? 'in_progress' : 'contacted';
+    updateStatus.mutate({ leadId: lead.id, newStatus: nextStatus });
+  }, [updateStatus]);
+
   // Basic plan: ALL leads are always locked/blurred to encourage upgrade
   const isLeadLocked = (lead: Lead, index: number) => {
     if (currentPlan === "basic") return true; // Always locked for basic plan
@@ -276,9 +316,11 @@ export default function ProviderLeadsPage() {
               <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
                 {isMobile && mobileView === 'detail' 
                   ? 'Swipe right to go back'
-                  : currentPlan === "basic"
-                    ? `${totalLeadsCount}/1 lifetime lead`
-                    : `${leads.length} total • ${thisMonthQualified.length}/${leadLimit} qualified`
+                  : isMobile && mobileView === 'list' && leads.length > 0 && currentPlan !== "basic"
+                    ? 'Swipe cards for quick actions'
+                    : currentPlan === "basic"
+                      ? `${totalLeadsCount}/1 lifetime lead`
+                      : `${leads.length} total • ${thisMonthQualified.length}/${leadLimit} qualified`
                 }
               </p>
             </div>
@@ -551,13 +593,32 @@ export default function ProviderLeadsPage() {
                   </div>
                 )}
                 
-                <div className={cn("space-y-2.5", currentPlan === "basic" && leads.length > 0 && "blur-sm pointer-events-none")}>
+                <div className={cn("space-y-3", currentPlan === "basic" && leads.length > 0 && "blur-sm pointer-events-none")}>
                   {filteredLeads.map((lead, idx) => {
                     const locked = isLeadLocked(lead, idx);
                     const selected = selectedLead?.id === lead.id;
-                    const location = lead.location_city_state || (lead.location_zip ? `ZIP: ${lead.location_zip}` : null);
                     const isQualified = lead.source === "Request Help Page";
                     
+                    // Use MobileLeadCard on mobile for swipe actions
+                    if (isMobile) {
+                      return (
+                        <MobileLeadCard
+                          key={lead.id}
+                          lead={lead}
+                          isSelected={selected}
+                          isLocked={locked}
+                          isQualified={isQualified}
+                          showFacility={facilities.length > 1}
+                          onSelect={() => handleSelectLead(lead)}
+                          onCall={() => handleMobileCall(lead)}
+                          onEmail={() => handleMobileEmail(lead)}
+                          onMarkContacted={() => handleMobileMarkContacted(lead)}
+                        />
+                      );
+                    }
+                    
+                    // Desktop card (original)
+                    const location = lead.location_city_state || (lead.location_zip ? `ZIP: ${lead.location_zip}` : null);
                     return (
                       <button
                         key={lead.id}
@@ -696,6 +757,18 @@ export default function ProviderLeadsPage() {
           />
         </div>
       </div>
+
+      {/* Email Dialog for Mobile Swipe Actions */}
+      {emailLead && (
+        <EmailLeadDialog
+          open={showEmailDialog}
+          onOpenChange={(open) => {
+            setShowEmailDialog(open);
+            if (!open) setEmailLead(null);
+          }}
+          lead={emailLead}
+        />
+      )}
     </div>
   );
 }
