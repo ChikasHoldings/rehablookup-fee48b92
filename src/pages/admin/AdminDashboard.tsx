@@ -98,7 +98,7 @@ const Sparkline = memo(forwardRef<HTMLDivElement, SparklineProps>(function Spark
   );
 }));
 
-export default function AdminDashboard() {
+const AdminDashboard = forwardRef<HTMLDivElement>(function AdminDashboard(_, ref) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -954,4 +954,6 @@ export default function AdminDashboard() {
       </Card>
     </div>
   );
-}
+});
+
+export default AdminDashboard;
