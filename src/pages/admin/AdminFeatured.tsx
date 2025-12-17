@@ -602,10 +602,6 @@ export default function AdminFeatured() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
           <Badge variant="outline" className="px-3 py-1.5 text-amber-700 bg-amber-50 border-amber-200">
             <Crown className="h-3.5 w-3.5 mr-1.5" />
             {autoFeaturedFacilities.length} Auto

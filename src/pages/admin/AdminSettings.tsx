@@ -648,23 +648,9 @@ export default function AdminSettings() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-          <p className="text-muted-foreground">Manage platform configuration and preferences</p>
-        </div>
-        <Button 
-          variant="outline" 
-          className="gap-2"
-          onClick={() => {
-            refetchStats();
-            toast.success("Status refreshed");
-          }}
-          disabled={loadingStats}
-        >
-          <RefreshCw className={cn("h-4 w-4", loadingStats && "animate-spin")} />
-          Refresh Status
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground">Manage platform configuration and preferences</p>
       </div>
 
       {/* Tabs */}

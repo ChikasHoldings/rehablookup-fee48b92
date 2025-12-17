@@ -861,15 +861,6 @@ export default function AdminProfile() {
               <CardDescription>Manage your active sessions across devices</CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refetchSessions()}
-                className="gap-1.5"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </Button>
               {otherSessions.length > 0 && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -1523,15 +1514,6 @@ export default function AdminProfile() {
               </CardTitle>
               <CardDescription>Your recent actions in the admin panel</CardDescription>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-activity"] })}
-              className="gap-1.5"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </Button>
           </div>
         </CardHeader>
         <CardContent>

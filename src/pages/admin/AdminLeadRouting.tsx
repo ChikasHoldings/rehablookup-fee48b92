@@ -258,17 +258,11 @@ export default function AdminLeadRouting() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Lead Routing Analytics</h1>
-          <p className="text-slate-600 mt-1">
-            Track lead assignments and re-routing history
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Lead Routing Analytics</h1>
+        <p className="text-muted-foreground mt-1">
+          Track lead assignments and re-routing history
+        </p>
       </div>
 
       {/* Statistics Cards */}
