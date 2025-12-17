@@ -46,6 +46,10 @@ export const AdminAuditActions = {
   PROFILE_NAME_UPDATED: "profile_name_updated",
   PASSWORD_CHANGED: "password_changed",
   
+  // Session actions
+  SESSION_REVOKED: "session_revoked",
+  LOGIN: "login",
+  
   // Notification actions
   NOTIFICATIONS_MARKED_READ: "notifications_marked_read",
   NOTIFICATIONS_CLEARED: "notifications_cleared",
@@ -90,6 +94,8 @@ export const AdminAuditActions = {
   FEATURED_ORDER_UPDATED: "featured_order_updated",
   LEGACY_FEATURED: "legacy_featured",
   LEGACY_UNFEATURED: "legacy_unfeatured",
+  PINNED_FEATURED: "pinned_featured",
+  UNPINNED_FEATURED: "unpinned_featured",
   
   // Image moderation
   IMAGE_FLAGGED: "image_flagged",
