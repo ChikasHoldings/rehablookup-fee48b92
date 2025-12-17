@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
 import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 
 // Memoized sidebar to prevent re-renders
 const MemoizedSidebar = memo(ProviderSidebar);
@@ -41,15 +42,25 @@ function ProviderShellContent() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        clearSentryUser();
         navigate("/provider-login", { replace: true });
         return;
       }
+      
+      // Set Sentry user context for error tracking
+      setSentryUser({
+        id: session.user.id,
+        email: session.user.email,
+        role: "provider",
+      });
+      
       setIsAuthChecked(true);
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!session) {
+          clearSentryUser();
           navigate("/provider-login", { replace: true });
         }
       }
@@ -73,6 +84,7 @@ function ProviderShellContent() {
       });
     }
     
+    clearSentryUser();
     await supabase.auth.signOut();
     // Clear provider data cache on logout
     queryClient.removeQueries({ queryKey: ["provider-data"] });

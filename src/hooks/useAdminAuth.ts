@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 
 // Map routes to permission keys
 const routePermissionMap: Record<string, string> = {
@@ -210,6 +211,7 @@ export function useAdminAuth() {
           setForcePasswordChange(false);
           setRequireMfaSetup(false);
           setIsLoading(false);
+          clearSentryUser();
           navigate("/admin-login", { replace: true });
           return;
         }
@@ -231,6 +233,15 @@ export function useAdminAuth() {
             setForcePasswordChange(profile?.force_password_change === true);
             // Require MFA setup if admin but no verified TOTP factor and not skipped
             setRequireMfaSetup(adminStatus && !hasMfa && profile?.mfa_skip !== true);
+            
+            // Set Sentry user context for error tracking
+            if (adminStatus) {
+              setSentryUser({
+                id: session.user.id,
+                email: session.user.email,
+                role: "admin",
+              });
+            }
             
             if (!adminStatus) {
               navigate("/", { replace: true });
@@ -273,6 +284,15 @@ export function useAdminAuth() {
           // Require MFA setup if admin but no verified TOTP factor and not skipped
           setRequireMfaSetup(adminStatus && !hasMfa && profile?.mfa_skip !== true);
           
+          // Set Sentry user context for error tracking
+          if (adminStatus) {
+            setSentryUser({
+              id: session.user.id,
+              email: session.user.email,
+              role: "admin",
+            });
+          }
+          
           if (!adminStatus) {
             navigate("/", { replace: true });
           }
@@ -293,6 +313,7 @@ export function useAdminAuth() {
   }, [navigate, checkAdminStatus, checkSuperAdminStatus, fetchPermissions, fetchAdminProfile, checkMfaStatus]);
 
   const logout = async () => {
+    clearSentryUser();
     await supabase.auth.signOut();
     navigate("/admin-login", { replace: true });
   };

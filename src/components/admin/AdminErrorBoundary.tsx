@@ -1,8 +1,8 @@
 import React from "react";
-import * as Sentry from "@sentry/react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { captureError } from "@/lib/sentry";
 
 interface Props {
   children: React.ReactNode;
@@ -29,8 +29,8 @@ export class AdminErrorBoundary extends React.Component<Props, State> {
     console.error("Component stack:", errorInfo?.componentStack);
     
     // Report to Sentry
-    Sentry.captureException(error, {
-      tags: { panel: "admin" },
+    captureError(error, {
+      panel: "admin",
       extra: {
         componentStack: errorInfo?.componentStack,
       },
