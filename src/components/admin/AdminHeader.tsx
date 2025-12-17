@@ -53,7 +53,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
   const lastLeadsCountRef = useRef<number | null>(null);
 
   // Fetch admin profile for avatar
-  const { data: adminProfile } = useQuery({
+  const { data: adminProfile, refetch: refetchAdminProfile } = useQuery({
     queryKey: ["admin-header-profile", userId],
     queryFn: async () => {
       if (!userId) return null;
@@ -65,8 +65,33 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
       return data;
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds for faster updates
   });
+
+  // Real-time subscription for admin profile updates (avatar changes)
+  useEffect(() => {
+    if (!userId) return;
+    
+    const profileChannel = supabase
+      .channel("admin-header-profile-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "admin_user_profiles",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-header-profile", userId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profileChannel);
+    };
+  }, [userId, queryClient]);
   
   // Get user-specific admin notifications
   const { 
@@ -478,41 +503,81 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
           {/* Account Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-slate-800">
-                <Avatar className="h-9 w-9">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-slate-800 p-0">
+                <Avatar className="h-9 w-9 ring-2 ring-amber-400/30">
                   <AvatarImage 
                     src={adminProfile?.avatar_url || undefined} 
                     alt={adminProfile?.display_name || userEmail || "Admin"} 
+                    className="object-cover"
                   />
-                  <AvatarFallback className="bg-amber-400 text-slate-900 font-semibold">
+                  <AvatarFallback className="bg-amber-400 text-slate-900 font-semibold text-sm">
                     {adminProfile?.display_name?.slice(0, 2).toUpperCase() || initials}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-background" align="end">
-              <div className="px-2 py-1.5">
-                <p className="text-sm font-medium">{adminProfile?.display_name || userEmail}</p>
-                <p className="text-xs text-muted-foreground">Administrator</p>
+            <DropdownMenuContent className="w-64 bg-background" align="end" sideOffset={8}>
+              {/* Profile Header Section */}
+              <div className="flex items-center gap-3 px-3 py-3 border-b">
+                <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                  <AvatarImage 
+                    src={adminProfile?.avatar_url || undefined} 
+                    alt={adminProfile?.display_name || userEmail || "Admin"}
+                    className="object-cover" 
+                  />
+                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                    {adminProfile?.display_name?.slice(0, 2).toUpperCase() || initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <p className="text-sm font-semibold truncate">
+                    {adminProfile?.display_name || "Admin User"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+                  <Badge variant="secondary" className="w-fit mt-1 text-[10px] h-5 px-1.5">
+                    Administrator
+                  </Badge>
+                </div>
               </div>
+              
+              {/* Menu Items */}
+              <div className="py-1">
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/profile" className="flex items-center gap-2 cursor-pointer px-3 py-2">
+                    <User className="h-4 w-4" />
+                    My Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/notifications" className="flex items-center gap-2 cursor-pointer px-3 py-2">
+                    <Bell className="h-4 w-4" />
+                    Notifications
+                    {userUnreadCount > 0 && (
+                      <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-[10px]">
+                        {userUnreadCount}
+                      </Badge>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer px-3 py-2">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+              </div>
+              
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/admin/profile" className="flex items-center gap-2 cursor-pointer">
-                  <User className="h-4 w-4" />
-                  My Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onLogout} className="text-destructive cursor-pointer">
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </DropdownMenuItem>
+              
+              <div className="py-1">
+                <DropdownMenuItem 
+                  onClick={onLogout} 
+                  className="text-destructive cursor-pointer px-3 py-2 focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

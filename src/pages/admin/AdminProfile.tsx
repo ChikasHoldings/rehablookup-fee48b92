@@ -435,8 +435,9 @@ export default function AdminProfile() {
       // Force avatar refresh
       setAvatarKey(timestamp);
       
-      // Invalidate and refetch profile
+      // Invalidate and refetch profile - including header profile for real-time avatar update
       await queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-header-profile"] });
       await refetchProfile();
       
       // Log audit action
@@ -481,6 +482,7 @@ export default function AdminProfile() {
       if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-header-profile"] });
       
       // Log audit action
       await logAdminAction({
