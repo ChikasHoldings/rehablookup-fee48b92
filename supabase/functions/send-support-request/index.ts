@@ -98,53 +98,81 @@ const handler = async (req: Request): Promise<Response> => {
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support Request</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
-  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <div style="background: #1B365D; padding: 20px; text-align: center;">
-      <h1 style="color: #fff; margin: 0; font-size: 16px; font-weight: 600;">Support Request: ${categoryLabel}</h1>
-    </div>
-    
-    <div style="padding: 24px;">
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
-        <tr>
-          <td style="padding: 6px 0; color: #64748b; width: 80px;">From:</td>
-          <td style="padding: 6px 0;">${providerName}</td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; color: #64748b;">Email:</td>
-          <td style="padding: 6px 0;"><a href="mailto:${providerEmail}" style="color: #1B365D;">${providerEmail}</a></td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; color: #64748b;">Facility:</td>
-          <td style="padding: 6px 0;">${facilityInfo}</td>
-        </tr>
-      </table>
-      
-      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-        <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Subject</p>
-        <p style="margin: 0; font-weight: 500;">${subject}</p>
-      </div>
-      
-      <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
-        <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Message</p>
-        <p style="margin: 0; white-space: pre-wrap;">${message}</p>
-      </div>
-      
-      <p style="font-size: 11px; color: #94a3b8; margin: 16px 0 0 0;">
-        User ID: ${user.id}
-      </p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: #1B365D; padding: 24px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600;">
+                Support Request: ${categoryLabel}
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px;">
+              <!-- Contact Info Table -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; width: 90px;">From:</td>
+                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a;">${providerName}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">Email:</td>
+                  <td style="padding: 8px 0;"><a href="mailto:${providerEmail}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1B365D; text-decoration: none;">${providerEmail}</a></td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">Facility:</td>
+                  <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a;">${facilityInfo}</td>
+                </tr>
+              </table>
+              
+              <!-- Subject Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 10px; margin-bottom: 16px;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Subject</p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 500; color: #1a1a1a;">${subject}</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Message Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 10px;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Message</p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #1a1a1a; white-space: pre-wrap; line-height: 1.6;">${message}</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #94a3b8;">
+                User ID: ${user.id}
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;
 
     const resend = new Resend(resendApiKey);
     const emailResponse = await resend.emails.send({
-      from: "RehabLookup Support <noreply@resend.dev>",
-      to: ["providers@rehablookup.com"],
+      from: "RehabLookup Support <no-reply@rehablookup.com>",
+      to: ["help@rehablookup.com"],
       subject: `[${categoryLabel}] ${subject}`,
       html: emailHtml,
       reply_to: providerEmail,

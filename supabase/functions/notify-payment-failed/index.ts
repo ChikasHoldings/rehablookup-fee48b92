@@ -99,46 +99,84 @@ serve(async (req) => {
     }
 
     // Admin email
-    const adminEmail = "admin@rehablookup.com";
+    const adminEmail = "help@rehablookup.com";
     const adminEmailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Failed</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
-  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 24px; text-align: center;">
-      <h1 style="color: #fff; margin: 0; font-size: 18px; font-weight: 600;">Payment Failed</h1>
-    </div>
-    
-    <div style="padding: 28px;">
-      <div style="background: #fef2f2; border-left: 3px solid #dc2626; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
-        <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 15px;">${providerName}</p>
-        ${facilityName ? `<p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">${facilityName}</p>` : ""}
-        <p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">${providerEmail}</p>
-        ${amount ? `<p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">Amount: ${currency?.toUpperCase() || "USD"} ${(amount / 100).toFixed(2)}</p>` : ""}
-        ${failureReason ? `<p style="margin: 0; font-size: 13px; color: #dc2626;">Reason: ${failureReason}</p>` : ""}
-      </div>
-      
-      <p style="margin: 0 0 20px 0; font-size: 14px; color: #64748b;">The provider has been notified to update their payment method.</p>
-      
-      <div style="text-align: center;">
-        <a href="https://rehablookup.com/admin/subscriptions" style="display: inline-block; background: #1B365D; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">View Subscriptions</a>
-      </div>
-    </div>
-    
-    <div style="background: #f8fafc; padding: 16px; border-top: 1px solid #e2e8f0;">
-      <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">RehabLookup Admin</p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 22px; font-weight: 700;">
+                Payment Failed
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px;">
+              <!-- Alert Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #1a1a1a;">
+                      ${providerName}
+                    </p>
+                    ${facilityName ? `<p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b;">${facilityName}</p>` : ""}
+                    <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b;">${providerEmail}</p>
+                    ${amount ? `<p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b;">Amount: ${currency?.toUpperCase() || "USD"} ${(amount / 100).toFixed(2)}</p>` : ""}
+                    ${failureReason ? `<p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #dc2626;">Reason: ${failureReason}</p>` : ""}
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b; line-height: 1.6;">
+                The provider has been notified to update their payment method.
+              </p>
+              
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="https://rehablookup.com/admin/subscriptions" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 15px;">
+                      View Subscriptions
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: #f8fafc; padding: 20px 32px; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #94a3b8; text-align: center;">
+                RehabLookup Admin
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;
 
     const { error: adminEmailError } = await resend.emails.send({
-      from: "RehabLookup <notifications@rehablookup.com>",
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: [adminEmail],
       subject: `Payment failed: ${providerName}`,
       html: adminEmailHtml,
@@ -156,48 +194,98 @@ serve(async (req) => {
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Issue</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
-  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 28px; text-align: center;">
-      <h1 style="color: #fff; margin: 0; font-size: 20px; font-weight: 600;">Payment Issue</h1>
-    </div>
-    
-    <div style="padding: 32px;">
-      <p style="margin: 0 0 16px 0; font-size: 15px;">Hi ${providerName},</p>
-      
-      <div style="background: #fef2f2; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-        <p style="margin: 0 0 8px 0; font-weight: 600; color: #dc2626;">Your payment could not be processed</p>
-        <p style="margin: 0; font-size: 14px; color: #64748b;">
-          Please update your payment method to keep your listing active.
-          ${failureReason ? ` (${failureReason})` : ""}
-        </p>
-      </div>
-      
-      <p style="margin: 0 0 24px 0; font-size: 14px; color: #64748b;">
-        Without a valid payment method, your subscription may be paused and your listing may become inactive.
-      </p>
-      
-      <div style="text-align: center; margin-bottom: 24px;">
-        <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #fff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">Update Payment Method</a>
-      </div>
-      
-      <p style="margin: 0; font-size: 13px; color: #94a3b8;">
-        Questions? Reply to this email or visit our <a href="https://rehablookup.com/provider/help" style="color: #1B365D;">help center</a>.
-      </p>
-    </div>
-    
-    <div style="background: #f8fafc; padding: 16px; border-top: 1px solid #e2e8f0;">
-      <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">RehabLookup</p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 36px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; font-weight: 700;">
+                Payment Issue
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 32px;">
+              <p style="margin: 0 0 24px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 17px; color: #1a1a1a; line-height: 1.6;">
+                Hi ${providerName},
+              </p>
+              
+              <!-- Alert Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #dc2626;">
+                      Your payment could not be processed
+                    </p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b; line-height: 1.6;">
+                      Please update your payment method to keep your listing active.${failureReason ? ` (${failureReason})` : ""}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0 0 32px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b; line-height: 1.7;">
+                Without a valid payment method, your subscription may be paused and your listing may become inactive.
+              </p>
+              
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
+                <tr>
+                  <td align="center">
+                    <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 16px;">
+                      Update Payment Method
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #94a3b8; line-height: 1.6;">
+                Questions? Contact us at <a href="mailto:help@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">help@rehablookup.com</a> or visit our <a href="https://rehablookup.com/provider/help" style="color: #1B365D; text-decoration: none; font-weight: 500;">help center</a>.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: #1B365D; padding: 28px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 12px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
+                      RehabLookup
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: rgba(255,255,255,0.7);">
+                      Connecting families with trusted treatment providers
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;
 
     const { error: providerEmailError } = await resend.emails.send({
-      from: "RehabLookup <billing@rehablookup.com>",
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
       subject: "Action needed: Update your payment method",
       html: providerEmailHtml,

@@ -58,8 +58,6 @@ Thank you for contacting {{facilityName}}. Your inquiry has been received by our
 
 We specialize in evidence-based treatment programs with experienced clinical staff. Our team will review your information and reach out to discuss how we can best support your recovery goals.
 
-Please feel free to reply to this email with any questions.
-
 Best regards,
 {{senderName}}
 {{facilityName}}`,
@@ -155,8 +153,6 @@ We work with most major insurance plans and offer flexible payment options. Our 
 
 Good news: we currently have openings and can often get you started within a few days.
 
-Questions? Just reply to this email or give us a call.
-
 Best,
 {{senderName}}
 {{facilityName}}`,
@@ -172,8 +168,6 @@ We'd love to speak with you about how {{facilityName}} can help.
 {{customNote}}
 
 Are you available for a quick call in the next day or two? Our team is here Monday through Friday, 8am to 8pm, and weekends 9am to 5pm.
-
-Reply with a few times that work, or just call us when you're ready.
 
 Looking forward to connecting,
 {{senderName}}
@@ -401,27 +395,66 @@ const handler = async (req: Request): Promise<Response> => {
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${emailSubject}</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
-  <div style="background: #fff; border-radius: 12px; padding: 36px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px;">
-      <p style="margin: 0; font-size: 13px; color: #94a3b8;">From ${facility.name} via RehabLookup</p>
-    </div>
-    
-    ${emailBody.split('\n').map(line => 
-      line.trim() ? `<p style="margin: 0 0 14px 0; font-size: 15px;">${line}</p>` : ''
-    ).join('')}
-    
-  </div>
-  
-  <div style="background: #1B365D; padding: 24px; border-radius: 12px; margin-top: 20px;">
-    <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
-    <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
-    <p style="font-size: 11px; color: rgba(255,255,255,0.5); margin: 0; text-align: center;">
-      Sent on behalf of ${facility.name}. To stop receiving emails, reply with "unsubscribe".
-    </p>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding: 24px 32px; border-bottom: 1px solid #e2e8f0;">
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #94a3b8;">
+                From ${facility.name} via RehabLookup
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 32px;">
+              ${emailBody.split('\n').map(line => 
+                line.trim() ? `<p style="margin: 0 0 18px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #374151; line-height: 1.7;">${line}</p>` : ''
+              ).join('')}
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: #1B365D; padding: 28px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 12px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
+                      RehabLookup
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-bottom: 16px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: rgba(255,255,255,0.7);">
+                      Connecting families with trusted treatment providers
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.5);">
+                      Sent on behalf of ${facility.name}. To stop receiving emails, email <a href="mailto:help@rehablookup.com" style="color: #93c5fd; text-decoration: none;">help@rehablookup.com</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;
