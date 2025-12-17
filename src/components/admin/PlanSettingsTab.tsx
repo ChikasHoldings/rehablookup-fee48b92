@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -51,7 +50,6 @@ import {
   Loader2,
   Percent,
   DollarSign,
-  Calendar,
   RefreshCw,
   Tag,
   XCircle,
@@ -85,7 +83,7 @@ type PromoCode = {
   created: number;
 };
 
-export function PlanSettingsTab() {
+export const PlanSettingsTab = forwardRef<HTMLDivElement>((_, ref) => {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -146,7 +144,7 @@ export function PlanSettingsTab() {
       toast.success("Promo code created successfully");
       setIsCreateDialogOpen(false);
       resetForm();
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to create promo code");
@@ -165,7 +163,7 @@ export function PlanSettingsTab() {
     onSuccess: () => {
       toast.success("Coupon deleted successfully");
       setDeleteConfirm(null);
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to delete coupon");
@@ -183,7 +181,7 @@ export function PlanSettingsTab() {
     },
     onSuccess: () => {
       toast.success("Promo code deactivated");
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to deactivate promo code");
@@ -205,6 +203,7 @@ export function PlanSettingsTab() {
   const copyToClipboard = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
+    toast.success("Code copied to clipboard");
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
@@ -231,8 +230,13 @@ export function PlanSettingsTab() {
     }
   };
 
+  // Extract numeric price from PLAN_DETAILS (remove $ sign)
+  const getPriceNumber = (price: string) => {
+    return price.replace(/[^0-9,]/g, "");
+  };
+
   return (
-    <div className="space-y-6">
+    <div ref={ref} className="space-y-6">
       {/* Plan Overview */}
       <Card>
         <CardHeader>
@@ -252,7 +256,7 @@ export function PlanSettingsTab() {
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• {PLAN_DETAILS.basic.qualified_lead_limit} qualified leads/month</li>
-                <li>• {PLAN_DETAILS.basic.direct_lead_limit === -1 ? "1 lifetime" : PLAN_DETAILS.basic.direct_lead_limit} direct inquiry</li>
+                <li>• {PLAN_DETAILS.basic.direct_lead_limit === -1 ? "Unlimited" : PLAN_DETAILS.basic.direct_lead_limit} direct inquiry</li>
                 <li>• Basic profile listing</li>
                 <li>• Hidden phone/website</li>
               </ul>
@@ -262,7 +266,7 @@ export function PlanSettingsTab() {
             <div className="rounded-lg border p-4 bg-blue-50/50 border-blue-200">
               <div className="flex items-center justify-between mb-3">
                 <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">Professional</Badge>
-                <span className="text-2xl font-bold">${PLAN_DETAILS.professional.price}<span className="text-sm font-normal">/mo</span></span>
+                <span className="text-2xl font-bold">${getPriceNumber(PLAN_DETAILS.professional.price)}<span className="text-sm font-normal">/mo</span></span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• {PLAN_DETAILS.professional.qualified_lead_limit} exclusive qualified leads/month</li>
@@ -276,7 +280,7 @@ export function PlanSettingsTab() {
             <div className="rounded-lg border p-4 bg-amber-50/50 border-amber-200">
               <div className="flex items-center justify-between mb-3">
                 <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">Featured</Badge>
-                <span className="text-2xl font-bold">${PLAN_DETAILS.featured.price}<span className="text-sm font-normal">/mo</span></span>
+                <span className="text-2xl font-bold">${getPriceNumber(PLAN_DETAILS.featured.price)}<span className="text-sm font-normal">/mo</span></span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• {PLAN_DETAILS.featured.qualified_lead_limit} exclusive qualified leads/month</li>
@@ -561,6 +565,7 @@ export function PlanSettingsTab() {
                               className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                               onClick={() => deactivateMutation.mutate(promo.id)}
                               disabled={deactivateMutation.isPending}
+                              title="Deactivate promo code"
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>
@@ -570,6 +575,7 @@ export function PlanSettingsTab() {
                             size="icon"
                             className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => setDeleteConfirm(coupon?.id || promo.coupon.id)}
+                            title="Delete coupon"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -629,4 +635,6 @@ export function PlanSettingsTab() {
       </AlertDialog>
     </div>
   );
-}
+});
+
+PlanSettingsTab.displayName = "PlanSettingsTab";

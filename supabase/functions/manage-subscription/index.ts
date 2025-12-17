@@ -110,6 +110,9 @@ const sendSubscriptionNotificationEmail = async (
   }
 };
 
+// Actions that don't require subscriptionId or customerId
+const PROMO_CODE_ACTIONS = ["list_coupons", "create_coupon", "delete_coupon", "deactivate_promo_code"];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -148,10 +151,15 @@ serve(async (req) => {
     if (!roleData) throw new Error("Unauthorized: Admin access required");
     logStep("Admin verified", { adminId: adminUser.id });
 
-    const { action, subscriptionId, customerId, reason } = await req.json();
+    const body = await req.json();
+    const { action, subscriptionId, customerId, reason } = body;
     
     if (!action) throw new Error("Action is required");
-    if (!subscriptionId && !customerId) throw new Error("Subscription ID or Customer ID is required");
+    
+    // Only require subscriptionId/customerId for non-promo code actions
+    if (!PROMO_CODE_ACTIONS.includes(action) && !subscriptionId && !customerId) {
+      throw new Error("Subscription ID or Customer ID is required");
+    }
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -286,7 +294,7 @@ serve(async (req) => {
 
       // Promo Code Management
       case "create_coupon": {
-        const { name, percent_off, amount_off, currency, duration, duration_in_months, max_redemptions } = await req.json();
+        const { name, percent_off, amount_off, currency, duration, duration_in_months, max_redemptions } = body;
         logStep("Creating coupon", { name, percent_off, amount_off });
         
         const couponData: Stripe.CouponCreateParams = {
@@ -326,14 +334,21 @@ serve(async (req) => {
 
       case "list_coupons": {
         logStep("Listing coupons");
-        const coupons = await stripe.coupons.list({ limit: 50 });
-        const promoCodes = await stripe.promotionCodes.list({ limit: 100, active: true });
-        result = { success: true, coupons: coupons.data, promoCodes: promoCodes.data };
+        const coupons = await stripe.coupons.list({ limit: 100 });
+        // Get all promo codes (both active and inactive)
+        const activePromoCodes = await stripe.promotionCodes.list({ limit: 100, active: true });
+        const inactivePromoCodes = await stripe.promotionCodes.list({ limit: 100, active: false });
+        
+        // Combine and dedupe promo codes
+        const allPromoCodes = [...activePromoCodes.data, ...inactivePromoCodes.data];
+        const uniquePromoCodes = Array.from(new Map(allPromoCodes.map(pc => [pc.id, pc])).values());
+        
+        result = { success: true, coupons: coupons.data, promoCodes: uniquePromoCodes };
         break;
       }
 
       case "delete_coupon": {
-        const { couponId } = await req.json();
+        const { couponId } = body;
         logStep("Deleting coupon", { couponId });
         await stripe.coupons.del(couponId);
         result = { success: true, message: "Coupon deleted" };
@@ -341,7 +356,7 @@ serve(async (req) => {
       }
 
       case "deactivate_promo_code": {
-        const { promoCodeId } = await req.json();
+        const { promoCodeId } = body;
         logStep("Deactivating promo code", { promoCodeId });
         const promoCode = await stripe.promotionCodes.update(promoCodeId, { active: false });
         result = { success: true, promoCode, message: "Promo code deactivated" };
@@ -367,14 +382,16 @@ serve(async (req) => {
       await sendSubscriptionNotificationEmail(resend, customerEmail, providerName, action, planName, reason);
     }
 
-    // Log audit entry
-    await supabaseClient.from("admin_audit_log").insert({
-      admin_user_id: adminUser.id,
-      action_type: `subscription_${action}`,
-      target_type: "subscription",
-      target_id: subscriptionId || customerId,
-      details: { action, reason, result: result?.message, emailSent: shouldSendEmail && !!customerEmail },
-    });
+    // Log audit entry (only for non-list actions)
+    if (action !== "list_coupons") {
+      await supabaseClient.from("admin_audit_log").insert({
+        admin_user_id: adminUser.id,
+        action_type: `subscription_${action}`,
+        target_type: PROMO_CODE_ACTIONS.includes(action) ? "promo_code" : "subscription",
+        target_id: subscriptionId || customerId || body.couponId || body.promoCodeId || null,
+        details: { action, reason, result: result?.message, emailSent: shouldSendEmail && !!customerEmail },
+      });
+    }
 
     logStep("Action completed successfully", { action });
     return new Response(JSON.stringify(result), {
