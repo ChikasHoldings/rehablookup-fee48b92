@@ -535,8 +535,8 @@ export default function ProviderDashboardPage() {
         </Card>
       </div>
 
-      {/* Leads Awaiting Follow-up Widget */}
-      {(() => {
+      {/* Leads Awaiting Follow-up Widget - Only show for paid plans */}
+      {planKey !== "basic" && (() => {
         const now = new Date();
         const leadsAwaitingFollowup = recentLeads.filter(lead => {
           if (lead.status !== 'new') return false;
