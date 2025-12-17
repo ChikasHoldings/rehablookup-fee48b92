@@ -294,8 +294,8 @@ serve(async (req) => {
 
       // Promo Code Management
       case "create_coupon": {
-        const { name, percent_off, amount_off, currency, duration, duration_in_months, max_redemptions } = body;
-        logStep("Creating coupon", { name, percent_off, amount_off });
+        const { name, percent_off, amount_off, currency, duration, duration_in_months, max_redemptions, expires_at } = body;
+        logStep("Creating coupon", { name, percent_off, amount_off, expires_at });
         
         const couponData: Stripe.CouponCreateParams = {
           name,
@@ -319,14 +319,20 @@ serve(async (req) => {
 
         const coupon = await stripe.coupons.create(couponData);
         
-        // Create a promotion code for the coupon
-        const promoCode = await stripe.promotionCodes.create({
+        // Create a promotion code for the coupon with optional expiration
+        const promoCodeParams: Stripe.PromotionCodeCreateParams = {
           coupon: coupon.id,
           code: name.toUpperCase().replace(/\s+/g, ""),
           metadata: {
             created_by: adminUser.id,
           },
-        });
+        };
+
+        if (expires_at) {
+          promoCodeParams.expires_at = expires_at;
+        }
+
+        const promoCode = await stripe.promotionCodes.create(promoCodeParams);
 
         result = { success: true, coupon, promoCode, message: "Coupon and promo code created" };
         break;
