@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, addHours, addDays, isPast, formatDistanceToNow } from "date-fns";
 import { 
@@ -100,7 +100,8 @@ interface LeadDetailDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerProps) {
+export const LeadDetailDrawer = forwardRef<HTMLDivElement, LeadDetailDrawerProps>(
+  function LeadDetailDrawer({ lead, open, onOpenChange }, ref) {
   const [newNote, setNewNote] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -720,4 +721,6 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
       />
     </>
   );
-}
+});
+
+LeadDetailDrawer.displayName = "LeadDetailDrawer";
