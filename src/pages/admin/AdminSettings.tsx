@@ -1438,6 +1438,51 @@ export default function AdminSettings() {
             </div>
           ) : (
             <>
+              {/* Quick Actions */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="gap-1">
+                    <Activity className="h-3 w-3" />
+                    Live Sync
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    Settings update in real-time
+                  </span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={async () => {
+                    try {
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (user) {
+                        await supabase.from("admin_user_notifications").insert({
+                          user_id: user.id,
+                          type: "system",
+                          title: "Test Notification",
+                          message: "This is a test notification to verify your notification settings are working correctly.",
+                          metadata: { test: true, sent_at: new Date().toISOString() }
+                        });
+                        await logAdminAction({
+                          actionType: AdminAuditActions.PLATFORM_SETTINGS_UPDATED,
+                          targetType: "notifications",
+                          details: { action: "test_notification_sent" }
+                        });
+                        toast.success("Test notification sent", {
+                          description: "Check your notification bell"
+                        });
+                      }
+                    } catch (error) {
+                      toast.error("Failed to send test notification");
+                    }
+                  }}
+                >
+                  <Bell className="h-4 w-4" />
+                  Send Test Notification
+                </Button>
+              </div>
+
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* Email Notifications */}
                 <Card>
@@ -1465,6 +1510,21 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
+                      icon={<Zap className="h-4 w-4 text-slate-500" />}
+                      title="New Lead Submissions"
+                      description="Alert when new leads are submitted"
+                    >
+                      <Switch 
+                        checked={getSetting('email_new_leads') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'email_new_leads', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
                       icon={<AlertTriangle className="h-4 w-4 text-slate-500" />}
                       title="Payment Failures"
                       description="Alert when subscription payments fail"
@@ -1480,6 +1540,21 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
+                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      title="Security Alerts"
+                      description="Brute force attacks and suspicious activity"
+                    >
+                      <Switch 
+                        checked={getSetting('email_security_alerts') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'email_security_alerts', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
                       icon={<Activity className="h-4 w-4 text-slate-500" />}
                       title="System Alerts"
                       description="Critical system status notifications"
@@ -1488,6 +1563,21 @@ export default function AdminSettings() {
                         checked={getSetting('email_system_alerts') === true}
                         onCheckedChange={(checked) => updateSetting.mutate({ 
                           key: 'email_system_alerts', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<AlertTriangle className="h-4 w-4 text-slate-500" />}
+                      title="Churn Risk Alerts"
+                      description="Notify when providers are at risk of churning"
+                    >
+                      <Switch 
+                        checked={getSetting('email_churn_alerts') === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'email_churn_alerts', 
                           value: checked 
                         })}
                         disabled={updateSetting.isPending}
@@ -1512,7 +1602,7 @@ export default function AdminSettings() {
                       description="Show badge for pending provider reviews"
                     >
                       <Switch 
-                        checked={getSetting('inapp_pending_approvals') === true}
+                        checked={getSetting('inapp_pending_approvals') !== false}
                         onCheckedChange={(checked) => updateSetting.mutate({ 
                           key: 'inapp_pending_approvals', 
                           value: checked 
@@ -1527,7 +1617,7 @@ export default function AdminSettings() {
                       description="Alert when leads need assignment"
                     >
                       <Switch 
-                        checked={getSetting('inapp_unassigned_leads') === true}
+                        checked={getSetting('inapp_unassigned_leads') !== false}
                         onCheckedChange={(checked) => updateSetting.mutate({ 
                           key: 'inapp_unassigned_leads', 
                           value: checked 
@@ -1542,9 +1632,54 @@ export default function AdminSettings() {
                       description="Notify about flagged images or content"
                     >
                       <Switch 
-                        checked={getSetting('inapp_flagged_content') === true}
+                        checked={getSetting('inapp_flagged_content') !== false}
                         onCheckedChange={(checked) => updateSetting.mutate({ 
                           key: 'inapp_flagged_content', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      title="Security Events"
+                      description="Alert on login attempts and security events"
+                    >
+                      <Switch 
+                        checked={getSetting('inapp_security_events') !== false}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'inapp_security_events', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Activity className="h-4 w-4 text-slate-500" />}
+                      title="Subscription Changes"
+                      description="Notify on upgrades, downgrades, and cancellations"
+                    >
+                      <Switch 
+                        checked={getSetting('inapp_subscription_changes') !== false}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'inapp_subscription_changes', 
+                          value: checked 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<AlertTriangle className="h-4 w-4 text-slate-500" />}
+                      title="At-Risk Providers"
+                      description="Notify when providers show churn signals"
+                    >
+                      <Switch 
+                        checked={getSetting('inapp_at_risk_providers') !== false}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'inapp_at_risk_providers', 
                           value: checked 
                         })}
                         disabled={updateSetting.isPending}
@@ -1595,6 +1730,7 @@ export default function AdminSettings() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="06:00">6:00 AM</SelectItem>
                           <SelectItem value="07:00">7:00 AM</SelectItem>
                           <SelectItem value="08:00">8:00 AM</SelectItem>
                           <SelectItem value="09:00">9:00 AM</SelectItem>
@@ -1638,10 +1774,235 @@ export default function AdminSettings() {
                           <SelectItem value="wednesday">Wednesday</SelectItem>
                           <SelectItem value="thursday">Thursday</SelectItem>
                           <SelectItem value="friday">Friday</SelectItem>
+                          <SelectItem value="saturday">Saturday</SelectItem>
+                          <SelectItem value="sunday">Sunday</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
+                  <Separator className="my-6" />
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="space-y-3">
+                      <Label>Include in Daily Summary</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Switch 
+                            checked={getSetting('daily_include_new_providers') !== false}
+                            onCheckedChange={(checked) => updateSetting.mutate({ 
+                              key: 'daily_include_new_providers', 
+                              value: checked 
+                            })}
+                            disabled={updateSetting.isPending || !getSetting('daily_summary_enabled')}
+                            id="daily-providers"
+                          />
+                          <Label htmlFor="daily-providers" className="text-sm font-normal cursor-pointer">
+                            New Providers
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch 
+                            checked={getSetting('daily_include_leads') !== false}
+                            onCheckedChange={(checked) => updateSetting.mutate({ 
+                              key: 'daily_include_leads', 
+                              value: checked 
+                            })}
+                            disabled={updateSetting.isPending || !getSetting('daily_summary_enabled')}
+                            id="daily-leads"
+                          />
+                          <Label htmlFor="daily-leads" className="text-sm font-normal cursor-pointer">
+                            Lead Summary
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch 
+                            checked={getSetting('daily_include_revenue') !== false}
+                            onCheckedChange={(checked) => updateSetting.mutate({ 
+                              key: 'daily_include_revenue', 
+                              value: checked 
+                            })}
+                            disabled={updateSetting.isPending || !getSetting('daily_summary_enabled')}
+                            id="daily-revenue"
+                          />
+                          <Label htmlFor="daily-revenue" className="text-sm font-normal cursor-pointer">
+                            Revenue Summary
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Label>Include in Weekly Report</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Switch 
+                            checked={getSetting('weekly_include_analytics') !== false}
+                            onCheckedChange={(checked) => updateSetting.mutate({ 
+                              key: 'weekly_include_analytics', 
+                              value: checked 
+                            })}
+                            disabled={updateSetting.isPending || !getSetting('weekly_report_enabled')}
+                            id="weekly-analytics"
+                          />
+                          <Label htmlFor="weekly-analytics" className="text-sm font-normal cursor-pointer">
+                            Platform Analytics
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch 
+                            checked={getSetting('weekly_include_retention') !== false}
+                            onCheckedChange={(checked) => updateSetting.mutate({ 
+                              key: 'weekly_include_retention', 
+                              value: checked 
+                            })}
+                            disabled={updateSetting.isPending || !getSetting('weekly_report_enabled')}
+                            id="weekly-retention"
+                          />
+                          <Label htmlFor="weekly-retention" className="text-sm font-normal cursor-pointer">
+                            Retention Metrics
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch 
+                            checked={getSetting('weekly_include_churn') !== false}
+                            onCheckedChange={(checked) => updateSetting.mutate({ 
+                              key: 'weekly_include_churn', 
+                              value: checked 
+                            })}
+                            disabled={updateSetting.isPending || !getSetting('weekly_report_enabled')}
+                            id="weekly-churn"
+                          />
+                          <Label htmlFor="weekly-churn" className="text-sm font-normal cursor-pointer">
+                            Churn Analysis
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Label>Notification Recipients</Label>
+                      <Select 
+                        value={getSetting('digest_recipients') || 'all_admins'}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'digest_recipients', 
+                          value 
+                        })}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all_admins">All Admin Users</SelectItem>
+                          <SelectItem value="super_admins">Super Admins Only</SelectItem>
+                          <SelectItem value="managers">Managers & Above</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Who receives digest emails
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Notification Behavior */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Settings className="h-5 w-5 text-slate-500" />
+                    Notification Behavior
+                  </CardTitle>
+                  <CardDescription>Configure how notifications are delivered and displayed</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-1">
+                  <SettingRow
+                    icon={<Bell className="h-4 w-4 text-slate-500" />}
+                    title="Sound Notifications"
+                    description="Play sound for new notifications"
+                  >
+                    <Switch 
+                      checked={getSetting('notification_sound') !== false}
+                      onCheckedChange={(checked) => updateSetting.mutate({ 
+                        key: 'notification_sound', 
+                        value: checked 
+                      })}
+                      disabled={updateSetting.isPending}
+                    />
+                  </SettingRow>
+                  <Separator />
+                  <SettingRow
+                    icon={<Globe className="h-4 w-4 text-slate-500" />}
+                    title="Browser Notifications"
+                    description="Show desktop notifications when app is in background"
+                  >
+                    <Switch 
+                      checked={getSetting('browser_notifications') === true}
+                      onCheckedChange={async (checked) => {
+                        if (checked && 'Notification' in window) {
+                          const permission = await Notification.requestPermission();
+                          if (permission !== 'granted') {
+                            toast.error("Browser notification permission denied");
+                            return;
+                          }
+                        }
+                        updateSetting.mutate({ 
+                          key: 'browser_notifications', 
+                          value: checked 
+                        });
+                      }}
+                      disabled={updateSetting.isPending}
+                    />
+                  </SettingRow>
+                  <Separator />
+                  <SettingRow
+                    icon={<Clock className="h-4 w-4 text-slate-500" />}
+                    title="Auto-mark as Read"
+                    description="Automatically mark notifications as read after viewing"
+                  >
+                    <Select 
+                      value={getSetting('auto_mark_read_delay') || '5'}
+                      onValueChange={(value) => updateSetting.mutate({ 
+                        key: 'auto_mark_read_delay', 
+                        value 
+                      })}
+                      disabled={updateSetting.isPending}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">Immediately</SelectItem>
+                        <SelectItem value="3">After 3 seconds</SelectItem>
+                        <SelectItem value="5">After 5 seconds</SelectItem>
+                        <SelectItem value="10">After 10 seconds</SelectItem>
+                        <SelectItem value="never">Never</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingRow>
+                  <Separator />
+                  <SettingRow
+                    icon={<Trash2 className="h-4 w-4 text-slate-500" />}
+                    title="Auto-delete Old Notifications"
+                    description="Automatically remove notifications older than"
+                  >
+                    <Select 
+                      value={getSetting('notification_retention_days') || '30'}
+                      onValueChange={(value) => updateSetting.mutate({ 
+                        key: 'notification_retention_days', 
+                        value 
+                      })}
+                      disabled={updateSetting.isPending}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7">7 days</SelectItem>
+                        <SelectItem value="14">14 days</SelectItem>
+                        <SelectItem value="30">30 days</SelectItem>
+                        <SelectItem value="60">60 days</SelectItem>
+                        <SelectItem value="90">90 days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </SettingRow>
                 </CardContent>
               </Card>
 
@@ -1652,7 +2013,7 @@ export default function AdminSettings() {
                     <Activity className="h-5 w-5 text-blue-500" />
                     Notification Status
                   </CardTitle>
-                  <CardDescription>Current notification system status</CardDescription>
+                  <CardDescription>Current notification system status and configuration overview</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1727,6 +2088,31 @@ export default function AdminSettings() {
                       </div>
                       <p className="text-2xl font-bold text-green-700">Active</p>
                       <p className="text-xs text-green-600 mt-1">Real-time enabled</p>
+                    </div>
+                  </div>
+                  
+                  {/* Configuration Summary */}
+                  <div className="mt-6 p-4 rounded-lg bg-blue-50 border border-blue-100">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-blue-800">Configuration Summary</p>
+                        <ul className="text-sm text-blue-700 space-y-1">
+                          <li>• Email notifications: {
+                            [
+                              getSetting('email_new_provider_signups') && 'New Providers',
+                              getSetting('email_new_leads') && 'New Leads',
+                              getSetting('email_payment_failures') && 'Payment Failures',
+                              getSetting('email_security_alerts') && 'Security Alerts',
+                              getSetting('email_system_alerts') && 'System Alerts',
+                              getSetting('email_churn_alerts') && 'Churn Alerts'
+                            ].filter(Boolean).join(', ') || 'None enabled'
+                          }</li>
+                          <li>• Browser notifications: {getSetting('browser_notifications') ? 'Enabled' : 'Disabled'}</li>
+                          <li>• Sound notifications: {getSetting('notification_sound') !== false ? 'Enabled' : 'Disabled'}</li>
+                          <li>• Notification retention: {getSetting('notification_retention_days') || '30'} days</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
