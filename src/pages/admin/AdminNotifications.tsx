@@ -31,6 +31,7 @@ import {
   Mail,
   Clock,
   Loader2,
+  ShieldAlert,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import {
@@ -47,6 +48,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -55,6 +57,7 @@ const getNotificationIcon = (type: string) => {
     case "payment_failed":
       return <CreditCard className="h-5 w-5 text-red-500" />;
     case "subscription_alert":
+    case "subscription_change":
       return <AlertTriangle className="h-5 w-5 text-amber-500" />;
     case "facility_approved":
       return <Building2 className="h-5 w-5 text-green-500" />;
@@ -66,6 +69,13 @@ const getNotificationIcon = (type: string) => {
       return <Bell className="h-5 w-5 text-slate-500" />;
     case "email":
       return <Mail className="h-5 w-5 text-cyan-500" />;
+    case "brute_force":
+    case "login_alert":
+    case "security_event":
+      return <AlertTriangle className="h-5 w-5 text-red-600" />;
+    case "churn_alert":
+    case "at_risk_provider":
+      return <AlertTriangle className="h-5 w-5 text-orange-500" />;
     default:
       return <Bell className="h-5 w-5 text-muted-foreground" />;
   }
@@ -78,6 +88,7 @@ const getNotificationBadge = (type: string) => {
     case "payment_failed":
       return <Badge variant="destructive">Payment Failed</Badge>;
     case "subscription_alert":
+    case "subscription_change":
       return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Subscription</Badge>;
     case "facility_approved":
       return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>;
@@ -89,6 +100,13 @@ const getNotificationBadge = (type: string) => {
       return <Badge variant="secondary">System</Badge>;
     case "email":
       return <Badge variant="outline" className="bg-cyan-50 text-cyan-700 border-cyan-200">Email</Badge>;
+    case "brute_force":
+    case "login_alert":
+    case "security_event":
+      return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-300">Security</Badge>;
+    case "churn_alert":
+    case "at_risk_provider":
+      return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">At Risk</Badge>;
     default:
       return <Badge variant="secondary">Notification</Badge>;
   }
@@ -188,6 +206,11 @@ export default function AdminNotifications() {
       markAllGlobalAsRead();
       markAllUserAsRead();
     }
+    logAdminAction({
+      actionType: AdminAuditActions.NOTIFICATIONS_MARKED_READ,
+      targetType: "admin_notifications",
+      details: { tab: activeTab },
+    });
   };
 
   const handleDeleteAll = () => {
@@ -199,6 +222,11 @@ export default function AdminNotifications() {
       deleteAllGlobal();
       deleteAllUser();
     }
+    logAdminAction({
+      actionType: AdminAuditActions.NOTIFICATIONS_CLEARED,
+      targetType: "admin_notifications",
+      details: { tab: activeTab },
+    });
   };
 
   const getNotificationLink = (notification: typeof allNotifications[0]) => {
@@ -215,6 +243,12 @@ export default function AdminNotifications() {
     }
     if (notification.type === "facility_approved" && metadata?.facility_id) {
       return `/admin/providers`;
+    }
+    if (notification.type === "brute_force" || notification.type === "login_alert" || notification.type === "security_event") {
+      return "/admin/security-logs";
+    }
+    if (notification.type === "churn_alert" || notification.type === "at_risk_provider" || notification.type === "subscription_change") {
+      return "/admin/subscriptions";
     }
     return null;
   };
@@ -313,15 +347,15 @@ export default function AdminNotifications() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Signups</CardTitle>
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Security Alerts</CardTitle>
+            <ShieldAlert className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {allNotifications.filter((n) => n.type === "provider_signup").length}
+            <div className="text-2xl font-bold text-red-600">
+              {allNotifications.filter((n) => ["brute_force", "login_alert", "security_event"].includes(n.type)).length}
             </div>
             <p className="text-xs text-muted-foreground">
-              Pending review
+              Security events
             </p>
           </CardContent>
         </Card>

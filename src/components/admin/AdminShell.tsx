@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, memo } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
-import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3 } from "lucide-react";
+import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
@@ -21,6 +21,7 @@ const mobileNavItems = [
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/featured", icon: Star, label: "Featured", permission: "featured" },
+  { to: "/admin/notifications", icon: Bell, label: "Notifications", permission: "notifications" },
   { to: "/admin/users", icon: Users, label: "User Mgmt", permission: "users" },
   { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
   { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },

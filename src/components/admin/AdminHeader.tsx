@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck } from "lucide-react";
+import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck, ShieldAlert } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +39,7 @@ type Notification = {
   title: string;
   message: string;
   time: string;
-  type: "provider" | "lead" | "success" | "warning";
+  type: "provider" | "lead" | "success" | "warning" | "security";
   link?: string;
 };
 
@@ -265,21 +265,28 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
 
   // Add user-specific notifications (tasks assigned to this admin, etc.)
   userNotifications?.slice(0, 5).forEach((notif) => {
+    let notifType: Notification["type"] = "provider";
+    if (notif.type === "payment_failed") notifType = "warning";
+    else if (notif.type === "lead_assigned" || notif.type === "new_lead") notifType = "lead";
+    else if (notif.type === "provider_signup") notifType = "provider";
+    else if (notif.type === "brute_force" || notif.type === "login_alert" || notif.type === "security_event") notifType = "security";
+    else if (notif.type === "facility_approved") notifType = "success";
+
     notifications.push({
       id: `user-${notif.id}`,
       title: notif.title,
       message: notif.message,
       time: formatDistanceToNow(new Date(notif.created_at), { addSuffix: true }),
-      type: notif.type === "payment_failed" ? "warning" : 
-            notif.type === "lead_assigned" ? "lead" : 
-            notif.type === "provider_signup" ? "provider" : "provider",
+      type: notifType,
       link: notif.link || "/admin/notifications",
     });
   });
 
-  // Sort by most recent first (pending providers and unassigned leads are priorities)
+  // Sort by most recent first (security, pending providers, and unassigned leads are priorities)
   const sortedNotifications = notifications.sort((a, b) => {
-    // Prioritize pending providers and unassigned leads
+    // Prioritize security, then pending providers and unassigned leads
+    if (a.type === "security") return -1;
+    if (b.type === "security") return 1;
     if (a.type === "provider" || a.type === "lead") return -1;
     if (b.type === "provider" || b.type === "lead") return 1;
     return 0;
@@ -297,6 +304,8 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case "warning":
         return <CreditCard className="h-4 w-4 text-red-500" />;
+      case "security":
+        return <ShieldAlert className="h-4 w-4 text-red-600" />;
       default:
         return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }
@@ -544,6 +553,13 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
             </CommandItem>
             <CommandItem onSelect={() => { navigate("/admin/subscriptions"); setSearchOpen(false); }}>
               Subscriptions
+            </CommandItem>
+            <CommandItem onSelect={() => { navigate("/admin/notifications"); setSearchOpen(false); }}>
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+            </CommandItem>
+            <CommandItem onSelect={() => { navigate("/admin/security-logs"); setSearchOpen(false); }}>
+              Security Logs
             </CommandItem>
             <CommandItem onSelect={() => { navigate("/admin/audit-log"); setSearchOpen(false); }}>
               Audit Log
