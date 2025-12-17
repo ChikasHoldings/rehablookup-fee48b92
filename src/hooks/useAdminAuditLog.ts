@@ -87,6 +87,9 @@ export const AdminAuditActions = {
   FEATURED_PINNED: "featured_pinned",
   FEATURED_UNPINNED: "featured_unpinned",
   FEATURED_SETTINGS_UPDATED: "featured_settings_updated",
+  FEATURED_ORDER_UPDATED: "featured_order_updated",
+  LEGACY_FEATURED: "legacy_featured",
+  LEGACY_UNFEATURED: "legacy_unfeatured",
   
   // Image moderation
   IMAGE_FLAGGED: "image_flagged",

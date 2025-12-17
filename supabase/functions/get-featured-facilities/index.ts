@@ -233,10 +233,10 @@ serve(async (req) => {
       logStep("Error loading notification settings, using defaults", { error: String(settingsError) });
     }
 
-    // Get all approved, non-suspended facilities (including legacy featured flag)
+    // Get all approved, non-suspended facilities (including legacy featured flag and display order)
     const { data: facilities, error: facilitiesError } = await supabaseClient
       .from("facilities")
-      .select("id, user_id, featured, featured_pinned, last_featured_shown_at, suspended, name")
+      .select("id, user_id, featured, featured_pinned, last_featured_shown_at, suspended, name, featured_display_order")
       .eq("status", "approved")
       .or("suspended.is.null,suspended.eq.false");
 
@@ -252,6 +252,7 @@ serve(async (req) => {
       user_id: string;
       featured_pinned: boolean;
       last_featured_shown_at: string | null;
+      featured_display_order: number | null;
       provider_email?: string;
       provider_name?: string;
       facility_name?: string;
@@ -303,6 +304,7 @@ serve(async (req) => {
               user_id: facility.user_id,
               featured_pinned: facility.featured_pinned || false,
               last_featured_shown_at: facility.last_featured_shown_at,
+              featured_display_order: facility.featured_display_order,
               provider_email: providerEmail,
               provider_name: profile?.first_name || "",
               facility_name: facilityData?.name || "",
@@ -336,6 +338,7 @@ serve(async (req) => {
         user_id: facility.user_id,
         featured_pinned: facility.featured_pinned || false,
         last_featured_shown_at: facility.last_featured_shown_at,
+        featured_display_order: facility.featured_display_order,
         provider_email: profile?.email,
         provider_name: profile?.first_name || "",
         facility_name: facility.name || "",
@@ -353,27 +356,56 @@ serve(async (req) => {
     const newlyFeaturedFacilities: EligibleFacility[] = [];
 
     if (eligibleFacilities.length <= MAX_HOMEPAGE_FEATURED) {
-      // Show all if 6 or fewer
-      homepageFeaturedIds = allEligibleIds;
+      // Show all if 6 or fewer, but still sort by display order
+      const sorted = [...eligibleFacilities].sort((a, b) => {
+        // Pinned facilities first
+        if (a.featured_pinned && !b.featured_pinned) return -1;
+        if (!a.featured_pinned && b.featured_pinned) return 1;
+        // Then by display order
+        if (a.featured_display_order !== null && b.featured_display_order !== null) {
+          return a.featured_display_order - b.featured_display_order;
+        }
+        if (a.featured_display_order !== null) return -1;
+        if (b.featured_display_order !== null) return 1;
+        return 0;
+      });
+      homepageFeaturedIds = sorted.map(f => f.id);
     } else {
-      // Rotation logic: pinned first, then rotate based on last_featured_shown_at with daily seed
-      const pinned = eligibleFacilities.filter(f => f.featured_pinned);
+      // Sort by: 1) pinned, 2) display_order, 3) fairness rotation
+      const pinned = eligibleFacilities.filter(f => f.featured_pinned).sort((a, b) => {
+        if (a.featured_display_order !== null && b.featured_display_order !== null) {
+          return a.featured_display_order - b.featured_display_order;
+        }
+        if (a.featured_display_order !== null) return -1;
+        if (b.featured_display_order !== null) return 1;
+        return 0;
+      });
+      
       const unpinned = eligibleFacilities.filter(f => !f.featured_pinned);
 
-      // Sort unpinned by last_featured_shown_at (oldest/null first for fairness)
+      // Sort unpinned by display_order first, then by last_featured_shown_at for fairness
       unpinned.sort((a, b) => {
+        // First priority: display order
+        if (a.featured_display_order !== null && b.featured_display_order !== null) {
+          return a.featured_display_order - b.featured_display_order;
+        }
+        if (a.featured_display_order !== null) return -1;
+        if (b.featured_display_order !== null) return 1;
+        // Fallback: last_featured_shown_at (oldest/null first for fairness)
         if (!a.last_featured_shown_at && !b.last_featured_shown_at) return 0;
         if (!a.last_featured_shown_at) return -1;
         if (!b.last_featured_shown_at) return 1;
         return new Date(a.last_featured_shown_at).getTime() - new Date(b.last_featured_shown_at).getTime();
       });
 
-      // Use daily seed to add variation while maintaining fairness
+      // Use daily seed for additional variation on items without display order
+      const withOrder = unpinned.filter(f => f.featured_display_order !== null);
+      const withoutOrder = unpinned.filter(f => f.featured_display_order === null);
       const dailySeed = getDailySeed();
-      const shuffledUnpinned = seededShuffle(unpinned, dailySeed);
+      const shuffledWithoutOrder = seededShuffle(withoutOrder, dailySeed);
 
-      // Combine: pinned first (always shown), then shuffled unpinned
-      const combined = [...pinned, ...shuffledUnpinned];
+      // Combine: pinned first (always shown), then ordered, then shuffled unordered
+      const combined = [...pinned, ...withOrder, ...shuffledWithoutOrder];
       const selectedFacilities = combined.slice(0, MAX_HOMEPAGE_FEATURED);
       homepageFeaturedIds = selectedFacilities.map(f => f.id);
 
