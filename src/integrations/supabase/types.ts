@@ -200,11 +200,17 @@ export type Database = {
           created_at: string
           created_by: string | null
           display_name: string | null
+          email_digest_frequency: string | null
           force_password_change: boolean | null
           id: string
           last_login_at: string | null
           mfa_enabled: boolean | null
           mfa_skip: boolean | null
+          notify_new_leads: boolean | null
+          notify_new_providers: boolean | null
+          notify_security_events: boolean | null
+          notify_subscription_changes: boolean | null
+          notify_system_alerts: boolean | null
           status: string
           temp_password_expires_at: string | null
           temp_password_hash: string | null
@@ -216,11 +222,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           display_name?: string | null
+          email_digest_frequency?: string | null
           force_password_change?: boolean | null
           id?: string
           last_login_at?: string | null
           mfa_enabled?: boolean | null
           mfa_skip?: boolean | null
+          notify_new_leads?: boolean | null
+          notify_new_providers?: boolean | null
+          notify_security_events?: boolean | null
+          notify_subscription_changes?: boolean | null
+          notify_system_alerts?: boolean | null
           status?: string
           temp_password_expires_at?: string | null
           temp_password_hash?: string | null
@@ -232,11 +244,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           display_name?: string | null
+          email_digest_frequency?: string | null
           force_password_change?: boolean | null
           id?: string
           last_login_at?: string | null
           mfa_enabled?: boolean | null
           mfa_skip?: boolean | null
+          notify_new_leads?: boolean | null
+          notify_new_providers?: boolean | null
+          notify_security_events?: boolean | null
+          notify_subscription_changes?: boolean | null
+          notify_system_alerts?: boolean | null
           status?: string
           temp_password_expires_at?: string | null
           temp_password_hash?: string | null

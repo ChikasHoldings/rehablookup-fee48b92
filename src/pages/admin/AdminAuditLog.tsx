@@ -98,7 +98,12 @@ const actionConfig: Record<string, { icon: React.ReactNode; label: string; color
   // Notification actions
   notifications_marked_read: { icon: <Bell className="h-4 w-4" />, label: "Marked Notifications Read", color: "text-slate-500 bg-slate-50" },
   notifications_cleared: { icon: <Bell className="h-4 w-4" />, label: "Cleared Notifications", color: "text-slate-500 bg-slate-50" },
+  notification_preferences_updated: { icon: <Bell className="h-4 w-4" />, label: "Updated Notification Preferences", color: "text-purple-500 bg-purple-50" },
   admin_notification_sent: { icon: <Bell className="h-4 w-4" />, label: "Sent Notification", color: "text-blue-500 bg-blue-50" },
+  
+  // Session actions
+  session_revoked: { icon: <Shield className="h-4 w-4" />, label: "Revoked Session", color: "text-red-500 bg-red-50" },
+  login: { icon: <Key className="h-4 w-4" />, label: "Signed In", color: "text-green-500 bg-green-50" },
   
   // Subscription actions
   subscription_override: { icon: <CreditCard className="h-4 w-4" />, label: "Override Subscription", color: "text-purple-500 bg-purple-50" },
