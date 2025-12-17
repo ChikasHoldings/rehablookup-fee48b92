@@ -10,7 +10,7 @@ const corsHeaders = {
 
 // Featured plan product ID
 const FEATURED_PRODUCT_ID = "prod_TbalOeJZA2ZoJl";
-const MAX_HOMEPAGE_FEATURED = 6;
+const DEFAULT_MAX_HOMEPAGE_FEATURED = 6;
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -216,6 +216,8 @@ serve(async (req) => {
 
     // Fetch notification settings
     let notificationSettings = defaultNotificationSettings;
+    let maxHomepageFeatured = DEFAULT_MAX_HOMEPAGE_FEATURED;
+    
     try {
       const { data: settingsData } = await supabaseClient
         .from("platform_settings")
@@ -229,8 +231,23 @@ serve(async (req) => {
       } else {
         logStep("Using default notification settings");
       }
+
+      // Fetch platform settings (max homepage featured)
+      const { data: platformData } = await supabaseClient
+        .from("platform_settings")
+        .select("setting_value")
+        .eq("setting_key", "featured_platform_settings")
+        .maybeSingle();
+      
+      if (platformData?.setting_value) {
+        const platformSettings = platformData.setting_value as { max_homepage_featured?: number };
+        if (platformSettings.max_homepage_featured && platformSettings.max_homepage_featured > 0) {
+          maxHomepageFeatured = platformSettings.max_homepage_featured;
+          logStep("Loaded max homepage featured", { maxHomepageFeatured });
+        }
+      }
     } catch (settingsError) {
-      logStep("Error loading notification settings, using defaults", { error: String(settingsError) });
+      logStep("Error loading settings, using defaults", { error: String(settingsError) });
     }
 
     // Get all approved, non-suspended facilities (including legacy featured flag and display order)
@@ -351,12 +368,12 @@ serve(async (req) => {
     // All eligible facility IDs (for search priority)
     const allEligibleIds = eligibleFacilities.map(f => f.id);
 
-    // Select homepage featured (max 6 with rotation)
+    // Select homepage featured (max configurable with rotation)
     let homepageFeaturedIds: string[] = [];
     const newlyFeaturedFacilities: EligibleFacility[] = [];
 
-    if (eligibleFacilities.length <= MAX_HOMEPAGE_FEATURED) {
-      // Show all if 6 or fewer, but still sort by display order
+    if (eligibleFacilities.length <= maxHomepageFeatured) {
+      // Show all if within limit, but still sort by display order
       const sorted = [...eligibleFacilities].sort((a, b) => {
         // Pinned facilities first
         if (a.featured_pinned && !b.featured_pinned) return -1;
@@ -406,7 +423,7 @@ serve(async (req) => {
 
       // Combine: pinned first (always shown), then ordered, then shuffled unordered
       const combined = [...pinned, ...withOrder, ...shuffledWithoutOrder];
-      const selectedFacilities = combined.slice(0, MAX_HOMEPAGE_FEATURED);
+      const selectedFacilities = combined.slice(0, maxHomepageFeatured);
       homepageFeaturedIds = selectedFacilities.map(f => f.id);
 
       // Update last_featured_shown_at for facilities shown today

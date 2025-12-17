@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Settings, Mail, Bell, Info, Save, Loader2, RotateCcw, Eye, Clock, CheckCircle2 } from "lucide-react";
+import { Settings, Mail, Bell, Info, Save, Loader2, RotateCcw, Eye, Clock, CheckCircle2, Hash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -39,7 +40,11 @@ type NotificationSettings = {
   admin_email_recipients: string[];
 };
 
-const defaultSettings: NotificationSettings = {
+type PlatformSettings = {
+  max_homepage_featured: number;
+};
+
+const defaultNotificationSettings: NotificationSettings = {
   rotation_notifications_enabled: true,
   notify_on_featured: true,
   notify_on_unfeatured: false,
@@ -47,16 +52,21 @@ const defaultSettings: NotificationSettings = {
   admin_email_recipients: ["help@rehablookup.com"],
 };
 
+const defaultPlatformSettings: PlatformSettings = {
+  max_homepage_featured: 6,
+};
+
 export function FeaturedSettingsTab() {
   const queryClient = useQueryClient();
-  const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(defaultNotificationSettings);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(defaultPlatformSettings);
   const [newEmail, setNewEmail] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // Fetch settings from platform_settings
-  const { data: savedSettings, isLoading, refetch } = useQuery({
+  // Fetch notification settings from platform_settings
+  const { data: savedNotificationSettings, isLoading: loadingNotifications, refetch: refetchNotifications } = useQuery({
     queryKey: ["featured-notification-settings"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -69,7 +79,22 @@ export function FeaturedSettingsTab() {
       if (data?.updated_at) {
         setLastSaved(new Date(data.updated_at));
       }
-      return (data?.setting_value as NotificationSettings) || defaultSettings;
+      return (data?.setting_value as NotificationSettings) || defaultNotificationSettings;
+    },
+  });
+
+  // Fetch platform settings (max homepage featured)
+  const { data: savedPlatformSettings, isLoading: loadingPlatform, refetch: refetchPlatform } = useQuery({
+    queryKey: ["featured-platform-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_settings")
+        .select("setting_value, updated_at")
+        .eq("setting_key", "featured_platform_settings")
+        .maybeSingle();
+      
+      if (error) throw error;
+      return (data?.setting_value as PlatformSettings) || defaultPlatformSettings;
     },
   });
 
@@ -82,11 +107,15 @@ export function FeaturedSettingsTab() {
         { 
           event: "*", 
           schema: "public", 
-          table: "platform_settings",
-          filter: "setting_key=eq.featured_notification_settings"
+          table: "platform_settings"
         },
-        () => {
-          refetch();
+        (payload) => {
+          const settingKey = (payload.new as { setting_key?: string })?.setting_key;
+          if (settingKey === "featured_notification_settings") {
+            refetchNotifications();
+          } else if (settingKey === "featured_platform_settings") {
+            refetchPlatform();
+          }
         }
       )
       .subscribe();
@@ -94,39 +123,46 @@ export function FeaturedSettingsTab() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch]);
+  }, [refetchNotifications, refetchPlatform]);
 
   // Initialize settings when data loads
   useEffect(() => {
-    if (savedSettings && savedSettings !== defaultSettings) {
-      setSettings(savedSettings);
+    if (savedNotificationSettings) {
+      setNotificationSettings(savedNotificationSettings);
     }
-  }, [savedSettings]);
+  }, [savedNotificationSettings]);
 
-  // Save settings mutation
+  useEffect(() => {
+    if (savedPlatformSettings) {
+      setPlatformSettings(savedPlatformSettings);
+    }
+  }, [savedPlatformSettings]);
+
+  // Save all settings mutation
   const saveMutation = useMutation({
-    mutationFn: async (newSettings: NotificationSettings) => {
-      const { data: existing } = await supabase
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Save notification settings
+      const { data: existingNotification } = await supabase
         .from("platform_settings")
         .select("id")
         .eq("setting_key", "featured_notification_settings")
         .maybeSingle();
 
-      const settingValue: Json = {
-        rotation_notifications_enabled: newSettings.rotation_notifications_enabled,
-        notify_on_featured: newSettings.notify_on_featured,
-        notify_on_unfeatured: newSettings.notify_on_unfeatured,
-        notification_timing: newSettings.notification_timing,
-        admin_email_recipients: newSettings.admin_email_recipients,
+      const notificationValue: Json = {
+        rotation_notifications_enabled: notificationSettings.rotation_notifications_enabled,
+        notify_on_featured: notificationSettings.notify_on_featured,
+        notify_on_unfeatured: notificationSettings.notify_on_unfeatured,
+        notification_timing: notificationSettings.notification_timing,
+        admin_email_recipients: notificationSettings.admin_email_recipients,
       };
 
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (existing) {
+      if (existingNotification) {
         const { error } = await supabase
           .from("platform_settings")
           .update({ 
-            setting_value: settingValue,
+            setting_value: notificationValue,
             updated_at: new Date().toISOString(),
             updated_by: user?.id || null
           })
@@ -137,8 +173,41 @@ export function FeaturedSettingsTab() {
           .from("platform_settings")
           .insert([{
             setting_key: "featured_notification_settings",
-            setting_value: settingValue,
+            setting_value: notificationValue,
             description: "Email notification settings for featured rotation",
+            updated_by: user?.id || null
+          }]);
+        if (error) throw error;
+      }
+
+      // Save platform settings (max homepage featured)
+      const { data: existingPlatform } = await supabase
+        .from("platform_settings")
+        .select("id")
+        .eq("setting_key", "featured_platform_settings")
+        .maybeSingle();
+
+      const platformValue: Json = {
+        max_homepage_featured: platformSettings.max_homepage_featured,
+      };
+
+      if (existingPlatform) {
+        const { error } = await supabase
+          .from("platform_settings")
+          .update({ 
+            setting_value: platformValue,
+            updated_at: new Date().toISOString(),
+            updated_by: user?.id || null
+          })
+          .eq("setting_key", "featured_platform_settings");
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("platform_settings")
+          .insert([{
+            setting_key: "featured_platform_settings",
+            setting_value: platformValue,
+            description: "Platform settings for featured placement",
             updated_by: user?.id || null
           }]);
         if (error) throw error;
@@ -150,16 +219,18 @@ export function FeaturedSettingsTab() {
         action_type: "featured_settings_updated",
         target_type: "platform_settings",
         details: { 
-          settings: newSettings,
-          changed_fields: Object.keys(newSettings)
+          notification_settings: notificationSettings,
+          platform_settings: platformSettings,
         },
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["featured-notification-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-platform-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-auto-featured-ids"] });
       setHasChanges(false);
       setLastSaved(new Date());
-      toast.success("Settings saved", { description: "Notification settings updated successfully" });
+      toast.success("Settings saved", { description: "All settings updated successfully" });
     },
     onError: (error) => {
       console.error("Error saving settings:", error);
@@ -167,11 +238,19 @@ export function FeaturedSettingsTab() {
     },
   });
 
-  const updateSetting = <K extends keyof NotificationSettings>(
+  const updateNotificationSetting = <K extends keyof NotificationSettings>(
     key: K,
     value: NotificationSettings[K]
   ) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setNotificationSettings(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const updatePlatformSetting = <K extends keyof PlatformSettings>(
+    key: K,
+    value: PlatformSettings[K]
+  ) => {
+    setPlatformSettings(prev => ({ ...prev, [key]: value }));
     setHasChanges(true);
   };
 
@@ -184,36 +263,39 @@ export function FeaturedSettingsTab() {
       return;
     }
     
-    if (settings.admin_email_recipients.includes(email)) {
+    if (notificationSettings.admin_email_recipients.includes(email)) {
       toast.error("Duplicate email", { description: "This email is already in the list" });
       return;
     }
     
-    updateSetting("admin_email_recipients", [...settings.admin_email_recipients, email]);
+    updateNotificationSetting("admin_email_recipients", [...notificationSettings.admin_email_recipients, email]);
     setNewEmail("");
   };
 
   const removeEmail = (email: string) => {
-    if (settings.admin_email_recipients.length <= 1) {
+    if (notificationSettings.admin_email_recipients.length <= 1) {
       toast.error("Cannot remove", { description: "At least one recipient is required" });
       return;
     }
-    updateSetting(
+    updateNotificationSetting(
       "admin_email_recipients",
-      settings.admin_email_recipients.filter(e => e !== email)
+      notificationSettings.admin_email_recipients.filter(e => e !== email)
     );
   };
 
   const handleSave = () => {
-    saveMutation.mutate(settings);
+    saveMutation.mutate();
   };
 
   const handleReset = () => {
-    setSettings(defaultSettings);
+    setNotificationSettings(defaultNotificationSettings);
+    setPlatformSettings(defaultPlatformSettings);
     setHasChanges(true);
     setShowResetDialog(false);
     toast.info("Settings reset", { description: "Click Save to apply default settings" });
   };
+
+  const isLoading = loadingNotifications || loadingPlatform;
 
   if (isLoading) {
     return (
@@ -232,7 +314,7 @@ export function FeaturedSettingsTab() {
         <Info className="h-4 w-4 text-blue-600" />
         <AlertDescription className="text-blue-700">
           <strong>Featured Settings</strong> control how featured providers are displayed and how notifications are sent. 
-          Changes to email notifications take effect immediately. Platform-level settings (rotation, pricing) are managed by engineering.
+          Changes take effect immediately after saving.
         </AlertDescription>
       </Alert>
 
@@ -244,27 +326,66 @@ export function FeaturedSettingsTab() {
         </div>
       )}
 
-      {/* Platform Settings Card (Read-only) */}
+      {/* Platform Settings Card (Editable) */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                <Settings className="h-5 w-5 text-slate-600" />
+              <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                <Settings className="h-5 w-5 text-purple-600" />
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
                   Platform Settings
-                  <Badge variant="secondary">Read Only</Badge>
+                  <Badge variant="outline" className="text-purple-600 border-purple-200">Editable</Badge>
                 </CardTitle>
                 <CardDescription>
-                  Core featured placement configuration (managed by engineering)
+                  Configure featured placement behavior
                 </CardDescription>
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Max Homepage Featured - Editable */}
+          <div className="p-4 border-2 rounded-lg bg-gradient-to-r from-purple-50 to-white border-purple-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium flex items-center gap-2">
+                  <Hash className="h-4 w-4 text-purple-600" />
+                  Max Homepage Featured
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Maximum number of featured providers shown on the homepage at once
+                </p>
+              </div>
+              <Badge variant="outline" className="text-2xl px-4 py-2 font-bold text-purple-700 border-purple-300 bg-purple-50">
+                {platformSettings.max_homepage_featured}
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              <Slider
+                value={[platformSettings.max_homepage_featured]}
+                onValueChange={([value]) => updatePlatformSetting("max_homepage_featured", value)}
+                min={1}
+                max={12}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>1</span>
+                <span>3</span>
+                <span>6</span>
+                <span>9</span>
+                <span>12</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              Recommended: 6 providers for optimal homepage layout
+            </p>
+          </div>
+
+          {/* Read-only settings grid */}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
               <div className="space-y-0.5">
@@ -281,25 +402,22 @@ export function FeaturedSettingsTab() {
 
             <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
               <div className="space-y-0.5">
-                <Label className="text-base font-medium flex items-center gap-2">
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                  Max Homepage Featured
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Providers shown at once
-                </p>
-              </div>
-              <Badge variant="outline" className="text-lg px-4 font-semibold">6</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
-              <div className="space-y-0.5">
                 <Label className="text-base font-medium">Featured Plan Price</Label>
                 <p className="text-sm text-muted-foreground">
                   Monthly subscription
                 </p>
               </div>
               <Badge variant="outline" className="text-lg px-4 font-semibold text-amber-700 border-amber-200 bg-amber-50">$1,099/mo</Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium">Pinned Priority</Label>
+                <p className="text-sm text-muted-foreground">
+                  Pinned providers always shown
+                </p>
+              </div>
+              <Badge className="bg-green-100 text-green-700 border-green-200">Active</Badge>
             </div>
 
             <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
@@ -312,13 +430,6 @@ export function FeaturedSettingsTab() {
               <Badge className="bg-green-100 text-green-700 border-green-200">Active</Badge>
             </div>
           </div>
-
-          <Alert className="bg-muted/50">
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              These platform settings are managed at the system level. Contact engineering to modify rotation rules, pricing, or homepage limits.
-            </AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
 
@@ -362,12 +473,12 @@ export function FeaturedSettingsTab() {
                 </p>
               </div>
               <Switch 
-                checked={settings.rotation_notifications_enabled}
-                onCheckedChange={(checked) => updateSetting("rotation_notifications_enabled", checked)}
+                checked={notificationSettings.rotation_notifications_enabled}
+                onCheckedChange={(checked) => updateNotificationSetting("rotation_notifications_enabled", checked)}
               />
             </div>
 
-            {settings.rotation_notifications_enabled && (
+            {notificationSettings.rotation_notifications_enabled && (
               <>
                 <Separator />
                 
@@ -385,8 +496,8 @@ export function FeaturedSettingsTab() {
                       </p>
                     </div>
                     <Switch 
-                      checked={settings.notify_on_featured}
-                      onCheckedChange={(checked) => updateSetting("notify_on_featured", checked)}
+                      checked={notificationSettings.notify_on_featured}
+                      onCheckedChange={(checked) => updateNotificationSetting("notify_on_featured", checked)}
                     />
                   </div>
 
@@ -398,8 +509,8 @@ export function FeaturedSettingsTab() {
                       </p>
                     </div>
                     <Switch 
-                      checked={settings.notify_on_unfeatured}
-                      onCheckedChange={(checked) => updateSetting("notify_on_unfeatured", checked)}
+                      checked={notificationSettings.notify_on_unfeatured}
+                      onCheckedChange={(checked) => updateNotificationSetting("notify_on_unfeatured", checked)}
                     />
                   </div>
                 </div>
@@ -420,8 +531,8 @@ export function FeaturedSettingsTab() {
                       </p>
                     </div>
                     <Select 
-                      value={settings.notification_timing}
-                      onValueChange={(value) => updateSetting("notification_timing", value as NotificationSettings["notification_timing"])}
+                      value={notificationSettings.notification_timing}
+                      onValueChange={(value) => updateNotificationSetting("notification_timing", value as NotificationSettings["notification_timing"])}
                     >
                       <SelectTrigger className="w-[180px]">
                         <SelectValue />
@@ -451,13 +562,13 @@ export function FeaturedSettingsTab() {
 
                   {/* Timing explanation */}
                   <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-                    {settings.notification_timing === "immediate" && (
+                    {notificationSettings.notification_timing === "immediate" && (
                       <p>Providers receive emails instantly when featured or rotated.</p>
                     )}
-                    {settings.notification_timing === "daily_digest" && (
+                    {notificationSettings.notification_timing === "daily_digest" && (
                       <p>Providers receive a daily summary of their featured status changes.</p>
                     )}
-                    {settings.notification_timing === "weekly_digest" && (
+                    {notificationSettings.notification_timing === "weekly_digest" && (
                       <p>Providers receive a weekly summary of their featured activity.</p>
                     )}
                   </div>
@@ -478,7 +589,7 @@ export function FeaturedSettingsTab() {
                     
                     {/* Email list */}
                     <div className="flex flex-wrap gap-2">
-                      {settings.admin_email_recipients.map((email) => (
+                      {notificationSettings.admin_email_recipients.map((email) => (
                         <Badge 
                           key={email} 
                           variant="secondary" 
@@ -520,7 +631,7 @@ export function FeaturedSettingsTab() {
               </>
             )}
 
-            {!settings.rotation_notifications_enabled && (
+            {!notificationSettings.rotation_notifications_enabled && (
               <Alert className="bg-amber-50 border-amber-200">
                 <Info className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-700">
@@ -562,8 +673,9 @@ export function FeaturedSettingsTab() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reset to Default Settings?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will reset all notification settings to their default values:
+              This will reset all settings to their default values:
               <ul className="mt-2 space-y-1 text-sm">
+                <li>• Max homepage featured: 6</li>
                 <li>• Rotation notifications: Enabled</li>
                 <li>• Notify when featured: Enabled</li>
                 <li>• Notify when rotated out: Disabled</li>
