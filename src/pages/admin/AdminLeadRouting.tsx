@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,7 +97,7 @@ export default function AdminLeadRouting() {
   const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
 
   // Fetch routing statistics
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ["routing-stats", dateRange],
     queryFn: async () => {
       const fromDate = dateRange.from?.toISOString() || subDays(new Date(), 30).toISOString();
@@ -163,7 +163,7 @@ export default function AdminLeadRouting() {
   });
 
   // Fetch total count for pagination
-  const { data: totalCount } = useQuery({
+  const { data: totalCount, error: countError } = useQuery({
     queryKey: ["routing-logs-count", dateRange, routingSource, resultType],
     queryFn: async () => {
       const fromDate = dateRange.from?.toISOString() || subDays(new Date(), 30).toISOString();
@@ -198,7 +198,7 @@ export default function AdminLeadRouting() {
   });
 
   // Fetch routing logs with pagination
-  const { data: logs, isLoading: logsLoading, refetch } = useQuery({
+  const { data: logs, isLoading: logsLoading, refetch, error: logsError } = useQuery({
     queryKey: ["routing-logs-detailed", dateRange, routingSource, resultType, currentPage, itemsPerPage],
     queryFn: async () => {
       const fromDate = dateRange.from?.toISOString() || subDays(new Date(), 30).toISOString();
@@ -241,6 +241,19 @@ export default function AdminLeadRouting() {
       return data as RoutingLog[];
     },
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (statsError) logError("fetch_routing_stats", statsError, { queryKey: "routing-stats" });
+  }, [statsError, logError]);
+
+  useEffect(() => {
+    if (countError) logError("fetch_routing_count", countError, { queryKey: "routing-logs-count" });
+  }, [countError, logError]);
+
+  useEffect(() => {
+    if (logsError) logError("fetch_routing_logs", logsError, { queryKey: "routing-logs-detailed" });
+  }, [logsError, logError]);
 
   const totalPages = Math.ceil((totalCount || 0) / itemsPerPage);
 

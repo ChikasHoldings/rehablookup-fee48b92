@@ -168,7 +168,7 @@ export default function AdminSecurityLogs() {
   const { from: dateFrom, to: dateTo } = getDateRange();
 
   // Fetch rate limit logs
-  const { data: logs, isLoading: logsLoading, refetch: refetchLogs } = useQuery({
+  const { data: logs, isLoading: logsLoading, refetch: refetchLogs, error: logsError } = useQuery({
     queryKey: ["rate-limit-logs", actionFilter, successFilter, dateFrom.toISOString(), dateTo.toISOString()],
     queryFn: async () => {
       let query = supabase
@@ -193,7 +193,7 @@ export default function AdminSecurityLogs() {
   });
 
   // Fetch suspicious activity (high failed attempt counts)
-  const { data: suspiciousActivity, isLoading: suspiciousLoading, refetch: refetchSuspicious } = useQuery({
+  const { data: suspiciousActivity, isLoading: suspiciousLoading, refetch: refetchSuspicious, error: suspiciousError } = useQuery({
     queryKey: ["suspicious-activity"],
     queryFn: async () => {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -235,7 +235,7 @@ export default function AdminSecurityLogs() {
   });
 
   // Fetch blocked identifiers
-  const { data: blockedIdentifiers, isLoading: blockedLoading, refetch: refetchBlocked } = useQuery({
+  const { data: blockedIdentifiers, isLoading: blockedLoading, refetch: refetchBlocked, error: blockedError } = useQuery({
     queryKey: ["blocked-identifiers"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -247,6 +247,19 @@ export default function AdminSecurityLogs() {
       return data as BlockedIdentifier[];
     },
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (logsError) logError("fetch_rate_limit_logs", logsError, { queryKey: "rate-limit-logs" });
+  }, [logsError, logError]);
+
+  useEffect(() => {
+    if (suspiciousError) logError("fetch_suspicious_activity", suspiciousError, { queryKey: "suspicious-activity" });
+  }, [suspiciousError, logError]);
+
+  useEffect(() => {
+    if (blockedError) logError("fetch_blocked_identifiers", blockedError, { queryKey: "blocked-identifiers" });
+  }, [blockedError, logError]);
 
   // Block identifier mutation
   const blockMutation = useMutation({

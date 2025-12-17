@@ -176,6 +176,15 @@ export default function AdminFeatured() {
     staleTime: 1000 * 60 * 2,
   });
 
+  // Log query errors
+  useEffect(() => {
+    if (facilitiesError) logError("fetch_facilities", facilitiesError, { queryKey: "admin-all-facilities-featured" });
+  }, [facilitiesError, logError]);
+
+  useEffect(() => {
+    if (featuredError) logError("fetch_featured_ids", featuredError, { queryKey: "admin-auto-featured-ids" });
+  }, [featuredError, logError]);
+
   const autoFeaturedIds = featuredData?.featuredFacilityIds || [];
   const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
 

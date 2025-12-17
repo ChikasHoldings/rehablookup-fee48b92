@@ -120,7 +120,7 @@ export default function AdminFlaggedImages() {
   }, [invalidateFlaggedQueries]);
 
   // Fetch flagged images with facility info
-  const { data: flaggedImages, isLoading } = useQuery({
+  const { data: flaggedImages, isLoading, error: flaggedImagesError } = useQuery({
     queryKey: ["admin-flagged-images", activeTab, searchQuery, reasonFilter],
     queryFn: async () => {
       let query = supabase
@@ -160,7 +160,7 @@ export default function AdminFlaggedImages() {
   });
 
   // Get counts
-  const { data: counts } = useQuery({
+  const { data: counts, error: countsError } = useQuery({
     queryKey: ["admin-flagged-images-counts"],
     queryFn: async () => {
       const [pendingResult, resolvedResult] = await Promise.all([
@@ -175,6 +175,15 @@ export default function AdminFlaggedImages() {
       };
     },
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (flaggedImagesError) logError("fetch_flagged_images", flaggedImagesError, { queryKey: "admin-flagged-images" });
+  }, [flaggedImagesError, logError]);
+
+  useEffect(() => {
+    if (countsError) logError("fetch_flagged_counts", countsError, { queryKey: "admin-flagged-images-counts" });
+  }, [countsError, logError]);
 
   // Resolve flagged image mutation
   const resolveImage = useMutation({

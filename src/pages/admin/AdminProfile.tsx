@@ -133,7 +133,7 @@ export default function AdminProfile() {
   });
 
   // Fetch current user and profile
-  const { data: userData } = useQuery({
+  const { data: userData, error: userError } = useQuery({
     queryKey: ["admin-profile-user"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -141,7 +141,7 @@ export default function AdminProfile() {
     },
   });
 
-  const { data: profile, isLoading, refetch: refetchProfile } = useQuery({
+  const { data: profile, isLoading, refetch: refetchProfile, error: profileError } = useQuery({
     queryKey: ["admin-profile", userData?.id],
     queryFn: async () => {
       if (!userData?.id) return null;
@@ -158,7 +158,7 @@ export default function AdminProfile() {
   });
 
   // Fetch active sessions
-  const { data: sessions, isLoading: isLoadingSessions, refetch: refetchSessions } = useQuery({
+  const { data: sessions, isLoading: isLoadingSessions, refetch: refetchSessions, error: sessionsError } = useQuery({
     queryKey: ["admin-sessions", userData?.id],
     queryFn: async () => {
       if (!userData?.id) return [];
@@ -176,7 +176,7 @@ export default function AdminProfile() {
   });
 
   // Fetch recent activity with real-time updates
-  const { data: recentActivity, isLoading: isLoadingActivity } = useQuery({
+  const { data: recentActivity, isLoading: isLoadingActivity, error: activityError } = useQuery({
     queryKey: ["admin-activity", userData?.id],
     queryFn: async () => {
       if (!userData?.id) return [];
@@ -192,6 +192,23 @@ export default function AdminProfile() {
     },
     enabled: !!userData?.id,
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (userError) logError("fetch_user", userError, { queryKey: "admin-profile-user" });
+  }, [userError, logError]);
+
+  useEffect(() => {
+    if (profileError) logError("fetch_profile", profileError, { queryKey: "admin-profile" });
+  }, [profileError, logError]);
+
+  useEffect(() => {
+    if (sessionsError) logError("fetch_sessions", sessionsError, { queryKey: "admin-sessions" });
+  }, [sessionsError, logError]);
+
+  useEffect(() => {
+    if (activityError) logError("fetch_activity", activityError, { queryKey: "admin-activity" });
+  }, [activityError, logError]);
 
   // Real-time subscription for activity and session updates
   useEffect(() => {

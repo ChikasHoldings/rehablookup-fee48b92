@@ -274,7 +274,7 @@ export default function AdminSubscriptions() {
   }, [invalidateSubscriptionQueries, queryClient]);
 
   // Fetch subscription stats from Stripe
-  const { data: stripeStats, isLoading: isLoadingStripe, refetch } = useQuery({
+  const { data: stripeStats, isLoading: isLoadingStripe, refetch, error: stripeError } = useQuery({
     queryKey: ["admin-subscription-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-revenue-stats");
@@ -285,7 +285,7 @@ export default function AdminSubscriptions() {
   });
 
   // Fetch all facilities
-  const { data: facilities, isLoading: isLoadingFacilities } = useQuery({
+  const { data: facilities, isLoading: isLoadingFacilities, error: facilitiesError } = useQuery({
     queryKey: ["admin-subscriptions-facilities"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -298,7 +298,7 @@ export default function AdminSubscriptions() {
   });
 
   // Fetch profiles to map emails
-  const { data: profiles } = useQuery({
+  const { data: profiles, error: profilesError } = useQuery({
     queryKey: ["admin-subscriptions-profiles"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -310,7 +310,7 @@ export default function AdminSubscriptions() {
   });
 
   // Fetch lead counts
-  const { data: leadCounts } = useQuery({
+  const { data: leadCounts, error: leadCountsError } = useQuery({
     queryKey: ["admin-subscription-lead-counts"],
     queryFn: async () => {
       const startOfMonth = new Date();
@@ -331,6 +331,23 @@ export default function AdminSubscriptions() {
       return counts;
     },
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (stripeError) logError("fetch_subscription_stats", stripeError, { queryKey: "admin-subscription-stats" });
+  }, [stripeError, logError]);
+
+  useEffect(() => {
+    if (facilitiesError) logError("fetch_facilities", facilitiesError, { queryKey: "admin-subscriptions-facilities" });
+  }, [facilitiesError, logError]);
+
+  useEffect(() => {
+    if (profilesError) logError("fetch_profiles", profilesError, { queryKey: "admin-subscriptions-profiles" });
+  }, [profilesError, logError]);
+
+  useEffect(() => {
+    if (leadCountsError) logError("fetch_lead_counts", leadCountsError, { queryKey: "admin-subscription-lead-counts" });
+  }, [leadCountsError, logError]);
 
   // Map email to profile
   const emailToProfile = useMemo(() => {
