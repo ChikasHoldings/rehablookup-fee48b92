@@ -395,180 +395,245 @@ export function PlanSettingsTab() {
                     Create Promo Code
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create Promo Code</DialogTitle>
-                    <DialogDescription>
-                      Create a new discount code for subscriptions
-                    </DialogDescription>
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+                  <DialogHeader className="pb-4 border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                        <Ticket className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <DialogTitle className="text-lg">Create Promo Code</DialogTitle>
+                        <DialogDescription className="text-sm">
+                          Create a discount code for provider subscriptions
+                        </DialogDescription>
+                      </div>
+                    </div>
                   </DialogHeader>
 
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Code Name</Label>
+                  <div className="space-y-6 py-4">
+                    {/* Code Name Section */}
+                    <div className="space-y-3">
+                      <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-muted-foreground" />
+                        Promo Code
+                      </Label>
                       <Input
                         id="name"
                         placeholder="e.g., SUMMER2024"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
+                        className="font-mono text-base tracking-wider"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        This will be the promo code users enter
-                      </p>
+                      {formData.name && (
+                        <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                          <span className="text-xs text-muted-foreground">Preview:</span>
+                          <Badge variant="outline" className="font-mono tracking-wider">
+                            {formData.name}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Discount Type</Label>
-                      <div className="flex gap-2">
+                    {/* Discount Section */}
+                    <div className="space-y-3 p-4 rounded-lg border bg-card">
+                      <Label className="text-sm font-medium">Discount Amount</Label>
+                      <div className="grid grid-cols-2 gap-2">
                         <Button
                           type="button"
                           variant={formData.discountType === "percent" ? "default" : "outline"}
-                          size="sm"
+                          className="h-12 flex-col gap-1"
                           onClick={() => setFormData({ ...formData, discountType: "percent", amountOff: "" })}
                         >
-                          <Percent className="h-4 w-4 mr-1" />
-                          Percentage
+                          <Percent className="h-4 w-4" />
+                          <span className="text-xs">Percentage</span>
                         </Button>
                         <Button
                           type="button"
                           variant={formData.discountType === "amount" ? "default" : "outline"}
-                          size="sm"
+                          className="h-12 flex-col gap-1"
                           onClick={() => setFormData({ ...formData, discountType: "amount", percentOff: "" })}
                         >
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          Fixed Amount
+                          <DollarSign className="h-4 w-4" />
+                          <span className="text-xs">Fixed Amount</span>
                         </Button>
                       </div>
+
+                      {formData.discountType === "percent" ? (
+                        <div className="space-y-2 pt-2">
+                          <Label htmlFor="percentOff" className="text-xs text-muted-foreground">Percentage Off</Label>
+                          <div className="relative">
+                            <Input
+                              id="percentOff"
+                              type="number"
+                              min="1"
+                              max="100"
+                              placeholder="25"
+                              value={formData.percentOff}
+                              onChange={(e) => setFormData({ ...formData, percentOff: e.target.value })}
+                              className="pr-10 text-lg font-semibold"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">%</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 pt-2">
+                          <Label htmlFor="amountOff" className="text-xs text-muted-foreground">Amount Off (USD)</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
+                            <Input
+                              id="amountOff"
+                              type="number"
+                              min="1"
+                              placeholder="50"
+                              value={formData.amountOff}
+                              onChange={(e) => setFormData({ ...formData, amountOff: e.target.value })}
+                              className="pl-8 text-lg font-semibold"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {formData.discountType === "percent" ? (
-                      <div className="space-y-2">
-                        <Label htmlFor="percentOff">Percentage Off</Label>
-                        <div className="relative">
-                          <Input
-                            id="percentOff"
-                            type="number"
-                            min="1"
-                            max="100"
-                            placeholder="25"
-                            value={formData.percentOff}
-                            onChange={(e) => setFormData({ ...formData, percentOff: e.target.value })}
-                            className="pr-8"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Label htmlFor="amountOff">Amount Off (USD)</Label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                          <Input
-                            id="amountOff"
-                            type="number"
-                            min="1"
-                            placeholder="50"
-                            value={formData.amountOff}
-                            onChange={(e) => setFormData({ ...formData, amountOff: e.target.value })}
-                            className="pl-7"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <Label htmlFor="duration">Duration</Label>
+                    {/* Duration Section */}
+                    <div className="space-y-3">
+                      <Label htmlFor="duration" className="text-sm font-medium flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        Duration
+                      </Label>
                       <Select
                         value={formData.duration}
                         onValueChange={(value: "once" | "repeating" | "forever") =>
                           setFormData({ ...formData, duration: value })
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="once">One-time (first payment only)</SelectItem>
-                          <SelectItem value="repeating">Multiple months</SelectItem>
-                          <SelectItem value="forever">Forever (all payments)</SelectItem>
+                          <SelectItem value="once">
+                            <div className="flex flex-col items-start">
+                              <span>One-time</span>
+                              <span className="text-xs text-muted-foreground">First payment only</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="repeating">
+                            <div className="flex flex-col items-start">
+                              <span>Multiple months</span>
+                              <span className="text-xs text-muted-foreground">Specify number of months</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="forever">
+                            <div className="flex flex-col items-start">
+                              <span>Forever</span>
+                              <span className="text-xs text-muted-foreground">All future payments</span>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
+
+                      {formData.duration === "repeating" && (
+                        <div className="space-y-2 pl-4 border-l-2 border-primary/20">
+                          <Label htmlFor="durationInMonths" className="text-xs text-muted-foreground">Number of Months</Label>
+                          <Input
+                            id="durationInMonths"
+                            type="number"
+                            min="1"
+                            max="36"
+                            placeholder="3"
+                            value={formData.durationInMonths}
+                            onChange={(e) => setFormData({ ...formData, durationInMonths: e.target.value })}
+                            className="w-24"
+                          />
+                        </div>
+                      )}
                     </div>
 
-                    {formData.duration === "repeating" && (
+                    {/* Limits Section */}
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="durationInMonths">Number of Months</Label>
+                        <Label htmlFor="maxRedemptions" className="text-sm font-medium flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          Max Uses
+                        </Label>
                         <Input
-                          id="durationInMonths"
+                          id="maxRedemptions"
                           type="number"
                           min="1"
-                          max="36"
-                          placeholder="3"
-                          value={formData.durationInMonths}
-                          onChange={(e) => setFormData({ ...formData, durationInMonths: e.target.value })}
+                          placeholder="Unlimited"
+                          value={formData.maxRedemptions}
+                          onChange={(e) => setFormData({ ...formData, maxRedemptions: e.target.value })}
                         />
+                        <p className="text-xs text-muted-foreground">
+                          Leave empty for unlimited
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                          Expires
+                        </Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal h-10",
+                                !formData.expiresAt && "text-muted-foreground"
+                              )}
+                            >
+                              {formData.expiresAt ? format(formData.expiresAt, "MMM d, yyyy") : "Never"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={formData.expiresAt}
+                              onSelect={(date) => setFormData({ ...formData, expiresAt: date })}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        {formData.expiresAt && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                            onClick={() => setFormData({ ...formData, expiresAt: undefined })}
+                          >
+                            Clear expiration
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Summary Preview */}
+                    {formData.name && (formData.percentOff || formData.amountOff) && (
+                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                        <p className="text-xs font-medium text-primary mb-2">Code Summary</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge className="font-mono">{formData.name}</Badge>
+                          <span className="text-sm text-muted-foreground">→</span>
+                          <span className="text-sm font-medium">
+                            {formData.discountType === "percent"
+                              ? `${formData.percentOff}% off`
+                              : `$${formData.amountOff} off`}
+                          </span>
+                          <span className="text-sm text-muted-foreground">•</span>
+                          <span className="text-sm text-muted-foreground">
+                            {formData.duration === "once" && "First payment"}
+                            {formData.duration === "forever" && "All payments"}
+                            {formData.duration === "repeating" && `${formData.durationInMonths || "?"} months`}
+                          </span>
+                        </div>
                       </div>
                     )}
-
-                    <div className="space-y-2">
-                      <Label htmlFor="maxRedemptions">Max Redemptions (optional)</Label>
-                      <Input
-                        id="maxRedemptions"
-                        type="number"
-                        min="1"
-                        placeholder="Unlimited"
-                        value={formData.maxRedemptions}
-                        onChange={(e) => setFormData({ ...formData, maxRedemptions: e.target.value })}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Leave empty for unlimited uses
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Expiration Date (optional)</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !formData.expiresAt && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formData.expiresAt ? format(formData.expiresAt, "PPP") : "No expiration"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={formData.expiresAt}
-                            onSelect={(date) => setFormData({ ...formData, expiresAt: date })}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      {formData.expiresAt && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
-                          onClick={() => setFormData({ ...formData, expiresAt: undefined })}
-                        >
-                          Clear expiration
-                        </Button>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        Leave empty for no expiration
-                      </p>
-                    </div>
                   </div>
 
-                  <DialogFooter>
+                  <DialogFooter className="pt-4 border-t gap-2 sm:gap-0">
                     <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                       Cancel
                     </Button>
@@ -581,6 +646,7 @@ export function PlanSettingsTab() {
                         (formData.discountType === "amount" && !formData.amountOff) ||
                         (formData.duration === "repeating" && !formData.durationInMonths)
                       }
+                      className="min-w-[120px]"
                     >
                       {createMutation.isPending ? (
                         <>
@@ -588,7 +654,10 @@ export function PlanSettingsTab() {
                           Creating...
                         </>
                       ) : (
-                        "Create Code"
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Code
+                        </>
                       )}
                     </Button>
                   </DialogFooter>
