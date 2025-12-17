@@ -233,39 +233,40 @@ export default function ProviderDashboardPage() {
   const profileUrl = facility?.slug ? `/center/${facility.slug}` : facility?.id ? `/rehab-centers/${facility.id}` : null;
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-      {/* Welcome Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+    <div className="p-3 sm:p-4 md:p-6 lg:p-8">
+      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
+      {/* Welcome Header - Mobile optimized */}
+      <div className="flex flex-col gap-4 sm:gap-6">
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+          <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
             {userName ? `Welcome back, ${userName}` : "Welcome back"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground line-clamp-1">
             {facility ? `Managing ${facility.name}` : "Set up your facility listing to get started"}
           </p>
         </div>
         
         {facility && profileUrl && (
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" asChild>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none h-9 sm:h-10 text-xs sm:text-sm" asChild>
               <a 
                 href={profileUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="gap-2"
+                className="gap-1.5 sm:gap-2"
               >
-                <Eye className="h-4 w-4" />
-                Preview Listing
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Preview</span>
+                <span className="xs:hidden">View</span>
                 <ArrowUpRight className="h-3 w-3" />
               </a>
             </Button>
-            <Button size="sm" asChild>
-              <Link to="/provider/listing" className="gap-2">
-                <FileEdit className="h-4 w-4" />
+            <Button size="sm" className="flex-1 sm:flex-none h-9 sm:h-10 text-xs sm:text-sm" asChild>
+              <Link to="/provider/listing" className="gap-1.5 sm:gap-2">
+                <FileEdit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Edit Listing
               </Link>
             </Button>
@@ -425,63 +426,61 @@ export default function ProviderDashboardPage() {
         <FeaturedAnalyticsWidget facilityId={facility.id} />
       )}
 
-      {/* Metrics Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Metrics Grid - 2 cols on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {/* Profile Views */}
-        <Card className="group hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
+        <Card className="group hover:shadow-md transition-all active:scale-[0.98] touch-manipulation">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Profile Views</CardTitle>
-              <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Eye className="h-4 w-4 text-blue-600" />
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Profile Views</CardTitle>
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600" />
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 sm:p-4 pt-0">
             {isLoading ? (
-              <Skeleton className="h-9 w-16" />
+              <Skeleton className="h-8 w-14" />
             ) : (
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-foreground">{viewsCount}</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl sm:text-3xl font-bold text-foreground">{viewsCount}</span>
               </div>
             )}
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               Last 30 days
             </p>
           </CardContent>
         </Card>
 
         {/* Leads - different display for Basic vs Paid plans */}
-        <Card className="group hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
+        <Card className="group hover:shadow-md transition-all active:scale-[0.98] touch-manipulation">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {planKey === "basic" ? "Direct Inquiry" : "Leads This Month"}
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+                {planKey === "basic" ? "Direct Inquiry" : "Leads"}
               </CardTitle>
-              <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <Users className="h-4 w-4 text-green-600" />
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" />
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 sm:p-4 pt-0">
             {isLoading ? (
-              <Skeleton className="h-9 w-16" />
+              <Skeleton className="h-8 w-14" />
             ) : planKey === "basic" ? (
-              <div className="space-y-2">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-foreground">{monthlyLeadsCount}</span>
-                  <span className="text-lg text-muted-foreground">/ 1</span>
+              <div className="space-y-1.5">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl sm:text-3xl font-bold text-foreground">{monthlyLeadsCount}</span>
+                  <span className="text-base sm:text-lg text-muted-foreground">/ 1</span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {monthlyLeadsCount >= 1 
-                    ? "Lifetime limit reached" 
-                    : "1 direct inquiry (lifetime)"}
+                <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">
+                  {monthlyLeadsCount >= 1 ? "Limit reached" : "1 inquiry (lifetime)"}
                 </p>
-                <Button variant="link" className="h-auto p-0 text-xs text-primary" asChild>
+                <Button variant="link" className="h-auto p-0 text-[10px] sm:text-xs text-primary" asChild>
                   <Link to="/provider/billing">
-                    Upgrade for more leads
-                    <ArrowRight className="h-3 w-3 ml-1" />
+                    Upgrade
+                    <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-0.5 sm:ml-1" />
                   </Link>
                 </Button>
               </div>
@@ -495,20 +494,20 @@ export default function ProviderDashboardPage() {
         </Card>
 
         {/* Facility Locations */}
-        <Card className="group hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
+        <Card className="group hover:shadow-md transition-all active:scale-[0.98] touch-manipulation">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Facility Locations</CardTitle>
-              <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <MapPin className="h-4 w-4 text-purple-600" />
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Locations</CardTitle>
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600" />
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3">
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="flex items-center gap-2 sm:gap-3">
               {/* Circular progress ring */}
-              <div className="relative h-12 w-12">
-                <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
+              <div className="relative h-10 w-10 sm:h-12 sm:w-12">
+                <svg className="h-10 w-10 sm:h-12 sm:w-12 -rotate-90" viewBox="0 0 36 36">
                   <circle
                     cx="18"
                     cy="18"
@@ -529,25 +528,25 @@ export default function ProviderDashboardPage() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-bold text-foreground">{usedLocations}/{locationLimit}</span>
+                  <span className="text-[10px] sm:text-xs font-bold text-foreground">{usedLocations}/{locationLimit}</span>
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">
-                  {usedLocations} of {locationLimit} used
+                <p className="text-xs sm:text-sm font-medium text-foreground">
+                  {usedLocations} of {locationLimit}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
                   {locationLimit - usedLocations > 0 
-                    ? `${locationLimit - usedLocations} available` 
-                    : "Limit reached"}
+                    ? `${locationLimit - usedLocations} left` 
+                    : "Full"}
                 </p>
               </div>
             </div>
             {usedLocations >= locationLimit && planKey !== "featured" && (
-              <Button variant="link" className="h-auto p-0 text-xs text-primary mt-2" asChild>
+              <Button variant="link" className="h-auto p-0 text-[10px] sm:text-xs text-primary mt-1.5 sm:mt-2" asChild>
                 <Link to="/provider/billing">
-                  Upgrade for more
-                  <ArrowRight className="h-3 w-3 ml-1" />
+                  Upgrade
+                  <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-0.5 sm:ml-1" />
                 </Link>
               </Button>
             )}
@@ -555,23 +554,23 @@ export default function ProviderDashboardPage() {
         </Card>
 
         {/* Subscription */}
-        <Card className="group hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
+        <Card className="group hover:shadow-md transition-all active:scale-[0.98] touch-manipulation">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Subscription</CardTitle>
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <CreditCard className="h-4 w-4 text-primary" />
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Plan</CardTitle>
+              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-foreground">{subscription?.plan_name || "Basic Listing"}</span>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base sm:text-xl font-bold text-foreground line-clamp-1">{subscription?.plan_name || "Basic"}</span>
             </div>
-            <Button variant="link" className="h-auto p-0 text-xs text-primary mt-1" asChild>
+            <Button variant="link" className="h-auto p-0 text-[10px] sm:text-xs text-primary mt-0.5 sm:mt-1" asChild>
               <Link to="/provider/billing">
-                {subscription?.subscribed ? "Manage plan" : "Upgrade plan"}
-                <ArrowRight className="h-3 w-3 ml-1" />
+                {subscription?.subscribed ? "Manage" : "Upgrade"}
+                <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-0.5 sm:ml-1" />
               </Link>
             </Button>
           </CardContent>
