@@ -44,6 +44,34 @@ import { compressImage, validateImageFile } from "@/lib/imageUtils";
 import { PlanSelectionStep } from "@/components/provider/PlanSelectionStep";
 import { PLAN_DETAILS } from "@/hooks/useSubscription";
 
+const getBrowserInfo = (): { browser: string; os: string; device: string } => {
+  const ua = navigator.userAgent;
+  
+  let browser = "Unknown Browser";
+  if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Edg")) browser = "Edge";
+  else if (ua.includes("Chrome")) browser = "Chrome";
+  else if (ua.includes("Safari")) browser = "Safari";
+  else if (ua.includes("Opera") || ua.includes("OPR")) browser = "Opera";
+  
+  let os = "Unknown OS";
+  if (ua.includes("Windows")) os = "Windows";
+  else if (ua.includes("Mac OS")) os = "macOS";
+  else if (ua.includes("Linux")) os = "Linux";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+  
+  let device = "Desktop";
+  if (ua.includes("Mobile") || ua.includes("Android")) device = "Mobile";
+  else if (ua.includes("Tablet") || ua.includes("iPad")) device = "Tablet";
+  
+  return { browser, os, device };
+};
+
+const generateSessionToken = (): string => {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+};
+
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
   { href: "/provider-resources", label: "Resources" },
@@ -397,7 +425,37 @@ export default function ProviderSignup() {
         user_id: userId,
       });
 
-      // 10. Notify admin of new provider signup
+      // 10. Create initial login session tracking
+      try {
+        const { browser, os, device } = getBrowserInfo();
+        const sessionToken = generateSessionToken();
+        localStorage.setItem("current_session_token", sessionToken);
+        
+        await supabase.from("user_sessions").insert({
+          user_id: userId,
+          session_token: sessionToken,
+          browser,
+          os,
+          device_name: device,
+          is_current: true,
+          last_active_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+        });
+        
+        // Log the signup as activity
+        supabase.functions.invoke("log-activity", {
+          body: {
+            user_id: userId,
+            event_type: "signup",
+            event_description: `Created new provider account from ${browser} on ${os}`,
+          },
+        });
+      } catch (sessionError) {
+        console.error("Session tracking error:", sessionError);
+        // Non-blocking - continue even if session tracking fails
+      }
+
+      // 11. Notify admin of new provider signup
       try {
         await supabase.functions.invoke("notify-admin-provider-signup", {
           body: {
@@ -413,7 +471,7 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if notification fails
       }
 
-      // 11. Send welcome email to provider
+      // 12. Send welcome email to provider
       try {
         await supabase.functions.invoke("send-provider-welcome-email", {
           body: {
@@ -429,7 +487,7 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if email fails
       }
 
-      // 12. Handle subscription for paid plans
+      // 13. Handle subscription for paid plans
       if (formData.selectedPlan !== "basic") {
         toast({
           title: "Account Created!",
