@@ -222,6 +222,140 @@ serve(async (req) => {
       }
     }
 
+    // Handle new subscription created
+    if (event.type === "customer.subscription.created" || event.type === "checkout.session.completed") {
+      let customerId: string;
+      let subscriptionId: string | null = null;
+      let planName = "Unknown Plan";
+      let amount = 0;
+      let currency = "USD";
+
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.mode !== "subscription") {
+          logStep("Checkout session is not subscription, skipping");
+        } else {
+          customerId = session.customer as string;
+          subscriptionId = session.subscription as string;
+          
+          if (subscriptionId) {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+              expand: ["items.data.price.product"],
+            });
+            const priceItem = subscription.items.data[0];
+            planName = (priceItem?.price?.product as Stripe.Product)?.name || "Subscription";
+            amount = priceItem?.price?.unit_amount || 0;
+            currency = (priceItem?.price?.currency || "usd").toUpperCase();
+          }
+        }
+      } else {
+        const subscription = event.data.object as Stripe.Subscription;
+        customerId = subscription.customer as string;
+        subscriptionId = subscription.id;
+        
+        // Get plan details
+        const priceItem = subscription.items.data[0];
+        if (priceItem?.price?.product) {
+          const product = await stripe.products.retrieve(priceItem.price.product as string);
+          planName = product.name;
+        }
+        amount = priceItem?.price?.unit_amount || 0;
+        currency = (priceItem?.price?.currency || "usd").toUpperCase();
+      }
+
+      if (customerId! && subscriptionId) {
+        logStep("New subscription created", { subscriptionId, customerId });
+
+        const customer = await stripe.customers.retrieve(customerId);
+        
+        if (!customer.deleted) {
+          const customerEmail = (customer as Stripe.Customer).email;
+          const customerName = (customer as Stripe.Customer).name || "Provider";
+          const amountFormatted = (amount / 100).toFixed(2);
+
+          // Find provider and facility
+          const { data: profiles } = await supabaseAdmin
+            .from("profiles")
+            .select("user_id, first_name, last_name")
+            .eq("email", customerEmail)
+            .limit(1);
+
+          const profile = profiles?.[0];
+          const providerName = profile ? `${profile.first_name} ${profile.last_name}` : customerName;
+
+          let facilityName = "New Provider";
+          let facilityId = null;
+          if (profile?.user_id) {
+            const { data: facilities } = await supabaseAdmin
+              .from("facilities")
+              .select("id, name")
+              .eq("user_id", profile.user_id)
+              .limit(1);
+            
+            if (facilities?.[0]) {
+              facilityName = facilities[0].name;
+              facilityId = facilities[0].id;
+            }
+          }
+
+          // Create admin notification
+          await supabaseAdmin.from("admin_notifications").insert({
+            type: "new_subscription",
+            title: "New Subscription Created",
+            message: `${facilityName} subscribed to ${planName} (${currency} ${amountFormatted}/mo)`,
+            metadata: {
+              customer_id: customerId,
+              customer_email: customerEmail,
+              subscription_id: subscriptionId,
+              plan_name: planName,
+              amount: amountFormatted,
+              currency,
+              facility_id: facilityId,
+              facility_name: facilityName,
+              provider_name: providerName,
+            },
+          });
+          logStep("New subscription admin notification created");
+
+          // Send admin email notification
+          if (resend) {
+            try {
+              await resend.emails.send({
+                from: "RehabLookup <notifications@rehablookup.com>",
+                to: ["help@rehablookup.com"],
+                subject: `🎉 New Subscription - ${facilityName}`,
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 30px; border-radius: 12px 12px 0 0;">
+                      <h1 style="color: white; margin: 0; font-size: 24px;">🎉 New Subscription</h1>
+                    </div>
+                    <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+                        A new provider has subscribed to RehabLookup!
+                      </p>
+                      <div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
+                        <p style="margin: 0; color: #047857;"><strong>Facility:</strong> ${facilityName}</p>
+                        <p style="margin: 8px 0 0; color: #047857;"><strong>Provider:</strong> ${providerName}</p>
+                        <p style="margin: 8px 0 0; color: #047857;"><strong>Email:</strong> ${customerEmail}</p>
+                        <p style="margin: 8px 0 0; color: #047857;"><strong>Plan:</strong> ${planName}</p>
+                        <p style="margin: 8px 0 0; color: #047857;"><strong>Amount:</strong> ${currency} ${amountFormatted}/month</p>
+                      </div>
+                      <p style="color: #6b7280; font-size: 14px;">
+                        View all subscriptions in the admin dashboard.
+                      </p>
+                    </div>
+                  </div>
+                `,
+              });
+              logStep("New subscription admin email sent");
+            } catch (emailError) {
+              logStep("Failed to send new subscription email", { error: emailError });
+            }
+          }
+        }
+      }
+    }
+
     // Handle subscription cancellation
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
@@ -260,6 +394,40 @@ serve(async (req) => {
               },
             });
             logStep("Subscription cancellation notification created");
+
+            // Send admin email for cancellation
+            if (resend) {
+              try {
+                await resend.emails.send({
+                  from: "RehabLookup <notifications@rehablookup.com>",
+                  to: ["help@rehablookup.com"],
+                  subject: `⚠️ Subscription Cancelled - ${facilities[0].name}`,
+                  html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                      <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 12px 12px 0 0;">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ Subscription Cancelled</h1>
+                      </div>
+                      <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+                        <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+                          A provider has cancelled their subscription.
+                        </p>
+                        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+                          <p style="margin: 0; color: #92400e;"><strong>Facility:</strong> ${facilities[0].name}</p>
+                          <p style="margin: 8px 0 0; color: #92400e;"><strong>Provider:</strong> ${profiles[0].first_name} ${profiles[0].last_name}</p>
+                          <p style="margin: 8px 0 0; color: #92400e;"><strong>Email:</strong> ${customerEmail}</p>
+                        </div>
+                        <p style="color: #6b7280; font-size: 14px;">
+                          Consider reaching out to understand why they cancelled.
+                        </p>
+                      </div>
+                    </div>
+                  `,
+                });
+                logStep("Cancellation admin email sent");
+              } catch (emailError) {
+                logStep("Failed to send cancellation email", { error: emailError });
+              }
+            }
           }
         }
       }
