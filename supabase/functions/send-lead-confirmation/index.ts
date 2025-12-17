@@ -68,15 +68,18 @@ const handler = async (req: Request): Promise<Response> => {
       <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280; font-style: italic;">Connecting people with trusted treatment options</p>
     </div>
     
-    <div style="background: #f8fafc; padding: 20px 28px; border-top: 1px solid #e5e7eb;">
-      <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-        <span style="font-size: 14px; color: #6b7280;">🔒 Your information is secure and confidential</span>
+    <div style="background: #1B365D; padding: 28px; border-radius: 0 0 12px 12px;">
+      <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+      <p style="margin: 0 0 16px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
+      <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.6); text-align: center;">🔒 Your information is secure and confidential</p>
+      <div style="text-align: center; margin-bottom: 12px;">
+        <a href="https://rehablookup.com/privacy-policy" style="color: #93c5fd; font-size: 11px; text-decoration: none;">Privacy Policy</a>
+        <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
+        <a href="https://rehablookup.com/terms-of-service" style="color: #93c5fd; font-size: 11px; text-decoration: none;">Terms of Service</a>
+        <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
+        <a href="mailto:support@rehablookup.com" style="color: #93c5fd; font-size: 11px; text-decoration: none;">Support</a>
       </div>
-      <p style="margin: 0; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.5;">
-        This email was sent by RehabLookup in response to your request for treatment information.
-        <br>If you did not make this request, please disregard this email.
-        <br><a href="https://rehablookup.com/privacy-policy" style="color: #6b7280;">Privacy Policy</a> · <a href="https://rehablookup.com/terms-of-service" style="color: #6b7280;">Terms of Service</a>
-      </p>
+      <p style="margin: 0; font-size: 10px; color: rgba(255,255,255,0.4); text-align: center;">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -84,7 +87,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const { error } = await resend.emails.send({
-      from: "RehabLookup <notifications@rehablookup.com>",
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: [leadEmail],
       subject: "We've received your request",
       html: emailHtml,

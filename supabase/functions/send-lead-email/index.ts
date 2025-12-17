@@ -413,12 +413,14 @@ const handler = async (req: Request): Promise<Response> => {
       line.trim() ? `<p style="margin: 0 0 14px 0; font-size: 15px;">${line}</p>` : ''
     ).join('')}
     
-    <div style="border-top: 1px solid #e2e8f0; margin-top: 32px; padding-top: 20px;">
-      <p style="font-size: 12px; color: #94a3b8; margin: 0;">
-        Sent via <a href="https://rehablookup.com" style="color: #64748b;">RehabLookup</a> on behalf of ${facility.name}.<br>
-        To stop receiving emails, reply with "unsubscribe".
-      </p>
-    </div>
+  </div>
+  
+  <div style="background: #1B365D; padding: 24px; border-radius: 12px; margin-top: 20px;">
+    <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+    <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
+    <p style="font-size: 11px; color: rgba(255,255,255,0.5); margin: 0; text-align: center;">
+      Sent on behalf of ${facility.name}. To stop receiving emails, reply with "unsubscribe".
+    </p>
   </div>
 </body>
 </html>
@@ -429,7 +431,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending email with Reply-To:", replyToEmail);
     
     const emailResponse = await resend.emails.send({
-      from: `${facility.name} via RehabLookup <noreply@resend.dev>`,
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: [lead.email],
       subject: emailSubject,
       html: emailHtml,

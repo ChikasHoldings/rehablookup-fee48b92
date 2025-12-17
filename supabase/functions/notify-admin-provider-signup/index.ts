@@ -142,8 +142,9 @@ serve(async (req) => {
       </div>
     </div>
     
-    <div style="background: #f8fafc; padding: 16px; border-top: 1px solid #e2e8f0;">
-      <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">RehabLookup Admin • You can manage notification preferences in your profile settings</p>
+    <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
+      <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup Admin</p>
+      <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;">You can manage notification preferences in your profile settings</p>
     </div>
   </div>
 </body>
@@ -151,7 +152,7 @@ serve(async (req) => {
     `;
 
     const { error: emailError } = await resend.emails.send({
-      from: "RehabLookup <notifications@rehablookup.com>",
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: adminEmails,
       subject: `New provider: ${facilityName}`,
       html: emailHtml,

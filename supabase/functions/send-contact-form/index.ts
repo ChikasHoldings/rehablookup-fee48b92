@@ -104,9 +104,12 @@ const handler = async (req: Request): Promise<Response> => {
         <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Message</p>
         <p style="margin: 0; white-space: pre-wrap;">${message}</p>
       </div>
-      
-      <p style="font-size: 11px; color: #94a3b8; margin: 16px 0 0 0;">
-        Submitted from rehablookup.com contact form
+    </div>
+    
+    <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
+      <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+      <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;">
+        Submitted via rehablookup.com contact form
       </p>
     </div>
   </div>
