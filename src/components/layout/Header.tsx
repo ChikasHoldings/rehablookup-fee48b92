@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/logo.png";
 
 export interface NavLink {
   href: string;
@@ -94,8 +93,8 @@ export function Header({
           {/* Logo - Bigger on mobile, shrinks when scrolled */}
           <Link to="/" className="flex items-center gap-2 group">
             <img 
-              src={logo} 
-              alt="RehabLookup" 
+              src="/logo.svg" 
+              alt="Rehab-Lookup" 
               className={cn(
                 "w-auto transition-all duration-300 group-hover:scale-105",
                 isScrolled ? "h-7 md:h-8" : "h-10 md:h-8"
@@ -192,8 +191,8 @@ export function Header({
         <div className="flex items-center justify-between border-b border-border px-6 py-5">
           <Link to="/" onClick={() => setMobileMenuOpen(false)}>
             <img 
-              src={logo} 
-              alt="RehabLookup" 
+              src="/logo.svg" 
+              alt="Rehab-Lookup" 
               className="h-9 w-auto"
             />
           </Link>

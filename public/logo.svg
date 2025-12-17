@@ -1,0 +1,28 @@
+<svg width="700" height="110" viewBox="0 0 700 110" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rehab-Lookup Flat Logo - Light Mode (Navy on transparent) -->
+  <!-- Icon -->
+  <g transform="translate(0,12) scale(0.82)">
+    <path
+      d="M54 2
+         C34 2 18 19 18 38
+         C18 57 40 78 50 92
+         C52.5 96 55.5 96 58 92
+         C68 78 90 57 90 38
+         C90 19 74 2 54 2Z"
+      fill="#0A2540"
+    />
+    <rect x="50" y="24" width="8" height="28" rx="2" fill="#FFFFFF"/>
+    <rect x="36" y="34" width="36" height="8" rx="2" fill="#FFFFFF"/>
+  </g>
+  <!-- Text -->
+  <text
+    x="88"
+    y="72"
+    fill="#0A2540"
+    font-size="58"
+    font-family="Inter, Arial, Helvetica, sans-serif"
+    font-weight="600"
+  >
+    Rehab-Lookup
+  </text>
+</svg>
