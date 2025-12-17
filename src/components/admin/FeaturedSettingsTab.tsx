@@ -668,31 +668,35 @@ export function FeaturedSettingsTab() {
       )}
 
       {/* Reset Confirmation Dialog */}
-      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reset to Default Settings?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will reset all settings to their default values:
-              <ul className="mt-2 space-y-1 text-sm">
-                <li>• Max homepage featured: 6</li>
-                <li>• Rotation notifications: Enabled</li>
-                <li>• Notify when featured: Enabled</li>
-                <li>• Notify when rotated out: Disabled</li>
-                <li>• Timing: Immediate</li>
-                <li>• Recipients: help@rehablookup.com</li>
-              </ul>
-              <p className="mt-2">You'll need to click Save to apply the changes.</p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleReset}>
-              Reset Settings
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {showResetDialog && (
+        <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reset to Default Settings?</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div>
+                  <p>This will reset all settings to their default values:</p>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    <li>• Max homepage featured: 6</li>
+                    <li>• Rotation notifications: Enabled</li>
+                    <li>• Notify when featured: Enabled</li>
+                    <li>• Notify when rotated out: Disabled</li>
+                    <li>• Timing: Immediate</li>
+                    <li>• Recipients: help@rehablookup.com</li>
+                  </ul>
+                  <p className="mt-2">You'll need to click Save to apply the changes.</p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleReset}>
+                Reset Settings
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
