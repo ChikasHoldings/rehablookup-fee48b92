@@ -52,6 +52,7 @@ import {
 import { toast } from "sonner";
 import { FeaturedSettingsTab } from "@/components/admin/FeaturedSettingsTab";
 import { FeaturedAnalyticsDashboard } from "@/components/admin/FeaturedAnalyticsDashboard";
+import { FeaturedActivityFeed } from "@/components/admin/FeaturedActivityFeed";
 
 type Facility = {
   id: string;
@@ -787,6 +788,9 @@ export default function AdminFeatured() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Real-time Activity Feed */}
+          <FeaturedActivityFeed />
 
           {/* Homepage Preview with Drag and Drop */}
           <Card>
