@@ -312,28 +312,37 @@ export default function ProviderDashboardPage() {
 
       {/* Basic Plan Upgrade Banner - show when Basic users have leads waiting */}
       {planKey === "basic" && totalLeadsCount > 0 && (
-        <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 via-background to-amber-500/5 overflow-hidden">
-          <CardContent className="py-5">
+        <Card className="border-2 border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-background to-primary/10 overflow-hidden relative">
+          {/* Animated background pulse */}
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-primary/5 animate-pulse" />
+          <CardContent className="py-5 relative">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Users className="h-6 w-6 text-primary" />
+                {/* Pulsing badge */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-emerald-500 rounded-xl animate-ping opacity-20" />
+                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/25">
+                    <span className="text-xl font-bold text-white">{totalLeadsCount}</span>
+                  </div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-primary">{totalLeadsCount}</span>
-                    <span className="text-lg font-semibold text-foreground">
-                      Lead{totalLeadsCount !== 1 ? 's' : ''} Waiting
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xl font-bold text-foreground">
+                      {totalLeadsCount} Lead{totalLeadsCount !== 1 ? 's' : ''} Waiting For You
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-medium">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Active
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Upgrade to view contact details and respond to inquiries
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Families are interested in your facility. Upgrade to view their contact details and respond.
                   </p>
                 </div>
               </div>
-              <Button asChild className="shrink-0 gap-2">
+              <Button asChild size="lg" className="shrink-0 gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20">
                 <Link to="/provider/billing">
-                  Upgrade to View Leads
+                  Unlock Leads
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
