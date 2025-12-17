@@ -386,17 +386,30 @@ export default function AdminDashboard() {
   });
 
   const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+    if (!dateString) return "Unknown";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Unknown";
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      return `${diffDays}d ago`;
+    } catch {
+      return "Unknown";
+    }
   };
+
+  // Safe data accessors with defaults
+  const safeProviderStats = providerStats || { total: 0, approved: 0, pending: 0, featured: 0, verified: 0 };
+  const safeLeadStats = leadStats || { totalMonth: 0, totalAll: 0, verified: 0, qualified: 0, verificationRate: 0, qualificationRate: 0, unassigned: 0, newLeads: 0 };
+  const safeRecentLeads = recentLeads || [];
+  const safeTopCities = topCities || [];
+  const safeSubscriptionBreakdown = subscriptionBreakdown || [];
 
   return (
     <div className="space-y-8">

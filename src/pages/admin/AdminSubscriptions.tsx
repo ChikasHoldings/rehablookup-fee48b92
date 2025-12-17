@@ -454,11 +454,15 @@ export default function AdminSubscriptions() {
     if (!stripeStats) return { basic: 0, professional: 0, featured: 0 };
     const total = stripeStats.active_subscriptions || 1;
     return {
-      basic: Math.round((stripeStats.basic_count / total) * 100),
-      professional: Math.round((stripeStats.professional_count / total) * 100),
-      featured: Math.round((stripeStats.featured_count / total) * 100),
+      basic: Math.round(((stripeStats.basic_count || 0) / total) * 100),
+      professional: Math.round(((stripeStats.professional_count || 0) / total) * 100),
+      featured: Math.round(((stripeStats.featured_count || 0) / total) * 100),
     };
   }, [stripeStats]);
+
+  // Safe data accessors
+  const safePaginatedSubscriptions = paginatedSubscriptions || [];
+  const safeRecentEvents = stripeStats?.recent_events || [];
 
   return (
     <div className="space-y-6">

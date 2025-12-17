@@ -408,10 +408,16 @@ export default function AdminSecurityLogs() {
 
   // Check if identifier is blocked
   const isIdentifierBlocked = (identifier: string): boolean => {
-    return blockedIdentifiers?.some(
-      (b) => b.identifier === identifier && b.is_active && (!b.expires_at || new Date(b.expires_at) > new Date())
+    if (!identifier || !blockedIdentifiers) return false;
+    return blockedIdentifiers.some(
+      (b) => b?.identifier === identifier && b?.is_active && (!b?.expires_at || new Date(b.expires_at) > new Date())
     ) || false;
   };
+
+  // Safe data accessors
+  const safeLogs = logs || [];
+  const safeSuspiciousActivity = suspiciousActivity || [];
+  const safeBlockedIdentifiers = blockedIdentifiers || [];
 
   // Look up IP location
   const lookupIpLocation = useCallback(async (ip: string): Promise<IpLocation | null> => {

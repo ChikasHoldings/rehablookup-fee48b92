@@ -455,9 +455,11 @@ export default function AdminLeads() {
 
   // Filter leads by score grade on client side
   const filteredLeads = useMemo(() => {
-    if (!leads || scoreFilter === "all") return leads;
+    if (!leads) return [];
+    if (scoreFilter === "all") return leads;
     
     return leads.filter((lead) => {
+      if (!lead) return false;
       const scoringInput: LeadScoringInput = {
         insurance_type: lead.insurance_type,
         urgency: lead.urgency,
