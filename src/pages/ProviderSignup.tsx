@@ -413,7 +413,23 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if notification fails
       }
 
-      // 11. Handle subscription for paid plans
+      // 11. Send welcome email to provider
+      try {
+        await supabase.functions.invoke("send-provider-welcome-email", {
+          body: {
+            facilityId,
+            facilityName: formData.facilityName,
+            providerEmail: formData.email,
+            providerFirstName: formData.firstName,
+            selectedPlan: formData.selectedPlan,
+          },
+        });
+      } catch (welcomeError) {
+        console.error("Welcome email error:", welcomeError);
+        // Non-blocking - continue even if email fails
+      }
+
+      // 12. Handle subscription for paid plans
       if (formData.selectedPlan !== "basic") {
         toast({
           title: "Account Created!",
@@ -1210,7 +1226,7 @@ export default function ProviderSignup() {
             )}
 
             {/* Step 7: Plan Selection */}
-            {currentStep === 8 && (
+            {currentStep === 7 && (
               <div className="rounded-2xl md:rounded-xl border border-border bg-card p-5 md:p-8 shadow-card">
                 <PlanSelectionStep
                   selectedPlan={formData.selectedPlan}
@@ -1220,7 +1236,7 @@ export default function ProviderSignup() {
             )}
 
             {/* Step 8: Review */}
-            {currentStep === 7 && (
+            {currentStep === 8 && (
               <div className="space-y-5 md:space-y-6 animate-fade-in rounded-2xl md:rounded-xl border border-border bg-card p-5 md:p-8 shadow-card">
                 <div>
                   <p className="text-base md:text-sm text-muted-foreground">
