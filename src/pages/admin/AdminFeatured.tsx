@@ -196,6 +196,11 @@ export default function AdminFeatured() {
   // Combined featured facilities for ordering (auto + legacy)
   const allFeaturedFacilities = [...autoFeaturedFacilities, ...legacyFeaturedFacilities];
   
+  // Calculate total leads for featured facilities
+  const totalFeaturedLeads = autoFeaturedFacilities.reduce(
+    (sum, f) => sum + (facilityStats?.[f.id]?.total_leads || 0), 0
+  );
+  
   // Sync ordered facilities when data changes
   useEffect(() => {
     if (allFeaturedFacilities.length > 0) {
@@ -216,7 +221,8 @@ export default function AdminFeatured() {
       setOrderedFacilities(sorted);
       setHasOrderChanges(false);
     }
-  }, [allFacilities, autoFeaturedIds]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allFacilities?.length, autoFeaturedIds?.length, legacyFeaturedFacilities.length]);
 
   // Save display order mutation
   const saveDisplayOrder = useMutation({
@@ -720,7 +726,67 @@ export default function AdminFeatured() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Featured Leads (30d)</p>
+                    <p className="text-3xl font-bold text-green-600">
+                      {totalFeaturedLeads}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">From featured providers</p>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                    <Users className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setActiveTab("auto-featured")}
+                >
+                  <Zap className="h-4 w-4 mr-2 text-amber-500" />
+                  View Auto-Featured ({autoFeaturedFacilities.length})
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setActiveTab("legacy")}
+                >
+                  <Star className="h-4 w-4 mr-2 text-slate-500" />
+                  Manage Legacy ({legacyFeaturedFacilities.length})
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setActiveTab("analytics")}
+                >
+                  <TrendingUp className="h-4 w-4 mr-2 text-emerald-500" />
+                  View Analytics
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setActiveTab("settings")}
+                >
+                  <Settings className="h-4 w-4 mr-2 text-slate-500" />
+                  Settings
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Homepage Preview with Drag and Drop */}
           <Card>
