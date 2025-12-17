@@ -18,7 +18,8 @@ import {
   AlertTriangle,
   BellOff,
   MapPin,
-  X
+  X,
+  Lock
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -346,6 +347,39 @@ export default function ProviderDashboardPage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
+            </div>
+            
+            {/* Blurred Leads Preview */}
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <p className="text-xs text-muted-foreground mb-3">Recent inquiries:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {['Sarah M.', 'John D.', 'Michael R.'].slice(0, Math.min(3, totalLeadsCount)).map((name, idx) => (
+                  <Link 
+                    key={idx} 
+                    to="/provider/billing"
+                    className="group/lead relative flex items-center gap-2 p-2 rounded-lg bg-background/50 border border-border/50 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground blur-[3px] group-hover/lead:blur-[4px]">
+                      {name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground blur-[4px] group-hover/lead:blur-[5px] select-none">
+                        {name}
+                      </p>
+                      <p className="text-xs text-muted-foreground blur-[3px] select-none">
+                        (555) ***-****
+                      </p>
+                    </div>
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/lead:opacity-100 transition-opacity bg-background/80 rounded-lg">
+                      <span className="text-xs font-medium text-emerald-600 flex items-center gap-1">
+                        <Lock className="h-3 w-3" />
+                        Upgrade to reveal
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
