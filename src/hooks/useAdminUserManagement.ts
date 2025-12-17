@@ -2,6 +2,7 @@ import { useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logAdminError } from "@/lib/adminErrorLogger";
 
 export type AdminRole = "admin" | "moderator";
 
@@ -133,7 +134,7 @@ export function useAdminUserManagement() {
   }, [invalidateAdminUsers]);
 
   // Fetch all admin users with their roles and permissions
-  const { data: adminUsers, isLoading, refetch } = useQuery({
+  const { data: adminUsers, isLoading, error: queryError, refetch } = useQuery({
     queryKey: ["admin-users-full"],
     queryFn: async () => {
       // Get all users with admin/moderator roles
@@ -141,7 +142,10 @@ export function useAdminUserManagement() {
         .from("user_roles")
         .select("user_id, role");
 
-      if (rolesError) throw rolesError;
+      if (rolesError) {
+        logAdminError("useAdminUserManagement", "fetch_roles", rolesError, { queryKey: "admin-users-full" });
+        throw rolesError;
+      }
 
       // Get unique user IDs with admin roles
       const adminUserIds = [...new Set((allRoles || []).map(r => r.user_id))];
@@ -156,7 +160,10 @@ export function useAdminUserManagement() {
         .select("user_id, email, first_name, last_name, created_at")
         .in("user_id", adminUserIds);
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        logAdminError("useAdminUserManagement", "fetch_profiles", profilesError, { queryKey: "admin-users-full" });
+        throw profilesError;
+      }
 
       // Get admin profiles
       const { data: adminProfiles, error: adminProfilesError } = await supabase
@@ -164,7 +171,9 @@ export function useAdminUserManagement() {
         .select("*")
         .in("user_id", adminUserIds);
 
-      if (adminProfilesError) console.error("Admin profiles error:", adminProfilesError);
+      if (adminProfilesError) {
+        logAdminError("useAdminUserManagement", "fetch_admin_profiles", adminProfilesError, { queryKey: "admin-users-full" });
+      }
 
       // Get permissions
       const { data: permissions, error: permissionsError } = await supabase
@@ -172,7 +181,9 @@ export function useAdminUserManagement() {
         .select("*")
         .in("user_id", adminUserIds);
 
-      if (permissionsError) console.error("Permissions error:", permissionsError);
+      if (permissionsError) {
+        logAdminError("useAdminUserManagement", "fetch_permissions", permissionsError, { queryKey: "admin-users-full" });
+      }
 
       // Group roles by user
       const rolesByUser: Record<string, AdminRole[]> = {};
@@ -221,6 +232,13 @@ export function useAdminUserManagement() {
     },
   });
 
+  // Log query errors
+  useEffect(() => {
+    if (queryError) {
+      logAdminError("useAdminUserManagement", "query_error", queryError, { queryKey: "admin-users-full" });
+    }
+  }, [queryError]);
+
   // Create admin user mutation
   const createAdminUserMutation = useMutation({
     mutationFn: async (data: {
@@ -247,6 +265,7 @@ export function useAdminUserManagement() {
       return data;
     },
     onError: (error: Error) => {
+      logAdminError("useAdminUserManagement", "create_admin_user", error, { mutation: "createAdminUser" });
       toast.error("Failed to create admin user", {
         description: error.message,
       });
@@ -288,7 +307,12 @@ export function useAdminUserManagement() {
       toast.success(messages[variables.action] || "Action completed");
       return data;
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables) => {
+      logAdminError("useAdminUserManagement", "manage_admin_user", error, { 
+        mutation: "manageAdminUser", 
+        action: variables.action,
+        targetUserId: variables.targetUserId 
+      });
       toast.error("Action failed", {
         description: error.message,
       });
