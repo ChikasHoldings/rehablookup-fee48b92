@@ -17,6 +17,7 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +52,7 @@ import { toast } from "sonner";
 import { PLAN_DETAILS } from "@/hooks/useSubscription";
 import { AtRiskProvidersCard } from "@/components/admin/AtRiskProvidersCard";
 import { RetentionDashboard } from "@/components/admin/RetentionDashboard";
+import { SubscriptionDetailModal } from "@/components/admin/SubscriptionDetailModal";
 
 type SubscriptionStats = {
   total_subscriptions: number;
@@ -165,6 +167,23 @@ function EventIcon({ type }: { type: string }) {
 type SortColumn = "name" | "plan" | "status" | "revenue" | "renews";
 type SortDirection = "asc" | "desc";
 
+type EnrichedSubscription = {
+  customer_id: string;
+  customer_email: string;
+  customer_name: string;
+  plan: string;
+  status: string;
+  current_period_end: string;
+  created: string;
+  cancel_at_period_end: boolean;
+  monthly_amount: number;
+  facility_name: string;
+  facility_city?: string;
+  facility_state?: string;
+  leads_used: number;
+  lead_limit: number;
+};
+
 export default function AdminSubscriptions() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
@@ -175,6 +194,8 @@ export default function AdminSubscriptions() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<SortColumn>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [selectedSubscription, setSelectedSubscription] = useState<EnrichedSubscription | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Invalidate subscription queries helper
   const invalidateSubscriptionQueries = useCallback(() => {
@@ -726,7 +747,14 @@ export default function AdminSubscriptions() {
                         </TableHeader>
                         <TableBody>
                           {paginatedSubscriptions.map((sub) => (
-                            <TableRow key={sub.customer_id}>
+                            <TableRow 
+                              key={sub.customer_id}
+                              className="cursor-pointer hover:bg-muted/50"
+                              onClick={() => {
+                                setSelectedSubscription(sub);
+                                setIsDetailModalOpen(true);
+                              }}
+                            >
                               <TableCell>
                                 <div className="min-w-0">
                                   <p className="font-medium truncate max-w-[200px]">{sub.facility_name}</p>
@@ -744,7 +772,7 @@ export default function AdminSubscriptions() {
                               <TableCell>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-2 cursor-default">
+                                    <div className="flex items-center gap-2 cursor-default" onClick={(e) => e.stopPropagation()}>
                                       <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
                                         <div 
                                           className={`h-full rounded-full transition-all ${
@@ -769,9 +797,12 @@ export default function AdminSubscriptions() {
                                 <span className="text-muted-foreground">/mo</span>
                               </TableCell>
                               <TableCell>
-                                <span className="text-sm text-muted-foreground">
-                                  {format(new Date(sub.current_period_end), "MMM d, yyyy")}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-muted-foreground">
+                                    {format(new Date(sub.current_period_end), "MMM d, yyyy")}
+                                  </span>
+                                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))}
@@ -904,6 +935,13 @@ export default function AdminSubscriptions() {
           <RetentionDashboard />
         </TabsContent>
       </Tabs>
+
+      {/* Subscription Detail Modal */}
+      <SubscriptionDetailModal
+        subscription={selectedSubscription}
+        open={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+      />
     </div>
   );
 }
