@@ -64,6 +64,7 @@ import { IPWhitelistDialog } from "@/components/admin/IPWhitelistDialog";
 import { BlockedIdentifiersDialog } from "@/components/admin/BlockedIdentifiersDialog";
 import { SecurityAlertsPanel } from "@/components/admin/SecurityAlertsPanel";
 import { RecentNotificationsPanel } from "@/components/admin/RecentNotificationsPanel";
+import { DataHealthMonitor } from "@/components/admin/DataHealthMonitor";
 
 interface SettingRowProps {
   icon: React.ReactNode;
@@ -2323,6 +2324,9 @@ export default function AdminSettings() {
               </Button>
             </div>
           </div>
+
+          {/* Data Health Monitor */}
+          <DataHealthMonitor />
 
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Storage */}
