@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {
   AlertTriangle,
@@ -10,6 +10,12 @@ import {
   User,
   Globe,
   XCircle,
+  Mail,
+  Play,
+  Loader2,
+  CheckCircle,
+  Bell,
+  Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +23,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 interface FailedAttempt {
   id: string;
@@ -42,6 +59,134 @@ interface BlockedIdentifier {
 
 export function SecurityAlertsPanel() {
   const queryClient = useQueryClient();
+  const [isRunningCheck, setIsRunningCheck] = useState(false);
+
+  // Fetch current admin's security notification preference
+  const { data: adminProfile, isLoading: loadingProfile } = useQuery({
+    queryKey: ["admin-security-notification-pref"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("admin_user_profiles")
+        .select("notify_security_events, user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch platform alert threshold settings
+  const { data: alertSettings } = useQuery({
+    queryKey: ["security-alert-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_settings")
+        .select("setting_key, setting_value")
+        .in("setting_key", ["alert_threshold", "auto_block_threshold", "alert_time_window"]);
+
+      if (error) throw error;
+      
+      const settings: Record<string, any> = {};
+      data?.forEach((s) => {
+        settings[s.setting_key] = s.setting_value;
+      });
+      return settings;
+    },
+  });
+
+  // Update security notification preference
+  const updateNotificationPref = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("admin_user_profiles")
+        .update({ notify_security_events: enabled })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return enabled;
+    },
+    onSuccess: (enabled) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-security-notification-pref"] });
+      toast.success(enabled ? "Security email alerts enabled" : "Security email alerts disabled");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update preference", { description: error.message });
+    },
+  });
+
+  // Update alert threshold setting
+  const updateAlertSetting = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: any }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { error } = await supabase
+        .from("platform_settings")
+        .upsert({ 
+          setting_key: key,
+          setting_value: value,
+          updated_by: user?.id 
+        }, { onConflict: "setting_key" });
+
+      if (error) throw error;
+
+      await logAdminAction({
+        actionType: AdminAuditActions.PLATFORM_SETTINGS_UPDATED,
+        targetType: "platform_settings",
+        details: { setting_key: key, new_value: value }
+      });
+
+      return { key, value };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["security-alert-settings"] });
+      toast.success("Alert setting updated");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update setting", { description: error.message });
+    },
+  });
+
+  // Run manual security check
+  const runSecurityCheck = async () => {
+    setIsRunningCheck(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-brute-force-alerts");
+
+      if (error) throw error;
+
+      await logAdminAction({
+        actionType: AdminAuditActions.PLATFORM_SETTINGS_UPDATED,
+        targetType: "security",
+        details: { action: "manual_security_check", result: data }
+      });
+
+      if (data?.alerts_sent > 0 || data?.auto_blocked > 0) {
+        toast.warning("Security threats detected", {
+          description: `${data.alerts_sent || 0} alert(s), ${data.auto_blocked || 0} IP(s) blocked`,
+        });
+      } else {
+        toast.success("Security check complete", {
+          description: "No threats detected",
+        });
+      }
+
+      // Refresh data
+      refetchAttempts();
+      refetchBlocked();
+    } catch (error: any) {
+      console.error("Security check error:", error);
+      toast.error("Security check failed", { description: error.message });
+    } finally {
+      setIsRunningCheck(false);
+    }
+  };
 
   // Fetch recent failed login attempts
   const { data: failedAttempts, isLoading: loadingAttempts, refetch: refetchAttempts } = useQuery({
@@ -57,7 +202,7 @@ export function SecurityAlertsPanel() {
       if (error) throw error;
       return data as FailedAttempt[];
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 
   // Fetch active blocked identifiers
@@ -115,7 +260,6 @@ export function SecurityAlertsPanel() {
   const failedCount = failedAttempts?.length ?? 0;
   const blockedCount = blockedIdentifiers?.length ?? 0;
 
-  // Check if there are recent critical alerts (failures in last hour)
   const recentCriticalAlerts = failedAttempts?.filter((attempt) => {
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
     return new Date(attempt.created_at) > hourAgo;
@@ -141,22 +285,146 @@ export function SecurityAlertsPanel() {
               </Badge>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="gap-1"
-          >
-            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={runSecurityCheck}
+              disabled={isRunningCheck}
+              className="gap-1"
+            >
+              {isRunningCheck ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+              Run Check
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="gap-1"
+            >
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              Refresh
+            </Button>
+          </div>
         </div>
         <CardDescription>
           Monitor failed login attempts and blocked IPs in real-time
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Email Alert Settings */}
+        <div className="mb-6 p-4 rounded-lg bg-muted/50 border">
+          <div className="flex items-center gap-2 mb-3">
+            <Mail className="h-4 w-4 text-blue-500" />
+            <h4 className="text-sm font-medium">Email Alert Settings</h4>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Email Alerts Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-background border">
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Email Alerts</p>
+                  <p className="text-xs text-muted-foreground">Receive security alerts</p>
+                </div>
+              </div>
+              {loadingProfile ? (
+                <Skeleton className="h-5 w-9" />
+              ) : (
+                <Switch
+                  checked={adminProfile?.notify_security_events !== false}
+                  onCheckedChange={(checked) => updateNotificationPref.mutate(checked)}
+                  disabled={updateNotificationPref.isPending}
+                />
+              )}
+            </div>
+
+            {/* Alert Threshold */}
+            <div className="p-3 rounded-lg bg-background border">
+              <div className="flex items-center gap-2 mb-2">
+                <Settings className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">Alert Threshold</p>
+              </div>
+              <Select
+                value={String((alertSettings?.alert_threshold as { attempts?: number })?.attempts || '10')}
+                onValueChange={(value) => updateAlertSetting.mutate({
+                  key: "alert_threshold",
+                  value: { attempts: parseInt(value) }
+                })}
+                disabled={updateAlertSetting.isPending}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 failures</SelectItem>
+                  <SelectItem value="10">10 failures</SelectItem>
+                  <SelectItem value="15">15 failures</SelectItem>
+                  <SelectItem value="20">20 failures</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Time Window */}
+            <div className="p-3 rounded-lg bg-background border">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">Time Window</p>
+              </div>
+              <Select
+                value={String((alertSettings?.alert_time_window as { hours?: number })?.hours || '1')}
+                onValueChange={(value) => updateAlertSetting.mutate({
+                  key: "alert_time_window",
+                  value: { hours: parseInt(value) }
+                })}
+                disabled={updateAlertSetting.isPending}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 hour</SelectItem>
+                  <SelectItem value="2">2 hours</SelectItem>
+                  <SelectItem value="4">4 hours</SelectItem>
+                  <SelectItem value="6">6 hours</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Current Status */}
+            <div className={cn(
+              "p-3 rounded-lg border",
+              adminProfile?.notify_security_events !== false
+                ? "bg-green-50 border-green-200"
+                : "bg-muted/50"
+            )}>
+              <div className="flex items-center gap-2 mb-1">
+                {adminProfile?.notify_security_events !== false ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-muted-foreground" />
+                )}
+                <p className="text-sm font-medium">Status</p>
+              </div>
+              <p className={cn(
+                "text-xs",
+                adminProfile?.notify_security_events !== false
+                  ? "text-green-600"
+                  : "text-muted-foreground"
+              )}>
+                {adminProfile?.notify_security_events !== false
+                  ? "Alerts active - you'll receive emails"
+                  : "Alerts disabled"}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Failed Login Attempts */}
           <div className="space-y-3">
