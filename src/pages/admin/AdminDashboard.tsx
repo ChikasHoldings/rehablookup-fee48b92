@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useCallback, memo } from "react";
+import { useEffect, useCallback, memo, forwardRef } from "react";
 import {
   Building2,
   Users,
@@ -57,23 +57,25 @@ interface RevenueStats {
   configured: boolean;
 }
 
-// Sparkline component for KPI cards - memoized to prevent ref warnings
-const Sparkline = memo(function Sparkline({ 
+// Sparkline component for KPI cards - using forwardRef to handle refs properly
+interface SparklineProps {
+  data: TrendDataPoint[];
+  color?: string;
+  height?: number;
+}
+
+const Sparkline = memo(forwardRef<HTMLDivElement, SparklineProps>(function Sparkline({ 
   data, 
   color = "hsl(var(--primary))", 
   height = 40 
-}: { 
-  data: TrendDataPoint[]; 
-  color?: string; 
-  height?: number; 
-}) {
+}, ref) {
   if (!data || data.length === 0) return null;
   
   // Generate unique gradient ID based on color
   const gradientId = `sparkline-gradient-${color.replace(/[^a-zA-Z0-9]/g, '')}`;
   
   return (
-    <div className="w-full" style={{ height }}>
+    <div ref={ref} className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
           <defs>
@@ -94,7 +96,7 @@ const Sparkline = memo(function Sparkline({
       </ResponsiveContainer>
     </div>
   );
-});
+}));
 
 export default function AdminDashboard() {
   const queryClient = useQueryClient();
