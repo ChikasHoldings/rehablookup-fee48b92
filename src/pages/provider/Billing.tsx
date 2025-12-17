@@ -46,6 +46,7 @@ export default function ProviderBillingPage() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [promoCode, setPromoCode] = useState("");
+  const [promoValidating, setPromoValidating] = useState(false);
   const [promoValidation, setPromoValidation] = useState<{
     isValid: boolean | null;
     message: string;
@@ -150,6 +151,33 @@ export default function ProviderBillingPage() {
     // Reset validation when user types
     if (promoValidation.isValid !== null) {
       setPromoValidation({ isValid: null, message: "" });
+    }
+  };
+
+  const validatePromoCode = async () => {
+    if (!promoCode.trim()) return;
+    
+    setPromoValidating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("validate-promo-code", {
+        body: { promoCode: promoCode.trim().toUpperCase() },
+      });
+
+      if (error) throw error;
+
+      setPromoValidation({
+        isValid: data?.valid || false,
+        message: data?.message || "Unable to validate",
+        discount: data?.discount,
+      });
+    } catch (err) {
+      console.error("Promo validation error:", err);
+      setPromoValidation({
+        isValid: false,
+        message: "Unable to validate promo code",
+      });
+    } finally {
+      setPromoValidating(false);
     }
   };
 
@@ -476,15 +504,21 @@ export default function ProviderBillingPage() {
                   placeholder="Enter promo code"
                   value={promoCode}
                   onChange={(e) => handlePromoCodeChange(e.target.value.toUpperCase())}
-                  className={`uppercase ${
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && promoCode.trim() && !promoValidating) {
+                      validatePromoCode();
+                    }
+                  }}
+                  className={`uppercase pr-10 ${
                     promoValidation.isValid === true 
                       ? "border-emerald-500 focus-visible:ring-emerald-500" 
                       : promoValidation.isValid === false 
                         ? "border-red-500 focus-visible:ring-red-500"
                         : ""
                   }`}
+                  disabled={promoValidating}
                 />
-                {promoCode && (
+                {promoCode && !promoValidating && (
                   <button
                     type="button"
                     onClick={clearPromoCode}
@@ -494,6 +528,19 @@ export default function ProviderBillingPage() {
                   </button>
                 )}
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={validatePromoCode}
+                disabled={!promoCode.trim() || promoValidating || promoValidation.isValid === true}
+              >
+                {promoValidating ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : promoValidation.isValid === true ? (
+                  <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-500" />
+                ) : null}
+                {promoValidating ? "Validating..." : promoValidation.isValid === true ? "Applied" : "Apply"}
+              </Button>
             </div>
             
             {/* Validation feedback */}
@@ -513,9 +560,9 @@ export default function ProviderBillingPage() {
               </div>
             )}
             
-            {promoCode && promoValidation.isValid === null && (
+            {promoCode && promoValidation.isValid === null && !promoValidating && (
               <p className="text-sm text-muted-foreground mt-3">
-                Your promo code will be applied when you proceed to checkout
+                Click "Apply" to validate your promo code
               </p>
             )}
           </CardContent>
