@@ -59,14 +59,14 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
               to={item.to}
               end={item.end}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
                 isActive
                   ? "bg-slate-900 text-white"
                   : "text-slate-700 hover:bg-slate-200"
               )}
             >
               <Icon className="h-5 w-5" />
-              <span className="text-sm font-medium">{item.label}</span>
+              <span className="text-base font-medium">{item.label}</span>
             </NavLink>
           );
         })}
