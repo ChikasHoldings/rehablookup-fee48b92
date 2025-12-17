@@ -59,7 +59,62 @@ serve(async (req) => {
       logStep("In-app notification created successfully");
     }
 
-    const adminEmail = "admin@rehablookup.com";
+    // Get admin users with notify_new_providers enabled
+    const { data: adminRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+
+    if (!adminRoles || adminRoles.length === 0) {
+      logStep("No admin users found");
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Get admin profiles with notification preferences
+    const { data: adminProfiles } = await supabase
+      .from("admin_user_profiles")
+      .select("user_id, notify_new_providers")
+      .in("user_id", adminRoles.map(r => r.user_id));
+
+    // Filter admins who have notify_new_providers enabled (default true if not set)
+    const eligibleAdminIds = adminRoles
+      .filter(role => {
+        const profile = adminProfiles?.find(p => p.user_id === role.user_id);
+        // Default to true if no profile or preference not explicitly set to false
+        return !profile || profile.notify_new_providers !== false;
+      })
+      .map(r => r.user_id);
+
+    if (eligibleAdminIds.length === 0) {
+      logStep("No admins have new provider notifications enabled");
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Get admin emails
+    const adminEmails: string[] = [];
+    for (const userId of eligibleAdminIds) {
+      const { data: userData } = await supabase.auth.admin.getUserById(userId);
+      if (userData?.user?.email) {
+        adminEmails.push(userData.user.email);
+      }
+    }
+
+    if (adminEmails.length === 0) {
+      logStep("No admin emails found for eligible admins");
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    logStep("Sending email to admins with notifications enabled", { count: adminEmails.length });
+
     const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -88,7 +143,7 @@ serve(async (req) => {
     </div>
     
     <div style="background: #f8fafc; padding: 16px; border-top: 1px solid #e2e8f0;">
-      <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">RehabLookup Admin</p>
+      <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">RehabLookup Admin • You can manage notification preferences in your profile settings</p>
     </div>
   </div>
 </body>
@@ -97,7 +152,7 @@ serve(async (req) => {
 
     const { error: emailError } = await resend.emails.send({
       from: "RehabLookup <notifications@rehablookup.com>",
-      to: [adminEmail],
+      to: adminEmails,
       subject: `New provider: ${facilityName}`,
       html: emailHtml,
     });
@@ -105,7 +160,7 @@ serve(async (req) => {
     if (emailError) {
       logStep("Error sending admin email", emailError);
     } else {
-      logStep("Admin email sent successfully");
+      logStep("Admin email sent successfully", { recipients: adminEmails.length });
     }
 
     return new Response(JSON.stringify({ success: true }), {

@@ -104,7 +104,7 @@ serve(async (req) => {
 
     console.log(`${LOG_PREFIX} Stats - Providers: ${newProvidersThisWeek} (${providerChange}), Leads: ${newLeadsThisWeek} (${leadChange}), Views: ${thisWeekViewsTotal} (${viewChange})`);
 
-    // Get admin users
+    // Get admin users with weekly digest frequency
     const { data: adminUsers } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -118,10 +118,33 @@ serve(async (req) => {
       );
     }
 
+    // Get admin profiles with notification preferences
+    const { data: adminProfiles } = await supabase
+      .from("admin_user_profiles")
+      .select("user_id, email_digest_frequency")
+      .in("user_id", adminUsers.map(u => u.user_id));
+
+    // Filter admins who have weekly digest enabled
+    const eligibleAdminIds = adminUsers
+      .filter(user => {
+        const profile = adminProfiles?.find(p => p.user_id === user.user_id);
+        const frequency = profile?.email_digest_frequency || 'daily';
+        return frequency === 'weekly';
+      })
+      .map(u => u.user_id);
+
+    if (eligibleAdminIds.length === 0) {
+      console.log(`${LOG_PREFIX} No admin users have weekly digest enabled`);
+      return new Response(
+        JSON.stringify({ success: true, message: "No admin users have weekly digest enabled" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Get admin emails
     const adminEmails: string[] = [];
-    for (const admin of adminUsers) {
-      const { data: userData } = await supabase.auth.admin.getUserById(admin.user_id);
+    for (const userId of eligibleAdminIds) {
+      const { data: userData } = await supabase.auth.admin.getUserById(userId);
       if (userData?.user?.email) {
         adminEmails.push(userData.user.email);
       }
@@ -138,9 +161,11 @@ serve(async (req) => {
     const weekStart = new Date(startOfWeek).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     const weekEnd = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
+    console.log(`${LOG_PREFIX} Sending weekly report to ${adminEmails.length} admin(s)`);
+
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "RehabLookup Admin <onboarding@resend.dev>",
+      from: "RehabLookup Admin <no-reply@rehablookup.com>",
       to: adminEmails,
       subject: `Weekly Analytics Report - ${weekStart} to ${weekEnd}`,
       html: `
@@ -230,7 +255,7 @@ serve(async (req) => {
               
               <div class="footer">
                 <p>This is an automated weekly report from RehabLookup Admin Panel.</p>
-                <p>You can manage notification preferences in Admin Settings.</p>
+                <p>You can manage notification preferences in your profile settings.</p>
               </div>
             </div>
           </div>
