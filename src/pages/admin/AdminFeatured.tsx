@@ -246,6 +246,8 @@ export default function AdminFeatured() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-all-facilities-featured"] });
       queryClient.invalidateQueries({ queryKey: ["admin-auto-featured-ids"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-facility-ids"] });
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       toast.success(variables.pinned ? "Provider pinned to featured" : "Provider unpinned");
       setConfirmAction(null);
     },
@@ -274,6 +276,8 @@ export default function AdminFeatured() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-all-facilities-featured"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-facility-ids"] });
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       toast.success(variables.featured ? "Provider added to legacy featured" : "Provider removed from featured");
       setConfirmAction(null);
     },

@@ -233,10 +233,10 @@ serve(async (req) => {
       logStep("Error loading notification settings, using defaults", { error: String(settingsError) });
     }
 
-    // Get all approved, non-suspended facilities
+    // Get all approved, non-suspended facilities (including legacy featured flag)
     const { data: facilities, error: facilitiesError } = await supabaseClient
       .from("facilities")
-      .select("id, user_id, featured_pinned, last_featured_shown_at, suspended")
+      .select("id, user_id, featured, featured_pinned, last_featured_shown_at, suspended, name")
       .eq("status", "approved")
       .or("suspended.is.null,suspended.eq.false");
 
@@ -316,7 +316,34 @@ serve(async (req) => {
       }
     }
 
-    logStep("Total eligible Featured facilities", { count: eligibleFacilities.length });
+    logStep("Total eligible Featured subscription facilities", { count: eligibleFacilities.length });
+
+    // Also include legacy featured facilities (those with featured=true in database)
+    const legacyFeaturedFacilities = (facilities || []).filter(f => 
+      f.featured === true && !eligibleFacilities.some(ef => ef.id === f.id)
+    );
+
+    for (const facility of legacyFeaturedFacilities) {
+      // Get provider info for legacy featured
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("email, first_name, last_name")
+        .eq("user_id", facility.user_id)
+        .maybeSingle();
+
+      eligibleFacilities.push({
+        id: facility.id,
+        user_id: facility.user_id,
+        featured_pinned: facility.featured_pinned || false,
+        last_featured_shown_at: facility.last_featured_shown_at,
+        provider_email: profile?.email,
+        provider_name: profile?.first_name || "",
+        facility_name: facility.name || "",
+      });
+      logStep("Added legacy featured facility", { facilityId: facility.id, name: facility.name });
+    }
+
+    logStep("Total eligible Featured facilities (subscription + legacy)", { count: eligibleFacilities.length });
 
     // All eligible facility IDs (for search priority)
     const allEligibleIds = eligibleFacilities.map(f => f.id);
