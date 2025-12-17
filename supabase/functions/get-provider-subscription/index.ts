@@ -7,11 +7,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PLAN_CONFIG: Record<string, { name: string }> = {
-  basic: { name: "Basic Listing" },
-  professional: { name: "Professional" },
-  featured: { name: "Featured" },
-};
+// Support both old and new Stripe product IDs
+const PROFESSIONAL_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_SHmIFMgcVkqixh"];
+const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_SHmJIiVALcuWdF"];
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[GET-PROVIDER-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
@@ -83,7 +81,10 @@ serve(async (req) => {
           plan_name: "Basic Listing",
           subscribed: false,
           subscription: null,
-          payments: [],
+          customer: null,
+          payment_history: [],
+          invoices: [],
+          timeline: [],
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
@@ -107,70 +108,155 @@ serve(async (req) => {
           plan_name: "Basic Listing",
           subscribed: false,
           subscription: null,
-          payments: [],
+          customer: null,
+          payment_history: [],
+          invoices: [],
+          timeline: [],
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
 
-    const customerId = customers.data[0].id;
+    const customer = customers.data[0];
+    const customerId = customer.id;
     logStep("Found Stripe customer", { customerId });
 
-    // Get subscriptions
+    // Get subscriptions (all statuses to build timeline)
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
-      limit: 5,
-    });
-
-    // Get payment history
-    const payments = await stripe.paymentIntents.list({
-      customer: customerId,
       limit: 10,
+      expand: ["data.items.data.price.product"],
     });
 
-    // Get invoices
+    // Get payment intents
+    const paymentIntents = await stripe.paymentIntents.list({
+      customer: customerId,
+      limit: 20,
+    });
+
+    // Get invoices with full details
     const invoices = await stripe.invoices.list({
       customer: customerId,
-      limit: 10,
+      limit: 20,
     });
 
-    // Determine current plan
+    // Determine current plan from active subscription
     const activeSubscription = subscriptions.data.find((s: { status: string }) => s.status === "active");
     let plan = "basic";
     let planName = "Basic Listing";
+    let monthlyAmount = 0;
 
     if (activeSubscription) {
-      const productId = activeSubscription.items.data[0]?.price?.product as string;
-      if (productId === "prod_TbalLOPujTIoUe") {
+      const priceData = activeSubscription.items.data[0]?.price;
+      const productId = priceData?.product as string;
+      monthlyAmount = (priceData?.unit_amount || 0) / 100;
+      
+      if (PROFESSIONAL_PRODUCT_IDS.includes(productId)) {
         plan = "professional";
         planName = "Professional";
-      } else if (productId === "prod_TbalOeJZA2ZoJl") {
+      } else if (FEATURED_PRODUCT_IDS.includes(productId)) {
         plan = "featured";
         planName = "Featured";
       }
     }
 
+    // Build subscription data
     const subscriptionData = activeSubscription ? {
       id: activeSubscription.id,
       status: activeSubscription.status,
       current_period_start: new Date(activeSubscription.current_period_start * 1000).toISOString(),
       current_period_end: new Date(activeSubscription.current_period_end * 1000).toISOString(),
       cancel_at_period_end: activeSubscription.cancel_at_period_end,
+      canceled_at: activeSubscription.canceled_at ? new Date(activeSubscription.canceled_at * 1000).toISOString() : null,
       created: new Date(activeSubscription.created * 1000).toISOString(),
+      plan,
+      monthly_amount: monthlyAmount,
     } : null;
 
-    const paymentHistory = invoices.data.map((invoice: any) => ({
-      id: invoice.id,
-      amount: invoice.amount_paid / 100,
-      currency: invoice.currency,
-      status: invoice.status,
-      created: new Date(invoice.created * 1000).toISOString(),
-      invoice_pdf: invoice.invoice_pdf,
-      description: invoice.lines.data[0]?.description || "Subscription payment",
+    // Build customer data
+    const customerData = {
+      id: customer.id,
+      email: customer.email || email,
+      name: customer.name || null,
+      created: new Date(customer.created * 1000).toISOString(),
+    };
+
+    // Build payment history
+    const paymentHistory = paymentIntents.data.map((pi: any) => ({
+      id: pi.id,
+      amount: pi.amount,
+      currency: pi.currency,
+      status: pi.status,
+      created: pi.created,
+      payment_method_type: pi.payment_method_types?.[0] || "card",
+      description: pi.description,
     }));
 
-    logStep("Returning subscription data", { plan, hasActiveSubscription: !!activeSubscription });
+    // Build invoices list
+    const invoicesList = invoices.data.map((inv: any) => ({
+      id: inv.id,
+      number: inv.number,
+      amount_paid: inv.amount_paid,
+      amount_due: inv.amount_due,
+      currency: inv.currency,
+      status: inv.status,
+      created: inv.created,
+      period_start: inv.period_start,
+      period_end: inv.period_end,
+      hosted_invoice_url: inv.hosted_invoice_url,
+      pdf: inv.invoice_pdf,
+    }));
+
+    // Build timeline from various events
+    const timeline: Array<{
+      type: string;
+      date: string;
+      description: string;
+      metadata?: Record<string, string>;
+    }> = [];
+
+    // Add subscription events
+    subscriptions.data.forEach((sub: any) => {
+      // Created event
+      timeline.push({
+        type: "created",
+        date: new Date(sub.created * 1000).toISOString(),
+        description: `Subscription created`,
+        metadata: { plan: getPlanFromSubscription(sub) },
+      });
+
+      // Canceled event
+      if (sub.canceled_at) {
+        timeline.push({
+          type: "canceled",
+          date: new Date(sub.canceled_at * 1000).toISOString(),
+          description: `Subscription canceled`,
+        });
+      }
+    });
+
+    // Add payment events
+    paymentIntents.data.forEach((pi: any) => {
+      if (pi.status === "succeeded") {
+        timeline.push({
+          type: "payment_succeeded",
+          date: new Date(pi.created * 1000).toISOString(),
+          description: `Payment of $${(pi.amount / 100).toFixed(2)} succeeded`,
+        });
+      } else if (pi.status === "canceled" || pi.last_payment_error) {
+        timeline.push({
+          type: "payment_failed",
+          date: new Date(pi.created * 1000).toISOString(),
+          description: `Payment of $${(pi.amount / 100).toFixed(2)} failed`,
+        });
+      }
+    });
+
+    // Sort timeline by date descending
+    timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    logStep("Returning detailed subscription data", { plan, hasActiveSubscription: !!activeSubscription });
 
     return new Response(
       JSON.stringify({
@@ -178,8 +264,10 @@ serve(async (req) => {
         plan_name: planName,
         subscribed: !!activeSubscription,
         subscription: subscriptionData,
-        payments: paymentHistory,
-        customer_id: customerId,
+        customer: customerData,
+        payment_history: paymentHistory,
+        invoices: invoicesList,
+        timeline,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
@@ -192,3 +280,12 @@ serve(async (req) => {
     );
   }
 });
+
+function getPlanFromSubscription(sub: any): string {
+  const productId = sub.items?.data?.[0]?.price?.product;
+  if (typeof productId === "string") {
+    if (PROFESSIONAL_PRODUCT_IDS.includes(productId)) return "Professional";
+    if (FEATURED_PRODUCT_IDS.includes(productId)) return "Featured";
+  }
+  return "Basic";
+}
