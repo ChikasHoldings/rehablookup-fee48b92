@@ -109,17 +109,13 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
       <div className="h-16 md:h-[72px] max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left - Logo & Facility Selector */}
         <div className="flex items-center min-w-0 gap-2 sm:gap-3">
-          <Link 
-            to="/" 
-            className="flex items-center shrink-0 group"
-            title="Back to Rehab-Lookup"
-          >
+          <div className="flex items-center shrink-0">
             <img 
               src="/logo-dark.svg" 
               alt="Rehab-Lookup" 
-              className="h-9 sm:h-10 md:h-11 w-auto group-hover:opacity-80 transition-opacity"
+              className="h-9 sm:h-10 md:h-11 w-auto"
             />
-          </Link>
+          </div>
           
           <div className="hidden md:block h-8 w-px bg-white/30 mx-4 lg:mx-6" />
           
