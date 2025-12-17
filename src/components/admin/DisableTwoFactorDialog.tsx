@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 interface DisableTwoFactorDialogProps {
   open: boolean;
@@ -74,13 +75,20 @@ export function DisableTwoFactorDialog({
 
       if (unenrollError) throw unenrollError;
 
-      // Update admin_user_profiles to mark MFA as disabled
+      // Update admin_user_profiles to mark MFA as disabled and log audit
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
           .from("admin_user_profiles")
           .update({ mfa_enabled: false })
           .eq("user_id", user.id);
+        
+        await logAdminAction({
+          actionType: AdminAuditActions.MFA_DISABLED,
+          targetType: "admin_profile",
+          targetId: user.id,
+          details: { disabledAt: new Date().toISOString() },
+        });
       }
 
       toast.success("Two-factor authentication has been disabled");

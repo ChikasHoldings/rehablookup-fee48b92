@@ -103,7 +103,7 @@ export function AdminShell() {
         onSuccess={completeMfaSetup}
       />
       
-      <MemoizedHeader userEmail={user?.email} onLogout={logout} />
+      <MemoizedHeader userEmail={user?.email} userId={user?.id} onLogout={logout} />
       
       <div className="flex flex-1">
         <MemoizedSidebar isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />

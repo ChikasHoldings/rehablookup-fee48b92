@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   CommandDialog,
   CommandEmpty,
@@ -30,6 +30,7 @@ import { toast } from "sonner";
 
 interface AdminHeaderProps {
   userEmail?: string;
+  userId?: string;
   onLogout: () => void;
 }
 
@@ -42,7 +43,7 @@ type Notification = {
   link?: string;
 };
 
-function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
+function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps) {
   const initials = userEmail?.slice(0, 2).toUpperCase() || "AD";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -50,6 +51,22 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
   const [bellAnimating, setBellAnimating] = useState(false);
   const lastPendingCountRef = useRef<number | null>(null);
   const lastLeadsCountRef = useRef<number | null>(null);
+
+  // Fetch admin profile for avatar
+  const { data: adminProfile } = useQuery({
+    queryKey: ["admin-header-profile", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data } = await supabase
+        .from("admin_user_profiles")
+        .select("avatar_url, display_name")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
   
   // Get user-specific admin notifications
   const { 
@@ -454,15 +471,19 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-slate-800">
                 <Avatar className="h-9 w-9">
+                  <AvatarImage 
+                    src={adminProfile?.avatar_url || undefined} 
+                    alt={adminProfile?.display_name || userEmail || "Admin"} 
+                  />
                   <AvatarFallback className="bg-amber-400 text-slate-900 font-semibold">
-                    {initials}
+                    {adminProfile?.display_name?.slice(0, 2).toUpperCase() || initials}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 bg-background" align="end">
               <div className="px-2 py-1.5">
-                <p className="text-sm font-medium">{userEmail}</p>
+                <p className="text-sm font-medium">{adminProfile?.display_name || userEmail}</p>
                 <p className="text-xs text-muted-foreground">Administrator</p>
               </div>
               <DropdownMenuSeparator />
@@ -508,8 +529,12 @@ function AdminHeaderComponent({ userEmail, onLogout }: AdminHeaderProps) {
             </CommandItem>
           </CommandGroup>
           <CommandGroup heading="Navigation">
-            <CommandItem onSelect={() => { navigate("/admin/dashboard"); setSearchOpen(false); }}>
+            <CommandItem onSelect={() => { navigate("/admin"); setSearchOpen(false); }}>
               Dashboard
+            </CommandItem>
+            <CommandItem onSelect={() => { navigate("/admin/profile"); setSearchOpen(false); }}>
+              <User className="h-4 w-4 mr-2" />
+              My Profile
             </CommandItem>
             <CommandItem onSelect={() => { navigate("/admin/providers"); setSearchOpen(false); }}>
               Providers

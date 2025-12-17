@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 interface RegenerateRecoveryCodesDialogProps {
   open: boolean;
@@ -45,6 +46,18 @@ export function RegenerateRecoveryCodesDialog({
       setRecoveryCodes(response.data.codes || []);
       setStep("codes");
       toast.success("New recovery codes generated");
+      
+      // Log audit action
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await logAdminAction({
+          actionType: AdminAuditActions.MFA_RECOVERY_CODES_REGENERATED,
+          targetType: "admin_profile",
+          targetId: user.id,
+          details: { regeneratedAt: new Date().toISOString() },
+        });
+      }
+      
       onSuccess?.();
     } catch (err) {
       console.error("Error regenerating recovery codes:", err);
