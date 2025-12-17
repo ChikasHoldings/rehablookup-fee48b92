@@ -75,6 +75,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
+      allow_promotion_codes: true, // Enable promo code redemption at checkout
       success_url: `${origin}/provider/billing?success=true`,
       cancel_url: `${origin}/provider/billing?canceled=true`,
       metadata: {
