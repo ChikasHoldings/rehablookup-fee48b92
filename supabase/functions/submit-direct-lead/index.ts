@@ -61,7 +61,7 @@ function getDirectLeadEmail(
     minute: '2-digit'
   });
   
-  const dashboardUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/leads`;
+  const dashboardUrl = "https://rehablookup.com/provider/leads";
   const fullName = `${leadFirstName} ${leadLastName}`;
   
   const subject = `📞 Direct Inquiry: ${fullName} wants to connect with ${facilityName}`;

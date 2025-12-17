@@ -69,8 +69,7 @@ async function getProviderPlan(stripe: Stripe, email: string): Promise<{ planNam
 }
 
 function generateDigestEmail(digest: ProviderDigest): string {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-  const dashboardUrl = supabaseUrl.replace('.supabase.co', '.lovable.app');
+  const dashboardUrl = "https://rehablookup.com";
   const usagePercent = digest.leadLimit > 0 ? Math.round((digest.monthlyLeads / digest.leadLimit) * 100) : 0;
   const remainingLeads = digest.leadLimit > 0 ? digest.leadLimit - digest.monthlyLeads : 0;
   

@@ -263,7 +263,7 @@ const handler = async (req: Request): Promise<Response> => {
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
                 <tr>
                   <td align="center">
-                    <a href="${supabaseUrl.replace(".supabase.co", ".lovable.app")}/provider/leads" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                    <a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
                       View All Leads
                     </a>
                   </td>
@@ -276,7 +276,7 @@ const handler = async (req: Request): Promise<Response> => {
           <tr>
             <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
               <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                RehabLookup | <a href="${supabaseUrl.replace(".supabase.co", ".lovable.app")}/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
+                RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
               </p>
             </td>
           </tr>
