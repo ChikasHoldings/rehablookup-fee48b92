@@ -11,10 +11,10 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[GET-REVENUE-STATS] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-// Product IDs from useSubscription.ts
+// Product IDs from useSubscription.ts - both new and legacy IDs
 const PRODUCT_IDS = {
-  professional: "prod_TbalLOPujTIoUe",
-  featured: "prod_TbalOeJZA2ZoJl",
+  professional: ["prod_Tbyz1bf6iYyzYd", "prod_TbalLOPujTIoUe"],
+  featured: ["prod_TbyzJVNOQL71NN", "prod_TbalOeJZA2ZoJl"],
 };
 
 serve(async (req) => {
@@ -140,9 +140,9 @@ serve(async (req) => {
       const monthlyAmount = interval === "year" ? amount / 12 : amount;
 
       let plan = "basic";
-      if (productId === PRODUCT_IDS.professional) {
+      if (PRODUCT_IDS.professional.includes(productId)) {
         plan = "professional";
-      } else if (productId === PRODUCT_IDS.featured) {
+      } else if (PRODUCT_IDS.featured.includes(productId)) {
         plan = "featured";
       }
 
@@ -153,9 +153,9 @@ serve(async (req) => {
         activeCount++;
         mrr += monthlyAmount / 100;
 
-        if (productId === PRODUCT_IDS.professional) {
+        if (PRODUCT_IDS.professional.includes(productId)) {
           professionalCount++;
-        } else if (productId === PRODUCT_IDS.featured) {
+        } else if (PRODUCT_IDS.featured.includes(productId)) {
           featuredCount++;
         }
 

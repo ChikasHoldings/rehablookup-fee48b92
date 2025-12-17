@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, TrendingDown, Clock, Mail, RefreshCw, ChevronDown, ChevronUp, ExternalLink, Send } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 interface AtRiskProvider {
@@ -123,38 +123,34 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
             </div>
             <div className="flex items-center gap-2">
               {highRiskCount > 0 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => sendRetentionMutation.mutate()}
-                        disabled={sendRetentionMutation.isPending}
-                      >
-                        <Send className={`h-4 w-4 mr-1.5 ${sendRetentionMutation.isPending ? "animate-pulse" : ""}`} />
-                        {sendRetentionMutation.isPending ? "Sending..." : "Send Outreach"}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Send personalized re-engagement emails</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => refetch()}
-                      disabled={isFetching}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => sendRetentionMutation.mutate()}
+                      disabled={sendRetentionMutation.isPending}
                     >
-                      <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+                      <Send className={`h-4 w-4 mr-1.5 ${sendRetentionMutation.isPending ? "animate-pulse" : ""}`} />
+                      {sendRetentionMutation.isPending ? "Sending..." : "Send Outreach"}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Refresh health check</TooltipContent>
+                  <TooltipContent>Send personalized re-engagement emails</TooltipContent>
                 </Tooltip>
-              </TooltipProvider>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => refetch()}
+                    disabled={isFetching}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Refresh health check</TooltipContent>
+              </Tooltip>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="icon">
                   {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
