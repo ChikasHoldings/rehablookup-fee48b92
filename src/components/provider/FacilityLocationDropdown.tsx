@@ -76,7 +76,7 @@ export function FacilityLocationDropdown() {
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
-          className="gap-2.5 text-white hover:text-white hover:bg-white/15 h-10 px-3 rounded-lg min-w-0"
+          className="gap-2.5 text-white hover:text-white hover:bg-white/15 h-10 px-3 rounded-lg min-w-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
         >
           <div className="flex items-center justify-center h-7 w-7 rounded-md bg-white/30 border border-white/20 shrink-0 overflow-hidden">
             {selectedFacility?.logo_url ? (
