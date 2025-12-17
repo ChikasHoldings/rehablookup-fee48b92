@@ -956,20 +956,142 @@ export default function AdminFeatured() {
 
         {/* Auto-Featured Tab */}
         <TabsContent value="auto-featured" className="space-y-6">
+          {/* Info Alert */}
+          <Alert className="border-amber-200 bg-amber-50">
+            <Zap className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <strong>How Auto-Featured Works:</strong> Providers with active Featured plan subscriptions ($1,099/mo) 
+              are automatically added here. Up to 6 rotate daily on the homepage. Pinned providers always appear first.
+            </AlertDescription>
+          </Alert>
+
+          {/* Auto-Featured Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-amber-700">Total Auto-Featured</p>
+                    <p className="text-3xl font-bold text-amber-900">{autoFeaturedFacilities.length}</p>
+                    <p className="text-xs text-amber-600 mt-1">Active subscriptions</p>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-amber-200 flex items-center justify-center">
+                    <Zap className="h-6 w-6 text-amber-700" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Pinned Providers</p>
+                    <p className="text-3xl font-bold text-purple-600">
+                      {autoFeaturedFacilities.filter(f => f.featured_pinned).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Always on homepage</p>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Pin className="h-6 w-6 text-purple-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Views (30d)</p>
+                    <p className="text-3xl font-bold text-green-600">
+                      {autoFeaturedFacilities.reduce((sum, f) => sum + (facilityStats?.[f.id]?.total_views || 0), 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Profile impressions</p>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                    <Eye className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Leads (30d)</p>
+                    <p className="text-3xl font-bold text-blue-600">
+                      {autoFeaturedFacilities.reduce((sum, f) => sum + (facilityStats?.[f.id]?.total_leads || 0), 0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">From featured placement</p>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Users className="h-6 w-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Pinned Providers Section */}
+          {autoFeaturedFacilities.filter(f => f.featured_pinned).length > 0 && (
+            <Card className="border-purple-200">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <Pin className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      Pinned Providers
+                      <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                        {autoFeaturedFacilities.filter(f => f.featured_pinned).length}
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      Always displayed on homepage, bypassing the daily rotation system
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {autoFeaturedFacilities
+                    .filter(f => f.featured_pinned)
+                    .map((facility) => (
+                      <FacilityRow key={facility.id} facility={facility} type="auto" />
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Rotating Providers Section */}
           <Card>
             <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-amber-600" />
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      {autoFeaturedFacilities.filter(f => f.featured_pinned).length > 0 ? "Rotating Providers" : "Auto-Featured Providers"}
+                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">Featured Plan</Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      {autoFeaturedFacilities.filter(f => f.featured_pinned).length > 0 
+                        ? "Rotate daily on homepage alongside pinned providers" 
+                        : "Automatically featured based on active Featured plan subscription"}
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    Auto-Featured Providers
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-200">Featured Plan</Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    Automatically featured based on active Featured plan subscription. Rotates daily on homepage.
-                  </CardDescription>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                    <Eye className="h-3 w-3 mr-1" />
+                    {homepageFeaturedIds.filter(id => autoFeaturedFacilities.some(f => f.id === id)).length} on homepage today
+                  </Badge>
                 </div>
               </div>
             </CardHeader>
@@ -980,11 +1102,21 @@ export default function AdminFeatured() {
                     <Skeleton key={i} className="h-20 w-full" />
                   ))}
                 </div>
-              ) : autoFeaturedFacilities.length > 0 ? (
+              ) : autoFeaturedFacilities.filter(f => !f.featured_pinned).length > 0 ? (
                 <div className="space-y-3">
-                  {autoFeaturedFacilities.map((facility) => (
-                    <FacilityRow key={facility.id} facility={facility} type="auto" />
-                  ))}
+                  {autoFeaturedFacilities
+                    .filter(f => !f.featured_pinned)
+                    .map((facility) => (
+                      <FacilityRow key={facility.id} facility={facility} type="auto" />
+                    ))}
+                </div>
+              ) : autoFeaturedFacilities.length > 0 ? (
+                <div className="text-center py-8 bg-muted/30 rounded-xl border-2 border-dashed">
+                  <Pin className="h-10 w-10 mx-auto mb-2 text-purple-300" />
+                  <p className="font-medium text-foreground">All providers are pinned</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    No providers in the rotation pool
+                  </p>
                 </div>
               ) : (
                 <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed">
