@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import {
   Star,
   Eye,
@@ -83,6 +84,7 @@ type ConfirmAction = {
 
 export default function AdminFeatured() {
   const queryClient = useQueryClient();
+  const { logError } = useAdminErrorHandler("AdminFeatured");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);

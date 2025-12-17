@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfWeek, endOfWeek, formatDistanceToNow } from "date-fns";
@@ -85,6 +86,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function AdminAnalytics() {
   const queryClient = useQueryClient();
+  const { logError } = useAdminErrorHandler("AdminAnalytics");
   const [datePreset, setDatePreset] = useState<DatePreset>("last30");
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [grouping, setGrouping] = useState<Grouping>("daily");

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import {
   CreditCard,
   TrendingUp,
@@ -188,6 +189,7 @@ type EnrichedSubscription = {
 
 export default function AdminSubscriptions() {
   const queryClient = useQueryClient();
+  const { logError } = useAdminErrorHandler("AdminSubscriptions");
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("all");

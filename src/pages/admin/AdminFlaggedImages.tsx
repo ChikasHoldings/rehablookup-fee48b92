@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   Image,
@@ -84,6 +85,7 @@ const REASON_LABELS: Record<string, string> = {
 
 export default function AdminFlaggedImages() {
   const queryClient = useQueryClient();
+  const { logError } = useAdminErrorHandler("AdminFlaggedImages");
   const [activeTab, setActiveTab] = useState("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [reasonFilter, setReasonFilter] = useState<string>("all");

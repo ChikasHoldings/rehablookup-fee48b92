@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useTheme } from "next-themes";
 import {
   Settings,
@@ -127,6 +128,7 @@ const StatusBadge = ({ status, label }: { status: "active" | "inactive" | "warni
 
 export default function AdminSettings() {
   const queryClient = useQueryClient();
+  const { logError } = useAdminErrorHandler("AdminSettings");
   const [activeTab, setActiveTab] = useState("general");
   const { theme, setTheme } = useTheme();
 

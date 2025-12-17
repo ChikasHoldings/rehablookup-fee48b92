@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
 import { Button } from "@/components/ui/button";
@@ -114,6 +115,7 @@ const getNotificationBadge = (type: string) => {
 
 export default function AdminNotifications() {
   const navigate = useNavigate();
+  const { logError } = useAdminErrorHandler("AdminNotifications");
   const {
     notifications: globalNotifications,
     unreadCount: globalUnreadCount,

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { supabase } from "@/integrations/supabase/client";
 import { format, formatDistanceToNow, subDays } from "date-fns";
 import {
@@ -85,6 +86,7 @@ const DATE_PRESETS = [
 ];
 
 export default function AdminLeadRouting() {
+  const { logError } = useAdminErrorHandler("AdminLeadRouting");
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: subDays(new Date(), 30),
     to: new Date(),

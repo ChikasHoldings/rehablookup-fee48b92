@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import {
   Search,
   UserPlus,
@@ -101,6 +102,7 @@ const STATUS_CONFIG = {
 };
 
 export default function AdminUsers() {
+  const { logError } = useAdminErrorHandler("AdminUsers");
   const { adminUsers, isLoading, manageAdminUser, isManaging } = useAdminUserManagement();
   
   const [searchQuery, setSearchQuery] = useState("");
