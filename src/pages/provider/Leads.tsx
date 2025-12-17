@@ -73,6 +73,7 @@ export default function ProviderLeadsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
+  const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -220,6 +221,8 @@ export default function ProviderLeadsPage() {
         if (sourceFilter === "qualified" && !isQ) return false;
         if (sourceFilter === "direct" && isQ) return false;
       }
+      // Urgency filter
+      if (urgencyFilter !== "all" && lead.urgency !== urgencyFilter) return false;
       // Facility filter
       if (facilityFilter !== "all" && lead.facility_id !== facilityFilter) return false;
       if (dateRange.from || dateRange.to) {
@@ -233,12 +236,12 @@ export default function ProviderLeadsPage() {
     return sortBy === 'score' 
       ? [...result].sort((a, b) => calculateLeadScore(b).total - calculateLeadScore(a).total)
       : [...result].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [leads, searchQuery, statusFilter, sourceFilter, facilityFilter, dateRange, sortBy]);
+  }, [leads, searchQuery, statusFilter, sourceFilter, urgencyFilter, facilityFilter, dateRange, sortBy]);
 
   const thisMonthLeads = leads.filter(l => new Date(l.created_at) >= startOfMonth(new Date()));
   const thisMonthQualified = thisMonthLeads.filter(l => l.source === "Request Help Page");
-  const clearFilters = () => { setSearchQuery(""); setStatusFilter("all"); setSourceFilter("all"); setFacilityFilter("all"); setDateRange({ from: undefined, to: undefined }); };
-  const hasFilters = searchQuery || statusFilter !== "all" || sourceFilter !== "all" || facilityFilter !== "all" || dateRange.from || dateRange.to;
+  const clearFilters = () => { setSearchQuery(""); setStatusFilter("all"); setSourceFilter("all"); setUrgencyFilter("all"); setFacilityFilter("all"); setDateRange({ from: undefined, to: undefined }); };
+  const hasFilters = searchQuery || statusFilter !== "all" || sourceFilter !== "all" || urgencyFilter !== "all" || facilityFilter !== "all" || dateRange.from || dateRange.to;
 
   // Status update mutation for mobile swipe actions
   const updateStatus = useMutation({
@@ -402,8 +405,75 @@ export default function ProviderLeadsPage() {
           isMobile && mobileView === 'list' && "flex-1 w-full",
           isMobile && mobileView === 'detail' && "hidden"
         )}>
+          {/* Mobile Quick Filters */}
+          {isMobile && currentPlan !== "basic" && (
+            <div className="flex-shrink-0 px-3 py-2 border-b bg-background overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-2 min-w-max">
+                <button
+                  onClick={() => { setStatusFilter("all"); setSourceFilter("all"); setUrgencyFilter("all"); }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap",
+                    statusFilter === "all" && sourceFilter === "all" && urgencyFilter === "all"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => { setStatusFilter("new"); setSourceFilter("all"); setUrgencyFilter("all"); }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5",
+                    statusFilter === "new" && urgencyFilter === "all"
+                      ? "bg-blue-500 text-white shadow-sm"
+                      : "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"
+                  )}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                  New
+                </button>
+                <button
+                  onClick={() => { setStatusFilter("all"); setSourceFilter("all"); setUrgencyFilter("immediate"); }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5",
+                    urgencyFilter === "immediate"
+                      ? "bg-red-500 text-white shadow-sm"
+                      : "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
+                  )}
+                >
+                  <AlertTriangle className="h-3 w-3" />
+                  Urgent
+                </button>
+                <button
+                  onClick={() => { setStatusFilter("all"); setSourceFilter("qualified"); setUrgencyFilter("all"); }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5",
+                    sourceFilter === "qualified"
+                      ? "bg-emerald-500 text-white shadow-sm"
+                      : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  )}
+                >
+                  <Sparkles className="h-3 w-3" />
+                  Qualified
+                </button>
+                <button
+                  onClick={() => { setStatusFilter("contacted"); setSourceFilter("all"); setUrgencyFilter("all"); }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5",
+                    statusFilter === "contacted"
+                      ? "bg-amber-500 text-white shadow-sm"
+                      : "bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400"
+                  )}
+                >
+                  <Phone className="h-3 w-3" />
+                  Contacted
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Filters Header */}
-          <div className="flex-shrink-0 border-b bg-muted/30">
+          <div className={cn("flex-shrink-0 border-b bg-muted/30", isMobile && "hidden")}>
             {/* Toggle Button */}
             <button
               onClick={() => setFiltersExpanded(!filtersExpanded)}
