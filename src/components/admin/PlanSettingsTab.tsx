@@ -7,6 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -54,7 +60,9 @@ import {
   Tag,
   XCircle,
   Users,
+  CalendarIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PLAN_DETAILS } from "@/hooks/useSubscription";
@@ -99,6 +107,7 @@ export function PlanSettingsTab() {
     duration: "once" as "once" | "repeating" | "forever",
     durationInMonths: "",
     maxRedemptions: "",
+    expiresAt: undefined as Date | undefined,
   });
 
   // Fetch coupons and promo codes with auto-refresh
@@ -159,6 +168,13 @@ export function PlanSettingsTab() {
 
       if (formData.maxRedemptions) {
         body.max_redemptions = parseInt(formData.maxRedemptions);
+      }
+
+      if (formData.expiresAt) {
+        // Set to end of day in UTC
+        const expiresDate = new Date(formData.expiresAt);
+        expiresDate.setHours(23, 59, 59, 999);
+        body.expires_at = Math.floor(expiresDate.getTime() / 1000); // Convert to Unix timestamp
       }
 
       const { data, error } = await supabase.functions.invoke("manage-subscription", { body });
@@ -222,6 +238,7 @@ export function PlanSettingsTab() {
       duration: "once",
       durationInMonths: "",
       maxRedemptions: "",
+      expiresAt: undefined,
     });
   };
 
@@ -471,6 +488,48 @@ export function PlanSettingsTab() {
                       />
                       <p className="text-xs text-muted-foreground">
                         Leave empty for unlimited uses
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Expiration Date (optional)</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !formData.expiresAt && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formData.expiresAt ? format(formData.expiresAt, "PPP") : "No expiration"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={formData.expiresAt}
+                            onSelect={(date) => setFormData({ ...formData, expiresAt: date })}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      {formData.expiresAt && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => setFormData({ ...formData, expiresAt: undefined })}
+                        >
+                          Clear expiration
+                        </Button>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Leave empty for no expiration
                       </p>
                     </div>
                   </div>
