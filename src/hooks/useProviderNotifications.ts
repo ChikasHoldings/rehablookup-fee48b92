@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNotificationAlert } from "./useNotificationAlert";
 
 export interface ProviderNotification {
   id: string;
@@ -16,6 +17,13 @@ export interface ProviderNotification {
 
 export function useProviderNotifications() {
   const queryClient = useQueryClient();
+  const { notify, requestPermission } = useNotificationAlert();
+  const previousCountRef = useRef<number | null>(null);
+
+  // Request permission on mount
+  useEffect(() => {
+    requestPermission();
+  }, [requestPermission]);
 
   const { data: notifications = [], isLoading, error } = useQuery({
     queryKey: ["provider-notifications"],
@@ -43,6 +51,28 @@ export function useProviderNotifications() {
       .on(
         "postgres_changes",
         {
+          event: "INSERT",
+          schema: "public",
+          table: "provider_notifications",
+        },
+        (payload) => {
+          const newNotification = payload.new as ProviderNotification;
+          
+          // Play sound and show browser notification for lead notifications
+          if (newNotification.type === "lead_received") {
+            notify(
+              newNotification.title,
+              newNotification.message,
+              () => window.location.href = "/provider/leads"
+            );
+          }
+          
+          queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
           event: "*",
           schema: "public",
           table: "provider_notifications",
@@ -56,7 +86,7 @@ export function useProviderNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, notify]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
