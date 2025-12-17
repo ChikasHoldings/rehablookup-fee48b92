@@ -1138,51 +1138,116 @@ export default function AdminFeatured() {
 
         {/* Legacy Tab */}
         <TabsContent value="legacy" className="space-y-6">
+          {/* Info Alert */}
+          <Alert className="border-slate-200 bg-slate-50">
+            <Info className="h-4 w-4 text-slate-600" />
+            <AlertDescription className="text-slate-700">
+              <strong>Legacy Featured</strong> providers are manually featured by admins, separate from the automatic Featured plan subscription system. 
+              Legacy featured providers appear in search results with a featured badge but do not participate in homepage rotation. 
+              Consider encouraging providers to upgrade to the Featured plan for full benefits.
+            </AlertDescription>
+          </Alert>
+
+          {/* Legacy Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <StatsCard
+              title="Legacy Featured"
+              value={legacyFeaturedFacilities.length}
+              subtitle="Manually featured"
+              icon={Star}
+              gradient="bg-gradient-to-br from-slate-50 to-white"
+            />
+            <StatsCard
+              title="Total Views (30d)"
+              value={legacyFeaturedFacilities.reduce((sum, f) => sum + (facilityStats?.[f.id]?.total_views || 0), 0).toLocaleString()}
+              subtitle="Legacy provider views"
+              icon={Eye}
+            />
+            <StatsCard
+              title="Total Leads (30d)"
+              value={legacyFeaturedFacilities.reduce((sum, f) => sum + (facilityStats?.[f.id]?.total_leads || 0), 0)}
+              subtitle="Legacy provider leads"
+              icon={Users}
+            />
+            <StatsCard
+              title="Eligible Providers"
+              value={eligibleFacilities.length}
+              subtitle="Can be legacy featured"
+              icon={CheckCircle2}
+            />
+          </div>
+
           {/* Current Legacy Featured */}
-          {legacyFeaturedFacilities.length > 0 && (
-            <Card>
-              <CardHeader className="pb-4">
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
                     <Star className="h-5 w-5 text-slate-600 fill-slate-400" />
                   </div>
                   <div>
-                    <CardTitle>Legacy Featured</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      Current Legacy Featured
+                      <Badge variant="secondary" className="bg-slate-100 text-slate-700">
+                        {legacyFeaturedFacilities.length}
+                      </Badge>
+                    </CardTitle>
                     <CardDescription>
-                      Manually featured providers (not from subscription). Consider migrating to Featured plan.
+                      Manually featured providers. Consider encouraging upgrade to Featured plan for full benefits.
                     </CardDescription>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              ) : legacyFeaturedFacilities.length > 0 ? (
+                <div className="space-y-3">
                   {legacyFeaturedFacilities.map((facility) => (
                     <FacilityRow key={facility.id} facility={facility} type="legacy" />
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed">
+                  <Star className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                  <p className="font-medium text-foreground">No Legacy Featured Providers</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    All featured providers are on the Featured plan, or you can add legacy featured below
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Add Legacy Featured */}
           <Card>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                    <Users className="h-5 w-5 text-slate-600" />
+                  <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <CardTitle>Add Legacy Featured</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      Add Legacy Featured
+                      <Badge variant="outline" className="text-blue-600 border-blue-200">
+                        {eligibleFacilities.length} eligible
+                      </Badge>
+                    </CardTitle>
                     <CardDescription>
-                      Manually feature providers (for providers not on Featured plan)
+                      Manually feature approved providers who are not on Featured plan
                     </CardDescription>
                   </div>
                 </div>
                 <div className="relative w-full md:w-72">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search providers..."
+                    placeholder="Search by name, city, state..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -1258,12 +1323,17 @@ export default function AdminFeatured() {
               ) : searchQuery ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Search className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                  <p>No providers match "{searchQuery}"</p>
+                  <p className="font-medium">No providers match "{searchQuery}"</p>
+                  <p className="text-sm mt-1">Try a different search term</p>
                 </div>
               ) : (
-                <p className="text-center py-8 text-muted-foreground">
-                  All providers are either featured or on Featured plan
-                </p>
+                <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed">
+                  <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-300" />
+                  <p className="font-medium text-foreground">All Providers Featured</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    All approved providers are either featured or on the Featured plan
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>
