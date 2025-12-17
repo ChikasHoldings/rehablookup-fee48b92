@@ -45,6 +45,7 @@ export const AdminAuditActions = {
   PROFILE_PHOTO_UPDATED: "profile_photo_updated",
   PROFILE_NAME_UPDATED: "profile_name_updated",
   PASSWORD_CHANGED: "password_changed",
+  NOTIFICATION_PREFERENCES_UPDATED: "notification_preferences_updated",
   
   // Session actions
   SESSION_REVOKED: "session_revoked",

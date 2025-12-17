@@ -9,8 +9,11 @@ import {
   UserCog, Bell, KeyRound, Image, CheckCircle, UserPlus, Ban, 
   BadgeCheck, Star, FileText, Settings, RefreshCw, Shield, 
   Clock, AlertTriangle, Lock, Monitor, Smartphone, Laptop, Tablet,
-  Globe, MapPin, LogOut, Trash2, ShieldOff, Key
+  Globe, MapPin, LogOut, Trash2, ShieldOff, Key, Mail, CreditCard,
+  UserCheck, FileWarning
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDistanceToNow, format } from "date-fns";
 import { TwoFactorSetupDialog } from "@/components/admin/TwoFactorSetupDialog";
 import { DisableTwoFactorDialog } from "@/components/admin/DisableTwoFactorDialog";
@@ -115,6 +118,15 @@ export default function AdminProfile() {
   const [showRegenerateCodes, setShowRegenerateCodes] = useState(false);
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [isCheckingMFA, setIsCheckingMFA] = useState(true);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    notify_new_providers: true,
+    notify_new_leads: true,
+    notify_security_events: true,
+    notify_system_alerts: true,
+    notify_subscription_changes: true,
+    email_digest_frequency: 'daily',
+  });
 
   // Fetch current user and profile
   const { data: userData } = useQuery({
@@ -223,6 +235,17 @@ export default function AdminProfile() {
     if (profile?.display_name) {
       setDisplayName(profile.display_name);
     }
+    // Load notification preferences from profile
+    if (profile) {
+      setNotificationPrefs({
+        notify_new_providers: profile.notify_new_providers ?? true,
+        notify_new_leads: profile.notify_new_leads ?? true,
+        notify_security_events: profile.notify_security_events ?? true,
+        notify_system_alerts: profile.notify_system_alerts ?? true,
+        notify_subscription_changes: profile.notify_subscription_changes ?? true,
+        email_digest_frequency: profile.email_digest_frequency ?? 'daily',
+      });
+    }
   }, [profile]);
 
   // Check MFA status
@@ -279,6 +302,7 @@ export default function AdminProfile() {
       profile_photo_updated: <Image className="h-4 w-4" />,
       profile_name_updated: <UserCog className="h-4 w-4" />,
       password_changed: <KeyRound className="h-4 w-4" />,
+      notification_preferences_updated: <Bell className="h-4 w-4" />,
       notifications_marked_read: <Bell className="h-4 w-4" />,
       notifications_cleared: <Bell className="h-4 w-4" />,
       provider_approved: <CheckCircle className="h-4 w-4" />,
@@ -301,6 +325,7 @@ export default function AdminProfile() {
       profile_photo_updated: "Updated profile photo",
       profile_name_updated: "Updated display name",
       password_changed: "Changed password",
+      notification_preferences_updated: "Updated notification preferences",
       notifications_marked_read: "Marked notifications as read",
       notifications_cleared: "Cleared notifications",
       provider_approved: "Approved provider",
@@ -472,6 +497,52 @@ export default function AdminProfile() {
       });
     } finally {
       setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleSaveNotificationPrefs = async () => {
+    if (!userData?.id) return;
+
+    setIsSavingNotifications(true);
+    try {
+      const { error } = await supabase
+        .from("admin_user_profiles")
+        .update({
+          notify_new_providers: notificationPrefs.notify_new_providers,
+          notify_new_leads: notificationPrefs.notify_new_leads,
+          notify_security_events: notificationPrefs.notify_security_events,
+          notify_system_alerts: notificationPrefs.notify_system_alerts,
+          notify_subscription_changes: notificationPrefs.notify_subscription_changes,
+          email_digest_frequency: notificationPrefs.email_digest_frequency,
+          updated_at: new Date().toISOString()
+        })
+        .eq("user_id", userData.id);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
+      
+      // Log audit action
+      await logAdminAction({
+        actionType: AdminAuditActions.NOTIFICATION_PREFERENCES_UPDATED,
+        targetType: "admin_profile",
+        targetId: userData.id,
+        details: { preferences: notificationPrefs },
+      });
+
+      toast({
+        title: "Preferences saved",
+        description: "Your notification preferences have been updated.",
+      });
+    } catch (err) {
+      console.error("Error saving notification preferences:", err);
+      toast({
+        title: "Save failed",
+        description: "Failed to save notification preferences. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingNotifications(false);
     }
   };
 
@@ -1264,6 +1335,174 @@ export default function AdminProfile() {
               </Button>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Email Notification Preferences */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Email Notification Preferences
+              </CardTitle>
+              <CardDescription>Choose which email alerts you want to receive</CardDescription>
+            </div>
+            <Badge variant="outline" className="gap-1">
+              <Mail className="h-3 w-3" />
+              Email Alerts
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Notification Categories */}
+          <div className="space-y-4">
+            {/* New Providers */}
+            <div className="flex items-center justify-between py-3 border-b">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                  <UserCheck className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">New Provider Signups</p>
+                  <p className="text-xs text-muted-foreground">Get notified when new providers register</p>
+                </div>
+              </div>
+              <Switch
+                checked={notificationPrefs.notify_new_providers}
+                onCheckedChange={(checked) => 
+                  setNotificationPrefs(prev => ({ ...prev, notify_new_providers: checked }))
+                }
+              />
+            </div>
+
+            {/* New Leads */}
+            <div className="flex items-center justify-between py-3 border-b">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-50 text-green-600">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">New Lead Submissions</p>
+                  <p className="text-xs text-muted-foreground">Get notified when new leads are submitted</p>
+                </div>
+              </div>
+              <Switch
+                checked={notificationPrefs.notify_new_leads}
+                onCheckedChange={(checked) => 
+                  setNotificationPrefs(prev => ({ ...prev, notify_new_leads: checked }))
+                }
+              />
+            </div>
+
+            {/* Security Events */}
+            <div className="flex items-center justify-between py-3 border-b">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-red-50 text-red-600">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Security Events</p>
+                  <p className="text-xs text-muted-foreground">Get notified about suspicious activities and security alerts</p>
+                </div>
+              </div>
+              <Switch
+                checked={notificationPrefs.notify_security_events}
+                onCheckedChange={(checked) => 
+                  setNotificationPrefs(prev => ({ ...prev, notify_security_events: checked }))
+                }
+              />
+            </div>
+
+            {/* Subscription Changes */}
+            <div className="flex items-center justify-between py-3 border-b">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
+                  <CreditCard className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Subscription Changes</p>
+                  <p className="text-xs text-muted-foreground">Get notified when providers upgrade, downgrade, or cancel</p>
+                </div>
+              </div>
+              <Switch
+                checked={notificationPrefs.notify_subscription_changes}
+                onCheckedChange={(checked) => 
+                  setNotificationPrefs(prev => ({ ...prev, notify_subscription_changes: checked }))
+                }
+              />
+            </div>
+
+            {/* System Alerts */}
+            <div className="flex items-center justify-between py-3 border-b">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
+                  <FileWarning className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">System Alerts</p>
+                  <p className="text-xs text-muted-foreground">Get notified about system issues and important updates</p>
+                </div>
+              </div>
+              <Switch
+                checked={notificationPrefs.notify_system_alerts}
+                onCheckedChange={(checked) => 
+                  setNotificationPrefs(prev => ({ ...prev, notify_system_alerts: checked }))
+                }
+              />
+            </div>
+          </div>
+
+          {/* Email Digest Frequency */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Email Digest Frequency</Label>
+            <Select
+              value={notificationPrefs.email_digest_frequency}
+              onValueChange={(value) => 
+                setNotificationPrefs(prev => ({ ...prev, email_digest_frequency: value }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="instant">Instant (Real-time)</SelectItem>
+                <SelectItem value="daily">Daily Digest</SelectItem>
+                <SelectItem value="weekly">Weekly Summary</SelectItem>
+                <SelectItem value="never">Never (Disable all emails)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {notificationPrefs.email_digest_frequency === 'instant' && 
+                "You'll receive emails immediately as events occur."}
+              {notificationPrefs.email_digest_frequency === 'daily' && 
+                "You'll receive a daily summary email with all events."}
+              {notificationPrefs.email_digest_frequency === 'weekly' && 
+                "You'll receive a weekly summary email with all events."}
+              {notificationPrefs.email_digest_frequency === 'never' && 
+                "You won't receive any email notifications."}
+            </p>
+          </div>
+
+          {/* Save Button */}
+          <Button 
+            onClick={handleSaveNotificationPrefs} 
+            disabled={isSavingNotifications}
+            className="w-full"
+          >
+            {isSavingNotifications ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save Notification Preferences
+              </>
+            )}
+          </Button>
         </CardContent>
       </Card>
 
