@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Heart, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
-import logo from "@/assets/logo.png";
 
 export function Footer() {
   return (
@@ -10,9 +9,9 @@ export function Footer() {
         <div className="flex flex-col items-center mb-10 md:hidden">
           <Link to="/" className="inline-block mb-4">
             <img 
-              src={logo} 
-              alt="RehabLookup" 
-              className="h-12 w-auto brightness-0 invert"
+              src="/logo-dark.svg" 
+              alt="Rehab-Lookup" 
+              className="h-12 w-auto"
             />
           </Link>
           <p className="text-center text-sm leading-relaxed text-primary-foreground/60 max-w-[280px]">
@@ -66,9 +65,9 @@ export function Footer() {
           <div className="hidden md:block space-y-6 col-span-2">
             <Link to="/" className="inline-block">
               <img 
-                src={logo} 
-                alt="RehabLookup" 
-                className="h-8 w-auto brightness-0 invert"
+                src="/logo-dark.svg" 
+                alt="Rehab-Lookup" 
+                className="h-8 w-auto"
               />
             </Link>
             

@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import logo from "@/assets/logo.png";
 import { useProviderNotifications } from "@/hooks/useProviderNotifications";
 import { ProviderSearchCommand } from "./ProviderSearchCommand";
 import { FacilityLocationDropdown } from "./FacilityLocationDropdown";
@@ -113,12 +112,12 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           <Link 
             to="/" 
             className="flex items-center shrink-0 group"
-            title="Back to RehabLookup"
+            title="Back to Rehab-Lookup"
           >
             <img 
-              src={logo} 
-              alt="RehabLookup" 
-              className="h-7 sm:h-8 md:h-9 w-auto brightness-0 invert group-hover:opacity-80 transition-opacity"
+              src="/logo-dark.svg" 
+              alt="Rehab-Lookup" 
+              className="h-7 sm:h-8 md:h-9 w-auto group-hover:opacity-80 transition-opacity"
             />
           </Link>
           
