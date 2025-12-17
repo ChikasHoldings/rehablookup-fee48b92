@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Settings2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +54,7 @@ import { PLAN_DETAILS } from "@/hooks/useSubscription";
 import { AtRiskProvidersCard } from "@/components/admin/AtRiskProvidersCard";
 import { RetentionDashboard } from "@/components/admin/RetentionDashboard";
 import { SubscriptionDetailModal } from "@/components/admin/SubscriptionDetailModal";
+import { PlanSettingsTab } from "@/components/admin/PlanSettingsTab";
 
 type SubscriptionStats = {
   total_subscriptions: number;
@@ -444,7 +446,7 @@ export default function AdminSubscriptions() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <LayoutDashboard className="h-4 w-4" />
             Overview
@@ -456,6 +458,10 @@ export default function AdminSubscriptions() {
           <TabsTrigger value="retention" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Retention
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4" />
+            Plan Settings
           </TabsTrigger>
         </TabsList>
 
@@ -933,6 +939,11 @@ export default function AdminSubscriptions() {
         {/* Retention Analytics Tab */}
         <TabsContent value="retention" className="space-y-6">
           <RetentionDashboard />
+        </TabsContent>
+
+        {/* Plan Settings Tab */}
+        <TabsContent value="settings" className="space-y-6">
+          <PlanSettingsTab />
         </TabsContent>
       </Tabs>
 
