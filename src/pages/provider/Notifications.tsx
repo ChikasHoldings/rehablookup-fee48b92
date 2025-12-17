@@ -18,8 +18,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
@@ -57,6 +64,15 @@ const notificationTypeLabels: Record<string, string> = {
   subscription_updated: "Subscription",
   lead_limit_warning: "Limit Warning",
   system: "System",
+};
+
+type NotificationTypeFilter = "all" | "leads" | "billing" | "system";
+
+const typeFilterCategories: Record<NotificationTypeFilter, string[]> = {
+  all: [],
+  leads: ["lead_received", "lead_status_changed", "lead_limit_warning"],
+  billing: ["subscription_updated"],
+  system: ["listing_approved", "system"],
 };
 
 function NotificationItem({
@@ -145,6 +161,7 @@ function NotificationItem({
 
 export default function ProviderNotificationsPage() {
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
+  const [typeFilter, setTypeFilter] = useState<NotificationTypeFilter>("all");
   const {
     notifications,
     unreadCount,
@@ -155,9 +172,12 @@ export default function ProviderNotificationsPage() {
     deleteAll,
   } = useProviderNotifications();
 
-  const filteredNotifications = activeTab === "unread"
-    ? notifications.filter((n) => !n.read)
-    : notifications;
+  // Apply both tab filter and type filter
+  const filteredNotifications = notifications.filter((n) => {
+    const tabMatch = activeTab === "all" || !n.read;
+    const typeMatch = typeFilter === "all" || typeFilterCategories[typeFilter].includes(n.type);
+    return tabMatch && typeMatch;
+  });
 
   const groupedNotifications = filteredNotifications.reduce((groups, notification) => {
     const date = format(new Date(notification.created_at), "yyyy-MM-dd");
@@ -252,28 +272,42 @@ export default function ProviderNotificationsPage() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs and Type Filter */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "unread")}>
-        <TabsList>
-          <TabsTrigger value="all" className="gap-2">
-            <Bell className="h-4 w-4" />
-            All
-            {notifications.length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                {notifications.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="unread" className="gap-2">
-            <Filter className="h-4 w-4" />
-            Unread
-            {unreadCount > 0 && (
-              <Badge className="ml-1 h-5 px-1.5 text-xs">
-                {unreadCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <TabsList>
+            <TabsTrigger value="all" className="gap-2">
+              <Bell className="h-4 w-4" />
+              All
+              {notifications.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {notifications.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="unread" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Unread
+              {unreadCount > 0 && (
+                <Badge className="ml-1 h-5 px-1.5 text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as NotificationTypeFilter)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="leads">Leads</SelectItem>
+              <SelectItem value="billing">Billing</SelectItem>
+              <SelectItem value="system">System</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         <TabsContent value={activeTab} className="mt-4">
           <Card>
@@ -285,12 +319,18 @@ export default function ProviderNotificationsPage() {
                   </div>
                   <div>
                     <h3 className="font-medium text-lg">
-                      {activeTab === "unread" ? "No unread notifications" : "No notifications yet"}
+                      {typeFilter !== "all" 
+                        ? `No ${typeFilter} notifications`
+                        : activeTab === "unread" 
+                          ? "No unread notifications" 
+                          : "No notifications yet"}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {activeTab === "unread"
-                        ? "You're all caught up!"
-                        : "When you receive leads or updates, they'll appear here."}
+                      {typeFilter !== "all"
+                        ? `No ${typeFilter} notifications match your current filter.`
+                        : activeTab === "unread"
+                          ? "You're all caught up!"
+                          : "When you receive leads or updates, they'll appear here."}
                     </p>
                   </div>
                 </div>
