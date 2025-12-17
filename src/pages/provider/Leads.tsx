@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { 
+import { Link, useSearchParams } from "react-router-dom";
+import {
   Users, 
   Search,
   X,
@@ -61,6 +61,9 @@ interface LeadWithFacility extends Lead {
 }
 
 export default function ProviderLeadsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightLeadId = searchParams.get("highlight");
+  
   const [selectedLead, setSelectedLead] = useState<LeadWithFacility | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -185,6 +188,21 @@ export default function ProviderLeadsPage() {
       }
     }
   }, [leads, selectedLead]);
+
+  // Auto-select highlighted lead from search results
+  useEffect(() => {
+    if (highlightLeadId && leads.length > 0 && !selectedLead) {
+      const leadToHighlight = leads.find(l => l.id === highlightLeadId);
+      if (leadToHighlight) {
+        setSelectedLead(leadToHighlight);
+        if (isMobile) {
+          setMobileView('detail');
+        }
+        // Clear the highlight param after selecting
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [highlightLeadId, leads, selectedLead, isMobile, setSearchParams]);
   const filteredLeads = useMemo(() => {
     let result = leads.filter(lead => {
       if (searchQuery) {
