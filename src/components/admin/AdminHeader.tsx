@@ -369,9 +369,9 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
         <div className="flex items-center gap-3">
           <Link to="/admin" className="flex items-center gap-2">
             <img 
-              src="/logo.svg" 
-              alt="RehabLookup" 
-              className="h-8 brightness-0 invert"
+              src="/logo-admin.svg" 
+              alt="Rehab-Lookup" 
+              className="h-7"
             />
             <span className="text-xs bg-amber-400 text-slate-900 px-2 py-0.5 rounded font-semibold uppercase">
               Admin
