@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   ChevronLeft,
   Zap,
+  Building2,
 } from "lucide-react";
 import {
   Select,
@@ -42,9 +43,8 @@ import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components
 import { LeadScoreBadge } from "@/components/provider/leads/LeadScoreBadge";
 import { LeadDetailPanel, type Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { calculateLeadScore } from "@/lib/leadScoring";
-// Removed unused banner imports - now using compact header indicator
 import { useSubscription } from "@/hooks/useSubscription";
-import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
@@ -53,11 +53,19 @@ interface DateRange {
   to: Date | undefined;
 }
 
+// Extended Lead type with facility info
+interface LeadWithFacility extends Lead {
+  facility_name?: string;
+  facility_city?: string;
+  facility_state?: string;
+}
+
 export default function ProviderLeadsPage() {
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedLead, setSelectedLead] = useState<LeadWithFacility | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -65,17 +73,28 @@ export default function ProviderLeadsPage() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { selectedFacility } = useSelectedFacility();
+  const { facilities } = useProviderFacilities();
   const { data: subscription } = useSubscription();
   const isMobile = useIsMobile();
-  const facilityId = selectedFacility?.id;
   const currentPlan = subscription?.plan || "basic";
-  const leadLimit = currentPlan === "basic" ? 1 : (subscription?.lead_limit ?? 25); // Basic: 1 lifetime lead
+  const leadLimit = currentPlan === "basic" ? 1 : (subscription?.lead_limit ?? 25);
+
+  // Create facility lookup map for quick access
+  const facilityMap = useMemo(() => {
+    const map = new Map<string, { name: string; city: string; state: string }>();
+    facilities.forEach(f => {
+      map.set(f.id, { name: f.name, city: f.city, state: f.state });
+    });
+    return map;
+  }, [facilities]);
+
+  // Get all facility IDs for the provider
+  const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
 
   // Swipe gestures for mobile navigation
   const { handlers: swipeHandlers } = useSwipeGesture({
     onSwipeLeft: () => {
-      if (isMobile && selectedLead) return; // Already on detail
+      if (isMobile && selectedLead) return;
       if (isMobile && mobileView === 'list' && selectedLead) {
         setMobileView('detail');
       }
@@ -89,7 +108,7 @@ export default function ProviderLeadsPage() {
   });
 
   // Handle lead selection on mobile
-  const handleSelectLead = (lead: Lead) => {
+  const handleSelectLead = (lead: LeadWithFacility) => {
     setSelectedLead(lead);
     if (isMobile) {
       setMobileView('detail');
@@ -99,45 +118,63 @@ export default function ProviderLeadsPage() {
   // Handle back navigation on mobile
   const handleBackToList = () => {
     setMobileView('list');
-    // Optionally keep lead selected for context
   };
 
+  // Fetch ALL leads across all facilities
   const { data: leads = [], isLoading } = useQuery({
-    queryKey: ["provider-leads", facilityId],
-    queryFn: async (): Promise<Lead[]> => {
-      if (!facilityId) return [];
+    queryKey: ["provider-leads-all", facilityIds],
+    queryFn: async (): Promise<LeadWithFacility[]> => {
+      if (facilityIds.length === 0) return [];
       const { data, error } = await supabase
         .from("leads")
         .select("*")
-        .eq("facility_id", facilityId)
+        .in("facility_id", facilityIds)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data || []) as Lead[];
+      
+      // Enrich leads with facility info
+      return (data || []).map(lead => ({
+        ...lead,
+        facility_name: facilityMap.get(lead.facility_id)?.name,
+        facility_city: facilityMap.get(lead.facility_id)?.city,
+        facility_state: facilityMap.get(lead.facility_id)?.state,
+      })) as LeadWithFacility[];
     },
-    enabled: !!facilityId,
+    enabled: facilityIds.length > 0,
     staleTime: 1000 * 60 * 2,
   });
 
-  // For Basic plan lifetime count - must be after leads query
+  // For Basic plan lifetime count
   const totalLeadsCount = leads.length;
 
+  // Realtime subscription for ALL facilities
   useEffect(() => {
-    if (!facilityId) return;
+    if (facilityIds.length === 0) return;
+    
     const channel = supabase
-      .channel("leads-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads", filter: `facility_id=eq.${facilityId}` },
+      .channel("leads-realtime-all")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "leads" },
         (payload) => {
-          queryClient.invalidateQueries({ queryKey: ["provider-leads", facilityId] });
           const newLead = payload.new as Lead;
-          toast({ title: "🎉 New Lead!", description: `${newLead.name} submitted a request` });
+          // Only process if it's one of our facilities
+          if (facilityIds.includes(newLead.facility_id)) {
+            queryClient.invalidateQueries({ queryKey: ["provider-leads-all"] });
+            const facilityName = facilityMap.get(newLead.facility_id)?.name || "your facility";
+            toast({ title: "🎉 New Lead!", description: `${newLead.name} submitted a request to ${facilityName}` });
+          }
         }
       )
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "leads", filter: `facility_id=eq.${facilityId}` },
-        () => queryClient.invalidateQueries({ queryKey: ["provider-leads", facilityId] })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "leads" },
+        (payload) => {
+          const updatedLead = payload.new as Lead;
+          if (facilityIds.includes(updatedLead.facility_id)) {
+            queryClient.invalidateQueries({ queryKey: ["provider-leads-all"] });
+          }
+        }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [facilityId, queryClient, toast]);
+  }, [facilityIds, facilityMap, queryClient, toast]);
 
   // Sync selectedLead with leads data to reflect real-time updates
   useEffect(() => {
@@ -160,6 +197,8 @@ export default function ProviderLeadsPage() {
         if (sourceFilter === "qualified" && !isQ) return false;
         if (sourceFilter === "direct" && isQ) return false;
       }
+      // Facility filter
+      if (facilityFilter !== "all" && lead.facility_id !== facilityFilter) return false;
       if (dateRange.from || dateRange.to) {
         const d = new Date(lead.created_at);
         if (dateRange.from && dateRange.to && !isWithinInterval(d, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })) return false;
@@ -171,12 +210,12 @@ export default function ProviderLeadsPage() {
     return sortBy === 'score' 
       ? [...result].sort((a, b) => calculateLeadScore(b).total - calculateLeadScore(a).total)
       : [...result].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [leads, searchQuery, statusFilter, sourceFilter, dateRange, sortBy]);
+  }, [leads, searchQuery, statusFilter, sourceFilter, facilityFilter, dateRange, sortBy]);
 
   const thisMonthLeads = leads.filter(l => new Date(l.created_at) >= startOfMonth(new Date()));
   const thisMonthQualified = thisMonthLeads.filter(l => l.source === "Request Help Page");
-  const clearFilters = () => { setSearchQuery(""); setStatusFilter("all"); setSourceFilter("all"); setDateRange({ from: undefined, to: undefined }); };
-  const hasFilters = searchQuery || statusFilter !== "all" || sourceFilter !== "all" || dateRange.from || dateRange.to;
+  const clearFilters = () => { setSearchQuery(""); setStatusFilter("all"); setSourceFilter("all"); setFacilityFilter("all"); setDateRange({ from: undefined, to: undefined }); };
+  const hasFilters = searchQuery || statusFilter !== "all" || sourceFilter !== "all" || facilityFilter !== "all" || dateRange.from || dateRange.to;
 
   // Basic plan: ALL leads are always locked/blurred to encourage upgrade
   const isLeadLocked = (lead: Lead, index: number) => {
@@ -360,6 +399,23 @@ export default function ProviderLeadsPage() {
                       <SelectItem value="direct">Direct</SelectItem>
                     </SelectContent>
                   </Select>
+                  {/* Facility Filter - only show if multiple facilities */}
+                  {facilities.length > 1 && (
+                    <Select value={facilityFilter} onValueChange={setFacilityFilter}>
+                      <SelectTrigger className={cn("w-[120px] h-9 text-xs", facilityFilter !== "all" && "border-primary text-primary")}>
+                        <Building2 className="h-3.5 w-3.5 mr-1.5" />
+                        <SelectValue placeholder="Location" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background">
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {facilities.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>
+                            <span className="truncate max-w-[150px]">{f.name}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-xs px-2.5", dateRange.from && "border-primary text-primary")}>
@@ -536,6 +592,13 @@ export default function ProviderLeadsPage() {
                           {/* Bottom Row - Tags */}
                           {!locked && (
                             <div className="flex items-center gap-1.5 flex-wrap">
+                              {/* Facility Location Tag - show when multiple facilities */}
+                              {facilities.length > 1 && lead.facility_name && (
+                                <Badge variant="outline" className="h-5 px-2 text-[10px] border-primary/30 bg-primary/5 text-primary font-medium">
+                                  <Building2 className="h-2.5 w-2.5 mr-1" />
+                                  {lead.facility_name.length > 20 ? lead.facility_name.slice(0, 20) + "..." : lead.facility_name}
+                                </Badge>
+                              )}
                               {/* Lead Type Tag - Primary distinction */}
                               {isQualified ? (
                                 <Badge className="h-5 px-2 text-[10px] bg-emerald-500 text-white border-0 font-semibold shadow-sm">
@@ -611,7 +674,7 @@ export default function ProviderLeadsPage() {
                 setSelectedLead(null);
               }
             }}
-            facilityName={selectedFacility?.name}
+            facilityName={selectedLead?.facility_name}
           />
         </div>
       </div>
