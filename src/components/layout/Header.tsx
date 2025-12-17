@@ -112,7 +112,7 @@ export function Header({
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "rounded-lg px-4 py-2 text-sm font-medium transition-all",
+                  "rounded-lg px-4 py-2 text-base font-medium transition-all",
                   location.pathname === link.href
                     ? "bg-primary text-primary-foreground"
                     : "text-foreground/70 hover:text-foreground hover:bg-secondary"
