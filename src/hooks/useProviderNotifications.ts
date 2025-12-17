@@ -1,7 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNotificationAlert } from "./useNotificationAlert";
 
 export interface ProviderNotification {
   id: string;
@@ -15,15 +14,52 @@ export interface ProviderNotification {
   created_at: string;
 }
 
+// Simple notification sound (base64 encoded short beep)
+const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleA0AFQN/kI6sxr2UXQAAxuzXooRCBgmQx+/FeSQNTfj3vE8PFq3s7qF1IkJ1wdbhoF4XLpG/xaCJTitdoNm6qXlPVYCgzcDBm2s5RnKUwdDFvJFfRFZ9l7bRzcKqeE1Laz5LWnSUqbXCzL+pgV1AMDlXboSZq7q+xb6uhFk6LkNedI6iu8XDu65/VDAsOlV5lq3Cx7+0qIhfQC8yTGJ+mbO/wruzqopiQy4sRV12j6S2wcS7t6+JYEQsKUBYcoabrrzAuba1qotgRCsmP1RvgoySnaWtsLe4ubaxqp+ThntuZV5bXmNqc4CQnq20uLy6tq+ij3xrX1NLSkpOVl9sdIiXpay0trStpJqOgnZqYFhTUldaX2hxgI2Zoa2ys7Cvqp2PhHpvZ2JfX2FlaXJ5g4+Yoqqvs7OvrKaclIqBd3FtaWpsb3R5gImRmqGnq66vraqknpaNhH15dnV1dnh7foSKkJebnqOlp6elo5+blo+JhIB9fHt7fH6Bh4yRlpmcnqCgo6OioJ2ZlpKOioeDgYGBgoWIjJCTlpmbnZ+goaKioaCemZaRjYqIhoWEhYaHioyPkpWYmpydn5+goKCfnpyZl5SSj4yLioqKi4yNj5KUlpmanJ2en5+fnp2cm5mWk5GQjo2NjY2OjpCSlJaYmZudnZ6enp2cm5qYlpSTkZCPj4+Pj5CRkpSVl5mam5ycnZ2dnJuamJeVk5KRkJCQkJCRkpOUlZaXmJmanJycnJybmpmYl5WUk5KRkZGRkZGSkpOUlZaXmJmampubm5uamZiXlpWUk5OSkpKSkpOTk5SVlpaXmJmZmpqampqZmZiXlpWVlJSUk5OTk5SUlJWVlpaXl5iYmZmZmZmYmJeWlpWVlJSUlJSUlJSVlZWWlpeXl5iYmJiYmJeXlpaWlZWVlZWVlZWVlZaWlpaWl5eXl5eXl5eXlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eXl5aWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eX";
+
 export function useProviderNotifications() {
   const queryClient = useQueryClient();
-  const { notify, requestPermission } = useNotificationAlert();
-  const previousCountRef = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Request permission on mount
+  // Initialize audio element on mount
   useEffect(() => {
-    requestPermission();
-  }, [requestPermission]);
+    audioRef.current = new Audio(NOTIFICATION_SOUND_URL);
+    audioRef.current.volume = 0.5;
+
+    // Request notification permission
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    return () => {
+      audioRef.current = null;
+    };
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch((err) => {
+        console.log("Could not play notification sound:", err);
+      });
+    }
+  }, []);
+
+  const showBrowserNotification = useCallback((title: string, body: string) => {
+    if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
+      const notification = new Notification(title, {
+        body,
+        icon: "/favicon.svg",
+        tag: "rehablookup-lead",
+      });
+      notification.onclick = () => {
+        window.focus();
+        window.location.href = "/provider/leads";
+        notification.close();
+      };
+      setTimeout(() => notification.close(), 5000);
+    }
+  }, []);
 
   const { data: notifications = [], isLoading, error } = useQuery({
     queryKey: ["provider-notifications"],
@@ -60,11 +96,8 @@ export function useProviderNotifications() {
           
           // Play sound and show browser notification for lead notifications
           if (newNotification.type === "lead_received") {
-            notify(
-              newNotification.title,
-              newNotification.message,
-              () => window.location.href = "/provider/leads"
-            );
+            playNotificationSound();
+            showBrowserNotification(newNotification.title, newNotification.message);
           }
           
           queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
@@ -86,7 +119,7 @@ export function useProviderNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, notify]);
+  }, [queryClient, playNotificationSound, showBrowserNotification]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
