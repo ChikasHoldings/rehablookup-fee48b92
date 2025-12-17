@@ -97,7 +97,7 @@ export function Header({
               alt="Rehab-Lookup" 
               className={cn(
                 "w-auto transition-all duration-300 group-hover:scale-105",
-                isScrolled ? "h-7 md:h-8" : "h-10 md:h-8"
+                isScrolled ? "h-8 md:h-10" : "h-12 md:h-11"
               )}
             />
             {variant === "provider" && (
@@ -193,7 +193,7 @@ export function Header({
             <img 
               src="/logo.svg" 
               alt="Rehab-Lookup" 
-              className="h-9 w-auto"
+              className="h-11 w-auto"
             />
           </Link>
           <button
