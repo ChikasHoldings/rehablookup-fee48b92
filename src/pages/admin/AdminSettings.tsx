@@ -198,7 +198,7 @@ export default function AdminSettings() {
   }, [invalidateSettingsQueries]);
 
   // Fetch platform settings
-  const { data: platformSettings, isLoading: loadingSettings } = useQuery({
+  const { data: platformSettings, isLoading: loadingSettings, error: settingsError } = useQuery({
     queryKey: ["platform-settings"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -215,6 +215,11 @@ export default function AdminSettings() {
       return settingsMap;
     },
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (settingsError) logError("fetch_platform_settings", settingsError, { queryKey: "platform-settings" });
+  }, [settingsError, logError]);
 
   // Sync theme mode from settings when loaded
   useEffect(() => {
@@ -276,7 +281,7 @@ export default function AdminSettings() {
   });
 
   // Fetch platform stats
-  const { data: stats, isLoading: loadingStats, refetch: refetchStats } = useQuery({
+  const { data: stats, isLoading: loadingStats, refetch: refetchStats, error: statsError } = useQuery({
     queryKey: ["admin-settings-stats"],
     queryFn: async () => {
       const [facilitiesResult, leadsResult, adminUsersResult, flaggedResult, auditLogsResult] = await Promise.all([
@@ -296,6 +301,11 @@ export default function AdminSettings() {
       };
     },
   });
+
+  // Log stats query errors
+  useEffect(() => {
+    if (statsError) logError("fetch_platform_stats", statsError, { queryKey: "admin-settings-stats" });
+  }, [statsError, logError]);
 
   // Count edge functions from supabase config
   const { data: edgeFunctionsCount } = useQuery({

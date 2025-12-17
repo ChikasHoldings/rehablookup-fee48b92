@@ -192,7 +192,7 @@ export default function AdminAuditLog() {
     };
   }, [invalidateAuditLog]);
 
-  const { data: logs, isLoading } = useQuery({
+  const { data: logs, isLoading, error: logsError } = useQuery({
     queryKey: ["admin-audit-log", dateRange],
     queryFn: async () => {
       let query = supabase
@@ -214,7 +214,7 @@ export default function AdminAuditLog() {
   });
 
   // Fetch admin profiles for display names
-  const { data: adminProfiles } = useQuery({
+  const { data: adminProfiles, error: profilesError } = useQuery({
     queryKey: ["admin-profiles-for-audit"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -224,6 +224,15 @@ export default function AdminAuditLog() {
       return data;
     },
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (logsError) logError("fetch_audit_logs", logsError, { queryKey: "admin-audit-log" });
+  }, [logsError, logError]);
+
+  useEffect(() => {
+    if (profilesError) logError("fetch_admin_profiles", profilesError, { queryKey: "admin-profiles-for-audit" });
+  }, [profilesError, logError]);
 
   const adminProfileMap = useMemo(() => {
     if (!adminProfiles) return new Map<string, string>();

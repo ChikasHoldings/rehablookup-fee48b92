@@ -106,7 +106,7 @@ export default function AdminAnalytics() {
   }, [queryClient]);
 
   // Fetch activity feed data
-  const { data: activityFeed, isLoading: isLoadingActivity } = useQuery({
+  const { data: activityFeed, isLoading: isLoadingActivity, error: activityError } = useQuery({
     queryKey: ["admin-activity-feed"],
     queryFn: async () => {
       const activities: ActivityItem[] = [];
@@ -270,7 +270,7 @@ export default function AdminAnalytics() {
   }, [dateRange]);
 
   // Fetch facilities for location filtering (with lead_limit_override)
-  const { data: facilities } = useQuery({
+  const { data: facilities, error: facilitiesError } = useQuery({
     queryKey: ["admin-analytics-facilities"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -289,7 +289,7 @@ export default function AdminAnalytics() {
   }, [facilities, selectedState]);
 
   // Fetch views data
-  const { data: viewsData, isLoading: isLoadingViews } = useQuery({
+  const { data: viewsData, isLoading: isLoadingViews, error: viewsError } = useQuery({
     queryKey: ["admin-analytics-views", dateRange, selectedState, selectedCity],
     queryFn: async () => {
       let query = supabase
@@ -312,7 +312,7 @@ export default function AdminAnalytics() {
   });
 
   // Fetch interactions data
-  const { data: interactionsData, isLoading: isLoadingInteractions } = useQuery({
+  const { data: interactionsData, isLoading: isLoadingInteractions, error: interactionsError } = useQuery({
     queryKey: ["admin-analytics-interactions", dateRange, selectedState, selectedCity],
     queryFn: async () => {
       let query = supabase
@@ -335,7 +335,7 @@ export default function AdminAnalytics() {
   });
 
   // Fetch leads data (including unassigned leads without facility)
-  const { data: leadsData, isLoading: isLoadingLeads } = useQuery({
+  const { data: leadsData, isLoading: isLoadingLeads, error: leadsError } = useQuery({
     queryKey: ["admin-analytics-leads", dateRange, selectedState, selectedCity],
     queryFn: async () => {
       // Fetch all leads including those without facility assignments
@@ -362,7 +362,7 @@ export default function AdminAnalytics() {
   });
 
   // Fetch subscription data via edge function
-  const { data: subscriptionData, isLoading: isLoadingSubscriptions, refetch: refetchSubscriptions } = useQuery({
+  const { data: subscriptionData, isLoading: isLoadingSubscriptions, refetch: refetchSubscriptions, error: subscriptionsError } = useQuery({
     queryKey: ["admin-analytics-subscriptions", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-revenue-stats", {
@@ -387,7 +387,7 @@ export default function AdminAnalytics() {
   });
 
   // Previous period data queries (only fetch when compare mode is enabled)
-  const { data: prevViewsData } = useQuery({
+  const { data: prevViewsData, error: prevViewsError } = useQuery({
     queryKey: ["admin-analytics-prev-views", previousDateRange, selectedState, selectedCity],
     queryFn: async () => {
       let query = supabase
@@ -410,7 +410,7 @@ export default function AdminAnalytics() {
     enabled: compareMode,
   });
 
-  const { data: prevInteractionsData } = useQuery({
+  const { data: prevInteractionsData, error: prevInteractionsError } = useQuery({
     queryKey: ["admin-analytics-prev-interactions", previousDateRange, selectedState, selectedCity],
     queryFn: async () => {
       let query = supabase
@@ -433,7 +433,7 @@ export default function AdminAnalytics() {
     enabled: compareMode,
   });
 
-  const { data: prevLeadsData } = useQuery({
+  const { data: prevLeadsData, error: prevLeadsError } = useQuery({
     queryKey: ["admin-analytics-prev-leads", previousDateRange, selectedState, selectedCity],
     queryFn: async () => {
       let query = supabase
@@ -457,6 +457,43 @@ export default function AdminAnalytics() {
     },
     enabled: compareMode,
   });
+
+  // Log query errors
+  useEffect(() => {
+    if (activityError) logError("fetch_activity_feed", activityError, { queryKey: "admin-activity-feed" });
+  }, [activityError, logError]);
+
+  useEffect(() => {
+    if (facilitiesError) logError("fetch_facilities", facilitiesError, { queryKey: "admin-analytics-facilities" });
+  }, [facilitiesError, logError]);
+
+  useEffect(() => {
+    if (viewsError) logError("fetch_views", viewsError, { queryKey: "admin-analytics-views" });
+  }, [viewsError, logError]);
+
+  useEffect(() => {
+    if (interactionsError) logError("fetch_interactions", interactionsError, { queryKey: "admin-analytics-interactions" });
+  }, [interactionsError, logError]);
+
+  useEffect(() => {
+    if (leadsError) logError("fetch_leads", leadsError, { queryKey: "admin-analytics-leads" });
+  }, [leadsError, logError]);
+
+  useEffect(() => {
+    if (subscriptionsError) logError("fetch_subscriptions", subscriptionsError, { queryKey: "admin-analytics-subscriptions" });
+  }, [subscriptionsError, logError]);
+
+  useEffect(() => {
+    if (prevViewsError) logError("fetch_prev_views", prevViewsError, { queryKey: "admin-analytics-prev-views" });
+  }, [prevViewsError, logError]);
+
+  useEffect(() => {
+    if (prevInteractionsError) logError("fetch_prev_interactions", prevInteractionsError, { queryKey: "admin-analytics-prev-interactions" });
+  }, [prevInteractionsError, logError]);
+
+  useEffect(() => {
+    if (prevLeadsError) logError("fetch_prev_leads", prevLeadsError, { queryKey: "admin-analytics-prev-leads" });
+  }, [prevLeadsError, logError]);
 
   // Calculate KPIs with comparison
   const kpis = useMemo(() => {
