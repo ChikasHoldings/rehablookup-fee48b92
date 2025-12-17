@@ -6,8 +6,8 @@ import {
   ChevronDown, 
   ChevronUp,
   Mail,
-  Phone,
   FileText,
+  Clock,
   BookOpen,
   AlertCircle,
   CheckCircle,
@@ -298,7 +298,7 @@ export default function ProviderHelpPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Phone className="h-5 w-5 text-primary" />
+              <Mail className="h-5 w-5 text-primary" />
               Direct Contact
             </CardTitle>
             <CardDescription>
@@ -309,7 +309,7 @@ export default function ProviderHelpPage() {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
               <Mail className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm font-medium">Email Support</p>
+                <p className="text-sm font-medium">Provider Support</p>
                 <a 
                   href="mailto:providers@rehablookup.com" 
                   className="text-sm text-primary hover:underline"
@@ -319,22 +319,19 @@ export default function ProviderHelpPage() {
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-              <Phone className="h-5 w-5 text-primary" />
+              <Clock className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm font-medium">Phone Support</p>
-                <a 
-                  href="tel:1-800-REHAB-HELP" 
-                  className="text-sm text-primary hover:underline"
-                >
-                  1-800-REHAB-HELP
-                </a>
+                <p className="text-sm font-medium">Response Time</p>
+                <p className="text-sm text-muted-foreground">
+                  Within 24-48 business hours
+                </p>
                 <p className="text-xs text-muted-foreground">Mon-Fri, 9am-6pm EST</p>
               </div>
             </div>
             <div className="pt-2 border-t">
               <p className="text-xs text-muted-foreground">
                 For urgent matters regarding patient inquiries or system outages, 
-                please call our priority support line.
+                please use the contact form above with "Urgent" in your subject.
               </p>
             </div>
           </CardContent>
