@@ -43,6 +43,9 @@ export class AdminErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const errorMessage = this.state.error?.message || "Unknown error";
+      const errorStack = this.state.error?.stack;
+      
       return (
         <div className="flex items-center justify-center min-h-[400px] p-6">
           <Card className="max-w-md w-full">
@@ -52,6 +55,14 @@ export class AdminErrorBoundary extends React.Component<Props, State> {
               <p className="text-muted-foreground mb-4">
                 We encountered an error loading this page. Please try again.
               </p>
+              {process.env.NODE_ENV === 'development' && (
+                <div className="text-left mb-4 p-3 bg-muted rounded-md text-xs overflow-auto max-h-32">
+                  <p className="font-semibold text-destructive">{errorMessage}</p>
+                  {errorStack && (
+                    <pre className="mt-2 text-muted-foreground whitespace-pre-wrap">{errorStack}</pre>
+                  )}
+                </div>
+              )}
               <Button onClick={this.handleRetry} variant="outline">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Try Again
