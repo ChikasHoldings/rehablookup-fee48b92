@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Star,
   Eye,
   Search,
   MapPin,
-  Shield,
   TrendingUp,
   Users,
   ExternalLink,
@@ -20,6 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
+  GripVertical,
+  Save,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +66,7 @@ type Facility = {
   featured_pinned: boolean | null;
   last_featured_shown_at: string | null;
   suspended: boolean | null;
+  featured_display_order: number | null;
 };
 
 type FacilityStats = {
@@ -87,6 +89,12 @@ export default function AdminFeatured() {
   // Pagination state for eligible facilities
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // Drag and drop state
+  const [orderedFacilities, setOrderedFacilities] = useState<Facility[]>([]);
+  const [hasOrderChanges, setHasOrderChanges] = useState(false);
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
 
   // Invalidate all featured queries helper
   const invalidateFeaturedQueries = useCallback(() => {
@@ -184,8 +192,92 @@ export default function AdminFeatured() {
   const eligibleFacilities = allFacilities?.filter(
     f => !f.featured && !autoFeaturedIds.includes(f.id) && !f.suspended
   ) || [];
+  
+  // Combined featured facilities for ordering (auto + legacy)
+  const allFeaturedFacilities = [...autoFeaturedFacilities, ...legacyFeaturedFacilities];
+  
+  // Sync ordered facilities when data changes
+  useEffect(() => {
+    if (allFeaturedFacilities.length > 0) {
+      // Sort by display_order first, then by name
+      const sorted = [...allFeaturedFacilities].sort((a, b) => {
+        // Pinned facilities come first
+        if (a.featured_pinned && !b.featured_pinned) return -1;
+        if (!a.featured_pinned && b.featured_pinned) return 1;
+        // Then by display order
+        if (a.featured_display_order !== null && b.featured_display_order !== null) {
+          return a.featured_display_order - b.featured_display_order;
+        }
+        if (a.featured_display_order !== null) return -1;
+        if (b.featured_display_order !== null) return 1;
+        // Then by name
+        return a.name.localeCompare(b.name);
+      });
+      setOrderedFacilities(sorted);
+      setHasOrderChanges(false);
+    }
+  }, [allFacilities, autoFeaturedIds]);
 
-  // Fetch stats for facilities
+  // Save display order mutation
+  const saveDisplayOrder = useMutation({
+    mutationFn: async (facilities: Facility[]) => {
+      const updates = facilities.map((f, index) => ({
+        id: f.id,
+        featured_display_order: index + 1,
+      }));
+      
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("facilities")
+          .update({ featured_display_order: update.featured_display_order })
+          .eq("id", update.id);
+        if (error) throw error;
+      }
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("admin_audit_log").insert({
+        admin_user_id: user?.id,
+        action_type: "featured_order_updated",
+        target_type: "facility",
+        details: { updated_count: updates.length },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-all-facilities-featured"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-facility-ids"] });
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      toast.success("Display order saved successfully");
+      setHasOrderChanges(false);
+    },
+    onError: () => {
+      toast.error("Failed to save display order");
+    },
+  });
+
+  // Drag and drop handlers
+  const handleDragStart = (index: number) => {
+    dragItem.current = index;
+  };
+
+  const handleDragEnter = (index: number) => {
+    dragOverItem.current = index;
+  };
+
+  const handleDragEnd = () => {
+    if (dragItem.current === null || dragOverItem.current === null) return;
+    
+    const items = [...orderedFacilities];
+    const draggedItem = items[dragItem.current];
+    items.splice(dragItem.current, 1);
+    items.splice(dragOverItem.current, 0, draggedItem);
+    
+    dragItem.current = null;
+    dragOverItem.current = null;
+    
+    setOrderedFacilities(items);
+    setHasOrderChanges(true);
+  };
+
   const { data: facilityStats } = useQuery({
     queryKey: ["admin-facility-stats"],
     queryFn: async () => {
@@ -630,22 +722,42 @@ export default function AdminFeatured() {
             </Card>
           </div>
 
-          {/* Homepage Preview */}
+          {/* Homepage Preview with Drag and Drop */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                  <Eye className="h-5 w-5 text-slate-600" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                    <Eye className="h-5 w-5 text-slate-600" />
+                  </div>
+                  <div>
+                    <CardTitle>Homepage Display Order</CardTitle>
+                    <CardDescription>
+                      Drag and drop to reorder. Top 6 shown on homepage. Pinned always appear first.
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle>Homepage Preview</CardTitle>
-                  <CardDescription>
-                    Current homepage featured display (max 6, rotates daily for fairness)
-                  </CardDescription>
-                </div>
+                {hasOrderChanges && (
+                  <Button 
+                    onClick={() => saveDisplayOrder.mutate(orderedFacilities)}
+                    disabled={saveDisplayOrder.isPending}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {saveDisplayOrder.isPending ? "Saving..." : "Save Order"}
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
+              {hasOrderChanges && (
+                <Alert className="mb-4 border-amber-200 bg-amber-50">
+                  <Info className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800">
+                    You have unsaved order changes. Click "Save Order" to apply.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 border">
                 <h3 className="text-lg font-semibold text-center mb-6">Featured Treatment Centers</h3>
                 {isLoading ? (
@@ -654,15 +766,28 @@ export default function AdminFeatured() {
                       <Skeleton key={i} className="h-32 w-full rounded-xl" />
                     ))}
                   </div>
-                ) : (
+                ) : orderedFacilities.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {allFacilities?.filter(f => homepageFeaturedIds.includes(f.id)).slice(0, 6).map((facility) => (
+                    {orderedFacilities.slice(0, 6).map((facility, index) => (
                       <div
                         key={facility.id}
-                        className="p-5 rounded-xl border bg-white shadow-sm hover:shadow-md transition-shadow"
+                        draggable
+                        onDragStart={() => handleDragStart(index)}
+                        onDragEnter={() => handleDragEnter(index)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => e.preventDefault()}
+                        className={`p-5 rounded-xl border bg-white shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing ${
+                          index < 6 ? "ring-2 ring-green-200" : "opacity-60"
+                        }`}
                       >
                         <div className="flex items-center gap-3 mb-4">
-                          <Avatar className="h-14 w-14 border-2 border-amber-200">
+                          <div className="flex items-center gap-2">
+                            <GripVertical className="h-5 w-5 text-muted-foreground/50" />
+                            <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded">
+                              #{index + 1}
+                            </span>
+                          </div>
+                          <Avatar className="h-12 w-12 border-2 border-amber-200">
                             <AvatarImage src={facility.logo_url || undefined} />
                             <AvatarFallback className="bg-amber-100 text-amber-800 font-semibold">
                               {facility.name.slice(0, 2).toUpperCase()}
@@ -696,12 +821,45 @@ export default function AdminFeatured() {
                         </div>
                       </div>
                     ))}
-                    {homepageFeaturedIds.length === 0 && (
-                      <div className="col-span-full text-center py-12 text-muted-foreground">
-                        <Crown className="h-10 w-10 mx-auto mb-2 text-amber-200" />
-                        <p>No Featured plan subscribers to display</p>
-                      </div>
-                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Crown className="h-10 w-10 mx-auto mb-2 text-amber-200" />
+                    <p>No featured providers to display</p>
+                  </div>
+                )}
+                
+                {/* Show remaining facilities outside top 6 */}
+                {orderedFacilities.length > 6 && (
+                  <div className="mt-6 pt-6 border-t">
+                    <p className="text-sm text-muted-foreground mb-4 text-center">
+                      Additional featured providers (rotate into top 6 based on order):
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {orderedFacilities.slice(6).map((facility, index) => (
+                        <div
+                          key={facility.id}
+                          draggable
+                          onDragStart={() => handleDragStart(index + 6)}
+                          onDragEnter={() => handleDragEnter(index + 6)}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={(e) => e.preventDefault()}
+                          className="p-3 rounded-lg border bg-white/50 opacity-70 hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+                        >
+                          <div className="flex items-center gap-2">
+                            <GripVertical className="h-4 w-4 text-muted-foreground/50" />
+                            <span className="text-xs font-bold text-muted-foreground">#{index + 7}</span>
+                            <Avatar className="h-8 w-8 border border-slate-200">
+                              <AvatarImage src={facility.logo_url || undefined} />
+                              <AvatarFallback className="bg-slate-100 text-slate-600 text-xs">
+                                {facility.name.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm truncate">{facility.name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

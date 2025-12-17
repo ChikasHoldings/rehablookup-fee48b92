@@ -349,6 +349,7 @@ export type Database = {
           email: string | null
           facility_type: string
           featured: boolean
+          featured_display_order: number | null
           featured_pinned: boolean | null
           gallery_urls: string[] | null
           gender_served: string | null
@@ -384,6 +385,7 @@ export type Database = {
           email?: string | null
           facility_type: string
           featured?: boolean
+          featured_display_order?: number | null
           featured_pinned?: boolean | null
           gallery_urls?: string[] | null
           gender_served?: string | null
@@ -419,6 +421,7 @@ export type Database = {
           email?: string | null
           facility_type?: string
           featured?: boolean
+          featured_display_order?: number | null
           featured_pinned?: boolean | null
           gallery_urls?: string[] | null
           gender_served?: string | null

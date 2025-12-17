@@ -108,6 +108,11 @@ const actionConfig: Record<string, { icon: React.ReactNode; label: string; color
   featured_pinned: { icon: <Star className="h-4 w-4" />, label: "Pinned to Featured", color: "text-amber-500 bg-amber-50" },
   featured_unpinned: { icon: <Star className="h-4 w-4" />, label: "Unpinned from Featured", color: "text-slate-500 bg-slate-50" },
   featured_settings_updated: { icon: <Settings className="h-4 w-4" />, label: "Updated Featured Settings", color: "text-blue-500 bg-blue-50" },
+  featured_order_updated: { icon: <Star className="h-4 w-4" />, label: "Updated Featured Order", color: "text-amber-500 bg-amber-50" },
+  legacy_featured: { icon: <Star className="h-4 w-4" />, label: "Added Legacy Featured", color: "text-amber-500 bg-amber-50" },
+  legacy_unfeatured: { icon: <Star className="h-4 w-4" />, label: "Removed Legacy Featured", color: "text-slate-500 bg-slate-50" },
+  pinned_featured: { icon: <Star className="h-4 w-4" />, label: "Pinned Featured", color: "text-purple-500 bg-purple-50" },
+  unpinned_featured: { icon: <Star className="h-4 w-4" />, label: "Unpinned Featured", color: "text-slate-500 bg-slate-50" },
   
   // Image moderation
   image_flagged: { icon: <Image className="h-4 w-4" />, label: "Flagged Image", color: "text-red-500 bg-red-50" },
