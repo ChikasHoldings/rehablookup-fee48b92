@@ -114,26 +114,30 @@ export default function AdminUsers() {
     user: AdminUser;
   } | null>(null);
 
-  // Stats
-  const totalCount = adminUsers?.length || 0;
-  const adminCount = adminUsers?.filter(u => u.roles.includes("admin")).length || 0;
-  const moderatorCount = adminUsers?.filter(u => u.roles.includes("moderator")).length || 0;
-  const activeCount = adminUsers?.filter(u => u.status === "active").length || 0;
-  const suspendedCount = adminUsers?.filter(u => u.status === "suspended").length || 0;
+  // Safe data accessors
+  const safeAdminUsers = adminUsers || [];
+  
+  // Stats with safeguards
+  const totalCount = safeAdminUsers.length;
+  const adminCount = safeAdminUsers.filter(u => u?.roles?.includes("admin")).length;
+  const moderatorCount = safeAdminUsers.filter(u => u?.roles?.includes("moderator")).length;
+  const activeCount = safeAdminUsers.filter(u => u?.status === "active").length;
+  const suspendedCount = safeAdminUsers.filter(u => u?.status === "suspended").length;
 
-  // Filtered users
-  const filteredUsers = adminUsers?.filter(user => {
+  // Filtered users with safeguards
+  const filteredUsers = safeAdminUsers.filter(user => {
+    if (!user) return false;
     const matchesSearch = !searchQuery || 
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.display_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesRole = filterRole === "all" || user.roles.includes(filterRole);
+    const matchesRole = filterRole === "all" || user.roles?.includes(filterRole);
     const matchesStatus = activeTab === "all" || user.status === activeTab;
 
     return matchesSearch && matchesRole && matchesStatus;
-  });
+  }) || [];
 
   const getUserDisplayName = (user: AdminUser) => {
     if (user.display_name) return user.display_name;

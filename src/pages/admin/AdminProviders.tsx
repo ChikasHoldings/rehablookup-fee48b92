@@ -1524,23 +1524,23 @@ export default function AdminProviders() {
                               </TableHeader>
                               <TableBody>
                                 {subscriptionData.payment_history.map((payment) => (
-                                  <TableRow key={payment.id}>
+                                  <TableRow key={payment?.id || Math.random()}>
                                     <TableCell>
-                                      {format(new Date(payment.created), "MMM d, yyyy")}
+                                      {payment?.created ? format(new Date(payment.created), "MMM d, yyyy") : "N/A"}
                                     </TableCell>
-                                    <TableCell>{payment.description}</TableCell>
+                                    <TableCell>{payment?.description || "N/A"}</TableCell>
                                     <TableCell>
                                       <span className="font-medium">
-                                        ${payment.amount.toFixed(2)} {payment.currency.toUpperCase()}
+                                        ${(payment?.amount ?? 0).toFixed(2)} {(payment?.currency || "usd").toUpperCase()}
                                       </span>
                                     </TableCell>
                                     <TableCell>
-                                      <Badge variant={payment.status === "paid" ? "default" : "secondary"} className={payment.status === "paid" ? "bg-emerald-100 text-emerald-700" : ""}>
-                                        {payment.status}
+                                      <Badge variant={payment?.status === "paid" ? "default" : "secondary"} className={payment?.status === "paid" ? "bg-emerald-100 text-emerald-700" : ""}>
+                                        {payment?.status || "unknown"}
                                       </Badge>
                                     </TableCell>
                                     <TableCell>
-                                      {payment.invoice_pdf && (
+                                      {payment?.invoice_pdf && (
                                         <Button size="sm" variant="ghost" asChild>
                                           <a href={payment.invoice_pdf} target="_blank" rel="noopener noreferrer">
                                             <Download className="h-4 w-4" />

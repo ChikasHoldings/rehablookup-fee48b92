@@ -191,11 +191,12 @@ export default function AdminFeatured() {
   ) || [];
   
   // Combined featured facilities for ordering (auto + legacy)
-  const allFeaturedFacilities = [...autoFeaturedFacilities, ...legacyFeaturedFacilities];
+  const allFeaturedFacilities = [...(autoFeaturedFacilities || []), ...(legacyFeaturedFacilities || [])];
   
-  // Calculate total leads for featured facilities
-  const totalFeaturedLeads = autoFeaturedFacilities.reduce(
-    (sum, f) => sum + (facilityStats?.[f.id]?.total_leads || 0), 0
+  // Calculate total leads for featured facilities - with safe access
+  const safeAutoFeaturedFacilities = autoFeaturedFacilities || [];
+  const totalFeaturedLeads = safeAutoFeaturedFacilities.reduce(
+    (sum, f) => sum + (facilityStats?.[f?.id]?.total_leads || 0), 0
   );
   
   // Sync ordered facilities when data changes
@@ -399,10 +400,18 @@ export default function AdminFeatured() {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  const getStats = (facilityId: string) => facilityStats?.[facilityId] || { total_views: 0, total_leads: 0 };
+  const getStats = (facilityId: string) => {
+    if (!facilityId || !facilityStats) return { total_views: 0, total_leads: 0 };
+    return facilityStats[facilityId] || { total_views: 0, total_leads: 0 };
+  };
 
   const isLoading = loadingFacilities || loadingFeaturedIds;
   const hasError = facilitiesError || featuredError;
+  
+  // Safe arrays for rendering
+  const safeOrderedFacilities = orderedFacilities || [];
+  const safeLegacyFeaturedFacilities = legacyFeaturedFacilities || [];
+  const safePaginatedEligible = paginatedEligible || [];
 
   // Handle confirmation actions
   const handleConfirmAction = () => {

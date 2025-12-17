@@ -242,6 +242,10 @@ export default function AdminLeadRouting() {
 
   const totalPages = Math.ceil((totalCount || 0) / itemsPerPage);
 
+  // Safe data accessors
+  const safeLogs = logs || [];
+  const safeStats = stats || { totalReroutes: 0, successfulReroutes: 0, failedReroutes: 0, totalInitial: 0, successRate: 0, byPlan: {} };
+
   const handleFilterChange = (setter: (v: string) => void) => (value: string) => {
     setter(value);
     setCurrentPage(1);

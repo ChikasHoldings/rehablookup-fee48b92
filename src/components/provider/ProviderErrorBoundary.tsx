@@ -23,7 +23,9 @@ export class ProviderErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Provider panel error:", error, errorInfo);
+    console.error("Provider panel error:", error);
+    console.error("Error info:", errorInfo);
+    console.error("Component stack:", errorInfo?.componentStack);
   }
 
   handleRetry = () => {
