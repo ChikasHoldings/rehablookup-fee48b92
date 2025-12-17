@@ -141,7 +141,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 text-white hover:text-white hover:bg-white/15"
+            className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
           >
             {mobileSearchOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Search className="h-4 w-4 sm:h-5 sm:w-5" />}
@@ -153,7 +153,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               href={facilitySlug ? `/center/${facilitySlug}` : `/rehab-centers/${facilityId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden lg:inline-flex items-center gap-1.5 h-10 px-3.5 text-sm font-medium text-white hover:bg-white/15 rounded-lg transition-colors border border-white/20"
+              className="hidden lg:inline-flex items-center gap-1.5 h-10 px-3.5 text-sm font-medium text-white hover:bg-white/15 rounded-lg transition-all duration-200 border border-white/20 hover:scale-[1.02] active:scale-[0.98]"
             >
               <ExternalLink className="h-4 w-4" />
               <span>View Listing</span>
@@ -166,7 +166,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="relative h-9 w-9 sm:h-10 sm:w-10 text-white hover:text-white hover:bg-white/15"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 {unreadCount > 0 && (
@@ -245,7 +245,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-1.5 sm:gap-2.5 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-lg"
+                className="gap-1.5 sm:gap-2.5 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/30 border border-white/30 flex items-center justify-center text-xs sm:text-sm font-semibold text-white overflow-hidden">
                   {facilityLogo ? (
