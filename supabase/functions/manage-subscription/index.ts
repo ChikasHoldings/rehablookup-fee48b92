@@ -111,7 +111,7 @@ const sendSubscriptionNotificationEmail = async (
 };
 
 // Actions that don't require subscriptionId or customerId
-const PROMO_CODE_ACTIONS = ["list_coupons", "create_coupon", "delete_coupon", "deactivate_promo_code"];
+const PROMO_CODE_ACTIONS = ["list_coupons", "create_coupon", "delete_coupon", "deactivate_promo_code", "get_promo_analytics"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -366,6 +366,102 @@ serve(async (req) => {
         logStep("Deactivating promo code", { promoCodeId });
         const promoCode = await stripe.promotionCodes.update(promoCodeId, { active: false });
         result = { success: true, promoCode, message: "Promo code deactivated" };
+        break;
+      }
+
+      case "get_promo_analytics": {
+        logStep("Fetching promo code analytics");
+        
+        // Get all subscriptions with discounts (expand discount to get promo code details)
+        const subscriptionsWithDiscounts = await stripe.subscriptions.list({
+          limit: 100,
+          expand: ["data.discount.promotion_code", "data.customer"],
+        });
+        
+        // Also check checkout sessions for one-time discounts used
+        const recentSessions = await stripe.checkout.sessions.list({
+          limit: 100,
+          expand: ["data.customer", "data.total_details.breakdown.discounts.discount.promotion_code"],
+        });
+        
+        // Build analytics data
+        const promoUsage: Record<string, { 
+          code: string; 
+          redemptions: { 
+            customerId: string; 
+            customerEmail: string; 
+            customerName: string;
+            redeemedAt: number;
+            subscriptionId?: string;
+            sessionId?: string;
+          }[] 
+        }> = {};
+        
+        // Process subscriptions
+        for (const sub of subscriptionsWithDiscounts.data) {
+          if (sub.discount?.promotion_code) {
+            const promoCode = sub.discount.promotion_code as Stripe.PromotionCode;
+            const customer = sub.customer as Stripe.Customer;
+            
+            if (!promoUsage[promoCode.id]) {
+              promoUsage[promoCode.id] = {
+                code: promoCode.code,
+                redemptions: [],
+              };
+            }
+            
+            promoUsage[promoCode.id].redemptions.push({
+              customerId: customer.id,
+              customerEmail: customer.email || "Unknown",
+              customerName: customer.name || customer.email || "Unknown",
+              redeemedAt: sub.created,
+              subscriptionId: sub.id,
+            });
+          }
+        }
+        
+        // Process checkout sessions
+        for (const session of recentSessions.data) {
+          const discounts = session.total_details?.breakdown?.discounts || [];
+          for (const discountItem of discounts) {
+            const promoCode = discountItem.discount?.promotion_code as Stripe.PromotionCode | undefined;
+            if (promoCode && typeof promoCode === "object") {
+              const customer = session.customer as Stripe.Customer | null;
+              
+              if (!promoUsage[promoCode.id]) {
+                promoUsage[promoCode.id] = {
+                  code: promoCode.code,
+                  redemptions: [],
+                };
+              }
+              
+              // Avoid duplicates from subscription + session
+              const alreadyTracked = promoUsage[promoCode.id].redemptions.some(
+                r => r.customerId === (customer?.id || session.customer_email)
+              );
+              
+              if (!alreadyTracked) {
+                promoUsage[promoCode.id].redemptions.push({
+                  customerId: customer?.id || session.customer_email || "guest",
+                  customerEmail: customer?.email || session.customer_email || "Unknown",
+                  customerName: customer?.name || session.customer_email || "Guest",
+                  redeemedAt: session.created,
+                  sessionId: session.id,
+                });
+              }
+            }
+          }
+        }
+        
+        // Convert to array and sort by total redemptions
+        const analytics = Object.entries(promoUsage).map(([promoCodeId, data]) => ({
+          promoCodeId,
+          code: data.code,
+          totalRedemptions: data.redemptions.length,
+          redemptions: data.redemptions.sort((a, b) => b.redeemedAt - a.redeemedAt),
+        })).sort((a, b) => b.totalRedemptions - a.totalRedemptions);
+        
+        result = { success: true, analytics };
         break;
       }
 

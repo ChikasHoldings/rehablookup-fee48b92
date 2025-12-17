@@ -63,6 +63,9 @@ import {
   CalendarIcon,
   AlertTriangle,
   Clock,
+  BarChart3,
+  TrendingUp,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,6 +97,22 @@ type PromoCode = {
   created: number;
 };
 
+type PromoRedemption = {
+  customerId: string;
+  customerEmail: string;
+  customerName: string;
+  redeemedAt: number;
+  subscriptionId?: string;
+  sessionId?: string;
+};
+
+type PromoAnalytics = {
+  promoCodeId: string;
+  code: string;
+  totalRedemptions: number;
+  redemptions: PromoRedemption[];
+};
+
 export function PlanSettingsTab() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -111,6 +130,19 @@ export function PlanSettingsTab() {
     durationInMonths: "",
     maxRedemptions: "",
     expiresAt: undefined as Date | undefined,
+  });
+
+  // Fetch promo code analytics
+  const { data: analyticsData, isLoading: isLoadingAnalytics, refetch: refetchAnalytics } = useQuery({
+    queryKey: ["admin-promo-analytics"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("manage-subscription", {
+        body: { action: "get_promo_analytics" },
+      });
+      if (error) throw error;
+      return data as { analytics: PromoAnalytics[] };
+    },
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   // Fetch coupons and promo codes with auto-refresh
@@ -725,6 +757,125 @@ export function PlanSettingsTab() {
                 <Plus className="h-4 w-4 mr-2" />
                 Create your first promo code
               </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Promo Code Analytics */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Promo Code Usage Analytics
+              </CardTitle>
+              <CardDescription>See which codes are being redeemed and by which providers</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetchAnalytics()} disabled={isLoadingAnalytics}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingAnalytics ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoadingAnalytics ? (
+            <div className="space-y-3">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : analyticsData?.analytics && analyticsData.analytics.length > 0 ? (
+            <div className="space-y-4">
+              {/* Summary Stats */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-lg border p-4 bg-muted/30">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                    <TrendingUp className="h-4 w-4" />
+                    Total Redemptions
+                  </div>
+                  <p className="text-2xl font-bold">
+                    {analyticsData.analytics.reduce((sum, a) => sum + a.totalRedemptions, 0)}
+                  </p>
+                </div>
+                <div className="rounded-lg border p-4 bg-muted/30">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                    <Ticket className="h-4 w-4" />
+                    Codes Used
+                  </div>
+                  <p className="text-2xl font-bold">
+                    {analyticsData.analytics.length}
+                  </p>
+                </div>
+                <div className="rounded-lg border p-4 bg-muted/30">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                    <Users className="h-4 w-4" />
+                    Unique Providers
+                  </div>
+                  <p className="text-2xl font-bold">
+                    {new Set(analyticsData.analytics.flatMap(a => a.redemptions.map(r => r.customerId))).size}
+                  </p>
+                </div>
+              </div>
+
+              {/* Usage Table */}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Promo Code</TableHead>
+                    <TableHead className="text-center">Redemptions</TableHead>
+                    <TableHead>Redeemed By</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {analyticsData.analytics.map((item) => (
+                    <TableRow key={item.promoCodeId}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="font-mono bg-emerald-50 text-emerald-700 border-emerald-200">
+                            {item.code}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="font-medium">
+                          {item.totalRedemptions}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                          {item.redemptions.slice(0, 5).map((redemption, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-sm">
+                              <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                                <User className="h-3 w-3 text-muted-foreground" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium truncate text-xs">{redemption.customerName}</p>
+                                <p className="text-xs text-muted-foreground truncate">{redemption.customerEmail}</p>
+                              </div>
+                              <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                                {format(new Date(redemption.redeemedAt * 1000), "MMM d")}
+                              </span>
+                            </div>
+                          ))}
+                          {item.redemptions.length > 5 && (
+                            <p className="text-xs text-muted-foreground pl-8">
+                              +{item.redemptions.length - 5} more
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <p>No promo code redemptions yet</p>
+              <p className="text-sm mt-1">Analytics will appear here when providers use your promo codes</p>
             </div>
           )}
         </CardContent>
