@@ -661,90 +661,90 @@ export default function AdminSubscriptions() {
                 </div>
               ) : sortedSubscriptions.length > 0 ? (
                 <>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                          <TableHead 
-                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                            onClick={() => handleSort("name")}
-                          >
-                            <div className="flex items-center gap-1">
-                              Provider
-                              {sortColumn === "name" && (
-                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                              )}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                            onClick={() => handleSort("plan")}
-                          >
-                            <div className="flex items-center gap-1">
-                              Plan
-                              {sortColumn === "plan" && (
-                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                              )}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                            onClick={() => handleSort("status")}
-                          >
-                            <div className="flex items-center gap-1">
-                              Status
-                              {sortColumn === "status" && (
-                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                              )}
-                            </div>
-                          </TableHead>
-                          <TableHead>Leads</TableHead>
-                          <TableHead 
-                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                            onClick={() => handleSort("revenue")}
-                          >
-                            <div className="flex items-center gap-1">
-                              Revenue
-                              {sortColumn === "revenue" && (
-                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                              )}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-                            onClick={() => handleSort("renews")}
-                          >
-                            <div className="flex items-center gap-1">
-                              Renews
-                              {sortColumn === "renews" && (
-                                sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                              )}
-                            </div>
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedSubscriptions.map((sub) => (
-                          <TableRow key={sub.customer_id}>
-                            <TableCell>
-                              <div className="min-w-0">
-                                <p className="font-medium truncate max-w-[200px]">{sub.facility_name}</p>
-                                <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                  {sub.customer_email}
-                                </p>
+                  <TooltipProvider>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="hover:bg-transparent">
+                            <TableHead 
+                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                              onClick={() => handleSort("name")}
+                            >
+                              <div className="flex items-center gap-1">
+                                Provider
+                                {sortColumn === "name" && (
+                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                                )}
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <PlanBadge plan={sub.plan} />
-                            </TableCell>
-                            <TableCell>
-                              <StatusBadge status={sub.status} cancelAtPeriodEnd={sub.cancel_at_period_end} />
-                            </TableCell>
-                            <TableCell>
-                              <TooltipProvider>
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                              onClick={() => handleSort("plan")}
+                            >
+                              <div className="flex items-center gap-1">
+                                Plan
+                                {sortColumn === "plan" && (
+                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                                )}
+                              </div>
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                              onClick={() => handleSort("status")}
+                            >
+                              <div className="flex items-center gap-1">
+                                Status
+                                {sortColumn === "status" && (
+                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                                )}
+                              </div>
+                            </TableHead>
+                            <TableHead>Leads</TableHead>
+                            <TableHead 
+                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                              onClick={() => handleSort("revenue")}
+                            >
+                              <div className="flex items-center gap-1">
+                                Revenue
+                                {sortColumn === "revenue" && (
+                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                                )}
+                              </div>
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+                              onClick={() => handleSort("renews")}
+                            >
+                              <div className="flex items-center gap-1">
+                                Renews
+                                {sortColumn === "renews" && (
+                                  sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                                )}
+                              </div>
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedSubscriptions.map((sub) => (
+                            <TableRow key={sub.customer_id}>
+                              <TableCell>
+                                <div className="min-w-0">
+                                  <p className="font-medium truncate max-w-[200px]">{sub.facility_name}</p>
+                                  <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                    {sub.customer_email}
+                                  </p>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <PlanBadge plan={sub.plan} />
+                              </TableCell>
+                              <TableCell>
+                                <StatusBadge status={sub.status} cancelAtPeriodEnd={sub.cancel_at_period_end} />
+                              </TableCell>
+                              <TableCell>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 cursor-default">
                                       <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
                                         <div 
                                           className={`h-full rounded-full transition-all ${
@@ -763,22 +763,22 @@ export default function AdminSubscriptions() {
                                     <p>{sub.leads_used} of {sub.lead_limit} leads used this month</p>
                                   </TooltipContent>
                                 </Tooltip>
-                              </TooltipProvider>
-                            </TableCell>
-                            <TableCell>
-                              <span className="font-medium">${sub.monthly_amount}</span>
-                              <span className="text-muted-foreground">/mo</span>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm text-muted-foreground">
-                                {format(new Date(sub.current_period_end), "MMM d, yyyy")}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                              </TableCell>
+                              <TableCell>
+                                <span className="font-medium">${sub.monthly_amount}</span>
+                                <span className="text-muted-foreground">/mo</span>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm text-muted-foreground">
+                                  {format(new Date(sub.current_period_end), "MMM d, yyyy")}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TooltipProvider>
 
                   {/* Pagination Controls */}
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t">
