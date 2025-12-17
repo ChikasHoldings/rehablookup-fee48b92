@@ -1,4 +1,3 @@
-import { forwardRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { 
@@ -55,7 +54,7 @@ const activityConfig: Record<string, { icon: typeof CreditCard; color: string; b
   },
 };
 
-const SubscriptionActivityWidget = forwardRef<HTMLDivElement>(function SubscriptionActivityWidget(_, ref) {
+export default function SubscriptionActivityWidget() {
   const { data: activities, isLoading } = useQuery({
     queryKey: ["admin-subscription-activity"],
     queryFn: async () => {
@@ -192,6 +191,4 @@ const SubscriptionActivityWidget = forwardRef<HTMLDivElement>(function Subscript
       </CardContent>
     </Card>
   );
-});
-
-export default SubscriptionActivityWidget;
+}
