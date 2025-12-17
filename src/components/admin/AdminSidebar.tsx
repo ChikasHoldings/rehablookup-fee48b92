@@ -13,12 +13,8 @@ import {
   BarChart3,
   RotateCcw,
   ShieldAlert,
-  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { useAdminNotifications } from "@/hooks/useAdminNotifications";
-import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
@@ -30,7 +26,6 @@ const navItems = [
   { to: "/admin/featured", icon: Star, label: "Featured Placement", permission: "featured" },
   { to: "/admin/flagged-images", icon: Image, label: "Flagged Images", permission: "flagged_images" },
   { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
-  { to: "/admin/notifications", icon: Bell, label: "Notifications", permission: "notifications" },
   { to: "/admin/users", icon: ShieldCheck, label: "User Management", permission: "users" },
   { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
   { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
@@ -43,9 +38,6 @@ interface AdminSidebarProps {
 
 function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProps) {
   const location = useLocation();
-  const { unreadCount: globalUnreadCount } = useAdminNotifications();
-  const { unreadCount: userUnreadCount } = useAdminUserNotifications();
-  const totalUnreadCount = globalUnreadCount + userUnreadCount;
 
   // Filter nav items based on permissions
   const visibleNavItems = navItems.filter(
@@ -60,7 +52,6 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
           const isActive = item.end 
             ? location.pathname === item.to 
             : location.pathname.startsWith(item.to);
-          const isNotifications = item.to === "/admin/notifications";
 
           return (
             <NavLink
@@ -75,15 +66,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
               )}
             >
               <Icon className="h-5 w-5" />
-              <span className="text-sm font-medium flex-1">{item.label}</span>
-              {isNotifications && totalUnreadCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="h-5 min-w-5 px-1.5 flex items-center justify-center text-xs"
-                >
-                  {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
-                </Badge>
-              )}
+              <span className="text-sm font-medium">{item.label}</span>
             </NavLink>
           );
         })}
