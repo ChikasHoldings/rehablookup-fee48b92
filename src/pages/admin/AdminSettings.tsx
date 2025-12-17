@@ -216,18 +216,18 @@ export default function AdminSettings() {
   // Loading state for settings
   const settingsLoading = loadingSettings;
 
-  // Update setting mutation
+  // Update setting mutation - uses upsert to handle new settings
   const updateSetting = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: any }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
       const { error } = await supabase
         .from("platform_settings")
-        .update({ 
+        .upsert({ 
+          setting_key: key,
           setting_value: value,
           updated_by: user?.id 
-        })
-        .eq("setting_key", key);
+        }, { onConflict: "setting_key" });
       
       if (error) throw error;
     },
