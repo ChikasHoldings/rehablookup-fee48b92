@@ -167,67 +167,146 @@ serve(async (req) => {
           to: [email],
           subject: "Your RehabLookup Admin Account Has Been Created",
           html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1a1a1a; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #1B365D; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-                .content { background: #f6f8fb; padding: 30px; border-radius: 0 0 8px 8px; }
-                .credentials { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin: 20px 0; }
-                .credential-item { margin: 10px 0; }
-                .credential-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
-                .credential-value { font-size: 16px; font-weight: 600; color: #1B365D; font-family: monospace; background: #f1f5f9; padding: 8px 12px; border-radius: 4px; margin-top: 4px; }
-                .warning { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0; }
-                .btn { display: inline-block; background: #1B365D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; }
-                .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #64748b; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <h1 style="margin: 0; font-size: 24px;">🛡️ Admin Account Created</h1>
-                </div>
-                <div class="content">
-                  <p>Hello ${displayName},</p>
-                  <p>An admin account has been created for you on the RehabLookup platform. You have been assigned the <strong>${role === "admin" ? "Administrator" : "Moderator"}</strong> role.</p>
-                  
-                  <div class="credentials">
-                    <h3 style="margin-top: 0;">Your Login Credentials</h3>
-                    <div class="credential-item">
-                      <div class="credential-label">Email</div>
-                      <div class="credential-value">${email}</div>
-                    </div>
-                    <div class="credential-item">
-                      <div class="credential-label">Temporary Password</div>
-                      <div class="credential-value">${tempPassword}</div>
-                    </div>
-                  </div>
-
-                  <div class="warning">
-                    <strong>⚠️ Important Security Notice</strong>
-                    <ul style="margin: 10px 0 0 0; padding-left: 20px;">
-                      <li>This temporary password expires in <strong>72 hours</strong></li>
-                      <li>You will be required to change your password upon first login</li>
-                      <li>Do not share these credentials with anyone</li>
-                    </ul>
-                  </div>
-
-                  <p style="text-align: center; margin-top: 30px;">
-                    <a href="${loginUrl}" class="btn">Login to Admin Panel →</a>
-                  </p>
-
-                  <p style="margin-top: 30px; font-size: 14px; color: #64748b;">If you did not expect this account or have questions, please contact your system administrator immediately.</p>
-                </div>
-                <div style="background: #1B365D; padding: 24px; border-radius: 8px; margin-top: 20px; text-align: center;">
-                  <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff;">RehabLookup</p>
-                  <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.7);">Admin System</p>
-                  <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5);">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
-                </div>
-              </div>
-            </body>
-            </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Account Created</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 40px 32px; text-align: center;">
+              <div style="font-size: 40px; margin-bottom: 12px;">🛡️</div>
+              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 26px; font-weight: 700;">
+                Admin Account Created
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 32px;">
+              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 17px; color: #1a1a1a; line-height: 1.6;">
+                Hello ${displayName},
+              </p>
+              
+              <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.7;">
+                An admin account has been created for you on the RehabLookup platform. You have been assigned the <strong style="color: #1a1a1a;">${role === "admin" ? "Administrator" : "Moderator"}</strong> role.
+              </p>
+              
+              <!-- Credentials Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <h3 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #1B365D;">
+                      Your Login Credentials
+                    </h3>
+                    
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 12px 0;">
+                          <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Email</p>
+                          <p style="margin: 0; font-family: 'Courier New', Courier, monospace; font-size: 16px; font-weight: 600; color: #1B365D; background: #f1f5f9; padding: 10px 14px; border-radius: 6px;">${email}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0;">
+                          <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Temporary Password</p>
+                          <p style="margin: 0; font-family: 'Courier New', Courier, monospace; font-size: 16px; font-weight: 600; color: #1B365D; background: #f1f5f9; padding: 10px 14px; border-radius: 6px;">${tempPassword}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Warning Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; margin-bottom: 32px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #92400e;">
+                      ⚠️ Important Security Notice
+                    </p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #92400e; line-height: 1.5;">
+                          • This temporary password expires in <strong>72 hours</strong>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #92400e; line-height: 1.5;">
+                          • You will be required to change your password upon first login
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #92400e; line-height: 1.5;">
+                          • Do not share these credentials with anyone
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
+                <tr>
+                  <td align="center">
+                    <a href="${loginUrl}" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 16px;">
+                      Login to Admin Panel →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">
+                If you did not expect this account or have questions, please contact your system administrator immediately at <a href="mailto:help@rehablookup.com" style="color: #1B365D; text-decoration: none; font-weight: 500;">help@rehablookup.com</a>.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: #1B365D; padding: 28px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 12px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff;">
+                      RehabLookup
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-bottom: 16px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: rgba(255,255,255,0.7);">
+                      Admin System
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.5);">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
           `,
         });
         console.log("[CREATE-ADMIN-USER] Invitation email sent to:", email);

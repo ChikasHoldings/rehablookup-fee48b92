@@ -73,51 +73,133 @@ const handler = async (req: Request): Promise<Response> => {
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listing Approved</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
-  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 32px; text-align: center;">
-      <div style="font-size: 40px; margin-bottom: 12px;">✓</div>
-      <h1 style="color: #fff; margin: 0; font-size: 22px; font-weight: 600;">You're Live on RehabLookup</h1>
-    </div>
-    
-    <div style="padding: 32px;">
-      <p style="margin: 0 0 16px 0; font-size: 15px;">Hi ${providerName},</p>
-      
-      <p style="margin: 0 0 16px 0; font-size: 15px;">Your listing for <strong>${facilityName}</strong> has been approved. Families searching for treatment can now find and contact you directly.</p>
-      
-      <div style="background: #f0fdf4; border-radius: 8px; padding: 16px; margin: 24px 0;">
-        <p style="margin: 0 0 8px 0; font-weight: 600; color: #166534; font-size: 14px;">What happens next:</p>
-        <ul style="margin: 0; padding-left: 18px; color: #166534; font-size: 14px;">
-          <li style="margin-bottom: 4px;">Your profile shows up in search results</li>
-          <li style="margin-bottom: 4px;">New leads go straight to your dashboard</li>
-          <li>You get notified when someone reaches out</li>
-        </ul>
-      </div>
-      
-      <div style="text-align: center; margin: 28px 0;">
-        <a href="${profileUrl}" style="display: inline-block; background: #1B365D; color: #fff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">See Your Listing</a>
-      </div>
-      
-      <p style="margin: 0; font-size: 14px; color: #64748b; text-align: center;">
-        <a href="https://rehablookup.com/provider/dashboard" style="color: #1B365D;">Go to Dashboard</a>
-      </p>
-    </div>
-    
-    <div style="background: #1B365D; padding: 28px 32px; border-top: 1px solid #e2e8f0;">
-      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
-      <p style="margin: 0 0 16px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
-      <div style="text-align: center; margin-bottom: 16px;">
-        <a href="https://rehablookup.com" style="color: #93c5fd; font-size: 12px; text-decoration: none; margin: 0 8px;">Website</a>
-        <span style="color: rgba(255,255,255,0.3);">|</span>
-        <a href="mailto:support@rehablookup.com" style="color: #93c5fd; font-size: 12px; text-decoration: none; margin: 0 8px;">Support</a>
-        <span style="color: rgba(255,255,255,0.3);">|</span>
-        <a href="https://rehablookup.com/privacy-policy" style="color: #93c5fd; font-size: 12px; text-decoration: none; margin: 0 8px;">Privacy</a>
-      </div>
-      <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 40px 32px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 16px;">✓</div>
+              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 26px; font-weight: 700;">
+                You're Live on RehabLookup
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 32px;">
+              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 17px; color: #1a1a1a; line-height: 1.6;">
+                Hi ${providerName},
+              </p>
+              
+              <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.7;">
+                Your listing for <strong style="color: #1a1a1a;">${facilityName}</strong> has been approved. Families searching for treatment can now find and contact you directly.
+              </p>
+              
+              <!-- Info Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdf4; border-radius: 12px; margin-bottom: 32px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #166534;">
+                      What happens next:
+                    </p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #166534; line-height: 1.6;">
+                          • Your profile shows up in search results
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #166534; line-height: 1.6;">
+                          • New leads go straight to your dashboard
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #166534; line-height: 1.6;">
+                          • You get notified when someone reaches out
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td align="center">
+                    <a href="${profileUrl}" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 16px;">
+                      See Your Listing
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b; text-align: center;">
+                <a href="https://rehablookup.com/provider/dashboard" style="color: #1B365D; text-decoration: none; font-weight: 500;">Go to Dashboard</a>
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: #1B365D; padding: 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 12px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #ffffff;">
+                      RehabLookup
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-bottom: 20px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.8);">
+                      Connecting families with trusted treatment providers
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-bottom: 16px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 0 12px;">
+                          <a href="https://rehablookup.com" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Website</a>
+                        </td>
+                        <td style="color: rgba(255,255,255,0.3);">|</td>
+                        <td style="padding: 0 12px;">
+                          <a href="mailto:help@rehablookup.com" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Support</a>
+                        </td>
+                        <td style="color: rgba(255,255,255,0.3);">|</td>
+                        <td style="padding: 0 12px;">
+                          <a href="https://rehablookup.com/privacy-policy" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Privacy</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.5);">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;

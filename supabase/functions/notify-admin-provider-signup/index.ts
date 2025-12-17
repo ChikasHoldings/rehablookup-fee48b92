@@ -120,33 +120,87 @@ serve(async (req) => {
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Provider Registration</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f6f8fb;">
-  <div style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-    <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 24px; text-align: center;">
-      <h1 style="color: #fff; margin: 0; font-size: 18px; font-weight: 600;">New Provider Registration</h1>
-    </div>
-    
-    <div style="padding: 28px;">
-      <p style="margin: 0 0 20px 0; font-size: 15px;">A new facility signed up and needs review:</p>
-      
-      <div style="background: #f8fafc; border-left: 3px solid #1B365D; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
-        <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 16px; color: #1B365D;">${facilityName}</p>
-        <p style="margin: 0 0 4px 0; font-size: 14px; color: #64748b;">${city}, ${state}</p>
-        <p style="margin: 0; font-size: 14px; color: #64748b;">${providerEmail}</p>
-      </div>
-      
-      <div style="text-align: center;">
-        <a href="https://rehablookup.com/admin/providers" style="display: inline-block; background: #1B365D; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">Review Now</a>
-      </div>
-    </div>
-    
-    <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
-      <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup Admin</p>
-      <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;">You can manage notification preferences in your profile settings</p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 22px; font-weight: 700;">
+                New Provider Registration
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px;">
+              <p style="margin: 0 0 24px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.6;">
+                A new facility signed up and needs review:
+              </p>
+              
+              <!-- Provider Info Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-left: 4px solid #1B365D; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #1B365D;">
+                      ${facilityName}
+                    </p>
+                    <p style="margin: 0 0 6px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b;">
+                      ${city}, ${state}
+                    </p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b;">
+                      ${providerEmail}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="https://rehablookup.com/admin/providers" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 15px;">
+                      Review Now
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: #1B365D; padding: 24px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 10px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 700; color: #ffffff;">
+                      RehabLookup Admin
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.6);">
+                      You can manage notification preferences in your <a href="https://rehablookup.com/admin/profile" style="color: #93c5fd; text-decoration: none;">profile settings</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;
