@@ -378,26 +378,36 @@ serve(async (req) => {
           expand: ["data.discount.promotion_code", "data.customer"],
         });
         
-        // Also check checkout sessions for one-time discounts used
-        const recentSessions = await stripe.checkout.sessions.list({
-          limit: 100,
-          expand: ["data.customer", "data.total_details.breakdown.discounts.discount.promotion_code"],
-        });
+        // Get all promotion codes with their redemption counts
+        const activePromoCodes = await stripe.promotionCodes.list({ limit: 100, active: true });
+        const inactivePromoCodes = await stripe.promotionCodes.list({ limit: 100, active: false });
+        const allPromoCodes = [...activePromoCodes.data, ...inactivePromoCodes.data];
         
-        // Build analytics data
+        // Build analytics data - start with promo codes that have redemptions
         const promoUsage: Record<string, { 
           code: string; 
+          timesRedeemed: number;
           redemptions: { 
             customerId: string; 
             customerEmail: string; 
             customerName: string;
             redeemedAt: number;
             subscriptionId?: string;
-            sessionId?: string;
           }[] 
         }> = {};
         
-        // Process subscriptions
+        // Initialize from promo codes with redemption counts
+        for (const promo of allPromoCodes) {
+          if (promo.times_redeemed > 0) {
+            promoUsage[promo.id] = {
+              code: promo.code,
+              timesRedeemed: promo.times_redeemed,
+              redemptions: [],
+            };
+          }
+        }
+        
+        // Add detailed redemption info from subscriptions
         for (const sub of subscriptionsWithDiscounts.data) {
           if (sub.discount?.promotion_code) {
             const promoCode = sub.discount.promotion_code as Stripe.PromotionCode;
@@ -406,6 +416,7 @@ serve(async (req) => {
             if (!promoUsage[promoCode.id]) {
               promoUsage[promoCode.id] = {
                 code: promoCode.code,
+                timesRedeemed: 1,
                 redemptions: [],
               };
             }
@@ -420,44 +431,11 @@ serve(async (req) => {
           }
         }
         
-        // Process checkout sessions
-        for (const session of recentSessions.data) {
-          const discounts = session.total_details?.breakdown?.discounts || [];
-          for (const discountItem of discounts) {
-            const promoCode = discountItem.discount?.promotion_code as Stripe.PromotionCode | undefined;
-            if (promoCode && typeof promoCode === "object") {
-              const customer = session.customer as Stripe.Customer | null;
-              
-              if (!promoUsage[promoCode.id]) {
-                promoUsage[promoCode.id] = {
-                  code: promoCode.code,
-                  redemptions: [],
-                };
-              }
-              
-              // Avoid duplicates from subscription + session
-              const alreadyTracked = promoUsage[promoCode.id].redemptions.some(
-                r => r.customerId === (customer?.id || session.customer_email)
-              );
-              
-              if (!alreadyTracked) {
-                promoUsage[promoCode.id].redemptions.push({
-                  customerId: customer?.id || session.customer_email || "guest",
-                  customerEmail: customer?.email || session.customer_email || "Unknown",
-                  customerName: customer?.name || session.customer_email || "Guest",
-                  redeemedAt: session.created,
-                  sessionId: session.id,
-                });
-              }
-            }
-          }
-        }
-        
         // Convert to array and sort by total redemptions
         const analytics = Object.entries(promoUsage).map(([promoCodeId, data]) => ({
           promoCodeId,
           code: data.code,
-          totalRedemptions: data.redemptions.length,
+          totalRedemptions: data.timesRedeemed,
           redemptions: data.redemptions.sort((a, b) => b.redeemedAt - a.redeemedAt),
         })).sort((a, b) => b.totalRedemptions - a.totalRedemptions);
         
