@@ -18,11 +18,15 @@ import {
   RefreshCw,
   Wallet,
   Receipt,
-  Settings
+  Settings,
+  Tag,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription, PLAN_DETAILS, DIRECT_INQUIRY_CLARIFICATION, EXCLUSIVITY_MESSAGE } from "@/hooks/useSubscription";
@@ -41,6 +45,12 @@ export default function ProviderBillingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoValidation, setPromoValidation] = useState<{
+    isValid: boolean | null;
+    message: string;
+    discount?: string;
+  }>({ isValid: null, message: "" });
 
   // Handle success/cancel from Stripe and clear params
   useEffect(() => {
@@ -113,7 +123,10 @@ export default function ProviderBillingPage() {
     setCheckoutLoading(plan);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { plan },
+        body: { 
+          plan,
+          promoCode: promoValidation.isValid ? promoCode.trim().toUpperCase() : undefined
+        },
       });
 
       if (error) throw error;
@@ -130,6 +143,19 @@ export default function ProviderBillingPage() {
     } finally {
       setCheckoutLoading(null);
     }
+  };
+
+  const handlePromoCodeChange = (value: string) => {
+    setPromoCode(value);
+    // Reset validation when user types
+    if (promoValidation.isValid !== null) {
+      setPromoValidation({ isValid: null, message: "" });
+    }
+  };
+
+  const clearPromoCode = () => {
+    setPromoCode("");
+    setPromoValidation({ isValid: null, message: "" });
   };
 
   const handleManageSubscription = async () => {
@@ -429,6 +455,71 @@ export default function ProviderBillingPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Promo Code Section - Only show for non-featured plans */}
+      {currentPlan !== "featured" && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Tag className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Have a Promo Code?</CardTitle>
+            </div>
+            <CardDescription>
+              Enter your promotional code to get a discount on your subscription
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Input
+                  placeholder="Enter promo code"
+                  value={promoCode}
+                  onChange={(e) => handlePromoCodeChange(e.target.value.toUpperCase())}
+                  className={`uppercase ${
+                    promoValidation.isValid === true 
+                      ? "border-emerald-500 focus-visible:ring-emerald-500" 
+                      : promoValidation.isValid === false 
+                        ? "border-red-500 focus-visible:ring-red-500"
+                        : ""
+                  }`}
+                />
+                {promoCode && (
+                  <button
+                    type="button"
+                    onClick={clearPromoCode}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Validation feedback */}
+            {promoValidation.isValid === true && (
+              <div className="flex items-center gap-2 mt-3 text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  {promoValidation.message}
+                  {promoValidation.discount && ` - ${promoValidation.discount}`}
+                </span>
+              </div>
+            )}
+            {promoValidation.isValid === false && (
+              <div className="flex items-center gap-2 mt-3 text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                <XCircle className="h-4 w-4" />
+                <span className="text-sm">{promoValidation.message}</span>
+              </div>
+            )}
+            
+            {promoCode && promoValidation.isValid === null && (
+              <p className="text-sm text-muted-foreground mt-3">
+                Your promo code will be applied when you proceed to checkout
+              </p>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Plans Grid */}

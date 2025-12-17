@@ -31,8 +31,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { plan } = await req.json();
-    logStep("Requested plan", { plan });
+    const { plan, promoCode } = await req.json();
+    logStep("Requested plan", { plan, promoCode: promoCode ? "provided" : "none" });
 
     if (!plan || !PRICE_IDS[plan as keyof typeof PRICE_IDS]) {
       throw new Error("Invalid plan selected. Available plans: professional, featured");
@@ -65,7 +65,27 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://rehablookup.com";
 
-    const session = await stripe.checkout.sessions.create({
+    // If promo code provided, look up the promotion code to get its ID
+    let discounts: { promotion_code: string }[] | undefined;
+    if (promoCode) {
+      try {
+        const promoCodes = await stripe.promotionCodes.list({
+          code: promoCode,
+          active: true,
+          limit: 1,
+        });
+        if (promoCodes.data.length > 0) {
+          discounts = [{ promotion_code: promoCodes.data[0].id }];
+          logStep("Promo code found and will be applied", { promoCodeId: promoCodes.data[0].id });
+        } else {
+          logStep("Promo code not found or inactive", { promoCode });
+        }
+      } catch (promoErr) {
+        logStep("Error looking up promo code", { error: promoErr });
+      }
+    }
+
+    const sessionConfig: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
@@ -75,7 +95,6 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      allow_promotion_codes: true, // Enable promo code redemption at checkout
       success_url: `${origin}/provider/billing?success=true`,
       cancel_url: `${origin}/provider/billing?canceled=true`,
       metadata: {
@@ -88,9 +107,18 @@ serve(async (req) => {
           plan: plan,
         },
       },
-    });
+    };
 
-    logStep("Checkout session created", { sessionId: session.id });
+    // Apply discount if promo code was valid, otherwise allow manual entry
+    if (discounts) {
+      sessionConfig.discounts = discounts;
+    } else {
+      sessionConfig.allow_promotion_codes = true;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    logStep("Checkout session created", { sessionId: session.id, hasDiscount: !!discounts });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
