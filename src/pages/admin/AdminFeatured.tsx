@@ -664,7 +664,7 @@ export default function AdminFeatured() {
           </Alert>
 
           {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
             <Card className="bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -740,6 +740,23 @@ export default function AdminFeatured() {
                   </div>
                   <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
                     <Users className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Legacy Featured</p>
+                    <p className="text-3xl font-bold text-slate-600">
+                      {legacyFeaturedFacilities.length}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Manual placements</p>
+                  </div>
+                  <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                    <Star className="h-6 w-6 text-slate-600" />
                   </div>
                 </div>
               </CardContent>
