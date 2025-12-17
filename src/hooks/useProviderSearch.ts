@@ -40,7 +40,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
       
       const { data, error } = await supabase
         .from("leads")
-        .select("id, name, email, phone, status, created_at, message")
+        .select("id, name, email, phone, status, created_at, message, location_city_state")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -75,9 +75,9 @@ export function useProviderSearch(query: string, facilityId?: string) {
         id: lead.id,
         type: "lead" as const,
         title: lead.name,
-        subtitle: `${lead.email} • ${lead.status}`,
+        subtitle: [lead.location_city_state, lead.status].filter(Boolean).join(" • "),
         url: `/provider/leads?highlight=${lead.id}`,
-        metadata: { status: lead.status, email: lead.email, phone: lead.phone },
+        metadata: { status: lead.status, email: lead.email, phone: lead.phone, location: lead.location_city_state },
       }));
 
     // Search pages
