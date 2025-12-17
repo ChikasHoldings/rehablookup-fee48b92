@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityWidget";
 
 // Subscription plan colors
 const PLAN_COLORS = {
@@ -110,6 +111,7 @@ export default function AdminDashboard() {
     queryClient.invalidateQueries({ queryKey: ["admin-revenue-stats"] });
     queryClient.invalidateQueries({ queryKey: ["admin-subscription-breakdown"] });
     queryClient.invalidateQueries({ queryKey: ["admin-weekly-trends"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-subscription-activity"] });
   }, [queryClient]);
 
   // Real-time subscriptions - always active
@@ -881,6 +883,9 @@ export default function AdminDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Subscription Activity */}
+      <SubscriptionActivityWidget />
 
       {/* Recent Leads */}
       <Card className="border-0 shadow-card bg-card">
