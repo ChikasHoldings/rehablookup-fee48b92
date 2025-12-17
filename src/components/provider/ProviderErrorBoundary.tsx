@@ -1,4 +1,5 @@
 import React from "react";
+import * as Sentry from "@sentry/react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,6 +27,14 @@ export class ProviderErrorBoundary extends React.Component<Props, State> {
     console.error("Provider panel error:", error);
     console.error("Error info:", errorInfo);
     console.error("Component stack:", errorInfo?.componentStack);
+    
+    // Report to Sentry
+    Sentry.captureException(error, {
+      tags: { panel: "provider" },
+      extra: {
+        componentStack: errorInfo?.componentStack,
+      },
+    });
   }
 
   handleRetry = () => {
