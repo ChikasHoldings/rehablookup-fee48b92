@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,6 +10,104 @@ const corsHeaders = {
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[MANAGE-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
+};
+
+const sendSubscriptionNotificationEmail = async (
+  resend: Resend,
+  email: string,
+  providerName: string,
+  action: string,
+  planName: string,
+  reason?: string
+) => {
+  const actionMessages: Record<string, { subject: string; title: string; message: string }> = {
+    cancel: {
+      subject: "Your Subscription Has Been Set to Cancel",
+      title: "Subscription Cancellation Notice",
+      message: `Your ${planName} subscription has been set to cancel at the end of your current billing period. You will continue to have access to all features until then.`,
+    },
+    cancel_immediately: {
+      subject: "Your Subscription Has Been Canceled",
+      title: "Subscription Canceled",
+      message: `Your ${planName} subscription has been canceled immediately. Your access to premium features has ended. If you believe this was done in error, please contact our support team.`,
+    },
+    pause: {
+      subject: "Your Subscription Has Been Paused",
+      title: "Subscription Paused",
+      message: `Your ${planName} subscription has been paused. During this time, you won't be charged and your premium features are temporarily unavailable. Contact support if you have questions.`,
+    },
+    resume: {
+      subject: "Your Subscription Has Been Resumed",
+      title: "Subscription Resumed",
+      message: `Great news! Your ${planName} subscription has been resumed. You now have full access to all premium features again.`,
+    },
+    reactivate: {
+      subject: "Your Subscription Has Been Reactivated",
+      title: "Subscription Reactivated",
+      message: `Your ${planName} subscription cancellation has been reversed. Your subscription will continue as normal and you will maintain access to all premium features.`,
+    },
+  };
+
+  const actionInfo = actionMessages[action];
+  if (!actionInfo) return;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f5;">
+      <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #1e3a5f; font-size: 24px; margin: 0;">RehabLookup</h1>
+          </div>
+          
+          <h2 style="color: #1e3a5f; font-size: 20px; margin-bottom: 20px;">${actionInfo.title}</h2>
+          
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">
+            Hi ${providerName},
+          </p>
+          
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">
+            ${actionInfo.message}
+          </p>
+          
+          ${reason ? `
+          <div style="background-color: #f8fafc; border-left: 4px solid #1e3a5f; padding: 16px; margin: 20px 0; border-radius: 4px;">
+            <p style="color: #64748b; font-size: 14px; margin: 0;"><strong>Reason:</strong> ${reason}</p>
+          </div>
+          ` : ''}
+          
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 24px;">
+            If you have any questions, please don't hesitate to contact our support team at 
+            <a href="mailto:help@rehablookup.com" style="color: #1e3a5f;">help@rehablookup.com</a>.
+          </p>
+          
+          <div style="border-top: 1px solid #e5e7eb; margin-top: 32px; padding-top: 24px;">
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+              © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: "RehabLookup <no-reply@rehablookup.com>",
+      to: [email],
+      subject: actionInfo.subject,
+      html,
+    });
+    logStep("Notification email sent", { email, action });
+  } catch (error) {
+    logStep("Failed to send notification email", { error: String(error) });
+  }
 };
 
 serve(async (req) => {
@@ -21,6 +120,8 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     { auth: { persistSession: false } }
   );
+
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
   try {
     logStep("Function started");
@@ -58,6 +159,20 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     let result: any = null;
+    let shouldSendEmail = false;
+    let customerEmail = "";
+    let providerName = "";
+    let planName = "";
+
+    // Helper to get customer details for email
+    const getCustomerDetails = async (stripeCustomerId: string) => {
+      const customer = await stripe.customers.retrieve(stripeCustomerId);
+      if (customer.deleted) return { email: "", name: "" };
+      return {
+        email: (customer as Stripe.Customer).email || "",
+        name: (customer as Stripe.Customer).name || "Provider",
+      };
+    };
 
     switch (action) {
       case "cancel": {
@@ -71,6 +186,13 @@ serve(async (req) => {
             canceled_at: new Date().toISOString(),
           },
         });
+        
+        const customerDetails = await getCustomerDetails(subscription.customer as string);
+        customerEmail = customerDetails.email;
+        providerName = customerDetails.name;
+        planName = (subscription.items.data[0]?.price?.product as Stripe.Product)?.name || "subscription";
+        shouldSendEmail = true;
+        
         result = { success: true, subscription, message: "Subscription will cancel at period end" };
         break;
       }
@@ -78,9 +200,21 @@ serve(async (req) => {
       case "cancel_immediately": {
         // Cancel subscription immediately
         logStep("Canceling subscription immediately", { subscriptionId });
+        
+        // Get customer details before canceling
+        const subBeforeCancel = await stripe.subscriptions.retrieve(subscriptionId, {
+          expand: ["items.data.price.product"],
+        });
+        const customerDetails = await getCustomerDetails(subBeforeCancel.customer as string);
+        customerEmail = customerDetails.email;
+        providerName = customerDetails.name;
+        planName = (subBeforeCancel.items.data[0]?.price?.product as Stripe.Product)?.name || "subscription";
+        
         const subscription = await stripe.subscriptions.cancel(subscriptionId, {
           prorate: true,
         });
+        
+        shouldSendEmail = true;
         result = { success: true, subscription, message: "Subscription canceled immediately" };
         break;
       }
@@ -97,6 +231,13 @@ serve(async (req) => {
             paused_at: new Date().toISOString(),
           },
         });
+        
+        const customerDetails = await getCustomerDetails(subscription.customer as string);
+        customerEmail = customerDetails.email;
+        providerName = customerDetails.name;
+        planName = (subscription.items.data[0]?.price?.product as Stripe.Product)?.name || "subscription";
+        shouldSendEmail = true;
+        
         result = { success: true, subscription, message: "Subscription paused" };
         break;
       }
@@ -111,6 +252,13 @@ serve(async (req) => {
             resumed_at: new Date().toISOString(),
           },
         });
+        
+        const customerDetails = await getCustomerDetails(subscription.customer as string);
+        customerEmail = customerDetails.email;
+        providerName = customerDetails.name;
+        planName = (subscription.items.data[0]?.price?.product as Stripe.Product)?.name || "subscription";
+        shouldSendEmail = true;
+        
         result = { success: true, subscription, message: "Subscription resumed" };
         break;
       }
@@ -125,6 +273,13 @@ serve(async (req) => {
             reactivated_at: new Date().toISOString(),
           },
         });
+        
+        const customerDetails = await getCustomerDetails(subscription.customer as string);
+        customerEmail = customerDetails.email;
+        providerName = customerDetails.name;
+        planName = (subscription.items.data[0]?.price?.product as Stripe.Product)?.name || "subscription";
+        shouldSendEmail = true;
+        
         result = { success: true, subscription, message: "Subscription reactivated" };
         break;
       }
@@ -207,13 +362,18 @@ serve(async (req) => {
         throw new Error(`Unknown action: ${action}`);
     }
 
+    // Send notification email if needed
+    if (shouldSendEmail && customerEmail) {
+      await sendSubscriptionNotificationEmail(resend, customerEmail, providerName, action, planName, reason);
+    }
+
     // Log audit entry
     await supabaseClient.from("admin_audit_log").insert({
       admin_user_id: adminUser.id,
       action_type: `subscription_${action}`,
       target_type: "subscription",
       target_id: subscriptionId || customerId,
-      details: { action, reason, result: result?.message },
+      details: { action, reason, result: result?.message, emailSent: shouldSendEmail && !!customerEmail },
     });
 
     logStep("Action completed successfully", { action });
