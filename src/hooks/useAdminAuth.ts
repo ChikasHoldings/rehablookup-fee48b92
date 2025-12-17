@@ -231,8 +231,8 @@ export function useAdminAuth() {
             setPermissions(userPermissions);
             setAdminProfile(profile);
             setForcePasswordChange(profile?.force_password_change === true);
-            // Require MFA setup if admin but no verified TOTP factor and not skipped
-            setRequireMfaSetup(adminStatus && !hasMfa && profile?.mfa_skip !== true);
+            // Require MFA setup if admin but no verified TOTP factor and not skipped (super admins are exempt)
+            setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true);
             
             // Set Sentry user context for error tracking
             if (adminStatus) {
@@ -281,8 +281,8 @@ export function useAdminAuth() {
           setPermissions(userPermissions);
           setAdminProfile(profile);
           setForcePasswordChange(profile?.force_password_change === true);
-          // Require MFA setup if admin but no verified TOTP factor and not skipped
-          setRequireMfaSetup(adminStatus && !hasMfa && profile?.mfa_skip !== true);
+          // Require MFA setup if admin but no verified TOTP factor and not skipped (super admins are exempt)
+          setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true);
           
           // Set Sentry user context for error tracking
           if (adminStatus) {
