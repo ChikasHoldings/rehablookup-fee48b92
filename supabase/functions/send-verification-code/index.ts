@@ -127,16 +127,14 @@ const handler = async (req: Request): Promise<Response> => {
       </p>
     </div>
     
-    <div style="background: #f8fafc; padding: 16px; border-top: 1px solid #e2e8f0;">
-      <p style="color: #94a3b8; font-size: 11px; margin: 0; text-align: center;">
+    <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
+      <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+      <p style="margin: 0 0 12px 0; font-size: 11px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
+      <p style="color: rgba(255,255,255,0.5); font-size: 10px; margin: 0; text-align: center;">
         Didn't request this? Just ignore this email.
       </p>
     </div>
   </div>
-  
-  <p style="text-align: center; color: #94a3b8; font-size: 11px; margin-top: 20px;">
-    RehabLookup.com
-  </p>
 </body>
 </html>
       `,

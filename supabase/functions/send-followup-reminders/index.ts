@@ -282,9 +282,11 @@ const handler = async (req: Request): Promise<Response> => {
           </tr>
           
           <tr>
-            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
-              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
+            <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 8px 8px;">
+              <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">RehabLookup</p>
+              <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Connecting families with trusted treatment providers</p>
+              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd; text-decoration: underline;">Notification settings</a> · <a href="mailto:support@rehablookup.com" style="color: #93c5fd; text-decoration: underline;">Support</a>
               </p>
             </td>
           </tr>
@@ -300,7 +302,7 @@ const handler = async (req: Request): Promise<Response> => {
         const subjectPrefix = highestTier.level === 3 ? "Urgent:" : highestTier.level === 2 ? "Action needed:" : "Reminder:";
 
         await resend.emails.send({
-          from: "RehabLookup <noreply@resend.dev>",
+          from: "RehabLookup <no-reply@rehablookup.com>",
           to: [providerData.providerEmail],
           subject: `${subjectPrefix} ${totalLeads} lead${totalLeads > 1 ? "s" : ""} waiting for follow-up`,
           html: emailHtml,

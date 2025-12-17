@@ -356,7 +356,7 @@ async function sendReassignmentNotification(
           <div style="background: linear-gradient(135deg, #1B365D 0%, #2A4A7A 100%); padding: 24px; border-radius: 8px 8px 0 0;">
             <h1 style="color: white; margin: 0; font-size: 24px;">New Lead Assigned</h1>
           </div>
-          <div style="background: #ffffff; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+          <div style="background: #ffffff; padding: 24px; border: 1px solid #e5e7eb; border-top: none;">
             <p style="color: #374151; font-size: 16px; line-height: 1.6;">
               A lead has been re-assigned to your facility. Please respond promptly to maximize your conversion rate.
             </p>
@@ -371,6 +371,12 @@ async function sendReassignmentNotification(
             </a>
             <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
               This lead was automatically re-assigned because the previous provider did not respond within 24 hours.
+            </p>
+          </div>
+          <div style="background: #1B365D; padding: 20px; border-radius: 0 0 8px 8px;">
+            <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+            <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;">
+              <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd;">Settings</a> · <a href="mailto:support@rehablookup.com" style="color: #93c5fd;">Support</a>
             </p>
           </div>
         </div>

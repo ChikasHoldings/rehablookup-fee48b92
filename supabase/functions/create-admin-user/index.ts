@@ -220,8 +220,10 @@ serve(async (req) => {
 
                   <p style="margin-top: 30px; font-size: 14px; color: #64748b;">If you did not expect this account or have questions, please contact your system administrator immediately.</p>
                 </div>
-                <div class="footer">
-                  <p>RehabLookup Admin System</p>
+                <div style="background: #1B365D; padding: 24px; border-radius: 8px; margin-top: 20px; text-align: center;">
+                  <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff;">RehabLookup</p>
+                  <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.7);">Admin System</p>
+                  <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5);">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
                 </div>
               </div>
             </body>

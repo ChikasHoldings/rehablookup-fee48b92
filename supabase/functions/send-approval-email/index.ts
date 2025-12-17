@@ -105,10 +105,17 @@ const handler = async (req: Request): Promise<Response> => {
       </p>
     </div>
     
-    <div style="background: #f8fafc; padding: 20px 32px; border-top: 1px solid #e2e8f0;">
-      <p style="margin: 0; font-size: 12px; color: #94a3b8; text-align: center;">
-        RehabLookup | <a href="mailto:support@rehablookup.com" style="color: #64748b;">support@rehablookup.com</a>
-      </p>
+    <div style="background: #1B365D; padding: 28px 32px; border-top: 1px solid #e2e8f0;">
+      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+      <p style="margin: 0 0 16px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <a href="https://rehablookup.com" style="color: #93c5fd; font-size: 12px; text-decoration: none; margin: 0 8px;">Website</a>
+        <span style="color: rgba(255,255,255,0.3);">|</span>
+        <a href="mailto:support@rehablookup.com" style="color: #93c5fd; font-size: 12px; text-decoration: none; margin: 0 8px;">Support</a>
+        <span style="color: rgba(255,255,255,0.3);">|</span>
+        <a href="https://rehablookup.com/privacy-policy" style="color: #93c5fd; font-size: 12px; text-decoration: none; margin: 0 8px;">Privacy</a>
+      </div>
+      <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -117,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resend = new Resend(resendApiKey);
     const emailResponse = await resend.emails.send({
-      from: "RehabLookup <noreply@resend.dev>",
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: [profile.email],
       subject: `Your listing is live: ${facilityName}`,
       html: emailHtml,

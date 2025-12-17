@@ -144,7 +144,7 @@ serve(async (req) => {
         // Email to admin
         try {
           await resend.emails.send({
-            from: "RehabLookup <notifications@rehablookup.com>",
+            from: "RehabLookup <no-reply@rehablookup.com>",
             to: ["admin@rehablookup.com"],
             subject: `⚠️ Payment Failed - ${facilityName}`,
             html: `
@@ -152,7 +152,7 @@ serve(async (req) => {
                 <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 30px; border-radius: 12px 12px 0 0;">
                   <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ Payment Failed</h1>
                 </div>
-                <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+                <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                   <p style="color: #374151; font-size: 16px; line-height: 1.6;">
                     A subscription payment has failed and requires attention.
                   </p>
@@ -166,6 +166,9 @@ serve(async (req) => {
                     The provider has been notified via email to update their payment method.
                   </p>
                 </div>
+                <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
+                  <p style="margin: 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup Admin</p>
+                </div>
               </div>
             `,
           });
@@ -178,7 +181,7 @@ serve(async (req) => {
         if (customerEmail) {
           try {
             await resend.emails.send({
-              from: "RehabLookup <billing@rehablookup.com>",
+              from: "RehabLookup <no-reply@rehablookup.com>",
               to: [customerEmail],
               subject: "Action Required: Payment Failed",
               html: `
@@ -186,7 +189,7 @@ serve(async (req) => {
                   <div style="background: linear-gradient(135deg, #1B365D 0%, #2d4a7c 100%); padding: 30px; border-radius: 12px 12px 0 0;">
                     <h1 style="color: white; margin: 0; font-size: 24px;">Payment Failed</h1>
                   </div>
-                  <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+                  <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                     <p style="color: #374151; font-size: 16px; line-height: 1.6;">
                       Hi ${providerName},
                     </p>
@@ -210,6 +213,10 @@ serve(async (req) => {
                     <p style="color: #6b7280; font-size: 14px;">
                       If you have any questions, please contact our support team.
                     </p>
+                  </div>
+                  <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
+                    <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+                    <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;"><a href="mailto:support@rehablookup.com" style="color: #93c5fd;">support@rehablookup.com</a></p>
                   </div>
                 </div>
               `,
@@ -321,7 +328,7 @@ serve(async (req) => {
           if (resend) {
             try {
               await resend.emails.send({
-                from: "RehabLookup <notifications@rehablookup.com>",
+                from: "RehabLookup <no-reply@rehablookup.com>",
                 to: ["help@rehablookup.com"],
                 subject: `🎉 New Subscription - ${facilityName}`,
                 html: `
@@ -329,7 +336,7 @@ serve(async (req) => {
                     <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 30px; border-radius: 12px 12px 0 0;">
                       <h1 style="color: white; margin: 0; font-size: 24px;">🎉 New Subscription</h1>
                     </div>
-                    <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+                    <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                       <p style="color: #374151; font-size: 16px; line-height: 1.6;">
                         A new provider has subscribed to RehabLookup!
                       </p>
@@ -343,6 +350,9 @@ serve(async (req) => {
                       <p style="color: #6b7280; font-size: 14px;">
                         View all subscriptions in the admin dashboard.
                       </p>
+                    </div>
+                    <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
+                      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup Admin</p>
                     </div>
                   </div>
                 `,
@@ -399,7 +409,7 @@ serve(async (req) => {
             if (resend) {
               try {
                 await resend.emails.send({
-                  from: "RehabLookup <notifications@rehablookup.com>",
+                  from: "RehabLookup <no-reply@rehablookup.com>",
                   to: ["help@rehablookup.com"],
                   subject: `⚠️ Subscription Cancelled - ${facilities[0].name}`,
                   html: `
@@ -407,7 +417,7 @@ serve(async (req) => {
                       <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 12px 12px 0 0;">
                         <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ Subscription Cancelled</h1>
                       </div>
-                      <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+                      <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
                         <p style="color: #374151; font-size: 16px; line-height: 1.6;">
                           A provider has cancelled their subscription.
                         </p>
@@ -419,6 +429,9 @@ serve(async (req) => {
                         <p style="color: #6b7280; font-size: 14px;">
                           Consider reaching out to understand why they cancelled.
                         </p>
+                      </div>
+                      <div style="background: #1B365D; padding: 20px; border-radius: 0 0 12px 12px;">
+                        <p style="margin: 0; font-size: 14px; font-weight: 600; color: #fff; text-align: center;">RehabLookup Admin</p>
                       </div>
                     </div>
                   `,

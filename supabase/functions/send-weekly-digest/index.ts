@@ -162,13 +162,19 @@ function generateDigestEmail(digest: ProviderDigest): string {
       </a>
     </div>
     
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
-    
-    <p style="font-size: 12px; color: #9ca3af; text-align: center; margin: 0;">
-      You're receiving this because you have weekly digest emails enabled.<br>
-      <a href="${dashboardUrl}/provider/settings" style="color: #6b7280;">Manage notification preferences</a> • 
-      <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a>
-    </p>
+  </div>
+  
+  <div style="background: #1B365D; padding: 28px; border-radius: 12px; margin-top: 20px;">
+    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+    <p style="margin: 0 0 16px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
+    <div style="text-align: center; margin-bottom: 16px;">
+      <a href="${dashboardUrl}/provider/settings" style="color: #93c5fd; font-size: 12px; text-decoration: none;">Notification Settings</a>
+      <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
+      <a href="https://rehablookup.com" style="color: #93c5fd; font-size: 12px; text-decoration: none;">Website</a>
+      <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
+      <a href="mailto:support@rehablookup.com" style="color: #93c5fd; font-size: 12px; text-decoration: none;">Support</a>
+    </div>
+    <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
   </div>
 </body>
 </html>
@@ -329,7 +335,7 @@ const handler = async (req: Request): Promise<Response> => {
         const emailHtml = generateDigestEmail(digest);
         
         await resend.emails.send({
-          from: "RehabLookup <noreply@resend.dev>",
+          from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
           subject: `📊 Weekly Digest: ${digest.weeklyLeads} new leads for ${facility.name}`,
           html: emailHtml,

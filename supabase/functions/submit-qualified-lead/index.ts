@@ -744,6 +744,14 @@ async function sendLeadNotificationEmail(
               This lead has been verified via email confirmation. View and respond to this lead in your RehabLookup provider dashboard.
             </p>
           </div>
+          
+          <div style="background: #1B365D; padding: 24px 40px; border-radius: 0 0 12px 12px;">
+            <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+            <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
+            <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">
+              <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd;">Settings</a> · <a href="mailto:support@rehablookup.com" style="color: #93c5fd;">Support</a>
+            </p>
+          </div>
         </body>
         </html>
       `,
@@ -805,6 +813,13 @@ async function sendLeadLimitWarningEmail(
       </a>
     </div>
   </div>
+  
+  <div style="background: #1B365D; padding: 24px; border-radius: 12px; margin-top: 16px;">
+    <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+    <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center;">
+      <a href="https://rehablookup.com/provider/billing" style="color: #93c5fd;">Billing</a> · <a href="mailto:support@rehablookup.com" style="color: #93c5fd;">Support</a>
+    </p>
+  </div>
 </body>
 </html>
       `,
@@ -860,11 +875,15 @@ async function sendUserConfirmationEmail(
       <p style="margin: 0; font-size: 15px; font-weight: 600; color: #1B365D;">The RehabLookup Team</p>
     </div>
     
-    <div style="background: #f8fafc; padding: 20px 28px; border-top: 1px solid #e5e7eb;">
-      <p style="margin: 0; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.5;">
-        This email was sent by RehabLookup in response to your request for treatment information.
-        <br>If you did not make this request, please disregard this email.
-      </p>
+    <div style="background: #1B365D; padding: 28px; border-radius: 0 0 12px 12px;">
+      <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
+      <p style="margin: 0 0 16px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
+      <div style="text-align: center; margin-bottom: 12px;">
+        <a href="https://rehablookup.com/privacy-policy" style="color: #93c5fd; font-size: 11px; text-decoration: none;">Privacy Policy</a>
+        <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
+        <a href="mailto:support@rehablookup.com" style="color: #93c5fd; font-size: 11px; text-decoration: none;">Support</a>
+      </div>
+      <p style="margin: 0; font-size: 10px; color: rgba(255,255,255,0.4); text-align: center;">If you did not make this request, please disregard this email.</p>
     </div>
   </div>
 </body>
