@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import {
   ClipboardList,
@@ -157,6 +158,7 @@ const datePresets = [
 
 export default function AdminAuditLog() {
   const queryClient = useQueryClient();
+  const { logError } = useAdminErrorHandler("AdminAuditLog");
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [targetFilter, setTargetFilter] = useState<string>("all");

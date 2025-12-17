@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { format, formatDistanceToNow, subDays, startOfDay, endOfDay } from "date-fns";
 import { 
   Shield, 
@@ -118,6 +119,7 @@ const ipLocationCache = new Map<string, IpLocation>();
 
 export default function AdminSecurityLogs() {
   const queryClient = useQueryClient();
+  const { logError } = useAdminErrorHandler("AdminSecurityLogs");
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [successFilter, setSuccessFilter] = useState<string>("all");

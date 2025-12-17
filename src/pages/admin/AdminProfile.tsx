@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -102,6 +103,7 @@ const getDeviceIcon = (deviceName: string | null, browser: string | null) => {
 
 export default function AdminProfile() {
   const { toast } = useToast();
+  const { logError } = useAdminErrorHandler("AdminProfile");
   const queryClient = useQueryClient();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
