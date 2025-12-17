@@ -371,9 +371,8 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
             <img 
               src="/logo.svg" 
               alt="RehabLookup" 
-              className="h-8 w-8 brightness-0 invert"
+              className="h-8 brightness-0 invert"
             />
-            <span className="text-xl font-bold hidden sm:inline text-white">RehabLookup</span>
             <span className="text-xs bg-amber-400 text-slate-900 px-2 py-0.5 rounded font-semibold uppercase">
               Admin
             </span>
