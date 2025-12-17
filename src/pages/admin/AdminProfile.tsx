@@ -103,6 +103,8 @@ const getDeviceIcon = (deviceName: string | null, browser: string | null) => {
 export default function AdminProfile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
@@ -232,11 +234,11 @@ export default function AdminProfile() {
   }, [userData?.id, queryClient]);
 
   useEffect(() => {
-    if (profile?.display_name) {
-      setDisplayName(profile.display_name);
-    }
-    // Load notification preferences from profile
     if (profile) {
+      setFirstName((profile as any).first_name || "");
+      setLastName((profile as any).last_name || "");
+      setDisplayName(profile.display_name || "");
+      // Load notification preferences from profile
       setNotificationPrefs({
         notify_new_providers: profile.notify_new_providers ?? true,
         notify_new_leads: profile.notify_new_leads ?? true,
@@ -467,16 +469,18 @@ export default function AdminProfile() {
   };
 
   const handleUpdateProfile = async () => {
-    if (!userData?.id || !displayName.trim()) return;
+    if (!userData?.id) return;
 
     setIsUpdatingProfile(true);
     try {
       const { error } = await supabase
         .from("admin_user_profiles")
         .update({ 
-          display_name: displayName.trim(),
+          first_name: firstName.trim() || null,
+          last_name: lastName.trim() || null,
+          display_name: displayName.trim() || null,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq("user_id", userData.id);
 
       if (error) throw error;
@@ -489,12 +493,12 @@ export default function AdminProfile() {
         actionType: AdminAuditActions.PROFILE_NAME_UPDATED,
         targetType: "admin_profile",
         targetId: userData.id,
-        details: { newDisplayName: displayName.trim() },
+        details: { firstName: firstName.trim(), lastName: lastName.trim(), displayName: displayName.trim() },
       });
 
       toast({
         title: "Profile updated",
-        description: "Your display name has been updated.",
+        description: "Your profile has been updated.",
       });
     } catch (err) {
       console.error("Error updating profile:", err);
@@ -818,22 +822,44 @@ export default function AdminProfile() {
 
           <Separator />
 
-          {/* Display Name */}
+          {/* Name Fields */}
           <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Enter first name"
+                  maxLength={50}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Enter last name"
+                  maxLength={50}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="displayName">Display Name</Label>
               <Input
                 id="displayName"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Enter your name"
+                placeholder="Enter display name (shown in header)"
                 maxLength={50}
               />
-              <p className="text-xs text-muted-foreground">{displayName.length}/50 characters</p>
+              <p className="text-xs text-muted-foreground">This name appears in the header dropdown</p>
             </div>
             <Button 
               onClick={handleUpdateProfile} 
-              disabled={isUpdatingProfile || !displayName.trim() || displayName === profile?.display_name}
+              disabled={isUpdatingProfile}
             >
               {isUpdatingProfile ? (
                 <>

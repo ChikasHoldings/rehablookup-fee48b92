@@ -59,14 +59,23 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
       if (!userId) return null;
       const { data } = await supabase
         .from("admin_user_profiles")
-        .select("avatar_url, display_name")
+        .select("avatar_url, display_name, first_name, last_name")
         .eq("user_id", userId)
         .maybeSingle();
-      return data;
+      return data as { avatar_url: string | null; display_name: string | null; first_name?: string | null; last_name?: string | null } | null;
     },
     enabled: !!userId,
     staleTime: 30 * 1000, // 30 seconds for faster updates
   });
+
+  // Compute display name from first/last name or fallback to display_name
+  const fullName = adminProfile?.first_name && adminProfile?.last_name 
+    ? `${adminProfile.first_name} ${adminProfile.last_name}`
+    : adminProfile?.first_name || adminProfile?.display_name || "Admin User";
+  
+  const avatarInitials = adminProfile?.first_name && adminProfile?.last_name
+    ? `${adminProfile.first_name[0]}${adminProfile.last_name[0]}`.toUpperCase()
+    : adminProfile?.display_name?.slice(0, 2).toUpperCase() || initials;
 
   // Real-time subscription for admin profile updates (avatar changes)
   useEffect(() => {
@@ -511,7 +520,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
                     className="object-cover"
                   />
                   <AvatarFallback className="bg-amber-400 text-slate-900 font-semibold text-sm">
-                    {adminProfile?.display_name?.slice(0, 2).toUpperCase() || initials}
+                    {avatarInitials}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -526,12 +535,12 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
                     className="object-cover" 
                   />
                   <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                    {adminProfile?.display_name?.slice(0, 2).toUpperCase() || initials}
+                    {avatarInitials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col min-w-0">
                   <p className="text-sm font-semibold truncate">
-                    {adminProfile?.display_name || "Admin User"}
+                    {fullName}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                   <Badge variant="secondary" className="w-fit mt-1 text-[10px] h-5 px-1.5">

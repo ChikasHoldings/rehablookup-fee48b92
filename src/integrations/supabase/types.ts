@@ -201,9 +201,11 @@ export type Database = {
           created_by: string | null
           display_name: string | null
           email_digest_frequency: string | null
+          first_name: string | null
           force_password_change: boolean | null
           id: string
           last_login_at: string | null
+          last_name: string | null
           mfa_enabled: boolean | null
           mfa_skip: boolean | null
           notify_new_leads: boolean | null
@@ -223,9 +225,11 @@ export type Database = {
           created_by?: string | null
           display_name?: string | null
           email_digest_frequency?: string | null
+          first_name?: string | null
           force_password_change?: boolean | null
           id?: string
           last_login_at?: string | null
+          last_name?: string | null
           mfa_enabled?: boolean | null
           mfa_skip?: boolean | null
           notify_new_leads?: boolean | null
@@ -245,9 +249,11 @@ export type Database = {
           created_by?: string | null
           display_name?: string | null
           email_digest_frequency?: string | null
+          first_name?: string | null
           force_password_change?: boolean | null
           id?: string
           last_login_at?: string | null
+          last_name?: string | null
           mfa_enabled?: boolean | null
           mfa_skip?: boolean | null
           notify_new_leads?: boolean | null
