@@ -81,9 +81,9 @@ export function Header({
   return (
     <>
       <header className={cn(
-        "sticky top-0 z-50 w-full border-b border-border bg-card transition-all duration-300",
+        "sticky top-0 z-50 w-full border-b border-border bg-white transition-all duration-300",
         isScrolled 
-          ? "shadow-md backdrop-blur-md bg-card/95" 
+          ? "shadow-md" 
           : "shadow-sm"
       )}>
         <div className={cn(
@@ -115,7 +115,7 @@ export function Header({
                   "rounded-lg px-4 py-2 text-base font-medium transition-all",
                   location.pathname === link.href
                     ? "bg-primary text-primary-foreground"
-                    : "text-foreground/70 hover:text-foreground hover:bg-secondary"
+                    : "text-foreground hover:text-primary hover:bg-secondary"
                 )}
               >
                 {link.label}
