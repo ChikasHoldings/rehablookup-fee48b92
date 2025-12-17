@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,8 +24,8 @@ const NAVIGATION_PAGES: SearchResult[] = [
 export function useProviderSearch(query: string, facilityId?: string) {
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 
-  // Debounce the query
-  useMemo(() => {
+  // Proper debounce with useEffect
+  useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(query);
     }, 300);
