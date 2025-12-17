@@ -23,6 +23,230 @@ function generateTempPassword(): string {
   return password;
 }
 
+function generatePasswordResetEmail(firstName: string, tempPassword: string, loginUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: hsl(210, 20%, 96%);">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: hsl(210, 20%, 96%); padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup Admin</p>
+                    <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">
+                      🔐 Password Reset
+                    </h1>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
+              
+              <p style="margin: 0 0 20px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
+                Hello ${firstName},
+              </p>
+              
+              <p style="margin: 0 0 24px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
+                Your admin password has been reset. Here is your new temporary password:
+              </p>
+              
+              <!-- Password Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border: 1px solid hsl(220, 13%, 91%); border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 24px; text-align: center;">
+                    <p style="margin: 0; font-size: 24px; font-weight: 600; color: hsl(217, 54%, 23%); font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                      ${tempPassword}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Warning -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(45, 93%, 95%); border: 1px solid hsl(45, 93%, 75%); border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0; color: hsl(32, 81%, 29%); font-size: 14px; line-height: 1.5;">
+                      <strong>⚠️ Important:</strong> This password expires in 72 hours. You must change it upon login.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <a href="${loginUrl}" style="display: inline-block; background: hsl(217, 54%, 23%); color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                      Login Now →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">RehabLookup</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Admin Panel</p>
+                    <p style="margin: 0; font-size: 11px; color: hsla(0, 0%, 100%, 0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+function generateInvitationEmail(displayName: string, email: string, tempPassword: string, loginUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: hsl(210, 20%, 96%);">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: hsl(210, 20%, 96%); padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup Admin</p>
+                    <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">
+                      🔑 Admin Invitation (Resent)
+                    </h1>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
+              
+              <p style="margin: 0 0 20px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
+                Hello ${displayName},
+              </p>
+              
+              <p style="margin: 0 0 24px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
+                Your invitation to the RehabLookup Admin Panel has been resent. Here are your new login credentials:
+              </p>
+              
+              <!-- Credentials Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border: 1px solid hsl(220, 13%, 91%); border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding: 12px 0; border-bottom: 1px solid hsl(220, 13%, 91%);">
+                          <p style="margin: 0 0 4px 0; font-size: 12px; color: hsl(220, 9%, 46%); text-transform: uppercase;">Email</p>
+                          <p style="margin: 0; font-size: 15px; font-weight: 600; color: hsl(217, 54%, 23%);">${email}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0;">
+                          <p style="margin: 0 0 4px 0; font-size: 12px; color: hsl(220, 9%, 46%); text-transform: uppercase;">Temporary Password</p>
+                          <p style="margin: 0; font-size: 18px; font-weight: 600; color: hsl(217, 54%, 23%); font-family: 'Courier New', monospace; letter-spacing: 1px;">${tempPassword}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Warning -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(45, 93%, 95%); border: 1px solid hsl(45, 93%, 75%); border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0 0 8px 0; color: hsl(32, 81%, 29%); font-size: 14px; font-weight: 600;">
+                      ⚠️ Important
+                    </p>
+                    <ul style="margin: 0; padding-left: 20px; color: hsl(32, 81%, 29%); font-size: 14px; line-height: 1.6;">
+                      <li style="margin-bottom: 6px;">This temporary password expires in <strong>72 hours</strong></li>
+                      <li style="margin-bottom: 6px;">You must change your password upon first login</li>
+                      <li>Keep these credentials secure</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <a href="${loginUrl}" style="display: inline-block; background: hsl(217, 54%, 23%); color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                      Login to Admin Panel →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">RehabLookup</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Admin Panel</p>
+                    <p style="margin: 0; font-size: 11px; color: hsla(0, 0%, 100%, 0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -217,47 +441,7 @@ serve(async (req) => {
             from: "RehabLookup Admin <no-reply@rehablookup.com>",
             to: [targetProfile.email],
             subject: "Your RehabLookup Admin Password Has Been Reset",
-            html: `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <style>
-                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1a1a1a; }
-                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                  .header { background: #1B365D; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-                  .content { background: #f6f8fb; padding: 30px; border-radius: 0 0 8px 8px; }
-                  .credentials { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin: 20px 0; }
-                  .credential-value { font-size: 16px; font-weight: 600; color: #1B365D; font-family: monospace; background: #f1f5f9; padding: 8px 12px; border-radius: 4px; }
-                  .warning { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0; }
-                  .btn { display: inline-block; background: #1B365D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <div class="header">
-                    <h1 style="margin: 0; font-size: 24px;">🔐 Password Reset</h1>
-                  </div>
-                  <div class="content">
-                    <p>Hello ${targetProfile.first_name || "Admin"},</p>
-                    <p>Your admin password has been reset. Here is your new temporary password:</p>
-                    
-                    <div class="credentials">
-                      <div class="credential-value" style="text-align: center; font-size: 20px;">${tempPassword}</div>
-                    </div>
-
-                    <div class="warning">
-                      <strong>⚠️ Important</strong>
-                      <p style="margin: 5px 0 0 0;">This password expires in 72 hours. You must change it upon login.</p>
-                    </div>
-
-                    <p style="text-align: center; margin-top: 30px;">
-                      <a href="${loginUrl}" class="btn">Login Now →</a>
-                    </p>
-                  </div>
-                </div>
-              </body>
-              </html>
-            `,
+            html: generatePasswordResetEmail(targetProfile.first_name || "Admin", tempPassword, loginUrl),
           });
         }
 
@@ -391,61 +575,7 @@ serve(async (req) => {
             from: "RehabLookup Admin <no-reply@rehablookup.com>",
             to: [targetProfile.email],
             subject: "Your RehabLookup Admin Invitation (Resent)",
-            html: `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <style>
-                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1a1a1a; }
-                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                  .header { background: linear-gradient(135deg, #1B365D 0%, #2d4a7c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-                  .content { background: #f6f8fb; padding: 30px; border-radius: 0 0 8px 8px; }
-                  .credentials { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin: 20px 0; }
-                  .credential-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-                  .credential-row:last-child { border-bottom: none; }
-                  .credential-label { color: #64748b; font-size: 14px; }
-                  .credential-value { font-weight: 600; color: #1B365D; font-family: monospace; }
-                  .warning { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0; }
-                  .btn { display: inline-block; background: #1B365D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <div class="header">
-                    <h1 style="margin: 0; font-size: 24px;">🔑 Admin Invitation (Resent)</h1>
-                  </div>
-                  <div class="content">
-                    <p>Hello ${displayName},</p>
-                    <p>Your invitation to the RehabLookup Admin Panel has been resent. Here are your new login credentials:</p>
-                    
-                    <div class="credentials">
-                      <div class="credential-row">
-                        <span class="credential-label">Email:</span>
-                        <span class="credential-value">${targetProfile.email}</span>
-                      </div>
-                      <div class="credential-row">
-                        <span class="credential-label">Temporary Password:</span>
-                        <span class="credential-value">${tempPassword}</span>
-                      </div>
-                    </div>
-
-                    <div class="warning">
-                      <strong>⚠️ Important</strong>
-                      <ul style="margin: 10px 0 0 0; padding-left: 20px;">
-                        <li>This temporary password expires in <strong>72 hours</strong></li>
-                        <li>You must change your password upon first login</li>
-                        <li>Keep these credentials secure</li>
-                      </ul>
-                    </div>
-
-                    <p style="text-align: center; margin-top: 30px;">
-                      <a href="${loginUrl}" class="btn">Login to Admin Panel →</a>
-                    </p>
-                  </div>
-                </div>
-              </body>
-              </html>
-            `,
+            html: generateInvitationEmail(displayName, targetProfile.email, tempPassword, loginUrl),
           });
         }
 

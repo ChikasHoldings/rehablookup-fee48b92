@@ -66,6 +66,146 @@ async function getProviderPlan(providerEmail: string): Promise<{ planName: strin
   }
 }
 
+function generateDigestEmail(
+  firstName: string,
+  digestType: string,
+  periodText: string,
+  leads: Lead[],
+  facilityNameMap: Record<string, string>,
+  usedLeads: number,
+  leadLimit: number,
+  remainingLeads: number
+): string {
+  const leadsHtml = leads.slice(0, 5).map((lead: Lead) => `
+    <tr>
+      <td style="padding: 16px 0; border-bottom: 1px solid hsl(220, 13%, 91%);">
+        <p style="margin: 0 0 6px 0; font-weight: 600; color: hsl(217, 54%, 23%); font-size: 15px;">${lead.name}</p>
+        <p style="margin: 0 0 6px 0; font-size: 14px; color: hsl(215, 19%, 35%);">
+          ${lead.phone} • ${lead.email}
+        </p>
+        <p style="margin: 0; font-size: 13px; color: hsl(220, 9%, 46%);">
+          ${facilityNameMap[lead.facility_id] || "Facility"} • ${lead.preferred_contact === "call" ? "Prefers call" : "Prefers email"}
+        </p>
+      </td>
+    </tr>
+  `).join("");
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: hsl(210, 20%, 96%);">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: hsl(210, 20%, 96%); padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup</p>
+                    <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">
+                      ${digestType} Lead Digest
+                    </h1>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
+              
+              <p style="margin: 0 0 20px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
+                Hi ${firstName},
+              </p>
+              
+              <p style="margin: 0 0 24px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
+                You received <strong>${leads.length} new lead${leads.length === 1 ? "" : "s"}</strong> in the past ${periodText}.
+              </p>
+              
+              ${leadLimit > 0 ? `
+              <!-- Monthly Usage -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px; text-align: center;">
+                    <p style="margin: 0 0 6px 0; font-size: 12px; color: hsl(220, 9%, 46%); text-transform: uppercase; letter-spacing: 0.5px;">Monthly Usage</p>
+                    <p style="margin: 0; font-size: 28px; font-weight: 700; color: hsl(217, 54%, 23%);">${usedLeads} / ${leadLimit}</p>
+                    <p style="margin: 6px 0 0 0; font-size: 14px; color: hsl(220, 9%, 46%);">${remainingLeads} remaining this month</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
+              
+              <!-- Leads List -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                ${leadsHtml}
+              </table>
+              
+              ${leads.length > 5 ? `
+              <p style="margin: 16px 0 0 0; font-size: 14px; color: hsl(220, 9%, 46%); text-align: center;">
+                + ${leads.length - 5} more leads
+              </p>
+              ` : ""}
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 32px;">
+                <tr>
+                  <td align="center">
+                    <a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: hsl(217, 54%, 23%); color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                      View All Leads
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">RehabLookup</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Connecting families with trusted treatment providers</p>
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding: 0 8px;">
+                          <a href="https://rehablookup.com/provider/settings" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Notification Settings</a>
+                        </td>
+                        <td style="color: hsla(0, 0%, 100%, 0.4); font-size: 12px;">|</td>
+                        <td style="padding: 0 8px;">
+                          <a href="mailto:help@rehablookup.com" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Contact Support</a>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin: 16px 0 0 0; font-size: 11px; color: hsla(0, 0%, 100%, 0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -195,101 +335,16 @@ const handler = async (req: Request): Promise<Response> => {
       const digestType = provider.lead_notification_frequency === "daily_digest" ? "Daily" : "Weekly";
       const periodText = provider.lead_notification_frequency === "daily_digest" ? "24 hours" : "week";
 
-      const leadsHtml = leads.slice(0, 5).map((lead: Lead) => `
-        <tr>
-          <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
-            <p style="margin: 0 0 4px 0; font-weight: 600; color: #1B365D;">${lead.name}</p>
-            <p style="margin: 0; font-size: 13px; color: #4b5563;">
-              ${lead.phone} | ${lead.email}
-            </p>
-            <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280;">
-              ${facilityNameMap[lead.facility_id] || "Facility"} | ${lead.preferred_contact === "call" ? "Prefers call" : "Prefers email"}
-            </p>
-          </td>
-        </tr>
-      `).join("");
-
-      const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          
-          <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 24px 32px; border-radius: 8px 8px 0 0;">
-              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
-              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                ${digestType} Lead Digest
-              </h1>
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
-              
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Hi ${profile.first_name || "there"},
-              </p>
-              
-              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                You received <strong>${leads.length} new lead${leads.length === 1 ? "" : "s"}</strong> in the past ${periodText}.
-              </p>
-              
-              ${leadLimit > 0 ? `
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 6px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 16px; text-align: center;">
-                    <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280; text-transform: uppercase;">Monthly Usage</p>
-                    <p style="margin: 0; font-size: 20px; font-weight: 600; color: #1B365D;">${usedLeads} / ${leadLimit}</p>
-                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280;">${remainingLeads} remaining</p>
-                  </td>
-                </tr>
-              </table>
-              ` : ""}
-              
-              <table width="100%" cellpadding="0" cellspacing="0">
-                ${leadsHtml}
-              </table>
-              
-              ${leads.length > 5 ? `<p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">+ ${leads.length - 5} more leads</p>` : ""}
-              
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
-                <tr>
-                  <td align="center">
-                    <a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                      View All Leads
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 8px 8px;">
-              <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">RehabLookup</p>
-              <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Connecting families with trusted treatment providers</p>
-              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd; text-decoration: underline;">Notification settings</a> · <a href="mailto:support@rehablookup.com" style="color: #93c5fd; text-decoration: underline;">Support</a>
-              </p>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-      `;
+      const emailHtml = generateDigestEmail(
+        profile.first_name || "there",
+        digestType,
+        periodText,
+        leads,
+        facilityNameMap,
+        usedLeads,
+        leadLimit,
+        remainingLeads
+      );
 
       try {
         await resend.emails.send({

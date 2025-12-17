@@ -61,7 +61,7 @@ function calculateCompletion(facility: FacilityWithProfile): CompletionStatus {
 function generateReminderEmail(firstName: string, facilityName: string, completion: CompletionStatus, dashboardUrl: string): string {
   const missingItemsHtml = completion.missingItems
     .slice(0, 3)
-    .map(item => `<li style="margin-bottom: 6px; color: #4b5563; font-size: 14px;">${item}</li>`)
+    .map(item => `<li style="margin-bottom: 8px; color: hsl(215, 19%, 35%); font-size: 14px; line-height: 1.5;">${item}</li>`)
     .join("");
 
   return `
@@ -69,47 +69,60 @@ function generateReminderEmail(firstName: string, facilityName: string, completi
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+<body style="margin: 0; padding: 0; background-color: hsl(210, 20%, 96%);">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: hsl(210, 20%, 96%); padding: 32px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
           
+          <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 24px 32px; border-radius: 8px 8px 0 0;">
-              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
-              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                Complete Your Profile
-              </h1>
+            <td style="background: linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup</p>
+                    <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">
+                      Complete Your Profile
+                    </h1>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           
+          <!-- Content -->
           <tr>
-            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+            <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
               
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+              <p style="margin: 0 0 20px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
                 Hi ${firstName},
               </p>
               
-              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+              <p style="margin: 0 0 24px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
                 Your listing for <strong>${facilityName}</strong> is ${completion.percentage}% complete. Finishing your profile helps families find and trust your facility.
               </p>
               
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 6px; margin-bottom: 24px;">
+              <!-- Progress Section -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border-radius: 8px; margin-bottom: 24px;">
                 <tr>
-                  <td style="padding: 20px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
+                  <td style="padding: 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td width="60" valign="top">
-                          <div style="background: #1B365D; color: #fff; border-radius: 50%; width: 48px; height: 48px; text-align: center; line-height: 48px; font-weight: 600; font-size: 16px;">
-                            ${completion.percentage}%
-                          </div>
+                        <td width="70" valign="top">
+                          <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td style="background: hsl(217, 54%, 23%); color: hsl(0, 0%, 100%); border-radius: 50%; width: 56px; height: 56px; text-align: center; vertical-align: middle; font-weight: 700; font-size: 16px;">
+                                ${completion.percentage}%
+                              </td>
+                            </tr>
+                          </table>
                         </td>
                         <td valign="top" style="padding-left: 16px;">
-                          <p style="margin: 0 0 12px 0; font-weight: 600; color: #1B365D; font-size: 15px;">To improve your listing:</p>
-                          <ul style="margin: 0; padding-left: 18px;">
+                          <p style="margin: 0 0 12px 0; font-weight: 600; color: hsl(217, 54%, 23%); font-size: 15px;">To improve your listing:</p>
+                          <ul style="margin: 0; padding-left: 20px;">
                             ${missingItemsHtml}
                           </ul>
                         </td>
@@ -119,14 +132,22 @@ function generateReminderEmail(firstName: string, facilityName: string, completi
                 </tr>
               </table>
               
-              <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px;">
-                Complete profiles receive up to 3x more inquiries from families seeking treatment.
-              </p>
+              <!-- Tip -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(45, 93%, 95%); border: 1px solid hsl(45, 93%, 85%); border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0; color: hsl(32, 81%, 29%); font-size: 14px; line-height: 1.5;">
+                      💡 <strong>Tip:</strong> Complete profiles receive up to 3x more inquiries from families seeking treatment.
+                    </p>
+                  </td>
+                </tr>
+              </table>
               
-              <table width="100%" cellpadding="0" cellspacing="0">
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <a href="${dashboardUrl}/listing" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                    <a href="${dashboardUrl}/listing" style="display: inline-block; background: hsl(217, 54%, 23%); color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
                       Complete Your Profile
                     </a>
                   </td>
@@ -136,11 +157,31 @@ function generateReminderEmail(firstName: string, facilityName: string, completi
             </td>
           </tr>
           
+          <!-- Footer -->
           <tr>
-            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
-              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                RehabLookup | <a href="${dashboardUrl}/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
-              </p>
+            <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">RehabLookup</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Connecting families with trusted treatment providers</p>
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding: 0 8px;">
+                          <a href="${dashboardUrl}/settings" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Notification Settings</a>
+                        </td>
+                        <td style="color: hsla(0, 0%, 100%, 0.4); font-size: 12px;">|</td>
+                        <td style="padding: 0 8px;">
+                          <a href="mailto:help@rehablookup.com" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Contact Support</a>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin: 16px 0 0 0; font-size: 11px; color: hsla(0, 0%, 100%, 0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           
@@ -264,7 +305,7 @@ const handler = async (req: Request): Promise<Response> => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "RehabLookup <noreply@resend.dev>",
+            from: "RehabLookup <no-reply@rehablookup.com>",
             to: [profile.email],
             subject: `Your ${facility.name} profile is ${completion.percentage}% complete`,
             html: emailHtml,

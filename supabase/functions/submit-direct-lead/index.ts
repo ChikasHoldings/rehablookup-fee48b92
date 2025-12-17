@@ -42,7 +42,7 @@ async function hashIP(ip: string): Promise<string> {
   return hashArray.slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-// Direct lead email template
+// Direct lead email template for provider
 function getDirectLeadEmail(
   facilityName: string,
   leadFirstName: string,
@@ -68,8 +68,8 @@ function getDirectLeadEmail(
   
   const messageSection = message ? `
     <tr>
-      <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Message:</td>
-      <td style="padding: 10px 0; color: #374151;">${message}</td>
+      <td style="padding: 12px 0; color: hsl(220, 9%, 46%); vertical-align: top; font-size: 14px;">Message:</td>
+      <td style="padding: 12px 0; color: hsl(215, 19%, 35%); font-size: 14px; line-height: 1.5;">${message}</td>
     </tr>
   ` : '';
   
@@ -78,81 +78,282 @@ function getDirectLeadEmail(
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">📞 Direct Profile Inquiry</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">Someone reached out directly from your profile</p>
-  </div>
-  
-  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
-    <p style="font-size: 14px; color: #6b7280; margin: 0 0 20px 0;">
-      Received on ${currentDate}
-    </p>
-    
-    <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-      <p style="margin: 0; color: #166534; font-weight: 600; font-size: 14px;">
-        💚 This is a direct inquiry from your public profile - the user specifically chose ${facilityName}!
-      </p>
-    </div>
-    
-    <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #1B365D;">Contact Details</h2>
-      
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; width: 140px; vertical-align: top;">Name:</td>
-          <td style="padding: 10px 0; font-weight: 600; font-size: 16px;">${fullName}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Phone:</td>
-          <td style="padding: 10px 0;">
-            <a href="tel:${leadPhone}" style="color: #1B365D; text-decoration: none; font-weight: 600; font-size: 16px;">${leadPhone}</a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Email:</td>
-          <td style="padding: 10px 0;">
-            <a href="mailto:${leadEmail}" style="color: #1B365D; text-decoration: none;">${leadEmail}</a>
-          </td>
-        </tr>
-        ${messageSection}
-      </table>
-    </div>
-    
-    <div style="text-align: center; margin-top: 28px;">
-      <a href="tel:${leadPhone}" style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; margin-right: 12px;">
-        📞 Call Now
-      </a>
-      <a href="mailto:${leadEmail}" style="display: inline-block; background: #fff; color: #1B365D; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; border: 2px solid #1B365D;">
-        ✉️ Send Email
-      </a>
-    </div>
-    
-    <div style="text-align: center; margin-top: 16px;">
-      <a href="${dashboardUrl}" style="display: inline-block; color: #6b7280; padding: 12px 32px; text-decoration: none; font-size: 14px;">
-        View in Dashboard →
-      </a>
-    </div>
-    
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
-    
-    <div style="background: #f0fdf4; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-      <p style="margin: 0; color: #166534; font-size: 13px;">
-        <strong>Note:</strong> Direct profile inquiries do not count toward your monthly lead limits. They're unlimited for all plans!
-      </p>
-    </div>
-    
-    <p style="font-size: 13px; color: #9ca3af; text-align: center; margin: 0;">
-      This inquiry was submitted via your profile on <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a>
-    </p>
-  </div>
+<body style="margin: 0; padding: 0; background-color: hsl(210, 20%, 96%);">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: hsl(210, 20%, 96%); padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(142, 76%, 29%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup</p>
+                    <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">📞 Direct Profile Inquiry</h1>
+                    <p style="margin: 8px 0 0 0; font-size: 15px; color: hsla(0, 0%, 100%, 0.9); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Someone reached out directly from your profile</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
+              
+              <p style="font-size: 14px; color: hsl(220, 9%, 46%); margin: 0 0 24px 0;">
+                Received on ${currentDate}
+              </p>
+              
+              <!-- Success callout -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(141, 79%, 85%); border: 1px solid hsl(142, 69%, 58%); border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0; color: hsl(143, 64%, 24%); font-weight: 600; font-size: 14px; line-height: 1.5;">
+                      💚 This is a direct inquiry from your public profile - the user specifically chose ${facilityName}!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Contact Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <h2 style="margin: 0 0 20px 0; font-size: 18px; color: hsl(217, 54%, 23%); font-weight: 600;">Contact Details</h2>
+                    
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding: 12px 0; color: hsl(220, 9%, 46%); width: 100px; vertical-align: top; font-size: 14px;">Name:</td>
+                        <td style="padding: 12px 0; font-weight: 600; font-size: 16px; color: hsl(215, 19%, 35%);">${fullName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; color: hsl(220, 9%, 46%); vertical-align: top; font-size: 14px;">Phone:</td>
+                        <td style="padding: 12px 0;">
+                          <a href="tel:${leadPhone}" style="color: hsl(217, 54%, 23%); text-decoration: none; font-weight: 600; font-size: 16px;">${leadPhone}</a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 12px 0; color: hsl(220, 9%, 46%); vertical-align: top; font-size: 14px;">Email:</td>
+                        <td style="padding: 12px 0;">
+                          <a href="mailto:${leadEmail}" style="color: hsl(217, 54%, 23%); text-decoration: none; font-size: 14px;">${leadEmail}</a>
+                        </td>
+                      </tr>
+                      ${messageSection}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Action buttons -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td align="center">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding-right: 12px;">
+                          <a href="tel:${leadPhone}" style="display: inline-block; background: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(142, 76%, 29%) 100%); color: hsl(0, 0%, 100%); padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                            📞 Call Now
+                          </a>
+                        </td>
+                        <td>
+                          <a href="mailto:${leadEmail}" style="display: inline-block; background: hsl(0, 0%, 100%); color: hsl(217, 54%, 23%); padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; border: 2px solid hsl(217, 54%, 23%);">
+                            ✉️ Send Email
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; color: hsl(220, 9%, 46%); padding: 12px 32px; text-decoration: none; font-size: 14px;">
+                      View in Dashboard →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Divider -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 28px 0;">
+                <tr>
+                  <td style="border-top: 1px solid hsl(220, 13%, 91%);"></td>
+                </tr>
+              </table>
+              
+              <!-- Note -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(138, 76%, 97%); border-radius: 8px;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0; color: hsl(143, 64%, 24%); font-size: 13px; line-height: 1.5;">
+                      <strong>Note:</strong> Direct profile inquiries do not count toward your monthly lead limits. They're unlimited for all plans!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">RehabLookup</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Connecting families with trusted treatment providers</p>
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding: 0 8px;">
+                          <a href="https://rehablookup.com/privacy-policy" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Privacy Policy</a>
+                        </td>
+                        <td style="color: hsla(0, 0%, 100%, 0.4); font-size: 12px;">|</td>
+                        <td style="padding: 0 8px;">
+                          <a href="https://rehablookup.com/terms-of-service" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Terms of Service</a>
+                        </td>
+                        <td style="color: hsla(0, 0%, 100%, 0.4); font-size: 12px;">|</td>
+                        <td style="padding: 0 8px;">
+                          <a href="mailto:help@rehablookup.com" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Contact Support</a>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin: 16px 0 0 0; font-size: 11px; color: hsla(0, 0%, 100%, 0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `;
   
   return { subject, html };
+}
+
+// User confirmation email template
+function getUserConfirmationEmail(
+  firstName: string,
+  facilityName: string
+): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: hsl(210, 20%, 96%);">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: hsl(210, 20%, 96%); padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup</p>
+                    <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">Request Received</h1>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
+              
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: hsl(215, 19%, 35%); line-height: 1.6;">
+                Hi ${firstName},
+              </p>
+              
+              <p style="margin: 0 0 24px 0; font-size: 16px; color: hsl(215, 19%, 35%); line-height: 1.6;">
+                We've forwarded your request to <strong>${facilityName}</strong>. They may contact you soon to discuss how they can help.
+              </p>
+              
+              <!-- What happens next -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(138, 76%, 97%); border-radius: 8px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 12px 0; color: hsl(143, 64%, 24%); font-weight: 600; font-size: 15px;">What happens next?</p>
+                    <ul style="margin: 0; padding-left: 20px; color: hsl(143, 64%, 24%); font-size: 14px; line-height: 1.6;">
+                      <li style="margin-bottom: 8px;">A representative from ${facilityName} may reach out by phone or email</li>
+                      <li style="margin-bottom: 8px;">There's no obligation to proceed</li>
+                      <li>Feel free to explore other options while you wait</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: hsl(220, 9%, 46%); line-height: 1.6;">
+                If you have questions, visit <a href="https://rehablookup.com" style="color: hsl(217, 54%, 23%); text-decoration: none; font-weight: 500;">RehabLookup.com</a> or contact us at <a href="mailto:help@rehablookup.com" style="color: hsl(217, 54%, 23%); text-decoration: none; font-weight: 500;">help@rehablookup.com</a>.
+              </p>
+              
+              <p style="margin: 24px 0 0 0; font-size: 15px; color: hsl(215, 19%, 35%); line-height: 1.6;">
+                Warm regards,<br>
+                <strong>The RehabLookup Team</strong>
+              </p>
+              
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">RehabLookup</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Connecting families with trusted treatment providers</p>
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding: 0 8px;">
+                          <a href="https://rehablookup.com/privacy-policy" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Privacy Policy</a>
+                        </td>
+                        <td style="color: hsla(0, 0%, 100%, 0.4); font-size: 12px;">|</td>
+                        <td style="padding: 0 8px;">
+                          <a href="https://rehablookup.com/terms-of-service" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Terms of Service</a>
+                        </td>
+                        <td style="color: hsla(0, 0%, 100%, 0.4); font-size: 12px;">|</td>
+                        <td style="padding: 0 8px;">
+                          <a href="mailto:help@rehablookup.com" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Contact Us</a>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin: 16px 0 0 0; font-size: 11px; color: hsla(0, 0%, 100%, 0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -272,11 +473,6 @@ const handler = async (req: Request): Promise<Response> => {
     const providerEmail = profile?.email || facility.email;
 
     // Create the lead record
-    // Direct leads are:
-    // - source = "provider_profile_direct"
-    // - qualified = true (auto-qualified as direct inquiry)
-    // - assignment_status = "assigned" (directly assigned to this provider)
-    // - Does NOT count toward qualified lead caps
     const { data: lead, error: leadError } = await supabase
       .from("leads")
       .insert({
@@ -288,7 +484,7 @@ const handler = async (req: Request): Promise<Response> => {
         preferred_contact: "call",
         source: "provider_profile_direct",
         qualified: true,
-        email_verified: false, // Direct leads skip email verification
+        email_verified: false,
         validation_status: "valid",
         assignment_status: "assigned",
         assignment_reason: "Direct profile inquiry",
@@ -338,7 +534,6 @@ const handler = async (req: Request): Promise<Response> => {
         console.log("Provider notification email sent to:", providerEmail);
       } catch (emailError) {
         console.error("Failed to send provider email:", emailError);
-        // Non-blocking - lead is still created
       }
     }
 
@@ -360,36 +555,7 @@ const handler = async (req: Request): Promise<Response> => {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [email],
           subject: `We've sent your request to ${body.facilityName}`,
-          html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">Request Received</h1>
-  </div>
-  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
-    <p style="font-size: 16px; color: #374151;">Hi ${firstName},</p>
-    <p style="font-size: 16px; color: #374151;">
-      We've forwarded your request to <strong>${body.facilityName}</strong>. They may contact you soon to discuss how they can help.
-    </p>
-    <div style="background: #f0fdf4; border-radius: 8px; padding: 16px; margin: 24px 0;">
-      <p style="margin: 0; color: #166534; font-size: 14px;">
-        <strong>What happens next?</strong><br>
-        A representative from ${body.facilityName} may reach out by phone or email. There's no obligation to proceed.
-      </p>
-    </div>
-    <p style="font-size: 14px; color: #6b7280;">
-      If you have questions, visit <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a> or reply to this email.
-    </p>
-    <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
-      Warm regards,<br>
-      The RehabLookup Team
-    </p>
-  </div>
-</body>
-</html>
-          `,
+          html: getUserConfirmationEmail(firstName, body.facilityName),
         });
         console.log("User confirmation email sent to:", email);
       } catch (userEmailError) {
