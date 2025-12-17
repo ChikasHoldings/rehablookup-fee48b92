@@ -240,111 +240,130 @@ serve(async (req) => {
       const highRiskProviders = atRiskProviders.filter(p => p.riskScore >= 50);
       
       if (highRiskProviders.length > 0) {
-        // Get admin emails
+        // Get admin users with subscription change notifications enabled
         const { data: adminRoles } = await supabaseClient
           .from("user_roles")
           .select("user_id")
           .eq("role", "admin");
 
         if (adminRoles && adminRoles.length > 0) {
+          // Get admin profiles with notification preferences
           const { data: adminProfiles } = await supabaseClient
-            .from("profiles")
-            .select("email")
+            .from("admin_user_profiles")
+            .select("user_id, notify_subscription_changes")
             .in("user_id", adminRoles.map(r => r.user_id));
 
-          if (adminProfiles && adminProfiles.length > 0) {
-            const adminEmails = adminProfiles.map(p => p.email);
+          // Filter admins who have notify_subscription_changes enabled (default true)
+          const eligibleAdminIds = adminRoles
+            .filter(role => {
+              const profile = adminProfiles?.find(p => p.user_id === role.user_id);
+              return !profile || profile.notify_subscription_changes !== false;
+            })
+            .map(r => r.user_id);
 
-            const emailHtml = `
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                    .header { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center; }
-                    .content { background: #fff; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px; }
-                    .provider-card { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin: 12px 0; }
-                    .risk-badge { display: inline-block; background: #dc2626; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-                    .risk-medium { background: #f59e0b; }
-                    .factor-list { margin: 8px 0; padding-left: 20px; }
-                    .factor-item { color: #6b7280; font-size: 13px; margin: 4px 0; }
-                    .cta-button { display: inline-block; background: #1B365D; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 16px; }
-                    .footer { text-align: center; margin-top: 24px; color: #6b7280; font-size: 12px; }
-                  </style>
-                </head>
-                <body>
-                  <div class="container">
-                    <div class="header">
-                      <h1 style="margin: 0; font-size: 24px;">⚠️ Provider Health Alert</h1>
-                      <p style="margin: 8px 0 0 0; opacity: 0.9;">${highRiskProviders.length} provider(s) showing signs of churn risk</p>
-                    </div>
-                    <div class="content">
-                      <p>The following providers have been flagged as at-risk based on their usage patterns:</p>
-                      
-                      ${highRiskProviders.slice(0, 5).map(p => `
-                        <div class="provider-card">
-                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong>${p.facilityName}</strong>
-                            <span class="risk-badge ${p.riskScore < 70 ? 'risk-medium' : ''}">Risk: ${p.riskScore}</span>
+          if (eligibleAdminIds.length > 0) {
+            const adminEmails: string[] = [];
+            for (const userId of eligibleAdminIds) {
+              const { data: userData } = await supabaseClient.auth.admin.getUserById(userId);
+              if (userData?.user?.email) {
+                adminEmails.push(userData.user.email);
+              }
+            }
+
+            if (adminEmails.length > 0) {
+              const emailHtml = `
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <style>
+                      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                      .header { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center; }
+                      .content { background: #fff; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px; }
+                      .provider-card { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin: 12px 0; }
+                      .risk-badge { display: inline-block; background: #dc2626; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+                      .risk-medium { background: #f59e0b; }
+                      .factor-list { margin: 8px 0; padding-left: 20px; }
+                      .factor-item { color: #6b7280; font-size: 13px; margin: 4px 0; }
+                      .cta-button { display: inline-block; background: #1B365D; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 16px; }
+                      .footer { text-align: center; margin-top: 24px; color: #6b7280; font-size: 12px; }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="container">
+                      <div class="header">
+                        <h1 style="margin: 0; font-size: 24px;">⚠️ Provider Health Alert</h1>
+                        <p style="margin: 8px 0 0 0; opacity: 0.9;">${highRiskProviders.length} provider(s) showing signs of churn risk</p>
+                      </div>
+                      <div class="content">
+                        <p>The following providers have been flagged as at-risk based on their usage patterns:</p>
+                        
+                        ${highRiskProviders.slice(0, 5).map(p => `
+                          <div class="provider-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                              <strong>${p.facilityName}</strong>
+                              <span class="risk-badge ${p.riskScore < 70 ? 'risk-medium' : ''}">Risk: ${p.riskScore}</span>
+                            </div>
+                            <div style="color: #6b7280; font-size: 13px; margin-bottom: 8px;">
+                              ${p.email} • ${p.plan} Plan
+                            </div>
+                            <ul class="factor-list">
+                              ${p.riskFactors.map(f => `<li class="factor-item">${f}</li>`).join('')}
+                            </ul>
                           </div>
-                          <div style="color: #6b7280; font-size: 13px; margin-bottom: 8px;">
-                            ${p.email} • ${p.plan} Plan
-                          </div>
-                          <ul class="factor-list">
-                            ${p.riskFactors.map(f => `<li class="factor-item">${f}</li>`).join('')}
-                          </ul>
-                        </div>
-                      `).join('')}
-                      
-                      ${highRiskProviders.length > 5 ? `
-                        <p style="color: #6b7280; font-size: 13px; text-align: center;">
-                          + ${highRiskProviders.length - 5} more at-risk providers
+                        `).join('')}
+                        
+                        ${highRiskProviders.length > 5 ? `
+                          <p style="color: #6b7280; font-size: 13px; text-align: center;">
+                            + ${highRiskProviders.length - 5} more at-risk providers
+                          </p>
+                        ` : ''}
+
+                        <p style="color: #4b5563; margin-top: 16px;">
+                          <strong>Recommended Actions:</strong>
                         </p>
-                      ` : ''}
+                        <ul style="color: #4b5563; margin: 0; padding-left: 20px;">
+                          <li>Reach out to high-risk providers personally</li>
+                          <li>Offer assistance with lead management</li>
+                          <li>Consider retention incentives for at-risk accounts</li>
+                        </ul>
 
-                      <p style="color: #4b5563; margin-top: 16px;">
-                        <strong>Recommended Actions:</strong>
-                      </p>
-                      <ul style="color: #4b5563; margin: 0; padding-left: 20px;">
-                        <li>Reach out to high-risk providers personally</li>
-                        <li>Offer assistance with lead management</li>
-                        <li>Consider retention incentives for at-risk accounts</li>
-                      </ul>
-
-                      <div style="text-align: center;">
-                        <a href="${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app')}/admin/subscriptions" class="cta-button">
-                          View At-Risk Providers
-                        </a>
+                        <div style="text-align: center;">
+                          <a href="${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app')}/admin/subscriptions" class="cta-button">
+                            View At-Risk Providers
+                          </a>
+                        </div>
+                      </div>
+                      <div class="footer">
+                        <p>This is an automated alert from RehabLookup Admin. You can manage notification preferences in your profile settings.</p>
                       </div>
                     </div>
-                    <div class="footer">
-                      <p>This is an automated alert from RehabLookup Admin</p>
-                    </div>
-                  </div>
-                </body>
-              </html>
-            `;
+                  </body>
+                </html>
+              `;
 
-            try {
-              await resend.emails.send({
-                from: "RehabLookup Admin <no-reply@rehablookup.com>",
-                to: adminEmails,
-                subject: `⚠️ ${highRiskProviders.length} Provider(s) At Risk of Churning`,
-                html: emailHtml,
-              });
+              try {
+                await resend.emails.send({
+                  from: "RehabLookup Admin <no-reply@rehablookup.com>",
+                  to: adminEmails,
+                  subject: `⚠️ ${highRiskProviders.length} Provider(s) At Risk of Churning`,
+                  html: emailHtml,
+                });
 
-              logStep("Alert email sent", { adminCount: adminEmails.length });
+                logStep("Alert email sent", { adminCount: adminEmails.length });
 
-              // Record that we sent this alert
-              await supabaseClient.from("subscription_alerts").insert({
-                alert_type: "provider_health",
-                alert_key: alertKey,
-                user_id: adminRoles[0].user_id,
-              });
-            } catch (emailError) {
-              logStep("Failed to send email", { error: String(emailError) });
+                // Record that we sent this alert
+                await supabaseClient.from("subscription_alerts").insert({
+                  alert_type: "provider_health",
+                  alert_key: alertKey,
+                  user_id: adminRoles[0].user_id,
+                });
+              } catch (emailError) {
+                logStep("Failed to send email", { error: String(emailError) });
+              }
             }
+          } else {
+            logStep("No admins have subscription change notifications enabled");
           }
         }
       }

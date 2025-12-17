@@ -182,63 +182,99 @@ Deno.serve(async (req) => {
 
     // Send email alert if Resend is configured and there are new alerts or blocks
     if (resendApiKey && (newAlerts.length > 0 || autoBlockedIPs.length > 0)) {
-      const resend = new Resend(resendApiKey);
-      
-      const alertSummary = newAlerts
-        .map((a) => `• ${a.identifier}: ${a.count} failed ${a.action_type} attempts`)
-        .join("\n");
+      // Get admin users with security notifications enabled
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin");
 
-      const blockSummary = autoBlockedIPs
-        .map((ip) => `• ${ip} (blocked for ${BLOCK_DURATION_HOURS} hours)`)
-        .join("\n");
+      if (adminRoles && adminRoles.length > 0) {
+        // Get admin profiles with notification preferences
+        const { data: adminProfiles } = await supabase
+          .from("admin_user_profiles")
+          .select("user_id, notify_security_events")
+          .in("user_id", adminRoles.map(r => r.user_id));
 
-      try {
-        await resend.emails.send({
-          from: "RehabLookup Security <no-reply@rehablookup.com>",
-          to: ["help@rehablookup.com"],
-          subject: `⚠️ Security Alert: ${autoBlockedIPs.length > 0 ? `${autoBlockedIPs.length} IP(s) Auto-Blocked` : "Brute Force Attack Detected"}`,
-          html: `
-            <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 20px; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0; font-size: 20px;">⚠️ Security Alert</h1>
-              </div>
-              <div style="background: #fef2f2; padding: 20px; border: 1px solid #fecaca; border-top: none; border-radius: 0 0 8px 8px;">
-                <p style="color: #991b1b; font-weight: 600; margin-top: 0;">Potential brute force attack detected on RehabLookup.</p>
-                
-                ${autoBlockedIPs.length > 0 ? `
-                <div style="background: #fef3c7; padding: 15px; border-radius: 6px; border: 1px solid #fcd34d; margin: 15px 0;">
-                  <p style="color: #92400e; font-weight: 600; margin: 0 0 10px 0;">🛡️ Auto-Blocked IP Addresses:</p>
-                  <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 14px; color: #78350f;">${blockSummary}</pre>
-                  <p style="color: #92400e; font-size: 12px; margin: 10px 0 0 0;">These IPs have been automatically blocked for ${BLOCK_DURATION_HOURS} hours.</p>
-                </div>
-                ` : ''}
-                
-                ${newAlerts.length > 0 ? `
-                <p style="color: #7f1d1d;">The following identifiers have exceeded ${ALERT_THRESHOLD} failed login attempts in the last hour:</p>
-                <div style="background: white; padding: 15px; border-radius: 6px; border: 1px solid #fecaca; margin: 15px 0;">
-                  <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 14px; color: #7f1d1d;">${alertSummary}</pre>
-                </div>
-                ` : ''}
-                
-                <p style="color: #7f1d1d; font-size: 14px;">
-                  <strong>Actions Taken:</strong><br>
-                  ${autoBlockedIPs.length > 0 ? `✓ ${autoBlockedIPs.length} IP address(es) auto-blocked for ${BLOCK_DURATION_HOURS} hours<br>` : ''}
-                  ✓ Admin notifications created<br><br>
-                  <strong>Recommended Follow-up:</strong><br>
-                  1. Review the Security Logs page in the admin panel<br>
-                  2. Verify no accounts were compromised<br>
-                  3. Consider extending block duration if needed
-                </p>
-                <p style="color: #9ca3af; font-size: 12px; margin-bottom: 0; margin-top: 20px;">
-                  This is an automated security alert from RehabLookup.
-                </p>
-              </div>
-            </div>
-          `,
-        });
-        console.log("[CHECK-BRUTE-FORCE] Email alert sent successfully");
-      } catch (emailError) {
-        console.error("[CHECK-BRUTE-FORCE] Failed to send email alert:", emailError);
+        // Filter admins who have notify_security_events enabled (default true)
+        const eligibleAdminIds = adminRoles
+          .filter(role => {
+            const profile = adminProfiles?.find(p => p.user_id === role.user_id);
+            return !profile || profile.notify_security_events !== false;
+          })
+          .map(r => r.user_id);
+
+        if (eligibleAdminIds.length > 0) {
+          const adminEmails: string[] = [];
+          for (const userId of eligibleAdminIds) {
+            const { data: userData } = await supabase.auth.admin.getUserById(userId);
+            if (userData?.user?.email) {
+              adminEmails.push(userData.user.email);
+            }
+          }
+
+          if (adminEmails.length > 0) {
+            const resend = new Resend(resendApiKey);
+            
+            const alertSummary = newAlerts
+              .map((a) => `• ${a.identifier}: ${a.count} failed ${a.action_type} attempts`)
+              .join("\n");
+
+            const blockSummary = autoBlockedIPs
+              .map((ip) => `• ${ip} (blocked for ${BLOCK_DURATION_HOURS} hours)`)
+              .join("\n");
+
+            try {
+              await resend.emails.send({
+                from: "RehabLookup Security <no-reply@rehablookup.com>",
+                to: adminEmails,
+                subject: `⚠️ Security Alert: ${autoBlockedIPs.length > 0 ? `${autoBlockedIPs.length} IP(s) Auto-Blocked` : "Brute Force Attack Detected"}`,
+                html: `
+                  <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 20px; border-radius: 8px 8px 0 0;">
+                      <h1 style="color: white; margin: 0; font-size: 20px;">⚠️ Security Alert</h1>
+                    </div>
+                    <div style="background: #fef2f2; padding: 20px; border: 1px solid #fecaca; border-top: none; border-radius: 0 0 8px 8px;">
+                      <p style="color: #991b1b; font-weight: 600; margin-top: 0;">Potential brute force attack detected on RehabLookup.</p>
+                      
+                      ${autoBlockedIPs.length > 0 ? `
+                      <div style="background: #fef3c7; padding: 15px; border-radius: 6px; border: 1px solid #fcd34d; margin: 15px 0;">
+                        <p style="color: #92400e; font-weight: 600; margin: 0 0 10px 0;">🛡️ Auto-Blocked IP Addresses:</p>
+                        <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 14px; color: #78350f;">${blockSummary}</pre>
+                        <p style="color: #92400e; font-size: 12px; margin: 10px 0 0 0;">These IPs have been automatically blocked for ${BLOCK_DURATION_HOURS} hours.</p>
+                      </div>
+                      ` : ''}
+                      
+                      ${newAlerts.length > 0 ? `
+                      <p style="color: #7f1d1d;">The following identifiers have exceeded ${ALERT_THRESHOLD} failed login attempts in the last hour:</p>
+                      <div style="background: white; padding: 15px; border-radius: 6px; border: 1px solid #fecaca; margin: 15px 0;">
+                        <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 14px; color: #7f1d1d;">${alertSummary}</pre>
+                      </div>
+                      ` : ''}
+                      
+                      <p style="color: #7f1d1d; font-size: 14px;">
+                        <strong>Actions Taken:</strong><br>
+                        ${autoBlockedIPs.length > 0 ? `✓ ${autoBlockedIPs.length} IP address(es) auto-blocked for ${BLOCK_DURATION_HOURS} hours<br>` : ''}
+                        ✓ Admin notifications created<br><br>
+                        <strong>Recommended Follow-up:</strong><br>
+                        1. Review the Security Logs page in the admin panel<br>
+                        2. Verify no accounts were compromised<br>
+                        3. Consider extending block duration if needed
+                      </p>
+                      <p style="color: #9ca3af; font-size: 12px; margin-bottom: 0; margin-top: 20px;">
+                        This is an automated security alert from RehabLookup. You can manage notification preferences in your profile settings.
+                      </p>
+                    </div>
+                  </div>
+                `,
+              });
+              console.log(`[CHECK-BRUTE-FORCE] Email alert sent to ${adminEmails.length} admin(s)`);
+            } catch (emailError) {
+              console.error("[CHECK-BRUTE-FORCE] Failed to send email alert:", emailError);
+            }
+          }
+        } else {
+          console.log("[CHECK-BRUTE-FORCE] No admins have security notifications enabled");
+        }
       }
     }
 
