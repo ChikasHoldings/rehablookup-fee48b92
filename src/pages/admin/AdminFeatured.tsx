@@ -111,12 +111,8 @@ export default function AdminFeatured() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "facilities" },
-        (payload) => {
-          console.log("Featured facilities update:", payload.eventType);
+        () => {
           invalidateFeaturedQueries();
-          if (payload.eventType === "UPDATE") {
-            toast.info("Featured status updated", { description: "Data refreshed" });
-          }
         }
       )
       .subscribe();

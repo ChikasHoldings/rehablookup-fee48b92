@@ -212,14 +212,8 @@ export default function AdminProviders() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "facilities" },
-        (payload) => {
-          console.log("Facilities update:", payload.eventType);
+        () => {
           invalidateProviderQueries();
-          if (payload.eventType === "INSERT") {
-            toast.info("New provider registered", { description: "List updated automatically" });
-          } else if (payload.eventType === "UPDATE") {
-            toast.info("Provider updated", { description: "Data refreshed" });
-          }
         }
       )
       .subscribe();
@@ -229,8 +223,7 @@ export default function AdminProviders() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "leads" },
-        (payload) => {
-          console.log("New lead:", payload);
+        () => {
           queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
           queryClient.invalidateQueries({ queryKey: ["admin-provider-leads"] });
         }

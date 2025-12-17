@@ -176,13 +176,8 @@ export default function AdminAnalytics() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'leads' },
-        (payload) => {
-          console.log('Leads update:', payload.eventType);
+        () => {
           invalidateAnalyticsQueries();
-          toast.success('Dashboard updated', { 
-            description: `New ${payload.eventType === 'INSERT' ? 'lead received' : 'lead update'}`,
-            duration: 2000 
-          });
         }
       )
       .subscribe();
@@ -193,8 +188,7 @@ export default function AdminAnalytics() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'facility_views' },
-        (payload) => {
-          console.log('Views update:', payload.eventType);
+        () => {
           invalidateAnalyticsQueries();
         }
       )
@@ -206,8 +200,7 @@ export default function AdminAnalytics() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'facility_interactions' },
-        (payload) => {
-          console.log('Interactions update:', payload.eventType);
+        () => {
           invalidateAnalyticsQueries();
         }
       )
@@ -219,8 +212,7 @@ export default function AdminAnalytics() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'facilities' },
-        (payload) => {
-          console.log('Facilities update:', payload.eventType);
+        () => {
           invalidateAnalyticsQueries();
         }
       )
