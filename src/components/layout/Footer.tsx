@@ -67,7 +67,7 @@ export function Footer() {
               <img 
                 src="/logo-dark.svg" 
                 alt="Rehab-Lookup" 
-                className="h-8 w-auto"
+                className="h-11 w-auto"
               />
             </Link>
             
