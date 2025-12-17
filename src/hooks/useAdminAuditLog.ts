@@ -47,6 +47,11 @@ export const AdminAuditActions = {
   PASSWORD_CHANGED: "password_changed",
   NOTIFICATION_PREFERENCES_UPDATED: "notification_preferences_updated",
   
+  // MFA actions
+  MFA_ENABLED: "mfa_enabled",
+  MFA_DISABLED: "mfa_disabled",
+  MFA_RECOVERY_CODES_REGENERATED: "mfa_recovery_codes_regenerated",
+  
   // Session actions
   SESSION_REVOKED: "session_revoked",
   LOGIN: "login",

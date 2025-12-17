@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 interface TwoFactorSetupDialogProps {
   open: boolean;
@@ -115,13 +116,20 @@ export function TwoFactorSetupDialog({
         setRecoveryCodes(response.data.codes || []);
       }
 
-      // Update admin_user_profiles to mark MFA as enabled
+      // Update admin_user_profiles to mark MFA as enabled and log audit
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
           .from("admin_user_profiles")
           .update({ mfa_enabled: true })
           .eq("user_id", user.id);
+        
+        await logAdminAction({
+          actionType: AdminAuditActions.MFA_ENABLED,
+          targetType: "admin_profile",
+          targetId: user.id,
+          details: { enabledAt: new Date().toISOString() },
+        });
       }
 
       setStep("recovery");
