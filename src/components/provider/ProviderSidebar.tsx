@@ -119,7 +119,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                   to={item.href}
                   onClick={onNavigate}
                   className={cn(
-                    "group flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-sm font-medium transition-all duration-200",
+                    "group flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-base font-medium transition-all duration-200",
                     isActive 
                       ? "bg-primary text-white shadow-sm" 
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -138,7 +138,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                       </span>
                     )}
                   </div>
-                  <span className="truncate flex-1 text-xs sm:text-sm">{item.label}</span>
+                  <span className="truncate flex-1 text-sm sm:text-base">{item.label}</span>
                   {showBadge && (
                     <Badge 
                       variant="secondary" 
