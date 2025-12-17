@@ -62,6 +62,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { IPWhitelistDialog } from "@/components/admin/IPWhitelistDialog";
 import { BlockedIdentifiersDialog } from "@/components/admin/BlockedIdentifiersDialog";
+import { SecurityAlertsPanel } from "@/components/admin/SecurityAlertsPanel";
 
 interface SettingRowProps {
   icon: React.ReactNode;
@@ -1367,6 +1368,9 @@ export default function AdminSettings() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Real-Time Security Alerts */}
+              <SecurityAlertsPanel />
 
               {/* Security Overview */}
               <Card>
