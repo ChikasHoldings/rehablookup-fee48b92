@@ -1,4 +1,4 @@
-import { useState, forwardRef, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,7 +83,7 @@ type PromoCode = {
   created: number;
 };
 
-export const PlanSettingsTab = forwardRef<HTMLDivElement>((_, ref) => {
+export function PlanSettingsTab() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -261,7 +261,7 @@ export const PlanSettingsTab = forwardRef<HTMLDivElement>((_, ref) => {
   };
 
   return (
-    <div ref={ref} className="space-y-6">
+    <div className="space-y-6">
       {/* Plan Overview */}
       <Card>
         <CardHeader>
@@ -660,6 +660,4 @@ export const PlanSettingsTab = forwardRef<HTMLDivElement>((_, ref) => {
       </AlertDialog>
     </div>
   );
-});
-
-PlanSettingsTab.displayName = "PlanSettingsTab";
+}
