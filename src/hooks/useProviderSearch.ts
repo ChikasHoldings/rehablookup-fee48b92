@@ -52,9 +52,14 @@ export function useProviderSearch(query: string, facilityId?: string) {
     staleTime: 60 * 1000,
   });
 
+  // Normalize phone number for search (remove all non-digits)
+  const normalizePhone = (phone: string | null | undefined) => 
+    phone?.replace(/\D/g, "") || "";
+
   // Filter and format results
   const results = useMemo(() => {
     const searchTerm = debouncedQuery.toLowerCase().trim();
+    const normalizedSearchTerm = searchTerm.replace(/\D/g, "");
     
     if (!searchTerm) {
       return { leads: [], pages: [], total: 0 };
@@ -63,10 +68,12 @@ export function useProviderSearch(query: string, facilityId?: string) {
     // Search leads
     const matchedLeads: SearchResult[] = leads
       .filter((lead) => {
+        const phoneMatch = normalizedSearchTerm.length >= 3 && 
+          normalizePhone(lead.phone).includes(normalizedSearchTerm);
         return (
           lead.name?.toLowerCase().includes(searchTerm) ||
           lead.email?.toLowerCase().includes(searchTerm) ||
-          lead.phone?.includes(searchTerm) ||
+          phoneMatch ||
           lead.message?.toLowerCase().includes(searchTerm)
         );
       })
@@ -75,7 +82,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
         id: lead.id,
         type: "lead" as const,
         title: lead.name,
-        subtitle: [lead.location_city_state, lead.status].filter(Boolean).join(" • "),
+        subtitle: [lead.location_city_state, lead.phone, lead.status].filter(Boolean).join(" • "),
         url: `/provider/leads?highlight=${lead.id}`,
         metadata: { status: lead.status, email: lead.email, phone: lead.phone, location: lead.location_city_state },
       }));
