@@ -3,11 +3,10 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ProviderHeader } from "./ProviderHeader";
 import { ProviderSidebar } from "./ProviderSidebar";
+import { MobileBottomNav } from "./MobileBottomNav";
 import { ProviderErrorBoundary } from "./ProviderErrorBoundary";
 import { useToast } from "@/hooks/use-toast";
-import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
 import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -104,6 +103,10 @@ function ProviderShellContent() {
     setSidebarOpen(false);
   }, []);
 
+  const handleMoreClick = useCallback(() => {
+    setSidebarOpen(true);
+  }, []);
+
   // Show loading only on initial auth check
   if (!isAuthChecked || facilityLoading || (isLoading && !providerData)) {
     return (
@@ -149,21 +152,12 @@ function ProviderShellContent() {
           <MemoizedSidebar />
         </aside>
 
-        {/* Mobile Sidebar Sheet */}
+        {/* Mobile Sidebar Sheet - accessed via "More" button */}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetTrigger asChild>
-            <Button 
-              variant="default" 
-              size="icon" 
-              className="lg:hidden fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-            >
-              {sidebarOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
-            </Button>
-          </SheetTrigger>
           <SheetContent side="left" className="w-[280px] sm:w-72 p-0 border-r-0">
             <div className="flex flex-col h-full bg-card">
-              <div className="p-3 sm:p-4 border-b border-border">
-                <p className="font-display font-semibold text-foreground text-sm sm:text-base">Navigation</p>
+              <div className="p-4 border-b border-border">
+                <p className="font-display font-semibold text-foreground">Menu</p>
               </div>
               <div className="flex-1 overflow-y-auto">
                 <MemoizedSidebar onNavigate={handleCloseSidebar} />
@@ -172,13 +166,19 @@ function ProviderShellContent() {
           </SheetContent>
         </Sheet>
 
-        {/* Main Content Area - Outlet renders child routes */}
-        <main ref={mainContentRef} className="flex-1 overflow-y-auto bg-muted/30">
+        {/* Main Content Area - with bottom padding on mobile for nav bar */}
+        <main 
+          ref={mainContentRef} 
+          className="flex-1 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
+        >
           <ProviderErrorBoundary>
             <Outlet />
           </ProviderErrorBoundary>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation - PWA style */}
+      <MobileBottomNav onMoreClick={handleMoreClick} />
     </div>
   );
 }
