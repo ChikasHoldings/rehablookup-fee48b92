@@ -108,7 +108,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
       <div className="h-16 md:h-[72px] max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left - Logo & Facility Selector */}
-        <div className="flex items-center min-w-0 gap-2 sm:gap-3">
+        <div className="flex items-center min-w-0 gap-1.5 sm:gap-2">
           <div className="flex items-center shrink-0">
             <img 
               src="/logo-dark.svg" 
@@ -117,12 +117,10 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             />
           </div>
           
-          <div className="hidden md:block h-8 w-px bg-white/30 mx-2 lg:mx-3" />
+          <div className="hidden md:block h-8 w-px bg-white/30 mx-1 lg:mx-2" />
           
           {/* Enhanced Location Dropdown */}
-          <div className="md:ml-0">
-            <FacilityLocationDropdown />
-          </div>
+          <FacilityLocationDropdown />
         </div>
 
         {/* Center - Search (Desktop) */}
