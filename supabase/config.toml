@@ -152,3 +152,15 @@ verify_jwt = false
 
 [functions.cleanup-audit-logs]
 verify_jwt = false
+
+[functions.send-provider-welcome-email]
+verify_jwt = false
+
+[functions.manage-mfa-recovery]
+verify_jwt = true
+
+[functions.manage-subscription]
+verify_jwt = true
+
+[functions.validate-promo-code]
+verify_jwt = true
