@@ -384,7 +384,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
           <div className="hidden md:block">
             <Button
               variant="ghost"
-              className="relative h-9 w-64 justify-start text-sm text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-600"
+              className="relative h-9 w-64 justify-start text-sm text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-600 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
               onClick={() => setSearchOpen(true)}
             >
               <Search className="h-4 w-4 mr-2 text-slate-300" />
@@ -399,7 +399,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-white hover:bg-slate-800 hover:text-white"
+            className="md:hidden text-white hover:bg-slate-800 hover:text-white transition-all duration-200 hover:scale-105 active:scale-95"
             onClick={() => setSearchOpen(true)}
           >
             <Search className="h-5 w-5" />
@@ -411,7 +411,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative text-white hover:bg-slate-700 hover:text-white transition-colors"
+                className="relative text-white hover:bg-slate-700 hover:text-white transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 <Bell className={`h-5 w-5 transition-transform ${bellAnimating ? "animate-wiggle" : ""}`} />
                 {unreadCount > 0 && (
@@ -519,7 +519,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
           {/* Account Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-slate-700 p-0 transition-colors">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-slate-700 p-0 transition-all duration-200 hover:scale-105 active:scale-95">
                 <Avatar className="h-9 w-9 ring-2 ring-white/20 hover:ring-white/40 transition-all">
                   <AvatarImage 
                     src={adminProfile?.avatar_url || undefined} 
