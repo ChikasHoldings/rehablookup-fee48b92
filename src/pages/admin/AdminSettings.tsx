@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTheme } from "next-themes";
 import {
   Settings,
   Shield,
@@ -27,6 +28,7 @@ import {
   Download,
   Loader2,
 } from "lucide-react";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -120,6 +122,7 @@ const StatusBadge = ({ status, label }: { status: "active" | "inactive" | "warni
 export default function AdminSettings() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("general");
+  const { theme, setTheme } = useTheme();
 
   // Invalidate settings queries helper
   const invalidateSettingsQueries = useCallback(() => {
@@ -205,6 +208,16 @@ export default function AdminSettings() {
     },
   });
 
+  // Sync theme mode from settings when loaded
+  useEffect(() => {
+    if (platformSettings?.theme_mode?.setting_value?.mode) {
+      const savedTheme = platformSettings.theme_mode.setting_value.mode;
+      if (savedTheme !== theme) {
+        setTheme(savedTheme);
+      }
+    }
+  }, [platformSettings, theme, setTheme]);
+
   // Helper to get a setting value
   const getSetting = useCallback((key: string): any => {
     const setting = platformSettings?.[key];
@@ -230,10 +243,24 @@ export default function AdminSettings() {
         }, { onConflict: "setting_key" });
       
       if (error) throw error;
+      
+      // Log the setting change
+      await logAdminAction({
+        actionType: AdminAuditActions.PLATFORM_SETTINGS_UPDATED,
+        targetType: "platform_settings",
+        details: { setting_key: key, new_value: value }
+      });
+      
+      return { key, value };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast.success("Setting updated");
       invalidateSettingsQueries();
+      
+      // If theme was changed, apply it
+      if (result?.key === "theme_mode") {
+        setTheme(result.value?.mode || "light");
+      }
     },
     onError: (error: Error) => {
       toast.error("Failed to update setting", { description: error.message });
@@ -266,8 +293,8 @@ export default function AdminSettings() {
   const { data: edgeFunctionsCount } = useQuery({
     queryKey: ["admin-edge-functions-count"],
     queryFn: async () => {
-      // Based on project structure - count of edge functions
-      return 24;
+      // Based on project structure - count of edge functions (52 deployed)
+      return 52;
     },
   });
 
