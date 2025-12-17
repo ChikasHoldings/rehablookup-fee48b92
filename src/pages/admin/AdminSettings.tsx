@@ -27,6 +27,7 @@ import {
   Activity,
   Download,
   Loader2,
+  Ban,
 } from "lucide-react";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +60,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { IPWhitelistDialog } from "@/components/admin/IPWhitelistDialog";
+import { BlockedIdentifiersDialog } from "@/components/admin/BlockedIdentifiersDialog";
 
 interface SettingRowProps {
   icon: React.ReactNode;
@@ -917,20 +920,20 @@ export default function AdminSettings() {
           ) : (
             <>
               <div className="grid gap-6 lg:grid-cols-2">
-                {/* Authentication */}
+                {/* Two-Factor Authentication */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Lock className="h-5 w-5 text-amber-500" />
-                      Authentication
+                      <Smartphone className="h-5 w-5 text-purple-500" />
+                      Two-Factor Authentication
                     </CardTitle>
-                    <CardDescription>Configure login and access security</CardDescription>
+                    <CardDescription>Configure 2FA enforcement and settings</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-1">
                     <SettingRow
-                      icon={<Smartphone className="h-4 w-4 text-slate-500" />}
-                      title="Two-Factor Authentication"
-                      description="Require 2FA for all admin accounts"
+                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      title="Require 2FA"
+                      description="Enforce 2FA for all admin accounts"
                     >
                       <Switch 
                         checked={getSetting('two_factor_required') === true}
@@ -943,15 +946,15 @@ export default function AdminSettings() {
                     </SettingRow>
                     <Separator />
                     <SettingRow
-                      icon={<Key className="h-4 w-4 text-slate-500" />}
-                      title="Password Requirements"
-                      description="Minimum password strength settings"
+                      icon={<Clock className="h-4 w-4 text-slate-500" />}
+                      title="2FA Grace Period"
+                      description="Days to set up 2FA after enforcement"
                     >
                       <Select 
-                        value={getSetting('password_requirements') || 'strong'}
+                        value={String((getSetting('two_factor_grace_period') as { days?: number })?.days || '3')}
                         onValueChange={(value) => updateSetting.mutate({ 
-                          key: 'password_requirements', 
-                          value 
+                          key: 'two_factor_grace_period', 
+                          value: { days: parseInt(value) } 
                         })}
                         disabled={updateSetting.isPending}
                       >
@@ -959,11 +962,118 @@ export default function AdminSettings() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="strong">Strong</SelectItem>
-                          <SelectItem value="very-strong">Very Strong</SelectItem>
+                          <SelectItem value="0">Immediate</SelectItem>
+                          <SelectItem value="1">1 day</SelectItem>
+                          <SelectItem value="3">3 days</SelectItem>
+                          <SelectItem value="7">7 days</SelectItem>
                         </SelectContent>
                       </Select>
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Key className="h-4 w-4 text-slate-500" />}
+                      title="Recovery Codes"
+                      description="Number of backup codes per user"
+                    >
+                      <Select 
+                        value={String((getSetting('mfa_recovery_codes_count') as { count?: number })?.count || '10')}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'mfa_recovery_codes_count', 
+                          value: { count: parseInt(value) } 
+                        })}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5 codes</SelectItem>
+                          <SelectItem value="10">10 codes</SelectItem>
+                          <SelectItem value="15">15 codes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                  </CardContent>
+                </Card>
+
+                {/* Password Policy */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Lock className="h-5 w-5 text-amber-500" />
+                      Password Policy
+                    </CardTitle>
+                    <CardDescription>Configure password requirements</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <SettingRow
+                      icon={<Key className="h-4 w-4 text-slate-500" />}
+                      title="Minimum Length"
+                      description="Required minimum password length"
+                    >
+                      <Select 
+                        value={String((getSetting('password_min_length') as { length?: number })?.length || '8')}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'password_min_length', 
+                          value: { length: parseInt(value) } 
+                        })}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="8">8 characters</SelectItem>
+                          <SelectItem value="10">10 characters</SelectItem>
+                          <SelectItem value="12">12 characters</SelectItem>
+                          <SelectItem value="16">16 characters</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      title="Require Uppercase"
+                      description="Must include uppercase letters"
+                    >
+                      <Switch 
+                        checked={(getSetting('password_require_uppercase') as { enabled?: boolean })?.enabled !== false}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'password_require_uppercase', 
+                          value: { enabled: checked } 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Activity className="h-4 w-4 text-slate-500" />}
+                      title="Require Numbers"
+                      description="Must include numeric characters"
+                    >
+                      <Switch 
+                        checked={(getSetting('password_require_numbers') as { enabled?: boolean })?.enabled !== false}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'password_require_numbers', 
+                          value: { enabled: checked } 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
+                    </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Key className="h-4 w-4 text-slate-500" />}
+                      title="Require Special Characters"
+                      description="Must include symbols (!@#$%)"
+                    >
+                      <Switch 
+                        checked={(getSetting('password_require_special') as { enabled?: boolean })?.enabled === true}
+                        onCheckedChange={(checked) => updateSetting.mutate({ 
+                          key: 'password_require_special', 
+                          value: { enabled: checked } 
+                        })}
+                        disabled={updateSetting.isPending}
+                      />
                     </SettingRow>
                     <Separator />
                     <SettingRow
@@ -972,10 +1082,10 @@ export default function AdminSettings() {
                       description="Force password change after period"
                     >
                       <Select 
-                        value={getSetting('password_expiry_days') || 'never'}
+                        value={String((getSetting('password_expiry_days') as { days?: number })?.days || 'never')}
                         onValueChange={(value) => updateSetting.mutate({ 
                           key: 'password_expiry_days', 
-                          value 
+                          value: { days: value === 'never' ? null : parseInt(value) } 
                         })}
                         disabled={updateSetting.isPending}
                       >
@@ -992,21 +1102,24 @@ export default function AdminSettings() {
                     </SettingRow>
                   </CardContent>
                 </Card>
+              </div>
 
-                {/* Access Control */}
+              {/* Access Control & IP Management */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* IP Whitelist */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Users className="h-5 w-5 text-blue-500" />
-                      Access Control
+                      <Globe className="h-5 w-5 text-blue-500" />
+                      IP Access Control
                     </CardTitle>
-                    <CardDescription>Manage user permissions and roles</CardDescription>
+                    <CardDescription>Restrict admin panel access by IP address</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-1">
+                  <CardContent className="space-y-4">
                     <SettingRow
                       icon={<Shield className="h-4 w-4 text-slate-500" />}
-                      title="IP Whitelist"
-                      description="Restrict admin access to specific IPs"
+                      title="Enable IP Whitelist"
+                      description="Only allow whitelisted IPs to access admin"
                     >
                       <Switch 
                         checked={getSetting('ip_whitelist_enabled') === true}
@@ -1018,16 +1131,36 @@ export default function AdminSettings() {
                       />
                     </SettingRow>
                     <Separator />
+                    <div className="flex items-center justify-between pt-2">
+                      <div>
+                        <p className="text-sm font-medium">Manage Whitelist</p>
+                        <p className="text-xs text-muted-foreground">Add or remove allowed IP addresses</p>
+                      </div>
+                      <IPWhitelistDialog />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Brute Force Protection */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Ban className="h-5 w-5 text-red-500" />
+                      Brute Force Protection
+                    </CardTitle>
+                    <CardDescription>Automatic lockout and blocking settings</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
                     <SettingRow
                       icon={<Activity className="h-4 w-4 text-slate-500" />}
-                      title="Failed Login Lockout"
-                      description="Max failed attempts before lockout"
+                      title="Failed Login Threshold"
+                      description="Attempts before lockout triggers"
                     >
                       <Select 
-                        value={String(getSetting('failed_login_lockout') || '5')}
+                        value={String((getSetting('failed_login_lockout') as { attempts?: number })?.attempts || '5')}
                         onValueChange={(value) => updateSetting.mutate({ 
                           key: 'failed_login_lockout', 
-                          value: parseInt(value) 
+                          value: { attempts: parseInt(value) } 
                         })}
                         disabled={updateSetting.isPending}
                       >
@@ -1048,10 +1181,10 @@ export default function AdminSettings() {
                       description="How long accounts stay locked"
                     >
                       <Select 
-                        value={String(getSetting('lockout_duration_minutes') || '15')}
+                        value={String((getSetting('lockout_duration_minutes') as { minutes?: number })?.minutes || '15')}
                         onValueChange={(value) => updateSetting.mutate({ 
                           key: 'lockout_duration_minutes', 
-                          value: parseInt(value) 
+                          value: { minutes: parseInt(value) } 
                         })}
                         disabled={updateSetting.isPending}
                       >
@@ -1066,6 +1199,38 @@ export default function AdminSettings() {
                         </SelectContent>
                       </Select>
                     </SettingRow>
+                    <Separator />
+                    <SettingRow
+                      icon={<Shield className="h-4 w-4 text-slate-500" />}
+                      title="Auto-Block Threshold"
+                      description="Block IP after excessive failures"
+                    >
+                      <Select 
+                        value={String((getSetting('auto_block_threshold') as { attempts?: number })?.attempts || '10')}
+                        onValueChange={(value) => updateSetting.mutate({ 
+                          key: 'auto_block_threshold', 
+                          value: { attempts: parseInt(value) } 
+                        })}
+                        disabled={updateSetting.isPending}
+                      >
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10 attempts</SelectItem>
+                          <SelectItem value="15">15 attempts</SelectItem>
+                          <SelectItem value="20">20 attempts</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingRow>
+                    <Separator />
+                    <div className="flex items-center justify-between pt-2">
+                      <div>
+                        <p className="text-sm font-medium">Blocked Identifiers</p>
+                        <p className="text-xs text-muted-foreground">View and manage blocked IPs/emails</p>
+                      </div>
+                      <BlockedIdentifiersDialog />
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -1080,7 +1245,7 @@ export default function AdminSettings() {
                   <CardDescription>Current security feature status</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <div className="p-4 rounded-lg bg-green-50 border border-green-100">
                       <div className="flex items-center gap-2 text-green-700 mb-1">
                         <Shield className="h-4 w-4" />
@@ -1131,6 +1296,18 @@ export default function AdminSettings() {
                         {getSetting('two_factor_required') ? 'All admins must use 2FA' : 'Consider enabling'}
                       </p>
                     </div>
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                      <div className="flex items-center gap-2 text-green-700 mb-1">
+                        <Key className="h-4 w-4" />
+                        <span className="text-sm font-medium">Password Policy</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-700">
+                        {(getSetting('password_min_length') as { length?: number })?.length || 8}+ chars
+                      </p>
+                      <p className="text-xs text-green-600 mt-1">
+                        {(getSetting('password_require_special') as { enabled?: boolean })?.enabled ? 'Complex required' : 'Standard'}
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1158,6 +1335,16 @@ export default function AdminSettings() {
                       <div>
                         <p className="font-medium text-green-800">HTTPS Enforced</p>
                         <p className="text-sm text-green-600">All connections are encrypted with TLS 1.3</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
+                      <CheckCircle className="h-8 w-8 text-green-500" />
+                      <div>
+                        <p className="font-medium text-green-800">Brute Force Protection</p>
+                        <p className="text-sm text-green-600">
+                          Auto-lockout after {(getSetting('failed_login_lockout') as { attempts?: number })?.attempts || 5} failed attempts, 
+                          IP blocked after {(getSetting('auto_block_threshold') as { attempts?: number })?.attempts || 10} attempts
+                        </p>
                       </div>
                     </div>
                     <div className={cn(
@@ -1221,6 +1408,19 @@ export default function AdminSettings() {
                       {getSetting('ip_whitelist_enabled') && (
                         <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>
                       )}
+                    </div>
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-green-50 border border-green-100">
+                      <CheckCircle className="h-8 w-8 text-green-500" />
+                      <div className="flex-1">
+                        <p className="font-medium text-green-800">Password Policy</p>
+                        <p className="text-sm text-green-600">
+                          Min {(getSetting('password_min_length') as { length?: number })?.length || 8} characters
+                          {(getSetting('password_require_uppercase') as { enabled?: boolean })?.enabled !== false && ', uppercase'}
+                          {(getSetting('password_require_numbers') as { enabled?: boolean })?.enabled !== false && ', numbers'}
+                          {(getSetting('password_require_special') as { enabled?: boolean })?.enabled && ', special chars'}
+                        </p>
+                      </div>
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Configured</Badge>
                     </div>
                   </div>
                 </CardContent>
