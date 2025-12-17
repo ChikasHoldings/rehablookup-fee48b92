@@ -155,7 +155,7 @@ type SubscriptionData = {
     current_period_end: string;
     cancel_at_period_end: boolean;
   } | null;
-  payments: Array<{
+  payment_history: Array<{
     id: string;
     amount: number;
     currency: string;
@@ -1510,7 +1510,7 @@ export default function AdminProviders() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {subscriptionData.payments.length > 0 ? (
+                        {subscriptionData.payment_history && subscriptionData.payment_history.length > 0 ? (
                           <div className="border rounded-lg overflow-hidden">
                             <Table>
                               <TableHeader>
@@ -1523,7 +1523,7 @@ export default function AdminProviders() {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {subscriptionData.payments.map((payment) => (
+                                {subscriptionData.payment_history.map((payment) => (
                                   <TableRow key={payment.id}>
                                     <TableCell>
                                       {format(new Date(payment.created), "MMM d, yyyy")}
