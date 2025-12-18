@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 interface OptimizedImageProps {
@@ -13,7 +13,7 @@ interface OptimizedImageProps {
   height?: number;
 }
 
-function OptimizedImageComponent({
+export function OptimizedImage({
   src,
   alt,
   className,
@@ -100,8 +100,6 @@ function OptimizedImageComponent({
   );
 }
 
-export const OptimizedImage = memo(OptimizedImageComponent);
-
 // Background image variant with blur-up
 interface OptimizedBackgroundProps {
   src: string;
@@ -111,7 +109,7 @@ interface OptimizedBackgroundProps {
   priority?: boolean;
 }
 
-function OptimizedBackgroundComponent({
+export function OptimizedBackground({
   src,
   className,
   children,
@@ -181,15 +179,13 @@ function OptimizedBackgroundComponent({
   );
 }
 
-export const OptimizedBackground = memo(OptimizedBackgroundComponent);
-
 // Simple lazy image for basic use cases
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   alt: string;
 }
 
-export const LazyImage = memo(function LazyImage({ src, alt, className, ...props }: LazyImageProps) {
+export function LazyImage({ src, alt, className, ...props }: LazyImageProps) {
   return (
     <img
       src={src}
@@ -200,4 +196,4 @@ export const LazyImage = memo(function LazyImage({ src, alt, className, ...props
       {...props}
     />
   );
-});
+}
