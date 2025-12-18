@@ -21,13 +21,15 @@ import {
   Settings,
   Tag,
   CheckCircle2,
-  XCircle
+  XCircle,
+  ChevronDown
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -719,128 +721,139 @@ export default function ProviderBillingPage() {
       </div>
 
       {/* Plan Comparison Table */}
-      <Card className="overflow-hidden">
-        <CardHeader className="border-b border-border bg-muted/30">
-          <CardTitle className="text-lg">Feature Comparison</CardTitle>
-          <CardDescription>See all features side-by-side</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-muted/20">
-                  <th className="text-left p-4 font-medium text-muted-foreground">Feature</th>
-                  <th className="text-center p-4 font-medium text-muted-foreground min-w-[120px]">Basic</th>
-                  <th className="text-center p-4 font-medium text-muted-foreground min-w-[120px]">Professional</th>
-                  <th className="text-center p-4 font-medium text-amber-600 min-w-[120px]">Featured</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Monthly Price</td>
-                  <td className="p-4 text-center text-sm font-semibold text-foreground">Free</td>
-                  <td className="p-4 text-center text-sm font-semibold text-foreground">$399</td>
-                  <td className="p-4 text-center text-sm font-semibold text-amber-600">$1,099</td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">
-                    <span className="flex items-center gap-1.5">
-                      Qualified Leads
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-[280px] text-xs">
-                            <p>Pre-screened leads from our intake form who have verified their contact info and expressed intent to seek treatment. Exclusively routed to one provider.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </span>
-                  </td>
-                  <td className="p-4 text-center text-sm text-muted-foreground">—</td>
-                  <td className="p-4 text-center text-sm text-foreground">25/month</td>
-                  <td className="p-4 text-center text-sm text-amber-600 font-medium">75/month</td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">
-                    <span className="flex items-center gap-1.5">
-                      Direct Inquiries
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-[280px] text-xs">
-                            <p>Inquiries from users who contact your profile directly. These don't count toward your monthly qualified lead limit.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </span>
-                  </td>
-                  <td className="p-4 text-center text-sm text-muted-foreground">1 (lifetime)</td>
-                  <td className="p-4 text-center text-sm text-emerald-600 font-medium">Unlimited</td>
-                  <td className="p-4 text-center text-sm text-emerald-600 font-medium">Unlimited</td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Facility Locations</td>
-                  <td className="p-4 text-center text-sm text-foreground">1</td>
-                  <td className="p-4 text-center text-sm text-foreground">3</td>
-                  <td className="p-4 text-center text-sm text-amber-600 font-medium">5</td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Phone & Website Visible</td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Email Lead Notifications</td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Lead Management Dashboard</td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Analytics & Insights</td>
-                  <td className="p-4 text-center text-sm text-muted-foreground">Basic</td>
-                  <td className="p-4 text-center text-sm text-foreground">Standard</td>
-                  <td className="p-4 text-center text-sm text-amber-600 font-medium">Advanced</td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Homepage Featured Placement</td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-amber-500 mx-auto" /></td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Priority Search Placement</td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-amber-500 mx-auto" /></td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Gold Featured Badge</td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-amber-500 mx-auto" /></td>
-                </tr>
-                <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Priority Email Support</td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
-                  <td className="p-4 text-center"><Check className="h-4 w-4 text-amber-500 mx-auto" /></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <Collapsible defaultOpen={false}>
+        <Card className="overflow-hidden">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="border-b border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors group">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Feature Comparison</CardTitle>
+                  <CardDescription>See all features side-by-side</CardDescription>
+                </div>
+                <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/20">
+                      <th className="text-left p-4 font-medium text-muted-foreground">Feature</th>
+                      <th className="text-center p-4 font-medium text-muted-foreground min-w-[120px]">Basic</th>
+                      <th className="text-center p-4 font-medium text-muted-foreground min-w-[120px]">Professional</th>
+                      <th className="text-center p-4 font-medium text-amber-600 min-w-[120px]">Featured</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Monthly Price</td>
+                      <td className="p-4 text-center text-sm font-semibold text-foreground">Free</td>
+                      <td className="p-4 text-center text-sm font-semibold text-foreground">$399</td>
+                      <td className="p-4 text-center text-sm font-semibold text-amber-600">$1,099</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">
+                        <span className="flex items-center gap-1.5">
+                          Qualified Leads
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[280px] text-xs">
+                                <p>Pre-screened leads from our intake form who have verified their contact info and expressed intent to seek treatment. Exclusively routed to one provider.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </span>
+                      </td>
+                      <td className="p-4 text-center text-sm text-muted-foreground">—</td>
+                      <td className="p-4 text-center text-sm text-foreground">25/month</td>
+                      <td className="p-4 text-center text-sm text-amber-600 font-medium">75/month</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">
+                        <span className="flex items-center gap-1.5">
+                          Direct Inquiries
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-[280px] text-xs">
+                                <p>Inquiries from users who contact your profile directly. These don't count toward your monthly qualified lead limit.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </span>
+                      </td>
+                      <td className="p-4 text-center text-sm text-muted-foreground">1 (lifetime)</td>
+                      <td className="p-4 text-center text-sm text-emerald-600 font-medium">Unlimited</td>
+                      <td className="p-4 text-center text-sm text-emerald-600 font-medium">Unlimited</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Facility Locations</td>
+                      <td className="p-4 text-center text-sm text-foreground">1</td>
+                      <td className="p-4 text-center text-sm text-foreground">3</td>
+                      <td className="p-4 text-center text-sm text-amber-600 font-medium">5</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Phone & Website Visible</td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Email Lead Notifications</td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Lead Management Dashboard</td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-emerald-600 mx-auto" /></td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Analytics & Insights</td>
+                      <td className="p-4 text-center text-sm text-muted-foreground">Basic</td>
+                      <td className="p-4 text-center text-sm text-foreground">Standard</td>
+                      <td className="p-4 text-center text-sm text-amber-600 font-medium">Advanced</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Homepage Featured Placement</td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-amber-500 mx-auto" /></td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Priority Search Placement</td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-amber-500 mx-auto" /></td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Gold Featured Badge</td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-amber-500 mx-auto" /></td>
+                    </tr>
+                    <tr className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-sm text-foreground">Priority Email Support</td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><X className="h-4 w-4 text-muted-foreground mx-auto" /></td>
+                      <td className="p-4 text-center"><Check className="h-4 w-4 text-amber-500 mx-auto" /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Billing Portal Section */}
       <Card className="shadow-sm">
