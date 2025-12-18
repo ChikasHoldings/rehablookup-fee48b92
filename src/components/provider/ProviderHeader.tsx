@@ -174,7 +174,15 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
         {/* Right - Actions */}
         <div className="flex items-center gap-1 sm:gap-1.5">
-          {/* Plan Badge */}
+          {/* Plan Badge - Mobile (icon only) */}
+          <Link 
+            to="/provider/billing"
+            className={`flex sm:hidden items-center justify-center h-8 w-8 rounded-full ${planConfig.bgClass} border border-white/20 transition-all duration-200 active:scale-95`}
+          >
+            <planConfig.icon className={`h-4 w-4 ${planConfig.textClass}`} />
+          </Link>
+          
+          {/* Plan Badge - Desktop */}
           <Link 
             to="/provider/billing"
             className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full ${planConfig.bgClass} border border-white/20 mr-1 lg:mr-2 transition-all duration-200 hover:scale-105 hover:shadow-lg`}
