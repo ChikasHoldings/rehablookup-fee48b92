@@ -101,35 +101,43 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
       <div className="relative p-5 md:p-5">
         <div className="flex items-start gap-4">
           {/* Logo Container - Round with subtle border glow */}
-          <div 
-            className={cn(
-              "relative h-18 w-18 shrink-0 overflow-hidden rounded-full transition-all duration-300 md:h-16 md:w-16",
-              showFeaturedBadge 
-                ? "ring-2 ring-amber-300/50 shadow-lg shadow-amber-500/20 group-hover:ring-amber-400/70 group-hover:shadow-amber-500/30" 
-                : "ring-1 ring-border/80 shadow-md group-hover:ring-primary/50 group-hover:shadow-lg"
-            )}
-          >
-            {hasValidLogo ? (
-              <img 
-                src={center.logo_url!} 
-                alt={`${center.name} logo`}
-                className="h-full w-full object-contain bg-white p-1 transition-transform duration-500 group-hover:scale-110"
-                loading="lazy"
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <div className={cn(
-                "flex h-full w-full items-center justify-center transition-all duration-300",
+          <div className="relative">
+            <div 
+              className={cn(
+                "relative h-18 w-18 shrink-0 overflow-hidden rounded-full transition-all duration-300 md:h-16 md:w-16",
                 showFeaturedBadge 
-                  ? "bg-gradient-to-br from-amber-50 to-amber-100/80"
-                  : "bg-gradient-to-br from-primary/5 to-primary/10 group-hover:from-primary/10 group-hover:to-primary/15"
-              )}>
-                <span className={cn(
-                  "font-display text-xl font-bold md:text-lg",
-                  showFeaturedBadge ? "text-amber-600" : "text-primary"
+                  ? "ring-2 ring-amber-300/50 shadow-lg shadow-amber-500/20 group-hover:ring-amber-400/70 group-hover:shadow-amber-500/30" 
+                  : "ring-1 ring-border/80 shadow-md group-hover:ring-primary/50 group-hover:shadow-lg"
+              )}
+            >
+              {hasValidLogo ? (
+                <img 
+                  src={center.logo_url!} 
+                  alt={`${center.name} logo`}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <div className={cn(
+                  "flex h-full w-full items-center justify-center transition-all duration-300",
+                  showFeaturedBadge 
+                    ? "bg-gradient-to-br from-amber-50 to-amber-100/80"
+                    : "bg-gradient-to-br from-primary/5 to-primary/10 group-hover:from-primary/10 group-hover:to-primary/15"
                 )}>
-                  {initials}
-                </span>
+                  <span className={cn(
+                    "font-display text-xl font-bold md:text-lg",
+                    showFeaturedBadge ? "text-amber-600" : "text-primary"
+                  )}>
+                    {initials}
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* Verified Trust Badge - Positioned on logo */}
+            {center.verified && (
+              <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg ring-2 ring-background z-10">
+                <ShieldCheck className="h-3.5 w-3.5 text-white" />
               </div>
             )}
           </div>
