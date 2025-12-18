@@ -151,6 +151,7 @@ const CenterProfile = () => {
   const queryClient = useQueryClient();
   const contactFormRef = useRef<HTMLDivElement>(null);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
+  const [showAllServices, setShowAllServices] = useState(false);
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
   const [logoError, setLogoError] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -704,9 +705,9 @@ const CenterProfile = () => {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid gap-6 lg:grid-cols-3 md:gap-8">
-            {/* Left Column */}
-            <div className="lg:col-span-2 space-y-6">
+          <div className="grid gap-8 lg:grid-cols-[1fr,380px]">
+            {/* Left Column - Main Content */}
+            <div className="space-y-8 min-w-0">
               {/* Gallery */}
               {galleryImages.length > 0 && (
                 <ProfileSection 
@@ -893,17 +894,25 @@ const CenterProfile = () => {
                   title="Services & Programs"
                   iconColor="bg-emerald-500/10 text-emerald-600"
                 >
-                  <div className="flex flex-wrap gap-2.5">
-                    {services.map((service) => (
+                  <div className="flex flex-wrap gap-2">
+                    {(showAllServices ? services : services.slice(0, 8)).map((service) => (
                       <Badge 
                         key={service} 
                         variant="secondary" 
-                        className="px-4 py-2 text-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-emerald-500/15 transition-colors font-medium"
+                        className="px-3 py-1.5 text-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 hover:bg-emerald-500/15 transition-colors font-medium"
                       >
                         <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
                         {service}
                       </Badge>
                     ))}
+                    {services.length > 8 && (
+                      <button
+                        onClick={() => setShowAllServices(!showAllServices)}
+                        className="px-3 py-1.5 text-sm font-semibold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/15 rounded-full transition-all cursor-pointer"
+                      >
+                        {showAllServices ? 'Show less' : `+${services.length - 8} more`}
+                      </button>
+                    )}
                   </div>
                   
                   {/* Age Groups */}
@@ -913,12 +922,12 @@ const CenterProfile = () => {
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <p className="text-sm font-semibold text-foreground">Age Groups Served</p>
                       </div>
-                      <div className="flex flex-wrap gap-2.5">
+                      <div className="flex flex-wrap gap-2">
                         {ageGroups.map((age) => (
                           <Badge 
                             key={age} 
                             variant="outline" 
-                            className="px-4 py-2 text-sm hover:bg-muted/50 transition-colors font-medium"
+                            className="px-3 py-1.5 text-sm hover:bg-muted/50 transition-colors font-medium"
                           >
                             {age}
                           </Badge>
@@ -936,26 +945,24 @@ const CenterProfile = () => {
                   title="Insurance Accepted"
                   iconColor="bg-amber-500/10 text-amber-600"
                 >
-                  <div className="flex flex-wrap gap-2.5">
+                  <div className="flex flex-wrap gap-2">
                     {(showAllInsurance ? insuranceList : insuranceList.slice(0, 8)).map((ins) => (
                       <Badge 
                         key={ins} 
                         variant="secondary" 
-                        className="px-4 py-2 text-sm bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/50 hover:bg-amber-500/15 transition-colors font-medium"
+                        className="px-3 py-1.5 text-sm bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/50 hover:bg-amber-500/15 transition-colors font-medium"
                       >
                         <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
                         {ins}
                       </Badge>
                     ))}
-                    {insuranceList.length > 8 && !showAllInsurance && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowAllInsurance(true)}
-                        className="text-primary hover:text-primary/80 font-medium"
+                    {insuranceList.length > 8 && (
+                      <button
+                        onClick={() => setShowAllInsurance(!showAllInsurance)}
+                        className="px-3 py-1.5 text-sm font-semibold text-amber-700 hover:text-amber-800 bg-amber-100 hover:bg-amber-200 rounded-full transition-all cursor-pointer"
                       >
-                        +{insuranceList.length - 8} more
-                      </Button>
+                        {showAllInsurance ? 'Show less' : `+${insuranceList.length - 8} more`}
+                      </button>
                     )}
                   </div>
                   <p className="mt-4 text-xs text-muted-foreground">
@@ -972,12 +979,13 @@ const CenterProfile = () => {
               />
             </div>
 
-            {/* Right Column - Sidebar */}
-            <div className="space-y-6">
+            {/* Right Column - Sticky Sidebar */}
+            <div className="hidden lg:block">
+              <div className="sticky top-24 space-y-6">
               {/* Contact CTA Card */}
               <div 
                 ref={contactFormRef}
-                className="sticky top-6 rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-6 shadow-xl"
+                className="rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-6 shadow-xl"
               >
                 <div className="text-center mb-6">
                   <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-4">
@@ -1072,9 +1080,88 @@ const CenterProfile = () => {
                   <div className="flex items-center justify-between py-2">
                     <span className="text-sm text-muted-foreground">Insurance</span>
                     <span className="text-sm font-semibold text-foreground">{insuranceList.length} accepted</span>
+              </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Sidebar Content - Shows below main content on mobile */}
+          <div className="lg:hidden mt-8 space-y-6">
+            {/* Contact CTA Card - Mobile */}
+            <div className="rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-6 shadow-xl">
+              <div className="text-center mb-6">
+                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-4">
+                  <MessageSquare className="h-7 w-7 text-primary-foreground" />
+                </div>
+                <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                  Get Started Today
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Take the first step towards recovery. Our team is here to help.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Button 
+                  size="lg" 
+                  className="w-full gap-2 h-13 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                  onClick={() => setRequestModalOpen(true)}
+                >
+                  <Sparkles className="h-5 w-5" />
+                  Request Information
+                </Button>
+
+                {showContactDetails && (
+                  <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")}>
+                    <Button variant="outline" size="lg" className="w-full gap-2 h-13 text-base font-semibold border-2">
+                      <Phone className="h-5 w-5" />
+                      {facility.phone}
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Facility Overview Card - Mobile */}
+            <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+              <h3 className="font-display text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-primary" />
+                Facility Overview
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <span className="text-xs text-muted-foreground block">Type</span>
+                  <span className="text-sm font-semibold text-foreground">{facility.facility_type}</span>
+                </div>
+                {genderLabel && (
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <span className="text-xs text-muted-foreground block">Gender</span>
+                    <span className="text-sm font-semibold text-foreground">{genderLabel}</span>
                   </div>
+                )}
+                {facility.bed_count && (
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <span className="text-xs text-muted-foreground block">Capacity</span>
+                    <span className="text-sm font-semibold text-foreground">{facility.bed_count} beds</span>
+                  </div>
+                )}
+                {facility.year_established && (
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <span className="text-xs text-muted-foreground block">Established</span>
+                    <span className="text-sm font-semibold text-foreground">{facility.year_established}</span>
+                  </div>
+                )}
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <span className="text-xs text-muted-foreground block">Services</span>
+                  <span className="text-sm font-semibold text-foreground">{services.length} programs</span>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <span className="text-xs text-muted-foreground block">Insurance</span>
+                  <span className="text-sm font-semibold text-foreground">{insuranceList.length} accepted</span>
                 </div>
               </div>
+            </div>
+          </div>
             </div>
           </div>
         </div>
