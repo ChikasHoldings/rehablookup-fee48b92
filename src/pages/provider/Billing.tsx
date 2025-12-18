@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   XCircle
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -741,13 +743,41 @@ export default function ProviderBillingPage() {
                   <td className="p-4 text-center text-sm font-semibold text-amber-600">$1,099</td>
                 </tr>
                 <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Qualified Leads</td>
+                  <td className="p-4 text-sm text-foreground">
+                    <span className="flex items-center gap-1.5">
+                      Qualified Leads
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[280px] text-xs">
+                            <p>Pre-screened leads from our intake form who have verified their contact info and expressed intent to seek treatment. Exclusively routed to one provider.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </span>
+                  </td>
                   <td className="p-4 text-center text-sm text-muted-foreground">—</td>
                   <td className="p-4 text-center text-sm text-foreground">25/month</td>
                   <td className="p-4 text-center text-sm text-amber-600 font-medium">75/month</td>
                 </tr>
                 <tr className="hover:bg-muted/30 transition-colors">
-                  <td className="p-4 text-sm text-foreground">Direct Inquiries</td>
+                  <td className="p-4 text-sm text-foreground">
+                    <span className="flex items-center gap-1.5">
+                      Direct Inquiries
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[280px] text-xs">
+                            <p>Inquiries from users who contact your profile directly. These don't count toward your monthly qualified lead limit.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </span>
+                  </td>
                   <td className="p-4 text-center text-sm text-muted-foreground">1 (lifetime)</td>
                   <td className="p-4 text-center text-sm text-emerald-600 font-medium">Unlimited</td>
                   <td className="p-4 text-center text-sm text-emerald-600 font-medium">Unlimited</td>
