@@ -35,7 +35,7 @@ const articles: Article[] = [
     readTime: "8 min read",
     image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=600&fit=crop",
     author: "Dr. Sarah Mitchell",
-    date: "December 15, 2024",
+    date: "December 2025",
     content: [
       "Understanding the landscape of addiction treatment options is crucial for anyone seeking help for themselves or a loved one. With various levels of care available, finding the right fit can significantly impact recovery success.",
       "## Medical Detoxification",
@@ -76,7 +76,7 @@ const articles: Article[] = [
     readTime: "7 min read",
     image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&h=600&fit=crop",
     author: "Jennifer Walsh, LCSW",
-    date: "December 14, 2024",
+    date: "December 2025",
     content: [
       "Choosing the right rehab center is one of the most important decisions you will make in your recovery journey. With thousands of facilities across the country offering different approaches, amenities, and specializations, finding the best fit requires careful consideration.",
       "## Determine the Appropriate Level of Care",
@@ -119,7 +119,7 @@ const articles: Article[] = [
     readTime: "6 min read",
     image: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200&h=600&fit=crop",
     author: "Dr. Michael Chen",
-    date: "December 12, 2024",
+    date: "December 2025",
     content: [
       "The first week of addiction treatment is often the most challenging—and the most transformative. Knowing what to expect can help ease anxiety and prepare you for this important step in your recovery journey.",
       "## Arrival and Intake",
@@ -160,7 +160,7 @@ const articles: Article[] = [
     readTime: "9 min read",
     image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&h=600&fit=crop",
     author: "Lisa Martinez, LMFT",
-    date: "December 10, 2024",
+    date: "December 2025",
     content: [
       "Navigating insurance coverage for addiction treatment can feel overwhelming, but understanding your options is crucial for accessing the care you need. This guide breaks down how insurance works for addiction treatment and how to maximize your benefits.",
       "## Your Legal Right to Coverage",
@@ -205,7 +205,7 @@ const articles: Article[] = [
     readTime: "5 min read",
     image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&h=600&fit=crop",
     author: "Dr. Sarah Mitchell",
-    date: "December 10, 2024",
+    date: "December 2025",
     content: [
       "Recovery from addiction is not a single event but a transformative journey that unfolds over time. Understanding the stages of this journey can help individuals and their loved ones navigate the path to lasting sobriety with greater awareness and preparation.",
       "## The Pre-Contemplation Stage",
@@ -239,7 +239,7 @@ const articles: Article[] = [
     readTime: "4 min read",
     image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=600&fit=crop",
     author: "Jennifer Walsh, LCSW",
-    date: "December 8, 2024",
+    date: "December 2025",
     content: [
       "When someone you love enters treatment for addiction, you may feel a mix of relief, hope, fear, and uncertainty. Your support during this time can make a significant difference in their recovery journey, but knowing how to help effectively is not always intuitive.",
       "## Educate Yourself About Addiction",
@@ -275,7 +275,7 @@ const articles: Article[] = [
     readTime: "6 min read",
     image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200&h=600&fit=crop",
     author: "Dr. Michael Chen",
-    date: "December 5, 2024",
+    date: "December 2025",
     content: [
       "One of the most important decisions when seeking addiction treatment is choosing between inpatient (residential) and outpatient care. Both approaches have their merits, and the right choice depends on individual circumstances, the severity of addiction, and personal responsibilities.",
       "## Understanding Inpatient Treatment",
@@ -312,7 +312,7 @@ const articles: Article[] = [
     readTime: "7 min read",
     image: "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=1200&h=600&fit=crop",
     author: "Dr. Amanda Roberts",
-    date: "December 3, 2024",
+    date: "December 2025",
     content: [
       "Dual diagnosis, also called co-occurring disorders, refers to the presence of both a substance use disorder and a mental health condition in the same individual. This combination is more common than many people realize and requires specialized treatment that addresses both issues simultaneously.",
       "## The Connection Between Addiction and Mental Health",
@@ -349,7 +349,7 @@ const articles: Article[] = [
     readTime: "5 min read",
     image: "https://images.unsplash.com/photo-1493836512294-502baa1986e2?w=1200&h=600&fit=crop",
     author: "Dr. Robert Thompson",
-    date: "November 28, 2024",
+    date: "December 2025",
     content: [
       "Recognizing the early signs of addiction can be challenging, especially since many people go to great lengths to hide their substance use. However, early intervention significantly improves outcomes, making it important to know what warning signs to look for.",
       "## Behavioral Changes",
@@ -385,7 +385,7 @@ const articles: Article[] = [
     readTime: "6 min read",
     image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=1200&h=600&fit=crop",
     author: "Lisa Martinez, LMFT",
-    date: "November 25, 2024",
+    date: "December 2025",
     content: [
       "Completing a treatment program is a significant accomplishment, but it marks the beginning of a new phase rather than the end of the recovery journey. Aftercare planning is essential for maintaining sobriety and building a fulfilling life in recovery.",
       "## Why Aftercare Matters",
@@ -421,7 +421,7 @@ const articles: Article[] = [
     readTime: "8 min read",
     image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&h=600&fit=crop",
     author: "Dr. Robert Thompson",
-    date: "December 8, 2024",
+    date: "December 2025",
     content: [
       "Opioid addiction has become one of the most pressing public health crises in recent decades. Whether the addiction began with prescription pain medications or illicit drugs like heroin or fentanyl, effective treatments are available that can help people reclaim their lives.",
       "## Understanding Opioid Addiction",
@@ -460,7 +460,7 @@ const articles: Article[] = [
     readTime: "6 min read",
     image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=1200&h=600&fit=crop",
     author: "Dr. Lisa Martinez",
-    date: "December 6, 2024",
+    date: "December 2025",
     content: [
       "For those who have been drinking heavily for an extended period, stopping alcohol suddenly can be dangerous—even life-threatening. Medical detoxification provides the safe, supervised environment needed to navigate withdrawal successfully.",
       "## Why Alcohol Withdrawal Can Be Dangerous",
@@ -494,7 +494,7 @@ const articles: Article[] = [
     readTime: "7 min read",
     image: "https://images.unsplash.com/photo-1493836512294-502baa1986e2?w=1200&h=600&fit=crop",
     author: "Dr. Amanda Roberts",
-    date: "December 4, 2024",
+    date: "December 2025",
     content: [
       "Depression and substance abuse are deeply intertwined conditions. People with depression are about twice as likely to develop a substance use disorder, and those with addiction have higher rates of depression. Understanding this connection is essential for effective treatment.",
       "## How Depression and Addiction Connect",
@@ -527,7 +527,7 @@ const articles: Article[] = [
     readTime: "5 min read",
     image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&h=600&fit=crop",
     author: "Mark Stevens, CADC",
-    date: "December 2, 2024",
+    date: "December 2025",
     content: [
       "The transition from treatment back to everyday life is one of the most vulnerable periods in recovery. Sober living homes provide a crucial bridge, offering structure and support while residents rebuild their lives in a substance-free environment.",
       "## What Are Sober Living Homes?",
@@ -561,7 +561,7 @@ const articles: Article[] = [
     readTime: "6 min read",
     image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1200&h=600&fit=crop",
     author: "Jennifer Walsh, LCSW",
-    date: "November 30, 2024",
+    date: "December 2025",
     content: [
       "Watching someone you love struggle with addiction is painful, especially when they refuse to acknowledge the problem or seek help. An intervention is a carefully planned process designed to help someone recognize their need for treatment and agree to accept it.",
       "## What Is an Intervention?",
@@ -598,7 +598,7 @@ const articles: Article[] = [
     readTime: "8 min read",
     image: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200&h=600&fit=crop",
     author: "Dr. Michael Chen",
-    date: "November 28, 2024",
+    date: "December 2025",
     content: [
       "Trauma and addiction are often intimately connected. Many people who struggle with substance use disorders have experienced significant trauma, and substances become a way to cope with the overwhelming emotions and memories that trauma leaves behind.",
       "## The Connection Between Trauma and Addiction",
@@ -633,7 +633,7 @@ const articles: Article[] = [
     readTime: "5 min read",
     image: "https://images.unsplash.com/photo-1497215842964-222b430dc094?w=1200&h=600&fit=crop",
     author: "Lisa Martinez, LMFT",
-    date: "November 25, 2024",
+    date: "December 2025",
     content: [
       "Substance abuse affects workplaces of all kinds, impacting productivity, safety, and employee well-being. Understanding workplace policies, resources, and how to seek help while protecting your career is essential for both employers and employees.",
       "## The Impact of Substance Abuse at Work",
@@ -667,7 +667,7 @@ const articles: Article[] = [
     readTime: "7 min read",
     image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&h=600&fit=crop",
     author: "Mark Stevens, CADC",
-    date: "November 22, 2024",
+    date: "December 2025",
     content: [
       "Completing treatment is a significant accomplishment, but it is the beginning of recovery, not the end. What distinguishes those who maintain long-term sobriety from those who struggle? Research and experience point to several key factors.",
       "## Building a Recovery-Focused Life",
