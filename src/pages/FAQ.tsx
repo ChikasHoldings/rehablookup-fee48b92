@@ -279,122 +279,188 @@ const FAQ = () => {
           { name: "FAQ", url: "/faq" },
         ]}
       />
+      
       {/* Hero Section */}
-      <section className="relative bg-primary py-12 px-4 md:py-20 md:px-6">
+      <section className="relative bg-primary py-16 px-4 md:py-20 md:px-6 overflow-hidden">
+        {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-primary-foreground/5 blur-3xl" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
         </div>
         
         <div className="container relative">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 md:px-4 md:py-1.5 md:mb-4">
-              <HelpCircle className="h-5 w-5 text-accent md:h-4 md:w-4" />
-              <span className="text-base font-medium text-primary-foreground md:text-sm">Frequently Asked Questions</span>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 backdrop-blur-sm border border-white/10">
+              <HelpCircle className="h-5 w-5 text-accent" />
+              <span className="text-base font-medium text-primary-foreground">Frequently Asked Questions</span>
             </div>
-            <h1 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl md:mb-4">
+            <h1 className="mb-5 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
               How Can We Help You?
             </h1>
-            <p className="mb-8 text-lg text-primary-foreground/70 leading-relaxed md:text-base">
+            <p className="mb-8 text-lg text-primary-foreground/80 leading-relaxed max-w-xl mx-auto md:text-xl">
               Find answers to common questions about addiction treatment, insurance, family support, and recovery.
             </p>
             
-            {/* Search Bar */}
+            {/* Enhanced Search Bar */}
             <div className="relative mx-auto max-w-xl">
-              <Search className="absolute left-4 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground md:h-5 md:w-5" />
-              <Input
-                type="text"
-                placeholder="Search for answers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-16 rounded-2xl border-0 bg-card pl-14 pr-4 text-lg shadow-lg placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent md:h-14 md:rounded-xl md:pl-12 md:text-base"
-              />
+              <div className="relative">
+                <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search for answers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-14 rounded-2xl border-0 bg-card pl-14 pr-14 text-base shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-5 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                  >
+                    <span className="sr-only">Clear search</span>
+                    <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              
+              {/* Search hint */}
+              <p className="mt-3 text-sm text-primary-foreground/60">
+                Try searching "insurance", "detox", or "family support"
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Category Filters */}
-      <section className="border-b border-border bg-card py-5 px-4 md:py-6 md:px-6">
+      <section className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md py-4 px-4 md:py-5 md:px-6 shadow-sm">
         <div className="container">
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0 md:mx-0 md:px-0">
-            <Button
-              variant={selectedCategory === null ? "default" : "outline"}
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0 md:mx-0 md:px-0 scrollbar-hide">
+            <button
               onClick={() => setSelectedCategory(null)}
-              className="h-12 rounded-full px-5 text-base whitespace-nowrap md:h-9 md:px-4 md:text-sm"
+              className={`h-11 rounded-full px-5 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                selectedCategory === null 
+                  ? "bg-primary text-primary-foreground shadow-lg" 
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
             >
-              All Categories
-            </Button>
+              All Topics
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                selectedCategory === null ? "bg-white/20" : "bg-background"
+              }`}>
+                {faqCategories.reduce((acc, cat) => acc + cat.faqs.length, 0)}
+              </span>
+            </button>
             {faqCategories.map((category) => (
-              <Button
+              <button
                 key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
                 onClick={() => setSelectedCategory(category.id)}
-                className="h-12 gap-2 rounded-full px-5 text-base whitespace-nowrap md:h-9 md:px-4 md:text-sm"
+                className={`h-11 rounded-full px-5 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                  selectedCategory === category.id 
+                    ? "bg-primary text-primary-foreground shadow-lg" 
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
               >
-                <category.icon className="h-5 w-5 md:h-4 md:w-4" />
+                <category.icon className="h-4 w-4" />
                 {category.name}
-              </Button>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  selectedCategory === category.id ? "bg-white/20" : "bg-background"
+                }`}>
+                  {category.faqs.length}
+                </span>
+              </button>
             ))}
           </div>
         </div>
       </section>
 
       {/* FAQ Content */}
-      <section className="py-10 px-4 md:py-20 md:px-6">
+      <section className="py-12 px-4 md:py-16 md:px-6 bg-gradient-to-b from-background to-muted/30">
         <div className="container">
+          {/* Search Results Info */}
           {searchQuery && (
-            <p className="mb-8 text-center text-base text-muted-foreground md:text-base">
-              Found <span className="font-semibold text-foreground">{totalResults}</span> result{totalResults !== 1 ? 's' : ''} for "{searchQuery}"
-            </p>
+            <div className="mb-8 flex items-center justify-center gap-3">
+              <div className="flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm">
+                <Search className="h-4 w-4 text-accent" />
+                <span className="text-muted-foreground">
+                  Found <span className="font-semibold text-foreground">{totalResults}</span> result{totalResults !== 1 ? 's' : ''} for 
+                  <span className="font-semibold text-foreground ml-1">"{searchQuery}"</span>
+                </span>
+              </div>
+              <button
+                onClick={() => setSearchQuery("")}
+                className="text-sm text-accent hover:underline"
+              >
+                Clear
+              </button>
+            </div>
           )}
 
           {filteredCategories.length === 0 ? (
-            <div className="mx-auto max-w-md text-center py-12">
-              <div className="mb-5 inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted md:h-16 md:w-16 md:mb-4">
-                <Search className="h-10 w-10 text-muted-foreground md:h-8 md:w-8" />
+            <div className="mx-auto max-w-md text-center py-16">
+              <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-muted to-muted/50">
+                <Search className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h3 className="mb-3 font-display text-2xl font-semibold text-foreground md:text-xl md:mb-2">No Results Found</h3>
-              <p className="mb-8 text-base text-muted-foreground md:text-base md:mb-6">
+              <h3 className="mb-3 font-display text-2xl font-bold text-foreground">No Results Found</h3>
+              <p className="mb-8 text-muted-foreground leading-relaxed">
                 We couldn't find any questions matching your search. Try different keywords or browse by category.
               </p>
               <Button 
                 onClick={() => { setSearchQuery(""); setSelectedCategory(null); }}
-                className="h-14 px-8 text-base font-semibold md:h-auto md:px-6"
+                className="h-12 px-8 gap-2"
               >
-                Clear Filters
+                <ArrowRight className="h-4 w-4 rotate-180" />
+                View All Questions
               </Button>
             </div>
           ) : (
-            <div className="mx-auto max-w-4xl space-y-10 md:space-y-12">
-              {filteredCategories.map((category) => (
-                <div key={category.id} className="animate-fade-in">
+            <div className="mx-auto max-w-4xl space-y-12">
+              {filteredCategories.map((category, catIndex) => (
+                <div 
+                  key={category.id} 
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${catIndex * 100}ms` }}
+                >
                   {/* Category Header */}
-                  <div className="mb-6 flex items-start gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/15 ring-1 ring-accent/25 md:h-12 md:w-12 md:rounded-xl">
-                      <category.icon className="h-7 w-7 text-accent md:h-6 md:w-6" />
+                  <div className="mb-6 flex items-center gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 ring-1 ring-accent/20">
+                      <category.icon className="h-7 w-7 text-accent" />
                     </div>
-                    <div>
-                      <h2 className="font-display text-xl font-bold text-foreground md:text-xl">
-                        {category.name}
-                      </h2>
-                      <p className="text-base text-muted-foreground md:text-sm">{category.description}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <h2 className="font-display text-xl font-bold text-foreground">
+                          {category.name}
+                        </h2>
+                        <span className="text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+                          {category.faqs.length} questions
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-0.5">{category.description}</p>
                     </div>
                   </div>
 
-                  {/* FAQ Accordion */}
+                  {/* Enhanced FAQ Accordion */}
                   <Accordion type="single" collapsible className="space-y-3">
                     {category.faqs.map((faq, index) => (
                       <AccordionItem
                         key={index}
                         value={`${category.id}-${index}`}
-                        className="rounded-2xl border border-border bg-card px-0 shadow-card overflow-hidden transition-all duration-300 hover:border-accent/30 hover:shadow-elevated data-[state=open]:border-accent/40 md:rounded-xl"
+                        className="group rounded-2xl border border-border bg-card overflow-hidden transition-all duration-300 hover:border-accent/30 hover:shadow-elevated data-[state=open]:border-accent/40 data-[state=open]:shadow-xl data-[state=open]:bg-gradient-to-br data-[state=open]:from-card data-[state=open]:to-accent/5"
                       >
-                        <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline py-5 px-5 gap-4 [&>svg]:shrink-0 [&>svg]:h-6 [&>svg]:w-6 md:py-5 md:px-6 md:text-base md:[&>svg]:h-5 md:[&>svg]:w-5">
-                          {faq.question}
+                        <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline py-5 px-6 gap-4 [&>svg]:shrink-0 [&>svg]:h-5 [&>svg]:w-5 [&>svg]:text-muted-foreground [&>svg]:transition-transform [&[data-state=open]>svg]:text-accent group-hover:text-accent transition-colors">
+                          <span className="flex items-start gap-3">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent mt-0.5">
+                              {index + 1}
+                            </span>
+                            <span>{faq.question}</span>
+                          </span>
                         </AccordionTrigger>
-                        <AccordionContent className="text-base text-muted-foreground pb-6 px-5 leading-relaxed md:pb-6 md:px-6 md:text-base">
-                          {faq.answer}
+                        <AccordionContent className="text-muted-foreground pb-6 px-6 leading-relaxed">
+                          <div className="pl-10 pt-2 border-l-2 border-accent/20 ml-3">
+                            {faq.answer}
+                          </div>
                         </AccordionContent>
                       </AccordionItem>
                     ))}
@@ -407,28 +473,37 @@ const FAQ = () => {
       </section>
 
       {/* Help CTA */}
-      <section className="py-12 px-4 bg-muted/30 md:py-20 md:px-6">
+      <section className="py-16 px-4 bg-muted/30 md:py-20 md:px-6">
         <div className="container">
-          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-2xl">
-              Still Have Questions?
-            </h2>
-            <p className="mb-8 text-base text-muted-foreground max-w-xl mx-auto leading-relaxed md:text-base md:mb-8">
-              Our compassionate support team is available 24/7 to answer your questions and help you find the right treatment.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
-              <Link to="/request-help?source=faq_cta" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full h-14 gap-2 text-base font-semibold min-w-[200px] sm:w-auto sm:h-auto">
-                  <Heart className="h-5 w-5 md:h-4 md:w-4" />
-                  Request Help
-                </Button>
-              </Link>
-              <Link to="/contact" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full h-14 gap-2 text-base font-semibold min-w-[200px] sm:w-auto sm:h-auto">
-                  Contact Us
-                  <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
-                </Button>
-              </Link>
+          <div className="mx-auto max-w-3xl rounded-3xl border border-accent/20 bg-gradient-to-br from-accent/5 via-card to-accent/10 p-10 md:p-12 text-center relative overflow-hidden">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full blur-xl" />
+            
+            <div className="relative">
+              <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent/80 shadow-xl">
+                <HelpCircle className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
+                Still Have Questions?
+              </h2>
+              <p className="mb-8 text-muted-foreground max-w-xl mx-auto leading-relaxed">
+                Our compassionate support team is here to answer your questions and help you find the right treatment center for your needs.
+              </p>
+              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <Link to="/request-help?source=faq_cta">
+                  <Button size="lg" className="h-14 gap-2 text-base font-semibold px-8 hover:scale-105 transition-transform">
+                    <Heart className="h-5 w-5" />
+                    Request Help
+                  </Button>
+                </Link>
+                <Link to="/contact">
+                  <Button variant="outline" size="lg" className="h-14 gap-2 text-base font-semibold px-8 hover:scale-105 transition-transform">
+                    Contact Us
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
