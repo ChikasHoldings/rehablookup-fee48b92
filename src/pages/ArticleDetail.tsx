@@ -12,6 +12,7 @@ import {
   Calendar,
   User,
 } from "lucide-react";
+import { ReactNode } from "react";
 
 interface Article {
   id: string;
@@ -25,6 +26,43 @@ interface Article {
   date: string;
   content: string[];
 }
+
+// Helper function to parse content with internal links
+// Link format: [[article-id|link text]]
+const parseContentWithLinks = (text: string): ReactNode => {
+  const linkPattern = /\[\[([^\]|]+)\|([^\]]+)\]\]/g;
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = linkPattern.exec(text)) !== null) {
+    // Add text before the link
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    
+    // Add the link
+    const [, articleId, linkText] = match;
+    parts.push(
+      <Link
+        key={match.index}
+        to={`/resources/${articleId}`}
+        className="text-primary hover:text-primary/80 underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60 transition-colors font-medium"
+      >
+        {linkText}
+      </Link>
+    );
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  
+  return parts.length > 0 ? parts : text;
+};
 
 const articles: Article[] = [
   {
@@ -40,31 +78,31 @@ const articles: Article[] = [
     content: [
       "Choosing the right addiction treatment program can feel overwhelming when you're searching for help. With so many options—medical detox, residential rehab, outpatient therapy—how do you know which one fits your situation? Here's everything you need to understand about each level of care.",
       "## Medical Detox: The Critical First Step",
-      "If you've been using drugs or alcohol heavily, medical detoxification is usually where recovery begins. Detox isn't treatment itself—it's the process of safely clearing substances from your body under medical supervision. Depending on what you've been using, withdrawal symptoms can range from deeply uncomfortable to potentially life-threatening.",
+      "If you've been using drugs or alcohol heavily, medical detoxification is usually where recovery begins. Detox isn't treatment itself—it's the process of safely clearing substances from your body under medical supervision. For those struggling with alcohol specifically, understanding [[alcohol-detox-what-to-expect|what happens during alcohol detox]] is essential since withdrawal can be particularly dangerous.",
       "During detox at a licensed facility, doctors and nurses monitor your vital signs around the clock. They can provide medications to ease withdrawal symptoms like nausea, anxiety, tremors, or seizures. Most detox programs last between three and ten days, though this varies based on the substance and how long you've been using.",
       "What happens after detox matters just as much as detox itself. Completing detox without transitioning into treatment is like setting a broken bone without a cast—the underlying problem hasn't been addressed. That's why reputable drug rehab centers build detox into a comprehensive treatment plan.",
       "## Inpatient Residential Treatment: Immersive Recovery",
-      "Residential addiction treatment means living at a treatment facility full-time, typically for 30 to 90 days. You'll participate in individual therapy, group counseling, educational workshops, and activities designed to help you build new coping skills. The structured environment removes you from people, places, and situations that trigger substance use.",
-      "Inpatient rehab works particularly well for people dealing with severe addiction, those who've relapsed after outpatient treatment, anyone with unstable housing, or individuals with co-occurring mental health disorders like depression or anxiety. The 24/7 support means help is always available when cravings hit or emotions feel overwhelming.",
+      "Residential addiction treatment means living at a treatment facility full-time, typically for 30 to 90 days. You'll participate in individual therapy, group counseling, educational workshops, and activities designed to help you build new coping skills. If you're curious about the day-to-day experience, our guide on [[first-week-treatment|what to expect during your first week in rehab]] provides a detailed breakdown.",
+      "Inpatient rehab works particularly well for people dealing with severe addiction, those who've relapsed after outpatient treatment, anyone with unstable housing, or individuals with co-occurring mental health disorders like [[depression-substance-abuse|depression]] or [[anxiety-and-addiction|anxiety]]. The 24/7 support means help is always available when cravings hit or emotions feel overwhelming.",
       "One thing many people don't realize: residential treatment isn't just sitting in therapy all day. Quality programs include fitness activities, nutrition education, stress management techniques, and even vocational training. The goal is to rebuild your entire life, not just stop using substances.",
       "## Partial Hospitalization Programs (PHP): Intensive Day Treatment",
       "PHPs bridge the gap between residential treatment and standard outpatient care. You attend treatment during the day—usually five to seven days per week for several hours—then return home in the evenings. This works well if you have a stable, supportive home environment but still need intensive clinical support.",
       "Partial hospitalization typically includes the same therapeutic components as residential treatment: individual counseling, group therapy, medication management, and skills training. The difference is that you practice applying these skills in real-world situations every evening, rather than in the protected bubble of a residential facility.",
-      "Many people step down to PHP after completing residential treatment. Others start with PHP if their addiction isn't severe enough to require 24-hour supervision but is too serious for weekly therapy sessions alone.",
+      "Many people step down to PHP after completing residential treatment. Others start with PHP if their addiction isn't severe enough to require 24-hour supervision but is too serious for weekly therapy sessions alone. For a deeper comparison, see our article on [[inpatient-vs-outpatient|inpatient vs. outpatient rehab]].",
       "## Intensive Outpatient Programs (IOP): Flexible Recovery Support",
       "Intensive outpatient treatment provides structured addiction care while allowing you to maintain work, school, or family responsibilities. Sessions typically meet three to five times per week for three to four hours, often scheduled in the evenings or on weekends.",
       "IOPs are ideal for people with mild to moderate substance use disorders, those transitioning from higher levels of care, or anyone who needs treatment but can't take extended time away from their daily responsibilities. You'll still participate in group therapy, individual counseling, and skill-building sessions—just with more flexibility.",
       "The research on intensive outpatient programs is encouraging. When people are well-matched to this level of care, outcomes can be comparable to residential treatment. The key is being honest about whether you have the motivation and home support to succeed in a less structured environment.",
       "## Standard Outpatient Treatment: Ongoing Recovery Support",
       "Traditional outpatient treatment involves attending therapy one to three times per week while living at home. This is the least intensive level of care, typically appropriate for people with milder substance use issues or as continuing care after completing a higher level of treatment.",
-      "Outpatient sessions might include individual therapy with an addiction counselor, group counseling, medication management appointments, or participation in support groups. Many people continue outpatient care for months or even years after initial treatment, using it as a touchstone for ongoing recovery.",
+      "Outpatient sessions might include individual therapy with an addiction counselor, group counseling, medication management appointments, or participation in support groups. Many people continue outpatient care for months or even years after initial treatment, using it as a touchstone for [[long-term-recovery-success|long-term recovery success]].",
       "## Medication-Assisted Treatment (MAT): Science-Based Recovery",
-      "For opioid and alcohol addiction specifically, medication-assisted treatment combines FDA-approved medications with counseling and behavioral therapies. This isn't substituting one drug for another—these medications help normalize brain chemistry, reduce cravings, and make it possible to focus on the therapeutic work of recovery.",
+      "For opioid and alcohol addiction specifically, medication-assisted treatment combines FDA-approved medications with counseling and behavioral therapies. This isn't substituting one drug for another—these medications help normalize brain chemistry, reduce cravings, and make it possible to focus on the therapeutic work of recovery. Learn more in our comprehensive guide on [[opioid-addiction-treatment|opioid addiction treatment and MAT]].",
       "Medications like buprenorphine (Suboxone), methadone, and naltrexone (Vivitrol) have transformed opioid addiction treatment. For alcohol use disorder, medications including naltrexone, acamprosate, and disulfiram can significantly improve outcomes. MAT works best when combined with therapy—medication manages the physical aspects while counseling addresses the psychological and behavioral components.",
       "## Making Your Decision",
-      "The right treatment level depends on several factors: how severe your addiction is, whether you have co-occurring mental health conditions, what your living situation looks like, whether you have responsibilities you can't step away from, and your history with previous treatment attempts.",
-      "Here's the most important thing to remember: starting somewhere is better than not starting at all. Many people move through different levels of care as their needs change. You might begin with residential treatment, step down to PHP, then transition to IOP, and eventually continue with outpatient therapy and support groups.",
-      "If you're unsure which level of care you need, reach out to a treatment center for a professional assessment. Most offer free evaluations to help determine the right starting point for your recovery journey.",
+      "The right treatment level depends on several factors: how severe your addiction is, whether you have co-occurring mental health conditions, what your living situation looks like, whether you have responsibilities you can't step away from, and your history with previous treatment attempts. Understanding [[insurance-coverage-guide|how insurance covers addiction treatment]] can also help you evaluate your options.",
+      "Here's the most important thing to remember: starting somewhere is better than not starting at all. Many people move through [[stages-of-recovery|different stages of recovery]] as their needs change. You might begin with residential treatment, step down to PHP, then transition to IOP, and eventually continue with outpatient therapy and support groups.",
+      "If you're unsure which level of care you need, reach out to a treatment center for a professional assessment. Our guide on [[choosing-rehab-center|how to choose the best rehab center]] can help you evaluate your options.",
     ],
   },
   {
@@ -80,8 +118,8 @@ const articles: Article[] = [
     content: [
       "Finding the right rehab center can mean the difference between lasting recovery and another relapse. With so many facilities advertising miracle cures and luxury amenities, how do you separate quality treatment from marketing hype? This guide walks you through exactly what to look for.",
       "## Start with the Right Level of Care",
-      "Before comparing facilities, you need to understand what level of treatment you actually need. Someone with a severe, long-term addiction to opioids has very different needs than someone dealing with a developing alcohol problem. Get an honest assessment—many treatment centers offer free evaluations, or you can talk with your doctor or a licensed addiction counselor.",
-      "Be wary of facilities that recommend residential treatment for everyone regardless of circumstances. While residential care is appropriate for many people, it's not always necessary. A quality treatment center will match your care level to your actual needs, not their available beds.",
+      "Before comparing facilities, you need to understand [[types-of-addiction-treatment|what level of treatment you actually need]]. Someone with a severe, long-term addiction to opioids has very different needs than someone dealing with a developing alcohol problem. Get an honest assessment—many treatment centers offer free evaluations, or you can talk with your doctor or a licensed addiction counselor.",
+      "Be wary of facilities that recommend residential treatment for everyone regardless of circumstances. While residential care is appropriate for many people, it's not always necessary. Understanding the [[inpatient-vs-outpatient|difference between inpatient and outpatient rehab]] can help you evaluate recommendations.",
       "## Verify Credentials and Accreditation",
       "Every legitimate rehab center should be licensed by their state's health department. Beyond basic licensing, look for accreditation from organizations like The Joint Commission (JCAHO), CARF International, or the National Association of Addiction Treatment Providers (NAATP). Accreditation means the facility meets established quality standards and undergoes regular inspections.",
       "Don't just take a facility's word for it—verify credentials directly with the accrediting body. Unfortunately, some facilities exaggerate their qualifications. A few minutes of research can save you from a bad experience.",
@@ -89,23 +127,23 @@ const articles: Article[] = [
       "Ask specifically about what therapeutic methods the facility uses. Evidence-based treatments with strong research support include cognitive-behavioral therapy (CBT), dialectical behavior therapy (DBT), motivational interviewing, and contingency management. If a facility can't clearly explain their treatment approach, that's a red flag.",
       "Be cautious of programs that rely exclusively on one philosophy—whether that's 12-step, faith-based, or any single approach. The most effective treatment centers recognize that different people respond to different methods and offer multiple therapeutic options.",
       "## Look for Specialized Expertise",
-      "If you have specific circumstances, look for programs with relevant specialization. This might include dual diagnosis treatment for co-occurring mental health conditions, gender-specific programs, LGBTQ+-affirming care, programs for specific age groups, or treatment focused on particular substances.",
+      "If you have specific circumstances, look for programs with relevant specialization. This might include [[dual-diagnosis-treatment|dual diagnosis treatment]] for co-occurring mental health conditions like [[anxiety-and-addiction|anxiety]] or [[depression-substance-abuse|depression]], gender-specific programs, LGBTQ+-affirming care, programs for specific age groups, or treatment focused on particular substances like [[opioid-addiction-treatment|opioids]].",
       "Specialized programs often provide more relevant peer support and staff who truly understand your specific challenges. Someone in a program designed for their particular needs typically engages more fully in treatment.",
       "## Investigate Staff Qualifications",
       "Quality addiction treatment requires qualified professionals. The clinical team should include licensed therapists, certified addiction counselors, medical doctors or nurse practitioners, and psychiatric staff if the program treats co-occurring disorders. Ask about staff-to-patient ratios—more individualized attention generally leads to better outcomes.",
       "Pay attention to who actually delivers treatment versus who appears in marketing materials. Some facilities feature medical directors prominently but provide most treatment through under-qualified staff. Ask directly who you'll be working with day-to-day.",
       "## Understand Costs and Insurance",
-      "Treatment costs range dramatically from a few thousand dollars to tens of thousands per month. Before committing, understand exactly what's included in the quoted price. Are medications included? What about aftercare planning? Will there be surprise charges for assessments or activities?",
+      "Treatment costs range dramatically from a few thousand dollars to tens of thousands per month. Before committing, understand exactly what's included in the quoted price. Are medications included? What about aftercare planning? Will there be surprise charges for assessments or activities? Our complete [[insurance-coverage-guide|guide to insurance coverage for addiction treatment]] explains what to expect.",
       "Contact your insurance company to understand your coverage for addiction treatment. Many plans are required to cover substance use disorder treatment, but specifics vary widely. The treatment center's admissions team should be able to help verify your benefits and explain any out-of-pocket costs.",
       "## Evaluate Family Involvement",
-      "Research consistently shows that family involvement improves treatment outcomes. Ask whether the facility offers family therapy sessions, educational programs for loved ones, and structured family visitation. Programs that isolate patients from all family contact may be missing an important component of recovery.",
+      "Research consistently shows that [[family-therapy-recovery|family involvement improves treatment outcomes]]. Ask whether the facility offers family therapy sessions, educational programs for loved ones, and structured family visitation. Programs that isolate patients from all family contact may be missing an important component of recovery.",
       "At the same time, some family situations are complicated. A good program will assess your specific family dynamics and make appropriate recommendations about involvement.",
       "## Ask About Aftercare Planning",
-      "Recovery doesn't end when treatment ends. From day one, a quality program should be planning for what happens when you leave. This includes referrals to outpatient treatment or support groups, connections to sober living if needed, alumni programs and ongoing support, and a personalized relapse prevention plan.",
-      "Be skeptical of facilities that focus exclusively on their program without discussing the months and years ahead. Long-term recovery requires long-term planning.",
+      "Recovery doesn't end when treatment ends. From day one, a quality program should be planning for what happens when you leave. This includes referrals to outpatient treatment or support groups, connections to [[sober-living-guide|sober living]] if needed, alumni programs and ongoing support, and a personalized [[relapse-prevention-strategies|relapse prevention plan]].",
+      "Be skeptical of facilities that focus exclusively on their program without discussing the months and years ahead. [[long-term-recovery-success|Long-term recovery]] requires long-term planning.",
       "## Trust Your Instincts",
       "After doing your research, schedule a call or visit with your top choices. Pay attention to how you feel. Are your questions answered honestly and completely? Do staff seem genuinely caring or just eager to fill a bed? Does the environment feel like somewhere you could do the hard work of recovery?",
-      "Your gut feeling matters. You'll engage more fully in treatment at a facility where you feel respected and supported.",
+      "Your gut feeling matters. You'll engage more fully in treatment at a facility where you feel respected and supported. Once you've chosen, read about [[first-week-treatment|what to expect during your first week in rehab]] so you arrive prepared.",
     ],
   },
   {
@@ -124,7 +162,7 @@ const articles: Article[] = [
       "Your first day focuses on getting settled in. You'll complete paperwork, have your belongings checked (most facilities restrict certain items), and meet the staff who'll be supporting you. A clinical intake coordinator will ask detailed questions about your substance use history, medical background, mental health, and personal circumstances.",
       "Be completely honest during intake, even when it's uncomfortable. This information helps your treatment team develop a plan tailored to your specific needs. Holding back details only limits the help they can provide.",
       "## Days One Through Three: Detox and Stabilization",
-      "If you've been actively using substances, the first few days often involve medical detoxification. Medical staff will monitor your vital signs and provide medications to manage withdrawal symptoms. Depending on what you've been using, you might experience anxiety, nausea, sweating, tremors, insomnia, or mood swings.",
+      "If you've been actively using substances, the first few days often involve medical detoxification. For those dealing with alcohol dependence, [[alcohol-detox-what-to-expect|understanding what happens during alcohol detox]] is especially important. Medical staff will monitor your vital signs and provide medications to manage withdrawal symptoms. Depending on what you've been using, you might experience anxiety, nausea, sweating, tremors, insomnia, or mood swings.",
       "Withdrawal is uncomfortable, but medical detox keeps you safe. Staff have seen every form of withdrawal and know how to help. Don't try to tough it out or hide symptoms—let your medical team know exactly how you're feeling so they can adjust your care.",
       "## Getting Oriented to Your New Environment",
       "Between intake and detox, you'll tour the facility, meet fellow patients, and learn the daily schedule. Most residential programs have structured days including wake-up times, group sessions, meals, therapy appointments, activities, and lights-out. This structure might feel rigid initially, but it replaces the chaos of addiction with healthy routines.",
@@ -133,19 +171,19 @@ const articles: Article[] = [
       "Once you're medically stable, therapeutic work begins in earnest. Your first therapy sessions focus on building rapport with your counselor, understanding your treatment goals, and introducing core concepts you'll work with throughout your stay.",
       "Don't expect profound breakthroughs in week one. The first week is about building trust and laying groundwork. Your therapist is getting to know you, and you're adjusting to a completely new way of spending your days. Deeper therapeutic work comes as you settle in.",
       "## The Emotional Rollercoaster",
-      "Without substances numbing your feelings, emotions you've been avoiding will surface. You might cry more than you have in years. You might feel angry, scared, ashamed, or overwhelmed. This emotional intensity is normal and actually a sign that healing is beginning.",
+      "Without substances numbing your feelings, emotions you've been avoiding will surface. You might cry more than you have in years. You might feel angry, scared, ashamed, or overwhelmed. This emotional intensity is normal and actually a sign that healing is beginning. If you're dealing with underlying [[anxiety-and-addiction|anxiety]] or [[depression-substance-abuse|depression]], these feelings may be especially intense.",
       "Staff understand this process. Lean on them when emotions feel unmanageable. Fellow patients further along in treatment can also offer perspective—they've been where you are and can reassure you that it gets easier.",
       "## Connecting with Other Patients",
       "You're not going through this alone. Living alongside others in recovery creates a unique bond. These are people who understand what you're experiencing in ways that friends and family outside treatment can't.",
       "Give yourself permission to take it slow socially. You don't need to share your life story on day one. Trust builds naturally over shared meals, groups, and downtime. By the end of your first week, you'll likely have found at least one person you genuinely connect with.",
       "## Handling Homesickness and Doubt",
       "Almost everyone misses home during the first week. You might question whether you really needed this level of help or feel the urge to leave. These feelings are normal and usually fade as you adjust.",
-      "Before making any decisions about leaving, talk to your counselor. Share what you're feeling. They've helped countless people through first-week doubts and can help you work through yours. Remember why you came in the first place.",
+      "Before making any decisions about leaving, talk to your counselor. Share what you're feeling. They've helped countless people through first-week doubts and can help you work through yours. Remember why you came in the first place—understanding the [[stages-of-recovery|stages of recovery]] can help put this challenging phase in perspective.",
       "## Physical Self-Care",
       "Focus on basic needs this week. Your body is adjusting to functioning without substances, and that's exhausting work. Sleep as much as your body needs—you're probably catching up on years of poor sleep. Eat regular meals even if your appetite is off. Stay hydrated. Take it one hour at a time when you need to.",
       "## What the First Week Accomplishes",
       "By the end of your first week, you'll have safely navigated withdrawal, started building relationships with your treatment team and fellow patients, begun learning the skills and concepts that will support your recovery, and proven to yourself that you can do this.",
-      "The first week is the hardest, but it's also the foundation for everything that follows. Take it one day at a time, be patient with yourself, and trust the process.",
+      "The first week is the hardest, but it's also the foundation for everything that follows. Take it one day at a time, be patient with yourself, and trust the process. If you haven't yet chosen a facility, our guide on [[choosing-rehab-center|how to choose the best rehab center]] can help.",
     ],
   },
   {
@@ -162,19 +200,19 @@ const articles: Article[] = [
       "The cost of addiction treatment stops many people from getting help. But here's something you might not know: federal law requires most health insurance plans to cover substance abuse treatment. Understanding your coverage options can make quality care much more accessible than you think.",
       "## Your Legal Right to Coverage",
       "Two key federal laws protect your access to addiction treatment coverage. The Mental Health Parity and Addiction Equity Act requires insurance plans to cover mental health and substance use disorder treatment at the same level as physical health conditions. The Affordable Care Act includes addiction treatment as one of ten essential health benefits that most plans must cover.",
-      "What this means practically: your insurance company can't impose stricter limits on addiction treatment than on other medical care. If your plan covers 30 days of hospitalization for a physical condition, it should cover comparable lengths of residential addiction treatment.",
+      "What this means practically: your insurance company can't impose stricter limits on addiction treatment than on other medical care. If your plan covers 30 days of hospitalization for a physical condition, it should cover comparable lengths of [[inpatient-vs-outpatient|residential addiction treatment]].",
       "## Types of Insurance Coverage",
       "Employer-sponsored insurance typically provides solid coverage for addiction treatment, though specifics vary by plan. Marketplace (ACA) plans must cover substance use disorder treatment as an essential health benefit. Medicare covers addiction treatment for eligible individuals, including inpatient services and outpatient counseling. Medicaid coverage varies significantly by state but generally includes substance abuse treatment. Private insurance policies vary widely—review your specific policy carefully.",
       "Don't assume you have no coverage or inadequate coverage without checking. Call the member services number on your insurance card and ask specifically about substance use disorder benefits.",
       "## Understanding Your Specific Benefits",
-      "Before entering treatment, call your insurance company and ask these questions: What levels of care are covered—inpatient, PHP, IOP, outpatient? What's my deductible for addiction treatment? What are my copays or coinsurance amounts after the deductible? Is there a maximum number of covered treatment days? Do I need pre-authorization before starting treatment? Which treatment facilities are in my network?",
+      "Before entering treatment, call your insurance company and ask these questions: What [[types-of-addiction-treatment|levels of care]] are covered—inpatient, PHP, IOP, outpatient? What's my deductible for addiction treatment? What are my copays or coinsurance amounts after the deductible? Is there a maximum number of covered treatment days? Do I need pre-authorization before starting treatment? Which treatment facilities are in my network?",
       "Ask for this information in writing or take detailed notes during your call, including the representative's name and the date. You may need to reference this information later.",
       "## In-Network vs. Out-of-Network Treatment",
       "Using in-network treatment facilities almost always costs significantly less than going out-of-network. In-network providers have negotiated rates with your insurance company, and your plan typically covers a larger percentage of costs.",
-      "However, if the in-network options aren't appropriate for your needs—perhaps you need specialized treatment that isn't available locally—you may be able to negotiate out-of-network coverage at in-network rates. This is called a network exception or gap exception. Document why in-network options are inadequate and submit a formal request to your insurance company.",
+      "However, if the in-network options aren't appropriate for your needs—perhaps you need specialized [[dual-diagnosis-treatment|dual diagnosis treatment]] or [[opioid-addiction-treatment|MAT for opioid addiction]] that isn't available locally—you may be able to negotiate out-of-network coverage at in-network rates. This is called a network exception or gap exception. Document why in-network options are inadequate and submit a formal request to your insurance company.",
       "## The Pre-Authorization Process",
       "Most insurance plans require pre-authorization (prior approval) before covering residential treatment. This involves the treatment facility submitting clinical information demonstrating that residential care is medically necessary for your situation.",
-      "Reputable treatment facilities handle pre-authorization routinely. Their admissions team will gather necessary information from you, submit documentation to your insurer, and follow up on the decision. Don't let pre-authorization requirements deter you—this is a standard process that facilities navigate every day.",
+      "Reputable treatment facilities handle pre-authorization routinely. Their admissions team will gather necessary information from you, submit documentation to your insurer, and follow up on the decision. Don't let pre-authorization requirements deter you—this is a standard process that facilities navigate every day. Our guide on [[choosing-rehab-center|choosing the best rehab center]] explains more about what to look for in a quality facility.",
       "## When Insurance Denies Coverage",
       "Insurance denials for addiction treatment happen, but you have the right to appeal. Common denial reasons include claims that treatment isn't medically necessary, failure to obtain required pre-authorization, or use of out-of-network providers.",
       "If your claim is denied: request a detailed written explanation of why, gather supporting documentation from your treatment team about medical necessity, submit a written appeal within the timeframe specified by your insurer, and consider getting help from a patient advocate if available.",
@@ -183,7 +221,7 @@ const articles: Article[] = [
       "If you don't have insurance, treatment is still possible. State-funded treatment programs provide free or low-cost care based on ability to pay. Many facilities offer sliding scale fees adjusted to your income. Some treatment centers offer scholarships or financial assistance for qualifying individuals. Community health centers often provide addiction treatment at reduced rates.",
       "SAMHSA's National Helpline (1-800-662-4357) can help locate free or reduced-cost treatment options in your area. This service is confidential, free, and available 24/7.",
       "## Financing Options",
-      "When insurance coverage falls short, additional financing options exist. Many treatment facilities offer payment plans allowing you to pay over time. Healthcare-specific financing companies provide loans for addiction treatment. Some nonprofits provide grants for treatment costs. Certain employers offer assistance programs that can help cover treatment.",
+      "When insurance coverage falls short, additional financing options exist. Many treatment facilities offer payment plans allowing you to pay over time. Healthcare-specific financing companies provide loans for addiction treatment. Some nonprofits provide grants for treatment costs. Certain employers offer assistance programs that can help cover treatment—learn more about [[workplace-substance-abuse|workplace options for getting help while protecting your job]].",
       "While financing involves costs, it can make treatment accessible when the alternative is no treatment at all. Many people view it as an investment in a healthier, more productive future.",
       "## Don't Let Cost Stop You",
       "Financial concerns are valid, but they shouldn't prevent you from getting help. Treatment centers have staff dedicated to helping navigate insurance and exploring payment options. Most facilities will work with you to make treatment financially feasible.",
@@ -827,7 +865,7 @@ const ArticleDetail = () => {
                         key={index}
                         className="text-foreground/80 leading-relaxed mb-5 text-base"
                       >
-                        {paragraph}
+                        {parseContentWithLinks(paragraph)}
                       </p>
                     );
                   })}
