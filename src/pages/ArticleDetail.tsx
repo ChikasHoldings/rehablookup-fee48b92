@@ -784,94 +784,105 @@ const ArticleDetail = () => {
       </section>
 
       {/* Content */}
-      <section className="py-12 md:py-16">
+      <section className="py-12 md:py-16 bg-gradient-to-b from-muted/30 to-background">
         <div className="container">
-          <div className="grid gap-12 lg:grid-cols-3">
+          <div className="grid gap-10 lg:grid-cols-3 lg:gap-12">
             {/* Article Content */}
             <article className="lg:col-span-2">
-              <div className="prose prose-lg max-w-none">
-                {article.content.map((paragraph, index) => {
-                  if (paragraph.startsWith("## ")) {
+              <div className="rounded-2xl border border-border/50 bg-card p-6 md:p-10 shadow-sm">
+                <div className="prose prose-lg max-w-none">
+                  {article.content.map((paragraph, index) => {
+                    if (paragraph.startsWith("## ")) {
+                      return (
+                        <h2
+                          key={index}
+                          className="font-display text-xl font-bold text-foreground mt-10 mb-4 first:mt-0 flex items-center gap-3"
+                        >
+                          <span className="h-8 w-1 rounded-full bg-primary" />
+                          {paragraph.replace("## ", "")}
+                        </h2>
+                      );
+                    }
                     return (
-                      <h2
+                      <p
                         key={index}
-                        className="font-display text-xl font-bold text-foreground mt-8 mb-4"
+                        className="text-foreground/80 leading-relaxed mb-5 text-base"
                       >
-                        {paragraph.replace("## ", "")}
-                      </h2>
+                        {paragraph}
+                      </p>
                     );
-                  }
-                  return (
-                    <p
-                      key={index}
-                      className="text-foreground/80 leading-relaxed mb-4"
-                    >
-                      {paragraph}
-                    </p>
-                  );
-                })}
-              </div>
+                  })}
+                </div>
 
-              {/* Share */}
-              <div className="mt-12 pt-8 border-t border-border">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Share2 className="h-4 w-4" />
-                    <span className="text-sm">Share this article</span>
+                {/* Share & Actions */}
+                <div className="mt-12 pt-8 border-t border-border/50">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground">Share:</span>
+                      <div className="flex items-center gap-2">
+                        <button className="h-9 w-9 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
+                          <Share2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <Link to="/resources">
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <ArrowLeft className="h-4 w-4" />
+                        All Articles
+                      </Button>
+                    </Link>
                   </div>
-                  <Link to="/resources">
-                    <Button variant="outline" className="gap-2">
-                      <ArrowLeft className="h-4 w-4" />
-                      Back to Resources
-                    </Button>
-                  </Link>
                 </div>
               </div>
             </article>
 
             {/* Sidebar */}
-            <aside className="space-y-8">
+            <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
               {/* Help Card */}
-              <div className="rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-6">
-                <h3 className="font-display text-lg font-semibold text-foreground mb-3">
+              <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/90 p-6 text-white shadow-lg shadow-primary/20">
+                <div className="mb-4 h-12 w-12 rounded-xl bg-white/15 flex items-center justify-center">
+                  <Heart className="h-6 w-6" />
+                </div>
+                <h3 className="font-display text-lg font-semibold mb-2">
                   Need Help Finding Treatment?
                 </h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-white/80 mb-5 leading-relaxed">
                   Our specialists are available 24/7 to help you find the right treatment center.
                 </p>
                 <Link to="/request-help?source=article_sidebar">
-                  <Button className="w-full gap-2">
-                    <Heart className="h-4 w-4" />
+                  <Button variant="secondary" className="w-full gap-2 bg-white text-primary hover:bg-white/90">
                     Request Help
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
 
               {/* Related Articles */}
               {relatedArticles.length > 0 && (
-                <div>
-                  <h3 className="font-display text-lg font-semibold text-foreground mb-4">
+                <div className="rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
+                  <h3 className="font-display text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-primary" />
                     Related Articles
                   </h3>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {relatedArticles.map((related) => (
                       <Link
                         key={related.id}
                         to={`/resources/${related.id}`}
                         className="group block"
                       >
-                        <div className="rounded-xl border border-border bg-card p-4 transition-all hover:border-accent/30 hover:shadow-md">
+                        <div className="rounded-xl bg-muted/30 p-3 transition-all hover:bg-muted/50 hover:shadow-sm">
                           <div className="flex gap-3">
                             <img
                               src={related.image}
                               alt={related.title}
-                              className="h-16 w-16 rounded-lg object-cover shrink-0"
+                              className="h-14 w-14 rounded-lg object-cover shrink-0"
                             />
-                            <div>
+                            <div className="min-w-0">
                               <h4 className="font-medium text-foreground text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2">
                                 {related.title}
                               </h4>
-                              <span className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                              <span className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
                                 {related.readTime}
                               </span>
@@ -885,15 +896,15 @@ const ArticleDetail = () => {
               )}
 
               {/* Browse More */}
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h3 className="font-display text-lg font-semibold text-foreground mb-3">
-                  Browse More Resources
+              <div className="rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
+                <h3 className="font-display text-base font-semibold text-foreground mb-2">
+                  Explore More
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Explore our full library of articles and guides.
+                  Discover our full library of recovery guides.
                 </p>
                 <Link to="/resources">
-                  <Button variant="outline" className="w-full gap-2">
+                  <Button variant="outline" size="sm" className="w-full gap-2">
                     View All Articles
                     <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -905,28 +916,36 @@ const ArticleDetail = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-16 md:py-20 bg-muted/30">
+      <section className="py-16 md:py-20 bg-muted/50">
         <div className="container">
-          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
-              Ready to Start Your Recovery Journey?
-            </h2>
-            <p className="mb-6 text-muted-foreground max-w-xl mx-auto">
-              Find verified treatment centers near you and take the first step toward a healthier future.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/rehab-centers">
-                <Button size="lg" className="gap-2">
-                  Find Treatment Centers
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/request-help?source=article_cta">
-                <Button variant="outline" size="lg" className="gap-2">
-                  <Heart className="h-4 w-4" />
-                  Request Help
-                </Button>
-              </Link>
+          <div className="mx-auto max-w-3xl rounded-2xl bg-gradient-to-br from-primary to-primary/90 p-8 md:p-12 text-center text-white shadow-xl shadow-primary/20 relative overflow-hidden">
+            {/* Decorative elements */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
+            
+            <div className="relative">
+              <div className="mb-4 mx-auto h-14 w-14 rounded-2xl bg-white/15 flex items-center justify-center">
+                <Heart className="h-7 w-7" />
+              </div>
+              <h2 className="mb-3 font-display text-2xl font-bold md:text-3xl">
+                Ready to Start Your Recovery Journey?
+              </h2>
+              <p className="mb-8 text-white/80 max-w-xl mx-auto">
+                Find verified treatment centers near you and take the first step toward a healthier future.
+              </p>
+              <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link to="/rehab-centers">
+                  <Button size="lg" variant="secondary" className="gap-2 bg-white text-primary hover:bg-white/90 shadow-lg">
+                    Find Treatment Centers
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/request-help?source=article_cta">
+                  <Button size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10">
+                    Request Help
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
