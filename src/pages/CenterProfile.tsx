@@ -28,7 +28,7 @@ import {
   MessageSquare,
   Flag,
 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
 import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
@@ -304,19 +304,7 @@ const CenterProfile = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="bg-muted/30 min-h-screen py-8">
-          <div className="container max-w-6xl">
-            <Skeleton className="h-8 w-48 mb-4" />
-            <Skeleton className="h-48 w-full mb-6 rounded-xl" />
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 space-y-4">
-                <Skeleton className="h-40 w-full rounded-xl" />
-                <Skeleton className="h-32 w-full rounded-xl" />
-              </div>
-              <Skeleton className="h-80 w-full rounded-xl" />
-            </div>
-          </div>
-        </div>
+        <CenterProfileSkeleton />
       </Layout>
     );
   }
