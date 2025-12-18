@@ -970,19 +970,6 @@ export default function ProviderListingPage() {
     });
   };
 
-  const allSectionKeys = ["photos", "basic", "location", "contact", "program", "services", "insurance", "trust"];
-  
-  const expandAllSections = () => {
-    setExpandedSections(new Set(allSectionKeys));
-  };
-
-  const collapseAllSections = () => {
-    setExpandedSections(new Set());
-  };
-
-  const allExpanded = allSectionKeys.every(key => expandedSections.has(key));
-  const allCollapsed = expandedSections.size === 0;
-
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "approved":
@@ -1081,26 +1068,7 @@ export default function ProviderListingPage() {
             </p>
           </div>
           
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Expand/Collapse All Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={allExpanded ? collapseAllSections : expandAllSections}
-              className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
-            >
-              {allExpanded ? (
-                <>
-                  <ChevronUp className="h-3.5 w-3.5" />
-                  Collapse All
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-3.5 w-3.5" />
-                  Expand All
-                </>
-              )}
-            </Button>
+          <div className="flex items-center gap-3 flex-wrap">
             {/* Save status indicators */}
             <div className="flex items-center gap-2 text-xs">
               {isAutoSaving && (
