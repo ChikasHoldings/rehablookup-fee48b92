@@ -277,13 +277,16 @@ const Index = () => {
               <SearchForm variant="compact-hero" />
             </div>
 
-            {/* Trust Badges - Better visual weight */}
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 animate-fade-in md:gap-x-8 lg:gap-x-10" style={{ animationDelay: "200ms" }}>
+            {/* Trust Badges - Staggered animation */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 md:gap-x-8 lg:gap-x-10">
               {trustBadges.map((badge, index) => (
                 <div 
                   key={badge.label} 
-                  className="flex items-center gap-2 text-foreground/70 transition-all duration-300 hover:text-primary group"
-                  style={{ animationDelay: `${200 + index * 50}ms` }}
+                  className="flex items-center gap-2 text-foreground/70 transition-all duration-300 hover:text-primary group animate-fade-in opacity-0"
+                  style={{ 
+                    animationDelay: `${400 + index * 150}ms`,
+                    animationFillMode: 'forwards'
+                  }}
                 >
                   <div className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/20 group-hover:ring-primary/40 group-hover:scale-110">
                     <badge.icon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
