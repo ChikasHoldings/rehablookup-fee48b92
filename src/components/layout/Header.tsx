@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, ChevronRight } from "lucide-react";
+import { Menu, X, LogOut, ChevronRight, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -71,7 +71,7 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-white shadow-sm">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-white/95 backdrop-blur-sm shadow-sm">
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
@@ -92,10 +92,12 @@ export function Header({
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "rounded-lg px-4 py-2 text-base font-medium transition-all",
+                  "relative rounded-lg px-4 py-2 text-base font-medium transition-all duration-200",
                   location.pathname === link.href
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:text-primary hover:bg-secondary"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-foreground hover:text-primary hover:bg-primary/5",
+                  // Underline animation for non-active links
+                  location.pathname !== link.href && "after:absolute after:bottom-1 after:left-4 after:right-4 after:h-0.5 after:bg-primary after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
                 )}
               >
                 {link.label}
@@ -104,30 +106,30 @@ export function Header({
           </nav>
 
           {/* CTA & Mobile Toggle */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {variant === "provider" ? (
               <>
                 {/* Provider CTAs - both List Facility and Login/Logout */}
                 <Link to="/provider-signup" className="hidden sm:block">
-                  <Button size="sm" variant="outline" className="shadow-sm">
+                  <Button size="sm" variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
                     List Your Facility
                   </Button>
                 </Link>
                 {isLoggedIn ? (
                   <div className="hidden sm:flex items-center gap-2">
                     <Link to="/provider-dashboard">
-                      <Button size="sm" variant="ghost">
+                      <Button size="sm" variant="ghost" className="hover:bg-primary/5">
                         Dashboard
                       </Button>
                     </Link>
-                    <Button size="sm" variant="secondary" onClick={handleLogout} className="gap-1.5">
+                    <Button size="sm" variant="secondary" onClick={handleLogout} className="gap-1.5 hover:bg-destructive/10 hover:text-destructive transition-colors">
                       <LogOut className="h-3.5 w-3.5" />
                       Sign Out
                     </Button>
                   </div>
                 ) : (
                   <Link to="/provider-login" className="hidden sm:block">
-                    <Button size="sm" className="shadow-sm">
+                    <Button size="sm" className="shadow-sm hover:shadow-md transition-shadow">
                       Provider Login
                     </Button>
                   </Link>
@@ -135,13 +137,13 @@ export function Header({
               </>
             ) : (
               <PrefetchLink to={ctaLink} className="hidden sm:block">
-                <Button size="sm" className="shadow-sm">
+                <Button size="sm" className="shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
                   {ctaLabel}
                 </Button>
               </PrefetchLink>
             )}
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground bg-secondary/50 hover:bg-secondary md:hidden transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground bg-secondary hover:bg-primary hover:text-primary-foreground md:hidden transition-all duration-200 active:scale-95"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -154,7 +156,7 @@ export function Header({
       {/* Mobile Menu Overlay */}
       <div 
         className={cn(
-          "fixed inset-0 z-[100] bg-foreground/60 backdrop-blur-sm md:hidden transition-opacity duration-300",
+          "fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm md:hidden transition-opacity duration-300",
           mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setMobileMenuOpen(false)}
@@ -163,21 +165,21 @@ export function Header({
       {/* Mobile Slide Menu - 80% width from right */}
       <div 
         className={cn(
-          "fixed top-0 right-0 z-[101] h-full w-[80%] max-w-sm bg-card shadow-2xl md:hidden transition-transform duration-300 ease-out",
+          "fixed top-0 right-0 z-[101] h-full w-[80%] max-w-sm bg-white shadow-2xl md:hidden transition-transform duration-300 ease-out",
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         {/* Menu Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-5">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-secondary/30">
           <Link to="/" onClick={() => setMobileMenuOpen(false)}>
             <img 
               src="/logo.svg" 
               alt="Rehab-Lookup" 
-              className="h-11 w-auto"
+              className="h-10 w-auto"
             />
           </Link>
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground bg-secondary/50 hover:bg-secondary transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground bg-white shadow-sm hover:bg-primary hover:text-primary-foreground transition-all duration-200 active:scale-95"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close menu"
           >
@@ -186,70 +188,75 @@ export function Header({
         </div>
 
         {/* Menu Content */}
-        <div className="flex flex-col h-[calc(100%-76px)] overflow-y-auto">
+        <div className="flex flex-col h-[calc(100%-72px)] overflow-y-auto">
           {/* Navigation Links */}
-          <nav className="flex-1 px-4 py-6">
-            <div className="space-y-1">
+          <nav className="flex-1 px-4 py-5">
+            <div className="space-y-1.5">
               {navLinks.map((link, index) => (
                 <PrefetchLink
                   key={link.href}
                   to={link.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    "flex items-center justify-between rounded-xl px-4 py-4 text-base font-medium transition-all",
+                    "group flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-all duration-200",
                     location.pathname === link.href
                       ? "bg-primary text-primary-foreground shadow-md"
-                      : "text-foreground hover:bg-secondary"
+                      : "text-foreground hover:bg-primary/5 hover:text-primary active:bg-primary/10"
                   )}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <span>{link.label}</span>
                   <ChevronRight className={cn(
-                    "h-4 w-4 transition-colors",
-                    location.pathname === link.href ? "text-primary-foreground/70" : "text-muted-foreground"
+                    "h-4 w-4 transition-all duration-200",
+                    location.pathname === link.href 
+                      ? "text-primary-foreground/70" 
+                      : "text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5"
                   )} />
                 </PrefetchLink>
               ))}
             </div>
 
             {/* Divider */}
-            <div className="my-6 border-t border-border" />
+            <div className="my-5 border-t border-border" />
 
             {/* Quick Links */}
+            <p className="px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Quick Links
+            </p>
             <div className="space-y-1">
               <PrefetchLink
                 to="/about"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+                className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all duration-200"
               >
                 <span>About Us</span>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </PrefetchLink>
               <PrefetchLink
                 to="/contact"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+                className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all duration-200"
               >
                 <span>Contact</span>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </PrefetchLink>
               <PrefetchLink
                 to="/faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+                className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all duration-200"
               >
                 <span>FAQ</span>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </PrefetchLink>
             </div>
           </nav>
 
           {/* Bottom CTA Section */}
-          <div className="border-t border-border bg-secondary/30 p-6 space-y-3">
+          <div className="border-t border-border bg-gradient-to-b from-secondary/50 to-secondary/30 p-5 space-y-3">
             {variant === "provider" ? (
               <>
                 <Link to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
-                  <Button variant="outline" className="w-full h-12 text-base font-medium rounded-xl">
+                  <Button variant="outline" className="w-full h-12 text-base font-medium rounded-xl hover:bg-primary/5 hover:border-primary transition-colors">
                     List Your Facility
                   </Button>
                 </Link>
@@ -262,7 +269,7 @@ export function Header({
                     </Link>
                     <Button 
                       variant="ghost" 
-                      className="w-full h-12 text-base font-medium rounded-xl gap-2" 
+                      className="w-full h-12 text-base font-medium rounded-xl gap-2 hover:bg-destructive/10 hover:text-destructive" 
                       onClick={() => {
                         handleLogout();
                         setMobileMenuOpen(false);
@@ -274,7 +281,7 @@ export function Header({
                   </>
                 ) : (
                   <Link to="/provider-login" onClick={() => setMobileMenuOpen(false)} className="block">
-                    <Button className="w-full h-12 text-base font-medium rounded-xl shadow-lg">
+                    <Button className="w-full h-12 text-base font-medium rounded-xl shadow-lg hover:shadow-xl transition-shadow">
                       Provider Login
                     </Button>
                   </Link>
@@ -282,14 +289,15 @@ export function Header({
               </>
             ) : (
               <PrefetchLink to={ctaLink} onClick={() => setMobileMenuOpen(false)} className="block">
-                <Button className="w-full h-14 text-base font-semibold rounded-xl shadow-lg bg-primary hover:bg-primary/90">
+                <Button className="w-full h-14 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all bg-primary hover:bg-primary/90 active:scale-[0.98]">
+                  <Heart className="h-4 w-4 mr-2" />
                   {ctaLabel}
                 </Button>
               </PrefetchLink>
             )}
             
             {/* Trust indicator */}
-            <p className="text-center text-xs text-muted-foreground pt-2">
+            <p className="text-center text-xs text-muted-foreground pt-1">
               Trusted by thousands of families nationwide
             </p>
           </div>
