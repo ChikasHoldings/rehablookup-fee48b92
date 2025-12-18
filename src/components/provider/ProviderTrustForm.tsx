@@ -94,15 +94,15 @@ export function ProviderTrustForm({ facilityId, yearEstablished, onYearChange }:
         {/* Year Established */}
         <div className="space-y-2">
           <Label htmlFor="year-established">Year Established</Label>
-          <Select
-            value={yearEstablished?.toString() || ""}
-            onValueChange={(value) => onYearChange(value ? parseInt(value) : null)}
+        <Select
+            value={yearEstablished?.toString() || "not_specified"}
+            onValueChange={(value) => onYearChange(value === "not_specified" ? null : parseInt(value))}
           >
             <SelectTrigger id="year-established" className="w-full md:w-[200px]">
               <SelectValue placeholder="Select year" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Not specified</SelectItem>
+              <SelectItem value="not_specified">Not specified</SelectItem>
               {years.map((year) => (
                 <SelectItem key={year} value={year.toString()}>
                   {year}
