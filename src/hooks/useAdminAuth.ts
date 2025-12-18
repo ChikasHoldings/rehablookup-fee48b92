@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
-
+import { toast } from "sonner";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 // Map routes to permission keys
 const routePermissionMap: Record<string, string> = {
   "/admin": "dashboard",
@@ -40,8 +42,9 @@ export function useAdminAuth() {
   const [forcePasswordChange, setForcePasswordChange] = useState(false);
   const [requireMfaSetup, setRequireMfaSetup] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
-
+  const queryClient = useQueryClient();
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase.rpc("has_role", {
@@ -312,11 +315,54 @@ export function useAdminAuth() {
     return () => subscription.unsubscribe();
   }, [navigate, checkAdminStatus, checkSuperAdminStatus, fetchPermissions, fetchAdminProfile, checkMfaStatus]);
 
-  const logout = async () => {
-    clearSentryUser();
-    await supabase.auth.signOut();
-    navigate("/admin-login", { replace: true });
-  };
+  const logout = useCallback(async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    try {
+      // Log logout activity before signing out
+      if (user) {
+        await logAdminAction({
+          actionType: AdminAuditActions.LOGOUT,
+          targetType: "admin_session",
+          targetId: user.id,
+          details: { email: user.email },
+        });
+      }
+
+      // Clear Sentry user context
+      clearSentryUser();
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast.error("Logout failed", {
+          description: "Please try again or refresh the page.",
+        });
+        setIsLoggingOut(false);
+        return;
+      }
+
+      // Clear all cached data
+      queryClient.clear();
+
+      // Show success toast
+      toast.success("Signed out", {
+        description: "You've been successfully logged out.",
+      });
+
+      // Navigate to login
+      navigate("/admin-login", { replace: true });
+    } catch (err) {
+      console.error("Logout exception:", err);
+      toast.error("Logout failed", {
+        description: "An unexpected error occurred.",
+      });
+      setIsLoggingOut(false);
+    }
+  }, [user, isLoggingOut, queryClient, navigate]);
 
   return { 
     user, 
@@ -330,7 +376,8 @@ export function useAdminAuth() {
     completeMfaSetup,
     hasPermission, 
     canAccessRoute, 
-    isLoading, 
+    isLoading,
+    isLoggingOut,
     logout 
   };
 }

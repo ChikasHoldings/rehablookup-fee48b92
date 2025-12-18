@@ -55,7 +55,7 @@ export const AdminAuditActions = {
   // Session actions
   SESSION_REVOKED: "session_revoked",
   LOGIN: "login",
-  
+  LOGOUT: "logout",
   // Notification actions
   NOTIFICATIONS_MARKED_READ: "notifications_marked_read",
   NOTIFICATIONS_CLEARED: "notifications_cleared",
