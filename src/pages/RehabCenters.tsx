@@ -602,35 +602,42 @@ const RehabCenters = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="relative overflow-hidden border-t border-border bg-gradient-to-br from-card via-card to-secondary/30 py-14 md:py-16">
-        {/* Decorative accent */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <section className="relative overflow-hidden border-t border-border/50 bg-gradient-to-br from-primary/5 via-card to-secondary/40 py-16 md:py-20">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+        <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-primary/5 blur-3xl" />
         
-        <div className="container">
-          <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 text-center md:flex-row md:text-left">
+        <div className="container relative">
+          <div className="mx-auto max-w-3xl text-center">
             {/* Icon */}
-            <div className="hidden md:flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10">
-              <Sparkles className="h-10 w-10 text-primary" />
+            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25">
+              <Sparkles className="h-7 w-7 text-primary-foreground" />
             </div>
             
-            <div className="flex-1">
-              <h2 className="mb-2 font-display text-xl font-bold text-foreground md:text-2xl">
-                Need Help Finding the Right Center?
-              </h2>
-              <p className="text-muted-foreground">
-                Our specialists provide free, confidential guidance on treatment options and insurance coverage. We're here to help you navigate the path to recovery.
-              </p>
-            </div>
+            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+              Need Help Finding the Right Center?
+            </h2>
+            <p className="mb-8 text-muted-foreground max-w-xl mx-auto text-base md:text-lg">
+              Our specialists provide free, confidential guidance on treatment options and insurance coverage.
+            </p>
             
-            <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link to="/request-help?source=rehab_cta">
-                <Button size="lg" className="w-full gap-2 sm:w-auto shadow-lg hover:shadow-xl transition-shadow">
+                <Button 
+                  size="lg" 
+                  className="px-8 gap-2 h-14 text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                >
                   <Heart className="h-4 w-4" />
-                  Request Help
+                  Get Started
                 </Button>
               </Link>
               <Link to="/contact">
-                <Button size="lg" variant="outline" className="w-full gap-2 sm:w-auto hover:bg-secondary transition-colors">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="px-8 gap-2 h-14 text-base font-semibold border-2 hover:bg-secondary hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                >
                   <Phone className="h-4 w-4" />
                   Contact Us
                 </Button>
