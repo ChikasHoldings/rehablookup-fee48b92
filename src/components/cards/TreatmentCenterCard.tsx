@@ -60,16 +60,24 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
     <article
       className={cn(
         "group relative flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-all duration-300",
-        "hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.99]",
+        "hover:shadow-2xl hover:-translate-y-1 active:scale-[0.98]",
         showFeaturedBadge 
-          ? "border-accent/40 shadow-lg ring-1 ring-accent/20" 
-          : "border-border shadow-sm"
+          ? "border-accent/50 shadow-lg shadow-accent/10 ring-1 ring-accent/20 hover:ring-accent/40 hover:border-accent/60" 
+          : "border-border shadow-sm hover:border-primary/30 hover:shadow-primary/5"
       )}
     >
+      {/* Hover gradient overlay for depth */}
+      <div className={cn(
+        "absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none",
+        showFeaturedBadge 
+          ? "bg-gradient-to-br from-accent/5 via-transparent to-primary/5 group-hover:opacity-100"
+          : "bg-gradient-to-br from-primary/3 via-transparent to-transparent group-hover:opacity-100"
+      )} />
+
       {/* Featured Badge - Gold for subscription-based featured */}
       {showFeaturedBadge && (
         <div className="absolute right-3 top-3 z-20 md:right-3 md:top-3">
-          <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-md px-2.5 py-1 text-xs font-semibold">
+          <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg shadow-amber-500/30 px-2.5 py-1 text-xs font-semibold animate-fade-in">
             <Crown className="h-3 w-3" />
             Featured
           </Badge>
@@ -77,24 +85,26 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
       )}
 
       {/* Header with Logo - Larger on mobile */}
-      <div className="flex items-start gap-4 p-5 md:p-4">
-        {/* Logo Container - Larger on mobile for better visibility */}
+      <div className="relative flex items-start gap-4 p-5 md:p-4">
+        {/* Logo Container - Enhanced hover effect */}
         <div 
           className={cn(
-            "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl md:h-14 md:w-14 md:rounded-lg",
-            showFeaturedBadge ? "ring-2 ring-accent/30" : "ring-1 ring-border"
+            "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl md:h-14 md:w-14 md:rounded-lg transition-all duration-300",
+            showFeaturedBadge 
+              ? "ring-2 ring-accent/30 group-hover:ring-accent/50 group-hover:shadow-md" 
+              : "ring-1 ring-border group-hover:ring-primary/40 group-hover:shadow-sm"
           )}
         >
           {hasValidLogo ? (
             <img 
               src={center.logo_url!} 
               alt={`${center.name} logo`}
-              className="h-full w-full object-contain bg-card"
+              className="h-full w-full object-contain bg-card transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
               onError={() => setLogoError(true)}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-muted">
+            <div className="flex h-full w-full items-center justify-center bg-muted transition-colors duration-300 group-hover:bg-primary/10">
               <span className="font-display text-lg font-semibold text-primary md:text-base">
                 {initials}
               </span>
@@ -102,25 +112,25 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
           )}
         </div>
 
-        {/* Name and Location - Larger text on mobile */}
+        {/* Name and Location - Enhanced typography */}
         <div className="min-w-0 flex-1 pt-0.5">
-          <h3 className="font-display text-lg font-semibold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-2 md:text-base">
+          <h3 className="font-display text-lg font-semibold text-foreground leading-tight transition-colors duration-300 group-hover:text-primary line-clamp-2 md:text-base">
             {center.name}
           </h3>
           <p className="mt-1.5 flex items-center gap-1.5 text-base text-muted-foreground md:mt-1 md:gap-1 md:text-sm">
-            <MapPin className="h-4 w-4 shrink-0 md:h-3.5 md:w-3.5" />
+            <MapPin className="h-4 w-4 shrink-0 text-primary/60 md:h-3.5 md:w-3.5" />
             <span className="truncate">{center.city}, {center.state}</span>
           </p>
         </div>
       </div>
 
       {/* Content - Better spacing on mobile */}
-      <div className="flex flex-1 flex-col px-5 pb-5 md:px-4 md:pb-4">
-        {/* Rating Row - Larger touch targets */}
+      <div className="relative flex flex-1 flex-col px-5 pb-5 md:px-4 md:pb-4">
+        {/* Rating Row - Enhanced visual weight */}
         <div className="mb-4 flex items-center gap-4 md:mb-3 md:gap-3">
-          <div className="flex items-center gap-1.5 md:gap-1">
-            <Star className="h-5 w-5 fill-accent text-accent md:h-4 md:w-4" />
-            <span className="text-base font-semibold text-foreground md:text-sm">{center.rating}</span>
+          <div className="flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1 md:gap-1 md:px-2 md:py-0.5">
+            <Star className="h-4 w-4 fill-accent text-accent md:h-3.5 md:w-3.5" />
+            <span className="text-sm font-bold text-accent md:text-xs">{center.rating}</span>
           </div>
           <span className="text-sm text-muted-foreground md:text-xs">
             {center.reviewCount} reviews
@@ -132,13 +142,13 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
           )}
         </div>
 
-        {/* Treatment Type Tags - Larger on mobile */}
+        {/* Treatment Type Tags - Better visual hierarchy */}
         <div className="mb-4 flex flex-wrap gap-2 md:mb-3 md:gap-1.5">
           {center.treatmentTypes.slice(0, 3).map((type) => (
             <Badge 
               key={type} 
               variant="secondary" 
-              className="text-sm font-medium px-3 py-1 bg-secondary/60 md:text-xs md:px-2 md:py-0.5"
+              className="text-sm font-medium px-3 py-1 bg-secondary/70 hover:bg-secondary transition-colors md:text-xs md:px-2 md:py-0.5"
             >
               {type}
             </Badge>
@@ -158,7 +168,7 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
           {center.description}
         </p>
 
-        {/* Actions - Larger touch targets (48px height on mobile) */}
+        {/* Actions - Enhanced button states */}
         <div className="flex gap-3 mt-auto md:gap-2">
           <Link 
             to={detailsUrl} 
@@ -168,16 +178,20 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
           >
             <Button 
               variant="default" 
-              className="w-full gap-2 h-12 text-base font-medium md:h-9 md:text-sm md:gap-1"
+              className={cn(
+                "w-full gap-2 h-12 text-base font-medium transition-all duration-300 md:h-9 md:text-sm md:gap-1",
+                "group-hover:shadow-md",
+                showFeaturedBadge && "group-hover:shadow-primary/20"
+              )}
             >
               View Profile
-              <ArrowRight className="h-4 w-4 md:h-3.5 md:w-3.5" />
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 md:h-3.5 md:w-3.5" />
             </Button>
           </Link>
           <a href={`tel:${center.phone}`}>
             <Button 
               variant="outline" 
-              className="gap-2 h-12 px-5 text-base font-medium md:h-9 md:px-3 md:text-sm md:gap-1.5"
+              className="gap-2 h-12 px-5 text-base font-medium transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:border-primary md:h-9 md:px-3 md:text-sm md:gap-1.5"
             >
               <Phone className="h-4 w-4 md:h-3.5 md:w-3.5" />
               Call
