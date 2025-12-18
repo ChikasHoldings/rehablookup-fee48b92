@@ -95,12 +95,25 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
       markAsRead(notification.id);
     }
     
+    // Check for explicit link in metadata
+    const metadata = notification.metadata as Record<string, any> | null;
+    if (metadata?.link) {
+      navigate(metadata.link);
+      return;
+    }
+    
+    // Type-based routing
     if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
       navigate("/provider/leads");
     } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
       navigate("/provider/billing");
     } else if (notification.type === "listing_approved") {
       navigate("/provider/listing");
+    } else if (notification.type === "system") {
+      navigate("/provider/notifications");
+    } else {
+      // Default to notifications page
+      navigate("/provider/notifications");
     }
   };
 
