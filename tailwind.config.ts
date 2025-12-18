@@ -125,6 +125,9 @@ export default {
           "60%": { transform: "rotate(5deg)" },
           "75%": { transform: "rotate(-5deg)" },
         },
+        "shimmer": {
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -134,6 +137,7 @@ export default {
         "scale-in": "scale-in 0.3s ease-out forwards",
         "slide-up": "slide-up 0.4s ease-out forwards",
         "wiggle": "wiggle 0.5s ease-in-out",
+        "shimmer": "shimmer 2s infinite",
       },
     },
   },
