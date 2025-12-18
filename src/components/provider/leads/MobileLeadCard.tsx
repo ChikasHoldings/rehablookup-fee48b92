@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, TouchEvent } from "react";
+import { useState, useRef, useCallback, TouchEvent, memo } from "react";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   Phone,
@@ -30,7 +30,27 @@ interface MobileLeadCardProps {
   onMarkContacted: () => void;
 }
 
-export function MobileLeadCard({
+// Comparison function for memo - only re-render if relevant props changed
+function arePropsEqual(
+  prevProps: MobileLeadCardProps,
+  nextProps: MobileLeadCardProps
+): boolean {
+  return (
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isLocked === nextProps.isLocked &&
+    prevProps.isQualified === nextProps.isQualified &&
+    prevProps.showFacility === nextProps.showFacility &&
+    prevProps.lead.id === nextProps.lead.id &&
+    prevProps.lead.name === nextProps.lead.name &&
+    prevProps.lead.status === nextProps.lead.status &&
+    prevProps.lead.urgency === nextProps.lead.urgency &&
+    prevProps.lead.email_verified === nextProps.lead.email_verified &&
+    prevProps.lead.created_at === nextProps.lead.created_at &&
+    prevProps.lead.facility_name === nextProps.lead.facility_name
+  );
+}
+
+export const MobileLeadCard = memo(function MobileLeadCard({
   lead,
   isSelected,
   isLocked,
@@ -274,4 +294,4 @@ export function MobileLeadCard({
       </div>
     </div>
   );
-}
+}, arePropsEqual);

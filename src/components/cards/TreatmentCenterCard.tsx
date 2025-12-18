@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, ArrowRight, Crown, Calendar, ShieldCheck } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TreatmentCenterCardProps {
@@ -20,6 +20,30 @@ interface TreatmentCenterCardProps {
   featured?: boolean;
 }
 
+// Comparison function for memo - only re-render if relevant props changed
+function arePropsEqual(
+  prevProps: TreatmentCenterCardProps,
+  nextProps: TreatmentCenterCardProps
+): boolean {
+  const prevCenter = prevProps.center;
+  const nextCenter = nextProps.center;
+  
+  return (
+    prevProps.featured === nextProps.featured &&
+    prevCenter.id === nextCenter.id &&
+    prevCenter.name === nextCenter.name &&
+    prevCenter.slug === nextCenter.slug &&
+    prevCenter.logo_url === nextCenter.logo_url &&
+    prevCenter.verified === nextCenter.verified &&
+    prevCenter.hasFeaturedSubscription === nextCenter.hasFeaturedSubscription &&
+    prevCenter.year_established === nextCenter.year_established &&
+    prevCenter.city === nextCenter.city &&
+    prevCenter.state === nextCenter.state &&
+    prevCenter.description === nextCenter.description &&
+    prevCenter.treatmentTypes?.length === nextCenter.treatmentTypes?.length
+  );
+}
+
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/);
   if (words.length >= 2) {
@@ -28,7 +52,7 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardProps) {
+export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, featured }: TreatmentCenterCardProps) {
   const [logoError, setLogoError] = useState(false);
   
   const detailsUrl = center.isFromDatabase && center.slug 
@@ -242,4 +266,4 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
       </div>
     </article>
   );
-}
+}, arePropsEqual);
