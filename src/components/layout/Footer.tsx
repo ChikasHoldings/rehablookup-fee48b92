@@ -27,28 +27,28 @@ const featuredArticles = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-slate-900 text-white">
+    <footer className="border-t border-border bg-slate-900">
       {/* Featured Articles Section - SEO Boost */}
       <div className="border-b border-white/10">
         <div className="container py-10">
           <div className="flex items-center gap-2 mb-6">
-            <BookOpen className="h-5 w-5 text-primary" />
-            <h3 className="font-display text-lg font-semibold">Recovery Resources & Guides</h3>
+            <BookOpen className="h-5 w-5 text-amber-400" />
+            <h3 className="font-display text-lg font-semibold text-white">Recovery Resources & Guides</h3>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {featuredArticles.map((article) => (
               <Link
                 key={article.slug}
                 to={article.slug}
-                className="group rounded-lg bg-white/5 p-4 transition-all hover:bg-white/10"
+                className="group rounded-lg bg-white/5 p-4 transition-all hover:bg-white/10 border border-white/5 hover:border-white/10"
               >
-                <span className="text-xs font-medium text-primary/80 uppercase tracking-wide">
+                <span className="text-xs font-medium text-amber-400 uppercase tracking-wide">
                   {article.category}
                 </span>
-                <h4 className="mt-2 text-sm font-medium text-white/90 group-hover:text-white line-clamp-2 leading-snug">
+                <h4 className="mt-2 text-sm font-medium text-slate-200 group-hover:text-white line-clamp-2 leading-snug">
                   {article.title}
                 </h4>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs text-primary group-hover:gap-2 transition-all">
+                <span className="mt-3 inline-flex items-center gap-1 text-xs text-amber-400 group-hover:gap-2 transition-all font-medium">
                   Read Article <ArrowRight className="h-3 w-3" />
                 </span>
               </Link>
@@ -68,7 +68,7 @@ export function Footer() {
               className="h-11 w-auto"
             />
           </Link>
-          <p className="text-center text-sm leading-relaxed text-white/60 max-w-[280px]">
+          <p className="text-center text-sm leading-relaxed text-slate-300 max-w-[280px]">
             Connecting families with trusted treatment centers nationwide.
           </p>
           
@@ -78,7 +78,7 @@ export function Footer() {
               href="https://facebook.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
               aria-label="Follow us on Facebook"
             >
               <Facebook className="h-4 w-4" />
@@ -87,7 +87,7 @@ export function Footer() {
               href="https://twitter.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
               aria-label="Follow us on Twitter"
             >
               <Twitter className="h-4 w-4" />
@@ -96,7 +96,7 @@ export function Footer() {
               href="https://instagram.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
               aria-label="Follow us on Instagram"
             >
               <Instagram className="h-4 w-4" />
@@ -105,7 +105,7 @@ export function Footer() {
               href="https://linkedin.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
               aria-label="Follow us on LinkedIn"
             >
               <Linkedin className="h-4 w-4" />
@@ -125,7 +125,7 @@ export function Footer() {
               />
             </Link>
             
-            <p className="max-w-xs text-sm leading-relaxed text-white/60">
+            <p className="max-w-xs text-sm leading-relaxed text-slate-300">
               Connecting families with trusted treatment centers nationwide. Free, confidential support available 24/7.
             </p>
             
@@ -135,7 +135,7 @@ export function Footer() {
                 href="https://facebook.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
                 aria-label="Follow us on Facebook"
               >
                 <Facebook className="h-4 w-4" />
@@ -144,7 +144,7 @@ export function Footer() {
                 href="https://twitter.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
                 aria-label="Follow us on Twitter"
               >
                 <Twitter className="h-4 w-4" />
@@ -153,7 +153,7 @@ export function Footer() {
                 href="https://instagram.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
                 aria-label="Follow us on Instagram"
               >
                 <Instagram className="h-4 w-4" />
@@ -162,7 +162,7 @@ export function Footer() {
                 href="https://linkedin.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
                 aria-label="Follow us on LinkedIn"
               >
                 <Linkedin className="h-4 w-4" />
@@ -172,27 +172,27 @@ export function Footer() {
 
           {/* Find Treatment */}
           <div>
-            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white/80">
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
               Find Treatment
             </h4>
             <ul className="space-y-2.5">
               <li>
-                <Link to="/rehab-centers" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/rehab-centers" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Find Rehab Centers
                 </Link>
               </li>
               <li>
-                <Link to="/treatment-types" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/treatment-types" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Treatment Types
                 </Link>
               </li>
               <li>
-                <Link to="/how-it-works" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/how-it-works" className="text-sm text-slate-300 transition-colors hover:text-white">
                   How It Works
                 </Link>
               </li>
               <li>
-                <Link to="/request-help?source=footer" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/request-help?source=footer" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Get Help Now
                 </Link>
               </li>
@@ -201,27 +201,27 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white/80">
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
               Resources
             </h4>
             <ul className="space-y-2.5">
               <li>
-                <Link to="/resources" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/resources" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Guides & Articles
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/faq" className="text-sm text-slate-300 transition-colors hover:text-white">
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/about" className="text-sm text-slate-300 transition-colors hover:text-white">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/contact" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Contact Us
                 </Link>
               </li>
@@ -230,27 +230,27 @@ export function Footer() {
 
           {/* For Providers */}
           <div>
-            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white/80">
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
               For Providers
             </h4>
             <ul className="space-y-2.5">
               <li>
-                <Link to="/for-providers" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/for-providers" className="text-sm text-slate-300 transition-colors hover:text-white">
                   List Your Facility
                 </Link>
               </li>
               <li>
-                <Link to="/provider-resources" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/provider-resources" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Provider Resources
                 </Link>
               </li>
               <li>
-                <Link to="/provider-login" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/provider-login" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Provider Login
                 </Link>
               </li>
               <li>
-                <Link to="/provider-support" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/provider-support" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Provider Support
                 </Link>
               </li>
@@ -259,22 +259,22 @@ export function Footer() {
 
           {/* Legal & Company */}
           <div>
-            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white/80">
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
               Company
             </h4>
             <ul className="space-y-2.5">
               <li>
-                <Link to="/about" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/about" className="text-sm text-slate-300 transition-colors hover:text-white">
                   About RehabLookup
                 </Link>
               </li>
               <li>
-                <Link to="/privacy-policy" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/privacy-policy" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms-of-service" className="text-sm text-white/60 transition-colors hover:text-white">
+                <Link to="/terms-of-service" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Terms of Service
                 </Link>
               </li>
@@ -283,35 +283,35 @@ export function Footer() {
         </div>
 
         {/* Contact Bar */}
-        <div className="mt-10 grid gap-4 sm:grid-cols-3 rounded-xl bg-white/5 p-5">
+        <div className="mt-10 grid gap-4 sm:grid-cols-3 rounded-xl bg-white/5 p-5 border border-white/10">
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20">
-              <Heart className="h-4 w-4 text-primary" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+              <Heart className="h-4 w-4 text-amber-400" />
             </div>
             <div>
-              <p className="text-xs text-white/50">Need Help?</p>
-              <Link to="/request-help?source=footer" className="font-medium text-white transition-colors hover:text-primary">
+              <p className="text-xs text-slate-400">Need Help?</p>
+              <Link to="/request-help?source=footer" className="font-medium text-white transition-colors hover:text-amber-400">
                 Request Help Now
               </Link>
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20">
-              <Mail className="h-4 w-4 text-primary" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+              <Mail className="h-4 w-4 text-amber-400" />
             </div>
             <div>
-              <p className="text-xs text-white/50">Email Us</p>
-              <a href="mailto:help@rehablookup.com" className="font-medium text-white transition-colors hover:text-primary">
+              <p className="text-xs text-slate-400">Email Us</p>
+              <a href="mailto:help@rehablookup.com" className="font-medium text-white transition-colors hover:text-amber-400">
                 help@rehablookup.com
               </a>
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20">
-              <MapPin className="h-4 w-4 text-primary" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+              <MapPin className="h-4 w-4 text-amber-400" />
             </div>
             <div>
-              <p className="text-xs text-white/50">Availability</p>
+              <p className="text-xs text-slate-400">Availability</p>
               <span className="font-medium text-white">24/7 Nationwide</span>
             </div>
           </div>
@@ -319,10 +319,10 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-8 flex flex-col items-center gap-3 border-t border-white/10 pt-6 md:flex-row md:justify-between">
-          <p className="text-sm text-white/50 text-center md:text-left">
+          <p className="text-sm text-slate-400 text-center md:text-left">
             © {new Date().getFullYear()} RehabLookup.com. All rights reserved.
           </p>
-          <p className="text-xs text-white/40 text-center md:text-right max-w-md">
+          <p className="text-xs text-slate-500 text-center md:text-right max-w-md">
             RehabLookup is a directory service connecting individuals with treatment providers. We are not a treatment provider.
           </p>
         </div>
