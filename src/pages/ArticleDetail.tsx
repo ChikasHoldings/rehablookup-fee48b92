@@ -64,6 +64,21 @@ const parseContentWithLinks = (text: string): ReactNode => {
   return parts.length > 0 ? parts : text;
 };
 
+// Helper function to extract linked article IDs from content
+const extractLinkedArticleIds = (content: string[]): string[] => {
+  const linkPattern = /\[\[([^\]|]+)\|[^\]]+\]\]/g;
+  const ids = new Set<string>();
+  
+  content.forEach((paragraph) => {
+    let match;
+    while ((match = linkPattern.exec(paragraph)) !== null) {
+      ids.add(match[1]);
+    }
+  });
+  
+  return Array.from(ids);
+};
+
 const articles: Article[] = [
   {
     id: "types-of-addiction-treatment",
@@ -760,6 +775,12 @@ const ArticleDetail = () => {
     .filter((a) => a.category === article.category && a.id !== article.id)
     .slice(0, 2);
 
+  // Get articles that are linked within the content
+  const linkedArticleIds = extractLinkedArticleIds(article.content);
+  const linkedArticles = articles.filter(
+    (a) => linkedArticleIds.includes(a.id) && a.id !== article.id
+  );
+
   const articleSchema = generateArticleSchema({
     title: article.title,
     description: article.excerpt,
@@ -890,6 +911,49 @@ const ArticleDetail = () => {
                     </Link>
                   </div>
                 </div>
+
+                {/* Related Topics - Articles linked in content */}
+                {linkedArticles.length > 0 && (
+                  <div className="mt-10 pt-8 border-t border-border/50">
+                    <h3 className="font-display text-lg font-semibold text-foreground mb-5 flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-primary" />
+                      Related Topics
+                    </h3>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {linkedArticles.slice(0, 6).map((linked) => (
+                        <Link
+                          key={linked.id}
+                          to={`/resources/${linked.id}`}
+                          className="group"
+                        >
+                          <div className="rounded-xl border border-border/50 bg-muted/30 p-4 transition-all hover:bg-muted/50 hover:border-primary/30 hover:shadow-sm">
+                            <div className="flex gap-3">
+                              <img
+                                src={linked.image}
+                                alt={linked.title}
+                                className="h-16 w-16 rounded-lg object-cover shrink-0"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-medium text-foreground text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2 mb-1">
+                                  {linked.title}
+                                </h4>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                                    {linked.categoryLabel}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {linked.readTime}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </article>
 
