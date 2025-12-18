@@ -1,10 +1,18 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Plan configuration - Basic plan gets 1 lifetime lead only
+const PLAN_CONFIG: Record<string, { product_ids: string[]; is_paid: boolean }> = {
+  basic: { product_ids: [], is_paid: false },
+  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], is_paid: true },
+  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], is_paid: true },
 };
 
 interface DirectLeadRequest {
@@ -193,7 +201,7 @@ function getDirectLeadEmail(
                 <tr>
                   <td style="padding: 16px;">
                     <p style="margin: 0; color: hsl(143, 64%, 24%); font-size: 13px; line-height: 1.5;">
-                      <strong>Note:</strong> Direct profile inquiries do not count toward your monthly lead limits. They're unlimited for all plans!
+                      <strong>Note:</strong> Direct profile inquiries do not count toward your monthly qualified lead limits.
                     </p>
                   </td>
                 </tr>
@@ -238,6 +246,134 @@ function getDirectLeadEmail(
       </td>
     </tr>
   </table>
+</body>
+</html>
+  `;
+  
+  return { subject, html };
+}
+
+// Check provider's subscription plan
+async function getProviderPlan(providerEmail: string): Promise<string> {
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  
+  if (!stripeKey) {
+    return "basic";
+  }
+  
+  try {
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
+    
+    if (customers.data.length === 0) {
+      return "basic";
+    }
+    
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customers.data[0].id,
+      status: "active",
+      limit: 1,
+    });
+    
+    if (subscriptions.data.length === 0) {
+      return "basic";
+    }
+    
+    const productId = subscriptions.data[0].items.data[0].price.product as string;
+    
+    if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
+      return "featured";
+    } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
+      return "professional";
+    }
+    
+    return "basic";
+  } catch (error) {
+    console.error("Error checking provider plan:", error);
+    return "basic";
+  }
+}
+
+// Special email template for Basic plan providers - prompts to upgrade to view leads
+function getBasicPlanUpgradeEmail(
+  facilityName: string,
+  totalLeadsCount: number
+): { subject: string; html: string } {
+  const billingUrl = "https://rehablookup.com/provider/billing";
+  const dashboardUrl = "https://rehablookup.com/provider/leads";
+  
+  const subject = `🔒 New Lead Waiting - Upgrade to View & Contact`;
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+  <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
+    <h1 style="color: #fff; margin: 0; font-size: 24px;">🔒 Someone Is Looking for Help</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You have a new lead waiting for ${facilityName}</p>
+  </div>
+  
+  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
+    
+    <!-- Lead Preview (Blurred) -->
+    <div style="position: relative; margin-bottom: 24px;">
+      <div style="background: #f9fafb; border-radius: 8px; padding: 20px; filter: blur(4px); user-select: none;">
+        <p style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">Name: ████████ ████████</p>
+        <p style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">Phone: (███) ███-████</p>
+        <p style="margin: 0; font-size: 16px; color: #374151;">Email: ████@████.com</p>
+      </div>
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; background: rgba(255,255,255,0.95); padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <p style="margin: 0 0 8px 0; font-size: 20px;">🔒</p>
+        <p style="margin: 0; font-weight: 600; color: #1B365D;">Upgrade to View</p>
+      </div>
+    </div>
+    
+    <!-- Leads Waiting Counter -->
+    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+      <p style="margin: 0 0 4px 0; font-size: 40px; font-weight: 700; color: #16a34a;">${totalLeadsCount}</p>
+      <p style="margin: 0; font-size: 16px; color: #15803d; font-weight: 500;">Lead${totalLeadsCount !== 1 ? 's' : ''} Waiting For You</p>
+    </div>
+    
+    <!-- Value Proposition -->
+    <div style="margin-bottom: 24px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #1B365D;">Unlock Your Leads:</h2>
+      <ul style="margin: 0; padding-left: 20px; color: #374151;">
+        <li style="margin-bottom: 8px;">See full contact details instantly</li>
+        <li style="margin-bottom: 8px;">Call or email leads directly</li>
+        <li style="margin-bottom: 8px;">Show your phone number on your profile</li>
+        <li style="margin-bottom: 8px;">Get 25 exclusive qualified leads/month</li>
+      </ul>
+    </div>
+    
+    <!-- CTA -->
+    <div style="text-align: center;">
+      <a href="${billingUrl}" style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);">
+        Upgrade Now - Start at $399/mo
+      </a>
+      <p style="margin: 16px 0 0 0; font-size: 13px; color: #6b7280;">
+        <a href="${dashboardUrl}" style="color: #6b7280; text-decoration: underline;">View in Dashboard</a>
+      </p>
+    </div>
+    
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+    
+    <p style="margin: 0; font-size: 13px; color: #6b7280; text-align: center;">
+      This is a direct inquiry from someone who visited your profile on RehabLookup.
+    </p>
+  </div>
+  
+  <!-- Footer -->
+  <div style="text-align: center; padding: 20px;">
+    <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">
+      <a href="https://rehablookup.com/privacy-policy" style="color: #6b7280; text-decoration: none;">Privacy Policy</a> | 
+      <a href="mailto:help@rehablookup.com" style="color: #6b7280; text-decoration: none;">Support</a>
+    </p>
+    <p style="margin: 0; font-size: 12px; color: #9ca3af;">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
+  </div>
 </body>
 </html>
   `;
@@ -510,19 +646,42 @@ const handler = async (req: Request): Promise<Response> => {
       eligibility_check_result: { direct_inquiry: true, skip_scoring: true },
     });
 
-    // Send provider notification email
+    // Send provider notification email based on their plan
     if (providerEmail && resendKey) {
       try {
         const resend = new Resend(resendKey);
-        const emailContent = getDirectLeadEmail(
-          body.facilityName,
-          firstName,
-          lastName,
-          phone,
-          email,
-          message,
-          supabaseUrl
-        );
+        
+        // Check provider's plan to send appropriate email
+        const providerPlan = await getProviderPlan(providerEmail);
+        console.log("Provider plan:", { providerEmail, plan: providerPlan });
+        
+        let emailContent;
+        if (providerPlan === "basic") {
+          // Basic plan: send upgrade email with blurred lead details
+          // Get total leads count for the facility
+          const { count: totalLeads } = await supabase
+            .from("leads")
+            .select("*", { count: "exact", head: true })
+            .eq("facility_id", body.facilityId);
+          
+          emailContent = getBasicPlanUpgradeEmail(
+            body.facilityName,
+            totalLeads || 1
+          );
+          console.log("Sending basic plan upgrade email");
+        } else {
+          // Paid plan: send full lead details
+          emailContent = getDirectLeadEmail(
+            body.facilityName,
+            firstName,
+            lastName,
+            phone,
+            email,
+            message,
+            supabaseUrl
+          );
+          console.log("Sending full lead details email");
+        }
 
         await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
