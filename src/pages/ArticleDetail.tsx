@@ -715,40 +715,62 @@ const ArticleDetail = () => {
   return (
     <Layout>
       {/* Hero */}
-      <section className="relative">
-        <div className="h-64 md:h-80 lg:h-96 overflow-hidden">
+      <section className="relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
           <img
             src={article.image}
             alt={article.title}
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/95 to-primary/80" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
         </div>
-        <div className="container relative -mt-32 md:-mt-40">
-          <div className="max-w-3xl">
+        
+        {/* Content */}
+        <div className="container relative py-12 md:py-16 lg:py-20">
+          <div className="mx-auto max-w-3xl text-center">
+            {/* Back Link */}
             <Link
               to="/resources"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground mb-4 transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white mb-6 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Resources
             </Link>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground mb-4">
-              <BookOpen className="h-3 w-3" />
-              {article.categoryLabel}
-            </span>
-            <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl mb-4">
+            
+            {/* Category Badge */}
+            <div className="mb-4">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white/90 border border-white/10">
+                <BookOpen className="h-3.5 w-3.5" />
+                {article.categoryLabel}
+              </span>
+            </div>
+            
+            {/* Title */}
+            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl mb-5 leading-tight">
               {article.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <User className="h-4 w-4" />
-                {article.author}
+            
+            {/* Excerpt */}
+            <p className="text-base text-white/75 md:text-lg mb-6 max-w-2xl mx-auto leading-relaxed">
+              {article.excerpt}
+            </p>
+            
+            {/* Meta Info */}
+            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-sm text-white/70">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center">
+                  <User className="h-4 w-4 text-white/80" />
+                </div>
+                <span className="text-white/90">{article.author}</span>
               </div>
+              <div className="hidden md:block h-4 w-px bg-white/20" />
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
                 {article.date}
               </div>
+              <div className="hidden md:block h-4 w-px bg-white/20" />
               <div className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
                 {article.readTime}
@@ -756,6 +778,9 @@ const ArticleDetail = () => {
             </div>
           </div>
         </div>
+        
+        {/* Bottom decorative line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </section>
 
       {/* Content */}
