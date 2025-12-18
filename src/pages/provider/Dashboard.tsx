@@ -27,6 +27,7 @@ import { useProviderData } from "@/hooks/useProviderData";
 import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProviderDashboardSkeleton } from "@/components/skeletons/ProviderDashboardSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, differenceInHours, isPast } from "date-fns";
 import { 
@@ -216,6 +217,11 @@ export default function ProviderDashboardPage() {
 
   // Get the correct profile URL
   const profileUrl = facility?.slug ? `/center/${facility.slug}` : facility?.id ? `/rehab-centers/${facility.id}` : null;
+
+  // Show full skeleton on initial load
+  if (isLoading && !providerData) {
+    return <ProviderDashboardSkeleton />;
+  }
 
   return (
     <div className="p-3 sm:p-4 md:p-6 lg:p-8">
