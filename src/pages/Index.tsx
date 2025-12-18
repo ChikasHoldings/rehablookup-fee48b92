@@ -226,7 +226,7 @@ const Index = () => {
         canonical="/"
       />
       {/* Hero Section - Light Background with Image */}
-      <section className="relative flex min-h-[75vh] md:min-h-[80vh] lg:min-h-[85vh] overflow-hidden">
+      <section className="relative flex min-h-[60vh] md:min-h-[65vh] lg:min-h-[70vh] overflow-hidden">
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -293,19 +293,6 @@ const Index = () => {
               ))}
             </div>
 
-            {/* Quick Help CTA - More visible */}
-            <div className="mt-8 md:mt-10 animate-fade-in" style={{ animationDelay: "300ms" }}>
-              <Link 
-                to="/request-help?source=hero" 
-                className="inline-flex items-center gap-2.5 text-sm sm:text-base text-foreground/70 hover:text-primary transition-all duration-300 group"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 transition-all duration-300 group-hover:bg-destructive/20 group-hover:scale-110">
-                  <Heart className="h-4 w-4 text-destructive" />
-                </div>
-                <span>Need help now? <strong className="text-foreground group-hover:text-primary transition-colors">Request Help</strong></span>
-                <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" />
-              </Link>
-            </div>
           </div>
         </div>
 
