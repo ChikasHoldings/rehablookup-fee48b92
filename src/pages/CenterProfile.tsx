@@ -1002,11 +1002,11 @@ const CenterProfile = () => {
                 <div className="space-y-3">
                   <Button 
                     size="lg" 
-                    className="w-full gap-2 h-13 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                    className="w-full gap-2.5 h-13 text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                     onClick={() => setRequestModalOpen(true)}
                   >
-                    <Sparkles className="h-5 w-5" />
-                    Request Information
+                    <Sparkles className="h-5 w-5 animate-pulse" />
+                    Get Started
                   </Button>
 
                   {showContactDetails && (
@@ -1104,11 +1104,11 @@ const CenterProfile = () => {
               <div className="space-y-3">
                 <Button 
                   size="lg" 
-                  className="w-full gap-2 h-13 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+                  className="w-full gap-2.5 h-13 text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                   onClick={() => setRequestModalOpen(true)}
                 >
-                  <Sparkles className="h-5 w-5" />
-                  Request Information
+                  <Sparkles className="h-5 w-5 animate-pulse" />
+                  Get Started
                 </Button>
 
                 {showContactDetails && (
