@@ -447,7 +447,7 @@ export default function ProviderBillingPage() {
 
       {/* Quick Actions for Subscribed Users */}
       {isSubscribed && (
-        <Collapsible defaultOpen={false}>
+        <Collapsible defaultOpen={true}>
           <Card className="overflow-hidden">
             <CollapsibleTrigger asChild>
               <CardHeader className="border-b border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors group">
