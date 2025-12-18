@@ -15,9 +15,10 @@ interface ProviderTrustFormProps {
   facilityId: string;
   yearEstablished: number | null;
   onYearChange: (year: number | null) => void;
+  isEmbedded?: boolean;
 }
 
-export function ProviderTrustForm({ facilityId, yearEstablished, onYearChange }: ProviderTrustFormProps) {
+export function ProviderTrustForm({ facilityId, yearEstablished, onYearChange, isEmbedded = false }: ProviderTrustFormProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const currentYear = new Date().getFullYear();
@@ -79,18 +80,8 @@ export function ProviderTrustForm({ facilityId, yearEstablished, onYearChange }:
     }
   };
 
-  return (
-    <Card className="border-border">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-          <ShieldCheck className="h-5 w-5 text-primary" />
-          Trust & Credentials
-        </CardTitle>
-        <CardDescription>
-          Add credentials to build trust with potential clients. Accreditations will be verified by our team.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+  const content = (
+    <div className="space-y-6">
         {/* Year Established */}
         <div className="space-y-2">
           <Label htmlFor="year-established">Year Established</Label>
@@ -181,8 +172,28 @@ export function ProviderTrustForm({ facilityId, yearEstablished, onYearChange }:
                 </div>
               );
             })}
-          </div>
         </div>
+      </div>
+    </div>
+  );
+
+  if (isEmbedded) {
+    return content;
+  }
+
+  return (
+    <Card className="border-border">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+          <ShieldCheck className="h-5 w-5 text-primary" />
+          Trust & Credentials
+        </CardTitle>
+        <CardDescription>
+          Add credentials to build trust with potential clients. Accreditations will be verified by our team.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {content}
       </CardContent>
     </Card>
   );
