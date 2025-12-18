@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Star, ArrowRight, Shield, Crown } from "lucide-react";
+import { MapPin, Phone, Star, ArrowRight, Crown } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { TrustBadge } from "@/components/trust/TrustBadge";
 
 interface TreatmentCenterCardProps {
   center: TreatmentCenter & { 
@@ -13,6 +14,8 @@ interface TreatmentCenterCardProps {
     isFromDatabase?: boolean; 
     logo_url?: string | null;
     hasFeaturedSubscription?: boolean;
+    verified?: boolean | null;
+    year_established?: number | null;
   };
   featured?: boolean;
 }
@@ -122,10 +125,11 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
           <span className="text-sm text-muted-foreground md:text-xs">
             {center.reviewCount} reviews
           </span>
-          <div className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground md:gap-1 md:text-xs">
-            <Shield className="h-4 w-4 text-accent md:h-3.5 md:w-3.5" />
-            Verified
-          </div>
+          {center.verified && (
+            <div className="ml-auto">
+              <TrustBadge type="verified" size="sm" />
+            </div>
+          )}
         </div>
 
         {/* Treatment Type Tags - Larger on mobile */}
