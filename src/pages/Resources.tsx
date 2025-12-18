@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 
 const categories = [
   { id: "all", label: "All Articles", icon: BookOpen },
+  { id: "getting-started", label: "Getting Started", icon: Phone },
   { id: "recovery", label: "Recovery", icon: Heart },
   { id: "family", label: "Family Support", icon: Users },
   { id: "treatment", label: "Treatment Options", icon: Stethoscope },
@@ -29,6 +30,46 @@ const categories = [
 
 const articles = [
   {
+    id: "types-of-addiction-treatment",
+    title: "Understanding the Different Types of Addiction Treatment",
+    excerpt: "From detox to outpatient care, learn about the various addiction treatment options available and how to determine which approach might be right for you.",
+    category: "getting-started",
+    categoryLabel: "Getting Started",
+    readTime: "8 min read",
+    image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop",
+    featured: true,
+  },
+  {
+    id: "choosing-rehab-center",
+    title: "How to Choose the Right Rehab Center for Your Needs",
+    excerpt: "With thousands of treatment facilities available, finding the right one can feel overwhelming. This guide walks you through the key factors to consider.",
+    category: "getting-started",
+    categoryLabel: "Getting Started",
+    readTime: "7 min read",
+    image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=400&fit=crop",
+    featured: true,
+  },
+  {
+    id: "first-week-treatment",
+    title: "What to Expect During Your First Week of Treatment",
+    excerpt: "Starting addiction treatment can feel intimidating. Learn what typically happens during the first week so you can feel more prepared and confident.",
+    category: "getting-started",
+    categoryLabel: "Getting Started",
+    readTime: "6 min read",
+    image: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&h=400&fit=crop",
+    featured: true,
+  },
+  {
+    id: "insurance-coverage-guide",
+    title: "Insurance Coverage for Addiction Treatment Explained",
+    excerpt: "Understanding how insurance covers addiction treatment can be confusing. This guide explains your coverage options, rights, and how to maximize benefits.",
+    category: "getting-started",
+    categoryLabel: "Getting Started",
+    readTime: "9 min read",
+    image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&h=400&fit=crop",
+    featured: false,
+  },
+  {
     id: "stages-of-recovery",
     title: "Understanding the Stages of Addiction Recovery",
     excerpt: "Recovery is a journey with distinct stages. Learn what to expect and how to navigate each phase successfully from pre-contemplation to maintenance.",
@@ -36,7 +77,7 @@ const articles = [
     categoryLabel: "Recovery",
     readTime: "5 min read",
     image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=400&fit=crop",
-    featured: true,
+    featured: false,
   },
   {
     id: "support-loved-one",
@@ -46,7 +87,7 @@ const articles = [
     categoryLabel: "Family Support",
     readTime: "4 min read",
     image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop",
-    featured: true,
+    featured: false,
   },
   {
     id: "inpatient-vs-outpatient",
@@ -56,7 +97,7 @@ const articles = [
     categoryLabel: "Treatment Options",
     readTime: "6 min read",
     image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop",
-    featured: true,
+    featured: false,
   },
   {
     id: "dual-diagnosis",
