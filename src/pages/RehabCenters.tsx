@@ -7,7 +7,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { Heart, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight, Sparkles, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -115,22 +115,15 @@ const RehabCenters = () => {
     // Apply sorting
     switch (sortParam) {
       case "featured":
-        // Sort by Featured subscription first (search priority), then by rating
         results.sort((a, b) => {
-          // First: Featured subscription holders always appear first
           const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
           const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
           if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
-          
-          // Second: Legacy featured flag (for static data)
           if (b.featured !== a.featured) return b.featured ? 1 : -1;
-          
-          // Third: Rating for remaining sort
           return b.rating - a.rating;
         });
         break;
       case "rating-high":
-        // Still prioritize featured at top, then sort by rating
         results.sort((a, b) => {
           const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
           const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
@@ -227,34 +220,37 @@ const RehabCenters = () => {
           { name: "Find Rehab", url: "/rehab-centers" },
         ]}
       />
+      
       {/* Hero Header */}
-      <section className="relative overflow-hidden bg-primary py-8 md:py-10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/5 via-transparent to-transparent" />
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-10 md:py-12">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
         <div className="container relative">
-          <div className="mb-6 max-w-xl">
-            <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-primary-foreground/70">
+          <div className="mb-8 max-w-2xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white/90 backdrop-blur-sm">
               <CheckCircle className="h-3.5 w-3.5" />
               Verified Treatment Centers
             </div>
-            <h1 className="font-display text-xl font-bold tracking-tight text-primary-foreground md:text-2xl lg:text-3xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Your Path to Recovery
             </h1>
-            <p className="mt-2 text-sm text-primary-foreground/70">
+            <p className="mt-3 text-base text-white/80 md:text-lg">
               {hasFilters ? (
                 <>
-                  <span className="font-medium text-primary-foreground">{filteredCenters.length}</span> results
+                  <span className="font-semibold text-white">{filteredCenters.length}</span> results
                   {activeTypeFilter && ` for ${activeTypeFilter}`}
                   {location && ` near "${location}"`}
                 </>
               ) : (
-                "Search verified treatment centers and find the right care for you"
+                "Search verified treatment centers and find the right care for you or your loved one"
               )}
             </p>
           </div>
 
-          {/* Compact Search Form */}
-          <div className="rounded-xl border border-white/10 bg-card p-4 shadow-lg">
+          {/* Search Form Container */}
+          <div className="rounded-2xl border border-white/10 bg-white p-4 shadow-2xl shadow-primary/20 md:p-5">
             <SearchForm
               variant="compact"
               initialLocation={location}
@@ -269,13 +265,13 @@ const RehabCenters = () => {
       </section>
 
       {/* Results */}
-      <section id="results" className="scroll-mt-4 bg-muted/30 py-8 md:py-16">
+      <section id="results" className="scroll-mt-4 bg-gradient-to-b from-secondary/50 to-background py-8 md:py-12">
         <div className="container px-4 md:px-6">
           {/* Mobile Results Header */}
           <div className="mb-6 md:hidden">
             {/* Results Count */}
             <p className="text-base font-medium text-foreground mb-4">
-              <span className="text-primary">{filteredCenters.length}</span> treatment centers found
+              <span className="text-primary font-semibold">{filteredCenters.length}</span> treatment centers found
             </p>
 
             {/* Mobile Active Filters - Horizontal scroll */}
@@ -285,43 +281,43 @@ const RehabCenters = () => {
                   {location && (
                     <button
                       onClick={() => clearFilter("location")}
-                      className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors active:bg-primary/20 shrink-0"
+                      className="group inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all active:bg-primary/20 active:scale-95 shrink-0 border border-primary/20"
                     >
                       <MapPin className="h-4 w-4" />
                       {location}
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 opacity-60 group-hover:opacity-100" />
                     </button>
                   )}
                   {treatment && (
                     <button
                       onClick={() => clearFilter("treatment")}
-                      className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors active:bg-primary/20 shrink-0"
+                      className="group inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all active:bg-primary/20 active:scale-95 shrink-0 border border-primary/20"
                     >
                       {treatment}
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 opacity-60 group-hover:opacity-100" />
                     </button>
                   )}
                   {insurance && (
                     <button
                       onClick={() => clearFilter("insurance")}
-                      className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors active:bg-primary/20 shrink-0"
+                      className="group inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all active:bg-primary/20 active:scale-95 shrink-0 border border-primary/20"
                     >
                       {insurance}
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 opacity-60 group-hover:opacity-100" />
                     </button>
                   )}
                   {activeTypeFilter && (
                     <button
                       onClick={() => clearFilter("type")}
-                      className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-colors active:bg-primary/20 shrink-0"
+                      className="group inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all active:bg-primary/20 active:scale-95 shrink-0 border border-primary/20"
                     >
                       {activeTypeFilter}
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 opacity-60 group-hover:opacity-100" />
                     </button>
                   )}
                   <button
                     onClick={clearAllFilters}
-                    className="text-sm font-medium text-muted-foreground underline shrink-0 px-2"
+                    className="text-sm font-medium text-muted-foreground hover:text-primary shrink-0 px-2"
                   >
                     Clear all
                   </button>
@@ -329,14 +325,14 @@ const RehabCenters = () => {
               </div>
             )}
 
-            {/* Mobile Sort & View Controls - Full width buttons */}
+            {/* Mobile Sort & View Controls */}
             <div className="flex items-center gap-3">
               <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
-                <SelectTrigger className="h-12 flex-1 gap-2 bg-card rounded-xl text-base">
+                <SelectTrigger className="h-12 flex-1 gap-2 bg-card rounded-xl text-base border-border shadow-sm">
                   <ArrowUpDown className="h-5 w-5 text-muted-foreground" />
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent className="bg-card">
+                <SelectContent className="bg-card border-border">
                   {sortOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value} className="text-base py-3">
                       {option.label}
@@ -345,14 +341,14 @@ const RehabCenters = () => {
                 </SelectContent>
               </Select>
 
-              {/* Mobile View Toggle - Larger touch targets */}
-              <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1.5">
+              {/* Mobile View Toggle */}
+              <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1.5 shadow-sm">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`rounded-lg p-3 transition-colors ${
+                  className={`rounded-lg p-3 transition-all ${
                     viewMode === "grid" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "text-muted-foreground active:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "text-muted-foreground active:text-foreground active:bg-secondary"
                   }`}
                   aria-label="Grid view"
                 >
@@ -360,10 +356,10 @@ const RehabCenters = () => {
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`rounded-lg p-3 transition-colors ${
+                  className={`rounded-lg p-3 transition-all ${
                     viewMode === "list" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "text-muted-foreground active:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "text-muted-foreground active:text-foreground active:bg-secondary"
                   }`}
                   aria-label="List view"
                 >
@@ -387,43 +383,43 @@ const RehabCenters = () => {
                   {location && (
                     <button
                       onClick={() => clearFilter("location")}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                      className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20 hover:shadow-sm border border-primary/20"
                     >
                       <MapPin className="h-3 w-3" />
                       {location}
-                      <X className="h-3 w-3" />
+                      <X className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   )}
                   {treatment && (
                     <button
                       onClick={() => clearFilter("treatment")}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                      className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20 hover:shadow-sm border border-primary/20"
                     >
                       {treatment}
-                      <X className="h-3 w-3" />
+                      <X className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   )}
                   {insurance && (
                     <button
                       onClick={() => clearFilter("insurance")}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                      className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20 hover:shadow-sm border border-primary/20"
                     >
                       {insurance}
-                      <X className="h-3 w-3" />
+                      <X className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   )}
                   {activeTypeFilter && (
                     <button
                       onClick={() => clearFilter("type")}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                      className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20 hover:shadow-sm border border-primary/20"
                     >
                       {activeTypeFilter}
-                      <X className="h-3 w-3" />
+                      <X className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   )}
                   <button
                     onClick={clearAllFilters}
-                    className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                    className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline transition-colors"
                   >
                     Clear all
                   </button>
@@ -433,13 +429,12 @@ const RehabCenters = () => {
 
             {/* Sort and View Controls */}
             <div className="flex items-center gap-3">
-              {/* Sort Dropdown */}
               <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
-                <SelectTrigger className="h-10 w-[180px] gap-2 bg-card">
+                <SelectTrigger className="h-10 w-[180px] gap-2 bg-card border-border shadow-sm hover:shadow-md transition-shadow">
                   <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent className="bg-card">
+                <SelectContent className="bg-card border-border">
                   {sortOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -449,13 +444,13 @@ const RehabCenters = () => {
               </Select>
 
               {/* View Toggle */}
-              <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+              <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-sm">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`rounded-md p-2 transition-colors ${
+                  className={`rounded-md p-2 transition-all ${
                     viewMode === "grid" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                   }`}
                   aria-label="Grid view"
                 >
@@ -463,10 +458,10 @@ const RehabCenters = () => {
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`rounded-md p-2 transition-colors ${
+                  className={`rounded-md p-2 transition-all ${
                     viewMode === "list" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                   }`}
                   aria-label="List view"
                 >
@@ -499,26 +494,26 @@ const RehabCenters = () => {
                 ))}
               </div>
 
-              {/* Pagination - Mobile optimized */}
+              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="mt-10 md:mt-12">
-                  {/* Mobile Pagination - Simpler with larger touch targets */}
+                <div className="mt-10 md:mt-14">
+                  {/* Mobile Pagination */}
                   <div className="flex items-center justify-center gap-4 md:hidden">
                     <button
                       onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="flex h-12 items-center gap-2 rounded-xl bg-card px-5 text-base font-medium shadow-sm border border-border disabled:opacity-50 disabled:pointer-events-none"
+                      className="flex h-12 items-center gap-2 rounded-xl bg-card px-5 text-base font-medium shadow-sm border border-border disabled:opacity-50 disabled:pointer-events-none hover:shadow-md transition-shadow active:scale-95"
                     >
                       <ChevronLeft className="h-5 w-5" />
                       Prev
                     </button>
-                    <span className="text-base font-medium text-foreground">
+                    <span className="text-base font-semibold text-foreground px-3 py-2 bg-secondary rounded-lg">
                       {currentPage} / {totalPages}
                     </span>
                     <button
                       onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="flex h-12 items-center gap-2 rounded-xl bg-card px-5 text-base font-medium shadow-sm border border-border disabled:opacity-50 disabled:pointer-events-none"
+                      className="flex h-12 items-center gap-2 rounded-xl bg-card px-5 text-base font-medium shadow-sm border border-border disabled:opacity-50 disabled:pointer-events-none hover:shadow-md transition-shadow active:scale-95"
                     >
                       Next
                       <ChevronRight className="h-5 w-5" />
@@ -532,13 +527,12 @@ const RehabCenters = () => {
                         <PaginationItem>
                           <PaginationPrevious 
                             onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-secondary"}
                           />
                         </PaginationItem>
                         
                         {[...Array(totalPages)].map((_, i) => {
                           const page = i + 1;
-                          // Show first, last, current, and adjacent pages
                           if (
                             page === 1 ||
                             page === totalPages ||
@@ -556,7 +550,6 @@ const RehabCenters = () => {
                               </PaginationItem>
                             );
                           }
-                          // Show ellipsis
                           if (page === 2 || page === totalPages - 1) {
                             return (
                               <PaginationItem key={page}>
@@ -570,7 +563,7 @@ const RehabCenters = () => {
                         <PaginationItem>
                           <PaginationNext 
                             onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-secondary"}
                           />
                         </PaginationItem>
                       </PaginationContent>
@@ -581,22 +574,23 @@ const RehabCenters = () => {
             </>
           ) : (
             <div className="mx-auto max-w-md py-16 text-center">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-                <Search className="h-10 w-10 text-primary" />
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10">
+                <Search className="h-12 w-12 text-primary" />
               </div>
               <h2 className="mb-3 font-display text-2xl font-semibold text-foreground">
                 No Results Found
               </h2>
-              <p className="mb-8 text-muted-foreground">
+              <p className="mb-8 text-muted-foreground leading-relaxed">
                 We couldn't find treatment centers matching your criteria. 
-                Try adjusting your search or call us for personalized help.
+                Try adjusting your search or request personalized help from our team.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-                <Button variant="outline" onClick={clearAllFilters} className="gap-2">
+                <Button variant="outline" onClick={clearAllFilters} className="gap-2 h-11">
+                  <X className="h-4 w-4" />
                   Clear Filters
                 </Button>
                 <Link to="/request-help?source=rehab_empty">
-                  <Button className="w-full gap-2 sm:w-auto">
+                  <Button className="w-full gap-2 sm:w-auto h-11">
                     <Heart className="h-4 w-4" />
                     Request Help
                   </Button>
@@ -608,28 +602,37 @@ const RehabCenters = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="border-t border-border bg-card py-12 md:py-14">
+      <section className="relative overflow-hidden border-t border-border bg-gradient-to-br from-card via-card to-secondary/30 py-14 md:py-16">
+        {/* Decorative accent */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        
         <div className="container">
-          <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center md:flex-row md:text-left">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 text-center md:flex-row md:text-left">
+            {/* Icon */}
+            <div className="hidden md:flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10">
+              <Sparkles className="h-10 w-10 text-primary" />
+            </div>
+            
             <div className="flex-1">
-              <h2 className="mb-2 font-display text-lg font-semibold text-foreground md:text-xl">
+              <h2 className="mb-2 font-display text-xl font-bold text-foreground md:text-2xl">
                 Need Help Finding the Right Center?
               </h2>
-              <p className="text-sm text-muted-foreground">
-                Our specialists provide free, confidential guidance on treatment options and insurance.
+              <p className="text-muted-foreground">
+                Our specialists provide free, confidential guidance on treatment options and insurance coverage. We're here to help you navigate the path to recovery.
               </p>
             </div>
-            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            
+            <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
               <Link to="/request-help?source=rehab_cta">
-                <Button className="w-full gap-2 sm:w-auto">
+                <Button size="lg" className="w-full gap-2 sm:w-auto shadow-lg hover:shadow-xl transition-shadow">
                   <Heart className="h-4 w-4" />
                   Request Help
                 </Button>
               </Link>
               <Link to="/contact">
-                <Button variant="outline" className="w-full gap-2 sm:w-auto">
-                  Request Callback
-                  <ArrowRight className="h-4 w-4" />
+                <Button size="lg" variant="outline" className="w-full gap-2 sm:w-auto hover:bg-secondary transition-colors">
+                  <Phone className="h-4 w-4" />
+                  Contact Us
                 </Button>
               </Link>
             </div>
