@@ -404,11 +404,11 @@ const CenterProfile = () => {
       </div>
 
       {/* Main Content - Contained Layout */}
-      <div className="bg-muted/30 min-h-screen pb-28 md:pb-0">
-        <div className="container max-w-6xl px-4 py-5 md:px-6 md:py-8">
+      <div className="bg-gradient-to-b from-muted/50 via-background to-background min-h-screen pb-28 md:pb-0">
+        <div className="container max-w-6xl px-4 py-6 md:px-6 md:py-10">
           {/* Pending Status Banner for Owner */}
           {isOwner && isPending && (
-            <Alert className="mb-5 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50">
+            <Alert className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:border-amber-800 dark:bg-gradient-to-r dark:from-amber-950/50 dark:to-orange-950/50 shadow-sm">
               <Clock className="h-5 w-5 text-amber-600" />
               <AlertDescription className="text-amber-800 dark:text-amber-200 text-sm md:text-base">
                 <strong>Preview Mode:</strong> Your listing is under review and only visible to you. 
@@ -421,19 +421,22 @@ const CenterProfile = () => {
           {fromSearch && (
             <Link
               to="/rehab-centers"
-              className="mb-5 inline-flex items-center gap-2 text-base text-muted-foreground hover:text-foreground transition-colors h-12 md:h-auto md:text-sm"
+              className="mb-6 inline-flex items-center gap-2 text-base text-muted-foreground hover:text-primary transition-colors h-12 md:h-auto md:text-sm group"
             >
-              <ArrowLeft className="h-5 w-5 md:h-4 md:w-4" />
+              <ArrowLeft className="h-5 w-5 md:h-4 md:w-4 transition-transform group-hover:-translate-x-1" />
               Back to search results
             </Link>
           )}
 
-          {/* Header Card */}
-          <div className="mb-5 md:mb-6 rounded-2xl border border-border bg-card p-5 md:p-6 shadow-sm">
-            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-              <div className="flex items-start gap-4">
-                {/* Logo with Reserved Space - Larger on mobile */}
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-border bg-muted md:h-20 md:w-20">
+          {/* Header Card - Enhanced */}
+          <div className="mb-6 md:mb-8 rounded-2xl border border-border/80 bg-card p-6 md:p-8 shadow-lg shadow-primary/5 relative overflow-hidden">
+            {/* Subtle gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-accent/3 pointer-events-none" />
+            
+            <div className="relative flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div className="flex items-start gap-5">
+                {/* Logo with Reserved Space - Enhanced */}
+                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-2 border-border/50 bg-muted shadow-md md:h-24 md:w-24 transition-transform hover:scale-105">
                   {hasValidLogo ? (
                     <img 
                       src={facility.logo_url!} 
@@ -443,8 +446,8 @@ const CenterProfile = () => {
                       onError={() => setLogoError(true)}
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-muted">
-                      <span className="font-display text-2xl font-bold text-primary">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                      <span className="font-display text-3xl font-bold text-primary">
                         {initials}
                       </span>
                     </div>
@@ -452,10 +455,10 @@ const CenterProfile = () => {
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  {/* Badges - Larger touch targets on mobile */}
+                  {/* Badges - Enhanced */}
                   <div className="flex flex-wrap items-center gap-2 mb-3">
                     {hasFeaturedSubscription && (
-                      <Badge className="bg-accent text-accent-foreground border-0 gap-1.5 text-sm px-3 py-1.5 md:text-xs md:px-2 md:py-0.5">
+                      <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1.5 text-sm px-3 py-1.5 md:text-xs md:px-2.5 md:py-1 shadow-md shadow-amber-500/20">
                         <Crown className="h-4 w-4 md:h-3 md:w-3" />
                         Featured
                       </Badge>
@@ -468,32 +471,32 @@ const CenterProfile = () => {
                     />
                   </div>
                   
-                  <h1 className="font-display text-xl font-bold text-foreground md:text-2xl leading-tight">
+                  <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl leading-tight">
                     {facility.name}
                   </h1>
-                  <p className="mt-2 flex items-center gap-2 text-base text-muted-foreground md:text-sm md:mt-1 md:gap-1.5">
-                    <MapPin className="h-5 w-5 shrink-0 md:h-4 md:w-4" />
+                  <p className="mt-3 flex items-center gap-2 text-base text-muted-foreground md:text-sm md:mt-2 md:gap-1.5">
+                    <MapPin className="h-5 w-5 shrink-0 text-primary/70 md:h-4 md:w-4" />
                     {facility.city}, {facility.state} {facility.zip_code}
                   </p>
                 </div>
               </div>
 
-              {/* Desktop Actions */}
-              <div className="hidden md:flex flex-col gap-2 shrink-0">
+              {/* Desktop Actions - Enhanced */}
+              <div className="hidden md:flex flex-col gap-3 shrink-0">
                 {showContactDetails ? (
                   <a 
                     href={`tel:${facility.phone}`}
                     onClick={() => trackInteraction("call")}
                   >
-                    <Button size="sm" className="w-full gap-2">
+                    <Button size="default" className="w-full gap-2 shadow-md hover:shadow-lg transition-all">
                       <Phone className="h-4 w-4" />
                       Call Now
                     </Button>
                   </a>
                 ) : (
                   <Button 
-                    size="sm" 
-                    className="w-full gap-2"
+                    size="default" 
+                    className="w-full gap-2 shadow-md hover:shadow-lg transition-all"
                     onClick={() => setRequestModalOpen(true)}
                   >
                     <Phone className="h-4 w-4" />
@@ -508,7 +511,7 @@ const CenterProfile = () => {
                       rel="noopener noreferrer"
                       onClick={() => trackInteraction("website")}
                     >
-                      <Button variant="outline" size="sm" className="gap-1.5">
+                      <Button variant="outline" size="default" className="gap-1.5 hover:bg-secondary transition-colors">
                         <Globe className="h-4 w-4" />
                         Website
                         <ExternalLink className="h-3 w-3" />
@@ -517,8 +520,8 @@ const CenterProfile = () => {
                   )}
                   <Button 
                     variant="outline" 
-                    size="sm"
-                    className="gap-2"
+                    size="default"
+                    className="gap-2 hover:bg-secondary transition-colors"
                     onClick={() => setRequestModalOpen(true)}
                   >
                     <MessageSquare className="h-4 w-4" />
@@ -528,17 +531,24 @@ const CenterProfile = () => {
               </div>
             </div>
 
-            {/* Service Tags - Scrollable on mobile */}
+            {/* Service Tags - Enhanced */}
             {services.length > 0 && (
-              <div className="mt-5 pt-5 border-t border-border md:mt-4 md:pt-4">
-                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 md:flex-wrap md:overflow-visible md:pb-0 md:mx-0 md:px-0 md:gap-1.5">
+              <div className="relative mt-6 pt-6 border-t border-border/60 md:mt-5 md:pt-5">
+                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 md:flex-wrap md:overflow-visible md:pb-0 md:mx-0 md:px-0 md:gap-2">
                   {services.slice(0, 5).map((service) => (
-                    <Badge key={service} variant="secondary" className="text-sm px-3 py-1.5 whitespace-nowrap md:text-xs md:px-2.5 md:py-1">
+                    <Badge 
+                      key={service} 
+                      variant="secondary" 
+                      className="text-sm px-4 py-2 whitespace-nowrap md:text-xs md:px-3 md:py-1.5 bg-secondary/80 hover:bg-secondary transition-colors"
+                    >
                       {service}
                     </Badge>
                   ))}
                   {services.length > 5 && (
-                    <Badge variant="outline" className="text-sm px-3 py-1.5 text-muted-foreground whitespace-nowrap md:text-xs md:px-2.5 md:py-1">
+                    <Badge 
+                      variant="outline" 
+                      className="text-sm px-4 py-2 text-muted-foreground whitespace-nowrap md:text-xs md:px-3 md:py-1.5"
+                    >
                       +{services.length - 5} more
                     </Badge>
                   )}
@@ -548,16 +558,18 @@ const CenterProfile = () => {
           </div>
 
           {/* Two Column Layout */}
-          <div className="grid gap-5 lg:grid-cols-3 md:gap-6">
+          <div className="grid gap-6 lg:grid-cols-3 md:gap-8">
             {/* Left Column - Main Content */}
-            <div className="lg:col-span-2 space-y-5">
+            <div className="lg:col-span-2 space-y-6">
               {/* Gallery Section - Only show if images exist */}
               {galleryImages.length > 0 && (
-                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:rounded-xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <ImageIcon className="h-5 w-5 text-primary md:h-4 md:w-4" />
-                      <h2 className="font-display text-lg font-semibold text-foreground md:text-base">
+                <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-md hover:shadow-lg transition-shadow md:rounded-xl">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 md:h-8 md:w-8 md:rounded-lg">
+                        <ImageIcon className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                      </div>
+                      <h2 className="font-display text-xl font-semibold text-foreground md:text-lg">
                         Facility Photos
                       </h2>
                     </div>
@@ -578,31 +590,31 @@ const CenterProfile = () => {
                   </div>
                   
                   {/* Main Image */}
-                  <div className="relative aspect-video rounded-xl overflow-hidden bg-muted mb-4 md:rounded-lg md:mb-3">
+                  <div className="relative aspect-video rounded-xl overflow-hidden bg-muted mb-4 shadow-inner md:rounded-lg md:mb-3">
                     <img 
                       src={galleryImages[activeGalleryIndex]} 
                       alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform hover:scale-[1.02]"
                       loading="lazy"
                     />
                     {galleryImages.length > 1 && (
                       <>
                         <button
                           onClick={() => setActiveGalleryIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-card/95 flex items-center justify-center shadow-lg active:scale-95 transition-transform md:h-8 md:w-8 md:left-2"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-card/95 backdrop-blur-sm flex items-center justify-center shadow-lg active:scale-95 hover:bg-card transition-all md:h-9 md:w-9 md:left-2"
                         >
-                          <ChevronLeft className="h-6 w-6 md:h-4 md:w-4" />
+                          <ChevronLeft className="h-6 w-6 md:h-5 md:w-5" />
                         </button>
                         <button
                           onClick={() => setActiveGalleryIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1))}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-card/95 flex items-center justify-center shadow-lg active:scale-95 transition-transform md:h-8 md:w-8 md:right-2"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-card/95 backdrop-blur-sm flex items-center justify-center shadow-lg active:scale-95 hover:bg-card transition-all md:h-9 md:w-9 md:right-2"
                         >
-                          <ChevronRight className="h-6 w-6 md:h-4 md:w-4" />
+                          <ChevronRight className="h-6 w-6 md:h-5 md:w-5" />
                         </button>
                       </>
                     )}
                     {/* Image counter on mobile */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-card/90 px-3 py-1.5 rounded-full text-sm font-medium md:hidden">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-card/95 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-semibold shadow-md md:hidden">
                       {activeGalleryIndex + 1} / {galleryImages.length}
                     </div>
                   </div>
@@ -614,8 +626,8 @@ const CenterProfile = () => {
                         <button
                           key={idx}
                           onClick={() => setActiveGalleryIndex(idx)}
-                          className={`shrink-0 w-18 h-18 rounded-xl overflow-hidden border-2 transition-all active:scale-95 md:w-14 md:h-14 md:rounded-md ${
-                            idx === activeGalleryIndex ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-border'
+                          className={`shrink-0 w-18 h-18 rounded-xl overflow-hidden border-2 transition-all active:scale-95 md:w-16 md:h-16 md:rounded-lg ${
+                            idx === activeGalleryIndex ? 'border-primary ring-2 ring-primary/30 shadow-md' : 'border-border/50 hover:border-primary/50 hover:shadow-sm'
                           }`}
                           style={{ width: '72px', height: '72px' }}
                         >
@@ -633,10 +645,12 @@ const CenterProfile = () => {
               )}
 
               {/* About Section */}
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:rounded-xl">
-                <div className="flex items-center gap-2 mb-4 md:mb-3">
-                  <Building2 className="h-5 w-5 text-primary md:h-4 md:w-4" />
-                  <h2 className="font-display text-lg font-semibold text-foreground md:text-base">
+              <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-md hover:shadow-lg transition-shadow md:rounded-xl">
+                <div className="flex items-center gap-3 mb-5 md:mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 md:h-8 md:w-8 md:rounded-lg">
+                    <Building2 className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                  </div>
+                  <h2 className="font-display text-xl font-semibold text-foreground md:text-lg">
                     About This Facility
                   </h2>
                 </div>
@@ -646,19 +660,23 @@ const CenterProfile = () => {
               </div>
 
               {/* Facility Details */}
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:rounded-xl">
-                <div className="flex items-center gap-2 mb-4">
-                  <Stethoscope className="h-5 w-5 text-primary md:h-4 md:w-4" />
-                  <h2 className="font-display text-lg font-semibold text-foreground md:text-base">
+              <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-md hover:shadow-lg transition-shadow md:rounded-xl">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 md:h-8 md:w-8 md:rounded-lg">
+                    <Stethoscope className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                  </div>
+                  <h2 className="font-display text-xl font-semibold text-foreground md:text-lg">
                     Facility Details
                   </h2>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/50 md:p-3 md:rounded-lg">
-                    <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5 md:h-4 md:w-4" />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 border border-border/50 hover:border-border transition-colors md:p-3.5 md:rounded-lg">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0 md:h-8 md:w-8">
+                      <MapPin className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                    </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground md:text-xs">Address</p>
-                      <p className="text-sm text-muted-foreground md:text-xs">
+                      <p className="text-sm font-semibold text-foreground md:text-xs">Address</p>
+                      <p className="text-sm text-muted-foreground mt-0.5 md:text-xs">
                         {facility.address}, {facility.city}, {facility.state} {facility.zip_code}
                       </p>
                     </div>
@@ -666,22 +684,26 @@ const CenterProfile = () => {
                   {showContactDetails ? (
                     <a 
                       href={`tel:${facility.phone}`}
-                      className="flex items-start gap-3 p-4 rounded-xl bg-muted/50 active:bg-muted transition-colors md:p-3 md:rounded-lg"
+                      className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all md:p-3.5 md:rounded-lg"
                     >
-                      <Phone className="h-5 w-5 text-primary shrink-0 mt-0.5 md:h-4 md:w-4" />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0 md:h-8 md:w-8">
+                        <Phone className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground md:text-xs">Phone</p>
-                        <p className="text-sm text-primary md:text-xs">
+                        <p className="text-sm font-semibold text-foreground md:text-xs">Phone</p>
+                        <p className="text-sm text-primary font-medium mt-0.5 md:text-xs">
                           {facility.phone}
                         </p>
                       </div>
                     </a>
                   ) : (
-                    <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/50 md:p-3 md:rounded-lg">
-                      <Phone className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5 md:h-4 md:w-4" />
+                    <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 border border-border/50 md:p-3.5 md:rounded-lg">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted shrink-0 md:h-8 md:w-8">
+                        <Phone className="h-5 w-5 text-muted-foreground md:h-4 md:w-4" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground md:text-xs">Phone</p>
-                        <p className="text-sm text-muted-foreground md:text-xs">Use contact form to request a call</p>
+                        <p className="text-sm font-semibold text-foreground md:text-xs">Phone</p>
+                        <p className="text-sm text-muted-foreground mt-0.5 md:text-xs">Use contact form to request a call</p>
                       </div>
                     </div>
                   )}
@@ -690,40 +712,48 @@ const CenterProfile = () => {
                       href={facility.website} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-start gap-3 p-4 rounded-xl bg-muted/50 active:bg-muted transition-colors md:p-3 md:rounded-lg"
+                      className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all md:p-3.5 md:rounded-lg"
                     >
-                      <Globe className="h-5 w-5 text-primary shrink-0 mt-0.5 md:h-4 md:w-4" />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0 md:h-8 md:w-8">
+                        <Globe className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground md:text-xs">Website</p>
-                        <p className="text-sm text-primary flex items-center gap-1 md:text-xs">
+                        <p className="text-sm font-semibold text-foreground md:text-xs">Website</p>
+                        <p className="text-sm text-primary font-medium flex items-center gap-1.5 mt-0.5 md:text-xs">
                           Visit Website
                           <ExternalLink className="h-4 w-4 md:h-3 md:w-3" />
                         </p>
                       </div>
                     </a>
                   )}
-                  <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/50 md:p-3 md:rounded-lg">
-                    <Building2 className="h-5 w-5 text-primary shrink-0 mt-0.5 md:h-4 md:w-4" />
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 border border-border/50 hover:border-border transition-colors md:p-3.5 md:rounded-lg">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0 md:h-8 md:w-8">
+                      <Building2 className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                    </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground md:text-xs">Facility Type</p>
-                      <p className="text-sm text-muted-foreground md:text-xs">{facility.facility_type}</p>
+                      <p className="text-sm font-semibold text-foreground md:text-xs">Facility Type</p>
+                      <p className="text-sm text-muted-foreground mt-0.5 md:text-xs">{facility.facility_type}</p>
                     </div>
                   </div>
                   {facility.gender_served && (
-                    <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/50 md:p-3 md:rounded-lg">
-                      <Users className="h-5 w-5 text-primary shrink-0 mt-0.5 md:h-4 md:w-4" />
+                    <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 border border-border/50 hover:border-border transition-colors md:p-3.5 md:rounded-lg">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0 md:h-8 md:w-8">
+                        <Users className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground md:text-xs">Gender Served</p>
-                        <p className="text-sm text-muted-foreground md:text-xs">{facility.gender_served}</p>
+                        <p className="text-sm font-semibold text-foreground md:text-xs">Gender Served</p>
+                        <p className="text-sm text-muted-foreground mt-0.5 md:text-xs">{facility.gender_served}</p>
                       </div>
                     </div>
                   )}
                   {facility.bed_count && (
-                    <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/50 md:p-3 md:rounded-lg">
-                      <Heart className="h-5 w-5 text-primary shrink-0 mt-0.5 md:h-4 md:w-4" />
+                    <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 border border-border/50 hover:border-border transition-colors md:p-3.5 md:rounded-lg">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0 md:h-8 md:w-8">
+                        <Heart className="h-5 w-5 text-primary md:h-4 md:w-4" />
+                      </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground md:text-xs">Bed Count</p>
-                        <p className="text-sm text-muted-foreground md:text-xs">{facility.bed_count} beds</p>
+                        <p className="text-sm font-semibold text-foreground md:text-xs">Bed Count</p>
+                        <p className="text-sm text-muted-foreground mt-0.5 md:text-xs">{facility.bed_count} beds</p>
                       </div>
                     </div>
                   )}
@@ -732,26 +762,36 @@ const CenterProfile = () => {
 
               {/* Services & Programs */}
               {services.length > 0 && (
-                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:rounded-xl">
-                  <div className="flex items-center gap-2 mb-4">
-                    <CheckCircle className="h-5 w-5 text-primary md:h-4 md:w-4" />
-                    <h2 className="font-display text-lg font-semibold text-foreground md:text-base">
+                <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-md hover:shadow-lg transition-shadow md:rounded-xl">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 md:h-8 md:w-8 md:rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-emerald-600 md:h-4 md:w-4" />
+                    </div>
+                    <h2 className="font-display text-xl font-semibold text-foreground md:text-lg">
                       Services & Programs
                     </h2>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {services.map((service) => (
-                      <Badge key={service} variant="secondary" className="px-3 py-1.5 text-sm md:px-2.5 md:py-1 md:text-xs">
+                      <Badge 
+                        key={service} 
+                        variant="secondary" 
+                        className="px-4 py-2 text-sm bg-secondary/80 hover:bg-secondary transition-colors md:px-3 md:py-1.5 md:text-xs"
+                      >
                         {service}
                       </Badge>
                     ))}
                   </div>
                   {ageGroups.length > 0 && (
-                    <div className="mt-5 pt-5 border-t border-border md:mt-4 md:pt-4">
-                      <p className="text-sm font-medium text-foreground mb-3 md:text-xs md:mb-2">Age Groups Served</p>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="mt-6 pt-6 border-t border-border/60 md:mt-5 md:pt-5">
+                      <p className="text-sm font-semibold text-foreground mb-3 md:text-xs md:mb-2">Age Groups Served</p>
+                      <div className="flex flex-wrap gap-2.5">
                         {ageGroups.map((age) => (
-                          <Badge key={age} variant="outline" className="px-3 py-1.5 text-sm md:px-2.5 md:py-1 md:text-xs">
+                          <Badge 
+                            key={age} 
+                            variant="outline" 
+                            className="px-4 py-2 text-sm hover:bg-muted/50 transition-colors md:px-3 md:py-1.5 md:text-xs"
+                          >
                             {age}
                           </Badge>
                         ))}
@@ -763,16 +803,22 @@ const CenterProfile = () => {
 
               {/* Insurance */}
               {insuranceList.length > 0 && (
-                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:rounded-xl">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Shield className="h-5 w-5 text-primary md:h-4 md:w-4" />
-                    <h2 className="font-display text-lg font-semibold text-foreground md:text-base">
+                <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-md hover:shadow-lg transition-shadow md:rounded-xl">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 md:h-8 md:w-8 md:rounded-lg">
+                      <Shield className="h-5 w-5 text-blue-600 md:h-4 md:w-4" />
+                    </div>
+                    <h2 className="font-display text-xl font-semibold text-foreground md:text-lg">
                       Insurance Accepted
                     </h2>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {(showAllInsurance ? insuranceList : insuranceList.slice(0, 8)).map((insurance) => (
-                      <Badge key={insurance} variant="secondary" className="px-3 py-1.5 text-sm md:px-2.5 md:py-1 md:text-xs">
+                      <Badge 
+                        key={insurance} 
+                        variant="secondary" 
+                        className="px-4 py-2 text-sm bg-secondary/80 hover:bg-secondary transition-colors md:px-3 md:py-1.5 md:text-xs"
+                      >
                         {insurance}
                       </Badge>
                     ))}
@@ -780,34 +826,36 @@ const CenterProfile = () => {
                   {insuranceList.length > 8 && (
                     <button
                       onClick={() => setShowAllInsurance(!showAllInsurance)}
-                      className="mt-4 flex items-center gap-2 text-base text-primary active:opacity-70 transition-opacity h-12 md:mt-3 md:gap-1 md:text-xs md:h-auto md:hover:underline"
+                      className="mt-5 flex items-center gap-2 text-base font-medium text-primary active:opacity-70 transition-all h-12 md:mt-4 md:gap-1.5 md:text-sm md:h-auto md:hover:underline"
                     >
                       {showAllInsurance ? "Show less" : `View all ${insuranceList.length} insurances`}
-                      <ChevronDown className={`h-5 w-5 transition-transform md:h-3 md:w-3 ${showAllInsurance ? "rotate-180" : ""}`} />
+                      <ChevronDown className={`h-5 w-5 transition-transform duration-200 md:h-4 md:w-4 ${showAllInsurance ? "rotate-180" : ""}`} />
                     </button>
                   )}
                 </div>
               )}
 
               {/* Trust & Compliance */}
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:rounded-xl">
-                <div className="flex items-center gap-2 mb-4 md:mb-3">
-                  <BadgeCheck className="h-5 w-5 text-accent md:h-4 md:w-4" />
-                  <h2 className="font-display text-lg font-semibold text-foreground md:text-base">
+              <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-md hover:shadow-lg transition-shadow md:rounded-xl">
+                <div className="flex items-center gap-3 mb-5 md:mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 md:h-8 md:w-8 md:rounded-lg">
+                    <BadgeCheck className="h-5 w-5 text-accent md:h-4 md:w-4" />
+                  </div>
+                  <h2 className="font-display text-xl font-semibold text-foreground md:text-lg">
                     Trust & Compliance
                   </h2>
                 </div>
                 {credentials?.accreditations && (
                   <p className="text-sm text-muted-foreground mb-3 md:text-xs md:mb-2">
-                    <span className="font-medium text-foreground">Accreditations:</span> {credentials.accreditations}
+                    <span className="font-semibold text-foreground">Accreditations:</span> {credentials.accreditations}
                   </p>
                 )}
                 {credentials?.licensing_info && (
-                  <p className="text-sm text-muted-foreground mb-4 md:text-xs md:mb-3">
-                    <span className="font-medium text-foreground">Licensing:</span> {credentials.licensing_info}
+                  <p className="text-sm text-muted-foreground mb-5 md:text-xs md:mb-4">
+                    <span className="font-semibold text-foreground">Licensing:</span> {credentials.licensing_info}
                   </p>
                 )}
-                <div className="p-4 rounded-xl bg-muted/50 border border-border md:p-3 md:rounded-lg">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-muted/60 to-muted/30 border border-border/50 md:p-3.5 md:rounded-lg">
                   <p className="text-sm text-muted-foreground leading-relaxed md:text-xs">
                     <strong className="text-foreground">Disclaimer:</strong> RehabLookup is a directory service and does not provide medical advice or treatment. 
                     Always verify credentials and insurance coverage directly with the facility.
@@ -818,46 +866,51 @@ const CenterProfile = () => {
 
             {/* Right Column - Contact CTA - Hidden on mobile (sticky CTA bar instead) */}
             <div className="hidden md:block lg:col-span-1">
-              <div ref={contactFormRef} className="sticky top-20 rounded-xl border border-border bg-card p-5 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                    <Phone className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-sm font-semibold text-foreground">
-                      Contact This Center
-                    </h2>
-                    <p className="text-xs text-muted-foreground">Get help today</p>
-                  </div>
-                </div>
+              <div ref={contactFormRef} className="sticky top-20 rounded-2xl border border-border/80 bg-card p-6 shadow-lg relative overflow-hidden">
+                {/* Subtle gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
                 
-                <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Clock className="h-3 w-3 text-primary" />
-                    <span className="text-xs font-medium text-foreground">Quick Response</span>
+                <div className="relative">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shadow-sm">
+                      <Phone className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="font-display text-base font-semibold text-foreground">
+                        Contact This Center
+                      </h2>
+                      <p className="text-sm text-muted-foreground">Get help today</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Share your details and a specialist may contact you within 24 hours.
-                  </p>
-                </div>
+                  
+                  <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">Quick Response</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Share your details and a specialist may contact you within 24 hours.
+                    </p>
+                  </div>
 
-                <Button 
-                  className="w-full gap-2" 
-                  size="lg"
-                  onClick={() => setRequestModalOpen(true)}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Request a Call Back
-                </Button>
-                
-                {showContactDetails && (
-                  <div className="mt-4 pt-4 border-t border-border text-center">
-                    <p className="text-xs text-muted-foreground mb-2">Or call directly:</p>
-                    <a href={`tel:${facility.phone}`} className="text-sm font-semibold text-primary hover:underline">
-                      {facility.phone}
-                    </a>
-                  </div>
-                )}
+                  <Button 
+                    className="w-full gap-2 h-12 text-base shadow-md hover:shadow-lg transition-all" 
+                    size="lg"
+                    onClick={() => setRequestModalOpen(true)}
+                  >
+                    <MessageSquare className="h-5 w-5" />
+                    Request a Call Back
+                  </Button>
+                  
+                  {showContactDetails && (
+                    <div className="mt-5 pt-5 border-t border-border/60 text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Or call directly:</p>
+                      <a href={`tel:${facility.phone}`} className="text-base font-bold text-primary hover:underline">
+                        {facility.phone}
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
