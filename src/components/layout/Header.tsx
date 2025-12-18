@@ -71,19 +71,27 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-white/95 backdrop-blur-sm shadow-sm">
+      <header className={cn(
+        "sticky top-0 z-50 w-full border-b backdrop-blur-sm shadow-sm",
+        variant === "provider" 
+          ? "bg-primary border-primary/20" 
+          : "bg-white/95 border-border"
+      )}>
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-3 group">
             <img 
-              src="/logo.svg" 
+              src={variant === "provider" ? "/logo-dark.svg" : "/logo.svg"}
               alt="Rehab-Lookup" 
               className="h-11 w-auto transition-transform duration-200 group-hover:scale-105"
               loading="eager"
               decoding="async"
             />
             {variant === "provider" && (
-              <span className="text-xs font-medium text-muted-foreground">Providers</span>
+              <div className="hidden sm:flex items-center">
+                <div className="h-6 w-px bg-white/20 mr-3" />
+                <span className="text-sm font-semibold text-white/90 tracking-wide">For Providers</span>
+              </div>
             )}
           </Link>
 
@@ -95,11 +103,17 @@ export function Header({
                 to={link.href}
                 className={cn(
                   "relative rounded-lg px-4 py-2 text-base font-medium transition-all duration-200",
-                  location.pathname === link.href
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-foreground hover:text-primary hover:bg-primary/5",
+                  variant === "provider" ? (
+                    location.pathname === link.href
+                      ? "bg-white/15 text-white shadow-sm"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
+                  ) : (
+                    location.pathname === link.href
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-foreground hover:text-primary hover:bg-primary/5"
+                  ),
                   // Underline animation for non-active links
-                  location.pathname !== link.href && "after:absolute after:bottom-1 after:left-4 after:right-4 after:h-0.5 after:bg-primary after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
+                  location.pathname !== link.href && variant !== "provider" && "after:absolute after:bottom-1 after:left-4 after:right-4 after:h-0.5 after:bg-primary after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
                 )}
               >
                 {link.label}
@@ -108,33 +122,39 @@ export function Header({
           </nav>
 
           {/* CTA & Mobile Toggle */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {variant === "provider" ? (
               <>
-                {/* Provider CTAs - both List Facility and Login/Logout */}
-                <Link to="/provider-signup" className="hidden sm:block">
-                  <Button size="sm" variant="outline" className="shadow-sm hover:shadow-md transition-shadow">
-                    List Your Facility
-                  </Button>
-                </Link>
+                {/* Provider CTAs */}
                 {isLoggedIn ? (
                   <div className="hidden sm:flex items-center gap-2">
                     <Link to="/provider-dashboard">
-                      <Button size="sm" variant="ghost" className="hover:bg-primary/5">
+                      <Button size="sm" variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
                         Dashboard
                       </Button>
                     </Link>
-                    <Button size="sm" variant="secondary" onClick={handleLogout} className="gap-1.5 hover:bg-destructive/10 hover:text-destructive transition-colors">
+                    <Button 
+                      size="sm" 
+                      onClick={handleLogout} 
+                      className="gap-1.5 bg-white/10 text-white hover:bg-white/20 border-0"
+                    >
                       <LogOut className="h-3.5 w-3.5" />
                       Sign Out
                     </Button>
                   </div>
                 ) : (
-                  <Link to="/provider-login" className="hidden sm:block">
-                    <Button size="sm" className="shadow-sm hover:shadow-md transition-shadow">
-                      Provider Login
-                    </Button>
-                  </Link>
+                  <div className="hidden sm:flex items-center gap-2">
+                    <Link to="/provider-login">
+                      <Button size="sm" variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link to="/provider-signup">
+                      <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-md hover:shadow-lg transition-all">
+                        Get Started
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </>
             ) : (
@@ -145,7 +165,12 @@ export function Header({
               </PrefetchLink>
             )}
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground bg-secondary hover:bg-primary hover:text-primary-foreground md:hidden transition-all duration-200 active:scale-95"
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-xl md:hidden transition-all duration-200 active:scale-95",
+                variant === "provider"
+                  ? "text-white bg-white/10 hover:bg-white/20"
+                  : "text-foreground bg-secondary hover:bg-primary hover:text-primary-foreground"
+              )}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -172,18 +197,31 @@ export function Header({
         )}
       >
         {/* Menu Header */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-secondary/30">
-          <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+        <div className={cn(
+          "flex items-center justify-between border-b px-5 py-4",
+          variant === "provider" 
+            ? "bg-primary border-primary/20" 
+            : "bg-secondary/30 border-border"
+        )}>
+          <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
             <img 
-              src="/logo.svg" 
+              src={variant === "provider" ? "/logo-dark.svg" : "/logo.svg"}
               alt="Rehab-Lookup" 
               className="h-10 w-auto"
               loading="lazy"
               decoding="async"
             />
+            {variant === "provider" && (
+              <span className="text-xs font-semibold text-white/80">For Providers</span>
+            )}
           </Link>
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground bg-white shadow-sm hover:bg-primary hover:text-primary-foreground transition-all duration-200 active:scale-95"
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 active:scale-95",
+              variant === "provider"
+                ? "text-white bg-white/10 hover:bg-white/20"
+                : "text-foreground bg-white shadow-sm hover:bg-primary hover:text-primary-foreground"
+            )}
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close menu"
           >
