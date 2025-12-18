@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, ArrowRight, Crown, Calendar, ShieldCheck } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
-import { useState, memo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TreatmentCenterCardProps {
@@ -28,7 +28,7 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function TreatmentCenterCardComponent({ center, featured }: TreatmentCenterCardProps) {
+export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardProps) {
   const [logoError, setLogoError] = useState(false);
   
   const detailsUrl = center.isFromDatabase && center.slug 
@@ -243,5 +243,3 @@ function TreatmentCenterCardComponent({ center, featured }: TreatmentCenterCardP
     </article>
   );
 }
-
-export const TreatmentCenterCard = memo(TreatmentCenterCardComponent);

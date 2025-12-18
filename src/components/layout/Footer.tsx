@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Heart, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, ArrowRight, BookOpen } from "lucide-react";
-import { memo } from "react";
 
 // SEO-friendly articles for footer
 const featuredArticles = [
@@ -26,7 +25,7 @@ const featuredArticles = [
   },
 ];
 
-function FooterComponent() {
+export function Footer() {
   return (
     <footer className="border-t border-border bg-slate-900">
       {/* Featured Articles Section - SEO Boost */}
@@ -335,5 +334,3 @@ function FooterComponent() {
     </footer>
   );
 }
-
-export const Footer = memo(FooterComponent);
