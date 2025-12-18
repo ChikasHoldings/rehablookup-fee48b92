@@ -32,18 +32,8 @@ export function Header({
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Track scroll position for header styling
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     if (variant === "provider") {
@@ -80,25 +70,14 @@ export function Header({
 
   return (
     <>
-      <header className={cn(
-        "sticky top-0 z-50 w-full border-b border-border bg-white transition-all duration-300",
-        isScrolled 
-          ? "shadow-md" 
-          : "shadow-sm"
-      )}>
-        <div className={cn(
-          "container flex items-center justify-between transition-all duration-300",
-          isScrolled ? "h-12 md:h-16" : "h-16 md:h-18"
-        )}>
-          {/* Logo - Bigger on mobile, shrinks when scrolled */}
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-white shadow-sm">
+        <div className="container flex h-16 items-center justify-between">
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <img 
               src="/logo.svg" 
               alt="Rehab-Lookup" 
-              className={cn(
-                "w-auto transition-all duration-300 group-hover:scale-105",
-                isScrolled ? "h-8 md:h-10" : "h-12 md:h-11"
-              )}
+              className="h-11 w-auto transition-transform duration-200 group-hover:scale-105"
             />
             {variant === "provider" && (
               <span className="text-xs font-medium text-muted-foreground">Providers</span>
