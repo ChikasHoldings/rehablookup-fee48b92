@@ -400,30 +400,40 @@ const Index = () => {
               <Link
                 key={option.title}
                 to={option.link}
-                className="group animate-fade-in"
-                style={{ animationDelay: `${index * 75}ms` }}
+                className="group animate-fade-in opacity-0"
+                style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
               >
-                <div className="relative h-full rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-300 hover:bg-white/15 hover:border-accent/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-accent/10">
-                  {/* Decorative glow */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="relative h-full rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-500 hover:bg-white/15 hover:border-accent/50 hover:-translate-y-2 hover:shadow-2xl hover:shadow-accent/20">
+                  {/* Decorative glow - enhanced */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/10 via-transparent to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                   
-                  {/* Icon */}
-                  <div className="relative mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-accent/15 ring-1 ring-accent/20 transition-all duration-300 group-hover:bg-accent/25 group-hover:ring-accent/40 group-hover:scale-110">
-                    <option.icon className="h-7 w-7 text-accent transition-transform duration-300 group-hover:scale-105" />
+                  {/* Shimmer effect on hover */}
+                  <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
                   </div>
                   
-                  <h3 className="relative mb-2 font-display text-lg font-semibold text-primary-foreground">
+                  {/* Icon - Enhanced with pulse and rotate on hover */}
+                  <div className="relative mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 ring-1 ring-accent/30 transition-all duration-500 group-hover:ring-accent/60 group-hover:shadow-lg group-hover:shadow-accent/30 group-hover:scale-110 group-hover:rotate-3">
+                    <option.icon className="h-8 w-8 text-accent transition-all duration-500 group-hover:scale-110" />
+                    {/* Icon glow */}
+                    <div className="absolute inset-0 rounded-2xl bg-accent/20 blur-xl opacity-0 transition-opacity duration-500 group-hover:opacity-60" />
+                  </div>
+                  
+                  <h3 className="relative mb-2 font-display text-lg font-semibold text-primary-foreground transition-colors duration-300 group-hover:text-accent">
                     {option.title}
                   </h3>
                   <p className="relative text-sm text-primary-foreground/70 leading-relaxed">
                     {option.description}
                   </p>
                   
-                  {/* Hover arrow */}
-                  <div className="relative mt-4 flex items-center gap-1.5 text-sm font-medium text-accent opacity-0 transition-all duration-300 group-hover:opacity-100">
-                    <span>Learn more</span>
+                  {/* Hover arrow - Enhanced */}
+                  <div className="relative mt-5 flex items-center gap-2 text-sm font-medium text-accent translate-y-2 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                    <span>Explore options</span>
                     <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
+                  
+                  {/* Corner accent */}
+                  <div className="absolute bottom-0 right-0 h-24 w-24 rounded-tl-full bg-gradient-to-tl from-accent/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 </div>
               </Link>
             ))}
