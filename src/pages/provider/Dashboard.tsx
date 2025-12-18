@@ -40,6 +40,7 @@ import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { OnboardingChecklist } from "@/components/provider/OnboardingChecklist";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { BasicPlanUpgradeBanner } from "@/components/provider/BasicPlanUpgradeBanner";
+import { OnboardingTour } from "@/components/provider/OnboardingTour";
 
 interface Lead {
   id: string;
@@ -817,6 +818,9 @@ export default function ProviderDashboardPage() {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
       />
+
+      {/* Onboarding Tour for first-time users */}
+      <OnboardingTour />
       </div>
     </div>
   );
