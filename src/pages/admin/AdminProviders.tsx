@@ -35,6 +35,7 @@ import {
   AlertTriangle,
   X,
   ZoomIn,
+  Award,
   History,
 } from "lucide-react";
 import { ProviderActivityTimeline } from "@/components/admin/ProviderActivityTimeline";
@@ -143,6 +144,17 @@ type FlaggedImage = {
   reason: string | null;
   flagged_at: string;
   resolved: boolean;
+};
+
+type Accreditation = {
+  id: string;
+  facility_id: string;
+  accreditation_type: string;
+  verified: boolean | null;
+  verified_at: string | null;
+  verified_by: string | null;
+  expiry_date: string | null;
+  created_at: string | null;
 };
 
 type SubscriptionData = {
@@ -400,6 +412,21 @@ export default function AdminProviders() {
     enabled: !!selectedProvider?.id && showDetailDialog,
   });
 
+  // Fetch accreditations for selected provider
+  const { data: providerAccreditations, refetch: refetchAccreditations } = useQuery({
+    queryKey: ["admin-provider-accreditations", selectedProvider?.id],
+    queryFn: async () => {
+      if (!selectedProvider?.id) return [];
+      const { data } = await supabase
+        .from("facility_accreditations")
+        .select("*")
+        .eq("facility_id", selectedProvider.id)
+        .order("created_at", { ascending: true });
+      return (data || []) as Accreditation[];
+    },
+    enabled: !!selectedProvider?.id && showDetailDialog,
+  });
+
   // Update provider mutation
   const updateProvider = useMutation({
     mutationFn: async ({
@@ -462,6 +489,48 @@ export default function AdminProviders() {
     onError: (error) => {
       console.error("Provider update failed:", error);
       toast.error("Failed to update provider");
+    },
+  });
+
+  // Update accreditation verification mutation
+  const updateAccreditationVerification = useMutation({
+    mutationFn: async ({
+      accreditationId,
+      verified,
+    }: {
+      accreditationId: string;
+      verified: boolean;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from("facility_accreditations")
+        .update({
+          verified,
+          verified_at: verified ? new Date().toISOString() : null,
+          verified_by: verified ? user?.id : null,
+        })
+        .eq("id", accreditationId);
+      
+      if (error) throw error;
+
+      // Log admin action
+      if (user?.id && selectedProvider?.id) {
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: user.id,
+          action_type: verified ? "verify_accreditation" : "unverify_accreditation",
+          target_type: "facility_accreditation",
+          target_id: accreditationId,
+          details: { facility_id: selectedProvider.id, verified },
+        });
+      }
+    },
+    onSuccess: () => {
+      refetchAccreditations();
+      toast.success("Accreditation updated");
+    },
+    onError: () => {
+      toast.error("Failed to update accreditation");
     },
   });
 
@@ -1178,6 +1247,76 @@ export default function AdminProviders() {
                     </div>
                   </div>
                 </div>
+
+                {/* Trust & Accreditations */}
+                {providerAccreditations && providerAccreditations.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <Award className="h-4 w-4" />
+                        Trust & Accreditations
+                        <Badge variant="outline" className="ml-2">
+                          {providerAccreditations.filter(a => a.verified).length}/{providerAccreditations.length} verified
+                        </Badge>
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Verify claimed accreditations by checking the boxes below. Verified badges will display on the provider's public profile.
+                      </p>
+                      <div className="space-y-3">
+                        {providerAccreditations.map((accreditation) => (
+                          <div 
+                            key={accreditation.id} 
+                            className={cn(
+                              "flex items-center justify-between p-3 rounded-lg border transition-colors",
+                              accreditation.verified 
+                                ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800" 
+                                : "bg-muted/50 border-border"
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Checkbox
+                                id={`accred-${accreditation.id}`}
+                                checked={accreditation.verified || false}
+                                onCheckedChange={(checked) => {
+                                  updateAccreditationVerification.mutate({
+                                    accreditationId: accreditation.id,
+                                    verified: checked as boolean,
+                                  });
+                                }}
+                              />
+                              <label 
+                                htmlFor={`accred-${accreditation.id}`}
+                                className="flex flex-col cursor-pointer"
+                              >
+                                <span className="font-medium text-sm">
+                                  {accreditation.accreditation_type}
+                                </span>
+                                {accreditation.expiry_date && (
+                                  <span className="text-xs text-muted-foreground">
+                                    Expires: {format(new Date(accreditation.expiry_date), "MMM d, yyyy")}
+                                  </span>
+                                )}
+                              </label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {accreditation.verified ? (
+                                <Badge className="bg-emerald-600 text-white">
+                                  <BadgeCheck className="h-3 w-3 mr-1" />
+                                  Verified
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  Pending
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Description */}
                 {selectedProvider?.description && (
