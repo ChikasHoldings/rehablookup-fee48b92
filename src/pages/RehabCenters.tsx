@@ -7,7 +7,8 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { Heart, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight, Sparkles, Phone } from "lucide-react";
+import { Heart, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone } from "lucide-react";
+import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -602,35 +603,60 @@ const RehabCenters = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="relative overflow-hidden border-t border-border bg-gradient-to-br from-card via-card to-secondary/30 py-14 md:py-16">
-        {/* Decorative accent */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <section className="relative overflow-hidden border-t border-border bg-gradient-to-br from-primary/5 via-card to-secondary/20 py-12 md:py-16">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        <div className="absolute -bottom-32 -right-32 w-64 h-64 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -top-32 -left-32 w-64 h-64 rounded-full bg-secondary/30 blur-3xl" />
         
-        <div className="container">
-          <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 text-center md:flex-row md:text-left">
-            {/* Icon */}
-            <div className="hidden md:flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10">
-              <Sparkles className="h-10 w-10 text-primary" />
+        <div className="container relative">
+          <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 md:gap-8 md:flex-row">
+            {/* Image */}
+            <div className="relative shrink-0">
+              <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-1 ring-2 ring-primary/10 shadow-xl shadow-primary/10">
+                <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-b from-white to-secondary/50">
+                  <img 
+                    src={supportSpecialistImg} 
+                    alt="Support specialist ready to help" 
+                    className="w-full h-full object-cover object-top scale-110"
+                  />
+                </div>
+              </div>
+              {/* Online indicator */}
+              <div className="absolute bottom-1 right-1 md:bottom-2 md:right-2 flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-lg border border-border">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-medium text-foreground">Online</span>
+              </div>
             </div>
             
-            <div className="flex-1">
-              <h2 className="mb-2 font-display text-xl font-bold text-foreground md:text-2xl">
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="mb-2 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
                 Need Help Finding the Right Center?
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm md:text-base max-w-xl">
                 Our specialists provide free, confidential guidance on treatment options and insurance coverage. We're here to help you navigate the path to recovery.
               </p>
             </div>
             
             <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
               <Link to="/request-help?source=rehab_cta">
-                <Button size="lg" className="w-full gap-2 sm:w-auto shadow-lg hover:shadow-xl transition-shadow">
+                <Button 
+                  size="lg" 
+                  className="w-full gap-2 sm:w-auto shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85"
+                >
                   <Heart className="h-4 w-4" />
-                  Request Help
+                  Get Help Now
                 </Button>
               </Link>
               <Link to="/contact">
-                <Button size="lg" variant="outline" className="w-full gap-2 sm:w-auto hover:bg-secondary transition-colors">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="w-full gap-2 sm:w-auto hover:bg-secondary hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                >
                   <Phone className="h-4 w-4" />
                   Contact Us
                 </Button>
