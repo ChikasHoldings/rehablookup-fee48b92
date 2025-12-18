@@ -75,28 +75,55 @@ function ProviderShellContent() {
   }, [navigate]);
 
   const handleLogout = useCallback(async () => {
-    // Log logout activity before signing out
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      supabase.functions.invoke("log-activity", {
-        body: {
-          user_id: session.user.id,
-          event_type: "logout",
-          event_description: "Signed out of account",
-        },
+    try {
+      // Log logout activity before signing out
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Fire and forget - don't block logout on activity logging
+        supabase.functions.invoke("log-activity", {
+          body: {
+            user_id: session.user.id,
+            event_type: "logout",
+            event_description: "Signed out of account",
+          },
+        }).catch(console.error);
+      }
+      
+      // Clear Sentry user context
+      clearSentryUser();
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast({
+          title: "Logout failed",
+          description: "Please try again or refresh the page.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Clear all provider data caches
+      queryClient.clear();
+
+      // Show success toast
+      toast({
+        title: "Signed out",
+        description: "You've been successfully logged out.",
+      });
+
+      // Navigate to login
+      navigate("/provider-login", { replace: true });
+    } catch (err) {
+      console.error("Logout exception:", err);
+      toast({
+        title: "Logout failed",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
       });
     }
-    
-    clearSentryUser();
-    await supabase.auth.signOut();
-    // Clear provider data cache on logout
-    queryClient.removeQueries({ queryKey: ["provider-data"] });
-    queryClient.removeQueries({ queryKey: ["provider-leads"] });
-    toast({
-      title: "Signed out",
-      description: "You've been successfully logged out.",
-    });
-    navigate("/provider-login", { replace: true });
   }, [navigate, toast, queryClient]);
 
   const handleCloseSidebar = useCallback(() => {
