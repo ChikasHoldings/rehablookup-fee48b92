@@ -8,33 +8,31 @@ import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { PageLoading } from "@/components/ui/page-loading";
 
-// Eagerly load critical pages for instant first paint
+// Eagerly load all public pages for instant navigation
 import Index from "./pages/Index";
-
-// Lazy load all other pages
-const RehabCenters = lazy(() => import("./pages/RehabCenters"));
-const TreatmentCenterProfile = lazy(() => import("./pages/TreatmentCenterProfile"));
-const CenterProfile = lazy(() => import("./pages/CenterProfile"));
-const TreatmentTypes = lazy(() => import("./pages/TreatmentTypes"));
-const HowItWorks = lazy(() => import("./pages/HowItWorks"));
-const ForProviders = lazy(() => import("./pages/ForProviders"));
-const ProviderResources = lazy(() => import("./pages/ProviderResources"));
-const ProviderLogin = lazy(() => import("./pages/ProviderLogin"));
-const ProviderForgotPassword = lazy(() => import("./pages/ProviderForgotPassword"));
-const ProviderResetPassword = lazy(() => import("./pages/ProviderResetPassword"));
-const ProviderSupport = lazy(() => import("./pages/ProviderSupport"));
-const ProviderSignup = lazy(() => import("./pages/ProviderSignup"));
-const RequestHelp = lazy(() => import("./pages/RequestHelp"));
-const AdLanding = lazy(() => import("./pages/AdLanding"));
-const SocialLanding = lazy(() => import("./pages/SocialLanding"));
-const Resources = lazy(() => import("./pages/Resources"));
-const ArticleDetail = lazy(() => import("./pages/ArticleDetail"));
-const FAQ = lazy(() => import("./pages/FAQ"));
-const About = lazy(() => import("./pages/About"));
-const Contact = lazy(() => import("./pages/Contact"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+import RehabCenters from "./pages/RehabCenters";
+import TreatmentCenterProfile from "./pages/TreatmentCenterProfile";
+import CenterProfile from "./pages/CenterProfile";
+import TreatmentTypes from "./pages/TreatmentTypes";
+import HowItWorks from "./pages/HowItWorks";
+import ForProviders from "./pages/ForProviders";
+import ProviderResources from "./pages/ProviderResources";
+import ProviderLogin from "./pages/ProviderLogin";
+import ProviderForgotPassword from "./pages/ProviderForgotPassword";
+import ProviderResetPassword from "./pages/ProviderResetPassword";
+import ProviderSupport from "./pages/ProviderSupport";
+import ProviderSignup from "./pages/ProviderSignup";
+import RequestHelp from "./pages/RequestHelp";
+import AdLanding from "./pages/AdLanding";
+import SocialLanding from "./pages/SocialLanding";
+import Resources from "./pages/Resources";
+import ArticleDetail from "./pages/ArticleDetail";
+import FAQ from "./pages/FAQ";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import NotFound from "./pages/NotFound";
 
 // Provider Panel - lazy load shell and pages
 const ProviderShell = lazy(() => import("./components/provider/ProviderShell").then(m => ({ default: m.ProviderShell })));
