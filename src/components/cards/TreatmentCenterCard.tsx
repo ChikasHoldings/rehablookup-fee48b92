@@ -100,10 +100,10 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
       {/* Header Section */}
       <div className="relative p-5 md:p-5">
         <div className="flex items-start gap-4">
-          {/* Logo Container - Enhanced with subtle border glow */}
+          {/* Logo Container - Round with subtle border glow */}
           <div 
             className={cn(
-              "relative h-18 w-18 shrink-0 overflow-hidden rounded-xl transition-all duration-300 md:h-16 md:w-16",
+              "relative h-18 w-18 shrink-0 overflow-hidden rounded-full transition-all duration-300 md:h-16 md:w-16",
               showFeaturedBadge 
                 ? "ring-2 ring-amber-300/50 shadow-lg shadow-amber-500/20 group-hover:ring-amber-400/70 group-hover:shadow-amber-500/30" 
                 : "ring-1 ring-border/80 shadow-md group-hover:ring-primary/50 group-hover:shadow-lg"
