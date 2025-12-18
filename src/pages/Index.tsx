@@ -226,73 +226,91 @@ const Index = () => {
         canonical="/"
       />
       {/* Hero Section - Light Background with Image */}
-      <section className="relative flex min-h-[70vh] md:min-h-[75vh] lg:min-h-[80vh] overflow-hidden">
+      <section className="relative flex min-h-[75vh] md:min-h-[80vh] lg:min-h-[85vh] overflow-hidden">
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
         
-        {/* Light overlay to maintain readability */}
-        <div className="absolute inset-0 bg-card/85" />
+        {/* Light overlay with gradient for depth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-card/90 via-card/85 to-card/95" />
         
         {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-accent/5 blur-3xl" />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full bg-primary/8 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 h-[400px] w-[400px] rounded-full bg-accent/6 blur-3xl" />
+          <div className="absolute top-1/3 left-1/4 h-64 w-64 rounded-full bg-primary/4 blur-2xl" />
         </div>
 
         {/* Content Container */}
-        <div className="container relative flex flex-1 flex-col justify-center py-6 md:py-8">
+        <div className="container relative flex flex-1 flex-col justify-center py-8 md:py-12 lg:py-16">
           <div className="mx-auto w-full max-w-4xl text-center">
-            {/* Trust Badge */}
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 animate-fade-in">
-              <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-              <span className="text-xs sm:text-sm font-semibold text-accent">
+            {/* Trust Badge - More prominent */}
+            <div className="mb-6 md:mb-8 inline-flex items-center gap-2.5 rounded-full border border-accent/40 bg-accent/15 px-4 py-2 shadow-sm animate-fade-in backdrop-blur-sm">
+              <Star className="h-4 w-4 fill-accent text-accent" />
+              <span className="text-sm font-semibold text-accent tracking-wide">
                 Trusted by 10,000+ families nationwide
               </span>
             </div>
 
-            {/* Headline */}
-            <h1 className="mb-3 font-display text-2xl font-bold leading-tight text-foreground sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl animate-fade-in drop-shadow-sm" style={{ animationDelay: "50ms" }}>
-              Find the Right Path to{" "}
-              <span className="text-primary">Recovery</span>
+            {/* Headline - Enhanced typography */}
+            <h1 className="mb-5 md:mb-6 font-display text-3xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl animate-fade-in" style={{ animationDelay: "50ms" }}>
+              Find the Right Path
+              <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>
+              to <span className="text-primary relative">
+                Recovery
+                <svg className="absolute -bottom-1 left-0 w-full h-2 text-primary/30" viewBox="0 0 200 8" preserveAspectRatio="none">
+                  <path d="M0 7 Q50 0, 100 7 T200 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+              </span>
             </h1>
 
-            {/* Subheadline */}
-            <p className="mb-6 text-sm text-foreground/80 sm:text-base md:text-lg animate-fade-in max-w-2xl mx-auto font-medium" style={{ animationDelay: "100ms" }}>
-              Search verified addiction treatment centers and take the first step toward a healthier future.
+            {/* Subheadline - Better readability */}
+            <p className="mb-8 md:mb-10 text-base text-foreground/75 sm:text-lg md:text-xl animate-fade-in max-w-2xl mx-auto leading-relaxed" style={{ animationDelay: "100ms" }}>
+              Search verified addiction treatment centers and take the first step toward a healthier future for you or your loved one.
             </p>
 
-            {/* Search Form */}
-            <div className="mb-6 animate-fade-in" style={{ animationDelay: "150ms" }}>
+            {/* Search Form - More prominent */}
+            <div className="mb-8 md:mb-10 animate-fade-in" style={{ animationDelay: "150ms" }}>
               <SearchForm variant="compact-hero" />
             </div>
 
-            {/* Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-4 animate-fade-in md:gap-6" style={{ animationDelay: "200ms" }}>
-              {trustBadges.map((badge) => (
-                <div key={badge.label} className="flex items-center gap-1.5 text-foreground/70 transition-colors hover:text-primary">
-                  <div className="flex h-7 w-7 md:h-8 md:w-8 items-center justify-center rounded-full bg-primary/15">
-                    <badge.icon className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
+            {/* Trust Badges - Better visual weight */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 animate-fade-in md:gap-x-8 lg:gap-x-10" style={{ animationDelay: "200ms" }}>
+              {trustBadges.map((badge, index) => (
+                <div 
+                  key={badge.label} 
+                  className="flex items-center gap-2 text-foreground/70 transition-all duration-300 hover:text-primary group"
+                  style={{ animationDelay: `${200 + index * 50}ms` }}
+                >
+                  <div className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/20 group-hover:ring-primary/40 group-hover:scale-110">
+                    <badge.icon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                   </div>
-                  <span className="text-xs md:text-sm font-medium">{badge.label}</span>
+                  <span className="text-sm md:text-base font-medium">{badge.label}</span>
                 </div>
               ))}
             </div>
 
-            {/* Quick Help CTA */}
-            <div className="mt-5 animate-fade-in" style={{ animationDelay: "250ms" }}>
-              <Link to="/request-help?source=hero" className="inline-flex items-center gap-2 text-xs sm:text-sm text-foreground/70 hover:text-primary transition-colors">
-                <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span>Need help now? <strong className="text-foreground">Request Help</strong></span>
+            {/* Quick Help CTA - More visible */}
+            <div className="mt-8 md:mt-10 animate-fade-in" style={{ animationDelay: "300ms" }}>
+              <Link 
+                to="/request-help?source=hero" 
+                className="inline-flex items-center gap-2.5 text-sm sm:text-base text-foreground/70 hover:text-primary transition-all duration-300 group"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 transition-all duration-300 group-hover:bg-destructive/20 group-hover:scale-110">
+                  <Heart className="h-4 w-4 text-destructive" />
+                </div>
+                <span>Need help now? <strong className="text-foreground group-hover:text-primary transition-colors">Request Help</strong></span>
+                <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" />
               </Link>
             </div>
           </div>
         </div>
 
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
+        {/* Bottom fade - Smoother transition */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/50 to-transparent" />
       </section>
 
       {/* Trust Bar - Enhanced Design */}
