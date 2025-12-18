@@ -715,82 +715,55 @@ const ArticleDetail = () => {
   return (
     <Layout>
       {/* Hero */}
-      <section className="relative bg-background border-b border-border/50">
-        <div className="container py-8 md:py-12">
+      <section className="relative h-[280px] md:h-[340px] overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img
+            src={article.image}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+          {/* Light overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/60" />
+        </div>
+        
+        {/* Content */}
+        <div className="container relative h-full flex flex-col justify-center">
           {/* Back Link */}
           <Link
             to="/resources"
-            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary mb-8 transition-colors group"
+            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary mb-4 transition-colors group w-fit"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Back to Resources
           </Link>
           
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            {/* Left: Content */}
-            <div className="order-2 lg:order-1">
-              {/* Category Badge */}
-              <div className="mb-5">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  {article.categoryLabel}
-                </span>
-              </div>
-              
-              {/* Title */}
-              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl lg:text-4xl xl:text-[2.75rem] mb-5 leading-[1.15]">
-                {article.title}
-              </h1>
-              
-              {/* Excerpt */}
-              <p className="text-base text-muted-foreground md:text-lg mb-8 leading-relaxed max-w-xl">
-                {article.excerpt}
-              </p>
-              
-              {/* Meta Info */}
-              <div className="flex flex-wrap items-center gap-6 text-sm">
-                {/* Author */}
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/20">
-                    <User className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">{article.author}</p>
-                    <p className="text-xs text-muted-foreground">Author</p>
-                  </div>
-                </div>
-                
-                {/* Divider */}
-                <div className="hidden sm:block h-10 w-px bg-border" />
-                
-                {/* Date & Read Time */}
-                <div className="flex items-center gap-4 text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-4 w-4" />
-                    <span>{article.date}</span>
-                  </div>
-                  <span className="text-border">•</span>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4" />
-                    <span>{article.readTime}</span>
-                  </div>
-                </div>
-              </div>
+          {/* Category Badge */}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary-foreground w-fit mb-3">
+            <BookOpen className="h-3 w-3" />
+            {article.categoryLabel}
+          </span>
+          
+          {/* Title */}
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl lg:text-4xl mb-4 leading-tight max-w-3xl">
+            {article.title}
+          </h1>
+          
+          {/* Meta Info */}
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              <span>{article.author}</span>
             </div>
-            
-            {/* Right: Featured Image */}
-            <div className="order-1 lg:order-2">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/10 ring-1 ring-black/5">
-                <div className="aspect-[16/10]">
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                {/* Subtle gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-              </div>
+            <span className="text-border">•</span>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-4 w-4" />
+              <span>{article.date}</span>
+            </div>
+            <span className="text-border">•</span>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4" />
+              <span>{article.readTime}</span>
             </div>
           </div>
         </div>
