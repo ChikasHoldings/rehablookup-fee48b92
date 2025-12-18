@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -19,6 +18,7 @@ import {
   ChevronLeft,
   Sparkles,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -113,36 +113,59 @@ export function OnboardingTour({ forceOpen = false, onComplete }: OnboardingTour
       // Small delay to let the dashboard render first
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, 500);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, [forceOpen]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentStep < tourSteps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(prev => prev + 1);
     } else {
       completeTour();
     }
-  };
+  }, [currentStep]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep(prev => prev - 1);
     }
-  };
+  }, [currentStep]);
 
-  const completeTour = () => {
+  const completeTour = useCallback(() => {
     localStorage.setItem(TOUR_STORAGE_KEY, "true");
     setIsOpen(false);
+    setCurrentStep(0);
     onComplete?.();
-  };
+  }, [onComplete]);
 
-  const skipTour = () => {
+  const dismissTour = useCallback(() => {
     localStorage.setItem(TOUR_STORAGE_KEY, "true");
     setIsOpen(false);
+    setCurrentStep(0);
     onComplete?.();
-  };
+  }, [onComplete]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === "Enter") {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        dismissTour();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleNext, handlePrev, dismissTour]);
 
   const step = tourSteps[currentStep];
   const Icon = step.icon;
@@ -152,81 +175,110 @@ export function OnboardingTour({ forceOpen = false, onComplete }: OnboardingTour
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) skipTour();
+      if (!open) dismissTour();
     }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[420px] p-0 gap-0 overflow-hidden border-border bg-card">
         {/* Progress bar */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-muted rounded-t-lg overflow-hidden">
+        <div className="h-1 bg-muted">
           <div 
             className="h-full bg-primary transition-all duration-300 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        <DialogHeader className="pt-2">
-          <div className="flex items-center justify-center mb-4">
-            <div className={cn(
-              "p-4 rounded-full",
-              isLastStep ? "bg-green-500/10" : "bg-primary/10"
-            )}>
-              <Icon className={cn(
-                "h-8 w-8",
-                isLastStep ? "text-green-500" : "text-primary"
-              )} />
+        {/* Close button - always visible */}
+        <button
+          onClick={dismissTour}
+          className="absolute right-3 top-3 z-10 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label="Close tour"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Content */}
+        <div className="px-6 pt-8 pb-4">
+          <DialogHeader className="space-y-4">
+            {/* Icon */}
+            <div className="flex items-center justify-center">
+              <div className={cn(
+                "p-4 rounded-full transition-colors",
+                isLastStep ? "bg-green-500/10" : "bg-primary/10"
+              )}>
+                <Icon className={cn(
+                  "h-8 w-8",
+                  isLastStep ? "text-green-500" : "text-primary"
+                )} />
+              </div>
             </div>
-          </div>
-          <DialogTitle className="text-center text-xl">
-            {step.title}
-          </DialogTitle>
-          <DialogDescription className="text-center text-base pt-2">
-            {step.description}
-          </DialogDescription>
-        </DialogHeader>
 
-        {step.tip && (
-          <div className="bg-muted/50 border border-border rounded-lg p-3 mx-4">
-            <p className="text-sm text-muted-foreground flex items-start gap-2">
-              <Sparkles className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-              <span><strong>Tip:</strong> {step.tip}</span>
-            </p>
-          </div>
-        )}
+            {/* Title */}
+            <DialogTitle className="text-center text-lg font-semibold leading-tight px-2">
+              {step.title}
+            </DialogTitle>
 
-        {/* Step indicators */}
-        <div className="flex items-center justify-center gap-1.5 py-2">
-          {tourSteps.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentStep(index)}
-              className={cn(
-                "h-2 rounded-full transition-all duration-200",
-                index === currentStep 
-                  ? "w-6 bg-primary" 
-                  : index < currentStep 
-                    ? "w-2 bg-primary/50" 
-                    : "w-2 bg-muted-foreground/30"
-              )}
-              aria-label={`Go to step ${index + 1}`}
-            />
-          ))}
+            {/* Description */}
+            <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed px-2">
+              {step.description}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Tip box */}
+          {step.tip && (
+            <div className="mt-4 bg-muted/50 border border-border rounded-lg p-3">
+              <p className="text-sm text-muted-foreground flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span><strong className="text-foreground">Tip:</strong> {step.tip}</span>
+              </p>
+            </div>
+          )}
+
+          {/* Step indicators */}
+          <div className="flex items-center justify-center gap-1.5 mt-5">
+            {tourSteps.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentStep(index)}
+                className={cn(
+                  "h-2 rounded-full transition-all duration-200 hover:opacity-80",
+                  index === currentStep 
+                    ? "w-6 bg-primary" 
+                    : index < currentStep 
+                      ? "w-2 bg-primary/60" 
+                      : "w-2 bg-muted-foreground/30"
+                )}
+                aria-label={`Go to step ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Step counter */}
+          <p className="text-center text-xs text-muted-foreground mt-2">
+            Step {currentStep + 1} of {tourSteps.length}
+          </p>
         </div>
 
-        <DialogFooter className="flex-row gap-2 sm:justify-between">
-          <div>
-            {!isFirstStep && (
-              <Button variant="ghost" size="sm" onClick={handlePrev}>
-                <ChevronLeft className="h-4 w-4 mr-1" />
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 bg-muted/30 border-t border-border">
+          <div className="min-w-[80px]">
+            {!isFirstStep ? (
+              <Button variant="ghost" size="sm" onClick={handlePrev} className="gap-1">
+                <ChevronLeft className="h-4 w-4" />
                 Back
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={dismissTour} className="text-muted-foreground">
+                Skip
               </Button>
             )}
           </div>
+          
           <div className="flex items-center gap-2">
-            {!isLastStep && (
-              <Button variant="ghost" size="sm" onClick={skipTour}>
-                Skip tour
+            {!isLastStep && !isFirstStep && (
+              <Button variant="ghost" size="sm" onClick={dismissTour} className="text-muted-foreground">
+                Skip
               </Button>
             )}
-            <Button onClick={handleNext} size="sm">
+            <Button onClick={handleNext} size="sm" className="min-w-[100px]">
               {isLastStep ? (
                 "Get Started"
               ) : (
@@ -237,7 +289,7 @@ export function OnboardingTour({ forceOpen = false, onComplete }: OnboardingTour
               )}
             </Button>
           </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
