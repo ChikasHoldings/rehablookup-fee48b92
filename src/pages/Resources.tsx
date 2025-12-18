@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -8,24 +8,52 @@ import {
   Clock,
   ArrowRight,
   Search,
-  Filter,
   Heart,
   Users,
   Brain,
   Stethoscope,
   Shield,
   Phone,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+
+// Import unique images for each article
+import typesOfTreatmentImg from "@/assets/articles/types-of-treatment.jpg";
+import choosingRehabImg from "@/assets/articles/choosing-rehab.jpg";
+import firstWeekImg from "@/assets/articles/first-week.jpg";
+import insuranceGuideImg from "@/assets/articles/insurance-guide.jpg";
+import stagesRecoveryImg from "@/assets/articles/stages-recovery.jpg";
+import supportLovedOneImg from "@/assets/articles/support-loved-one.jpg";
+import inpatientOutpatientImg from "@/assets/articles/inpatient-outpatient.jpg";
+import dualDiagnosisImg from "@/assets/articles/dual-diagnosis.jpg";
+import signsAddictionImg from "@/assets/articles/signs-addiction.jpg";
+import aftercarePlanningImg from "@/assets/articles/aftercare-planning.jpg";
+import familyTherapyImg from "@/assets/articles/family-therapy.jpg";
+import medicationAssistedImg from "@/assets/articles/medication-assisted.jpg";
+import anxietyAddictionImg from "@/assets/articles/anxiety-addiction.jpg";
+import talkingTeensImg from "@/assets/articles/talking-teens.jpg";
+import holisticTherapiesImg from "@/assets/articles/holistic-therapies.jpg";
+import relapsePreventionImg from "@/assets/articles/relapse-prevention.jpg";
+import opioidTreatmentImg from "@/assets/articles/opioid-treatment.jpg";
+import alcoholDetoxImg from "@/assets/articles/alcohol-detox.jpg";
+import depressionSubstanceImg from "@/assets/articles/depression-substance.jpg";
+import soberLivingImg from "@/assets/articles/sober-living.jpg";
+import interventionGuideImg from "@/assets/articles/intervention-guide.jpg";
+import ptsdAddictionImg from "@/assets/articles/ptsd-addiction.jpg";
+import workplaceSubstanceImg from "@/assets/articles/workplace-substance.jpg";
+import longTermSuccessImg from "@/assets/articles/long-term-success.jpg";
 
 const categories = [
-  { id: "all", label: "All Articles", icon: BookOpen },
-  { id: "getting-started", label: "Getting Started", icon: Phone },
-  { id: "recovery", label: "Recovery", icon: Heart },
-  { id: "family", label: "Family Support", icon: Users },
-  { id: "treatment", label: "Treatment Options", icon: Stethoscope },
-  { id: "mental-health", label: "Mental Health", icon: Brain },
-  { id: "prevention", label: "Prevention", icon: Shield },
+  { id: "all", label: "All Articles", icon: BookOpen, color: "bg-primary" },
+  { id: "getting-started", label: "Getting Started", icon: Phone, color: "bg-blue-500" },
+  { id: "recovery", label: "Recovery", icon: Heart, color: "bg-rose-500" },
+  { id: "family", label: "Family Support", icon: Users, color: "bg-amber-500" },
+  { id: "treatment", label: "Treatment Options", icon: Stethoscope, color: "bg-emerald-500" },
+  { id: "mental-health", label: "Mental Health", icon: Brain, color: "bg-purple-500" },
+  { id: "prevention", label: "Prevention", icon: Shield, color: "bg-cyan-500" },
 ];
 
 const articles = [
@@ -36,7 +64,7 @@ const articles = [
     category: "getting-started",
     categoryLabel: "Getting Started",
     readTime: "8 min read",
-    image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop",
+    image: typesOfTreatmentImg,
     featured: true,
   },
   {
@@ -46,7 +74,7 @@ const articles = [
     category: "getting-started",
     categoryLabel: "Getting Started",
     readTime: "7 min read",
-    image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=400&fit=crop",
+    image: choosingRehabImg,
     featured: true,
   },
   {
@@ -56,7 +84,7 @@ const articles = [
     category: "getting-started",
     categoryLabel: "Getting Started",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&h=400&fit=crop",
+    image: firstWeekImg,
     featured: true,
   },
   {
@@ -66,7 +94,7 @@ const articles = [
     category: "getting-started",
     categoryLabel: "Getting Started",
     readTime: "9 min read",
-    image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&h=400&fit=crop",
+    image: insuranceGuideImg,
     featured: false,
   },
   {
@@ -76,7 +104,7 @@ const articles = [
     category: "recovery",
     categoryLabel: "Recovery",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=400&fit=crop",
+    image: stagesRecoveryImg,
     featured: false,
   },
   {
@@ -86,7 +114,7 @@ const articles = [
     category: "family",
     categoryLabel: "Family Support",
     readTime: "4 min read",
-    image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop",
+    image: supportLovedOneImg,
     featured: false,
   },
   {
@@ -96,7 +124,7 @@ const articles = [
     category: "treatment",
     categoryLabel: "Treatment Options",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop",
+    image: inpatientOutpatientImg,
     featured: false,
   },
   {
@@ -106,7 +134,7 @@ const articles = [
     category: "mental-health",
     categoryLabel: "Mental Health",
     readTime: "7 min read",
-    image: "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=600&h=400&fit=crop",
+    image: dualDiagnosisImg,
     featured: false,
   },
   {
@@ -116,7 +144,7 @@ const articles = [
     category: "prevention",
     categoryLabel: "Prevention",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1493836512294-502baa1986e2?w=600&h=400&fit=crop",
+    image: signsAddictionImg,
     featured: false,
   },
   {
@@ -126,7 +154,7 @@ const articles = [
     category: "recovery",
     categoryLabel: "Recovery",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&h=400&fit=crop",
+    image: aftercarePlanningImg,
     featured: false,
   },
   {
@@ -136,7 +164,7 @@ const articles = [
     category: "family",
     categoryLabel: "Family Support",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=600&h=400&fit=crop",
+    image: familyTherapyImg,
     featured: false,
   },
   {
@@ -146,7 +174,7 @@ const articles = [
     category: "treatment",
     categoryLabel: "Treatment Options",
     readTime: "8 min read",
-    image: "https://images.unsplash.com/photo-1585435557343-3b092031a831?w=600&h=400&fit=crop",
+    image: medicationAssistedImg,
     featured: false,
   },
   {
@@ -156,7 +184,7 @@ const articles = [
     category: "mental-health",
     categoryLabel: "Mental Health",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1474418397713-7ede21d49118?w=600&h=400&fit=crop",
+    image: anxietyAddictionImg,
     featured: false,
   },
   {
@@ -166,7 +194,7 @@ const articles = [
     category: "prevention",
     categoryLabel: "Prevention",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1516534775068-ba3e7458af70?w=600&h=400&fit=crop",
+    image: talkingTeensImg,
     featured: false,
   },
   {
@@ -176,7 +204,7 @@ const articles = [
     category: "treatment",
     categoryLabel: "Treatment Options",
     readTime: "4 min read",
-    image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=400&fit=crop",
+    image: holisticTherapiesImg,
     featured: false,
   },
   {
@@ -186,7 +214,7 @@ const articles = [
     category: "recovery",
     categoryLabel: "Recovery",
     readTime: "7 min read",
-    image: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=600&h=400&fit=crop",
+    image: relapsePreventionImg,
     featured: false,
   },
   {
@@ -196,7 +224,7 @@ const articles = [
     category: "treatment",
     categoryLabel: "Treatment Options",
     readTime: "8 min read",
-    image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&h=400&fit=crop",
+    image: opioidTreatmentImg,
     featured: false,
   },
   {
@@ -206,7 +234,7 @@ const articles = [
     category: "treatment",
     categoryLabel: "Treatment Options",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&h=400&fit=crop",
+    image: alcoholDetoxImg,
     featured: false,
   },
   {
@@ -216,7 +244,7 @@ const articles = [
     category: "mental-health",
     categoryLabel: "Mental Health",
     readTime: "7 min read",
-    image: "https://images.unsplash.com/photo-1493836512294-502baa1986e2?w=600&h=400&fit=crop",
+    image: depressionSubstanceImg,
     featured: false,
   },
   {
@@ -226,7 +254,7 @@ const articles = [
     category: "recovery",
     categoryLabel: "Recovery",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop",
+    image: soberLivingImg,
     featured: false,
   },
   {
@@ -236,7 +264,7 @@ const articles = [
     category: "family",
     categoryLabel: "Family Support",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=400&fit=crop",
+    image: interventionGuideImg,
     featured: false,
   },
   {
@@ -246,7 +274,7 @@ const articles = [
     category: "mental-health",
     categoryLabel: "Mental Health",
     readTime: "8 min read",
-    image: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&h=400&fit=crop",
+    image: ptsdAddictionImg,
     featured: false,
   },
   {
@@ -256,7 +284,7 @@ const articles = [
     category: "prevention",
     categoryLabel: "Prevention",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1497215842964-222b430dc094?w=600&h=400&fit=crop",
+    image: workplaceSubstanceImg,
     featured: false,
   },
   {
@@ -266,10 +294,132 @@ const articles = [
     category: "recovery",
     categoryLabel: "Recovery",
     readTime: "7 min read",
-    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=400&fit=crop",
+    image: longTermSuccessImg,
     featured: false,
   },
 ];
+
+// Get category color
+const getCategoryColor = (categoryId: string) => {
+  const category = categories.find(c => c.id === categoryId);
+  return category?.color || "bg-primary";
+};
+
+// Memoized Article Card Component
+const ArticleCard = memo(function ArticleCard({ 
+  article, 
+  index,
+  variant = "default"
+}: { 
+  article: typeof articles[0]; 
+  index: number;
+  variant?: "featured" | "default";
+}) {
+  const categoryColor = getCategoryColor(article.category);
+  
+  if (variant === "featured") {
+    return (
+      <Link
+        to={`/resources/${article.id}`}
+        className="group animate-fade-in block h-full"
+        style={{ animationDelay: `${index * 100}ms` }}
+      >
+        <article className="relative h-full rounded-2xl border border-border bg-card shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 hover:border-primary/30">
+          {/* Featured Badge */}
+          <div className="absolute top-4 left-4 z-10">
+            <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg px-3 py-1.5">
+              <Sparkles className="h-3.5 w-3.5" />
+              Featured
+            </Badge>
+          </div>
+          
+          {/* Image */}
+          <div className="relative h-56 overflow-hidden">
+            <img
+              src={article.image}
+              alt={article.title}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            
+            {/* Category on image */}
+            <div className="absolute bottom-4 left-4 right-4">
+              <span className={`inline-flex items-center gap-2 rounded-full ${categoryColor} px-3 py-1.5 text-xs font-semibold text-white shadow-lg`}>
+                <BookOpen className="h-3.5 w-3.5" />
+                {article.categoryLabel}
+              </span>
+            </div>
+          </div>
+          
+          {/* Content */}
+          <div className="p-6">
+            <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              {article.readTime}
+            </div>
+            <h3 className="mb-3 font-display text-xl font-bold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+              {article.title}
+            </h3>
+            <p className="mb-5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+              {article.excerpt}
+            </p>
+            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+              Read article
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </div>
+          </div>
+        </article>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      to={`/resources/${article.id}`}
+      className="group animate-fade-in block h-full"
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
+      <article className="h-full rounded-xl border border-border bg-card shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
+        {/* Image */}
+        <div className="relative h-44 overflow-hidden">
+          <img
+            src={article.image}
+            alt={article.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        </div>
+        
+        {/* Content */}
+        <div className="p-5">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <span className={`inline-flex items-center gap-1.5 rounded-full ${categoryColor} px-2.5 py-1 text-[11px] font-semibold text-white`}>
+              {article.categoryLabel}
+            </span>
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              {article.readTime}
+            </span>
+          </div>
+          <h3 className="mb-2 font-display text-base font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+            {article.title}
+          </h3>
+          <p className="mb-4 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+            {article.excerpt}
+          </p>
+          <div className="flex items-center gap-1.5 text-sm font-medium text-primary">
+            Read more
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+});
 
 const Resources = () => {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -310,109 +460,122 @@ const Resources = () => {
           { name: "Resources", url: "/resources" },
         ]}
       />
-      {/* Hero */}
-      <section className="bg-primary py-12 md:py-16">
-        <div className="container text-center px-5 md:px-6">
-          <div className="mb-4 md:mb-4 inline-flex items-center gap-2.5 md:gap-2 rounded-full bg-white/10 px-5 md:px-4 py-2.5 md:py-1.5">
-            <BookOpen className="h-5 w-5 md:h-4 md:w-4 text-accent" />
-            <span className="text-base md:text-sm font-medium text-primary-foreground">Resources & Guides</span>
+      
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-primary via-primary to-primary/90 py-16 md:py-20 overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-accent rounded-full blur-3xl" />
+        </div>
+        
+        <div className="container relative text-center px-5 md:px-6">
+          <div className="mb-6 inline-flex items-center gap-2.5 rounded-full bg-white/15 backdrop-blur-sm px-5 py-2.5 border border-white/20">
+            <BookOpen className="h-5 w-5 text-accent" />
+            <span className="text-sm font-medium text-white">Recovery Resources & Guides</span>
           </div>
-          <h1 className="mb-4 md:mb-3 font-display text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground">
-            Recovery Resources
+          <h1 className="mb-5 font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white">
+            Your Guide to Recovery
           </h1>
-          <p className="text-lg md:text-base text-primary-foreground/80 max-w-2xl mx-auto">
-            Expert articles, guides, and insights to support you and your loved ones on the journey to recovery.
+          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
+            Expert articles, guides, and insights to support you and your loved ones on the journey to lasting recovery.
           </p>
+          
+          {/* Stats */}
+          <div className="mt-10 flex items-center justify-center gap-8 md:gap-12">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white">{articles.length}</div>
+              <div className="text-sm text-white/70">Expert Articles</div>
+            </div>
+            <div className="h-12 w-px bg-white/20" />
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white">{categories.length - 1}</div>
+              <div className="text-sm text-white/70">Categories</div>
+            </div>
+            <div className="h-12 w-px bg-white/20" />
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white">Free</div>
+              <div className="text-sm text-white/70">Always</div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Featured Articles */}
-      <section className="py-12 md:py-16 border-b border-border">
+      <section className="py-14 md:py-20 border-b border-border bg-gradient-to-b from-muted/30 to-background">
         <div className="container px-5 md:px-6">
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="font-display text-2xl md:text-xl lg:text-2xl font-bold text-foreground">
-              Featured Articles
-            </h2>
+          <div className="mb-10 flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-5 w-5 text-amber-500" />
+                <span className="text-sm font-semibold text-amber-600 uppercase tracking-wide">Editor's Picks</span>
+              </div>
+              <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+                Featured Articles
+              </h2>
+            </div>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
             {featuredArticles.map((article, index) => (
-              <Link
-                key={article.id}
-                to={`/resources/${article.id}`}
-                className="group animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="h-full rounded-2xl md:rounded-xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
-                  <div className="relative h-52 md:h-48 overflow-hidden">
-                    <img
-                      src={article.image}
-                      alt={article.title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    <span className="absolute bottom-4 md:bottom-3 left-4 md:left-3 inline-flex items-center gap-2 md:gap-1.5 rounded-full bg-white/90 backdrop-blur-sm px-4 md:px-3 py-2 md:py-1 text-sm md:text-xs font-medium text-foreground shadow-sm">
-                      <BookOpen className="h-4 w-4 md:h-3 md:w-3 text-accent" />
-                      {article.categoryLabel}
-                    </span>
-                  </div>
-                  <div className="p-6 md:p-5">
-                    <div className="mb-3 flex items-center gap-2 md:gap-1 text-sm md:text-xs text-muted-foreground">
-                      <Clock className="h-4 w-4 md:h-3 md:w-3" />
-                      {article.readTime}
-                    </div>
-                    <h3 className="mb-3 md:mb-2 font-display text-xl md:text-lg font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
-                      {article.title}
-                    </h3>
-                    <p className="mb-5 md:mb-4 text-base md:text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                      {article.excerpt}
-                    </p>
-                    <div className="flex items-center gap-2 md:gap-1.5 text-base md:text-sm font-medium text-primary">
-                      Read article
-                      <ArrowRight className="h-5 w-5 md:h-4 md:w-4 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <ArticleCard 
+                key={article.id} 
+                article={article} 
+                index={index}
+                variant="featured"
+              />
             ))}
           </div>
         </div>
       </section>
 
       {/* All Articles with Filters */}
-      <section className="py-12 md:py-16">
+      <section className="py-14 md:py-20">
         <div className="container px-5 md:px-6">
           {/* Search and Filters */}
           <div className="mb-10 space-y-6">
-            {/* Search */}
-            <div className="relative max-w-md">
-              <Search className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 md:pl-10 h-14 md:h-10 text-lg md:text-base rounded-2xl md:rounded-lg"
-              />
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-1">
+                  Browse All Articles
+                </h2>
+                <p className="text-muted-foreground">Find the information you need</p>
+              </div>
+              
+              {/* Search */}
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search articles..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-11 h-11 rounded-xl border-border/50 focus:border-primary"
+                />
+              </div>
             </div>
 
-            {/* Category Filters - Horizontally scrollable on mobile */}
+            {/* Category Filters */}
             <div className="overflow-x-auto -mx-5 md:mx-0 px-5 md:px-0 pb-2 md:pb-0 scrollbar-hide">
-              <div className="flex gap-3 md:flex-wrap md:gap-2 min-w-max md:min-w-0">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setActiveCategory(category.id)}
-                    className={`inline-flex items-center gap-2.5 md:gap-2 rounded-full px-5 md:px-4 py-3 md:py-2 text-base md:text-sm font-medium transition-all whitespace-nowrap min-h-[48px] md:min-h-0 ${
-                      activeCategory === category.id
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "bg-secondary text-foreground hover:bg-secondary/80"
-                    }`}
-                  >
-                    <category.icon className="h-5 w-5 md:h-4 md:w-4" />
-                    {category.label}
-                  </button>
-                ))}
+              <div className="flex gap-2 md:flex-wrap min-w-max md:min-w-0">
+                {categories.map((category) => {
+                  const Icon = category.icon;
+                  const isActive = activeCategory === category.id;
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => setActiveCategory(category.id)}
+                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap ${
+                        isActive
+                          ? `${category.color} text-white shadow-md`
+                          : "bg-muted text-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {category.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -420,62 +583,29 @@ const Resources = () => {
           {/* Results */}
           {filteredArticles.length > 0 ? (
             <>
-              <p className="mb-6 text-base md:text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{filteredArticles.length}</span> articles found
+              <p className="mb-6 text-sm text-muted-foreground">
+                Showing <span className="font-semibold text-foreground">{filteredArticles.length}</span> {filteredArticles.length === 1 ? "article" : "articles"}
               </p>
 
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredArticles.map((article, index) => (
-                  <Link
-                    key={article.id}
-                    to={`/resources/${article.id}`}
-                    className="group animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <div className="h-full rounded-2xl md:rounded-xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
-                      <div className="relative h-48 md:h-40 overflow-hidden">
-                        <img
-                          src={article.image}
-                          alt={article.title}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                      </div>
-                      <div className="p-6 md:p-5">
-                        <div className="mb-3 flex items-center justify-between">
-                          <span className="inline-flex items-center gap-2 md:gap-1.5 rounded-full bg-accent/10 px-4 md:px-2.5 py-1.5 md:py-0.5 text-sm md:text-xs font-medium text-accent">
-                            {article.categoryLabel}
-                          </span>
-                          <span className="flex items-center gap-1.5 md:gap-1 text-sm md:text-xs text-muted-foreground">
-                            <Clock className="h-4 w-4 md:h-3 md:w-3" />
-                            {article.readTime}
-                          </span>
-                        </div>
-                        <h3 className="mb-3 md:mb-2 font-display text-lg md:text-base font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
-                          {article.title}
-                        </h3>
-                        <p className="mb-5 md:mb-4 text-base md:text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                          {article.excerpt}
-                        </p>
-                        <div className="flex items-center gap-2 md:gap-1.5 text-base md:text-sm font-medium text-primary">
-                          Read more
-                          <ArrowRight className="h-4 w-4 md:h-3.5 md:w-3.5 transition-transform group-hover:translate-x-1" />
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+                  <ArticleCard 
+                    key={article.id} 
+                    article={article} 
+                    index={index}
+                  />
                 ))}
               </div>
             </>
           ) : (
-            <div className="py-16 text-center">
-              <div className="mx-auto mb-6 flex h-20 w-20 md:h-16 md:w-16 items-center justify-center rounded-full bg-muted">
-                <Search className="h-10 w-10 md:h-8 md:w-8 text-muted-foreground" />
+            <div className="py-20 text-center">
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+                <Search className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h3 className="mb-3 md:mb-2 font-display text-2xl md:text-xl font-semibold text-foreground">
+              <h3 className="mb-3 font-display text-2xl font-semibold text-foreground">
                 No articles found
               </h3>
-              <p className="mb-6 text-lg md:text-base text-muted-foreground">
+              <p className="mb-6 text-muted-foreground max-w-md mx-auto">
                 Try adjusting your search or filter to find what you're looking for.
               </p>
               <Button
@@ -484,7 +614,7 @@ const Resources = () => {
                   setActiveCategory("all");
                   setSearchQuery("");
                 }}
-                className="h-14 md:h-10 px-8 md:px-4 text-lg md:text-base rounded-2xl md:rounded-lg"
+                className="h-11 px-6 rounded-xl"
               >
                 Clear filters
               </Button>
@@ -493,29 +623,40 @@ const Resources = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 md:py-20">
+      {/* CTA Section */}
+      <section className="py-16 md:py-24 bg-muted/30">
         <div className="container px-5 md:px-6">
-          <div className="mx-auto max-w-3xl rounded-2xl md:rounded-xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-8 lg:p-12 text-center">
-            <h2 className="mb-4 md:mb-3 font-display text-2xl md:text-2xl lg:text-3xl font-bold text-foreground">
-              Need Personalized Guidance?
-            </h2>
-            <p className="mb-8 md:mb-6 text-lg md:text-base text-muted-foreground max-w-xl mx-auto">
-              Our specialists are available 24/7 to answer your questions and help you find the right treatment.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
-              <Link to="/request-help?source=resources_cta" className="w-full sm:w-auto">
-                <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
-                  <Heart className="h-5 w-5 md:h-4 md:w-4" />
-                  Request Help
-                </Button>
-              </Link>
-              <Link to="/contact" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
-                  Request a Callback
-                  <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
-                </Button>
-              </Link>
+          <div className="mx-auto max-w-3xl rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-accent/10 p-8 md:p-12 text-center relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+            
+            <div className="relative">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5">
+                <Heart className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">We're Here to Help</span>
+              </div>
+              
+              <h2 className="mb-4 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
+                Need Personalized Guidance?
+              </h2>
+              <p className="mb-8 text-lg text-muted-foreground max-w-xl mx-auto">
+                Our specialists are available 24/7 to answer your questions and help you find the right treatment path.
+              </p>
+              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <Link to="/request-help?source=resources_cta" className="w-full sm:w-auto">
+                  <Button size="lg" className="gap-2 w-full sm:w-auto h-12 text-base rounded-xl shadow-lg">
+                    <Heart className="h-5 w-5" />
+                    Request Help Now
+                  </Button>
+                </Link>
+                <Link to="/contact" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-12 text-base rounded-xl">
+                    Request a Callback
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
