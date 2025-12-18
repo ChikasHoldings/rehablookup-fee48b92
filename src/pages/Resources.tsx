@@ -467,8 +467,8 @@ const Resources = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
-        <div className="container relative">
-          <div className="mb-8 max-w-2xl">
+        <div className="container relative text-center">
+          <div className="mx-auto max-w-2xl">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white/90 backdrop-blur-sm">
               <BookOpen className="h-3.5 w-3.5" />
               Recovery Resources & Guides
