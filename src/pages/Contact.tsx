@@ -377,40 +377,6 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* CTA Banner */}
-      <section className="bg-primary py-16 px-4 md:py-20 md:px-6 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
-        </div>
-        
-        <div className="container text-center relative">
-          <div className="mb-6 inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-accent to-accent/80 shadow-xl mx-auto">
-            <Headphones className="h-8 w-8 text-white" />
-          </div>
-          <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
-            Need Immediate Assistance?
-          </h2>
-          <p className="mb-8 text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed">
-            Our specialists are available 24/7 to help you find the right treatment center.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
-            <Link to="/request-help?source=contact_cta" className="w-full sm:w-auto">
-              <Button variant="hero-light" size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:px-8 hover:scale-105 hover:shadow-xl transition-all duration-200">
-                <Heart className="h-5 w-5" />
-                Request Help
-              </Button>
-            </Link>
-            <Link to="/rehab-centers" className="w-full sm:w-auto">
-              <Button variant="hero-light" size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:px-8 hover:scale-105 transition-all duration-200">
-                Find Treatment Centers
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
     </Layout>
   );
 };
