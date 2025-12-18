@@ -468,12 +468,15 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Steps - Horizontal Timeline */}
+          {/* Steps - Enhanced Horizontal Timeline */}
           <div className="relative max-w-4xl mx-auto">
-            {/* Connector line */}
-            <div className="absolute top-12 left-0 right-0 hidden h-0.5 bg-gradient-to-r from-transparent via-accent/30 to-transparent md:block" />
+            {/* Animated connector line */}
+            <div className="absolute top-12 left-[16.67%] right-[16.67%] hidden md:block">
+              <div className="h-0.5 bg-border" />
+              <div className="absolute inset-0 h-0.5 bg-gradient-to-r from-accent via-primary to-accent animate-pulse" style={{ opacity: 0.5 }} />
+            </div>
             
-            <div className="grid gap-8 md:grid-cols-3 md:gap-6">
+            <div className="grid gap-10 md:grid-cols-3 md:gap-8">
               {[
                 {
                   step: 1,
@@ -496,36 +499,52 @@ const Index = () => {
               ].map((item, index) => (
                 <div
                   key={item.step}
-                  className="group relative text-center animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  className="group relative text-center animate-fade-in opacity-0"
+                  style={{ animationDelay: `${200 + index * 200}ms`, animationFillMode: 'forwards' }}
                 >
-                  {/* Step circle */}
+                  {/* Step circle - Enhanced */}
                   <div className="relative mx-auto mb-6 h-24 w-24">
-                    <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-accent/20 bg-card shadow-lg transition-all duration-300 group-hover:border-accent/50 group-hover:shadow-xl">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent/10 to-accent/20">
-                        <item.icon className="h-7 w-7 text-accent" />
+                    {/* Outer ring with pulse */}
+                    <div className="absolute inset-0 rounded-full bg-accent/20 animate-ping" style={{ animationDuration: '3s', animationDelay: `${index * 0.5}s` }} />
+                    
+                    {/* Main circle */}
+                    <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-accent/30 bg-card shadow-lg transition-all duration-500 group-hover:border-accent group-hover:shadow-xl group-hover:shadow-accent/20 group-hover:scale-105">
+                      {/* Inner gradient circle */}
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent/15 to-primary/10 transition-all duration-500 group-hover:from-accent/25 group-hover:to-primary/20">
+                        <item.icon className="h-7 w-7 text-accent transition-transform duration-500 group-hover:scale-110" />
                       </div>
                     </div>
-                    {/* Step number badge */}
-                    <div className="absolute top-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-xs font-bold text-accent-foreground shadow-md ring-2 ring-background">
+                    
+                    {/* Step number badge - Enhanced */}
+                    <div className="absolute -top-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-primary text-sm font-bold text-accent-foreground shadow-lg ring-4 ring-background transition-transform duration-300 group-hover:scale-110">
                       {item.step}
                     </div>
                   </div>
                   
-                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
+                  {/* Arrow connector (visible on desktop between items) */}
+                  {index < 2 && (
+                    <div className="absolute top-10 -right-4 hidden md:flex items-center text-accent/40 group-hover:text-accent transition-colors duration-300">
+                      <ArrowRight className="h-6 w-6" />
+                    </div>
+                  )}
+                  
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">
                     {item.title}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
                     {item.description}
                   </p>
+                  
+                  {/* Hover indicator line */}
+                  <div className="mt-4 mx-auto h-1 w-0 rounded-full bg-gradient-to-r from-accent to-primary transition-all duration-500 group-hover:w-16" />
                 </div>
               ))}
             </div>
 
             {/* CTA */}
-            <div className="mt-12 text-center">
+            <div className="mt-14 text-center">
               <Link to="/rehab-centers">
-                <Button size="lg" className="gap-2 group">
+                <Button size="lg" className="gap-2 group shadow-lg hover:shadow-xl transition-all duration-300">
                   Start Your Search
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
