@@ -447,46 +447,65 @@ export default function ProviderBillingPage() {
 
       {/* Quick Actions for Subscribed Users */}
       {isSubscribed && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleManageSubscription}>
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Wallet className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">Payment Methods</h3>
-                <p className="text-sm text-muted-foreground">Add or update cards</p>
-              </div>
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-            </CardContent>
+        <Collapsible defaultOpen={false}>
+          <Card className="overflow-hidden">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="border-b border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors group">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">Quick Actions</CardTitle>
+                    <CardDescription>Manage your subscription and billing</CardDescription>
+                  </div>
+                  <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="p-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleManageSubscription}>
+                    <CardContent className="p-5 flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Wallet className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">Payment Methods</h3>
+                        <p className="text-sm text-muted-foreground">Add or update cards</p>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleManageSubscription}>
+                    <CardContent className="p-5 flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Receipt className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">Billing History</h3>
+                        <p className="text-sm text-muted-foreground">View all invoices</p>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleManageSubscription}>
+                    <CardContent className="p-5 flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Settings className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground">Manage Subscription</h3>
+                        <p className="text-sm text-muted-foreground">Cancel or modify</p>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
           </Card>
-          
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleManageSubscription}>
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Receipt className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">Billing History</h3>
-                <p className="text-sm text-muted-foreground">View all invoices</p>
-              </div>
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-            </CardContent>
-          </Card>
-          
-          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleManageSubscription}>
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Settings className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">Manage Subscription</h3>
-                <p className="text-sm text-muted-foreground">Cancel or modify</p>
-              </div>
-              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-            </CardContent>
-          </Card>
-        </div>
+        </Collapsible>
       )}
 
       {/* Promo Code Section - Only show for non-featured plans */}
