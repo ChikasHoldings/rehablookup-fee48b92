@@ -2,6 +2,7 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { SEO, generateArticleSchema } from "@/components/SEO";
+import { toast } from "@/hooks/use-toast";
 import {
   BookOpen,
   Clock,
@@ -13,8 +14,10 @@ import {
   Twitter,
   Facebook,
   Linkedin,
+  Copy,
+  Check,
 } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 interface Article {
   id: string;
@@ -783,6 +786,19 @@ const ArticleDetail = () => {
     (a) => linkedArticleIds.includes(a.id) && a.id !== article.id
   );
 
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = async () => {
+    const url = `https://rehablookup.com/resources/${article.id}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    toast({
+      title: "Link copied",
+      description: "Article link has been copied to clipboard.",
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const articleSchema = generateArticleSchema({
     title: article.title,
     description: article.excerpt,
@@ -927,6 +943,13 @@ const ArticleDetail = () => {
                         >
                           <Linkedin className="h-4 w-4" />
                         </a>
+                        <button
+                          onClick={handleCopyLink}
+                          className="h-9 w-9 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                          aria-label="Copy link"
+                        >
+                          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </button>
                       </div>
                     </div>
                     <Link to="/resources">
