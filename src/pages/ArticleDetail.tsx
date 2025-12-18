@@ -8,9 +8,11 @@ import {
   ArrowLeft,
   ArrowRight,
   Heart,
-  Share2,
   Calendar,
   User,
+  Twitter,
+  Facebook,
+  Linkedin,
 } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -898,9 +900,33 @@ const ArticleDetail = () => {
                     <div className="flex items-center gap-3">
                       <span className="text-sm text-muted-foreground">Share:</span>
                       <div className="flex items-center gap-2">
-                        <button className="h-9 w-9 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
-                          <Share2 className="h-4 w-4" />
-                        </button>
+                        <a
+                          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(`https://rehablookup.com/resources/${article.id}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-9 w-9 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-[#000000] hover:text-white transition-colors"
+                          aria-label="Share on X"
+                        >
+                          <Twitter className="h-4 w-4" />
+                        </a>
+                        <a
+                          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`https://rehablookup.com/resources/${article.id}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-9 w-9 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-[#1877F2] hover:text-white transition-colors"
+                          aria-label="Share on Facebook"
+                        >
+                          <Facebook className="h-4 w-4" />
+                        </a>
+                        <a
+                          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://rehablookup.com/resources/${article.id}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-9 w-9 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground hover:bg-[#0A66C2] hover:text-white transition-colors"
+                          aria-label="Share on LinkedIn"
+                        >
+                          <Linkedin className="h-4 w-4" />
+                        </a>
                       </div>
                     </div>
                     <Link to="/resources">
