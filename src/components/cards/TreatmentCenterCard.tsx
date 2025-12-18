@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, ArrowRight, Crown, Calendar, ShieldCheck } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TreatmentCenterCardProps {
@@ -28,7 +28,7 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardProps) {
+function TreatmentCenterCardComponent({ center, featured }: TreatmentCenterCardProps) {
   const [logoError, setLogoError] = useState(false);
   
   const detailsUrl = center.isFromDatabase && center.slug 
@@ -43,7 +43,7 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
     ? new Date().getFullYear() - center.year_established 
     : null;
 
-  const handleFeaturedClick = async () => {
+  const handleFeaturedClick = useCallback(async () => {
     if (showFeaturedBadge && center.isFromDatabase && center.id) {
       try {
         await supabase.functions.invoke("track-featured-analytics", {
@@ -53,7 +53,7 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
         console.error("Failed to track featured click:", error);
       }
     }
-  };
+  }, [showFeaturedBadge, center.isFromDatabase, center.id]);
 
   return (
     <article
@@ -103,6 +103,7 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
                   alt={`${center.name} logo`}
                   className="h-full w-full object-cover"
                   loading="lazy"
+                  decoding="async"
                   onError={() => setLogoError(true)}
                 />
               ) : (
@@ -242,3 +243,5 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
     </article>
   );
 }
+
+export const TreatmentCenterCard = memo(TreatmentCenterCardComponent);
