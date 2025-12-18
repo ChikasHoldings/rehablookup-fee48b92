@@ -37,25 +37,31 @@ import {
 
 const blogArticles = [
   {
+    id: "stages-of-recovery",
     title: "Understanding the Stages of Addiction Recovery",
     excerpt: "Recovery is a journey with distinct stages. Learn what to expect and how to navigate each phase successfully.",
     category: "Recovery",
     readTime: "5 min read",
     image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=400&fit=crop",
+    author: "Dr. Sarah Mitchell",
   },
   {
+    id: "support-loved-one",
     title: "How to Support a Loved One in Treatment",
     excerpt: "Family support is crucial for recovery. Discover effective ways to be there for someone during their treatment journey.",
     category: "Family Support",
     readTime: "4 min read",
     image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop",
+    author: "Jennifer Walsh, LCSW",
   },
   {
+    id: "inpatient-vs-outpatient",
     title: "Choosing Between Inpatient and Outpatient Care",
     excerpt: "Not sure which treatment option is right? We break down the key differences to help you make an informed decision.",
     category: "Treatment Options",
     readTime: "6 min read",
     image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop",
+    author: "Dr. Michael Chen",
   },
 ];
 
@@ -739,7 +745,7 @@ const Index = () => {
       </section>
 
       {/* Resources / Blog Section */}
-      <section className="py-20 md:py-24">
+      <section className="py-20 md:py-24 bg-muted/30">
         <div className="container">
           {/* Section Header */}
           <div className="mb-12 flex flex-col items-center text-center md:flex-row md:items-end md:justify-between md:text-left">
@@ -752,10 +758,10 @@ const Index = () => {
                 Resources & Guides
               </h2>
               <p className="max-w-xl text-muted-foreground">
-                Helpful articles to guide you through the recovery journey.
+                Expert articles to guide you through the recovery journey with practical advice and support.
               </p>
             </div>
-            <Link to="/resources" className="mt-4 md:mt-0">
+            <Link to="/resources" className="mt-6 md:mt-0">
               <Button variant="outline" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
                 View All Articles
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -764,39 +770,45 @@ const Index = () => {
           </div>
 
           {/* Articles Grid */}
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-6 md:gap-8 md:grid-cols-3">
             {blogArticles.map((article, index) => (
-              <article
-                key={article.title}
+              <Link
+                key={article.id}
+                to={`/resources/${article.id}`}
                 className="group animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-full rounded-2xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
+                <article className="h-full rounded-2xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
                     <img 
                       src={article.image} 
                       alt={article.title}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
                     {/* Category Badge */}
-                    <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-xs font-medium text-foreground shadow-sm">
+                    <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
                       <BookOpen className="h-3 w-3 text-accent" />
                       {article.category}
                     </span>
                   </div>
                   
                   {/* Content */}
-                  <div className="p-5">
-                    {/* Read Time */}
-                    <div className="mb-3 flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {article.readTime}
+                  <div className="p-5 md:p-6">
+                    {/* Meta */}
+                    <div className="mb-3 flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {article.readTime}
+                      </span>
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground/50" />
+                      <span>{article.author}</span>
                     </div>
                     
                     {/* Title */}
-                    <h3 className="mb-2 font-display text-lg font-semibold text-foreground leading-snug group-hover:text-primary transition-colors">
+                    <h3 className="mb-3 font-display text-lg font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
                       {article.title}
                     </h3>
                     
@@ -806,13 +818,13 @@ const Index = () => {
                     </p>
                     
                     {/* Read More Link */}
-                    <div className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                    <div className="flex items-center gap-1.5 text-sm font-semibold text-primary">
                       Read article
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              </Link>
             ))}
           </div>
         </div>
