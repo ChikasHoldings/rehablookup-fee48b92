@@ -27,7 +27,14 @@ import {
   Stethoscope,
   CreditCard,
   ShieldCheck,
-  Send
+  Send,
+  Sparkles,
+  TrendingUp,
+  CircleCheck,
+  CircleDashed,
+  Info,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +43,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -43,10 +51,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { FacilityImageUpload } from "@/components/provider/FacilityImageUpload";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
+import { cn } from "@/lib/utils";
 
 interface Facility {
   id: string;
@@ -130,6 +149,8 @@ const availableInsurance = [
   "Sliding Scale",
 ];
 
+const DESCRIPTION_MAX_LENGTH = 2000;
+
 // Validation schema for required fields
 const validateField = (field: string, value: string | null): string | null => {
   const trimmedValue = value?.trim() || "";
@@ -182,6 +203,154 @@ const validateField = (field: string, value: string | null): string | null => {
   }
 };
 
+// Section Header Component
+function SectionHeader({ 
+  icon: Icon, 
+  iconColor,
+  title, 
+  description,
+  badge
+}: { 
+  icon: React.ElementType; 
+  iconColor: string;
+  title: string; 
+  description: string;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className={cn(
+        "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105",
+        iconColor
+      )}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <CardTitle className="text-base font-semibold">{title}</CardTitle>
+          {badge}
+        </div>
+        <CardDescription className="text-xs mt-0.5">{description}</CardDescription>
+      </div>
+    </div>
+  );
+}
+
+// Form Field with enhanced styling
+function FormField({
+  label,
+  required,
+  error,
+  touched,
+  hint,
+  children,
+  className
+}: {
+  label: string;
+  required?: boolean;
+  error?: string | null;
+  touched?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("space-y-2", className)}>
+      <Label className="text-sm font-medium flex items-center gap-1.5">
+        {label}
+        {required && <span className="text-destructive">*</span>}
+      </Label>
+      {children}
+      {error && touched && (
+        <p className="text-xs text-destructive flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          {error}
+        </p>
+      )}
+      {hint && !error && (
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      )}
+    </div>
+  );
+}
+
+// Tag/Chip Component for Services and Insurance
+function TagChip({ 
+  label, 
+  onRemove,
+  variant = "default"
+}: { 
+  label: string; 
+  onRemove: () => void;
+  variant?: "default" | "service" | "insurance";
+}) {
+  const variantStyles = {
+    default: "bg-secondary hover:bg-secondary/80",
+    service: "bg-teal-500/10 text-teal-700 border-teal-200 hover:bg-teal-500/20",
+    insurance: "bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-500/20"
+  };
+
+  return (
+    <Badge 
+      variant="outline"
+      className={cn(
+        "gap-1.5 pr-1.5 py-1.5 text-sm font-normal transition-all duration-200",
+        variantStyles[variant]
+      )}
+    >
+      {label}
+      <button
+        onClick={onRemove}
+        className="ml-1 rounded-full p-0.5 hover:bg-foreground/10 transition-colors"
+        aria-label={`Remove ${label}`}
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </Badge>
+  );
+}
+
+// Empty State Component
+function EmptyTagsState({ type }: { type: "services" | "insurance" }) {
+  return (
+    <div className="py-4 px-3 rounded-lg border border-dashed border-border bg-muted/30 text-center">
+      <p className="text-sm text-muted-foreground">
+        {type === "services" 
+          ? "No services added yet. Add your treatment services to help families find the right care."
+          : "No insurance providers added yet. Add accepted insurance to help families understand their options."}
+      </p>
+    </div>
+  );
+}
+
+// Profile Completion Item
+function CompletionItem({ 
+  label, 
+  completed,
+  onClick
+}: { 
+  label: string; 
+  completed: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2.5 w-full text-left py-1.5 px-2 rounded-md transition-colors",
+        completed ? "text-muted-foreground" : "text-foreground hover:bg-muted/50"
+      )}
+    >
+      {completed ? (
+        <CircleCheck className="h-4 w-4 text-green-600 shrink-0" />
+      ) : (
+        <CircleDashed className="h-4 w-4 text-muted-foreground shrink-0" />
+      )}
+      <span className={cn("text-xs", completed && "line-through")}>{label}</span>
+    </button>
+  );
+}
+
 export default function ProviderListingPage() {
   const queryClient = useQueryClient();
   const [facility, setFacility] = useState<Facility | null>(null);
@@ -193,6 +362,7 @@ export default function ProviderListingPage() {
   const [newInsurance, setNewInsurance] = useState("");
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["photos", "basic", "location", "contact", "program", "services", "insurance", "trust"]));
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const { selectedFacility } = useSelectedFacility();
@@ -274,9 +444,31 @@ export default function ProviderListingPage() {
     if (!facility?.reply_email) return false;
     const replyEmail = facility.reply_email.toLowerCase().trim();
     const accountEmail = profileEmail.toLowerCase().trim();
-    // Only needs verification if it's different from account email and not already verified
     return replyEmail !== accountEmail && !facility.reply_email_verified;
   }, [facility?.reply_email, facility?.reply_email_verified, profileEmail]);
+
+  // Calculate profile completion
+  const profileCompletion = useMemo(() => {
+    if (!facility) return { percentage: 0, items: [] };
+    
+    const items = [
+      { key: "name", label: "Facility name", completed: !!facility.name?.trim() },
+      { key: "type", label: "Facility type", completed: !!facility.facility_type },
+      { key: "description", label: "Description", completed: !!facility.description?.trim() },
+      { key: "address", label: "Full address", completed: !!(facility.address && facility.city && facility.state && facility.zip_code) },
+      { key: "phone", label: "Phone number", completed: !!facility.phone?.trim() },
+      { key: "logo", label: "Facility logo", completed: !!facility.logo_url },
+      { key: "gallery", label: "Gallery photos", completed: (facility.gallery_urls?.length || 0) > 0 },
+      { key: "services", label: "Services offered", completed: services.length > 0 },
+      { key: "insurance", label: "Insurance accepted", completed: insurance.length > 0 },
+      { key: "website", label: "Website URL", completed: !!facility.website?.trim() },
+    ];
+
+    const completedCount = items.filter(item => item.completed).length;
+    const percentage = Math.round((completedCount / items.length) * 100);
+
+    return { percentage, items };
+  }, [facility, services, insurance]);
 
   // Update local facility state when data changes
   useEffect(() => {
@@ -348,11 +540,10 @@ export default function ProviderListingPage() {
   const performAutoSave = useCallback(async () => {
     if (!facility || isSaving) return;
     
-    // Check for validation errors silently - don't auto-save if there are errors
     const requiredFields = ["name", "facility_type", "address", "city", "state", "zip_code", "phone"];
     for (const field of requiredFields) {
       const error = validateField(field, facility[field as keyof Facility] as string | null);
-      if (error) return; // Don't auto-save if required fields have errors
+      if (error) return;
     }
     
     setIsAutoSaving(true);
@@ -383,7 +574,6 @@ export default function ProviderListingPage() {
 
     if (!error) {
       queryClient.setQueryData(["facility-listing", selectedFacility?.id], facility);
-      // Invalidate all relevant queries for real-time updates
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
       queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
@@ -392,10 +582,9 @@ export default function ProviderListingPage() {
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);
       
-      // Show toast for auto-save to confirm public profile is updated
       toast({
         title: "Changes saved",
-        description: "Your public profile has been updated and is now live.",
+        description: "Your public profile has been updated.",
         action: facility.slug ? (
           <ToastAction altText="View Public Profile" asChild>
             <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
@@ -405,17 +594,15 @@ export default function ProviderListingPage() {
         ) : undefined,
       });
     }
-  }, [facility, isSaving, selectedFacility?.id, queryClient]);
+  }, [facility, isSaving, selectedFacility?.id, queryClient, toast]);
 
-  // Auto-save effect - triggers 3 seconds after last change
+  // Auto-save effect
   useEffect(() => {
     if (hasChanges && facility) {
-      // Clear any existing timer
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
       
-      // Set new timer for auto-save after 3 seconds of inactivity
       autoSaveTimerRef.current = setTimeout(() => {
         performAutoSave();
       }, 3000);
@@ -428,7 +615,7 @@ export default function ProviderListingPage() {
     };
   }, [hasChanges, facility, performAutoSave]);
 
-  // Keyboard shortcut: Ctrl+S / Cmd+S to save
+  // Keyboard shortcut: Ctrl+S / Cmd+S
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -446,12 +633,10 @@ export default function ProviderListingPage() {
   const handleSave = async () => {
     if (!facility) return;
     
-    // Clear auto-save timer when manually saving
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
     }
     
-    // Validate all fields before saving
     if (!validateAllFields()) {
       toast({
         title: "Validation Error",
@@ -461,13 +646,9 @@ export default function ProviderListingPage() {
       return;
     }
     
-    // Optimistic update: immediately update cache and UI state
     const previousData = queryClient.getQueryData(["facility-listing", selectedFacility?.id]);
-    
-    // Optimistically update the cache
     queryClient.setQueryData(["facility-listing", selectedFacility?.id], facility);
     
-    // Immediately show saved state for responsive feel
     setHasChanges(false);
     setShowSaved(true);
     setIsSaving(true);
@@ -497,7 +678,6 @@ export default function ProviderListingPage() {
     setIsSaving(false);
 
     if (error) {
-      // Rollback on error
       queryClient.setQueryData(["facility-listing", selectedFacility?.id], previousData);
       setFacility(previousData as Facility | null);
       setHasChanges(true);
@@ -508,13 +688,12 @@ export default function ProviderListingPage() {
         variant: "destructive",
       });
     } else {
-      // Invalidate all relevant queries to update in real-time across the app
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-facilities"] }); // Header dropdown
+      queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["facility-services-count", selectedFacility?.id] });
       queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", selectedFacility?.id] });
-      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] }); // Public cards
-      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] }); // Public profile
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       setTimeout(() => setShowSaved(false), 2000);
       toast({
         title: "Profile updated",
@@ -549,7 +728,6 @@ export default function ProviderListingPage() {
       setFacility({ ...facility, [field]: value });
       setHasChanges(true);
       
-      // Validate on change if field has been touched (only for string fields)
       if (touchedFields.has(field) && typeof value === 'string') {
         const error = validateField(field, value);
         setFieldErrors(prev => ({ ...prev, [field]: error }));
@@ -576,7 +754,6 @@ export default function ProviderListingPage() {
       if (error) isValid = false;
     });
     
-    // Also validate optional fields for format
     const optionalFields = ["email", "website"];
     optionalFields.forEach(field => {
       const error = validateField(field, facility[field as keyof Facility] as string | null);
@@ -590,7 +767,6 @@ export default function ProviderListingPage() {
     return isValid;
   };
 
-  // Add service
   const handleAddService = async (serviceName: string) => {
     if (!facility || !serviceName.trim()) return;
     
@@ -603,7 +779,6 @@ export default function ProviderListingPage() {
     } else {
       setNewService("");
       refetchServices();
-      // Invalidate all relevant queries for real-time updates
       queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
@@ -611,7 +786,6 @@ export default function ProviderListingPage() {
     }
   };
 
-  // Remove service
   const handleRemoveService = async (serviceId: string) => {
     const { error } = await supabase
       .from("facility_services")
@@ -630,7 +804,6 @@ export default function ProviderListingPage() {
     }
   };
 
-  // Add insurance
   const handleAddInsurance = async (insuranceName: string) => {
     if (!facility || !insuranceName.trim()) return;
     
@@ -643,7 +816,6 @@ export default function ProviderListingPage() {
     } else {
       setNewInsurance("");
       refetchInsurance();
-      // Invalidate all relevant queries for real-time updates
       queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
@@ -651,7 +823,6 @@ export default function ProviderListingPage() {
     }
   };
 
-  // Remove insurance
   const handleRemoveInsurance = async (insuranceId: string) => {
     const { error } = await supabase
       .from("facility_insurance")
@@ -670,7 +841,6 @@ export default function ProviderListingPage() {
     }
   };
 
-  // Send reply email verification code
   const handleSendVerificationCode = async () => {
     if (!facility?.reply_email) {
       toast({
@@ -728,7 +898,6 @@ export default function ProviderListingPage() {
     }
   };
 
-  // Verify reply email code
   const handleVerifyCode = async () => {
     if (!facility?.reply_email || !verificationCode.trim()) {
       return;
@@ -754,7 +923,6 @@ export default function ProviderListingPage() {
         throw new Error(response.data.error);
       }
 
-      // Update local state
       setFacility({
         ...facility,
         reply_email_verified: true,
@@ -763,7 +931,6 @@ export default function ProviderListingPage() {
       setCodeSent(false);
       setVerificationCode("");
 
-      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["facility-listing", selectedFacility?.id] });
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
 
@@ -783,10 +950,17 @@ export default function ProviderListingPage() {
     }
   };
 
-  // Check if reply email needs re-verification (email changed)
-  const replyEmailNeedsVerification = facility?.reply_email && 
-    (!facility.reply_email_verified || 
-     (facilityData?.reply_email !== facility.reply_email && facility.reply_email !== facilityData?.reply_email));
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
+    });
+  };
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -817,11 +991,11 @@ export default function ProviderListingPage() {
     }
   };
 
-  // Show loading state while data is being fetched OR while facility state is being initialized
+  // Loading state
   if (isLoading || (facilityData && !facility)) {
     return (
       <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-5xl mx-auto flex items-center justify-center py-20">
+        <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
           <div className="text-center">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
             <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
@@ -831,7 +1005,7 @@ export default function ProviderListingPage() {
     );
   }
 
-  // Only show "No Listing Found" when we're sure there's no data (not loading and no facilityData)
+  // No listing state
   if (!isLoading && !facilityData && !facility) {
     return (
       <div className="p-4 md:p-6 lg:p-8">
@@ -851,11 +1025,10 @@ export default function ProviderListingPage() {
     );
   }
 
-  // If we still don't have facility data at this point, show loading
   if (!facility) {
     return (
       <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-5xl mx-auto flex items-center justify-center py-20">
+        <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
           <div className="text-center">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
             <p className="mt-4 text-sm text-muted-foreground">Loading your listing...</p>
@@ -867,58 +1040,65 @@ export default function ProviderListingPage() {
 
   const statusConfig = getStatusConfig(facility.status);
   const StatusIcon = statusConfig.icon;
+  const descriptionLength = facility.description?.length || 0;
 
   return (
     <div className="p-4 md:p-6 lg:p-8">
-      <div className="max-w-5xl mx-auto space-y-6 pb-6">
+      <div className="max-w-6xl mx-auto space-y-6 pb-8">
         {/* Header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1 className="font-display text-2xl font-bold text-foreground">My Listing</h1>
-              <Badge className={`gap-1.5 ${statusConfig.className}`}>
-                <StatusIcon className="h-3 w-3" />
+              <Badge className={cn("gap-1.5", statusConfig.className)}>
+                <StatusIcon className="h-3.5 w-3.5" />
                 {statusConfig.label}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground max-w-lg">
               {statusConfig.description}
             </p>
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Auto-save indicator */}
-            {isAutoSaving && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Auto-saving...
-              </span>
-            )}
-            {showSaved && !isAutoSaving && !hasChanges && (
-              <span className="text-xs text-green-600 flex items-center gap-1.5">
-                <CheckCircle className="h-3 w-3" />
-                Saved
-              </span>
-            )}
-            {hasChanges && !isAutoSaving && (
-              <span className="text-xs text-muted-foreground">Unsaved changes</span>
-            )}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Save status indicators */}
+            <div className="flex items-center gap-2 text-xs">
+              {isAutoSaving && (
+                <span className="text-muted-foreground flex items-center gap-1.5 animate-pulse">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Saving...
+                </span>
+              )}
+              {showSaved && !isAutoSaving && !hasChanges && (
+                <span className="text-green-600 flex items-center gap-1.5">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  All changes saved
+                </span>
+              )}
+              {hasChanges && !isAutoSaving && (
+                <span className="text-amber-600 flex items-center gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Unsaved changes
+                </span>
+              )}
+            </div>
             
             {facility.slug && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 asChild
+                className="gap-2"
               >
                 <a 
                   href={`/center/${facility.slug}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="gap-2"
                 >
                   <Eye className="h-4 w-4" />
-                  View Public Profile
-                  <ArrowUpRight className="h-3 w-3" />
+                  <span className="hidden sm:inline">View Public Profile</span>
+                  <span className="sm:hidden">Preview</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
                 </a>
               </Button>
             )}
@@ -926,37 +1106,58 @@ export default function ProviderListingPage() {
               onClick={handleSave} 
               disabled={isSaving || isAutoSaving || !hasChanges} 
               size="sm"
-              className="gap-2 min-w-[120px]"
+              className="gap-2 min-w-[100px]"
             >
-              <Save className="h-4 w-4" />
-              {isSaving ? "Saving..." : "Save Now"}
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save
+                </>
+              )}
             </Button>
           </div>
         </div>
 
-        {/* Main Content Grid - Reorder columns on mobile for better UX */}
+        {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left Column - Main Forms (appears first on all screens) */}
-          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
-            {/* Logo & Facility Photos */}
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                    <ImageIcon className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Logo & Facility Photos</CardTitle>
-                    <CardDescription className="text-xs">Upload your logo and gallery images to showcase your facility</CardDescription>
-                  </div>
-                </div>
+          {/* Left Column - Main Forms */}
+          <div className="lg:col-span-2 space-y-5 order-2 lg:order-1">
+            {/* Logo & Photos */}
+            <Card className="group overflow-hidden border-border/60 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-4 bg-gradient-to-r from-purple-500/5 to-transparent">
+                <SectionHeader
+                  icon={ImageIcon}
+                  iconColor="bg-purple-500/10 text-purple-600"
+                  title="Logo & Photos"
+                  description="Showcase your facility with professional images"
+                  badge={
+                    (facility.logo_url || (facility.gallery_urls?.length || 0) > 0) && (
+                      <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-700 border-green-200">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Added
+                      </Badge>
+                    )
+                  }
+                />
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-2">
                 {/* Logo Upload */}
                 <div className="space-y-3">
-                  <Label className="text-xs font-medium">Facility Logo</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Facility Logo</Label>
+                    {facility.logo_url && (
+                      <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                        Uploaded
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    Your logo will appear on your public profile and in search results.
+                    Your logo appears on search results and your public profile. Use a square image for best results.
                   </p>
                   <FacilityImageUpload
                     type="logo"
@@ -967,13 +1168,18 @@ export default function ProviderListingPage() {
                   />
                 </div>
 
-                <Separator />
+                <Separator className="my-4" />
 
                 {/* Gallery Upload */}
                 <div className="space-y-3">
-                  <Label className="text-xs font-medium">Facility Gallery</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Facility Gallery</Label>
+                    <Badge variant="outline" className="text-xs">
+                      {facility.gallery_urls?.length || 0} / 5 photos
+                    </Badge>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    Upload up to 5 photos of your facility. The first image will be your primary gallery photo.
+                    Upload up to 5 photos. The first image will be your primary gallery photo.
                   </p>
                   <FacilityImageUpload
                     type="gallery"
@@ -987,39 +1193,41 @@ export default function ProviderListingPage() {
             </Card>
 
             {/* Basic Information */}
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Building2 className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Basic Information</CardTitle>
-                    <CardDescription className="text-xs">Core details about your facility</CardDescription>
-                  </div>
-                </div>
+            <Card className="group overflow-hidden border-border/60 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
+                <SectionHeader
+                  icon={Building2}
+                  iconColor="bg-primary/10 text-primary"
+                  title="Basic Information"
+                  description="Essential details about your facility"
+                />
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-xs font-medium">
-                    Facility Name <span className="text-destructive">*</span>
-                  </Label>
+              <CardContent className="space-y-5 pt-2">
+                <FormField 
+                  label="Facility Name" 
+                  required 
+                  error={fieldErrors.name}
+                  touched={touchedFields.has("name")}
+                >
                   <Input
                     id="name"
                     value={facility.name}
                     onChange={(e) => updateField("name", e.target.value)}
                     onBlur={(e) => handleFieldBlur("name", e.target.value)}
-                    className={`h-10 ${fieldErrors.name && touchedFields.has("name") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    className={cn(
+                      "h-11",
+                      fieldErrors.name && touchedFields.has("name") && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    placeholder="Enter your facility name"
                   />
-                  {fieldErrors.name && touchedFields.has("name") && (
-                    <p className="text-xs text-destructive">{fieldErrors.name}</p>
-                  )}
-                </div>
+                </FormField>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="type" className="text-xs font-medium">
-                    Facility Type <span className="text-destructive">*</span>
-                  </Label>
+                <FormField 
+                  label="Facility Type" 
+                  required
+                  error={fieldErrors.facility_type}
+                  touched={touchedFields.has("facility_type")}
+                >
                   <Select
                     value={facility.facility_type}
                     onValueChange={(value) => {
@@ -1027,8 +1235,11 @@ export default function ProviderListingPage() {
                       handleFieldBlur("facility_type", value);
                     }}
                   >
-                    <SelectTrigger className={`h-10 ${fieldErrors.facility_type && touchedFields.has("facility_type") ? "border-destructive focus-visible:ring-destructive" : ""}`}>
-                      <SelectValue placeholder="Select type" />
+                    <SelectTrigger className={cn(
+                      "h-11",
+                      fieldErrors.facility_type && touchedFields.has("facility_type") && "border-destructive focus-visible:ring-destructive"
+                    )}>
+                      <SelectValue placeholder="Select facility type" />
                     </SelectTrigger>
                     <SelectContent className="bg-card">
                       {facilityTypes.map((type) => (
@@ -1038,80 +1249,92 @@ export default function ProviderListingPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {fieldErrors.facility_type && touchedFields.has("facility_type") && (
-                    <p className="text-xs text-destructive">{fieldErrors.facility_type}</p>
-                  )}
-                </div>
+                </FormField>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description" className="text-xs font-medium">
-                    Description
-                  </Label>
-                  <Textarea
-                    id="description"
-                    value={facility.description || ""}
-                    onChange={(e) => updateField("description", e.target.value)}
-                    rows={4}
-                    placeholder="Describe your facility, treatment approach, and what makes you unique..."
-                    className="resize-none text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    This will be displayed on your public profile.
-                  </p>
-                </div>
+                <FormField 
+                  label="Description"
+                  hint="This will be displayed prominently on your public profile."
+                >
+                  <div className="relative">
+                    <Textarea
+                      id="description"
+                      value={facility.description || ""}
+                      onChange={(e) => {
+                        if (e.target.value.length <= DESCRIPTION_MAX_LENGTH) {
+                          updateField("description", e.target.value);
+                        }
+                      }}
+                      rows={5}
+                      placeholder="Describe your facility, treatment approach, and what makes you unique..."
+                      className="resize-none text-sm pr-16"
+                    />
+                    <span className={cn(
+                      "absolute bottom-2 right-3 text-xs",
+                      descriptionLength > DESCRIPTION_MAX_LENGTH * 0.9 ? "text-amber-600" : "text-muted-foreground"
+                    )}>
+                      {descriptionLength}/{DESCRIPTION_MAX_LENGTH}
+                    </span>
+                  </div>
+                </FormField>
               </CardContent>
             </Card>
 
             {/* Location */}
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <MapPin className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Location</CardTitle>
-                    <CardDescription className="text-xs">Where families can find you</CardDescription>
-                  </div>
-                </div>
+            <Card className="group overflow-hidden border-border/60 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-4 bg-gradient-to-r from-blue-500/5 to-transparent">
+                <SectionHeader
+                  icon={MapPin}
+                  iconColor="bg-blue-500/10 text-blue-600"
+                  title="Location"
+                  description="Where families can find you"
+                />
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="address" className="text-xs font-medium">
-                    Street Address <span className="text-destructive">*</span>
-                  </Label>
+              <CardContent className="space-y-5 pt-2">
+                <FormField 
+                  label="Street Address" 
+                  required
+                  error={fieldErrors.address}
+                  touched={touchedFields.has("address")}
+                >
                   <Input
                     id="address"
                     value={facility.address}
                     onChange={(e) => updateField("address", e.target.value)}
                     onBlur={(e) => handleFieldBlur("address", e.target.value)}
-                    className={`h-10 ${fieldErrors.address && touchedFields.has("address") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                    className={cn(
+                      "h-11",
+                      fieldErrors.address && touchedFields.has("address") && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    placeholder="123 Main Street"
                   />
-                  {fieldErrors.address && touchedFields.has("address") && (
-                    <p className="text-xs text-destructive">{fieldErrors.address}</p>
-                  )}
-                </div>
+                </FormField>
 
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="city" className="text-xs font-medium">
-                      City <span className="text-destructive">*</span>
-                    </Label>
+                  <FormField 
+                    label="City" 
+                    required
+                    error={fieldErrors.city}
+                    touched={touchedFields.has("city")}
+                  >
                     <Input
                       id="city"
                       value={facility.city}
                       onChange={(e) => updateField("city", e.target.value)}
                       onBlur={(e) => handleFieldBlur("city", e.target.value)}
-                      className={`h-10 ${fieldErrors.city && touchedFields.has("city") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      className={cn(
+                        "h-11",
+                        fieldErrors.city && touchedFields.has("city") && "border-destructive focus-visible:ring-destructive"
+                      )}
+                      placeholder="City"
                     />
-                    {fieldErrors.city && touchedFields.has("city") && (
-                      <p className="text-xs text-destructive">{fieldErrors.city}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state" className="text-xs font-medium">
-                      State <span className="text-destructive">*</span>
-                    </Label>
+                  </FormField>
+                  
+                  <FormField 
+                    label="State" 
+                    required
+                    error={fieldErrors.state}
+                    touched={touchedFields.has("state")}
+                  >
                     <Select
                       value={facility.state}
                       onValueChange={(value) => {
@@ -1119,7 +1342,10 @@ export default function ProviderListingPage() {
                         handleFieldBlur("state", value);
                       }}
                     >
-                      <SelectTrigger className={`h-10 ${fieldErrors.state && touchedFields.has("state") ? "border-destructive focus-visible:ring-destructive" : ""}`}>
+                      <SelectTrigger className={cn(
+                        "h-11",
+                        fieldErrors.state && touchedFields.has("state") && "border-destructive focus-visible:ring-destructive"
+                      )}>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent className="bg-card max-h-[200px]">
@@ -1130,48 +1356,48 @@ export default function ProviderListingPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {fieldErrors.state && touchedFields.has("state") && (
-                      <p className="text-xs text-destructive">{fieldErrors.state}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zip" className="text-xs font-medium">
-                      ZIP Code <span className="text-destructive">*</span>
-                    </Label>
+                  </FormField>
+                  
+                  <FormField 
+                    label="ZIP Code" 
+                    required
+                    error={fieldErrors.zip_code}
+                    touched={touchedFields.has("zip_code")}
+                  >
                     <Input
                       id="zip"
                       value={facility.zip_code}
                       onChange={(e) => updateField("zip_code", e.target.value)}
                       onBlur={(e) => handleFieldBlur("zip_code", e.target.value)}
-                      className={`h-10 ${fieldErrors.zip_code && touchedFields.has("zip_code") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      className={cn(
+                        "h-11",
+                        fieldErrors.zip_code && touchedFields.has("zip_code") && "border-destructive focus-visible:ring-destructive"
+                      )}
+                      placeholder="12345"
                     />
-                    {fieldErrors.zip_code && touchedFields.has("zip_code") && (
-                      <p className="text-xs text-destructive">{fieldErrors.zip_code}</p>
-                    )}
-                  </div>
+                  </FormField>
                 </div>
               </CardContent>
             </Card>
 
             {/* Contact Information */}
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center">
-                    <Phone className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Contact Information</CardTitle>
-                    <CardDescription className="text-xs">How families can reach you</CardDescription>
-                  </div>
-                </div>
+            <Card className="group overflow-hidden border-border/60 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-4 bg-gradient-to-r from-green-500/5 to-transparent">
+                <SectionHeader
+                  icon={Phone}
+                  iconColor="bg-green-500/10 text-green-600"
+                  title="Contact Information"
+                  description="How families can reach you"
+                />
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5 pt-2">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-xs font-medium">
-                      Phone Number <span className="text-destructive">*</span>
-                    </Label>
+                  <FormField 
+                    label="Phone Number" 
+                    required
+                    error={fieldErrors.phone}
+                    touched={touchedFields.has("phone")}
+                  >
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -1179,18 +1405,20 @@ export default function ProviderListingPage() {
                         value={facility.phone}
                         onChange={(e) => updateField("phone", e.target.value)}
                         onBlur={(e) => handleFieldBlur("phone", e.target.value)}
-                        className={`h-10 pl-10 ${fieldErrors.phone && touchedFields.has("phone") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                        className={cn(
+                          "h-11 pl-10",
+                          fieldErrors.phone && touchedFields.has("phone") && "border-destructive focus-visible:ring-destructive"
+                        )}
                         placeholder="(555) 123-4567"
                       />
                     </div>
-                    {fieldErrors.phone && touchedFields.has("phone") && (
-                      <p className="text-xs text-destructive">{fieldErrors.phone}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-xs font-medium">
-                      Email Address
-                    </Label>
+                  </FormField>
+                  
+                  <FormField 
+                    label="Email Address"
+                    error={fieldErrors.email}
+                    touched={touchedFields.has("email")}
+                  >
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -1199,36 +1427,69 @@ export default function ProviderListingPage() {
                         value={facility.email || ""}
                         onChange={(e) => updateField("email", e.target.value)}
                         onBlur={(e) => handleFieldBlur("email", e.target.value)}
-                        className={`h-10 pl-10 ${fieldErrors.email && touchedFields.has("email") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                        className={cn(
+                          "h-11 pl-10",
+                          fieldErrors.email && touchedFields.has("email") && "border-destructive focus-visible:ring-destructive"
+                        )}
                         placeholder="contact@facility.com"
                       />
                     </div>
-                    {fieldErrors.email && touchedFields.has("email") && (
-                      <p className="text-xs text-destructive">{fieldErrors.email}</p>
+                  </FormField>
+                </div>
+
+                <FormField 
+                  label="Website"
+                  error={fieldErrors.website}
+                  touched={touchedFields.has("website")}
+                  hint="Include the full URL starting with https://"
+                >
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="website"
+                      type="url"
+                      value={facility.website || ""}
+                      onChange={(e) => updateField("website", e.target.value)}
+                      onBlur={(e) => handleFieldBlur("website", e.target.value)}
+                      className={cn(
+                        "h-11 pl-10",
+                        fieldErrors.website && touchedFields.has("website") && "border-destructive focus-visible:ring-destructive"
+                      )}
+                      placeholder="https://www.yourfacility.com"
+                    />
+                  </div>
+                </FormField>
+                
+                {/* Reply Email Section */}
+                <div className="p-4 rounded-xl border bg-muted/30 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">Reply Email</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[250px]">
+                            <p className="text-xs">
+                              This is the email address where lead replies will be sent. If left blank, your account email will be used.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    {(!facility.reply_email || 
+                      facility.reply_email.toLowerCase().trim() === profileEmail.toLowerCase().trim() ||
+                      facility.reply_email_verified) && (
+                      <Badge variant="outline" className="gap-1 text-green-700 border-green-200 bg-green-500/10 text-xs">
+                        <ShieldCheck className="h-3 w-3" />
+                        Verified
+                      </Badge>
                     )}
                   </div>
-                </div>
-                
-                {/* Reply Email - Lead replies go to this address */}
-                <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="reply_email" className="text-xs font-medium flex items-center gap-2">
-                      Reply Email
-                      {/* Show verified badge if using account email OR custom email is verified */}
-                      {(!facility.reply_email || 
-                        facility.reply_email.toLowerCase().trim() === profileEmail.toLowerCase().trim() ||
-                        facility.reply_email_verified) && (
-                        <Badge variant="outline" className="gap-1 text-green-700 border-green-200 bg-green-500/10">
-                          <ShieldCheck className="h-3 w-3" />
-                          Verified
-                        </Badge>
-                      )}
-                    </Label>
-                  </div>
                   
-                  {/* Show account email info */}
                   {!facility.reply_email && profileEmail && (
-                    <div className="flex items-center gap-2 p-2 rounded bg-primary/5 border border-primary/10">
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
                       <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
                       <p className="text-xs text-muted-foreground">
                         Using your account email: <span className="font-medium text-foreground">{profileEmail}</span>
@@ -1245,7 +1506,6 @@ export default function ProviderListingPage() {
                         value={facility.reply_email || ""}
                         onChange={(e) => {
                           updateField("reply_email", e.target.value);
-                          // Reset verification state when email changes
                           if (e.target.value !== facilityData?.reply_email) {
                             setCodeSent(false);
                             setVerificationCode("");
@@ -1253,19 +1513,20 @@ export default function ProviderListingPage() {
                           }
                         }}
                         onBlur={(e) => handleFieldBlur("reply_email", e.target.value)}
-                        className={`h-10 pl-10 ${fieldErrors.reply_email && touchedFields.has("reply_email") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                        className={cn(
+                          "h-11 pl-10",
+                          fieldErrors.reply_email && touchedFields.has("reply_email") && "border-destructive focus-visible:ring-destructive"
+                        )}
                         placeholder={profileEmail || "replies@facility.com"}
                       />
                     </div>
-                    {/* Only show verify button if using a DIFFERENT email that's not verified */}
                     {needsReplyEmailVerification && !fieldErrors.reply_email && (
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
                         onClick={handleSendVerificationCode}
                         disabled={isSendingCode}
-                        className="h-10 gap-2"
+                        className="h-11 gap-2"
                       >
                         {isSendingCode ? (
                           <>
@@ -1283,13 +1544,15 @@ export default function ProviderListingPage() {
                   </div>
 
                   {fieldErrors.reply_email && touchedFields.has("reply_email") && (
-                    <p className="text-xs text-destructive">{fieldErrors.reply_email}</p>
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {fieldErrors.reply_email}
+                    </p>
                   )}
 
-                  {/* Verification code input - only show when needed */}
                   {codeSent && needsReplyEmailVerification && (
-                    <div className="space-y-2 pt-2 border-t">
-                      <Label className="text-xs font-medium">Enter 6-digit verification code</Label>
+                    <div className="space-y-3 pt-3 border-t">
+                      <Label className="text-sm font-medium">Enter verification code</Label>
                       <div className="flex gap-2">
                         <Input
                           type="text"
@@ -1302,13 +1565,13 @@ export default function ProviderListingPage() {
                             setVerificationError(null);
                           }}
                           placeholder="000000"
-                          className="h-10 text-center font-mono text-lg tracking-widest max-w-[140px]"
+                          className="h-11 text-center font-mono text-lg tracking-widest max-w-[140px]"
                         />
                         <Button
                           type="button"
                           onClick={handleVerifyCode}
                           disabled={isVerifying || verificationCode.length !== 6}
-                          className="h-10 gap-2"
+                          className="h-11 gap-2"
                         >
                           {isVerifying ? (
                             <>
@@ -1342,56 +1605,28 @@ export default function ProviderListingPage() {
                           : "Verify this email to receive lead replies here."}
                   </p>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="website" className="text-xs font-medium">
-                    Website
-                  </Label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="website"
-                      type="url"
-                      value={facility.website || ""}
-                      onChange={(e) => updateField("website", e.target.value)}
-                      onBlur={(e) => handleFieldBlur("website", e.target.value)}
-                      placeholder="https://www.yourfacility.com"
-                      className={`h-10 pl-10 ${fieldErrors.website && touchedFields.has("website") ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                    />
-                  </div>
-                  {fieldErrors.website && touchedFields.has("website") && (
-                    <p className="text-xs text-destructive">{fieldErrors.website}</p>
-                  )}
-                </div>
               </CardContent>
             </Card>
 
             {/* Program Details */}
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Program Details</CardTitle>
-                    <CardDescription className="text-xs">Treatment capacity and demographics</CardDescription>
-                  </div>
-                </div>
+            <Card className="group overflow-hidden border-border/60 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-4 bg-gradient-to-r from-indigo-500/5 to-transparent">
+                <SectionHeader
+                  icon={Users}
+                  iconColor="bg-indigo-500/10 text-indigo-600"
+                  title="Program Details"
+                  description="Treatment capacity and demographics"
+                />
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="pt-2">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="gender" className="text-xs font-medium">
-                      <Users className="inline h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-                      Population Served
-                    </Label>
+                  <FormField label="Gender Served">
                     <Select
                       value={facility.gender_served || "all"}
                       onValueChange={(value) => updateField("gender_served", value)}
                     >
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Select" />
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent className="bg-card">
                         {genderOptions.map((option) => (
@@ -1401,63 +1636,63 @@ export default function ProviderListingPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="beds" className="text-xs font-medium">
-                      <Bed className="inline h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-                      Bed Count / Capacity
-                    </Label>
-                    <Input
-                      id="beds"
-                      value={facility.bed_count || ""}
-                      onChange={(e) => updateField("bed_count", e.target.value)}
-                      placeholder="e.g., 24"
-                      className="h-10"
-                    />
-                  </div>
+                  </FormField>
+                  
+                  <FormField 
+                    label="Bed Count / Capacity"
+                    hint="How many clients can you serve at once?"
+                  >
+                    <div className="relative">
+                      <Bed className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="beds"
+                        value={facility.bed_count || ""}
+                        onChange={(e) => updateField("bed_count", e.target.value)}
+                        placeholder="e.g., 24"
+                        className="h-11 pl-10"
+                      />
+                    </div>
+                  </FormField>
                 </div>
               </CardContent>
             </Card>
 
             {/* Services Offered */}
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-teal-500/10 flex items-center justify-center">
-                    <Stethoscope className="h-4 w-4 text-teal-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Services Offered</CardTitle>
-                    <CardDescription className="text-xs">Treatment programs and therapies available</CardDescription>
-                  </div>
-                </div>
+            <Card className="group overflow-hidden border-border/60 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-4 bg-gradient-to-r from-teal-500/5 to-transparent">
+                <SectionHeader
+                  icon={Stethoscope}
+                  iconColor="bg-teal-500/10 text-teal-600"
+                  title="Services Offered"
+                  description="Treatment programs and therapies available"
+                  badge={
+                    services.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {services.length} service{services.length !== 1 ? "s" : ""}
+                      </Badge>
+                    )
+                  }
+                />
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Current Services */}
-                {services.length > 0 && (
+              <CardContent className="space-y-4 pt-2">
+                {services.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {services.map((service) => (
-                      <Badge 
-                        key={service.id} 
-                        variant="secondary" 
-                        className="gap-1.5 pr-1.5 py-1"
-                      >
-                        {service.service_name}
-                        <button
-                          onClick={() => handleRemoveService(service.id)}
-                          className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
+                      <TagChip
+                        key={service.id}
+                        label={service.service_name}
+                        onRemove={() => handleRemoveService(service.id)}
+                        variant="service"
+                      />
                     ))}
                   </div>
+                ) : (
+                  <EmptyTagsState type="services" />
                 )}
 
-                {/* Add Service */}
                 <div className="flex gap-2">
                   <Select value={newService} onValueChange={setNewService}>
-                    <SelectTrigger className="h-10 flex-1">
+                    <SelectTrigger className="h-11 flex-1">
                       <SelectValue placeholder="Select a service to add..." />
                     </SelectTrigger>
                     <SelectContent className="bg-card max-h-[200px]">
@@ -1473,58 +1708,51 @@ export default function ProviderListingPage() {
                   <Button 
                     onClick={() => handleAddService(newService)}
                     disabled={!newService}
-                    size="icon"
-                    className="h-10 w-10"
+                    className="h-11 gap-2"
                   >
                     <Plus className="h-4 w-4" />
+                    Add
                   </Button>
                 </div>
-
-                <p className="text-xs text-muted-foreground">
-                  Add the treatment services your facility offers to help families find the right care.
-                </p>
               </CardContent>
             </Card>
 
             {/* Insurance Accepted */}
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                    <CreditCard className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">Insurance Accepted</CardTitle>
-                    <CardDescription className="text-xs">Payment options and insurance providers</CardDescription>
-                  </div>
-                </div>
+            <Card className="group overflow-hidden border-border/60 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <CardHeader className="pb-4 bg-gradient-to-r from-amber-500/5 to-transparent">
+                <SectionHeader
+                  icon={CreditCard}
+                  iconColor="bg-amber-500/10 text-amber-600"
+                  title="Insurance Accepted"
+                  description="Payment options and insurance providers"
+                  badge={
+                    insurance.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {insurance.length} provider{insurance.length !== 1 ? "s" : ""}
+                      </Badge>
+                    )
+                  }
+                />
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Current Insurance */}
-                {insurance.length > 0 && (
+              <CardContent className="space-y-4 pt-2">
+                {insurance.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {insurance.map((ins) => (
-                      <Badge 
-                        key={ins.id} 
-                        variant="secondary" 
-                        className="gap-1.5 pr-1.5 py-1"
-                      >
-                        {ins.insurance_name}
-                        <button
-                          onClick={() => handleRemoveInsurance(ins.id)}
-                          className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
+                      <TagChip
+                        key={ins.id}
+                        label={ins.insurance_name}
+                        onRemove={() => handleRemoveInsurance(ins.id)}
+                        variant="insurance"
+                      />
                     ))}
                   </div>
+                ) : (
+                  <EmptyTagsState type="insurance" />
                 )}
 
-                {/* Add Insurance */}
                 <div className="flex gap-2">
                   <Select value={newInsurance} onValueChange={setNewInsurance}>
-                    <SelectTrigger className="h-10 flex-1">
+                    <SelectTrigger className="h-11 flex-1">
                       <SelectValue placeholder="Select insurance to add..." />
                     </SelectTrigger>
                     <SelectContent className="bg-card max-h-[200px]">
@@ -1540,16 +1768,12 @@ export default function ProviderListingPage() {
                   <Button 
                     onClick={() => handleAddInsurance(newInsurance)}
                     disabled={!newInsurance}
-                    size="icon"
-                    className="h-10 w-10"
+                    className="h-11 gap-2"
                   >
                     <Plus className="h-4 w-4" />
+                    Add
                   </Button>
                 </div>
-
-                <p className="text-xs text-muted-foreground">
-                  Let families know which insurance providers you accept.
-                </p>
               </CardContent>
             </Card>
 
@@ -1561,26 +1785,78 @@ export default function ProviderListingPage() {
             />
           </div>
 
-          {/* Right Column - Sidebar (appears second on mobile, first position doesn't matter due to order) */}
-          <div className="space-y-6 order-1 lg:order-2">
-            {/* Status Card - Not sticky on mobile to prevent overlap */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Listing Status</CardTitle>
+          {/* Right Column - Sidebar */}
+          <div className="space-y-5 order-1 lg:order-2">
+            {/* Profile Completion Card */}
+            <Card className="border-border/60 shadow-sm overflow-hidden">
+              <CardHeader className="pb-3 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Profile Completion
+                  </CardTitle>
+                  <Badge 
+                    variant={profileCompletion.percentage === 100 ? "default" : "secondary"}
+                    className={cn(
+                      "text-xs font-semibold",
+                      profileCompletion.percentage === 100 && "bg-green-500 hover:bg-green-500/90"
+                    )}
+                  >
+                    {profileCompletion.percentage}%
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                <Progress 
+                  value={profileCompletion.percentage} 
+                  className="h-2"
+                />
+                
+                {profileCompletion.percentage < 100 ? (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Complete your profile to improve visibility
+                    </p>
+                    {profileCompletion.items.map((item) => (
+                      <CompletionItem
+                        key={item.key}
+                        label={item.label}
+                        completed={item.completed}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-200">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-green-700">Profile Complete!</p>
+                      <p className="text-xs text-green-600">Your listing is fully optimized</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Status Card */}
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Listing Status</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+                  <div className={cn(
+                    "h-10 w-10 rounded-xl flex items-center justify-center",
                     facility.status === 'approved' ? 'bg-green-500/10' : 
                     facility.status === 'pending' ? 'bg-amber-500/10' : 'bg-muted'
-                  }`}>
-                    <StatusIcon className={`h-4 w-4 ${
+                  )}>
+                    <StatusIcon className={cn(
+                      "h-5 w-5",
                       facility.status === 'approved' ? 'text-green-600' : 
                       facility.status === 'pending' ? 'text-amber-600' : 'text-muted-foreground'
-                    }`} />
+                    )} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{statusConfig.label}</p>
+                    <p className="text-sm font-semibold">{statusConfig.label}</p>
                     <p className="text-xs text-muted-foreground">
                       {facility.status === 'approved' ? 'Visible to families' : 
                        facility.status === 'pending' ? 'Under review' : 'Not published'}
@@ -1593,13 +1869,17 @@ export default function ProviderListingPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Visibility</span>
-                    <span className="font-medium">
+                    <Badge variant={facility.status === 'approved' ? "default" : "secondary"} className="text-xs">
                       {facility.status === 'approved' ? 'Public' : 'Private'}
-                    </span>
+                    </Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Listing Type</span>
-                    <span className="font-medium">Standard</span>
+                    <span className="text-muted-foreground">Type</span>
+                    <span className="font-medium text-xs">{facility.facility_type || "Not set"}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Location</span>
+                    <span className="font-medium text-xs">{facility.city}, {facility.state}</span>
                   </div>
                 </div>
 
@@ -1607,37 +1887,49 @@ export default function ProviderListingPage() {
 
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">Need Help?</p>
-                  <p className="text-xs text-muted-foreground">
-                    Contact our support team for assistance with your listing.
-                  </p>
-                  <Button variant="outline" size="sm" className="w-full text-xs" asChild>
-                    <Link to="/provider-support">Contact Support</Link>
+                  <Button variant="outline" size="sm" className="w-full text-xs gap-2" asChild>
+                    <Link to="/provider-support">
+                      <Info className="h-3.5 w-3.5" />
+                      Contact Support
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
             {/* Tips Card */}
-            <Card className="bg-primary/5 border-primary/10">
+            <Card className="bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border-primary/10 shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-primary" />
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
                   Optimization Tips
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2 text-xs text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                    <span>Add a detailed description to improve visibility</span>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-2.5">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-primary" />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Add a detailed description with your unique approach</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                    <span>Keep contact information up to date</span>
+                  <li className="flex items-start gap-2.5">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-primary" />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Upload high-quality photos of your facility</span>
                   </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                    <span>Respond to inquiries within 24 hours</span>
+                  <li className="flex items-start gap-2.5">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-primary" />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Respond to inquiries within 24 hours</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle className="h-3 w-3 text-primary" />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Keep services and insurance list up to date</span>
                   </li>
                 </ul>
               </CardContent>
@@ -1645,27 +1937,33 @@ export default function ProviderListingPage() {
           </div>
         </div>
 
-        {/* Save Button at the end of the page */}
-        <div className="flex justify-end pt-4 border-t border-border">
-          <Button 
-            onClick={handleSave} 
-            disabled={isSaving || !hasChanges} 
-            size="lg"
-            className="gap-2 min-w-[160px]"
-          >
-            {showSaved ? (
-              <>
-                <CheckCircle className="h-4 w-4" />
-                Saved Successfully
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </>
-            )}
-        </Button>
-      </div>
+        {/* Floating Save Bar */}
+        <div className="sticky bottom-4 flex justify-center pt-4 z-10">
+          <div className={cn(
+            "flex items-center gap-3 px-4 py-3 rounded-full bg-card/95 backdrop-blur-sm border shadow-lg transition-all duration-300",
+            hasChanges ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+          )}>
+            <span className="text-sm text-muted-foreground">You have unsaved changes</span>
+            <Button 
+              onClick={handleSave} 
+              disabled={isSaving || isAutoSaving} 
+              size="sm"
+              className="gap-2 rounded-full"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
