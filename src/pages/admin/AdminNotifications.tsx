@@ -234,25 +234,48 @@ export default function AdminNotifications() {
   const getNotificationLink = (notification: typeof allNotifications[0]) => {
     const metadata = notification.metadata as Record<string, any> | null;
     
+    // Check for explicit link in notification or metadata
+    if ((notification as any).link) {
+      return (notification as any).link;
+    }
+    if (metadata?.link) {
+      return metadata.link;
+    }
+    
+    // Type-based routing
     if (notification.type === "provider_signup") {
       return "/admin/providers?status=pending";
     }
-    if (notification.type === "payment_failed") {
+    if (notification.type === "payment_failed" || notification.type === "subscription_change") {
       return "/admin/subscriptions";
     }
     if (notification.type === "new_lead" || notification.type === "lead_assigned") {
-      return "/admin/leads";
+      return metadata?.lead_id ? `/admin/leads?id=${metadata.lead_id}` : "/admin/leads";
     }
-    if (notification.type === "facility_approved" && metadata?.facility_id) {
-      return `/admin/providers`;
+    if (notification.type === "facility_approved") {
+      return "/admin/providers";
     }
     if (notification.type === "brute_force" || notification.type === "login_alert" || notification.type === "security_event") {
       return "/admin/security-logs";
     }
-    if (notification.type === "churn_alert" || notification.type === "at_risk_provider" || notification.type === "subscription_change") {
+    if (notification.type === "churn_alert" || notification.type === "at_risk_provider") {
       return "/admin/subscriptions";
     }
+    if (notification.type === "flagged_image") {
+      return "/admin/flagged-images";
+    }
     return null;
+  };
+
+  const handleNotificationClick = (notification: typeof allNotifications[0], link: string | null) => {
+    // Mark as read when clicking
+    if (!notification.read) {
+      handleMarkAsRead(notification.id, notification.source);
+    }
+    // Navigate if there's a link
+    if (link) {
+      navigate(link);
+    }
   };
 
   return (
@@ -430,7 +453,7 @@ export default function AdminNotifications() {
             isLoading={isLoading}
             onMarkAsRead={handleMarkAsRead}
             onDelete={handleDelete}
-            onNavigate={(link) => navigate(link)}
+            onNotificationClick={handleNotificationClick}
             getNotificationLink={getNotificationLink}
           />
         </TabsContent>
@@ -453,7 +476,7 @@ interface NotificationListProps {
   isLoading: boolean;
   onMarkAsRead: (id: string, source: "global" | "personal") => void;
   onDelete: (id: string, source: "global" | "personal") => void;
-  onNavigate: (link: string) => void;
+  onNotificationClick: (notification: NotificationListProps["notifications"][0], link: string | null) => void;
   getNotificationLink: (notification: NotificationListProps["notifications"][0]) => string | null;
 }
 
@@ -462,7 +485,7 @@ function NotificationList({
   isLoading, 
   onMarkAsRead, 
   onDelete, 
-  onNavigate,
+  onNotificationClick,
   getNotificationLink,
 }: NotificationListProps) {
   if (isLoading) {
@@ -501,7 +524,7 @@ function NotificationList({
                 !notification.read && "border-l-4 border-l-primary bg-primary/5",
                 link && "cursor-pointer"
               )}
-              onClick={() => link && onNavigate(link)}
+              onClick={() => onNotificationClick(notification, link)}
             >
               <CardContent className="flex items-start gap-4 p-4">
                 <div className="flex-shrink-0 mt-1">

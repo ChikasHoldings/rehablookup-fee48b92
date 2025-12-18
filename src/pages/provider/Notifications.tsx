@@ -93,7 +93,14 @@ function NotificationItem({
       onMarkAsRead(notification.id);
     }
     
-    // Navigate based on notification type
+    // Check for explicit link in metadata
+    const metadata = notification.metadata as Record<string, any> | null;
+    if (metadata?.link) {
+      navigate(metadata.link);
+      return;
+    }
+    
+    // Type-based routing
     if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
       navigate("/provider/leads");
     } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
