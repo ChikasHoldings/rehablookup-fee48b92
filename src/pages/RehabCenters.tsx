@@ -6,6 +6,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Heart, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -476,11 +477,7 @@ const RehabCenters = () => {
           </div>
 
           {isLoading ? (
-            <div className="grid gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-[420px] md:h-96 animate-pulse rounded-2xl bg-card" />
-              ))}
-            </div>
+            <SearchResultsLoading count={9} />
           ) : paginatedCenters.length > 0 ? (
             <>
               <div className={
