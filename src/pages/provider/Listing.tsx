@@ -362,7 +362,15 @@ export default function ProviderListingPage() {
   const [newInsurance, setNewInsurance] = useState("");
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('provider-listing-expanded-sections');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  // Persist expanded sections to localStorage
+  useEffect(() => {
+    localStorage.setItem('provider-listing-expanded-sections', JSON.stringify([...expandedSections]));
+  }, [expandedSections]);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const { selectedFacility } = useSelectedFacility();
