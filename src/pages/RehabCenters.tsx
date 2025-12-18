@@ -222,21 +222,22 @@ const RehabCenters = () => {
       />
       
       {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-10 md:py-12">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-12 md:py-14">
         {/* Decorative elements */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
         <div className="container relative">
-          <div className="mb-8 max-w-2xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white/90 backdrop-blur-sm">
+          <div className="mb-8 max-w-3xl">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-medium uppercase tracking-wider text-white backdrop-blur-sm border border-white/10">
               <CheckCircle className="h-3.5 w-3.5" />
               Verified Treatment Centers
             </div>
             <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Your Path to Recovery
             </h1>
-            <p className="mt-3 text-base text-white/80 md:text-lg">
+            <p className="mt-3 text-base text-white/80 md:text-lg max-w-2xl">
               {hasFilters ? (
                 <>
                   <span className="font-semibold text-white">{filteredCenters.length}</span> results
@@ -244,13 +245,13 @@ const RehabCenters = () => {
                   {location && ` near "${location}"`}
                 </>
               ) : (
-                "Search verified treatment centers and find the right care for you or your loved one"
+                "Browse our network of verified addiction treatment facilities and find compassionate care tailored to your needs"
               )}
             </p>
           </div>
 
           {/* Search Form Container */}
-          <div className="rounded-2xl border border-white/10 bg-white p-4 shadow-2xl shadow-primary/20 md:p-5">
+          <div className="rounded-2xl border border-white/10 bg-white p-4 shadow-2xl shadow-primary/20 md:p-6">
             <SearchForm
               variant="compact"
               initialLocation={location}
