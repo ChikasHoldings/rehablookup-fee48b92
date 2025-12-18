@@ -886,68 +886,73 @@ export default function ProviderBillingPage() {
       </Collapsible>
 
       {/* Billing Portal Section */}
-      <Card className="shadow-sm">
-        <CardHeader className="border-b border-border bg-muted/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <FileText className="h-5 w-5 text-primary" />
+      <Collapsible defaultOpen={false}>
+        <Card className="shadow-sm overflow-hidden">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="border-b border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors group">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>Billing Portal</CardTitle>
+                    <CardDescription>Manage payments, invoices, and subscription</CardDescription>
+                  </div>
+                </div>
+                <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
               </div>
-              <div>
-                <CardTitle>Billing Portal</CardTitle>
-                <CardDescription>Manage payments, invoices, and subscription</CardDescription>
-              </div>
-            </div>
-            {isSubscribed && (
-              <Button onClick={handleManageSubscription} disabled={portalLoading}>
-                {portalLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                )}
-                Open Portal
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          {isSubscribed ? (
-            <div className="space-y-4">
-              <p className="text-muted-foreground">
-                Access the billing portal to:
-              </p>
-              <ul className="grid gap-3 md:grid-cols-2">
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-primary" />
-                  View and download invoices
-                </li>
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-primary" />
-                  Update payment methods
-                </li>
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-primary" />
-                  Change or cancel subscription
-                </li>
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-primary" />
-                  Update billing information
-                </li>
-              </ul>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="h-12 w-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-                <FileText className="h-6 w-6 text-muted-foreground/40" />
-              </div>
-              <p className="text-muted-foreground">No billing history yet</p>
-              <p className="text-sm text-muted-foreground/70 mt-1">
-                Subscribe to a plan to access billing features
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="p-6">
+              {isSubscribed ? (
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">
+                    Access the billing portal to:
+                  </p>
+                  <ul className="grid gap-3 md:grid-cols-2">
+                    <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      View and download invoices
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      Update payment methods
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      Change or cancel subscription
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      Update billing information
+                    </li>
+                  </ul>
+                  <Button onClick={handleManageSubscription} disabled={portalLoading} className="mt-2">
+                    {portalLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                    )}
+                    Open Portal
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="h-12 w-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                    <FileText className="h-6 w-6 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-muted-foreground">No billing history yet</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">
+                    Subscribe to a plan to access billing features
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
       </div>
     </div>
   );
