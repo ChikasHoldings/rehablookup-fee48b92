@@ -715,72 +715,85 @@ const ArticleDetail = () => {
   return (
     <Layout>
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img
-            src={article.image}
-            alt={article.title}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/95 to-primary/80" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
-        </div>
-        
-        {/* Content */}
-        <div className="container relative py-12 md:py-16 lg:py-20">
-          <div className="mx-auto max-w-3xl text-center">
-            {/* Back Link */}
-            <Link
-              to="/resources"
-              className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white mb-6 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Resources
-            </Link>
-            
-            {/* Category Badge */}
-            <div className="mb-4">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white/90 border border-white/10">
-                <BookOpen className="h-3.5 w-3.5" />
-                {article.categoryLabel}
-              </span>
+      <section className="relative bg-background border-b border-border/50">
+        <div className="container py-8 md:py-12">
+          {/* Back Link */}
+          <Link
+            to="/resources"
+            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary mb-8 transition-colors group"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to Resources
+          </Link>
+          
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left: Content */}
+            <div className="order-2 lg:order-1">
+              {/* Category Badge */}
+              <div className="mb-5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  {article.categoryLabel}
+                </span>
+              </div>
+              
+              {/* Title */}
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl lg:text-4xl xl:text-[2.75rem] mb-5 leading-[1.15]">
+                {article.title}
+              </h1>
+              
+              {/* Excerpt */}
+              <p className="text-base text-muted-foreground md:text-lg mb-8 leading-relaxed max-w-xl">
+                {article.excerpt}
+              </p>
+              
+              {/* Meta Info */}
+              <div className="flex flex-wrap items-center gap-6 text-sm">
+                {/* Author */}
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/20">
+                    <User className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">{article.author}</p>
+                    <p className="text-xs text-muted-foreground">Author</p>
+                  </div>
+                </div>
+                
+                {/* Divider */}
+                <div className="hidden sm:block h-10 w-px bg-border" />
+                
+                {/* Date & Read Time */}
+                <div className="flex items-center gap-4 text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4" />
+                    <span>{article.date}</span>
+                  </div>
+                  <span className="text-border">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    <span>{article.readTime}</span>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            {/* Title */}
-            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl mb-5 leading-tight">
-              {article.title}
-            </h1>
-            
-            {/* Excerpt */}
-            <p className="text-base text-white/75 md:text-lg mb-6 max-w-2xl mx-auto leading-relaxed">
-              {article.excerpt}
-            </p>
-            
-            {/* Meta Info */}
-            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-sm text-white/70">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center">
-                  <User className="h-4 w-4 text-white/80" />
+            {/* Right: Featured Image */}
+            <div className="order-1 lg:order-2">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/10 ring-1 ring-black/5">
+                <div className="aspect-[16/10]">
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
-                <span className="text-white/90">{article.author}</span>
-              </div>
-              <div className="hidden md:block h-4 w-px bg-white/20" />
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" />
-                {article.date}
-              </div>
-              <div className="hidden md:block h-4 w-px bg-white/20" />
-              <div className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" />
-                {article.readTime}
+                {/* Subtle gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Bottom decorative line */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </section>
 
       {/* Content */}
