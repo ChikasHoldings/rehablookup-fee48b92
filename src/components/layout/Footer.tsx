@@ -1,20 +1,74 @@
 import { Link } from "react-router-dom";
-import { Heart, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Heart, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, ArrowRight, BookOpen } from "lucide-react";
+
+// SEO-friendly articles for footer
+const featuredArticles = [
+  {
+    title: "Understanding the Different Types of Addiction Treatment",
+    slug: "/resources/types-of-addiction-treatment",
+    category: "Treatment Guide",
+  },
+  {
+    title: "How to Choose the Right Rehab Center for Your Needs",
+    slug: "/resources/choosing-rehab-center",
+    category: "Getting Started",
+  },
+  {
+    title: "What to Expect During Your First Week of Treatment",
+    slug: "/resources/first-week-treatment",
+    category: "Recovery Tips",
+  },
+  {
+    title: "Insurance Coverage for Addiction Treatment Explained",
+    slug: "/resources/insurance-coverage-guide",
+    category: "Insurance",
+  },
+];
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-primary text-primary-foreground">
-      <div className="container py-12 md:py-16">
-        {/* Mobile Logo - Centered and Bigger */}
+    <footer className="border-t border-border bg-slate-900 text-white">
+      {/* Featured Articles Section - SEO Boost */}
+      <div className="border-b border-white/10">
+        <div className="container py-10">
+          <div className="flex items-center gap-2 mb-6">
+            <BookOpen className="h-5 w-5 text-primary" />
+            <h3 className="font-display text-lg font-semibold">Recovery Resources & Guides</h3>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredArticles.map((article) => (
+              <Link
+                key={article.slug}
+                to={article.slug}
+                className="group rounded-lg bg-white/5 p-4 transition-all hover:bg-white/10"
+              >
+                <span className="text-xs font-medium text-primary/80 uppercase tracking-wide">
+                  {article.category}
+                </span>
+                <h4 className="mt-2 text-sm font-medium text-white/90 group-hover:text-white line-clamp-2 leading-snug">
+                  {article.title}
+                </h4>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs text-primary group-hover:gap-2 transition-all">
+                  Read Article <ArrowRight className="h-3 w-3" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Footer Content */}
+      <div className="container py-12 md:py-14">
+        {/* Mobile Logo Section */}
         <div className="flex flex-col items-center mb-10 md:hidden">
           <Link to="/" className="inline-block mb-4">
             <img 
               src="/logo-dark.svg" 
               alt="Rehab-Lookup" 
-              className="h-12 w-auto"
+              className="h-11 w-auto"
             />
           </Link>
-          <p className="text-center text-sm leading-relaxed text-primary-foreground/60 max-w-[280px]">
+          <p className="text-center text-sm leading-relaxed text-white/60 max-w-[280px]">
             Connecting families with trusted treatment centers nationwide.
           </p>
           
@@ -24,55 +78,55 @@ export function Footer() {
               href="https://facebook.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
               aria-label="Follow us on Facebook"
             >
-              <Facebook className="h-5 w-5" />
+              <Facebook className="h-4 w-4" />
             </a>
             <a 
               href="https://twitter.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
               aria-label="Follow us on Twitter"
             >
-              <Twitter className="h-5 w-5" />
+              <Twitter className="h-4 w-4" />
             </a>
             <a 
               href="https://instagram.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
               aria-label="Follow us on Instagram"
             >
-              <Instagram className="h-5 w-5" />
+              <Instagram className="h-4 w-4" />
             </a>
             <a 
               href="https://linkedin.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
               aria-label="Follow us on LinkedIn"
             >
-              <Linkedin className="h-5 w-5" />
+              <Linkedin className="h-4 w-4" />
             </a>
           </div>
         </div>
 
         {/* Main Footer Grid */}
-        <div className="grid gap-8 grid-cols-2 md:grid-cols-6 lg:grid-cols-6">
+        <div className="grid gap-8 grid-cols-2 md:grid-cols-6">
           {/* Brand & Social - Desktop Only */}
-          <div className="hidden md:block space-y-6 col-span-2">
+          <div className="hidden md:block space-y-5 col-span-2">
             <Link to="/" className="inline-block">
               <img 
                 src="/logo-dark.svg" 
                 alt="Rehab-Lookup" 
-                className="h-11 w-auto"
+                className="h-10 w-auto"
               />
             </Link>
             
-            <p className="max-w-xs text-sm leading-relaxed text-primary-foreground/60">
-              Connecting families with trusted treatment centers nationwide.
+            <p className="max-w-xs text-sm leading-relaxed text-white/60">
+              Connecting families with trusted treatment centers nationwide. Free, confidential support available 24/7.
             </p>
             
             {/* Social Media Links - Desktop */}
@@ -81,7 +135,7 @@ export function Footer() {
                 href="https://facebook.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
                 aria-label="Follow us on Facebook"
               >
                 <Facebook className="h-4 w-4" />
@@ -90,7 +144,7 @@ export function Footer() {
                 href="https://twitter.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
                 aria-label="Follow us on Twitter"
               >
                 <Twitter className="h-4 w-4" />
@@ -99,7 +153,7 @@ export function Footer() {
                 href="https://instagram.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
                 aria-label="Follow us on Instagram"
               >
                 <Instagram className="h-4 w-4" />
@@ -108,7 +162,7 @@ export function Footer() {
                 href="https://linkedin.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 transition-all hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-primary hover:text-white"
                 aria-label="Follow us on LinkedIn"
               >
                 <Linkedin className="h-4 w-4" />
@@ -116,25 +170,30 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Treatment */}
+          {/* Find Treatment */}
           <div>
-            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-primary-foreground/90">
-              Treatment
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white/80">
+              Find Treatment
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               <li>
-                <Link to="/rehab-centers" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
-                  Find Centers
+                <Link to="/rehab-centers" className="text-sm text-white/60 transition-colors hover:text-white">
+                  Find Rehab Centers
                 </Link>
               </li>
               <li>
-                <Link to="/treatment-types" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/treatment-types" className="text-sm text-white/60 transition-colors hover:text-white">
                   Treatment Types
                 </Link>
               </li>
               <li>
-                <Link to="/how-it-works" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/how-it-works" className="text-sm text-white/60 transition-colors hover:text-white">
                   How It Works
+                </Link>
+              </li>
+              <li>
+                <Link to="/request-help?source=footer" className="text-sm text-white/60 transition-colors hover:text-white">
+                  Get Help Now
                 </Link>
               </li>
             </ul>
@@ -142,70 +201,80 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-primary-foreground/90">
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white/80">
               Resources
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               <li>
-                <Link to="/resources" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/resources" className="text-sm text-white/60 transition-colors hover:text-white">
                   Guides & Articles
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/faq" className="text-sm text-white/60 transition-colors hover:text-white">
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/about" className="text-sm text-white/60 transition-colors hover:text-white">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
-                  Contact
+                <Link to="/contact" className="text-sm text-white/60 transition-colors hover:text-white">
+                  Contact Us
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Providers */}
+          {/* For Providers */}
           <div>
-            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-primary-foreground/90">
-              Providers
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white/80">
+              For Providers
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               <li>
-                <Link to="/for-providers" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/for-providers" className="text-sm text-white/60 transition-colors hover:text-white">
                   List Your Facility
                 </Link>
               </li>
               <li>
-                <Link to="/provider-resources" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/provider-resources" className="text-sm text-white/60 transition-colors hover:text-white">
                   Provider Resources
                 </Link>
               </li>
               <li>
-                <Link to="/provider-login" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/provider-login" className="text-sm text-white/60 transition-colors hover:text-white">
                   Provider Login
+                </Link>
+              </li>
+              <li>
+                <Link to="/provider-support" className="text-sm text-white/60 transition-colors hover:text-white">
+                  Provider Support
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Legal & Company */}
           <div>
-            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-primary-foreground/90">
-              Legal
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white/80">
+              Company
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               <li>
-                <Link to="/privacy-policy" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/about" className="text-sm text-white/60 transition-colors hover:text-white">
+                  About RehabLookup
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy-policy" className="text-sm text-white/60 transition-colors hover:text-white">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms-of-service" className="text-sm text-primary-foreground/70 transition-colors hover:text-primary-foreground">
+                <Link to="/terms-of-service" className="text-sm text-white/60 transition-colors hover:text-white">
                   Terms of Service
                 </Link>
               </li>
@@ -213,48 +282,48 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Contact Bar - Mobile Optimized */}
-        <div className="mt-10 md:mt-12 flex flex-col gap-4 md:grid md:grid-cols-3 rounded-xl bg-primary-foreground/5 p-5">
+        {/* Contact Bar */}
+        <div className="mt-10 grid gap-4 sm:grid-cols-3 rounded-xl bg-white/5 p-5">
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-10 w-10 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
-              <Heart className="h-4 w-4 text-accent" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20">
+              <Heart className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-primary-foreground/50">Need Help?</p>
-              <Link to="/request-help?source=footer" className="font-medium text-primary-foreground transition-colors hover:text-primary-foreground/80">
+              <p className="text-xs text-white/50">Need Help?</p>
+              <Link to="/request-help?source=footer" className="font-medium text-white transition-colors hover:text-primary">
                 Request Help Now
               </Link>
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-10 w-10 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
-              <Mail className="h-4 w-4 text-accent" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20">
+              <Mail className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-primary-foreground/50">Email Us</p>
-              <a href="mailto:help@rehablookup.com" className="font-medium text-primary-foreground transition-colors hover:text-primary-foreground/80">
+              <p className="text-xs text-white/50">Email Us</p>
+              <a href="mailto:help@rehablookup.com" className="font-medium text-white transition-colors hover:text-primary">
                 help@rehablookup.com
               </a>
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-10 w-10 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-full bg-accent/20">
-              <MapPin className="h-4 w-4 text-accent" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20">
+              <MapPin className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-primary-foreground/50">Availability</p>
-              <span className="font-medium text-primary-foreground">24/7 Nationwide</span>
+              <p className="text-xs text-white/50">Availability</p>
+              <span className="font-medium text-white">24/7 Nationwide</span>
             </div>
           </div>
         </div>
 
-        {/* Bottom Bar - Mobile Optimized */}
-        <div className="mt-8 md:mt-10 flex flex-col items-center gap-3 border-t border-primary-foreground/10 pt-6 md:pt-8 md:flex-row md:justify-between md:gap-4">
-          <p className="text-sm text-primary-foreground/60 text-center md:text-left">
+        {/* Bottom Bar */}
+        <div className="mt-8 flex flex-col items-center gap-3 border-t border-white/10 pt-6 md:flex-row md:justify-between">
+          <p className="text-sm text-white/50 text-center md:text-left">
             © {new Date().getFullYear()} RehabLookup.com. All rights reserved.
           </p>
-          <p className="text-xs text-primary-foreground/40 text-center md:text-right">
-            RehabLookup is a directory service. We are not a treatment provider.
+          <p className="text-xs text-white/40 text-center md:text-right max-w-md">
+            RehabLookup is a directory service connecting individuals with treatment providers. We are not a treatment provider.
           </p>
         </div>
       </div>
