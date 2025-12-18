@@ -988,24 +988,24 @@ const CenterProfile = () => {
                 className="rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-6 shadow-xl"
               >
                 <div className="text-center mb-6">
-                  <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-4">
-                    <MessageSquare className="h-7 w-7 text-primary-foreground" />
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-4">
+                    <MessageSquare className="h-5 w-5 text-primary-foreground" />
                   </div>
                   <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                    Get Started Today
+                    Request Information
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Take the first step towards recovery. Our team is here to help.
                   </p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="flex flex-col items-center space-y-3">
                   <Button 
                     size="lg" 
-                    className="w-full gap-2.5 h-13 text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                    className="px-8 gap-2 h-14 text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                     onClick={() => setRequestModalOpen(true)}
                   >
-                    <Sparkles className="h-5 w-5 animate-pulse" />
+                    <Sparkles className="h-4 w-4 animate-pulse" />
                     Get Started
                   </Button>
 
@@ -1090,24 +1090,24 @@ const CenterProfile = () => {
             {/* Contact CTA Card - Mobile */}
             <div className="rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-6 shadow-xl">
               <div className="text-center mb-6">
-                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-4">
-                  <MessageSquare className="h-7 w-7 text-primary-foreground" />
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-4">
+                  <MessageSquare className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                  Get Started Today
+                  Request Information
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Take the first step towards recovery. Our team is here to help.
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="flex flex-col items-center space-y-3">
                 <Button 
                   size="lg" 
-                  className="w-full gap-2.5 h-13 text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                  className="px-8 gap-2 h-14 text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                   onClick={() => setRequestModalOpen(true)}
                 >
-                  <Sparkles className="h-5 w-5 animate-pulse" />
+                  <Sparkles className="h-4 w-4 animate-pulse" />
                   Get Started
                 </Button>
 
