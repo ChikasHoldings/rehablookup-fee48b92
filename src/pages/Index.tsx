@@ -30,7 +30,8 @@ import {
   Quote,
   BookOpen,
   Calendar,
-  Search
+  Search,
+  MapPin
 } from "lucide-react";
 
 const blogArticles = [
@@ -652,7 +653,7 @@ const Index = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 md:py-24 bg-gradient-to-b from-background to-muted/20">
+      <section className="py-20 md:py-24 bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
         <div className="container">
           {/* Section Header */}
           <div className="mb-14 text-center">
@@ -668,46 +669,67 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Testimonials Grid */}
+          {/* Testimonials Grid - Enhanced */}
           <div className="grid gap-8 md:grid-cols-3">
             {testimonials.map((testimonial, index) => (
               <div
                 key={testimonial.name}
-                className="group animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group animate-fade-in opacity-0"
+                style={{ animationDelay: `${200 + index * 150}ms`, animationFillMode: 'forwards' }}
               >
-                <div className="relative h-full rounded-2xl border border-border bg-card p-8 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
-                  {/* Large decorative quote */}
-                  <div className="absolute -top-4 left-6">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 shadow-lg ring-4 ring-background">
-                      <Quote className="h-5 w-5 text-accent-foreground" />
+                <div className="relative h-full rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-muted/30 p-8 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-accent/40">
+                  {/* Background glow on hover */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 via-transparent to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                  
+                  {/* Large decorative quote - Enhanced */}
+                  <div className="absolute -top-5 left-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-primary shadow-xl shadow-accent/30 ring-4 ring-background transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                      <Quote className="h-6 w-6 text-accent-foreground" />
                     </div>
                   </div>
                   
-                  {/* Rating */}
-                  <div className="mt-4 mb-5 flex gap-0.5">
+                  {/* Rating - Animated stars */}
+                  <div className="relative mt-5 mb-5 flex gap-1">
                     {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-accent text-accent" />
+                      <Star 
+                        key={i} 
+                        className="h-5 w-5 fill-accent text-accent transition-all duration-300 hover:scale-125"
+                        style={{ 
+                          animationDelay: `${400 + index * 150 + i * 100}ms`,
+                        }}
+                      />
                     ))}
                   </div>
                   
-                  {/* Quote */}
-                  <blockquote className="mb-6">
-                    <p className="text-foreground leading-relaxed italic">
-                      "{testimonial.quote}"
+                  {/* Quote - Enhanced typography */}
+                  <blockquote className="relative mb-6">
+                    <p className="text-foreground leading-relaxed text-[15px]">
+                      <span className="text-accent/60 text-xl leading-none">"</span>
+                      {testimonial.quote}
+                      <span className="text-accent/60 text-xl leading-none">"</span>
                     </p>
                   </blockquote>
                   
-                  {/* Author */}
-                  <div className="flex items-center gap-3 pt-4 border-t border-border">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                      {testimonial.name.charAt(0)}
+                  {/* Author - Enhanced */}
+                  <div className="relative flex items-center gap-4 pt-5 border-t border-border/50">
+                    <div className="relative">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 text-base font-bold text-primary ring-2 ring-primary/20 transition-all duration-300 group-hover:ring-primary/40">
+                        {testimonial.name.charAt(0)}
+                      </div>
+                      {/* Online indicator */}
+                      <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-background" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.location}</p>
+                      <p className="font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">{testimonial.name}</p>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {testimonial.location}
+                      </p>
                     </div>
                   </div>
+                  
+                  {/* Decorative corner accent */}
+                  <div className="absolute bottom-0 right-0 h-20 w-20 rounded-tl-3xl bg-gradient-to-tl from-accent/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 </div>
               </div>
             ))}
