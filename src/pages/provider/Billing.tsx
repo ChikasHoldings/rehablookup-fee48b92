@@ -510,86 +510,97 @@ export default function ProviderBillingPage() {
 
       {/* Promo Code Section - Only show for non-featured plans */}
       {currentPlan !== "featured" && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Have a Promo Code?</CardTitle>
-            </div>
-            <CardDescription>
-              Enter your promotional code to get a discount on your subscription
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Input
-                  placeholder="Enter promo code"
-                  value={promoCode}
-                  onChange={(e) => handlePromoCodeChange(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && promoCode.trim() && !promoValidating) {
-                      validatePromoCode();
-                    }
-                  }}
-                  className={`uppercase pr-10 ${
-                    promoValidation.isValid === true 
-                      ? "border-emerald-500 focus-visible:ring-emerald-500" 
-                      : promoValidation.isValid === false 
-                        ? "border-red-500 focus-visible:ring-red-500"
-                        : ""
-                  }`}
-                  disabled={promoValidating}
-                />
-                {promoCode && !promoValidating && (
-                  <button
+        <Collapsible defaultOpen={false}>
+          <Card className="overflow-hidden">
+            <CollapsibleTrigger asChild>
+              <CardHeader className="border-b border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors group">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-5 w-5 text-primary" />
+                    <div>
+                      <CardTitle className="text-lg">Have a Promo Code?</CardTitle>
+                      <CardDescription>
+                        Enter your promotional code to get a discount on your subscription
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Input
+                      placeholder="Enter promo code"
+                      value={promoCode}
+                      onChange={(e) => handlePromoCodeChange(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && promoCode.trim() && !promoValidating) {
+                          validatePromoCode();
+                        }
+                      }}
+                      className={`uppercase pr-10 ${
+                        promoValidation.isValid === true 
+                          ? "border-emerald-500 focus-visible:ring-emerald-500" 
+                          : promoValidation.isValid === false 
+                            ? "border-red-500 focus-visible:ring-red-500"
+                            : ""
+                      }`}
+                      disabled={promoValidating}
+                    />
+                    {promoCode && !promoValidating && (
+                      <button
+                        type="button"
+                        onClick={clearPromoCode}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <Button
                     type="button"
-                    onClick={clearPromoCode}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    variant="outline"
+                    onClick={validatePromoCode}
+                    disabled={!promoCode.trim() || promoValidating || promoValidation.isValid === true}
                   >
-                    <X className="h-4 w-4" />
-                  </button>
+                    {promoValidating ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : promoValidation.isValid === true ? (
+                      <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-500" />
+                    ) : null}
+                    {promoValidating ? "Validating..." : promoValidation.isValid === true ? "Applied" : "Apply"}
+                  </Button>
+                </div>
+                
+                {/* Validation feedback */}
+                {promoValidation.isValid === true && (
+                  <div className="flex items-center gap-2 mt-3 text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span className="text-sm font-medium">
+                      {promoValidation.message}
+                      {promoValidation.discount && ` - ${promoValidation.discount}`}
+                    </span>
+                  </div>
                 )}
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={validatePromoCode}
-                disabled={!promoCode.trim() || promoValidating || promoValidation.isValid === true}
-              >
-                {promoValidating ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : promoValidation.isValid === true ? (
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-500" />
-                ) : null}
-                {promoValidating ? "Validating..." : promoValidation.isValid === true ? "Applied" : "Apply"}
-              </Button>
-            </div>
-            
-            {/* Validation feedback */}
-            {promoValidation.isValid === true && (
-              <div className="flex items-center gap-2 mt-3 text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
-                <CheckCircle2 className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  {promoValidation.message}
-                  {promoValidation.discount && ` - ${promoValidation.discount}`}
-                </span>
-              </div>
-            )}
-            {promoValidation.isValid === false && (
-              <div className="flex items-center gap-2 mt-3 text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-                <XCircle className="h-4 w-4" />
-                <span className="text-sm">{promoValidation.message}</span>
-              </div>
-            )}
-            
-            {promoCode && promoValidation.isValid === null && !promoValidating && (
-              <p className="text-sm text-muted-foreground mt-3">
-                Click "Apply" to validate your promo code
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                {promoValidation.isValid === false && (
+                  <div className="flex items-center gap-2 mt-3 text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                    <XCircle className="h-4 w-4" />
+                    <span className="text-sm">{promoValidation.message}</span>
+                  </div>
+                )}
+                
+                {promoCode && promoValidation.isValid === null && !promoValidating && (
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Click "Apply" to validate your promo code
+                  </p>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       )}
 
       {/* Plans Grid */}
