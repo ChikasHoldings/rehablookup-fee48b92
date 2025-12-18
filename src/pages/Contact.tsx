@@ -114,7 +114,7 @@ const Contact = () => {
             Contact Us
           </h1>
           <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-xl">
-            Have questions about finding treatment? We're here to help 24/7.
+            Have questions about finding treatment? We're here to help.
           </p>
         </div>
       </section>
