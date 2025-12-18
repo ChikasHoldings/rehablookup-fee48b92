@@ -8,8 +8,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Featured plan product ID
-const FEATURED_PRODUCT_ID = "prod_TbalOeJZA2ZoJl";
+// Featured plan product IDs - support both old and new IDs
+const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"];
 const DEFAULT_MAX_HOMEPAGE_FEATURED = 6;
 
 const logStep = (step: string, details?: unknown) => {
@@ -308,7 +308,7 @@ serve(async (req) => {
           const subscription = subscriptions.data[0];
           const productId = subscription.items.data[0].price.product as string;
 
-          if (productId === FEATURED_PRODUCT_ID) {
+          if (FEATURED_PRODUCT_IDS.includes(productId)) {
             // Get facility name
             const { data: facilityData } = await supabaseClient
               .from("facilities")
