@@ -7,6 +7,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-recovery.jpg";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
@@ -126,7 +127,7 @@ const trustBadges = [
 ];
 
 const Index = () => {
-  const { data: approvedFacilities = [] } = useApprovedFacilities();
+  const { data: approvedFacilities = [], isLoading: isFacilitiesLoading } = useApprovedFacilities();
   
   // Get homepage featured centers (max 6, with rotation from backend)
   const featuredCenters = useMemo(() => {
@@ -350,17 +351,21 @@ const Index = () => {
           </div>
 
           {/* Cards Grid - Up to 6 featured centers */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredCenters.map((center, index) => (
-              <div 
-                key={center.id} 
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <TreatmentCenterCard center={center} featured />
-              </div>
-            ))}
-          </div>
+          {isFacilitiesLoading ? (
+            <FeaturedCentersLoading />
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredCenters.map((center, index) => (
+                <div 
+                  key={center.id} 
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <TreatmentCenterCard center={center} featured />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* View All Link */}
           <div className="mt-12 text-center">
