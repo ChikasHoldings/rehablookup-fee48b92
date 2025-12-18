@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Mail,
-  MapPin,
   Clock,
   Send,
   CheckCircle,
@@ -18,7 +17,6 @@ import {
   Heart,
   Globe,
   Headphones,
-  Building2,
 } from "lucide-react";
 
 const contactMethods = [
@@ -318,84 +316,8 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* Map and Info */}
+            {/* Info Cards */}
             <div className="order-1 lg:order-2 space-y-6 animate-fade-in">
-              {/* US Map Section */}
-              <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-elevated">
-                <div className="relative h-72 md:h-80 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/10 flex items-center justify-center p-8">
-                  {/* US Map SVG */}
-                  <div className="relative w-full max-w-md">
-                    <svg
-                      viewBox="0 0 959 593"
-                      className="w-full h-auto opacity-90"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      {/* Simplified US Map outline */}
-                      <path
-                        d="M158 494l2-10 6-2 4 1 3 4 8 2 6-2 6 1 3 3 3-1 4-5 5-2 10 2 6-1 3-4 6-2 9 1 4 4 5-1 3-5 6-2 10 3 4-2 4-8 7-4 8 1 5 5 3-1 4-7 8-3 10 2 3 4 5-2 5-7 6-2 7 3 4 5 2-2 6-9 5-3 11 1 5 4 2 7-1 5-6 5-3 8v6l-2 9 3 7 5-1 7-8 3 1 1 7-3 8-1 10 3 5 6-2 3-6 5-3 8 2 4 6 3 9-1 6-4 5-9 3-4 4-1 8 3 6 7 2 4 5v8l-4 7-8 6-3 8 2 9 5 4 4-1 6-6 4 1v6l-5 8-1 6 3 4 10 2 5 5 1 8-3 8-7 5-4 7 1 7 5 4 8-2 5-6 5-1 3 4-2 9-6 8-2 8 2 6 7 3 6-1 4-5 5-1 4 3 2 7-3 7-7 5-4 8v8l4 6 8 2 5 5 1 9-4 8-9 6-4 8v9l4 7 9 3 5 5 1 10-5 8-9 5-5 9v10l4 8 10 4 6 6 2 10-4 9-10 6-6 9-1 11 4 9 11 5 7 8-158 1v-60l-5-6-3-8 2-6 5-3 1-4-3-5-1-7 4-5 1-5-4-4v-6l5-5 3-7-1-5-4-3-1-8 2-5 6-4 2-7-2-6-5-3-2-6 1-7 5-5 3-8-1-7-5-4-3-7 1-6 5-4 2-7-1-6-5-4-2-7 1-7 6-5 3-8-1-7-6-5-3-7 1-7 5-5 3-8v-7l-5-6-4-8 1-7 5-5 2-7-1-7-6-5-3-8z"
-                        className="fill-primary/20 stroke-primary/40"
-                        strokeWidth="2"
-                      />
-                      {/* Location dots representing coverage */}
-                      <circle cx="180" cy="450" r="6" className="fill-accent animate-pulse" />
-                      <circle cx="280" cy="380" r="6" className="fill-accent animate-pulse" style={{ animationDelay: "0.2s" }} />
-                      <circle cx="420" cy="320" r="6" className="fill-accent animate-pulse" style={{ animationDelay: "0.4s" }} />
-                      <circle cx="550" cy="280" r="6" className="fill-accent animate-pulse" style={{ animationDelay: "0.6s" }} />
-                      <circle cx="680" cy="240" r="6" className="fill-accent animate-pulse" style={{ animationDelay: "0.8s" }} />
-                      <circle cx="780" cy="200" r="6" className="fill-accent animate-pulse" style={{ animationDelay: "1s" }} />
-                      <circle cx="850" cy="280" r="6" className="fill-accent animate-pulse" style={{ animationDelay: "1.2s" }} />
-                      <circle cx="620" cy="420" r="6" className="fill-accent animate-pulse" style={{ animationDelay: "1.4s" }} />
-                      <circle cx="480" cy="480" r="6" className="fill-accent animate-pulse" style={{ animationDelay: "1.6s" }} />
-                      <circle cx="350" cy="520" r="6" className="fill-accent animate-pulse" style={{ animationDelay: "1.8s" }} />
-                    </svg>
-                    
-                    {/* Overlay badge */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <div className="bg-card/95 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-xl border border-accent/20 text-center">
-                        <div className="text-3xl font-display font-bold text-accent">50</div>
-                        <div className="text-sm font-medium text-muted-foreground">States Covered</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-card/50 via-transparent to-transparent pointer-events-none" />
-                </div>
-                
-                <div className="p-6 bg-gradient-to-r from-primary/5 to-accent/5">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg">
-                      <Globe className="h-7 w-7 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-display text-xl font-bold text-foreground mb-1">
-                        Nationwide Coverage
-                      </h3>
-                      <p className="text-muted-foreground text-sm leading-relaxed">
-                        Our comprehensive directory connects families with treatment centers across all 50 states, ensuring help is always within reach.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Stats row */}
-                  <div className="mt-5 pt-5 border-t border-border/50 grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-display font-bold text-foreground">500+</div>
-                      <div className="text-xs text-muted-foreground">Treatment Centers</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-display font-bold text-foreground">24/7</div>
-                      <div className="text-xs text-muted-foreground">Directory Access</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-display font-bold text-accent">Free</div>
-                      <div className="text-xs text-muted-foreground">To Search</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Quick Help Card */}
               <div className="rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/5 to-accent/10 p-6 relative overflow-hidden">
                 {/* Decorative element */}
