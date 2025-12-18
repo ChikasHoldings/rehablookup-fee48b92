@@ -39,6 +39,7 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { OnboardingChecklist } from "@/components/provider/OnboardingChecklist";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
+import { BasicPlanUpgradeBanner } from "@/components/provider/BasicPlanUpgradeBanner";
 
 interface Lead {
   id: string;
@@ -277,6 +278,11 @@ export default function ProviderDashboardPage() {
       {/* Lead Limit Banners */}
       <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
       <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
+
+      {/* Basic Plan Upgrade Banner - show when no leads waiting banner */}
+      {planKey === "basic" && totalLeadsCount === 0 && (
+        <BasicPlanUpgradeBanner />
+      )}
 
       {/* Basic Plan Contact Hidden Warning */}
       {planKey === "basic" && !contactWarningDismissed && (
