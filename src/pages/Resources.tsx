@@ -324,11 +324,11 @@ const ArticleCard = memo(function ArticleCard({
         className="group animate-fade-in block h-full"
         style={{ animationDelay: `${index * 100}ms` }}
       >
-        <article className="relative h-full rounded-2xl border border-border bg-card shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 hover:border-primary/30">
+        <article className="relative h-full rounded-2xl bg-card overflow-hidden transition-all duration-500 hover:-translate-y-2 shadow-[0_4px_20px_-4px_hsl(var(--foreground)/0.1)] hover:shadow-[0_20px_40px_-12px_hsl(var(--primary)/0.25)] border border-border/50 hover:border-primary/40">
           {/* Featured Badge */}
           <div className="absolute top-4 left-4 z-10">
-            <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg px-3 py-1.5">
-              <Sparkles className="h-3.5 w-3.5" />
+            <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 shadow-lg px-3 py-1.5 backdrop-blur-sm">
+              <Sparkles className="h-3.5 w-3.5 animate-pulse" />
               Featured
             </Badge>
           </div>
@@ -338,15 +338,15 @@ const ArticleCard = memo(function ArticleCard({
             <img
               src={article.image}
               alt={article.title}
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+              className="h-full w-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
               loading="lazy"
               decoding="async"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent transition-opacity duration-300 group-hover:opacity-80" />
             
             {/* Category on image */}
             <div className="absolute bottom-4 left-4 right-4">
-              <span className={`inline-flex items-center gap-2 rounded-full ${categoryColor} px-3 py-1.5 text-xs font-semibold text-white shadow-lg`}>
+              <span className={`inline-flex items-center gap-2 rounded-full ${categoryColor} px-3 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur-sm transition-transform duration-300 group-hover:scale-105`}>
                 <BookOpen className="h-3.5 w-3.5" />
                 {article.categoryLabel}
               </span>
@@ -354,20 +354,23 @@ const ArticleCard = memo(function ArticleCard({
           </div>
           
           {/* Content */}
-          <div className="p-6">
+          <div className="p-6 relative">
+            {/* Subtle accent line */}
+            <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            
             <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
               {article.readTime}
             </div>
-            <h3 className="mb-3 font-display text-xl font-bold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+            <h3 className="mb-3 font-display text-xl font-bold text-foreground leading-snug group-hover:text-primary transition-colors duration-300 line-clamp-2">
               {article.title}
             </h3>
             <p className="mb-5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
               {article.excerpt}
             </p>
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+            <div className="flex items-center gap-2 text-sm font-semibold text-primary group-hover:gap-3 transition-all duration-300">
               Read article
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </div>
           </div>
         </article>
@@ -381,23 +384,29 @@ const ArticleCard = memo(function ArticleCard({
       className="group animate-fade-in block h-full"
       style={{ animationDelay: `${index * 40}ms` }}
     >
-      <article className="h-full rounded-xl border border-border bg-card shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/20">
+      <article className="h-full rounded-xl bg-card overflow-hidden transition-all duration-400 hover:-translate-y-1.5 shadow-[0_2px_12px_-3px_hsl(var(--foreground)/0.08)] hover:shadow-[0_12px_28px_-8px_hsl(var(--primary)/0.2)] border border-border/40 hover:border-primary/30 relative">
+        {/* Hover glow effect */}
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        
         {/* Image */}
         <div className="relative h-44 overflow-hidden">
           <img
             src={article.image}
             alt={article.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-all duration-600 group-hover:scale-108 group-hover:brightness-105"
             loading="lazy"
             decoding="async"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent transition-opacity duration-300" />
+          
+          {/* Animated overlay on hover */}
+          <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         </div>
         
         {/* Content */}
-        <div className="p-5">
+        <div className="p-5 relative">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <span className={`inline-flex items-center gap-1.5 rounded-full ${categoryColor} px-2.5 py-1 text-[11px] font-semibold text-white`}>
+            <span className={`inline-flex items-center gap-1.5 rounded-full ${categoryColor} px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:scale-105`}>
               {article.categoryLabel}
             </span>
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -405,15 +414,20 @@ const ArticleCard = memo(function ArticleCard({
               {article.readTime}
             </span>
           </div>
-          <h3 className="mb-2 font-display text-base font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+          <h3 className="mb-2.5 font-display text-base font-semibold text-foreground leading-snug group-hover:text-primary transition-colors duration-300 line-clamp-2">
             {article.title}
           </h3>
-          <p className="mb-4 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+          <p className="mb-4 text-sm text-muted-foreground leading-relaxed line-clamp-2 transition-colors duration-300 group-hover:text-muted-foreground/80">
             {article.excerpt}
           </p>
-          <div className="flex items-center gap-1.5 text-sm font-medium text-primary">
-            Read more
-            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+          
+          {/* Enhanced read more link */}
+          <div className="flex items-center gap-1.5 text-sm font-medium text-primary transition-all duration-300 group-hover:gap-2.5">
+            <span className="relative">
+              Read more
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary/50 group-hover:w-full transition-all duration-300" />
+            </span>
+            <ArrowRight className="h-3.5 w-3.5 transition-all duration-300 group-hover:translate-x-1" />
           </div>
         </div>
       </article>
