@@ -16,7 +16,35 @@ import {
   ArrowRight,
   Users,
   Heart,
+  Globe,
+  Headphones,
+  Building2,
 } from "lucide-react";
+
+const contactMethods = [
+  {
+    icon: Mail,
+    title: "Email Support",
+    value: "help@rehablookup.com",
+    description: "Response within 1-2 business days",
+    href: "mailto:help@rehablookup.com",
+    gradient: "from-blue-500 to-cyan-500",
+  },
+  {
+    icon: Clock,
+    title: "Business Hours",
+    value: "Mon-Fri 9am-5pm EST",
+    description: "Email support during business hours",
+    gradient: "from-violet-500 to-purple-500",
+  },
+  {
+    icon: Globe,
+    title: "Service Coverage",
+    value: "All 50 States",
+    description: "Nationwide treatment directory",
+    gradient: "from-emerald-500 to-teal-500",
+  },
+];
 
 const Contact = () => {
   const { toast } = useToast();
@@ -68,17 +96,24 @@ const Contact = () => {
           { name: "Contact", url: "/contact" },
         ]}
       />
-      {/* Hero - Navy background */}
-      <section className="bg-primary py-12 px-4 md:py-16 md:px-6">
-        <div className="container text-center">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 md:px-4 md:py-1.5 md:mb-4">
-            <MessageSquare className="h-5 w-5 text-accent md:h-4 md:w-4" />
-            <span className="text-base font-medium text-primary-foreground md:text-sm">Get In Touch</span>
+      
+      {/* Hero - Navy background with decorative elements */}
+      <section className="bg-primary py-16 px-4 md:py-20 md:px-6 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
+        </div>
+        
+        <div className="container text-center relative">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 backdrop-blur-sm border border-white/10">
+            <MessageSquare className="h-5 w-5 text-accent" />
+            <span className="text-base font-medium text-primary-foreground">Get In Touch</span>
           </div>
-          <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl md:mb-3">
+          <h1 className="mb-5 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
             Contact Us
           </h1>
-          <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-base">
+          <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-xl">
             Have questions about finding treatment? We're here to help 24/7.
           </p>
         </div>
@@ -87,13 +122,13 @@ const Contact = () => {
       {/* Trust Bar */}
       <section className="border-b border-border bg-card py-5 px-4 md:py-4 md:px-6">
         <div className="container">
-          <div className="flex flex-wrap items-center justify-center gap-5 text-base md:gap-10 md:text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-base md:gap-12 md:text-sm">
             <div className="flex items-center gap-2.5 text-muted-foreground md:gap-2">
               <Shield className="h-5 w-5 text-accent md:h-4 md:w-4" />
               <span>Confidential</span>
             </div>
             <div className="flex items-center gap-2.5 text-muted-foreground md:gap-2">
-              <Clock className="h-5 w-5 text-accent md:h-4 md:w-4" />
+              <Headphones className="h-5 w-5 text-accent md:h-4 md:w-4" />
               <span>24/7 Available</span>
             </div>
             <div className="flex items-center gap-2.5 text-muted-foreground md:gap-2">
@@ -104,234 +139,326 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="py-10 px-4 md:py-16 md:px-6">
+      {/* Contact Methods Cards */}
+      <section className="py-12 px-4 md:py-16 md:px-6 bg-gradient-to-b from-background to-muted/30">
         <div className="container">
-          <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-            {/* Contact Info */}
-            <div className="animate-fade-in">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-5 py-2 md:px-4 md:py-1.5 md:mb-4">
-                <Mail className="h-5 w-5 text-accent md:h-4 md:w-4" />
-                <span className="text-base font-medium text-accent md:text-sm">Contact Information</span>
+          <div className="grid gap-5 md:grid-cols-3 max-w-4xl mx-auto">
+            {contactMethods.map((method, index) => (
+              <div
+                key={method.title}
+                className="group relative animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {method.href ? (
+                  <a 
+                    href={method.href}
+                    className="block h-full rounded-2xl bg-gradient-to-br from-accent/5 to-accent/10 p-1 hover:scale-[1.02] transition-transform duration-300"
+                  >
+                    <div className="h-full rounded-[14px] bg-card p-6 border border-border/50 text-center">
+                      <div className={`mb-4 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${method.gradient} shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
+                        <method.icon className="h-7 w-7 text-white" />
+                      </div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">{method.title}</h3>
+                      <p className="font-display text-lg font-bold text-foreground mb-1">{method.value}</p>
+                      <p className="text-xs text-muted-foreground">{method.description}</p>
+                    </div>
+                  </a>
+                ) : (
+                  <div className="h-full rounded-2xl bg-gradient-to-br from-accent/5 to-accent/10 p-1">
+                    <div className="h-full rounded-[14px] bg-card p-6 border border-border/50 text-center">
+                      <div className={`mb-4 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${method.gradient} shadow-lg`}>
+                        <method.icon className="h-7 w-7 text-white" />
+                      </div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">{method.title}</h3>
+                      <p className="font-display text-lg font-bold text-foreground mb-1">{method.value}</p>
+                      <p className="text-xs text-muted-foreground">{method.description}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <h2 className="mb-5 font-display text-2xl font-bold text-foreground md:text-2xl">
-                Get in Touch
-              </h2>
-              <p className="mb-6 text-base text-muted-foreground leading-relaxed md:text-base">
-                Whether you have questions about our directory, need assistance finding 
-                treatment, or want to list a facility, we're here to help.
-              </p>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              <div className="space-y-4 md:space-y-5">
-                <a 
-                  href="mailto:help@rehablookup.com"
-                  className="group flex items-start gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:border-accent/30 hover:shadow-card active:scale-[0.98] md:rounded-xl md:p-4"
-                >
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10 transition-colors group-hover:bg-accent/20 md:h-12 md:w-12 md:rounded-xl">
-                    <Mail className="h-6 w-6 text-accent md:h-5 md:w-5" />
+      {/* Main Contact Section */}
+      <section className="py-12 px-4 md:py-20 md:px-6">
+        <div className="container">
+          <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 max-w-6xl mx-auto">
+            {/* Contact Form */}
+            <div className="order-2 lg:order-1 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              <div className="rounded-3xl border border-border bg-card p-8 md:p-10 shadow-elevated relative overflow-hidden">
+                {/* Decorative corner */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-accent/10 to-transparent rounded-bl-full" />
+                
+                <div className="relative">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/80 shadow-lg">
+                      <Send className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-xl font-bold text-foreground">
+                        Send Us a Message
+                      </h3>
+                      <p className="text-sm text-muted-foreground">We'll respond within 1-2 business days</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="mb-1 text-lg font-semibold text-foreground md:text-base">Email</h3>
-                    <p className="text-base text-primary font-medium md:text-sm">
-                      help@rehablookup.com
-                    </p>
-                    <p className="mt-1.5 text-sm text-muted-foreground md:mt-1 md:text-xs">
-                      Response within 1-2 business days
-                    </p>
-                  </div>
-                </a>
 
-                <div className="group flex items-start gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:border-accent/30 hover:shadow-card md:rounded-xl md:p-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10 transition-colors group-hover:bg-accent/20 md:h-12 md:w-12 md:rounded-xl">
-                    <Clock className="h-6 w-6 text-accent md:h-5 md:w-5" />
-                  </div>
-                  <div>
-                    <h3 className="mb-1 text-lg font-semibold text-foreground md:text-base">Hours</h3>
-                    <p className="text-base text-muted-foreground md:text-sm">
-                      Email support: <span className="text-foreground font-medium">Mon-Fri 9am-5pm EST</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="group flex items-start gap-4 rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:border-accent/30 hover:shadow-card md:rounded-xl md:p-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10 transition-colors group-hover:bg-accent/20 md:h-12 md:w-12 md:rounded-xl">
-                    <MapPin className="h-6 w-6 text-accent md:h-5 md:w-5" />
-                  </div>
-                  <div>
-                    <h3 className="mb-1 text-lg font-semibold text-foreground md:text-base">Service Area</h3>
-                    <p className="text-base text-muted-foreground md:text-sm">
-                      Nationwide coverage across all <span className="text-foreground font-medium">50 states</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Note */}
-              <div className="mt-6 rounded-2xl border border-accent/30 bg-accent/5 p-5 animate-fade-in md:rounded-xl" style={{ animationDelay: "0.2s" }}>
-                <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent/15 md:h-10 md:w-10">
-                    <MessageSquare className="h-6 w-6 text-accent md:h-5 md:w-5" />
-                  </div>
-                  <div>
-                    <h4 className="mb-2 text-lg font-semibold text-foreground md:text-base md:mb-1">
-                      Looking for Treatment Help?
-                    </h4>
-                    <p className="text-base text-muted-foreground leading-relaxed md:text-sm">
-                      For immediate treatment assistance,{" "}
-                      <Link to="/request-help?source=contact_sidebar" className="text-primary font-medium hover:underline">
-                        request help
+                  {isSubmitted ? (
+                    <div className="py-12 text-center">
+                      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20">
+                        <CheckCircle className="h-10 w-10 text-emerald-500" />
+                      </div>
+                      <h4 className="mb-3 font-display text-2xl font-bold text-foreground">
+                        Message Received!
+                      </h4>
+                      <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
+                        Thank you for contacting us. We'll respond within 1-2 business days.
+                      </p>
+                      <Link to="/rehab-centers">
+                        <Button variant="outline" className="gap-2 h-12 px-6">
+                          Find Treatment Centers
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
                       </Link>
-                      {" "}or visit our{" "}
-                      <Link to="/rehab-centers" className="text-primary font-medium hover:underline">
-                        treatment center search
-                      </Link>
-                      .
-                    </p>
-                  </div>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                      <div className="grid gap-5 md:grid-cols-2">
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-foreground">
+                            Full Name <span className="text-destructive">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={formData.name}
+                            onChange={(e) =>
+                              setFormData({ ...formData, name: e.target.value })
+                            }
+                            placeholder="Your name"
+                            className="h-12 w-full rounded-xl border border-input bg-background px-4 text-base text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all duration-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-foreground">
+                            Email Address <span className="text-destructive">*</span>
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(e) =>
+                              setFormData({ ...formData, email: e.target.value })
+                            }
+                            placeholder="you@example.com"
+                            className="h-12 w-full rounded-xl border border-input bg-background px-4 text-base text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all duration-200"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-foreground">
+                          Subject <span className="text-destructive">*</span>
+                        </label>
+                        <select
+                          required
+                          value={formData.subject}
+                          onChange={(e) =>
+                            setFormData({ ...formData, subject: e.target.value })
+                          }
+                          className="h-12 w-full appearance-none rounded-xl border border-input bg-background px-4 text-base text-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all duration-200"
+                        >
+                          <option value="">Select a subject</option>
+                          <option value="general">General Inquiry</option>
+                          <option value="listing">Facility Listing</option>
+                          <option value="feedback">Feedback</option>
+                          <option value="technical">Technical Issue</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-foreground">
+                          Message <span className="text-destructive">*</span>
+                        </label>
+                        <textarea
+                          required
+                          value={formData.message}
+                          onChange={(e) =>
+                            setFormData({ ...formData, message: e.target.value })
+                          }
+                          placeholder="How can we help you?"
+                          rows={5}
+                          className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all duration-200"
+                        />
+                      </div>
+
+                      <Button
+                        type="submit"
+                        size="lg"
+                        className="w-full gap-2 h-14 text-base font-semibold bg-gradient-to-r from-accent to-accent/90 hover:from-accent/95 hover:to-accent/85 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-5 w-5" />
+                            Send Message
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Contact Form */}
-            <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-card animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              <h3 className="mb-6 font-display text-xl font-semibold text-foreground">
-                Send Us a Message
-              </h3>
-
-              {isSubmitted ? (
-                <div className="py-12 text-center">
-                  <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-accent/10 md:h-16 md:w-16 md:mb-4">
-                    <CheckCircle className="h-10 w-10 text-accent md:h-8 md:w-8" />
+            {/* Map and Info */}
+            <div className="order-1 lg:order-2 space-y-6 animate-fade-in">
+              {/* Map Placeholder */}
+              <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-elevated">
+                <div className="relative h-64 md:h-72 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/10">
+                  {/* Stylized map placeholder */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="relative">
+                      {/* Map dots pattern */}
+                      <div className="absolute -inset-20 opacity-30">
+                        {[...Array(20)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="absolute w-2 h-2 rounded-full bg-primary/40"
+                            style={{
+                              left: `${Math.random() * 100}%`,
+                              top: `${Math.random() * 100}%`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      
+                      {/* Center marker */}
+                      <div className="relative z-10 flex flex-col items-center">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 shadow-xl animate-pulse">
+                          <MapPin className="h-8 w-8 text-white" />
+                        </div>
+                        <div className="mt-2 w-4 h-4 bg-accent/30 rounded-full blur-sm" />
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="mb-3 font-display text-2xl font-semibold text-foreground md:text-xl md:mb-2">
-                    Message Received
-                  </h4>
-                  <p className="text-base text-muted-foreground mb-8 md:text-base md:mb-6">
-                    Thank you for contacting us. We'll respond within 1-2 business days.
-                  </p>
-                  <Link to="/rehab-centers" className="block md:inline-block">
-                    <Button variant="outline" className="w-full h-14 gap-2 text-base font-semibold md:w-auto md:h-auto">
-                      Find Treatment Centers
-                      <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
-                    </Button>
-                  </Link>
+                  
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
                 </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div>
-                    <label className="mb-2.5 block text-base font-medium text-foreground md:text-sm md:mb-2">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      placeholder="Your name"
-                      className="h-14 w-full rounded-xl border border-input bg-background px-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors md:h-11 md:text-sm"
-                    />
+                
+                <div className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg">
+                      <Building2 className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-lg font-bold text-foreground mb-1">
+                        Nationwide Service
+                      </h3>
+                      <p className="text-muted-foreground text-sm">
+                        Our directory covers treatment centers across all 50 states, helping families find care wherever they are.
+                      </p>
+                    </div>
                   </div>
+                </div>
+              </div>
 
-                  <div>
-                    <label className="mb-2.5 block text-base font-medium text-foreground md:text-sm md:mb-2">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      placeholder="you@example.com"
-                      className="h-14 w-full rounded-xl border border-input bg-background px-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors md:h-11 md:text-sm"
-                    />
+              {/* Quick Help Card */}
+              <div className="rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/5 to-accent/10 p-6 relative overflow-hidden">
+                {/* Decorative element */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl" />
+                
+                <div className="relative flex flex-col gap-4 md:flex-row md:items-start">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent/80 shadow-lg">
+                    <Heart className="h-7 w-7 text-white" />
                   </div>
-
                   <div>
-                    <label className="mb-2.5 block text-base font-medium text-foreground md:text-sm md:mb-2">
-                      Subject *
-                    </label>
-                    <select
-                      required
-                      value={formData.subject}
-                      onChange={(e) =>
-                        setFormData({ ...formData, subject: e.target.value })
-                      }
-                      className="h-14 w-full appearance-none rounded-xl border border-input bg-background px-4 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors md:h-11 md:text-sm"
-                    >
-                      <option value="">Select a subject</option>
-                      <option value="general">General Inquiry</option>
-                      <option value="listing">Facility Listing</option>
-                      <option value="feedback">Feedback</option>
-                      <option value="technical">Technical Issue</option>
-                      <option value="other">Other</option>
-                    </select>
+                    <h4 className="mb-2 font-display text-lg font-bold text-foreground">
+                      Looking for Treatment Help?
+                    </h4>
+                    <p className="text-muted-foreground leading-relaxed mb-4">
+                      For immediate treatment assistance, our specialists are ready to help you find the right care.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Link to="/request-help?source=contact_sidebar">
+                        <Button size="sm" className="gap-2 h-10">
+                          <Heart className="h-4 w-4" />
+                          Request Help
+                        </Button>
+                      </Link>
+                      <Link to="/rehab-centers">
+                        <Button variant="outline" size="sm" className="gap-2 h-10">
+                          Search Centers
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
+                </div>
+              </div>
 
+              {/* FAQ Teaser */}
+              <div className="rounded-2xl border border-border bg-card p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+                    <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                  </div>
                   <div>
-                    <label className="mb-2.5 block text-base font-medium text-foreground md:text-sm md:mb-2">
-                      Message *
-                    </label>
-                    <textarea
-                      required
-                      value={formData.message}
-                      onChange={(e) =>
-                        setFormData({ ...formData, message: e.target.value })
-                      }
-                      placeholder="How can we help you?"
-                      rows={4}
-                      className="w-full resize-none rounded-xl border border-input bg-background px-4 py-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors md:py-3 md:text-sm"
-                    />
+                    <h4 className="font-display text-base font-semibold text-foreground mb-1">
+                      Have Common Questions?
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Check our FAQ page for quick answers to frequently asked questions.
+                    </p>
+                    <Link to="/faq" className="text-sm font-medium text-accent hover:underline inline-flex items-center gap-1">
+                      Visit FAQ Page
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
                   </div>
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full gap-2 h-14 text-base font-semibold md:h-12"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent md:h-4 md:w-4" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-5 w-5 md:h-4 md:w-4" />
-                        Send Message
-                      </>
-                    )}
-                  </Button>
-                </form>
-              )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Banner */}
-      <section className="bg-primary py-12 px-4 md:py-16 md:px-6">
-        <div className="container text-center">
-          <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-2xl md:mb-3">
+      <section className="bg-primary py-16 px-4 md:py-20 md:px-6 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
+        </div>
+        
+        <div className="container text-center relative">
+          <div className="mb-6 inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-accent to-accent/80 shadow-xl mx-auto">
+            <Headphones className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
             Need Immediate Assistance?
           </h2>
-          <p className="mb-8 text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-base md:mb-6">
+          <p className="mb-8 text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed">
             Our specialists are available 24/7 to help you find the right treatment center.
           </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-3">
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
             <Link to="/request-help?source=contact_cta" className="w-full sm:w-auto">
-              <Button variant="hero-light" size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:h-auto">
-                <Heart className="h-5 w-5 md:h-4 md:w-4" />
+              <Button variant="hero-light" size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:px-8 hover:scale-105 hover:shadow-xl transition-all duration-200">
+                <Heart className="h-5 w-5" />
                 Request Help
               </Button>
             </Link>
             <Link to="/rehab-centers" className="w-full sm:w-auto">
-              <Button variant="hero-light" size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:h-auto">
+              <Button variant="hero-light" size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:px-8 hover:scale-105 transition-all duration-200">
                 Find Treatment Centers
-                <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
+                <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
           </div>
