@@ -1,7 +1,8 @@
+import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
-export function SearchResultCardSkeleton() {
+const SearchResultCardSkeleton: React.FC = () => {
   return (
     <Card className="overflow-hidden h-full">
       {/* Image skeleton */}
@@ -47,9 +48,9 @@ export function SearchResultCardSkeleton() {
       </CardContent>
     </Card>
   );
-}
+};
 
-export function SearchResultsLoading({ count = 9 }: { count?: number }) {
+const SearchResultsLoading: React.FC<{ count?: number }> = ({ count = 9 }) => {
   return (
     <div className="grid gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: count }).map((_, i) => (
@@ -57,4 +58,6 @@ export function SearchResultsLoading({ count = 9 }: { count?: number }) {
       ))}
     </div>
   );
-}
+};
+
+export { SearchResultCardSkeleton, SearchResultsLoading };
