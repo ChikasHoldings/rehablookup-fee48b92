@@ -46,6 +46,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { FacilityImageUpload } from "@/components/provider/FacilityImageUpload";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
 
 interface Facility {
   id: string;
@@ -70,6 +71,7 @@ interface Facility {
   featured: boolean;
   logo_url: string | null;
   gallery_urls: string[] | null;
+  year_established: number | null;
 }
 
 const facilityTypes = [
@@ -373,6 +375,7 @@ export default function ProviderListingPage() {
         bed_count: facility.bed_count,
         logo_url: facility.logo_url,
         gallery_urls: facility.gallery_urls,
+        year_established: facility.year_established,
       })
       .eq("id", facility.id);
 
@@ -487,6 +490,7 @@ export default function ProviderListingPage() {
         bed_count: facility.bed_count,
         logo_url: facility.logo_url,
         gallery_urls: facility.gallery_urls,
+        year_established: facility.year_established,
       })
       .eq("id", facility.id);
 
@@ -540,13 +544,13 @@ export default function ProviderListingPage() {
     }
   };
 
-  const updateField = (field: keyof Facility, value: string | null) => {
+  const updateField = (field: keyof Facility, value: string | number | null) => {
     if (facility) {
       setFacility({ ...facility, [field]: value });
       setHasChanges(true);
       
-      // Validate on change if field has been touched
-      if (touchedFields.has(field)) {
+      // Validate on change if field has been touched (only for string fields)
+      if (touchedFields.has(field) && typeof value === 'string') {
         const error = validateField(field, value);
         setFieldErrors(prev => ({ ...prev, [field]: error }));
       }
@@ -1548,6 +1552,13 @@ export default function ProviderListingPage() {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Trust & Credentials */}
+            <ProviderTrustForm
+              facilityId={facility.id}
+              yearEstablished={facility.year_established}
+              onYearChange={(year) => updateField("year_established", year)}
+            />
           </div>
 
           {/* Right Column - Sidebar (appears second on mobile, first position doesn't matter due to order) */}

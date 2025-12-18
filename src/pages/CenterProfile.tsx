@@ -32,6 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
+import { TrustBadgesInline, TrustBadgesSection } from "@/components/trust/TrustBadgesSection";
 
 interface FacilityData {
   id: string;
@@ -49,6 +50,8 @@ interface FacilityData {
   gender_served: string | null;
   bed_count: string | null;
   featured: boolean;
+  verified: boolean | null;
+  year_established: number | null;
   logo_url: string | null;
   gallery_urls: string[] | null;
   status: string;
@@ -57,6 +60,7 @@ interface FacilityData {
   facility_insurance: { insurance_name: string }[];
   facility_age_groups: { age_group: string }[];
   facility_credentials: { accreditations: string | null; licensing_info: string | null }[];
+  facility_accreditations: { accreditation_type: string; verified: boolean }[];
 }
 
 // Generate initials from facility name (first letters of first 2 words)
@@ -183,6 +187,8 @@ const CenterProfile = () => {
           gender_served,
           bed_count,
           featured,
+          verified,
+          year_established,
           logo_url,
           gallery_urls,
           status,
@@ -190,7 +196,8 @@ const CenterProfile = () => {
           facility_services (service_name),
           facility_insurance (insurance_name),
           facility_age_groups (age_group),
-          facility_credentials (accreditations, licensing_info)
+          facility_credentials (accreditations, licensing_info),
+          facility_accreditations (accreditation_type, verified)
         `)
         .eq("slug", slug)
         .eq("status", "approved")
@@ -218,6 +225,8 @@ const CenterProfile = () => {
             gender_served,
             bed_count,
             featured,
+            verified,
+            year_established,
             logo_url,
             gallery_urls,
             status,
@@ -225,7 +234,8 @@ const CenterProfile = () => {
             facility_services (service_name),
             facility_insurance (insurance_name),
             facility_age_groups (age_group),
-            facility_credentials (accreditations, licensing_info)
+            facility_credentials (accreditations, licensing_info),
+            facility_accreditations (accreditation_type, verified)
           `)
           .eq("slug", slug)
           .eq("user_id", currentUserId)
@@ -462,10 +472,12 @@ const CenterProfile = () => {
                         Featured
                       </Badge>
                     )}
-                    <Badge variant="secondary" className="gap-1.5 text-sm px-3 py-1.5 md:text-xs md:px-2 md:py-0.5">
-                      <BadgeCheck className="h-4 w-4 md:h-3 md:w-3" />
-                      Verified
-                    </Badge>
+                    <TrustBadgesInline 
+                      verified={facility.verified || false}
+                      yearEstablished={facility.year_established}
+                      accreditations={facility.facility_accreditations || []}
+                      size="md"
+                    />
                   </div>
                   
                   <h1 className="font-display text-xl font-bold text-foreground md:text-2xl leading-tight">

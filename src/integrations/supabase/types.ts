@@ -397,6 +397,7 @@ export type Database = {
           user_id: string
           verified: boolean | null
           website: string | null
+          year_established: number | null
           zip_code: string
         }
         Insert: {
@@ -433,6 +434,7 @@ export type Database = {
           user_id: string
           verified?: boolean | null
           website?: string | null
+          year_established?: number | null
           zip_code: string
         }
         Update: {
@@ -469,9 +471,58 @@ export type Database = {
           user_id?: string
           verified?: boolean | null
           website?: string | null
+          year_established?: number | null
           zip_code?: string
         }
         Relationships: []
+      }
+      facility_accreditations: {
+        Row: {
+          accreditation_type: string
+          created_at: string | null
+          expiry_date: string | null
+          facility_id: string
+          id: string
+          verified: boolean | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          accreditation_type: string
+          created_at?: string | null
+          expiry_date?: string | null
+          facility_id: string
+          id?: string
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          accreditation_type?: string
+          created_at?: string | null
+          expiry_date?: string | null
+          facility_id?: string
+          id?: string
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_accreditations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_accreditations_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       facility_age_groups: {
         Row: {
