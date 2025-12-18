@@ -18,7 +18,11 @@ import {
   BellOff,
   HelpCircle,
   User,
+  Crown,
+  Star,
+  Sparkles,
 } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,7 +85,36 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   const statusConfig = getStatusConfig(facilityStatus || "inactive");
   
   const { notifications, unreadCount, markAsRead, isLoading } = useProviderNotifications();
+  const { data: subscription } = useSubscription();
   const recentNotifications = notifications.slice(0, 5);
+
+  const getPlanBadgeConfig = (plan: string) => {
+    switch (plan) {
+      case "featured":
+        return {
+          label: "Featured",
+          icon: Crown,
+          bgClass: "bg-gradient-to-r from-amber-500 to-yellow-400",
+          textClass: "text-white",
+        };
+      case "professional":
+        return {
+          label: "Pro",
+          icon: Star,
+          bgClass: "bg-gradient-to-r from-emerald-500 to-teal-400",
+          textClass: "text-white",
+        };
+      default:
+        return {
+          label: "Basic",
+          icon: Sparkles,
+          bgClass: "bg-white/20",
+          textClass: "text-white/80",
+        };
+    }
+  };
+
+  const planConfig = getPlanBadgeConfig(subscription?.plan || "basic");
   
   const initials = userName
     ?.split(" ")
@@ -141,6 +174,17 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
         {/* Right - Actions */}
         <div className="flex items-center gap-1 sm:gap-1.5">
+          {/* Plan Badge */}
+          <Link 
+            to="/provider/billing"
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full ${planConfig.bgClass} border border-white/20 mr-1 lg:mr-2 transition-all duration-200 hover:scale-105 hover:shadow-lg`}
+          >
+            <planConfig.icon className={`h-3.5 w-3.5 ${planConfig.textClass}`} />
+            <span className={`text-xs font-bold ${planConfig.textClass}`}>
+              {planConfig.label}
+            </span>
+          </Link>
+
           {/* Status Indicator - Hidden on mobile, compact on tablet */}
           <div className="hidden md:flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 rounded-full bg-white/15 border border-white/20 mr-1 lg:mr-2">
             <span className={`h-2 w-2 rounded-full ${statusConfig.dotClass} animate-pulse`} />
