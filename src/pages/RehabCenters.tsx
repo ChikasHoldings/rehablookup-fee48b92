@@ -236,7 +236,7 @@ const RehabCenters = () => {
             <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Your Path to Recovery
             </h1>
-            <p className="mt-3 text-base text-white/80 md:text-lg">
+            <p className="mt-3 text-base text-white/80 md:text-lg whitespace-nowrap">
               {hasFilters ? (
                 <>
                   <span className="font-semibold text-white">{filteredCenters.length}</span> results
