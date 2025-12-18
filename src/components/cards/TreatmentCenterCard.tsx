@@ -1,12 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, ArrowRight, Crown, Calendar } from "lucide-react";
+import { MapPin, Phone, ArrowRight, Crown, Calendar, Building2, ShieldCheck } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { TrustBadge } from "@/components/trust/TrustBadge";
 
 interface TreatmentCenterCardProps {
   center: TreatmentCenter & { 
@@ -16,6 +15,7 @@ interface TreatmentCenterCardProps {
     hasFeaturedSubscription?: boolean;
     verified?: boolean | null;
     year_established?: number | null;
+    facilityType?: string | null;
   };
   featured?: boolean;
 }
@@ -42,6 +42,11 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
   
   // Show featured badge if they have a Featured subscription
   const showFeaturedBadge = center.hasFeaturedSubscription || featured;
+  
+  // Calculate years in business
+  const yearsInBusiness = center.year_established 
+    ? new Date().getFullYear() - center.year_established 
+    : null;
 
   // Track click for featured facilities
   const handleFeaturedClick = async () => {
@@ -59,97 +64,149 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
   return (
     <article
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-all duration-300",
-        "hover:shadow-2xl hover:-translate-y-1 active:scale-[0.98]",
+        "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-500",
+        "hover:shadow-2xl hover:-translate-y-1.5",
         showFeaturedBadge 
-          ? "border-accent/50 shadow-lg shadow-accent/10 ring-1 ring-accent/20 hover:ring-accent/40 hover:border-accent/60" 
-          : "border-border shadow-sm hover:border-primary/30 hover:shadow-primary/5"
+          ? "border-amber-200/60 shadow-xl shadow-amber-500/10 ring-1 ring-amber-400/30 hover:ring-amber-400/50 hover:border-amber-300/80 hover:shadow-amber-500/20" 
+          : "border-border/60 shadow-lg shadow-black/5 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10"
       )}
     >
-      {/* Hover gradient overlay for depth */}
+      {/* Background gradient overlay */}
       <div className={cn(
-        "absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none",
+        "absolute inset-0 opacity-0 transition-opacity duration-500 pointer-events-none",
         showFeaturedBadge 
-          ? "bg-gradient-to-br from-accent/5 via-transparent to-primary/5 group-hover:opacity-100"
-          : "bg-gradient-to-br from-primary/3 via-transparent to-transparent group-hover:opacity-100"
+          ? "bg-gradient-to-br from-amber-50/80 via-transparent to-primary/5 group-hover:opacity-100"
+          : "bg-gradient-to-br from-primary/5 via-transparent to-secondary/10 group-hover:opacity-100"
+      )} />
+      
+      {/* Subtle top accent line */}
+      <div className={cn(
+        "absolute top-0 left-0 right-0 h-1 transition-all duration-300",
+        showFeaturedBadge 
+          ? "bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400"
+          : "bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 group-hover:opacity-100"
       )} />
 
-      {/* Featured Badge - Gold for subscription-based featured */}
+      {/* Featured Badge - Premium gold styling */}
       {showFeaturedBadge && (
-        <div className="absolute right-3 top-3 z-20 md:right-3 md:top-3">
-          <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg shadow-amber-500/30 px-2.5 py-1 text-xs font-semibold animate-fade-in">
-            <Crown className="h-3 w-3" />
-            Featured
+        <div className="absolute right-4 top-4 z-20">
+          <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-white border-0 shadow-lg shadow-amber-500/40 px-3 py-1.5 text-xs font-bold tracking-wide animate-fade-in">
+            <Crown className="h-3.5 w-3.5" />
+            FEATURED
           </Badge>
         </div>
       )}
 
-      {/* Header with Logo - Larger on mobile */}
-      <div className="relative flex items-start gap-4 p-5 md:p-4">
-        {/* Logo Container - Enhanced hover effect */}
-        <div 
-          className={cn(
-            "relative h-16 w-16 shrink-0 overflow-hidden rounded-xl md:h-14 md:w-14 md:rounded-lg transition-all duration-300",
-            showFeaturedBadge 
-              ? "ring-2 ring-accent/30 group-hover:ring-accent/50 group-hover:shadow-md" 
-              : "ring-1 ring-border group-hover:ring-primary/40 group-hover:shadow-sm"
-          )}
-        >
-          {hasValidLogo ? (
-            <img 
-              src={center.logo_url!} 
-              alt={`${center.name} logo`}
-              className="h-full w-full object-contain bg-card transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
-              onError={() => setLogoError(true)}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-muted transition-colors duration-300 group-hover:bg-primary/10">
-              <span className="font-display text-lg font-semibold text-primary md:text-base">
-                {initials}
-              </span>
-            </div>
-          )}
-        </div>
+      {/* Header Section */}
+      <div className="relative p-5 md:p-5">
+        <div className="flex items-start gap-4">
+          {/* Logo Container - Enhanced with subtle border glow */}
+          <div 
+            className={cn(
+              "relative h-18 w-18 shrink-0 overflow-hidden rounded-xl transition-all duration-300 md:h-16 md:w-16",
+              showFeaturedBadge 
+                ? "ring-2 ring-amber-300/50 shadow-lg shadow-amber-500/20 group-hover:ring-amber-400/70 group-hover:shadow-amber-500/30" 
+                : "ring-1 ring-border/80 shadow-md group-hover:ring-primary/50 group-hover:shadow-lg"
+            )}
+          >
+            {hasValidLogo ? (
+              <img 
+                src={center.logo_url!} 
+                alt={`${center.name} logo`}
+                className="h-full w-full object-contain bg-white p-1 transition-transform duration-500 group-hover:scale-110"
+                loading="lazy"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <div className={cn(
+                "flex h-full w-full items-center justify-center transition-all duration-300",
+                showFeaturedBadge 
+                  ? "bg-gradient-to-br from-amber-50 to-amber-100/80"
+                  : "bg-gradient-to-br from-primary/5 to-primary/10 group-hover:from-primary/10 group-hover:to-primary/15"
+              )}>
+                <span className={cn(
+                  "font-display text-xl font-bold md:text-lg",
+                  showFeaturedBadge ? "text-amber-600" : "text-primary"
+                )}>
+                  {initials}
+                </span>
+              </div>
+            )}
+          </div>
 
-        {/* Name and Location - Enhanced typography */}
-        <div className="min-w-0 flex-1 pt-0.5">
-          <h3 className="font-display text-lg font-semibold text-foreground leading-tight transition-colors duration-300 group-hover:text-primary line-clamp-2 md:text-base">
-            {center.name}
-          </h3>
-          <p className="mt-1.5 flex items-center gap-1.5 text-base text-muted-foreground md:mt-1 md:gap-1 md:text-sm">
-            <MapPin className="h-4 w-4 shrink-0 text-primary/60 md:h-3.5 md:w-3.5" />
-            <span className="truncate">{center.city}, {center.state}</span>
-          </p>
+          {/* Name and Location */}
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h3 className={cn(
+              "font-display text-lg font-bold leading-tight line-clamp-2 transition-colors duration-300 md:text-base",
+              showFeaturedBadge 
+                ? "text-foreground group-hover:text-amber-700" 
+                : "text-foreground group-hover:text-primary"
+            )}>
+              {center.name}
+            </h3>
+            <div className="mt-2 flex items-center gap-1.5 text-muted-foreground">
+              <div className={cn(
+                "flex items-center justify-center h-5 w-5 rounded-full transition-colors duration-300",
+                showFeaturedBadge 
+                  ? "bg-amber-100/80 group-hover:bg-amber-200/80"
+                  : "bg-primary/10 group-hover:bg-primary/15"
+              )}>
+                <MapPin className={cn(
+                  "h-3 w-3",
+                  showFeaturedBadge ? "text-amber-600" : "text-primary"
+                )} />
+              </div>
+              <span className="text-sm font-medium truncate">{center.city}, {center.state}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Content - Better spacing on mobile */}
-      <div className="relative flex flex-1 flex-col px-5 pb-5 md:px-4 md:pb-4">
-        {/* Years in Business & Verified Badge */}
-        <div className="mb-4 flex items-center gap-3 md:mb-3">
-          {center.year_established && (
-            <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 md:gap-1 md:px-2.5 md:py-1">
-              <Calendar className="h-4 w-4 text-primary md:h-3.5 md:w-3.5" />
-              <span className="text-sm font-semibold text-primary md:text-xs">
-                {new Date().getFullYear() - center.year_established}+ years
-              </span>
-            </div>
-          )}
-          {center.verified && (
-            <div className={cn(!center.year_established && "ml-0", center.year_established && "ml-auto")}>
-              <TrustBadge type="verified" size="sm" />
-            </div>
-          )}
-        </div>
+      {/* Quick Stats Bar */}
+      <div className={cn(
+        "mx-5 mb-4 flex items-center gap-2 flex-wrap md:mx-5 md:mb-3",
+      )}>
+        {yearsInBusiness && yearsInBusiness > 0 && (
+          <div className={cn(
+            "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-300",
+            showFeaturedBadge 
+              ? "bg-amber-100/80 text-amber-700 group-hover:bg-amber-200/80"
+              : "bg-primary/10 text-primary group-hover:bg-primary/15"
+          )}>
+            <Calendar className="h-3.5 w-3.5" />
+            <span>{yearsInBusiness}+ years</span>
+          </div>
+        )}
+        
+        {center.verified && (
+          <div className="flex items-center gap-1.5 rounded-full bg-emerald-100/80 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-all duration-300 group-hover:bg-emerald-200/80">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Verified</span>
+          </div>
+        )}
+        
+        {center.facilityType && (
+          <div className="flex items-center gap-1.5 rounded-full bg-secondary/80 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-300 group-hover:bg-secondary">
+            <Building2 className="h-3.5 w-3.5" />
+            <span className="capitalize">{center.facilityType.replace(/_/g, ' ')}</span>
+          </div>
+        )}
+      </div>
 
-        {/* Treatment Type Tags - Better visual hierarchy */}
-        <div className="mb-4 flex flex-wrap gap-2 md:mb-3 md:gap-1.5">
+      {/* Content */}
+      <div className="relative flex flex-1 flex-col px-5 pb-5 md:px-5 md:pb-5">
+        {/* Treatment Type Tags */}
+        <div className="mb-4 flex flex-wrap gap-1.5 md:mb-3">
           {center.treatmentTypes.slice(0, 3).map((type) => (
             <Badge 
               key={type} 
               variant="secondary" 
-              className="text-sm font-medium px-3 py-1 bg-secondary/70 hover:bg-secondary transition-colors md:text-xs md:px-2 md:py-0.5"
+              className={cn(
+                "text-xs font-medium px-2.5 py-1 transition-all duration-300",
+                showFeaturedBadge 
+                  ? "bg-amber-50/80 text-amber-800 border border-amber-200/60 hover:bg-amber-100/80"
+                  : "bg-secondary/60 text-secondary-foreground border border-border/50 hover:bg-secondary"
+              )}
             >
               {type}
             </Badge>
@@ -157,20 +214,20 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
           {center.treatmentTypes.length > 3 && (
             <Badge 
               variant="outline" 
-              className="text-sm px-3 py-1 text-muted-foreground md:text-xs md:px-2 md:py-0.5"
+              className="text-xs px-2.5 py-1 text-muted-foreground border-dashed"
             >
-              +{center.treatmentTypes.length - 3}
+              +{center.treatmentTypes.length - 3} more
             </Badge>
           )}
         </div>
 
-        {/* Description - Better readability on mobile */}
-        <p className="mb-5 line-clamp-2 flex-1 text-base text-muted-foreground leading-relaxed md:mb-4 md:text-sm">
+        {/* Description */}
+        <p className="mb-5 line-clamp-2 flex-1 text-sm text-muted-foreground leading-relaxed md:mb-4">
           {center.description}
         </p>
 
-        {/* Actions - Enhanced button states */}
-        <div className="flex gap-3 mt-auto md:gap-2">
+        {/* Actions */}
+        <div className="flex gap-2.5 mt-auto">
           <Link 
             to={detailsUrl} 
             state={{ fromSearch: true }}
@@ -180,22 +237,28 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
             <Button 
               variant="default" 
               className={cn(
-                "w-full gap-2 h-12 text-base font-medium transition-all duration-300 md:h-9 md:text-sm md:gap-1",
-                "group-hover:shadow-md",
-                showFeaturedBadge && "group-hover:shadow-primary/20"
+                "w-full gap-2 h-11 text-sm font-semibold transition-all duration-300 md:h-10",
+                showFeaturedBadge 
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+                  : "shadow-md hover:shadow-lg hover:shadow-primary/20"
               )}
             >
               View Profile
-              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 md:h-3.5 md:w-3.5" />
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
           </Link>
           <a href={`tel:${center.phone}`}>
             <Button 
               variant="outline" 
-              className="gap-2 h-12 px-5 text-base font-medium transition-all duration-300 hover:bg-primary hover:text-primary-foreground hover:border-primary md:h-9 md:px-3 md:text-sm md:gap-1.5"
+              size="icon"
+              className={cn(
+                "h-11 w-11 transition-all duration-300 md:h-10 md:w-10",
+                showFeaturedBadge 
+                  ? "border-amber-300/60 text-amber-600 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-400"
+                  : "hover:bg-primary hover:text-primary-foreground hover:border-primary"
+              )}
             >
-              <Phone className="h-4 w-4 md:h-3.5 md:w-3.5" />
-              Call
+              <Phone className="h-4 w-4" />
             </Button>
           </a>
         </div>
