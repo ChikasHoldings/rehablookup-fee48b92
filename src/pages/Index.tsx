@@ -226,115 +226,111 @@ const Index = () => {
         description="Search verified addiction treatment centers and find the right path to recovery. Compare rehab facilities, check insurance coverage, and get help today. 24/7 support available."
         canonical="/"
       />
-      {/* Hero Section - Light Background with Image */}
-      <section className="relative flex min-h-[60vh] md:min-h-[65vh] lg:min-h-[70vh] overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        />
-        
-        {/* Light overlay with gradient for depth */}
-        <div className="absolute inset-0 bg-gradient-to-b from-card/90 via-card/85 to-card/95" />
-        
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full bg-primary/8 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 h-[400px] w-[400px] rounded-full bg-accent/6 blur-3xl" />
-          <div className="absolute top-1/3 left-1/4 h-64 w-64 rounded-full bg-primary/4 blur-2xl" />
-        </div>
+      {/* Hero + Trust Bar Viewport Wrapper */}
+      <div className="relative flex min-h-[calc(100vh-64px)] md:min-h-[calc(100vh-72px)] flex-col">
+        {/* Hero Section */}
+        <section className="relative flex flex-1 overflow-hidden">
+          {/* Background Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${heroImage})` }}
+          />
+          
+          {/* Light overlay with gradient for depth */}
+          <div className="absolute inset-0 bg-gradient-to-b from-card/90 via-card/85 to-card/95" />
+          
+          {/* Decorative elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-32 -right-32 h-[400px] w-[400px] rounded-full bg-primary/8 blur-3xl" />
+            <div className="absolute -bottom-32 -left-32 h-[300px] w-[300px] rounded-full bg-accent/6 blur-3xl" />
+          </div>
 
-        {/* Content Container */}
-        <div className="container relative flex flex-1 flex-col justify-center py-8 md:py-12 lg:py-16">
-          <div className="mx-auto w-full max-w-4xl text-center">
-            {/* Trust Badge - More prominent */}
-            <div className="mb-6 md:mb-8 inline-flex items-center gap-2.5 rounded-full border border-accent/40 bg-accent/15 px-4 py-2 shadow-sm animate-fade-in backdrop-blur-sm">
-              <Star className="h-4 w-4 fill-accent text-accent" />
-              <span className="text-sm font-semibold text-accent tracking-wide">
-                Trusted by 10,000+ families nationwide
-              </span>
-            </div>
+          {/* Content Container */}
+          <div className="container relative flex flex-1 flex-col justify-center py-6 sm:py-8 md:py-10 lg:py-12">
+            <div className="mx-auto w-full max-w-4xl text-center">
+              {/* Trust Badge */}
+              <div className="mb-4 sm:mb-5 md:mb-6 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-3 py-1.5 sm:px-4 sm:py-2 shadow-sm animate-fade-in backdrop-blur-sm">
+                <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-accent text-accent" />
+                <span className="text-xs sm:text-sm font-semibold text-accent tracking-wide">
+                  Trusted by 10,000+ families
+                </span>
+              </div>
 
-            {/* Headline - Enhanced typography */}
-            <h1 className="mb-5 md:mb-6 font-display text-3xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl animate-fade-in" style={{ animationDelay: "50ms" }}>
-              Find the Right Path
-              <br className="hidden sm:block" />
-              <span className="sm:hidden"> </span>
-              to <span className="text-primary relative">
-                Recovery
-                <svg className="absolute -bottom-1 left-0 w-full h-2 text-primary/30" viewBox="0 0 200 8" preserveAspectRatio="none">
-                  <path d="M0 7 Q50 0, 100 7 T200 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                </svg>
-              </span>
-            </h1>
+              {/* Headline - Responsive sizing for viewport fit */}
+              <h1 className="mb-3 sm:mb-4 md:mb-5 font-display text-2xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl animate-fade-in" style={{ animationDelay: "50ms" }}>
+                Find the Right Path to{" "}
+                <span className="text-primary relative inline-block">
+                  Recovery
+                  <svg className="absolute -bottom-0.5 sm:-bottom-1 left-0 w-full h-1.5 sm:h-2 text-primary/30" viewBox="0 0 200 8" preserveAspectRatio="none">
+                    <path d="M0 7 Q50 0, 100 7 T200 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                  </svg>
+                </span>
+              </h1>
 
-            {/* Subheadline - Better readability */}
-            <p className="mb-8 md:mb-10 text-base text-foreground/75 sm:text-lg md:text-xl animate-fade-in max-w-2xl mx-auto leading-relaxed" style={{ animationDelay: "100ms" }}>
-              Search verified addiction treatment centers and take the first step toward a healthier future for you or your loved one.
-            </p>
+              {/* Subheadline - Compact */}
+              <p className="mb-5 sm:mb-6 md:mb-8 text-sm sm:text-base md:text-lg text-foreground/75 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "100ms" }}>
+                Search verified treatment centers and take the first step toward a healthier future.
+              </p>
 
-            {/* Search Form - More prominent */}
-            <div className="mb-8 md:mb-10 animate-fade-in" style={{ animationDelay: "150ms" }}>
-              <SearchForm variant="compact-hero" />
-            </div>
+              {/* Search Form */}
+              <div className="mb-5 sm:mb-6 md:mb-8 animate-fade-in" style={{ animationDelay: "150ms" }}>
+                <SearchForm variant="compact-hero" />
+              </div>
 
-            {/* Trust Badges - Staggered animation */}
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 md:gap-x-8 lg:gap-x-10">
-              {trustBadges.map((badge, index) => (
-                <div 
-                  key={badge.label} 
-                  className="flex items-center gap-2 text-foreground/70 transition-all duration-300 hover:text-primary group animate-fade-in opacity-0"
-                  style={{ 
-                    animationDelay: `${400 + index * 150}ms`,
-                    animationFillMode: 'forwards'
-                  }}
-                >
-                  <div className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/20 group-hover:ring-primary/40 group-hover:scale-110">
-                    <badge.icon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+              {/* Trust Badges - Compact layout */}
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:gap-x-6 md:gap-x-8">
+                {trustBadges.map((badge, index) => (
+                  <div 
+                    key={badge.label} 
+                    className="flex items-center gap-1.5 sm:gap-2 text-foreground/70 transition-all duration-300 hover:text-primary group animate-fade-in opacity-0"
+                    style={{ 
+                      animationDelay: `${400 + index * 100}ms`,
+                      animationFillMode: 'forwards'
+                    }}
+                  >
+                    <div className="flex h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-105">
+                      <badge.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                    </div>
+                    <span className="text-xs sm:text-sm font-medium">{badge.label}</span>
                   </div>
-                  <span className="text-sm md:text-base font-medium">{badge.label}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Trust Bar - Pinned at bottom of hero viewport */}
+        <div className="relative shrink-0 border-y border-border bg-primary py-3 sm:py-4">
+          <div className="container">
+            <div className="flex items-center justify-center gap-x-4 gap-y-2 sm:gap-x-8 md:gap-x-12 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-2 shrink-0 group">
+                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
+                  <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
                 </div>
-              ))}
-            </div>
-
-          </div>
-        </div>
-
-        {/* Bottom fade - Smoother transition */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/50 to-transparent" />
-      </section>
-
-      {/* Trust Bar - Enhanced Design */}
-      <section className="relative border-y border-border bg-primary py-4 md:py-5">
-        <div className="container">
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:gap-x-12 lg:gap-x-16">
-            <div className="flex items-center gap-2.5 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                <Shield className="h-4 w-4 text-accent" />
+                <span className="text-xs sm:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">Licensed & Accredited</span>
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Licensed & Accredited</span>
-            </div>
-            <div className="flex items-center gap-2.5 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                <Clock className="h-4 w-4 text-accent" />
+              <div className="flex items-center gap-2 shrink-0 group">
+                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
+                  <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
+                </div>
+                <span className="text-xs sm:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">24/7 Support</span>
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">24/7 Confidential Support</span>
-            </div>
-            <div className="flex items-center gap-2.5 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                <Heart className="h-4 w-4 text-accent" />
+              <div className="flex items-center gap-2 shrink-0 group">
+                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
+                  <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
+                </div>
+                <span className="text-xs sm:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">Free Assessment</span>
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Free Assessment</span>
-            </div>
-            <div className="flex items-center gap-2.5 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                <CheckCircle className="h-4 w-4 text-accent" />
+              <div className="flex items-center gap-2 shrink-0 group">
+                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
+                  <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
+                </div>
+                <span className="text-xs sm:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">Insurance Verified</span>
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Insurance Verified</span>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Featured Centers */}
       <section className="py-20 md:py-24">
