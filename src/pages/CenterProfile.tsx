@@ -520,8 +520,15 @@ const CenterProfile = () => {
                         </div>
                       )}
                     </div>
+                    {/* Verified Trust Badge */}
+                    {facility.verified && (
+                      <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg ring-2 ring-background z-10">
+                        <ShieldCheck className="h-4.5 w-4.5 text-white" />
+                      </div>
+                    )}
+                    {/* Featured Crown Badge */}
                     {hasFeaturedSubscription && (
-                      <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg ring-2 ring-background">
+                      <div className="absolute -top-1 -right-1 h-8 w-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg ring-2 ring-background z-10">
                         <Crown className="h-4 w-4 text-white" />
                       </div>
                     )}
