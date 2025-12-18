@@ -1,19 +1,20 @@
 import { Link, LinkProps } from "react-router-dom";
 import { forwardRef, useCallback } from "react";
 
-// Route to lazy import mapping for prefetching
+// Route to lazy import mapping for prefetching (only for lazy-loaded routes)
 const routePrefetchMap: Record<string, () => Promise<unknown>> = {
-  "/rehab-centers": () => import("@/pages/RehabCenters"),
-  "/request-help": () => import("@/pages/RequestHelp"),
-  "/for-providers": () => import("@/pages/ForProviders"),
-  "/how-it-works": () => import("@/pages/HowItWorks"),
-  "/treatment-types": () => import("@/pages/TreatmentTypes"),
-  "/resources": () => import("@/pages/Resources"),
-  "/about": () => import("@/pages/About"),
-  "/contact": () => import("@/pages/Contact"),
-  "/faq": () => import("@/pages/FAQ"),
-  "/provider-login": () => import("@/pages/ProviderLogin"),
-  "/provider-signup": () => import("@/pages/ProviderSignup"),
+  // Provider panel routes (lazy loaded)
+  "/provider/dashboard": () => import("@/pages/provider/Dashboard"),
+  "/provider/listing": () => import("@/pages/provider/Listing"),
+  "/provider/leads": () => import("@/pages/provider/Leads"),
+  "/provider/analytics": () => import("@/pages/provider/Analytics"),
+  "/provider/billing": () => import("@/pages/provider/Billing"),
+  "/provider/settings": () => import("@/pages/provider/Settings"),
+  // Admin panel routes (lazy loaded)
+  "/admin": () => import("@/pages/admin/AdminDashboard"),
+  "/admin/dashboard": () => import("@/pages/admin/AdminDashboard"),
+  "/admin/providers": () => import("@/pages/admin/AdminProviders"),
+  "/admin/leads": () => import("@/pages/admin/AdminLeads"),
 };
 
 // Track which routes have been prefetched to avoid duplicate fetches

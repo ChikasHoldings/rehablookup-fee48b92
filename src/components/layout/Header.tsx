@@ -79,6 +79,8 @@ export function Header({
               src="/logo.svg" 
               alt="Rehab-Lookup" 
               className="h-11 w-auto transition-transform duration-200 group-hover:scale-105"
+              loading="eager"
+              decoding="async"
             />
             {variant === "provider" && (
               <span className="text-xs font-medium text-muted-foreground">Providers</span>
@@ -176,6 +178,8 @@ export function Header({
               src="/logo.svg" 
               alt="Rehab-Lookup" 
               className="h-10 w-auto"
+              loading="lazy"
+              decoding="async"
             />
           </Link>
           <button

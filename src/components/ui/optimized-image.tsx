@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { cn } from "@/lib/utils";
 
 interface OptimizedImageProps {
@@ -9,9 +9,11 @@ interface OptimizedImageProps {
   placeholderColor?: string;
   aspectRatio?: string;
   priority?: boolean;
+  width?: number;
+  height?: number;
 }
 
-export function OptimizedImage({
+function OptimizedImageComponent({
   src,
   alt,
   className,
@@ -19,6 +21,8 @@ export function OptimizedImage({
   placeholderColor = "hsl(var(--muted))",
   aspectRatio,
   priority = false,
+  width,
+  height,
 }: OptimizedImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
@@ -39,7 +43,7 @@ export function OptimizedImage({
         }
       },
       {
-        rootMargin: "50px",
+        rootMargin: "100px", // Increased for earlier loading
         threshold: 0.01,
       }
     );
@@ -68,14 +72,11 @@ export function OptimizedImage({
       {/* Placeholder with blur effect */}
       <div
         className={cn(
-          "absolute inset-0 transition-opacity duration-500",
+          "absolute inset-0 transition-opacity duration-300",
           isLoaded ? "opacity-0" : "opacity-100"
         )}
         style={{ backgroundColor: placeholderColor }}
-      >
-        {/* Shimmer animation */}
-        <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-      </div>
+      />
 
       {/* Actual image */}
       {isInView && (
@@ -83,9 +84,13 @@ export function OptimizedImage({
           ref={imgRef}
           src={src}
           alt={alt}
+          width={width}
+          height={height}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
           onLoad={() => setIsLoaded(true)}
           className={cn(
-            "transition-opacity duration-500",
+            "transition-opacity duration-300",
             isLoaded ? "opacity-100" : "opacity-0",
             className
           )}
@@ -94,6 +99,8 @@ export function OptimizedImage({
     </div>
   );
 }
+
+export const OptimizedImage = memo(OptimizedImageComponent);
 
 // Background image variant with blur-up
 interface OptimizedBackgroundProps {
@@ -104,7 +111,7 @@ interface OptimizedBackgroundProps {
   priority?: boolean;
 }
 
-export function OptimizedBackground({
+function OptimizedBackgroundComponent({
   src,
   className,
   children,
@@ -128,7 +135,7 @@ export function OptimizedBackground({
           observer.disconnect();
         }
       },
-      { rootMargin: "50px", threshold: 0.01 }
+      { rootMargin: "100px", threshold: 0.01 }
     );
 
     if (containerRef.current) {
@@ -151,7 +158,7 @@ export function OptimizedBackground({
       {/* Placeholder */}
       <div
         className={cn(
-          "absolute inset-0 bg-muted transition-opacity duration-700",
+          "absolute inset-0 bg-muted transition-opacity duration-500",
           isLoaded ? "opacity-0" : "opacity-100"
         )}
       />
@@ -159,7 +166,7 @@ export function OptimizedBackground({
       {/* Background image */}
       <div
         className={cn(
-          "absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700",
+          "absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500",
           isLoaded ? "opacity-100" : "opacity-0"
         )}
         style={{ backgroundImage: isInView ? `url(${src})` : undefined }}
@@ -173,3 +180,24 @@ export function OptimizedBackground({
     </div>
   );
 }
+
+export const OptimizedBackground = memo(OptimizedBackgroundComponent);
+
+// Simple lazy image for basic use cases
+interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  src: string;
+  alt: string;
+}
+
+export const LazyImage = memo(function LazyImage({ src, alt, className, ...props }: LazyImageProps) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={className}
+      {...props}
+    />
+  );
+});
