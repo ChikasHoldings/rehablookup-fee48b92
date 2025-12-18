@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -87,7 +88,7 @@ export function Header({
           {/* Desktop Navigation */}
           <nav className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (
-              <Link
+              <PrefetchLink
                 key={link.href}
                 to={link.href}
                 className={cn(
@@ -98,7 +99,7 @@ export function Header({
                 )}
               >
                 {link.label}
-              </Link>
+              </PrefetchLink>
             ))}
           </nav>
 
@@ -133,11 +134,11 @@ export function Header({
                 )}
               </>
             ) : (
-              <Link to={ctaLink} className="hidden sm:block">
+              <PrefetchLink to={ctaLink} className="hidden sm:block">
                 <Button size="sm" className="shadow-sm">
                   {ctaLabel}
                 </Button>
-              </Link>
+              </PrefetchLink>
             )}
             <button
               className="flex h-10 w-10 items-center justify-center rounded-xl text-foreground bg-secondary/50 hover:bg-secondary md:hidden transition-colors"
@@ -190,7 +191,7 @@ export function Header({
           <nav className="flex-1 px-4 py-6">
             <div className="space-y-1">
               {navLinks.map((link, index) => (
-                <Link
+                <PrefetchLink
                   key={link.href}
                   to={link.href}
                   onClick={() => setMobileMenuOpen(false)}
@@ -207,7 +208,7 @@ export function Header({
                     "h-4 w-4 transition-colors",
                     location.pathname === link.href ? "text-primary-foreground/70" : "text-muted-foreground"
                   )} />
-                </Link>
+                </PrefetchLink>
               ))}
             </div>
 
@@ -216,30 +217,30 @@ export function Header({
 
             {/* Quick Links */}
             <div className="space-y-1">
-              <Link
+              <PrefetchLink
                 to="/about"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
               >
                 <span>About Us</span>
                 <ChevronRight className="h-4 w-4" />
-              </Link>
-              <Link
+              </PrefetchLink>
+              <PrefetchLink
                 to="/contact"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
               >
                 <span>Contact</span>
                 <ChevronRight className="h-4 w-4" />
-              </Link>
-              <Link
+              </PrefetchLink>
+              <PrefetchLink
                 to="/faq"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
               >
                 <span>FAQ</span>
                 <ChevronRight className="h-4 w-4" />
-              </Link>
+              </PrefetchLink>
             </div>
           </nav>
 
@@ -280,11 +281,11 @@ export function Header({
                 )}
               </>
             ) : (
-              <Link to={ctaLink} onClick={() => setMobileMenuOpen(false)} className="block">
+              <PrefetchLink to={ctaLink} onClick={() => setMobileMenuOpen(false)} className="block">
                 <Button className="w-full h-14 text-base font-semibold rounded-xl shadow-lg bg-primary hover:bg-primary/90">
                   {ctaLabel}
                 </Button>
-              </Link>
+              </PrefetchLink>
             )}
             
             {/* Trust indicator */}
