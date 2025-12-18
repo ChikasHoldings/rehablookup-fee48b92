@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Star, ArrowRight, Crown } from "lucide-react";
+import { MapPin, Phone, ArrowRight, Crown, Calendar } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -126,17 +126,18 @@ export function TreatmentCenterCard({ center, featured }: TreatmentCenterCardPro
 
       {/* Content - Better spacing on mobile */}
       <div className="relative flex flex-1 flex-col px-5 pb-5 md:px-4 md:pb-4">
-        {/* Rating Row - Enhanced visual weight */}
-        <div className="mb-4 flex items-center gap-4 md:mb-3 md:gap-3">
-          <div className="flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1 md:gap-1 md:px-2 md:py-0.5">
-            <Star className="h-4 w-4 fill-accent text-accent md:h-3.5 md:w-3.5" />
-            <span className="text-sm font-bold text-accent md:text-xs">{center.rating}</span>
-          </div>
-          <span className="text-sm text-muted-foreground md:text-xs">
-            {center.reviewCount} reviews
-          </span>
+        {/* Years in Business & Verified Badge */}
+        <div className="mb-4 flex items-center gap-3 md:mb-3">
+          {center.year_established && (
+            <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 md:gap-1 md:px-2.5 md:py-1">
+              <Calendar className="h-4 w-4 text-primary md:h-3.5 md:w-3.5" />
+              <span className="text-sm font-semibold text-primary md:text-xs">
+                {new Date().getFullYear() - center.year_established}+ years
+              </span>
+            </div>
+          )}
           {center.verified && (
-            <div className="ml-auto">
+            <div className={cn(!center.year_established && "ml-0", center.year_established && "ml-auto")}>
               <TrustBadge type="verified" size="sm" />
             </div>
           )}
