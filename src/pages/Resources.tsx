@@ -462,41 +462,23 @@ const Resources = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary via-primary to-primary/90 py-16 md:py-20 overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-accent rounded-full blur-3xl" />
-        </div>
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-10 md:py-12">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
-        <div className="container relative text-center px-5 md:px-6">
-          <div className="mb-6 inline-flex items-center gap-2.5 rounded-full bg-white/15 backdrop-blur-sm px-5 py-2.5 border border-white/20">
-            <BookOpen className="h-5 w-5 text-accent" />
-            <span className="text-sm font-medium text-white">Recovery Resources & Guides</span>
-          </div>
-          <h1 className="mb-5 font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white">
-            Your Guide to Recovery
-          </h1>
-          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-            Expert articles, guides, and insights to support you and your loved ones on the journey to lasting recovery.
-          </p>
-          
-          {/* Stats */}
-          <div className="mt-10 flex items-center justify-center gap-8 md:gap-12">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white">{articles.length}</div>
-              <div className="text-sm text-white/70">Expert Articles</div>
+        <div className="container relative">
+          <div className="mb-8 max-w-2xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white/90 backdrop-blur-sm">
+              <BookOpen className="h-3.5 w-3.5" />
+              Recovery Resources & Guides
             </div>
-            <div className="h-12 w-px bg-white/20" />
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white">{categories.length - 1}</div>
-              <div className="text-sm text-white/70">Categories</div>
-            </div>
-            <div className="h-12 w-px bg-white/20" />
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white">Free</div>
-              <div className="text-sm text-white/70">Always</div>
-            </div>
+            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
+              Expert Guides for Your Recovery Journey
+            </h1>
+            <p className="mt-3 text-base text-white/80 md:text-lg">
+              <span className="font-semibold text-white">{articles.length}+</span> articles covering treatment options, family support, mental health, and relapse prevention
+            </p>
           </div>
         </div>
       </section>
