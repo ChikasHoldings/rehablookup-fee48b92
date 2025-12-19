@@ -64,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
               </p>
               
               <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.7;">
-                Your request for information has been received and successfully reviewed. Based on what you shared, your inquiry has been forwarded to a treatment provider that matches your needs and location.
+                Your request for information has been received and successfully reviewed. Based on what you shared, your request has been forwarded to a treatment provider that matches your needs and location.
               </p>
               
               <p style="margin: 0 0 32px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.7;">
