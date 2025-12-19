@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 import RehabCenters from "./pages/RehabCenters";
 import StatePage from "./pages/StatePage";
 import CityPage from "./pages/CityPage";
+import Locations from "./pages/Locations";
 import TreatmentCenterProfile from "./pages/TreatmentCenterProfile";
 import CenterProfile from "./pages/CenterProfile";
 import TreatmentTypes from "./pages/TreatmentTypes";
@@ -91,6 +92,7 @@ const App = () => (
         <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/locations" element={<Locations />} />
             <Route path="/rehab-centers" element={<RehabCenters />} />
             <Route path="/rehab-centers/:stateSlug/:citySlug" element={<CityPage />} />
             <Route path="/rehab-centers/:stateSlug" element={<StatePage />} />
