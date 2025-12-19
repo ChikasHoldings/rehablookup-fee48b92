@@ -7,17 +7,23 @@ export interface SubscriptionData {
   plan_name: string;
   lead_limit: number;
   subscription_end: string | null;
+  current_period_start: string | null;
   product_id?: string;
   is_featured?: boolean;
   exclusivity?: 'shared' | 'exclusive';
+  status?: 'active' | 'past_due' | 'trialing' | 'canceled' | 'incomplete' | null;
+  cancel_at_period_end?: boolean;
 }
 
 const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   subscribed: false,
   plan: "basic",
   plan_name: "Basic Listing",
-  lead_limit: 1, // Basic plan gets 1 lifetime lead
+  lead_limit: 0, // Basic plan gets no qualified leads
   subscription_end: null,
+  current_period_start: null,
+  status: null,
+  cancel_at_period_end: false,
 };
 
 export function useSubscription() {

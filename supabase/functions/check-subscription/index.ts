@@ -91,6 +91,9 @@ serve(async (req) => {
           subscription_end: null,
           is_featured: false,
           exclusivity: PLAN_CONFIG.basic.exclusivity,
+          status: null,
+          cancel_at_period_end: false,
+          current_period_start: null,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -102,14 +105,35 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
-    const subscriptions = await stripe.subscriptions.list({
+    // Check for active, past_due, or trialing subscriptions first
+    const activeSubscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
       limit: 1,
     });
 
-    if (subscriptions.data.length === 0) {
-      logStep("No active subscription found, returning basic plan");
+    // Also check for past_due subscriptions (still active but payment failed)
+    const pastDueSubscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "past_due",
+      limit: 1,
+    });
+
+    // Also check for trialing subscriptions
+    const trialingSubscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "trialing",
+      limit: 1,
+    });
+
+    // Use the first subscription found in priority order
+    const subscription = 
+      activeSubscriptions.data[0] || 
+      pastDueSubscriptions.data[0] || 
+      trialingSubscriptions.data[0];
+
+    if (!subscription) {
+      logStep("No active/past_due/trialing subscription found, returning basic plan");
       return new Response(
         JSON.stringify({
           subscribed: false,
@@ -119,6 +143,9 @@ serve(async (req) => {
           subscription_end: null,
           is_featured: false,
           exclusivity: PLAN_CONFIG.basic.exclusivity,
+          status: null,
+          cancel_at_period_end: false,
+          current_period_start: null,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -127,10 +154,16 @@ serve(async (req) => {
       );
     }
 
-    const subscription = subscriptions.data[0];
     const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+    const subscriptionStart = new Date(subscription.current_period_start * 1000).toISOString();
     const productId = subscription.items.data[0].price.product as string;
-    logStep("Active subscription found", { subscriptionId: subscription.id, productId, endDate: subscriptionEnd });
+    logStep("Subscription found", { 
+      subscriptionId: subscription.id, 
+      productId, 
+      status: subscription.status,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      endDate: subscriptionEnd 
+    });
 
     // Determine plan based on product ID (supports both old and new product IDs)
     let plan = "basic";
@@ -144,7 +177,14 @@ serve(async (req) => {
       planConfig = PLAN_CONFIG.featured;
     }
 
-    logStep("Determined plan", { plan, leadLimit: planConfig.lead_limit, featured: planConfig.featured, exclusivity: planConfig.exclusivity });
+    logStep("Determined plan", { 
+      plan, 
+      leadLimit: planConfig.lead_limit, 
+      featured: planConfig.featured, 
+      exclusivity: planConfig.exclusivity,
+      status: subscription.status,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end
+    });
 
     return new Response(
       JSON.stringify({
@@ -153,9 +193,12 @@ serve(async (req) => {
         plan_name: planConfig.name,
         lead_limit: planConfig.lead_limit,
         subscription_end: subscriptionEnd,
+        current_period_start: subscriptionStart,
         product_id: productId,
         is_featured: planConfig.featured,
         exclusivity: planConfig.exclusivity,
+        status: subscription.status,
+        cancel_at_period_end: subscription.cancel_at_period_end,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
