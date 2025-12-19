@@ -349,23 +349,39 @@ export default function ProviderDashboardPage() {
         </div>
 
         {/* Profile Completion Prompt */}
-        {providerData?.facility && !providerData.facility.description && (
-          <Link to="/provider/listing" className="block">
-            <Card className="border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <FileEdit className="h-4 w-4 text-primary" />
+        {providerData?.facility && (() => {
+          const f = providerData.facility;
+          const missingFields: string[] = [];
+          if (!f.description) missingFields.push("description");
+          if (!f.phone) missingFields.push("phone");
+          if (!f.address || !f.city || !f.state || !f.zip_code) missingFields.push("address");
+          if (!f.logo_url) missingFields.push("logo");
+          if (!f.gallery_urls || f.gallery_urls.length === 0) missingFields.push("photos");
+          
+          if (missingFields.length === 0) return null;
+          
+          const missingText = missingFields.length === 1 
+            ? `Add your ${missingFields[0]}` 
+            : `Add ${missingFields.slice(0, 2).join(", ")}${missingFields.length > 2 ? ` +${missingFields.length - 2} more` : ""}`;
+          
+          return (
+            <Link to="/provider/listing" className="block">
+              <Card className="border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <FileEdit className="h-4 w-4 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{missingText}</span> to attract more families
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground">Complete your profile</span> to attract more families
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </CardContent>
-            </Card>
-          </Link>
-        )}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })()}
 
         {/* Status Banner - Only for non-approved */}
         {facility?.status !== "approved" && (
