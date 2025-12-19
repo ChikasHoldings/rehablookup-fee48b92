@@ -13,13 +13,16 @@ import {
   Building2,
   FileText,
   AlertCircle,
+  CheckSquare,
+  Square,
+  Minus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -38,6 +41,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -56,6 +60,7 @@ type CredentialDocument = {
     name: string;
     city: string;
     state: string;
+    user_id: string;
   };
 };
 
@@ -70,6 +75,11 @@ export default function AdminCredentials() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBatchRejectDialog, setShowBatchRejectDialog] = useState(false);
+  const [batchRejectionReason, setBatchRejectionReason] = useState("");
 
   // Fetch status counts
   const { data: statusCounts } = useQuery({
@@ -99,7 +109,7 @@ export default function AdminCredentials() {
         .from("facility_credential_documents")
         .select(`
           *,
-          facility:facilities!facility_credential_documents_facility_id_fkey(name, city, state)
+          facility:facilities!facility_credential_documents_facility_id_fkey(name, city, state, user_id)
         `)
         .order("uploaded_at", { ascending: false })
         .range(from, to);
@@ -125,6 +135,33 @@ export default function AdminCredentials() {
       return filtered;
     },
   });
+
+  // Get pending documents for batch selection
+  const pendingDocuments = documents?.filter(d => d.status === "pending") || [];
+  const allPendingSelected = pendingDocuments.length > 0 && pendingDocuments.every(d => selectedIds.has(d.id));
+  const somePendingSelected = pendingDocuments.some(d => selectedIds.has(d.id));
+
+  const toggleSelectAll = () => {
+    if (allPendingSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pendingDocuments.map(d => d.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
 
   // Verify document mutation
   const verifyMutation = useMutation({
@@ -183,6 +220,142 @@ export default function AdminCredentials() {
     },
     onError: () => {
       toast.error("Failed to verify document");
+    },
+  });
+
+  // Batch verify mutation
+  const batchVerifyMutation = useMutation({
+    mutationFn: async (documentIds: string[]) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Update all documents
+      const { error } = await supabase
+        .from("facility_credential_documents")
+        .update({
+          status: "verified",
+          verified_at: new Date().toISOString(),
+          verified_by: user?.id,
+        })
+        .in("id", documentIds);
+
+      if (error) throw error;
+
+      // Get documents for notifications
+      const { data: docs } = await supabase
+        .from("facility_credential_documents")
+        .select(`
+          *,
+          facility:facilities!facility_credential_documents_facility_id_fkey(name, user_id)
+        `)
+        .in("id", documentIds);
+
+      // Send notifications for each (in background)
+      if (docs) {
+        for (const doc of docs) {
+          if (doc.facility) {
+            supabase.functions.invoke("send-credential-notification", {
+              body: {
+                facilityId: doc.facility_id,
+                facilityName: doc.facility.name,
+                userId: doc.facility.user_id,
+                documentName: doc.document_name,
+                documentType: doc.document_type,
+                status: "verified",
+              },
+            }).catch(console.error);
+          }
+        }
+      }
+
+      // Log audit
+      if (user?.id) {
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: user.id,
+          action_type: "batch_credential_verified",
+          target_type: "credential_documents",
+          target_id: null,
+          details: { document_ids: documentIds, count: documentIds.length },
+        });
+      }
+    },
+    onSuccess: (_, documentIds) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-credentials"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-credentials-counts"] });
+      clearSelection();
+      toast.success(`${documentIds.length} documents verified`);
+    },
+    onError: () => {
+      toast.error("Failed to verify documents");
+    },
+  });
+
+  // Batch reject mutation
+  const batchRejectMutation = useMutation({
+    mutationFn: async ({ documentIds, reason }: { documentIds: string[]; reason: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Update all documents
+      const { error } = await supabase
+        .from("facility_credential_documents")
+        .update({
+          status: "rejected",
+          rejection_reason: reason,
+          verified_at: new Date().toISOString(),
+          verified_by: user?.id,
+        })
+        .in("id", documentIds);
+
+      if (error) throw error;
+
+      // Get documents for notifications
+      const { data: docs } = await supabase
+        .from("facility_credential_documents")
+        .select(`
+          *,
+          facility:facilities!facility_credential_documents_facility_id_fkey(name, user_id)
+        `)
+        .in("id", documentIds);
+
+      // Send notifications for each (in background)
+      if (docs) {
+        for (const doc of docs) {
+          if (doc.facility) {
+            supabase.functions.invoke("send-credential-notification", {
+              body: {
+                facilityId: doc.facility_id,
+                facilityName: doc.facility.name,
+                userId: doc.facility.user_id,
+                documentName: doc.document_name,
+                documentType: doc.document_type,
+                status: "rejected",
+                rejectionReason: reason,
+              },
+            }).catch(console.error);
+          }
+        }
+      }
+
+      // Log audit
+      if (user?.id) {
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: user.id,
+          action_type: "batch_credential_rejected",
+          target_type: "credential_documents",
+          target_id: null,
+          details: { document_ids: documentIds, count: documentIds.length, reason },
+        });
+      }
+    },
+    onSuccess: (_, { documentIds }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-credentials"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-credentials-counts"] });
+      setShowBatchRejectDialog(false);
+      setBatchRejectionReason("");
+      clearSelection();
+      toast.success(`${documentIds.length} documents rejected`);
+    },
+    onError: () => {
+      toast.error("Failed to reject documents");
     },
   });
 
@@ -344,12 +517,64 @@ export default function AdminCredentials() {
         </Tabs>
       </div>
 
+      {/* Batch Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
+          <div className="flex items-center gap-3">
+            <CheckSquare className="h-5 w-5 text-primary" />
+            <span className="font-medium">{selectedIds.size} document{selectedIds.size > 1 ? "s" : ""} selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearSelection}
+            >
+              Clear Selection
+            </Button>
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => batchVerifyMutation.mutate(Array.from(selectedIds))}
+              disabled={batchVerifyMutation.isPending}
+            >
+              <CheckCircle className="h-4 w-4 mr-1" />
+              Verify All
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setShowBatchRejectDialog(true)}
+            >
+              <XCircle className="h-4 w-4 mr-1" />
+              Reject All
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Documents Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
+                {activeTab === "pending" && pendingDocuments.length > 0 && (
+                  <TableHead className="w-12">
+                    <button
+                      onClick={toggleSelectAll}
+                      className="flex items-center justify-center p-1 hover:bg-muted rounded"
+                    >
+                      {allPendingSelected ? (
+                        <CheckSquare className="h-4 w-4 text-primary" />
+                      ) : somePendingSelected ? (
+                        <Minus className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Square className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                  </TableHead>
+                )}
                 <TableHead>Facility</TableHead>
                 <TableHead>Document</TableHead>
                 <TableHead>Type</TableHead>
@@ -362,6 +587,7 @@ export default function AdminCredentials() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
+                    {activeTab === "pending" && <TableCell><Skeleton className="h-4 w-4" /></TableCell>}
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
@@ -372,14 +598,23 @@ export default function AdminCredentials() {
                 ))
               ) : documents?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12">
+                  <TableCell colSpan={activeTab === "pending" ? 7 : 6} className="text-center py-12">
                     <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">No documents found</p>
                   </TableCell>
                 </TableRow>
               ) : (
                 documents?.map((doc) => (
-                  <TableRow key={doc.id}>
+                  <TableRow key={doc.id} className={selectedIds.has(doc.id) ? "bg-primary/5" : ""}>
+                    {activeTab === "pending" && doc.status === "pending" && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(doc.id)}
+                          onCheckedChange={() => toggleSelect(doc.id)}
+                        />
+                      </TableCell>
+                    )}
+                    {activeTab === "pending" && doc.status !== "pending" && <TableCell />}
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -448,7 +683,7 @@ export default function AdminCredentials() {
         </CardContent>
       </Card>
 
-      {/* Rejection Dialog */}
+      {/* Single Rejection Dialog */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent>
           <DialogHeader>
@@ -487,6 +722,50 @@ export default function AdminCredentials() {
               disabled={!rejectionReason.trim() || rejectMutation.isPending}
             >
               Reject Document
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch Rejection Dialog */}
+      <Dialog open={showBatchRejectDialog} onOpenChange={setShowBatchRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              Reject {selectedIds.size} Document{selectedIds.size > 1 ? "s" : ""}
+            </DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting these documents. All selected providers will receive email notifications.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Selected Documents</Label>
+              <p className="text-sm text-muted-foreground">{selectedIds.size} document{selectedIds.size > 1 ? "s" : ""} selected</p>
+            </div>
+            <div>
+              <Label htmlFor="batch-rejection-reason">Rejection Reason (applied to all)</Label>
+              <Textarea
+                id="batch-rejection-reason"
+                value={batchRejectionReason}
+                onChange={(e) => setBatchRejectionReason(e.target.value)}
+                placeholder="e.g., Document is expired, image is unreadable, missing required information..."
+                className="mt-1.5"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBatchRejectDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => batchRejectMutation.mutate({ documentIds: Array.from(selectedIds), reason: batchRejectionReason })}
+              disabled={!batchRejectionReason.trim() || batchRejectMutation.isPending}
+            >
+              Reject {selectedIds.size} Document{selectedIds.size > 1 ? "s" : ""}
             </Button>
           </DialogFooter>
         </DialogContent>
