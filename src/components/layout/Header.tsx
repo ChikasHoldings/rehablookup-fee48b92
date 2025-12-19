@@ -79,46 +79,62 @@ export function Header({
       )}>
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-3">
             <img 
               src={variant === "provider" ? "/logo-dark.svg" : "/logo.svg"}
               alt="Rehab-Lookup" 
-              className="h-11 w-auto transition-transform duration-200 group-hover:scale-105"
+              className="h-11 w-auto"
               loading="eager"
               decoding="async"
             />
-            {variant === "provider" && (
-              <div className="hidden sm:flex items-center">
-                <div className="h-6 w-px bg-white/20 mr-3" />
-                <span className="text-sm font-semibold text-white/90 tracking-wide">For Providers</span>
-              </div>
-            )}
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden items-center gap-1 md:flex">
-            {navLinks.map((link) => (
-              <PrefetchLink
-                key={link.href}
-                to={link.href}
-                className={cn(
-                  "relative rounded-lg px-4 py-2 text-base font-medium transition-all duration-200",
-                  variant === "provider" ? (
-                    location.pathname === link.href
-                      ? "bg-white/15 text-white shadow-sm"
-                      : "text-white/80 hover:text-white hover:bg-white/10"
-                  ) : (
-                    location.pathname === link.href
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-foreground hover:text-primary hover:bg-primary/5"
-                  ),
-                  // Underline animation for non-active links
-                  location.pathname !== link.href && variant !== "provider" && "after:absolute after:bottom-1 after:left-4 after:right-4 after:h-0.5 after:bg-primary after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
-                )}
-              >
-                {link.label}
-              </PrefetchLink>
-            ))}
+            {navLinks.map((link) => {
+              const isForProviders = link.href === "/for-providers" && variant === "default";
+              
+              if (isForProviders) {
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "relative rounded-lg px-4 py-2 text-base font-medium transition-all duration-200",
+                      "text-foreground hover:text-primary hover:bg-primary/5",
+                      "after:absolute after:bottom-1 after:left-4 after:right-4 after:h-0.5 after:bg-primary after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
+                    )}
+                  >
+                    {link.label}
+                  </a>
+                );
+              }
+              
+              return (
+                <PrefetchLink
+                  key={link.href}
+                  to={link.href}
+                  className={cn(
+                    "relative rounded-lg px-4 py-2 text-base font-medium transition-all duration-200",
+                    variant === "provider" ? (
+                      location.pathname === link.href
+                        ? "bg-white/15 text-white shadow-sm"
+                        : "text-white/80 hover:text-white hover:bg-white/10"
+                    ) : (
+                      location.pathname === link.href
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-foreground hover:text-primary hover:bg-primary/5"
+                    ),
+                    // Underline animation for non-active links
+                    location.pathname !== link.href && variant !== "provider" && "after:absolute after:bottom-1 after:left-4 after:right-4 after:h-0.5 after:bg-primary after:scale-x-0 after:origin-left after:transition-transform after:duration-300 hover:after:scale-x-100"
+                  )}
+                >
+                  {link.label}
+                </PrefetchLink>
+              );
+            })}
           </nav>
 
           {/* CTA & Mobile Toggle */}
@@ -211,9 +227,6 @@ export function Header({
               loading="lazy"
               decoding="async"
             />
-            {variant === "provider" && (
-              <span className="text-xs font-semibold text-white/80">For Providers</span>
-            )}
           </Link>
           <button
             className={cn(
@@ -234,28 +247,49 @@ export function Header({
           {/* Navigation Links */}
           <nav className="flex-1 px-4 py-5">
             <div className="space-y-1.5">
-              {navLinks.map((link, index) => (
-                <PrefetchLink
-                  key={link.href}
-                  to={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "group flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-all duration-200",
-                    location.pathname === link.href
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "text-foreground hover:bg-primary/5 hover:text-primary active:bg-primary/10"
-                  )}
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <span>{link.label}</span>
-                  <ChevronRight className={cn(
-                    "h-4 w-4 transition-all duration-200",
-                    location.pathname === link.href 
-                      ? "text-primary-foreground/70" 
-                      : "text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5"
-                  )} />
-                </PrefetchLink>
-              ))}
+              {navLinks.map((link, index) => {
+                const isForProviders = link.href === "/for-providers" && variant === "default";
+                
+                if (isForProviders) {
+                  return (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="group flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-all duration-200 text-foreground hover:bg-primary/5 hover:text-primary active:bg-primary/10"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <span>{link.label}</span>
+                      <ChevronRight className="h-4 w-4 transition-all duration-200 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5" />
+                    </a>
+                  );
+                }
+                
+                return (
+                  <PrefetchLink
+                    key={link.href}
+                    to={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "group flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-all duration-200",
+                      location.pathname === link.href
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "text-foreground hover:bg-primary/5 hover:text-primary active:bg-primary/10"
+                    )}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <span>{link.label}</span>
+                    <ChevronRight className={cn(
+                      "h-4 w-4 transition-all duration-200",
+                      location.pathname === link.href 
+                        ? "text-primary-foreground/70" 
+                        : "text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5"
+                    )} />
+                  </PrefetchLink>
+                );
+              })}
             </div>
 
             {/* Divider */}
