@@ -19,6 +19,13 @@ import {
 
 const treatmentTypes = [
   {
+    icon: Stethoscope,
+    title: "Medical Detox",
+    description: "Safe, medically supervised withdrawal with 24/7 monitoring and medication support for alcohol, opioids, and other substances.",
+    features: ["24/7 medical supervision", "Medication management", "Safe withdrawal", "Transition to treatment"],
+    link: "/treatment-types/medical-detox",
+  },
+  {
     icon: Pill,
     title: "Drug Addiction Treatment",
     description: "Comprehensive programs for substance abuse including opioids, stimulants, benzodiazepines, and other controlled substances.",
@@ -59,6 +66,13 @@ const treatmentTypes = [
     description: "Complementary approaches that address mind, body, and spirit for whole-person healing.",
     features: ["Yoga & meditation", "Art & music therapy", "Equine therapy", "Nutritional counseling"],
     link: "/treatment-types/holistic-therapy",
+  },
+  {
+    icon: Sparkles,
+    title: "Luxury Rehab",
+    description: "Premium treatment in resort-like settings with private accommodations, gourmet dining, and executive services.",
+    features: ["Private rooms", "Gourmet cuisine", "Spa & fitness", "Executive programs"],
+    link: "/treatment-types/luxury-rehab",
   },
 ];
 
