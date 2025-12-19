@@ -28,7 +28,6 @@ import { useProviderData } from "@/hooks/useProviderData";
 import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProviderDashboardSkeleton } from "@/components/skeletons/ProviderDashboardSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, differenceInHours, isPast, format } from "date-fns";
 import { 
@@ -323,9 +322,7 @@ export default function ProviderDashboardPage() {
   const StatusIcon = statusConfig.icon;
   const profileUrl = facility?.slug ? `/center/${facility.slug}` : facility?.id ? `/rehab-centers/${facility.id}` : null;
 
-  if (isLoading && !providerData) {
-    return <ProviderDashboardSkeleton />;
-  }
+  // Remove blocking skeleton - render page immediately, show inline loading states
 
   // Calculate leads awaiting follow-up
   const now = new Date();
