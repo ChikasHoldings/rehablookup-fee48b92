@@ -24,9 +24,9 @@ interface ProviderSidebarProps {
 
 const navItems = [
   { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/provider/listing", label: "My Listing", icon: Building2 },
   { href: "/provider/leads", label: "Leads", icon: Users },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/provider/listing", label: "My Listing", icon: Building2 },
   { href: "/provider/billing", label: "Billing", icon: CreditCard },
   { href: "/provider/settings", label: "Settings", icon: Settings },
 ];
