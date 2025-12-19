@@ -20,6 +20,7 @@ import {
   Clock,
   X,
   Sparkles,
+  Quote,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -71,6 +72,30 @@ const listingFeatures = [
   "Direct contact and inquiry forms",
   "Analytics dashboard and reporting",
   "Priority customer support",
+];
+
+const testimonials = [
+  {
+    quote: "RehabLookup has transformed how we connect with families. Our admissions increased by 40% within the first three months of partnering.",
+    author: "Dr. Sarah Mitchell",
+    role: "Clinical Director",
+    facility: "Sunrise Recovery Center",
+    location: "California",
+  },
+  {
+    quote: "The quality of referrals we receive is exceptional. Families come to us already informed and ready to begin their recovery journey.",
+    author: "Michael Torres",
+    role: "Admissions Director",
+    facility: "New Horizons Treatment",
+    location: "Florida",
+  },
+  {
+    quote: "The analytics dashboard gives us insights we never had before. We can now make data-driven decisions about our outreach efforts.",
+    author: "Jennifer Adams",
+    role: "Marketing Manager",
+    facility: "Coastal Wellness Center",
+    location: "Texas",
+  },
 ];
 
 const ForProviders = () => {
@@ -298,6 +323,42 @@ const ForProviders = () => {
                   {item.description}
                 </p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Partner Testimonials */}
+      <section className="py-16 md:py-20 bg-muted/30">
+        <div className="container px-5 md:px-6">
+          <div className="text-center mb-12">
+            <div className="mb-4 inline-flex items-center gap-2.5 md:gap-2 rounded-full bg-accent/10 px-5 md:px-4 py-2.5 md:py-1.5">
+              <Quote className="h-5 w-5 md:h-4 md:w-4 text-accent" />
+              <span className="text-base md:text-sm font-medium text-accent">Partner Success</span>
+            </div>
+            <h2 className="mb-4 md:mb-3 font-display text-2xl md:text-xl lg:text-2xl font-bold text-foreground">
+              What Our Partners Say
+            </h2>
+            <p className="text-lg md:text-base text-muted-foreground max-w-xl mx-auto">
+              Hear from treatment centers who have grown their reach with RehabLookup.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {testimonials.map((testimonial, index) => (
+              <AnimatedCard key={testimonial.author} delay={index * 100}>
+                <div className="h-full flex flex-col rounded-2xl md:rounded-xl border border-border bg-card p-7 md:p-6 shadow-card">
+                  <Quote className="h-8 w-8 md:h-6 md:w-6 text-accent/30 mb-4" />
+                  <blockquote className="flex-1 text-lg md:text-base text-foreground/90 leading-relaxed mb-6">
+                    "{testimonial.quote}"
+                  </blockquote>
+                  <div className="border-t border-border pt-5 md:pt-4">
+                    <p className="font-semibold text-foreground">{testimonial.author}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                    <p className="text-sm text-accent font-medium mt-1">{testimonial.facility}, {testimonial.location}</p>
+                  </div>
+                </div>
+              </AnimatedCard>
             ))}
           </div>
         </div>
