@@ -21,6 +21,8 @@ import {
   Sparkles,
   Zap,
   X,
+  Share2,
+  Star,
 } from "lucide-react";
 import {
   Select,
@@ -99,9 +101,10 @@ interface LeadDetailPanelProps {
   lead: Lead | null;
   onClose: () => void;
   facilityName?: string;
+  exclusivity?: 'shared' | 'exclusive' | null;
 }
 
-export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanelProps) {
+export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: LeadDetailPanelProps) {
   const [newNote, setNewNote] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("details");
@@ -324,6 +327,18 @@ export function LeadDetailPanel({ lead, onClose, facilityName }: LeadDetailPanel
             <Badge className="bg-primary/10 text-primary border-0 gap-1 h-6 text-xs px-2 font-medium">
               <Sparkles className="h-3 w-3" />
               Qualified
+            </Badge>
+          )}
+          {exclusivity === 'shared' && (
+            <Badge variant="outline" className="gap-1 h-6 text-xs px-2 font-medium border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+              <Share2 className="h-3 w-3" />
+              Shared
+            </Badge>
+          )}
+          {exclusivity === 'exclusive' && (
+            <Badge variant="outline" className="gap-1 h-6 text-xs px-2 font-medium border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+              <Star className="h-3 w-3" />
+              Exclusive
             </Badge>
           )}
           {lead.urgency === "immediate" && (
