@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityWidget";
+import LeadCapMonitorWidget from "@/components/admin/LeadCapMonitorWidget";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 
 // Subscription plan colors
@@ -884,7 +885,10 @@ export default function AdminDashboard() {
       </Card>
 
       {/* Subscription Activity */}
-      <SubscriptionActivityWidget />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SubscriptionActivityWidget />
+        <LeadCapMonitorWidget />
+      </div>
 
       {/* Recent Leads */}
       <Card className="border-0 shadow-card bg-card">
