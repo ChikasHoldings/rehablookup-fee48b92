@@ -1066,7 +1066,7 @@ export default function ProviderSettingsPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">New Leads</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    When someone submits an inquiry through your profile
+                    When someone submits a request through your profile
                   </p>
                 </div>
                 <Switch

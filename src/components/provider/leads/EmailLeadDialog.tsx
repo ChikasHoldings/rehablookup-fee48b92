@@ -108,7 +108,7 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
     subject: "Thanks for reaching out to {{provider_name}}",
     body: `Hi {{lead_first_name}},
 
-Thank you for reaching out to {{provider_name}}. We received your inquiry and want you to know we're here to help.
+Thank you for reaching out to {{provider_name}}. We received your request and want you to know we're here to help.
 
 Taking this step takes courage, and we appreciate your trust. Our team is ready to answer your questions about our programs, insurance, and what to expect.
 
@@ -125,10 +125,10 @@ Warmly,
     icon: Briefcase,
     iconColor: "text-blue-600",
     isWelcome: true,
-    subject: "Your inquiry has been received - {{provider_name}}",
+    subject: "Your request has been received - {{provider_name}}",
     body: `Hi {{lead_first_name}},
 
-Thank you for contacting {{provider_name}}. Your inquiry has been received by our admissions team.
+Thank you for contacting {{provider_name}}. Your request has been received by our admissions team.
 
 We specialize in evidence-based treatment programs with experienced clinical staff. Our team will review your information and reach out to discuss how we can best support your recovery goals.
 
@@ -148,7 +148,7 @@ Best regards,
     subject: "A personal note from our team - {{provider_name}}",
     body: `Hi {{lead_first_name}},
 
-I wanted to personally reach out after receiving your inquiry. At {{provider_name}}, we believe every person's journey is unique, and we're honored you're considering us.
+I wanted to personally reach out after receiving your request. At {{provider_name}}, we believe every person's journey is unique, and we're honored you're considering us.
 
 Recovery is possible. I've seen it happen for so many people who started exactly where you are now. We're here to support you every step of the way.
 
@@ -184,7 +184,7 @@ With hope,
     subject: "Here's what happens next - {{provider_name}}",
     body: `Hi {{lead_first_name}},
 
-Thanks for your inquiry to {{provider_name}}. Here's what you can expect from us:
+Thanks for reaching out to {{provider_name}}. Here's what you can expect from us:
 
 1. We'll call within 24 hours to learn about your situation
 2. We'll verify your insurance coverage at no cost

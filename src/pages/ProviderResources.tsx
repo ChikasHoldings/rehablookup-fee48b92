@@ -129,7 +129,7 @@ const faqs = [
   },
   {
     question: "What analytics are available?",
-    answer: "Your dashboard includes views, unique visitors, inquiry rates, conversion metrics, and engagement trends. Premium plans include advanced analytics with demographic insights.",
+    answer: "Your dashboard includes views, unique visitors, lead rates, conversion metrics, and engagement trends. Premium plans include advanced analytics with demographic insights.",
   },
   {
     question: "How do I add photos to my listing?",

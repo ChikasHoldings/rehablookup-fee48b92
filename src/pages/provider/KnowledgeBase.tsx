@@ -199,11 +199,11 @@ Quality images help families visualize your facility and build trust.
     content: `
 # Managing Your Leads Effectively
 
-Your Leads dashboard is your central hub for managing inquiries.
+Your Leads dashboard is your central hub for managing all incoming leads.
 
 ## Lead Statuses
 
-- **New** - Fresh inquiry, not yet contacted
+- **New** - Fresh lead, not yet contacted
 - **Contacted** - Initial outreach made
 - **Qualified** - Good fit, actively discussing
 - **Converted** - Successfully admitted
@@ -214,7 +214,7 @@ Your Leads dashboard is your central hub for managing inquiries.
 ### Response Time Matters
 - Respond to new leads within 1 hour during business hours
 - Set up instant email notifications
-- Use the quick-call feature for urgent inquiries
+- Use the quick-call feature for urgent leads
 
 ### Tracking Interactions
 - Add notes after each contact
@@ -391,7 +391,7 @@ Data-driven insights to improve your listing performance.
 
 ### Identify Trends
 - Track view patterns over time
-- Notice peak inquiry days
+- Notice peak lead days
 - Correlate with marketing efforts
 
 ### Optimize Performance
@@ -412,7 +412,7 @@ Data-driven insights to improve your listing performance.
     content: `
 # Securing Your Account
 
-Protect your account and patient inquiry data.
+Protect your account and patient lead data.
 
 ## Password Best Practices
 
