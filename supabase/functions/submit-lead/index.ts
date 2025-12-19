@@ -801,6 +801,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // ============ CREATE LEAD ============
+    // Direct profile leads are QUALIFIED if they have valid contact info (already validated above)
+    const isQualified = true; // Already validated email and phone format above
+    const qualityFlag = "qualified";
     
     const { data: lead, error: leadError } = await supabase
       .from("leads")
@@ -814,6 +817,12 @@ const handler = async (req: Request): Promise<Response> => {
         ip_hash: ipHash,
         validation_status: "valid",
         source: "Direct",
+        qualified: isQualified,
+        quality_flag: qualityFlag,
+        assignment_status: "assigned",
+        assignment_reason: `Direct profile submission to ${body.facilityName}`,
+        assigned_at: new Date().toISOString(),
+        exclusivity: "exclusive",
       })
       .select()
       .single();
