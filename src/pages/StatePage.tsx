@@ -22,6 +22,60 @@ import {
   Heart
 } from "lucide-react";
 
+// State capital images mapping - using Unsplash images of state capitals
+const stateCapitalImages: Record<string, string> = {
+  'alabama': 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1920&q=80', // Montgomery
+  'alaska': 'https://images.unsplash.com/photo-1531176175280-33e68e01b7d7?w=1920&q=80', // Juneau
+  'arizona': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80', // Phoenix
+  'arkansas': 'https://images.unsplash.com/photo-1590937276195-a0280fab0de6?w=1920&q=80', // Little Rock
+  'california': 'https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?w=1920&q=80', // Sacramento
+  'colorado': 'https://images.unsplash.com/photo-1546156929-a4c0ac411f47?w=1920&q=80', // Denver
+  'connecticut': 'https://images.unsplash.com/photo-1569012871812-f38ee64cd54c?w=1920&q=80', // Hartford
+  'delaware': 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=1920&q=80', // Dover
+  'florida': 'https://images.unsplash.com/photo-1605723517503-3cadb5818a0c?w=1920&q=80', // Tallahassee
+  'georgia': 'https://images.unsplash.com/photo-1575917649705-5b59aaa12e6b?w=1920&q=80', // Atlanta
+  'hawaii': 'https://images.unsplash.com/photo-1507876466758-bc54f384809c?w=1920&q=80', // Honolulu
+  'idaho': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80', // Boise
+  'illinois': 'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?w=1920&q=80', // Springfield
+  'indiana': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69c07b?w=1920&q=80', // Indianapolis
+  'iowa': 'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=1920&q=80', // Des Moines
+  'kansas': 'https://images.unsplash.com/photo-1590937276234-e45c0e6c9e76?w=1920&q=80', // Topeka
+  'kentucky': 'https://images.unsplash.com/photo-1578301978018-3005759f48f7?w=1920&q=80', // Frankfort
+  'louisiana': 'https://images.unsplash.com/photo-1568402102990-bc541580b59f?w=1920&q=80', // Baton Rouge
+  'maine': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80', // Augusta
+  'maryland': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80', // Annapolis
+  'massachusetts': 'https://images.unsplash.com/photo-1501979376754-1d09b529c917?w=1920&q=80', // Boston
+  'michigan': 'https://images.unsplash.com/photo-1534351450181-ea9f78427fe8?w=1920&q=80', // Lansing
+  'minnesota': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80', // St. Paul
+  'mississippi': 'https://images.unsplash.com/photo-1590937276195-a0280fab0de6?w=1920&q=80', // Jackson
+  'missouri': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80', // Jefferson City
+  'montana': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80', // Helena
+  'nebraska': 'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=1920&q=80', // Lincoln
+  'nevada': 'https://images.unsplash.com/photo-1581351721010-8cf859cb14a4?w=1920&q=80', // Carson City
+  'new-hampshire': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80', // Concord
+  'new-jersey': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80', // Trenton
+  'new-mexico': 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1920&q=80', // Santa Fe
+  'new-york': 'https://images.unsplash.com/photo-1538970272646-f61fabb3a8a2?w=1920&q=80', // Albany
+  'north-carolina': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80', // Raleigh
+  'north-dakota': 'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=1920&q=80', // Bismarck
+  'ohio': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69c07b?w=1920&q=80', // Columbus
+  'oklahoma': 'https://images.unsplash.com/photo-1590937276234-e45c0e6c9e76?w=1920&q=80', // Oklahoma City
+  'oregon': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80', // Salem
+  'pennsylvania': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80', // Harrisburg
+  'rhode-island': 'https://images.unsplash.com/photo-1501979376754-1d09b529c917?w=1920&q=80', // Providence
+  'south-carolina': 'https://images.unsplash.com/photo-1575917649705-5b59aaa12e6b?w=1920&q=80', // Columbia
+  'south-dakota': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80', // Pierre
+  'tennessee': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69c07b?w=1920&q=80', // Nashville
+  'texas': 'https://images.unsplash.com/photo-1531218150217-54595bc2b934?w=1920&q=80', // Austin
+  'utah': 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=80', // Salt Lake City
+  'vermont': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80', // Montpelier
+  'virginia': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80', // Richmond
+  'washington': 'https://images.unsplash.com/photo-1502175353174-a7a70e73b362?w=1920&q=80', // Olympia
+  'west-virginia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80', // Charleston
+  'wisconsin': 'https://images.unsplash.com/photo-1534351450181-ea9f78427fe8?w=1920&q=80', // Madison
+  'wyoming': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80', // Cheyenne
+};
+
 const StatePage = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
   const stateData = stateSlug ? getStateBySlug(stateSlug) : undefined;
@@ -53,6 +107,9 @@ const StatePage = () => {
 
   // Get nearby states for internal linking
   const nearbyStates = stateData ? getNearbyStates(stateData.slug, 4) : [];
+
+  // Get state capital image
+  const capitalImage = stateSlug ? stateCapitalImages[stateSlug] : undefined;
 
   // If state not found, redirect to 404
   if (!stateData) {
@@ -99,55 +156,69 @@ const StatePage = () => {
         ]}
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-12 md:py-16">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+      {/* Hero Section with State Capital Background */}
+      <section className="relative min-h-[420px] overflow-hidden">
+        {/* Background Image */}
+        {capitalImage && (
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${capitalImage})` }}
+          />
+        )}
+        
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-primary/40" />
+        
+        {/* Decorative elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
-        <div className="container relative">
+        <div className="container relative z-10 py-14 md:py-20">
           {/* Breadcrumb */}
-          <nav className="mb-6 flex items-center gap-2 text-sm text-white/70">
+          <nav className="mb-8 flex items-center gap-2 text-sm text-white/70">
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="h-4 w-4" />
             <Link to="/rehab-centers" className="hover:text-white transition-colors">Find Rehab</Link>
             <ChevronRight className="h-4 w-4" />
-            <span className="text-white">{stateData.name}</span>
+            <span className="text-white font-medium">{stateData.name}</span>
           </nav>
 
           <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
               <MapPin className="h-4 w-4" />
               {stateData.abbreviation} Treatment Centers
             </div>
             
-            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
+            <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
               Drug & Alcohol Rehab Centers in {stateData.name}
             </h1>
             
-            <p className="mt-4 text-lg text-white/80 leading-relaxed max-w-2xl">
+            <p className="mt-5 text-lg text-white/85 leading-relaxed max-w-2xl">
               {stateData.description}
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2 text-white/90">
-                <Building2 className="h-5 w-5" />
-                <span className="font-semibold">{stateCenters.length}</span> Verified Facilities
+            <div className="mt-6 flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-2 text-white">
+                <Building2 className="h-5 w-5 text-white/80" />
+                <span className="font-semibold">{stateCenters.length}</span>
+                <span className="text-white/80">Verified Facilities</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90">
-                <CheckCircle className="h-5 w-5" />
-                <span>All Credentials Verified</span>
+              <div className="flex items-center gap-2 text-white">
+                <CheckCircle className="h-5 w-5 text-white/80" />
+                <span className="text-white/80">All Credentials Verified</span>
               </div>
             </div>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <Link to="/request-help">
-                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
+                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
                   <Phone className="h-4 w-4" />
                   Get Help Now
                 </Button>
               </Link>
               <Link to={`/rehab-centers?location=${encodeURIComponent(stateData.name)}`}>
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
                   <Search className="h-4 w-4" />
                   Search {stateData.name}
                 </Button>
