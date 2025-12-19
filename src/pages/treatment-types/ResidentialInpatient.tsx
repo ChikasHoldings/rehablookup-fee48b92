@@ -432,6 +432,18 @@ const ResidentialInpatient = () => {
               { name: "Georgia", slug: "georgia" },
               { name: "New Jersey", slug: "new-jersey" },
               { name: "Massachusetts", slug: "massachusetts" },
+              { name: "Washington", slug: "washington" },
+              { name: "Michigan", slug: "michigan" },
+              { name: "North Carolina", slug: "north-carolina" },
+              { name: "Virginia", slug: "virginia" },
+              { name: "Tennessee", slug: "tennessee" },
+              { name: "Maryland", slug: "maryland" },
+              { name: "Indiana", slug: "indiana" },
+              { name: "Missouri", slug: "missouri" },
+              { name: "Nevada", slug: "nevada" },
+              { name: "Oregon", slug: "oregon" },
+              { name: "Kentucky", slug: "kentucky" },
+              { name: "Utah", slug: "utah" },
             ].map((state) => (
               <Link key={state.slug} to={`/treatment-types/residential-inpatient/${state.slug}`}>
                 <Button variant="outline" size="sm">
