@@ -1081,10 +1081,18 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     // ============ LEAD QUALIFICATION GATE ============
-    // A lead is only routed if it passes: valid phone OR email, location match, not duplicate, not spam
+    // A lead is QUALIFIED only if ALL of the following pass:
+    // 1. Phone OR email is valid (at least one contact method)
+    // 2. Location is provided (matches provider service area - checked during routing)
+    // 3. Lead is not a duplicate within suppression window
+    // 4. Spam/bot checks pass (IP rate limiting)
+    // 
+    // UNQUALIFIED leads:
+    // - Are NOT routed to providers
+    // - Do NOT count toward monthly caps
     
-    // Validate required fields
-    const requiredFields = ["whoSeekingHelp", "locationZip", "urgency", "levelOfCare", "name", "phone", "email", "preferredContact"];
+    // ============ 1. Validate required fields ============
+    const requiredFields = ["whoSeekingHelp", "locationZip", "urgency", "levelOfCare", "name", "preferredContact"];
     const missingFields: string[] = [];
     
     for (const field of requiredFields) {
@@ -1092,6 +1100,14 @@ const handler = async (req: Request): Promise<Response> => {
       if (!value || (typeof value === "string" && value.trim() === "")) {
         missingFields.push(field);
       }
+    }
+    
+    // Phone OR email is required (at least one valid contact method)
+    const hasPhone = leadData.phone && leadData.phone.trim() !== "";
+    const hasEmail = leadData.email && leadData.email.trim() !== "";
+    
+    if (!hasPhone && !hasEmail) {
+      missingFields.push("phone or email");
     }
     
     if (missingFields.length > 0) {
@@ -1102,30 +1118,32 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Validate email format
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadData.email)) {
-      log(requestId, "WARN", "Invalid email format - UNQUALIFIED", { email: leadData.email?.substring(0, 5) + "***" });
+    // ============ 2. Validate contact methods (phone OR email must be valid) ============
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isEmailValid = hasEmail && emailRegex.test(leadData.email);
+    
+    const phoneDigits = leadData.phone?.replace(/\D/g, "") || "";
+    const isPhoneValid = hasPhone && phoneDigits.length >= 10;
+    
+    // At least one valid contact method is required
+    if (!isEmailValid && !isPhoneValid) {
+      log(requestId, "WARN", "No valid contact method - UNQUALIFIED", { 
+        emailProvided: hasEmail, 
+        emailValid: isEmailValid,
+        phoneProvided: hasPhone,
+        phoneValid: isPhoneValid 
+      });
       return new Response(
-        JSON.stringify({ error: "Invalid email format" }),
+        JSON.stringify({ error: "Please provide a valid phone number or email address" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Validate phone format
-    const phoneDigits = leadData.phone.replace(/\D/g, "");
-    if (phoneDigits.length < 10) {
-      log(requestId, "WARN", "Invalid phone number - UNQUALIFIED", { digitCount: phoneDigits.length });
-      return new Response(
-        JSON.stringify({ error: "Invalid phone number - must have at least 10 digits" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Validate input lengths to prevent abuse
-    if (leadData.name.length > 200 || leadData.email.length > 255 || (leadData.message && leadData.message.length > 2000)) {
-      log(requestId, "WARN", "Input length exceeded - spam check", { 
+    // ============ 3. Validate input lengths (spam check) ============
+    if (leadData.name.length > 200 || (leadData.email && leadData.email.length > 255) || (leadData.message && leadData.message.length > 2000)) {
+      log(requestId, "WARN", "Input length exceeded - spam check failed", { 
         nameLen: leadData.name.length, 
-        emailLen: leadData.email.length,
+        emailLen: leadData.email?.length || 0,
         messageLen: leadData.message?.length || 0 
       });
       return new Response(
@@ -1134,23 +1152,35 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    log(requestId, "INFO", "Validation passed - creating Supabase client");
+    // ============ 4. Location validation ============
+    if (!leadData.locationZip || leadData.locationZip.length < 5) {
+      log(requestId, "WARN", "Invalid location - UNQUALIFIED", { zip: leadData.locationZip });
+      return new Response(
+        JSON.stringify({ error: "Please provide a valid ZIP code" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    log(requestId, "INFO", "Basic validation passed - creating Supabase client");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // ============ EMAIL VERIFICATION CHECK ============
-    const { data: verificationRecord } = await supabase
-      .from("email_verification_codes")
-      .select("verified")
-      .eq("email", leadData.email.toLowerCase())
-      .eq("verified", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // ============ 5. EMAIL VERIFICATION CHECK (enhances qualification) ============
+    let emailVerified = false;
+    if (isEmailValid) {
+      const { data: verificationRecord } = await supabase
+        .from("email_verification_codes")
+        .select("verified")
+        .eq("email", leadData.email.toLowerCase())
+        .eq("verified", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      emailVerified = !!verificationRecord;
+    }
+    log(requestId, "INFO", "Email verification status", { verified: emailVerified, emailProvided: isEmailValid });
 
-    const emailVerified = !!verificationRecord;
-    log(requestId, "INFO", "Email verification status", { verified: emailVerified });
-
-    // ============ DUPLICATE CHECK (suppression window) ============
+    // ============ 6. DUPLICATE CHECK (suppression window) ============
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0] || 
                      req.headers.get("cf-connecting-ip") || 
                      "unknown";
@@ -1158,15 +1188,38 @@ const handler = async (req: Request): Promise<Response> => {
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     
-    const { data: recentLeads } = await supabase
-      .from("leads")
-      .select("source")
-      .eq("email", leadData.email.toLowerCase())
-      .gte("created_at", oneHourAgo);
+    // Check for duplicate by email (if provided) or phone
+    let isDuplicate = false;
     
-    // Filter to count any lead submissions (no more "direct" distinction)
-    if ((recentLeads || []).length > 0) {
-      log(requestId, "WARN", "Duplicate submission blocked - UNQUALIFIED", { email: leadData.email });
+    if (isEmailValid) {
+      const { data: recentLeadsByEmail } = await supabase
+        .from("leads")
+        .select("id")
+        .eq("email", leadData.email.toLowerCase())
+        .gte("created_at", oneHourAgo);
+      
+      if ((recentLeadsByEmail || []).length > 0) {
+        isDuplicate = true;
+      }
+    }
+    
+    if (!isDuplicate && isPhoneValid) {
+      const { data: recentLeadsByPhone } = await supabase
+        .from("leads")
+        .select("id")
+        .eq("phone", leadData.phone.trim())
+        .gte("created_at", oneHourAgo);
+      
+      if ((recentLeadsByPhone || []).length > 0) {
+        isDuplicate = true;
+      }
+    }
+    
+    if (isDuplicate) {
+      log(requestId, "WARN", "Duplicate submission blocked - UNQUALIFIED", { 
+        email: leadData.email?.substring(0, 5) + "***",
+        phone: phoneDigits.substring(0, 3) + "***" 
+      });
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -1177,7 +1230,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // ============ RATE LIMIT CHECK (spam validation) ============
+    // ============ 7. RATE LIMIT CHECK (spam/bot validation) ============
     const { count: ipCount } = await supabase
       .from("leads")
       .select("*", { count: "exact", head: true })
@@ -1185,7 +1238,7 @@ const handler = async (req: Request): Promise<Response> => {
       .gte("created_at", oneHourAgo);
 
     if (ipCount && ipCount >= 5) {
-      log(requestId, "WARN", "IP rate limit exceeded - UNQUALIFIED (spam)", { ipHash });
+      log(requestId, "WARN", "IP rate limit exceeded - UNQUALIFIED (bot/spam)", { ipHash });
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -1196,9 +1249,26 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // ============ LEAD IS QUALIFIED - PROCEED WITH ROUTING ============
-    const isQualified = emailVerified;
-    const qualificationReason = !emailVerified ? "Email not verified" : null;
+    // ============ LEAD QUALIFICATION DETERMINATION ============
+    // A lead is QUALIFIED if:
+    // 1. At least one valid contact method (phone or email) ✓ (validated above)
+    // 2. Location provided ✓ (validated above)
+    // 3. Not a duplicate ✓ (validated above)
+    // 4. Not spam/bot ✓ (validated above)
+    // 5. Email verified (enhances quality score but not required for qualification)
+    
+    const isQualified = isPhoneValid || isEmailValid; // At least one valid contact
+    const qualificationReason = !isQualified 
+      ? "No valid contact method provided" 
+      : (emailVerified ? null : "Email not verified (valid contact available)");
+    
+    log(requestId, "INFO", "Qualification check complete", { 
+      isQualified, 
+      phoneValid: isPhoneValid, 
+      emailValid: isEmailValid, 
+      emailVerified,
+      qualificationReason 
+    });
 
     // ============ ROUTING VARIABLES ============
     let primaryFacilityId: string | null = null;
@@ -1220,10 +1290,19 @@ const handler = async (req: Request): Promise<Response> => {
     let scoringBreakdown: Record<string, number> | null = null;
     let eligibilityResult: ProviderEligibility | null = null;
 
+    // ============ UNQUALIFIED LEADS: DO NOT ROUTE ============
+    // Unqualified leads are stored but NOT routed to providers and do NOT count toward caps
+    if (!isQualified) {
+      log(requestId, "WARN", "Lead is UNQUALIFIED - will NOT be routed", { qualificationReason });
+      assignmentStatus = "unqualified_not_routed";
+      assignmentReason = qualificationReason || "Lead did not pass qualification checks";
+    }
+
     // ============ FEATURED PROFILE SUBMISSION SAFEGUARD ============
     // When a lead is submitted from a Featured provider profile page:
     // Route ONLY to that Featured provider, no secondary routing
-    if (leadData.facilityId) {
+    // ONLY route if the lead is qualified
+    if (isQualified && leadData.facilityId) {
       log(requestId, "INFO", "Processing direct provider request", { facilityId: leadData.facilityId });
       
       const { data: facility } = await supabase
@@ -1355,7 +1434,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // ============ AUTO-ASSIGNMENT: Fair-share routing with exclusivity rules ============
-    if (!primaryFacilityId) {
+    // ONLY run auto-assignment for QUALIFIED leads that don't have a provider yet
+    if (isQualified && !primaryFacilityId && assignmentStatus !== "unqualified_not_routed") {
       log(requestId, "INFO", "Starting scored auto-assignment", { qualified: isQualified });
       const eligibleProviders = await getEligibleProviders(supabase, leadData, requestId);
       
