@@ -167,3 +167,9 @@ verify_jwt = true
 
 [functions.send-provider-support]
 verify_jwt = false
+
+[functions.get-billing-history]
+verify_jwt = true
+
+[functions.get-payment-method]
+verify_jwt = true
