@@ -863,6 +863,62 @@ async function sendLeadNotificationEmail(
   }
 }
 
+// ============ BASIC PROVIDER UPGRADE NOTIFICATION ============
+async function sendBasicProviderUpgradeNotification(
+  providerEmail: string,
+  facilityName: string,
+  leadLocation: string,
+  requestId: string
+): Promise<void> {
+  try {
+    await resend.emails.send({
+      from: "RehabLookup <no-reply@rehablookup.com>",
+      to: [providerEmail],
+      subject: `You missed a lead from your profile - Upgrade to receive leads`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+  <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
+    <h1 style="color: #fff; margin: 0; font-size: 24px;">A Lead Just Submitted From Your Profile</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">But you're on the Basic plan...</p>
+  </div>
+  
+  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
+    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #92400e;">📍 Lead Location: ${leadLocation || 'Not specified'}</p>
+      <p style="margin: 0; color: #92400e; font-size: 14px;">This lead was submitted directly from your facility profile at <strong>${facilityName}</strong>.</p>
+    </div>
+    
+    <p style="margin: 0 0 16px 0; font-size: 15px; color: #4b5563;">Someone looking for treatment reached out through your profile, but as a Basic plan member, you're not able to receive leads.</p>
+    
+    <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563;">This lead has been routed to a paid provider. <strong>Don't miss the next one!</strong></p>
+    
+    <div style="background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #166534;">Upgrade to Start Receiving Leads</p>
+      <ul style="margin: 0 0 16px 0; padding-left: 20px; color: #166534; font-size: 14px;">
+        <li style="margin-bottom: 8px;"><strong>Professional Plan:</strong> 100 shared leads/month</li>
+        <li style="margin-bottom: 0;"><strong>Featured Plan:</strong> 100 exclusive leads/month + premium placement</li>
+      </ul>
+    </div>
+    
+    <div style="text-align: center;">
+      <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #fff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Upgrade Your Plan</a>
+    </div>
+    
+    <p style="margin: 24px 0 0 0; font-size: 13px; color: #9ca3af; text-align: center;">Questions? Contact us at <a href="mailto:support@rehablookup.com" style="color: #1B365D;">support@rehablookup.com</a></p>
+  </div>
+</body>
+</html>
+      `,
+    });
+    log(requestId, "INFO", "Basic provider upgrade notification sent", { to: providerEmail, facilityName });
+  } catch (error) {
+    log(requestId, "ERROR", "Failed to send basic provider upgrade notification", { error: String(error) });
+  }
+}
+
 async function sendLeadLimitWarningEmail(
   providerEmail: string,
   facilityName: string,
@@ -1335,74 +1391,79 @@ const handler = async (req: Request): Promise<Response> => {
               planName: eligibilityResult.planName 
             });
             
-            // Basic plan providers cannot receive leads - block completely
+            // Basic plan providers cannot receive leads - notify and route to paid providers
             if (!PAID_PLANS.includes(eligibilityResult.planName)) {
-              // Create unassigned lead record
-              const { data: blockedLead } = await supabase
-                .from("leads")
-                .insert({
-                  facility_id: null,
-                  name: leadData.name.trim(),
-                  phone: leadData.phone.trim(),
-                  email: leadData.email.toLowerCase().trim(),
-                  preferred_contact: leadData.preferredContact,
-                  message: leadData.message?.trim() || null,
-                  ip_hash: ipHash,
-                  email_verified: emailVerified,
-                  source: "Profile Submission (Blocked)",
-                  who_seeking_help: leadData.whoSeekingHelp,
-                  location_zip: leadData.locationZip,
-                  location_city_state: leadData.locationCityState || null,
-                  urgency: leadData.urgency,
-                  primary_substance: leadData.primarySubstance || [],
-                  level_of_care: leadData.levelOfCare,
-                  dual_diagnosis: leadData.dualDiagnosis,
-                  insurance_type: leadData.insuranceType,
-                  insurance_provider: leadData.insuranceProvider || null,
-                  budget_preference: leadData.budgetPreference || null,
-                  status: "new",
-                  quality_flag: isQualified ? "qualified" : "unqualified",
-                  validation_status: "valid",
-                  qualified: isQualified,
-                  qualification_reason: qualificationReason,
-                  assignment_status: "blocked_basic_provider",
-                  assignment_reason: `Requested provider (${facility.name}) is on Basic plan`,
-                  assigned_at: null,
-                  exclusivity: 'exclusive',
-                  routing_order: 1,
-                  shared_with: [],
-                })
-                .select()
-                .single();
-
-              // Log routing decision
-              await supabase.from("lead_routing_logs").insert({
-                lead_id: blockedLead?.id,
-                assigned_provider_id: null,
-                assignment_reason: `Blocked: Basic plan provider cannot receive leads`,
-                plan_tier: "basic",
-                routing_source: "direct_blocked",
-                requested_facility_id: facility.id,
-                exclusivity: 'exclusive',
-                provider_routing_order: 1,
-                eligibility_check_result: {
-                  blocked_reason: "basic_plan",
-                  requested_facility_name: facility.name,
-                  request_id: requestId,
-                },
+              log(requestId, "INFO", "Basic plan profile submission - notifying provider and routing to paid providers", { 
+                facilityName: facility.name 
               });
-
-              log(requestId, "INFO", "Basic plan profile submission blocked", { facilityName: facility.name });
-
-              return new Response(
-                JSON.stringify({ 
-                  success: false,
-                  error: "provider_unavailable",
-                  message: "This provider is not currently accepting leads. Please use our Request Help form to be matched with an available provider.",
-                  showFallback: true,
-                }),
-                { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+              
+              // Notify the Basic provider about the missed lead (encourage upgrade)
+              await sendBasicProviderUpgradeNotification(
+                profile.email,
+                facility.name,
+                leadData.locationCityState || leadData.locationZip,
+                requestId
               );
+              
+              // Find eligible paid providers to route this lead to
+              const eligibleProviders = await getEligibleProviders(supabase, leadData, requestId);
+              
+              if (eligibleProviders.length > 0) {
+                // Use findBestProviders to determine routing based on plan type
+                const result = findBestProviders(eligibleProviders, leadData, requestId);
+                
+                if (result.primary) {
+                  primaryFacilityId = result.primary.provider.facilityId;
+                  primaryFacilityUserId = result.primary.provider.facilityUserId;
+                  primaryFacilityEmail = result.primary.provider.facilityEmail;
+                  primaryFacilityName = result.primary.provider.facilityName;
+                  primaryProviderEmail = result.primary.provider.providerEmail;
+                  primaryPlanName = result.primary.provider.planName;
+                  assignmentStatus = "assigned";
+                  leadExclusivity = result.exclusivity;
+                  scoringBreakdown = result.primary.score.breakdown;
+                  
+                  assignmentReason = `Rerouted from Basic provider (${facility.name}): ${result.reason}`;
+                  
+                  // Handle secondary provider for shared leads
+                  if (result.secondary && result.exclusivity === 'shared') {
+                    secondaryFacilityId = result.secondary.provider.facilityId;
+                    secondaryFacilityUserId = result.secondary.provider.facilityUserId;
+                    secondaryFacilityEmail = result.secondary.provider.facilityEmail;
+                    secondaryFacilityName = result.secondary.provider.facilityName;
+                    secondaryProviderEmail = result.secondary.provider.providerEmail;
+                  }
+                  
+                  log(requestId, "INFO", "Basic profile lead rerouted successfully", { 
+                    from: facility.name,
+                    to: primaryFacilityName,
+                    exclusivity: leadExclusivity,
+                    secondary: secondaryFacilityName || null
+                  });
+                } else {
+                  assignmentStatus = "unassigned_no_capacity";
+                  assignmentReason = `Lead from Basic provider ${facility.name} - no paid providers available: ${result.reason}`;
+                  log(requestId, "WARN", "No paid providers available to reroute Basic profile lead");
+                }
+              } else {
+                assignmentStatus = "unassigned_no_providers";
+                assignmentReason = `Lead from Basic provider ${facility.name} - no eligible paid providers in location`;
+                log(requestId, "WARN", "No eligible paid providers found for Basic profile lead");
+              }
+              
+              // Create admin notification about the Basic provider lead
+              await supabase.from("admin_notifications").insert({
+                type: "basic_provider_lead",
+                title: "Lead submitted from Basic profile",
+                message: `A lead was submitted from ${facility.name} (Basic plan). Provider was notified to upgrade. Lead was ${primaryFacilityId ? `rerouted to ${primaryFacilityName}` : 'not routed - no providers available'}.`,
+                metadata: {
+                  basic_facility_id: facility.id,
+                  basic_facility_name: facility.name,
+                  rerouted_to: primaryFacilityId || null,
+                  rerouted_to_name: primaryFacilityName || null,
+                  lead_location: leadData.locationCityState,
+                }
+              });
             } else if (eligibilityResult.isSuspended) {
               // FEATURED: Block completely. PROFESSIONAL: Block (no fallback for direct submissions)
               assignmentStatus = "unassigned_provider_suspended";
