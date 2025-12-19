@@ -221,70 +221,66 @@ const Locations = () => {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {filteredStates.map(state => {
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredStates.map((state, index) => {
                 const isExpanded = expandedStates.has(state.slug);
-                const displayCities = isExpanded ? state.cities : state.cities.slice(0, 4);
-                const hasMoreCities = state.cities.length > 4;
+                const displayCities = isExpanded ? state.cities : state.cities.slice(0, 3);
+                const hasMoreCities = state.cities.length > 3;
 
                 return (
                   <div
                     key={state.slug}
-                    className="group rounded-2xl border bg-card overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30"
+                    className="group relative rounded-xl border bg-card overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/40 animate-fade-in"
+                    style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
                   >
                     {/* State Header */}
                     <Link
                       to={`/rehab-centers/${state.slug}`}
-                      className="flex items-center justify-between border-b bg-gradient-to-r from-secondary/50 to-secondary/30 p-5 transition-colors hover:from-primary/10 hover:to-primary/5"
+                      className="flex items-center gap-3 p-4 transition-colors hover:bg-secondary/50"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm">
-                          {state.abbreviation}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {state.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {state.cities.length} cities available
-                          </p>
-                        </div>
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
+                        {state.abbreviation}
                       </div>
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background shadow-sm transition-all group-hover:bg-primary group-hover:shadow-md">
-                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground transition-colors" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                          {state.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {state.cities.length} cities
+                        </p>
                       </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
                     </Link>
 
                     {/* Cities List */}
-                    <div className="p-5">
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="border-t px-4 py-3 bg-secondary/20">
+                      <div className="flex flex-wrap gap-1.5">
                         {displayCities.map(city => (
                           <Link
                             key={city.slug}
                             to={`/rehab-centers/${state.slug}/${city.slug}`}
-                            className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-primary/5 hover:translate-x-0.5"
+                            className="inline-flex items-center gap-1 rounded-md bg-background px-2 py-1 text-xs text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20"
                           >
-                            <MapPin className="h-3.5 w-3.5 text-primary/60" />
-                            <span className="text-foreground truncate hover:text-primary">{city.name}</span>
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate max-w-[80px]">{city.name}</span>
                           </Link>
                         ))}
+                        {hasMoreCities && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleState(state.slug);
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md bg-primary/5 px-2 py-1 text-xs font-medium text-primary transition-all hover:bg-primary/10"
+                          >
+                            {isExpanded ? (
+                              "Less"
+                            ) : (
+                              `+${state.cities.length - 3}`
+                            )}
+                          </button>
+                        )}
                       </div>
-
-                      {hasMoreCities && (
-                        <button
-                          onClick={() => toggleState(state.slug)}
-                          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border/60 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:border-primary/50 hover:text-primary hover:bg-primary/5"
-                        >
-                          {isExpanded ? (
-                            <>Show fewer cities</>
-                          ) : (
-                            <>
-                              <span>+{state.cities.length - 4} more cities</span>
-                              <ArrowRight className="h-3.5 w-3.5" />
-                            </>
-                          )}
-                        </button>
-                      )}
                     </div>
                   </div>
                 );
