@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
 import { PlanSelectionStep } from "@/components/provider/PlanSelectionStep";
 import { PLAN_DETAILS } from "@/hooks/useSubscription";
+import { providerNavLinks } from "@/data/providerNavLinks";
 
 const getBrowserInfo = (): { browser: string; os: string; device: string } => {
   const ua = navigator.userAgent;
@@ -71,12 +72,6 @@ const getBrowserInfo = (): { browser: string; os: string; device: string } => {
 const generateSessionToken = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 };
-
-const providerNavLinks = [
-  { href: "/for-providers", label: "Why List With Us" },
-  { href: "/provider-resources", label: "Resources" },
-  { href: "/provider-support", label: "Support" },
-];
 
 const steps = [
   { id: 1, name: "Account", icon: User },

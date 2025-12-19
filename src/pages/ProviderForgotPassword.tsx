@@ -9,14 +9,9 @@ import { Mail, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { providerNavLinks } from "@/data/providerNavLinks";
 
 const emailSchema = z.string().trim().email({ message: "Please enter a valid email address" }).max(255, { message: "Email is too long" });
-
-const providerNavLinks = [
-  { href: "/for-providers", label: "Why List With Us" },
-  { href: "/provider-resources", label: "Resources" },
-  { href: "/provider-support", label: "Support" },
-];
 
 export default function ProviderForgotPassword() {
   const [email, setEmail] = useState("");

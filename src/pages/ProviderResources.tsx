@@ -30,13 +30,7 @@ import {
   Award,
   Sparkles,
 } from "lucide-react";
-
-const providerNavLinks = [
-  { href: "/for-providers", label: "Why List With Us" },
-  { href: "/provider-resources", label: "Resources" },
-  { href: "/provider-faq", label: "FAQ" },
-  { href: "/provider-support", label: "Support" },
-];
+import { providerNavLinks } from "@/data/providerNavLinks";
 
 const resources = [
   {
