@@ -12,6 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Upload, 
@@ -22,7 +28,12 @@ import {
   Clock,
   AlertCircle,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  Eye,
+  X,
+  Download,
+  ZoomIn,
+  ZoomOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -107,6 +118,8 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
   const [selectedCategory, setSelectedCategory] = useState<string>("other");
   const [detectedCategory, setDetectedCategory] = useState<{ category: string; confidence: 'high' | 'medium' | 'low' } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewDocument, setPreviewDocument] = useState<CredentialDocument | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(100);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -342,6 +355,32 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
     return null;
   };
 
+  const isImageFile = (docType: string) => {
+    return docType.startsWith('image/');
+  };
+
+  const isPdfFile = (docType: string) => {
+    return docType === 'application/pdf';
+  };
+
+  const handlePreview = (doc: CredentialDocument) => {
+    setPreviewDocument(doc);
+    setZoomLevel(100);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewDocument(null);
+    setZoomLevel(100);
+  };
+
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 25, 200));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 25, 50));
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -484,9 +523,18 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
+                    onClick={() => handlePreview(doc)}
+                    title="Preview document"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
                     asChild
                   >
-                    <a href={doc.document_url} target="_blank" rel="noopener noreferrer">
+                    <a href={doc.document_url} target="_blank" rel="noopener noreferrer" title="Open in new tab">
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </Button>
@@ -495,6 +543,7 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
                     size="icon"
                     className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => handleDeleteDocument(doc)}
+                    title="Delete document"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -508,6 +557,73 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
           No credential documents uploaded yet.
         </p>
       )}
+
+      {/* Document Preview Modal */}
+      <Dialog open={!!previewDocument} onOpenChange={(open) => !open && handleClosePreview()}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-4 border-b bg-muted/30">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-base font-medium truncate pr-4">
+                {previewDocument?.document_name}
+              </DialogTitle>
+              <div className="flex items-center gap-2">
+                {previewDocument && isImageFile(previewDocument.document_type) && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={handleZoomOut}
+                      disabled={zoomLevel <= 50}
+                    >
+                      <ZoomOut className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground w-12 text-center">{zoomLevel}%</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={handleZoomIn}
+                      disabled={zoomLevel >= 200}
+                    >
+                      <ZoomIn className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <a href={previewDocument?.document_url} download target="_blank" rel="noopener noreferrer">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="overflow-auto max-h-[calc(90vh-80px)] p-4 flex items-center justify-center bg-muted/20">
+            {previewDocument && isImageFile(previewDocument.document_type) && (
+              <img
+                src={previewDocument.document_url}
+                alt={previewDocument.document_name}
+                className="max-w-full h-auto rounded-lg shadow-lg transition-transform duration-200"
+                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center' }}
+              />
+            )}
+            
+            {previewDocument && isPdfFile(previewDocument.document_type) && (
+              <iframe
+                src={`${previewDocument.document_url}#toolbar=1&navpanes=0`}
+                className="w-full h-[70vh] rounded-lg border"
+                title={previewDocument.document_name}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
