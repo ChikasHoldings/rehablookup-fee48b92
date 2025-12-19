@@ -78,6 +78,8 @@ export interface Lead {
   insurance_type: string | null;
   insurance_provider: string | null;
   budget_preference: string | null;
+  qualified: boolean | null;
+  exclusivity: string | null;
 }
 
 interface LeadNote {

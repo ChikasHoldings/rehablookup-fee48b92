@@ -59,6 +59,7 @@ import { toast } from "sonner";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 import { LeadLimitUpgradeModal } from "@/components/provider/LeadLimitUpgradeModal";
 import { useProviderData } from "@/hooks/useProviderData";
+import { Card } from "@/components/ui/card";
 
 interface DateRange {
   from: Date | undefined;
@@ -248,8 +249,9 @@ export default function ProviderLeadsPage() {
       : [...result].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [leads, searchQuery, statusFilter, sourceFilter, urgencyFilter, facilityFilter, dateRange, sortBy]);
 
+  // Use qualified field for counting against cap (matches useProviderData logic)
   const thisMonthLeads = leads.filter(l => new Date(l.created_at) >= startOfMonth(new Date()));
-  const thisMonthQualified = thisMonthLeads.filter(l => l.source === "Request Help Page");
+  const thisMonthQualified = thisMonthLeads.filter(l => l.qualified === true);
   const clearFilters = () => { setSearchQuery(""); setStatusFilter("all"); setSourceFilter("all"); setUrgencyFilter("all"); setFacilityFilter("all"); setDateRange({ from: undefined, to: undefined }); };
   const hasFilters = searchQuery || statusFilter !== "all" || sourceFilter !== "all" || urgencyFilter !== "all" || facilityFilter !== "all" || dateRange.from || dateRange.to;
 
@@ -291,8 +293,9 @@ export default function ProviderLeadsPage() {
   // Basic plan: ALL leads are always locked/blurred to encourage upgrade
   const isLeadLocked = (lead: Lead, index: number) => {
     if (currentPlan === "basic") return true; // Always locked for basic plan
-    if (currentPlan === "professional" && lead.source === "Request Help Page") {
-      return filteredLeads.slice(0, index).filter(l => l.source === "Request Help Page").length >= leadLimit;
+    // Check if over limit based on qualified leads
+    if (lead.qualified === true) {
+      return filteredLeads.slice(0, index).filter(l => l.qualified === true).length >= leadLimit;
     }
     return false;
   };
@@ -403,9 +406,47 @@ export default function ProviderLeadsPage() {
         </div>
       </div>
 
+      {/* Lead Usage Summary - Consistent with Dashboard */}
+      {(!isMobile || mobileView === 'list') && currentPlan !== "basic" && (
+        <div className="flex-shrink-0 px-4 md:px-6 pt-2">
+          <Card className="p-3 bg-muted/30 border-border/50">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Leads Used:</span>
+                  <span className={cn(
+                    "text-sm font-bold",
+                    thisMonthQualified.length >= leadLimit ? "text-destructive" : "text-foreground"
+                  )}>
+                    {thisMonthQualified.length} / {leadLimit}
+                  </span>
+                </div>
+                <div className="h-4 w-px bg-border" />
+                <span className="text-sm text-muted-foreground">
+                  {leadLimit - thisMonthQualified.length} remaining
+                </span>
+              </div>
+              <Badge variant="outline" className={cn(
+                "gap-1 text-xs",
+                currentPlan === "featured" 
+                  ? "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-700 dark:text-amber-400"
+                  : "border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:border-blue-700 dark:text-blue-400"
+              )}>
+                {currentPlan === "featured" ? (
+                  <><Star className="h-3 w-3" /> Exclusive Leads</>
+                ) : (
+                  <><Share2 className="h-3 w-3" /> Shared (Max 2 Providers)</>
+                )}
+              </Badge>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Lead Limit Banners - Consistent with Dashboard */}
       {(!isMobile || mobileView === 'list') && (
-        <div className="flex-shrink-0 px-4 md:px-6 space-y-2">
+        <div className="flex-shrink-0 px-4 md:px-6 pt-2 space-y-2">
           <LeadLimitReachedBanner 
             usedLeads={thisMonthQualified.length} 
             leadLimit={leadLimit} 
@@ -635,7 +676,7 @@ export default function ProviderLeadsPage() {
                       </Link>
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                      Get 25 exclusive leads/month • Full contact info • Direct communication
+                      Up to 100 leads/month • Full contact info • Direct communication
                     </p>
                   </div>
                 </div>
@@ -681,7 +722,7 @@ export default function ProviderLeadsPage() {
                           </Link>
                         </Button>
                         <p className="text-xs text-muted-foreground">
-                          25 exclusive leads/month • Full contact info • Direct communication
+                          Up to 100 leads/month • Full contact info • Direct communication
                         </p>
                       </div>
                     </div>
@@ -692,7 +733,13 @@ export default function ProviderLeadsPage() {
                   {filteredLeads.map((lead, idx) => {
                     const locked = isLeadLocked(lead, idx);
                     const selected = selectedLead?.id === lead.id;
-                    const isQualified = lead.source === "Request Help Page";
+                    const isQualified = lead.qualified === true;
+                    // Determine exclusivity from lead data or plan default
+                    const leadExclusivity = lead.exclusivity === 'exclusive' ? 'exclusive' 
+                      : lead.exclusivity === 'shared' ? 'shared'
+                      : currentPlan === "featured" ? "exclusive" 
+                      : currentPlan === "professional" ? "shared" 
+                      : null;
                     
                     // Use MobileLeadCard on mobile for swipe actions
                     if (isMobile) {
@@ -704,7 +751,7 @@ export default function ProviderLeadsPage() {
                           isLocked={locked}
                           isQualified={isQualified}
                           showFacility={facilities.length > 1}
-                          exclusivity={currentPlan === "professional" ? "shared" : currentPlan === "featured" ? "exclusive" : null}
+                          exclusivity={leadExclusivity}
                           onSelect={() => handleSelectLead(lead)}
                           onCall={() => handleMobileCall(lead)}
                           onEmail={() => handleMobileEmail(lead)}
@@ -785,14 +832,14 @@ export default function ProviderLeadsPage() {
                                   Direct
                                 </Badge>
                               )}
-                              {/* Exclusivity Badge - based on provider's plan */}
-                              {currentPlan === "professional" && (
+                              {/* Exclusivity Badge - based on lead data or plan */}
+                              {leadExclusivity === "shared" && (
                                 <Badge variant="outline" className="h-5 px-2 text-[10px] border-blue-300 bg-blue-50 text-blue-700 font-medium dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
                                   <Share2 className="h-2.5 w-2.5 mr-1" />
                                   Shared (Max 2)
                                 </Badge>
                               )}
-                              {currentPlan === "featured" && (
+                              {leadExclusivity === "exclusive" && (
                                 <Badge variant="outline" className="h-5 px-2 text-[10px] border-amber-300 bg-amber-50 text-amber-700 font-medium dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
                                   <Star className="h-2.5 w-2.5 mr-1" />
                                   Exclusive
@@ -863,7 +910,13 @@ export default function ProviderLeadsPage() {
               }
             }}
             facilityName={selectedLead?.facility_name}
-            exclusivity={currentPlan === "professional" ? "shared" : currentPlan === "featured" ? "exclusive" : null}
+            exclusivity={
+              selectedLead?.exclusivity === 'exclusive' ? 'exclusive'
+              : selectedLead?.exclusivity === 'shared' ? 'shared'
+              : currentPlan === "featured" ? "exclusive" 
+              : currentPlan === "professional" ? "shared" 
+              : null
+            }
           />
         </div>
       </div>

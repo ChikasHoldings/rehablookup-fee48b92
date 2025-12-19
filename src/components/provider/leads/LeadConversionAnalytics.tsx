@@ -54,9 +54,9 @@ export function LeadConversionAnalytics({ leads }: LeadConversionAnalyticsProps)
       ? (convertedLeads.length / closedLeads.length) * 100 
       : 0;
 
-    // By source
-    const qualifiedLeads = leads.filter(l => l.source === 'Request Help Page');
-    const directLeads = leads.filter(l => l.source !== 'Request Help Page');
+    // By qualification status (using qualified field)
+    const qualifiedLeads = leads.filter(l => l.qualified === true);
+    const directLeads = leads.filter(l => l.qualified !== true);
     
     const qualifiedConverted = qualifiedLeads.filter(l => l.status === 'converted').length;
     const qualifiedClosed = qualifiedLeads.filter(l => ['converted', 'lost', 'closed'].includes(l.status)).length;
