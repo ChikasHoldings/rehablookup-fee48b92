@@ -5,7 +5,7 @@ import { Search, MapPin, Stethoscope, Shield } from "lucide-react";
 import { treatmentTypes, insuranceProviders } from "@/data/treatmentCenters";
 
 interface SearchFormProps {
-  variant?: "hero" | "compact" | "compact-hero";
+  variant?: "hero" | "compact" | "compact-hero" | "directory";
   initialLocation?: string;
   initialTreatmentType?: string;
   initialInsurance?: string;
@@ -39,6 +39,79 @@ export function SearchForm({
       }, 100);
     }
   };
+
+  // Directory variant - Rehabs.com style horizontal search bar
+  if (variant === "directory") {
+    return (
+      <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
+        <div className="flex flex-col overflow-hidden rounded-lg bg-card shadow-2xl md:flex-row">
+          {/* Where */}
+          <div className="flex-1 border-b border-border md:border-b-0 md:border-r">
+            <div className="p-4">
+              <label className="mb-1 flex items-center gap-2 text-sm font-semibold text-primary">
+                <MapPin className="h-4 w-4" />
+                Where
+              </label>
+              <input
+                type="text"
+                placeholder="Search locations"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+            </div>
+          </div>
+          
+          {/* Type of Care */}
+          <div className="flex-1 border-b border-border md:border-b-0 md:border-r">
+            <div className="p-4">
+              <label className="mb-1 flex items-center gap-2 text-sm font-semibold text-primary">
+                <Stethoscope className="h-4 w-4" />
+                Type of Care
+              </label>
+              <select
+                value={treatmentType}
+                onChange={(e) => setTreatmentType(e.target.value)}
+                className="w-full appearance-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none cursor-pointer"
+              >
+                <option value="">Search types of care</option>
+                {treatmentTypes.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Insurance */}
+          <div className="flex-1 border-b border-border md:border-b-0 md:border-r">
+            <div className="p-4">
+              <label className="mb-1 flex items-center gap-2 text-sm font-semibold text-primary">
+                <Shield className="h-4 w-4" />
+                Insurance
+              </label>
+              <select
+                value={insurance}
+                onChange={(e) => setInsurance(e.target.value)}
+                className="w-full appearance-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none cursor-pointer"
+              >
+                <option value="">Search providers</option>
+                {insuranceProviders.map((provider) => (
+                  <option key={provider} value={provider}>{provider}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="flex items-center p-2 md:p-3">
+            <Button type="submit" size="lg" className="w-full h-12 px-8 text-base font-semibold md:w-auto">
+              See Results
+            </Button>
+          </div>
+        </div>
+      </form>
+    );
+  }
 
   // Compact hero variant - inline search in hero
   if (variant === "compact-hero") {
