@@ -16,7 +16,6 @@ import {
   Phone,
   Mail,
   AlertTriangle,
-  BellOff,
   Lock,
   TrendingUp,
   Sparkles,
