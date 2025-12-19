@@ -156,6 +156,92 @@ const TreatmentTypes = () => {
         </div>
       </section>
 
+      {/* Browse by State */}
+      <section className="bg-secondary/30 section-padding">
+        <div className="container">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+              Find Treatment by State
+            </h2>
+            <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+              Browse detox, inpatient, and outpatient programs in popular states
+            </p>
+          </div>
+
+          {/* Detox by State */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-accent" />
+              Detox Programs by State
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { name: "California", slug: "california" },
+                { name: "Florida", slug: "florida" },
+                { name: "Texas", slug: "texas" },
+                { name: "New York", slug: "new-york" },
+                { name: "Arizona", slug: "arizona" },
+                { name: "Colorado", slug: "colorado" },
+              ].map((state) => (
+                <Link key={state.slug} to={`/treatment-types/detox-programs/${state.slug}`}>
+                  <Button variant="outline" size="sm">
+                    {state.name}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Inpatient by State */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Home className="h-5 w-5 text-accent" />
+              Inpatient Rehab by State
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { name: "California", slug: "california" },
+                { name: "Florida", slug: "florida" },
+                { name: "Texas", slug: "texas" },
+                { name: "New York", slug: "new-york" },
+                { name: "Arizona", slug: "arizona" },
+                { name: "Colorado", slug: "colorado" },
+              ].map((state) => (
+                <Link key={state.slug} to={`/treatment-types/residential-inpatient/${state.slug}`}>
+                  <Button variant="outline" size="sm">
+                    {state.name}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Outpatient by State */}
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Stethoscope className="h-5 w-5 text-accent" />
+              Outpatient Programs by State
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { name: "California", slug: "california" },
+                { name: "Florida", slug: "florida" },
+                { name: "Texas", slug: "texas" },
+                { name: "New York", slug: "new-york" },
+                { name: "Arizona", slug: "arizona" },
+                { name: "Colorado", slug: "colorado" },
+              ].map((state) => (
+                <Link key={state.slug} to={`/treatment-types/outpatient-programs/${state.slug}`}>
+                  <Button variant="outline" size="sm">
+                    {state.name}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Banner */}
       <section className="section-padding">
         <div className="container">
