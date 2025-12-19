@@ -84,7 +84,20 @@ interface ProfileFormData {
   phone: string;
   job_title: string;
   primary_contact_name: string;
+  timezone: string;
 }
+
+// Common timezone options for US treatment centers
+const TIMEZONE_OPTIONS = [
+  { value: "America/New_York", label: "Eastern Time (ET)", offset: "UTC-5/4" },
+  { value: "America/Chicago", label: "Central Time (CT)", offset: "UTC-6/5" },
+  { value: "America/Denver", label: "Mountain Time (MT)", offset: "UTC-7/6" },
+  { value: "America/Phoenix", label: "Arizona (MST)", offset: "UTC-7" },
+  { value: "America/Los_Angeles", label: "Pacific Time (PT)", offset: "UTC-8/7" },
+  { value: "America/Anchorage", label: "Alaska Time (AKT)", offset: "UTC-9/8" },
+  { value: "Pacific/Honolulu", label: "Hawaii Time (HST)", offset: "UTC-10" },
+  { value: "America/Puerto_Rico", label: "Atlantic Time (AST)", offset: "UTC-4" },
+] as const;
 
 // Password validation helpers
 const validatePassword = (password: string) => {
@@ -195,6 +208,7 @@ export default function ProviderSettingsPage() {
       phone: providerData.profile.phone || "",
       job_title: providerData.profile.job_title || "",
       primary_contact_name: (providerData.profile as any).primary_contact_name || "",
+      timezone: (providerData.profile as any).timezone || "America/New_York",
     };
   }, [providerData?.profile]);
 
@@ -209,7 +223,8 @@ export default function ProviderSettingsPage() {
       localProfile.last_name !== initialProfile.last_name ||
       localProfile.phone !== initialProfile.phone ||
       localProfile.job_title !== initialProfile.job_title ||
-      localProfile.primary_contact_name !== initialProfile.primary_contact_name
+      localProfile.primary_contact_name !== initialProfile.primary_contact_name ||
+      localProfile.timezone !== initialProfile.timezone
     );
   }, [localProfile, initialProfile]);
 
@@ -451,6 +466,7 @@ export default function ProviderSettingsPage() {
           phone: profile.phone ? formatPhone(profile.phone) : null,
           job_title: profile.job_title?.trim() || null,
           primary_contact_name: profile.primary_contact_name?.trim() || null,
+          timezone: profile.timezone,
         })
         .eq("user_id", session.user.id);
 
@@ -907,12 +923,28 @@ export default function ProviderSettingsPage() {
               <CardContent className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Timezone</Label>
-                    <Input
-                      value="America/New_York (EST)"
-                      disabled
-                      className="h-10 bg-muted/50"
-                    />
+                    <Label htmlFor="timezone" className="text-sm font-medium">Timezone</Label>
+                    <Select
+                      value={profile?.timezone || "America/New_York"}
+                      onValueChange={(value) => updateField("timezone", value)}
+                    >
+                      <SelectTrigger id="timezone" className="h-10">
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIMEZONE_OPTIONS.map((tz) => (
+                          <SelectItem key={tz.value} value={tz.value}>
+                            <span className="flex items-center gap-2">
+                              <span>{tz.label}</span>
+                              <span className="text-xs text-muted-foreground">({tz.offset})</span>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Used for displaying times in your dashboard and email notifications
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Language</Label>
@@ -921,6 +953,9 @@ export default function ProviderSettingsPage() {
                       disabled
                       className="h-10 bg-muted/50"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Additional languages coming soon
+                    </p>
                   </div>
                 </div>
               </CardContent>
