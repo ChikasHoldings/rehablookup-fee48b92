@@ -267,6 +267,64 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Insurance Coverage Section */}
+      <section className="py-12 md:py-16 lg:py-20 bg-background">
+        <div className="container">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            {/* Left Content */}
+            <div className="lg:max-w-md">
+              <span className="mb-2 inline-block text-xs font-bold uppercase tracking-wider text-primary">
+                Insurance Coverage
+              </span>
+              <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl">
+                Are You Covered For Treatment?
+              </h2>
+              <p className="mb-6 text-muted-foreground">
+                Check to see if your insurance is covered for addiction treatment.
+              </p>
+              <Link to="/request-help">
+                <Button size="lg" className="gap-2 font-semibold">
+                  Check Your Coverage
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Insurance Logos */}
+            <div className="flex-1 lg:max-w-2xl">
+              <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
+                {[
+                  { name: "Aetna", color: "#7C3AED" },
+                  { name: "Ambetter", color: "#059669" },
+                  { name: "Anthem", color: "#0891B2" },
+                  { name: "Blue Cross", color: "#2563EB" },
+                  { name: "Carelon", color: "#16A34A" },
+                  { name: "Cigna", color: "#EA580C" },
+                  { name: "Humana", color: "#65A30D" },
+                  { name: "Kaiser", color: "#0284C7" },
+                  { name: "Magellan", color: "#7C3AED" },
+                  { name: "Medicare", color: "#DC2626" },
+                  { name: "United", color: "#2563EB" },
+                  { name: "Tricare", color: "#0D9488" },
+                ].map((insurance) => (
+                  <div
+                    key={insurance.name}
+                    className="flex h-16 items-center justify-center rounded-lg border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md"
+                  >
+                    <span 
+                      className="text-xs font-bold text-center"
+                      style={{ color: insurance.color }}
+                    >
+                      {insurance.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Featured Centers */}
       <section className="section-padding-lg">
         <div className="container">
