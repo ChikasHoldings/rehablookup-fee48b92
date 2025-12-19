@@ -132,6 +132,10 @@ export default {
         "shimmer": {
           "100%": { transform: "translateX(100%)" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -143,6 +147,7 @@ export default {
         "step-enter": "step-enter 0.35s ease-out forwards",
         "wiggle": "wiggle 0.5s ease-in-out",
         "shimmer": "shimmer 2s infinite",
+        "float": "float 3s ease-in-out infinite",
       },
     },
   },
