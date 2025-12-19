@@ -34,7 +34,10 @@ export function useProviderFacilities() {
       if (error) throw error;
       return (data || []) as ProviderFacility[];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10, // 10 minutes - data doesn't change often
+    gcTime: 1000 * 60 * 60, // 1 hour cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch when component remounts (navigation)
   });
 
   // Real-time subscription for facilities

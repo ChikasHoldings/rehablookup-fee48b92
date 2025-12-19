@@ -163,7 +163,8 @@ export default function ProviderLeadsPage() {
       })) as LeadWithFacility[];
     },
     enabled: facilityIds.length > 0,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 5, // 5 minutes - leads update via realtime
+    refetchOnMount: false,
   });
 
   // For Basic plan lifetime count
