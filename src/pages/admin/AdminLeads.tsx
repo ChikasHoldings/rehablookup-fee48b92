@@ -28,6 +28,8 @@ import {
   FileWarning,
   ShieldCheck,
   Send,
+  Lock,
+  Share2,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -148,6 +150,8 @@ type Lead = {
   assigned_at: string | null;
   validation_status: string | null;
   quality_flag: string | null;
+  exclusivity: string | null;
+  shared_with: string[] | null;
 };
 
 type Facility = {
@@ -279,6 +283,76 @@ function AssignmentStatusBadge({ lead }: { lead: Lead }) {
             <p className="max-w-xs">{lead.assignment_reason}</p>
           </TooltipContent>
         )}
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+// Exclusivity Badge Component
+function ExclusivityBadge({ lead, facilitiesMap }: { lead: Lead; facilitiesMap: Map<string, Facility> }) {
+  const isExclusive = lead.exclusivity === "exclusive";
+  const sharedCount = lead.shared_with?.length || 0;
+  const totalRecipients = (lead.facility_id ? 1 : 0) + sharedCount;
+  
+  // If not assigned, show nothing
+  if (!lead.facility_id && sharedCount === 0) {
+    return <span className="text-muted-foreground text-sm">—</span>;
+  }
+
+  // Get all provider names for tooltip
+  const providerNames: string[] = [];
+  if (lead.facility_id) {
+    const primary = facilitiesMap.get(lead.facility_id);
+    if (primary) providerNames.push(primary.name);
+  }
+  if (lead.shared_with) {
+    lead.shared_with.forEach(id => {
+      const facility = facilitiesMap.get(id);
+      if (facility) providerNames.push(facility.name);
+    });
+  }
+
+  if (isExclusive) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
+              <Lock className="h-3 w-3" />
+              Exclusive
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="font-medium">Exclusive Lead</p>
+            <p className="text-xs text-muted-foreground">
+              Only sent to: {providerNames[0] || "1 provider"}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge className="bg-blue-50 text-blue-700 border-blue-200 gap-1">
+            <Share2 className="h-3 w-3" />
+            Shared ({totalRecipients})
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="font-medium">Shared Lead</p>
+          <p className="text-xs text-muted-foreground mb-1">
+            Sent to {totalRecipients} provider{totalRecipients !== 1 ? "s" : ""}:
+          </p>
+          <ul className="text-xs space-y-0.5">
+            {providerNames.map((name, i) => (
+              <li key={i}>• {name}</li>
+            ))}
+          </ul>
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
@@ -1112,6 +1186,7 @@ export default function AdminLeads() {
                         <TableHead>Score</TableHead>
                         <TableHead>Qualified</TableHead>
                         <TableHead>Assignment</TableHead>
+                        <TableHead>Exclusivity</TableHead>
                         <TableHead>Provider</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>Submitted</TableHead>
@@ -1179,6 +1254,9 @@ export default function AdminLeads() {
                             </TableCell>
                             <TableCell>
                               <AssignmentStatusBadge lead={lead} />
+                            </TableCell>
+                            <TableCell>
+                              <ExclusivityBadge lead={lead} facilitiesMap={facilitiesMap} />
                             </TableCell>
                             <TableCell>
                               {assignedFacility ? (
