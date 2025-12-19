@@ -21,6 +21,7 @@ import ProviderLogin from "./pages/ProviderLogin";
 import ProviderForgotPassword from "./pages/ProviderForgotPassword";
 import ProviderResetPassword from "./pages/ProviderResetPassword";
 import ProviderSupport from "./pages/ProviderSupport";
+import ProviderFAQ from "./pages/ProviderFAQ";
 import ProviderSignup from "./pages/ProviderSignup";
 import RequestHelp from "./pages/RequestHelp";
 import AdLanding from "./pages/AdLanding";
@@ -100,6 +101,7 @@ const App = () => (
             <Route path="/provider-forgot-password" element={<ProviderForgotPassword />} />
             <Route path="/provider-reset-password" element={<ProviderResetPassword />} />
             <Route path="/provider-support" element={<ProviderSupport />} />
+            <Route path="/provider-faq" element={<ProviderFAQ />} />
             <Route path="/provider-signup" element={<ProviderSignup />} />
             
             {/* Provider Panel Routes - Nested under persistent shell */}
