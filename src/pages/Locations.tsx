@@ -152,7 +152,7 @@ const Locations = () => {
       </section>
 
       {/* Top Cities Section */}
-      <section className="border-b bg-card py-12 md:py-14">
+      <section className="border-b bg-card section-padding-sm">
         <div className="container">
           <div className="mb-8 text-center">
             <span className="text-sm font-medium text-primary uppercase tracking-wider">Featured Destinations</span>
@@ -190,7 +190,7 @@ const Locations = () => {
       </section>
 
       {/* All States Directory */}
-      <section className="bg-background py-12 md:py-16">
+      <section className="bg-background section-padding">
         <div className="container">
           <div className="mb-10 text-center">
             <span className="text-sm font-medium text-primary uppercase tracking-wider">Complete Directory</span>
@@ -291,7 +291,7 @@ const Locations = () => {
       </section>
 
       {/* Quick Links by Region */}
-      <section className="border-t bg-gradient-to-b from-secondary/50 to-secondary/20 py-12 md:py-14">
+      <section className="border-t bg-gradient-to-b from-secondary/50 to-secondary/20 section-padding-sm">
         <div className="container">
           <div className="mb-10 text-center">
             <span className="text-sm font-medium text-primary uppercase tracking-wider">Quick Access</span>
@@ -329,7 +329,7 @@ const Locations = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-20">
+      <section className="section-padding-lg">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
             <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">

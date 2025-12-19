@@ -165,7 +165,7 @@ const About = () => {
       </section>
 
       {/* Mission Cards Section */}
-      <section className="py-16 px-4 md:py-24 md:px-6 bg-gradient-to-b from-background to-muted/30">
+      <section className="section-padding-lg bg-gradient-to-b from-background to-muted/30">
         <div className="container">
           <div className="text-center mb-12">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-5 py-2.5">
@@ -205,7 +205,7 @@ const About = () => {
       </section>
 
       {/* Who We Are with Image */}
-      <section className="py-16 px-4 md:py-24 md:px-6">
+      <section className="section-padding-lg">
         <div className="container">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div className="animate-fade-in">
@@ -275,7 +275,7 @@ const About = () => {
       </section>
 
       {/* Timeline Section */}
-      <section className="py-16 px-4 md:py-24 md:px-6 bg-primary relative overflow-hidden">
+      <section className="section-padding-lg bg-primary relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
@@ -341,7 +341,7 @@ const About = () => {
       </section>
 
       {/* Team Section */}
-      <section className="py-16 px-4 md:py-24 md:px-6">
+      <section className="section-padding-lg">
         <div className="container">
           <div className="text-center mb-12">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-5 py-2.5">
@@ -393,7 +393,7 @@ const About = () => {
       </section>
 
       {/* Our Values */}
-      <section className="py-16 px-4 md:py-24 md:px-6 bg-muted/30">
+      <section className="section-padding-lg bg-muted/30">
         <div className="container">
           <div className="mb-12 text-center animate-fade-in">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent/10 px-5 py-2.5">
