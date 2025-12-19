@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import {
   Clock,
   ArrowRight,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 const supportTopics = [
@@ -64,19 +66,43 @@ export default function ProviderSupport() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!topic) {
+      toast({
+        title: "Please select a topic",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.functions.invoke("send-provider-support", {
+        body: { name, email, topic, message },
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Message Sent",
-        description: "Our team will respond within 24 hours.",
+        description: "We'll get back to you within 24 hours.",
       });
+      
       setName("");
       setEmail("");
       setTopic("");
       setMessage("");
+    } catch (error) {
+      console.error("Error sending support request:", error);
+      toast({
+        title: "Failed to send message",
+        description: "Please try again or email us directly.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -173,8 +199,17 @@ export default function ProviderSupport() {
                       disabled={isSubmitting} 
                       className="h-11 px-6 gap-2"
                     >
-                      {isSubmitting ? "Sending..." : "Send Message"}
-                      {!isSubmitting && <ArrowRight className="h-4 w-4" />}
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          Send Message
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
                     </Button>
                   </form>
                 </div>
