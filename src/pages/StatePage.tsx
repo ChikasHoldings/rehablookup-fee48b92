@@ -157,7 +157,7 @@ const StatePage = () => {
       />
 
       {/* Hero Section with State Capital Background */}
-      <section className="relative min-h-[420px] overflow-hidden">
+      <section className="relative overflow-hidden">
         {/* Background Image */}
         {capitalImage && (
           <div 
@@ -174,9 +174,9 @@ const StatePage = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
-        <div className="container relative z-10 py-14 md:py-20">
+        <div className="container relative z-10 py-10 md:py-14">
           {/* Breadcrumb */}
-          <nav className="mb-8 flex items-center gap-2 text-sm text-white/70">
+          <nav className="mb-5 flex items-center gap-2 text-sm text-white/70">
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="h-4 w-4" />
             <Link to="/rehab-centers" className="hover:text-white transition-colors">Find Rehab</Link>
@@ -185,32 +185,32 @@ const StatePage = () => {
           </nav>
 
           <div className="max-w-3xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
               <MapPin className="h-4 w-4" />
               {stateData.abbreviation} Treatment Centers
             </div>
             
-            <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-[2.5rem] lg:text-5xl">
               Drug & Alcohol Rehab Centers in {stateData.name}
             </h1>
             
-            <p className="mt-5 text-lg text-white/85 leading-relaxed max-w-2xl">
+            <p className="mt-4 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl">
               {stateData.description}
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-6">
-              <div className="flex items-center gap-2 text-white">
-                <Building2 className="h-5 w-5 text-white/80" />
+            <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">
+              <div className="flex items-center gap-2 text-white text-sm md:text-base">
+                <Building2 className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
                 <span className="font-semibold">{stateCenters.length}</span>
                 <span className="text-white/80">Verified Facilities</span>
               </div>
-              <div className="flex items-center gap-2 text-white">
-                <CheckCircle className="h-5 w-5 text-white/80" />
-                <span className="text-white/80">All Credentials Verified</span>
+              <div className="flex items-center gap-2 text-white text-sm md:text-base">
+                <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
+                <span className="text-white/80">Credentials Verified</span>
               </div>
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <Link to="/request-help">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
                   <Phone className="h-4 w-4" />
