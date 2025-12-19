@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,8 @@ import {
   Heart,
   Users,
   Clock,
-  Shield
+  Shield,
+  ChevronDown
 } from "lucide-react";
 
 interface FAQItem {
@@ -209,6 +210,31 @@ const faqCategories: FAQCategory[] = [
 const FAQ = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const location = useLocation();
+
+  // Scroll to category based on URL hash
+  const scrollToCategory = useCallback((categoryId: string) => {
+    const element = document.getElementById(categoryId);
+    if (element) {
+      const headerOffset = 140; // Account for sticky header + filters
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  }, []);
+
+  // Handle URL hash on load and changes
+  useEffect(() => {
+    const hash = location.hash.replace('#', '');
+    if (hash && faqCategories.some(cat => cat.id === hash)) {
+      setSelectedCategory(null); // Clear filter to show all categories
+      setTimeout(() => scrollToCategory(hash), 100);
+    }
+  }, [location.hash, scrollToCategory]);
 
   // Add JSON-LD structured data for SEO
   useEffect(() => {
@@ -245,20 +271,21 @@ const FAQ = () => {
   }, []);
 
   const filteredCategories = useMemo(() => {
-    if (!searchQuery && !selectedCategory) return faqCategories;
+    if (!searchQuery) return faqCategories;
     
     return faqCategories
-      .filter(category => !selectedCategory || category.id === selectedCategory)
       .map(category => ({
         ...category,
         faqs: category.faqs.filter(faq => 
-          !searchQuery || 
           faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
           faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
         )
       }))
       .filter(category => category.faqs.length > 0);
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery]);
+
+  // Display categories - all when not searching, filtered when searching
+  const displayCategories = searchQuery ? filteredCategories : faqCategories;
 
   const totalResults = filteredCategories.reduce((acc, cat) => acc + cat.faqs.length, 0);
 
@@ -334,44 +361,49 @@ const FAQ = () => {
         </div>
       </section>
 
-      {/* Category Filters */}
+      {/* Quick Jump Navigation */}
       <section className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md py-3 px-4 md:py-4 md:px-6 shadow-sm">
         <div className="container">
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0 md:mx-0 md:px-0 scrollbar-hide">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`h-9 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 ${
-                selectedCategory === null 
-                  ? "bg-primary text-primary-foreground shadow-md" 
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              All Topics
-              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                selectedCategory === null ? "bg-white/20" : "bg-background"
-              }`}>
-                {faqCategories.reduce((acc, cat) => acc + cat.faqs.length, 0)}
-              </span>
-            </button>
-            {faqCategories.map((category) => (
+          <div className="flex flex-col gap-2">
+            {/* Filter/Jump buttons */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0 md:mx-0 md:px-0 scrollbar-hide">
               <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => {
+                  setSelectedCategory(null);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
                 className={`h-9 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 ${
-                  selectedCategory === category.id 
+                  selectedCategory === null 
                     ? "bg-primary text-primary-foreground shadow-md" 
                     : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                <category.icon className="h-3.5 w-3.5" />
-                {category.name}
+                All Topics
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                  selectedCategory === category.id ? "bg-white/20" : "bg-background"
+                  selectedCategory === null ? "bg-white/20" : "bg-background"
                 }`}>
-                  {category.faqs.length}
+                  {faqCategories.reduce((acc, cat) => acc + cat.faqs.length, 0)}
                 </span>
               </button>
-            ))}
+              {faqCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => {
+                    setSelectedCategory(null); // Clear filter to show all
+                    setTimeout(() => scrollToCategory(category.id), 50);
+                  }}
+                  className={`h-9 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 ${
+                    selectedCategory === category.id 
+                      ? "bg-primary text-primary-foreground shadow-md" 
+                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <category.icon className="h-3.5 w-3.5" />
+                  {category.name}
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -398,7 +430,7 @@ const FAQ = () => {
             </div>
           )}
 
-          {filteredCategories.length === 0 ? (
+          {displayCategories.length === 0 ? (
             <div className="mx-auto max-w-md text-center py-12">
               <div className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-muted to-muted/50">
                 <Search className="h-8 w-8 text-muted-foreground" />
@@ -417,10 +449,11 @@ const FAQ = () => {
             </div>
           ) : (
             <div className="mx-auto max-w-3xl space-y-10">
-              {filteredCategories.map((category, catIndex) => (
+              {displayCategories.map((category, catIndex) => (
                 <div 
-                  key={category.id} 
-                  className="animate-fade-in"
+                  key={category.id}
+                  id={category.id}
+                  className="animate-fade-in scroll-mt-36"
                   style={{ animationDelay: `${catIndex * 100}ms` }}
                 >
                   {/* Category Header */}
