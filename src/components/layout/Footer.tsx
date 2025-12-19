@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Heart, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, ArrowRight, BookOpen } from "lucide-react";
+import { Heart, Mail, Facebook, Twitter, Instagram, Linkedin, ArrowRight, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // SEO-friendly articles for footer
 const featuredArticles = [
@@ -23,6 +24,40 @@ const featuredArticles = [
     slug: "/resources/insurance-coverage-guide",
     category: "Insurance",
   },
+];
+
+// Popular locations for SEO
+const popularLocations = [
+  { name: "California", path: "/locations/california", cities: ["Los Angeles", "San Diego", "San Francisco"] },
+  { name: "Florida", path: "/locations/florida", cities: ["Miami", "Tampa", "Orlando"] },
+  { name: "Texas", path: "/locations/texas", cities: ["Houston", "Dallas", "Austin"] },
+  { name: "New York", path: "/locations/new-york", cities: ["New York City", "Buffalo", "Rochester"] },
+  { name: "Arizona", path: "/locations/arizona", cities: ["Phoenix", "Scottsdale", "Tucson"] },
+  { name: "Colorado", path: "/locations/colorado", cities: ["Denver", "Boulder", "Colorado Springs"] },
+];
+
+// Treatment types for SEO
+const treatmentTypes = [
+  { name: "Detox Programs", path: "/treatment-types/drug-addiction-treatment" },
+  { name: "Inpatient Rehab", path: "/treatment-types/residential-inpatient" },
+  { name: "Outpatient Programs", path: "/treatment-types/outpatient-programs" },
+  { name: "Alcohol Rehab", path: "/treatment-types/alcohol-rehabilitation" },
+  { name: "Drug Addiction", path: "/treatment-types/drug-addiction-treatment" },
+  { name: "Dual Diagnosis", path: "/treatment-types/dual-diagnosis-treatment" },
+  { name: "Holistic Therapy", path: "/treatment-types/holistic-therapy" },
+  { name: "Medication-Assisted", path: "/resources/medication-assisted-treatment" },
+];
+
+// Insurance types for SEO
+const insuranceTypes = [
+  { name: "Medicaid", path: "/resources/insurance-coverage-guide" },
+  { name: "Medicare", path: "/resources/insurance-coverage-guide" },
+  { name: "Private Insurance", path: "/resources/insurance-coverage-guide" },
+  { name: "Blue Cross Blue Shield", path: "/resources/insurance-coverage-guide" },
+  { name: "Aetna", path: "/resources/insurance-coverage-guide" },
+  { name: "Cigna", path: "/resources/insurance-coverage-guide" },
+  { name: "United Healthcare", path: "/resources/insurance-coverage-guide" },
+  { name: "Self-Pay Options", path: "/resources/insurance-coverage-guide" },
 ];
 
 export function Footer() {
@@ -59,28 +94,41 @@ export function Footer() {
 
       {/* Main Footer Content */}
       <div className="container py-12 md:py-14">
-        {/* Mobile Logo Section */}
-        <div className="flex flex-col items-center mb-10 md:hidden">
-          <Link to="/" className="inline-block mb-4">
+        {/* Top Section: Logo + Contact */}
+        <div className="flex flex-col items-center text-center mb-12 pb-10 border-b border-white/10">
+          <Link to="/" className="inline-block mb-6">
             <img 
               src="/logo-dark.svg" 
               alt="Rehab-Lookup" 
-              className="h-11 w-auto"
+              className="h-14 md:h-16 w-auto"
               loading="lazy"
               decoding="async"
             />
           </Link>
-          <p className="text-center text-sm leading-relaxed text-slate-300 max-w-[280px]">
-            Connecting families with trusted treatment centers nationwide.
-          </p>
           
-          {/* Social Media - Mobile */}
-          <div className="flex items-center justify-center gap-3 mt-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+            <Button asChild variant="default" size="lg" className="gap-2">
+              <Link to="/request-help?source=footer">
+                <Heart className="h-4 w-4" />
+                Get Help Now
+              </Link>
+            </Button>
+            <a 
+              href="mailto:help@rehablookup.com" 
+              className="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
+            >
+              <Mail className="h-4 w-4 text-amber-400" />
+              help@rehablookup.com
+            </a>
+          </div>
+          
+          {/* Social Media Links */}
+          <div className="flex items-center gap-2">
             <a 
               href="https://facebook.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
               aria-label="Follow us on Facebook"
             >
               <Facebook className="h-4 w-4" />
@@ -89,7 +137,7 @@ export function Footer() {
               href="https://twitter.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
               aria-label="Follow us on Twitter"
             >
               <Twitter className="h-4 w-4" />
@@ -98,7 +146,7 @@ export function Footer() {
               href="https://instagram.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
               aria-label="Follow us on Instagram"
             >
               <Instagram className="h-4 w-4" />
@@ -107,7 +155,7 @@ export function Footer() {
               href="https://linkedin.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
               aria-label="Follow us on LinkedIn"
             >
               <Linkedin className="h-4 w-4" />
@@ -115,96 +163,68 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Main Footer Grid */}
-        <div className="grid gap-8 grid-cols-2 md:grid-cols-6">
-          {/* Brand & Social - Desktop Only */}
-          <div className="hidden md:block space-y-5 col-span-2">
-            <Link to="/" className="inline-block">
-              <img 
-                src="/logo-dark.svg" 
-                alt="Rehab-Lookup" 
-                className="h-10 w-auto"
-                loading="lazy"
-                decoding="async"
-              />
-            </Link>
-            
-            <p className="max-w-xs text-sm leading-relaxed text-slate-300">
-              Connecting families with trusted treatment centers nationwide. Free, confidential support available 24/7.
-            </p>
-            
-            {/* Social Media Links - Desktop */}
-            <div className="flex items-center gap-2">
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
-                aria-label="Follow us on Facebook"
-              >
-                <Facebook className="h-4 w-4" />
-              </a>
-              <a 
-                href="https://twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
-                aria-label="Follow us on Twitter"
-              >
-                <Twitter className="h-4 w-4" />
-              </a>
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
-                aria-label="Follow us on Instagram"
-              >
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a 
-                href="https://linkedin.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-slate-300 transition-all hover:bg-amber-500 hover:text-white"
-                aria-label="Follow us on LinkedIn"
-              >
-                <Linkedin className="h-4 w-4" />
-              </a>
+        {/* SEO Links Grid */}
+        <div className="grid gap-8 grid-cols-2 md:grid-cols-4 lg:grid-cols-6 mb-12">
+          {/* Popular Locations */}
+          <div className="col-span-2">
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
+              Popular Locations
+            </h4>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              {popularLocations.map((location) => (
+                <div key={location.name}>
+                  <Link 
+                    to={location.path} 
+                    className="text-sm font-medium text-slate-200 transition-colors hover:text-amber-400"
+                  >
+                    {location.name}
+                  </Link>
+                  <ul className="mt-1.5 space-y-1">
+                    {location.cities.map((city) => (
+                      <li key={city}>
+                        <Link 
+                          to={`${location.path}/${city.toLowerCase().replace(/\s+/g, '-')}`}
+                          className="text-xs text-slate-400 transition-colors hover:text-slate-200"
+                        >
+                          {city}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Find Treatment */}
+          {/* Treatment Types */}
           <div>
             <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
-              Find Treatment
+              Treatment Types
             </h4>
-            <ul className="space-y-2.5">
-              <li>
-                <Link to="/rehab-centers" className="text-sm text-slate-300 transition-colors hover:text-white">
-                  Find Rehab Centers
-                </Link>
-              </li>
-              <li>
-                <Link to="/locations" className="text-sm text-slate-300 transition-colors hover:text-white">
-                  Browse by Location
-                </Link>
-              </li>
-              <li>
-                <Link to="/treatment-types" className="text-sm text-slate-300 transition-colors hover:text-white">
-                  Treatment Types
-                </Link>
-              </li>
-              <li>
-                <Link to="/how-it-works" className="text-sm text-slate-300 transition-colors hover:text-white">
-                  How It Works
-                </Link>
-              </li>
-              <li>
-                <Link to="/request-help?source=footer" className="text-sm text-slate-300 transition-colors hover:text-white">
-                  Get Help Now
-                </Link>
-              </li>
+            <ul className="space-y-2">
+              {treatmentTypes.map((type) => (
+                <li key={type.name}>
+                  <Link to={type.path} className="text-sm text-slate-300 transition-colors hover:text-white">
+                    {type.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Insurance Accepted */}
+          <div>
+            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
+              Insurance Accepted
+            </h4>
+            <ul className="space-y-2">
+              {insuranceTypes.map((type) => (
+                <li key={type.name}>
+                  <Link to={type.path} className="text-sm text-slate-300 transition-colors hover:text-white">
+                    {type.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -213,10 +233,15 @@ export function Footer() {
             <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
               Resources
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               <li>
                 <Link to="/resources" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Guides & Articles
+                </Link>
+              </li>
+              <li>
+                <Link to="/how-it-works" className="text-sm text-slate-300 transition-colors hover:text-white">
+                  How It Works
                 </Link>
               </li>
               <li>
@@ -237,12 +262,12 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* For Providers */}
+          {/* For Providers & Company */}
           <div>
             <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
               For Providers
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               <li>
                 <Link to="/for-providers" className="text-sm text-slate-300 transition-colors hover:text-white">
                   List Your Facility
@@ -258,25 +283,12 @@ export function Footer() {
                   Provider Login
                 </Link>
               </li>
-              <li>
-                <Link to="/provider-support" className="text-sm text-slate-300 transition-colors hover:text-white">
-                  Provider Support
-                </Link>
-              </li>
             </ul>
-          </div>
-
-          {/* Legal & Company */}
-          <div>
-            <h4 className="mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
-              Company
+            
+            <h4 className="mt-6 mb-4 font-display text-xs font-semibold uppercase tracking-widest text-white">
+              Legal
             </h4>
-            <ul className="space-y-2.5">
-              <li>
-                <Link to="/about" className="text-sm text-slate-300 transition-colors hover:text-white">
-                  About RehabLookup
-                </Link>
-              </li>
+            <ul className="space-y-2">
               <li>
                 <Link to="/privacy-policy" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Privacy Policy
@@ -291,43 +303,8 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Contact Bar */}
-        <div className="mt-10 grid gap-4 sm:grid-cols-3 rounded-xl bg-white/5 p-5 border border-white/10">
-          <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
-              <Heart className="h-4 w-4 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Need Help?</p>
-              <Link to="/request-help?source=footer" className="font-medium text-white transition-colors hover:text-amber-400">
-                Request Help Now
-              </Link>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
-              <Mail className="h-4 w-4 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Email Us</p>
-              <a href="mailto:help@rehablookup.com" className="font-medium text-white transition-colors hover:text-amber-400">
-                help@rehablookup.com
-              </a>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
-              <MapPin className="h-4 w-4 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Availability</p>
-              <span className="font-medium text-white">24/7 Nationwide</span>
-            </div>
-          </div>
-        </div>
-
         {/* Bottom Bar */}
-        <div className="mt-8 flex flex-col items-center gap-3 border-t border-white/10 pt-6 md:flex-row md:justify-between">
+        <div className="flex flex-col items-center gap-3 border-t border-white/10 pt-6 md:flex-row md:justify-between">
           <p className="text-sm text-slate-400 text-center md:text-left">
             © {new Date().getFullYear()} RehabLookup.com. All rights reserved.
           </p>
