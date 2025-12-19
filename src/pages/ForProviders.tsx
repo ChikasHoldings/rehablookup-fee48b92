@@ -628,6 +628,77 @@ const ForProviders = () => {
             <p className="text-center text-sm text-muted-foreground mt-8">
               All plans include 14-day free trial • No credit card required • Cancel anytime
             </p>
+
+            {/* Comparison Table */}
+            <div className="mt-16 max-w-4xl mx-auto">
+              <h3 className="text-2xl font-bold text-center text-foreground mb-8">
+                Compare All Features
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-4 px-4 text-foreground font-semibold">Feature</th>
+                      <th className="text-center py-4 px-4 text-foreground font-semibold">Basic</th>
+                      <th className="text-center py-4 px-4 text-foreground font-semibold bg-accent/5 border-x border-accent/20">Professional</th>
+                      <th className="text-center py-4 px-4 text-foreground font-semibold">Featured</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { feature: "Monthly Lead Limit", basic: "1 lifetime", professional: "25/month", featured: "75/month" },
+                      { feature: "Exclusive Leads", basic: true, professional: true, featured: true },
+                      { feature: "Lead Quality Score", basic: false, professional: true, featured: true },
+                      { feature: "Email Notifications", basic: true, professional: true, featured: true },
+                      { feature: "Lead Management Dashboard", basic: true, professional: true, featured: true },
+                      { feature: "Priority Lead Routing", basic: false, professional: true, featured: true },
+                      { feature: "Featured Homepage Placement", basic: false, professional: false, featured: true },
+                      { feature: "Enhanced Profile Badge", basic: false, professional: false, featured: true },
+                      { feature: "Priority Support", basic: false, professional: true, featured: true },
+                      { feature: "Analytics & Reporting", basic: false, professional: true, featured: true },
+                      { feature: "Lead Limit Override", basic: false, professional: false, featured: true },
+                    ].map((row, index) => (
+                      <tr key={index} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                        <td className="py-4 px-4 text-foreground">{row.feature}</td>
+                        <td className="text-center py-4 px-4">
+                          {typeof row.basic === "boolean" ? (
+                            row.basic ? (
+                              <CheckCircle className="h-5 w-5 text-accent mx-auto" />
+                            ) : (
+                              <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-muted-foreground text-sm">{row.basic}</span>
+                          )}
+                        </td>
+                        <td className="text-center py-4 px-4 bg-accent/5 border-x border-accent/20">
+                          {typeof row.professional === "boolean" ? (
+                            row.professional ? (
+                              <CheckCircle className="h-5 w-5 text-accent mx-auto" />
+                            ) : (
+                              <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-foreground font-medium text-sm">{row.professional}</span>
+                          )}
+                        </td>
+                        <td className="text-center py-4 px-4">
+                          {typeof row.featured === "boolean" ? (
+                            row.featured ? (
+                              <CheckCircle className="h-5 w-5 text-accent mx-auto" />
+                            ) : (
+                              <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-muted-foreground text-sm">{row.featured}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
