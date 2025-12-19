@@ -11,7 +11,9 @@ import {
   ChevronRight,
   ChevronDown,
   Sparkles,
-  PartyPopper
+  PartyPopper,
+  Users,
+  Calendar
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +37,7 @@ interface OnboardingChecklistProps {
     logo_url?: string | null;
     gallery_urls?: string[] | null;
     profile_completion_celebrated?: boolean | null;
+    year_established?: number | null;
   } | null;
 }
 
@@ -131,7 +134,21 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
     staleTime: 1000 * 30, // 30 seconds for faster updates
   });
 
-  // Real-time subscriptions for services, insurance, and facility updates
+  // Fetch age groups count with real-time updates
+  const { data: ageGroupsCount = 0 } = useQuery({
+    queryKey: ["facility-age-groups-count", facilityId],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("facility_age_groups")
+        .select("*", { count: "exact", head: true })
+        .eq("facility_id", facilityId);
+      return count || 0;
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 30,
+  });
+
+  // Real-time subscriptions for services, insurance, age groups and facility updates
   useEffect(() => {
     if (!facilityId) return;
 
@@ -167,6 +184,22 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
       )
       .subscribe();
 
+    const ageGroupsChannel = supabase
+      .channel(`onboarding-age-groups-${facilityId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_age_groups",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["facility-age-groups-count", facilityId] });
+        }
+      )
+      .subscribe();
+
     const facilityChannel = supabase
       .channel(`onboarding-facility-${facilityId}`)
       .on(
@@ -187,6 +220,7 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
     return () => {
       supabase.removeChannel(servicesChannel);
       supabase.removeChannel(insuranceChannel);
+      supabase.removeChannel(ageGroupsChannel);
       supabase.removeChannel(facilityChannel);
     };
   }, [facilityId, queryClient]);
@@ -250,6 +284,24 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
         priority: "required",
       },
       {
+        id: "age-groups",
+        label: "Specify age groups served",
+        description: "Who you can help",
+        completed: ageGroupsCount >= 1,
+        link: "/provider/listing",
+        icon: Users,
+        priority: "recommended",
+      },
+      {
+        id: "year-established",
+        label: "Add year established",
+        description: "Show your experience",
+        completed: !!facilityData.year_established,
+        link: "/provider/listing",
+        icon: Calendar,
+        priority: "recommended",
+      },
+      {
         id: "website",
         label: "Add your website",
         description: "Link to more information",
@@ -259,7 +311,7 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
         priority: "recommended",
       },
     ];
-  }, [facilityData, servicesCount, insuranceCount]);
+  }, [facilityData, servicesCount, insuranceCount, ageGroupsCount]);
 
   const completedCount = checklistItems.filter(item => item.completed).length;
   const totalCount = checklistItems.length;

@@ -525,6 +525,8 @@ export default function ProviderListingPage() {
       { key: "gallery", label: "Gallery photos", completed: (facility.gallery_urls?.length || 0) > 0 },
       { key: "services", label: "Services offered", completed: services.length > 0 },
       { key: "insurance", label: "Insurance accepted", completed: insurance.length > 0 },
+      { key: "ageGroups", label: "Age groups served", completed: ageGroups.length > 0 },
+      { key: "yearEstablished", label: "Year established", completed: !!facility.year_established },
       { key: "website", label: "Website URL", completed: !!facility.website?.trim() },
     ];
 
@@ -532,7 +534,7 @@ export default function ProviderListingPage() {
     const percentage = Math.round((completedCount / items.length) * 100);
 
     return { percentage, items };
-  }, [facility, services, insurance]);
+  }, [facility, services, insurance, ageGroups]);
 
   // Update local facility state when data changes
   useEffect(() => {
@@ -2085,6 +2087,7 @@ export default function ProviderListingPage() {
                   <CardContent className="pt-2">
                     <ProviderTrustForm
                       facilityId={facility.id}
+                      userId={facility.user_id}
                       yearEstablished={facility.year_established}
                       onYearChange={(year) => updateField("year_established", year)}
                       isEmbedded
