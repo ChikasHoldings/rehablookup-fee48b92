@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import { providerNavLinks } from "@/data/providerNavLinks";
 
 const supportTopics = [
   { value: "listing", label: "Listing & Profile" },
@@ -32,13 +33,6 @@ const supportTopics = [
   { value: "technical", label: "Technical Issue" },
   { value: "account", label: "Account Settings" },
   { value: "other", label: "Other" },
-];
-
-const providerNavLinks = [
-  { href: "/for-providers", label: "Why List With Us" },
-  { href: "/provider-resources", label: "Resources" },
-  { href: "/provider-faq", label: "FAQ" },
-  { href: "/provider-support", label: "Support" },
 ];
 
 const faqs = [

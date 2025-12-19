@@ -11,17 +11,12 @@ import { Lock, Mail, ArrowRight, Eye, EyeOff, AlertTriangle, Clock, ShieldCheck,
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { providerNavLinks } from "@/data/providerNavLinks";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
   password: z.string().min(1, { message: "Password is required" }),
 });
-
-const providerNavLinks = [
-  { href: "/for-providers", label: "Why List With Us" },
-  { href: "/provider-resources", label: "Resources" },
-  { href: "/provider-support", label: "Support" },
-];
 
 const REMEMBER_ME_KEY = "provider_remember_me";
 const LOGIN_ATTEMPTS_KEY = "provider_login_attempts";

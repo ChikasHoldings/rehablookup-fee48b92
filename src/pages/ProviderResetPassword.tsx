@@ -9,18 +9,13 @@ import { Lock, ArrowRight, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { providerNavLinks } from "@/data/providerNavLinks";
 
 const passwordSchema = z.string()
   .min(8, { message: "Password must be at least 8 characters long" })
   .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
   .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
   .regex(/[0-9]/, { message: "Password must contain at least one number" });
-
-const providerNavLinks = [
-  { href: "/for-providers", label: "Why List With Us" },
-  { href: "/provider-resources", label: "Resources" },
-  { href: "/provider-support", label: "Support" },
-];
 
 export default function ProviderResetPassword() {
   const [password, setPassword] = useState("");
