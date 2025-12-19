@@ -75,13 +75,13 @@ const faqCategories = [
     ],
   },
   {
-    id: "leads-inquiries",
+    id: "leads-management",
     icon: Users,
-    title: "Leads & Inquiries",
+    title: "Leads & Contacts",
     faqs: [
       {
-        question: "How do I receive and respond to inquiries?",
-        answer: "All inquiries are sent directly to your registered email and appear in your provider dashboard. You can respond via email or use our built-in messaging system. We recommend responding within 1 hour for the best conversion rates.",
+        question: "How do I receive and respond to leads?",
+        answer: "All leads are sent directly to your registered email and appear in your provider dashboard. You can respond via email or use our built-in messaging system. We recommend responding within 1 hour for the best conversion rates.",
       },
       {
         question: "What information is included in a lead?",
@@ -131,7 +131,7 @@ const faqCategories = [
       },
       {
         question: "How often is analytics data updated?",
-        answer: "Analytics data is updated in real-time for views and inquiries. Aggregated reports and trend analysis are refreshed daily. You can export data for custom reporting at any time.",
+        answer: "Analytics data is updated in real-time for views and leads. Aggregated reports and trend analysis are refreshed daily. You can export data for custom reporting at any time.",
       },
       {
         question: "Can I see where my traffic comes from?",

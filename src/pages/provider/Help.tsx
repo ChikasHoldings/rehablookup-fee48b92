@@ -330,7 +330,7 @@ export default function ProviderHelpPage() {
             </div>
             <div className="pt-2 border-t">
               <p className="text-xs text-muted-foreground">
-                For urgent matters regarding patient inquiries or system outages, 
+                For urgent matters regarding patient leads or system outages, 
                 please use the contact form above with "Urgent" in your subject.
               </p>
             </div>

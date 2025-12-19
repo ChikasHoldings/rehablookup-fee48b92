@@ -1027,7 +1027,7 @@ const CenterProfile = () => {
                     </div>
                     <div>
                       <p className="font-semibold text-foreground mb-0.5">Quick Response</p>
-                      <p>Most inquiries receive a response within 24 hours.</p>
+                      <p>Most requests receive a response within 24 hours.</p>
                     </div>
                   </div>
                 </div>

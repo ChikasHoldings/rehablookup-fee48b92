@@ -847,7 +847,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <CardTitle className="text-lg font-semibold">Top Cities by Leads</CardTitle>
-              <CardDescription>Geographic distribution of inquiries</CardDescription>
+              <CardDescription>Geographic distribution of leads</CardDescription>
             </div>
           </div>
         </CardHeader>

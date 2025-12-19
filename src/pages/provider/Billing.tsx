@@ -798,14 +798,14 @@ export default function ProviderBillingPage() {
                     <tr className="hover:bg-muted/30 transition-colors">
                       <td className="p-4 text-sm text-foreground">
                         <span className="flex items-center gap-1.5">
-                          Direct Inquiries
+                          Direct Profile Leads
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent className="max-w-[280px] text-xs">
-                                <p>Inquiries from users who contact your profile directly. These don't count toward your monthly qualified lead limit.</p>
+                                <p>Leads from users who contact your profile directly. These don't count toward your monthly qualified lead limit.</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
