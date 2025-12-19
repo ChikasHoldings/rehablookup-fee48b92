@@ -221,11 +221,11 @@ const Index = () => {
     <Layout>
       <SEO
         title="Find Addiction Treatment Centers Near You | RehabLookup"
-        description="Search verified addiction treatment centers and find the right path to recovery. Compare rehab facilities, check insurance coverage, and get help today. 24/7 support available."
+        description="Search 15,000+ verified drug and alcohol rehab centers. Compare treatment options, verify insurance coverage, and find the right recovery program. Confidential help available 24/7."
         canonical="/"
       />
       
-      {/* Hero Section - Rehabs.com Style */}
+      {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background Image */}
         <div 
@@ -239,14 +239,14 @@ const Index = () => {
         {/* Content */}
         <div className="container relative py-12 md:py-14 lg:py-16">
           <div className="mx-auto max-w-4xl text-center">
-            {/* Headline */}
+            {/* Headline - SEO optimized with primary keywords */}
             <h1 className="mb-3 font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Find Drug & Alcohol Rehab Options
+              Find Addiction Treatment Centers Near You
             </h1>
 
-            {/* Subheadline */}
-            <p className="mb-6 md:mb-8 text-sm md:text-base text-white/85 animate-fade-in max-w-xl mx-auto" style={{ animationDelay: "50ms" }}>
-              Find and compare addiction treatment facilities across the United States.
+            {/* Subheadline - Value proposition with secondary keywords */}
+            <p className="mb-6 md:mb-8 text-sm md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
+              Compare verified rehab facilities, check insurance coverage, and start your recovery journey today.
             </p>
 
             {/* Search Form - Directory Style */}
@@ -260,7 +260,7 @@ const Index = () => {
                 to="/for-providers" 
                 className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"
               >
-                Get Listed On Our Site
+                List Your Treatment Center
               </Link>
             </div>
           </div>
@@ -275,25 +275,25 @@ const Index = () => {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
                 <CheckCircle className="h-4 w-4 text-accent" />
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Verified Centers</span>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Verified Facilities</span>
             </div>
             <div className="flex items-center gap-2 group">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
-                <Heart className="h-4 w-4 text-accent" />
+                <Users className="h-4 w-4 text-accent" />
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">10,000+ Helped</span>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">15,000+ Centers</span>
             </div>
             <div className="flex items-center gap-2 group">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
                 <Clock className="h-4 w-4 text-accent" />
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">24/7 Support</span>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">24/7 Confidential Help</span>
             </div>
             <div className="flex items-center gap-2 group">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
                 <Phone className="h-4 w-4 text-accent" />
               </div>
-              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Free Consultation</span>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Free Insurance Check</span>
             </div>
           </div>
         </div>
