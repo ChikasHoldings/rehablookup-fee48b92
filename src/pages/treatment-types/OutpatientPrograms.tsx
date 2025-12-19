@@ -435,20 +435,62 @@ const OutpatientPrograms = () => {
         </div>
       </section>
 
+      {/* State Outpatient Pages */}
+      <section className="bg-secondary/30 section-padding">
+        <div className="container">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+              Find Outpatient Programs by State
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Browse PHP, IOP, and outpatient treatment in your state
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            {[
+              { name: "California", slug: "california" },
+              { name: "Florida", slug: "florida" },
+              { name: "Texas", slug: "texas" },
+              { name: "New York", slug: "new-york" },
+              { name: "Arizona", slug: "arizona" },
+              { name: "Colorado", slug: "colorado" },
+              { name: "Pennsylvania", slug: "pennsylvania" },
+              { name: "Illinois", slug: "illinois" },
+              { name: "Ohio", slug: "ohio" },
+              { name: "Georgia", slug: "georgia" },
+              { name: "New Jersey", slug: "new-jersey" },
+              { name: "Massachusetts", slug: "massachusetts" },
+            ].map((state) => (
+              <Link key={state.slug} to={`/treatment-types/outpatient-programs/${state.slug}`}>
+                <Button variant="outline" size="sm">
+                  Outpatient in {state.name}
+                </Button>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Other Treatment Types */}
-      <section className="border-t bg-secondary/30 section-padding-sm">
+      <section className="border-t section-padding-sm">
         <div className="container">
           <h2 className="mb-6 text-center text-xl font-bold text-foreground">
             Explore Other Treatment Types
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
+            <Link to="/treatment-types/detox-programs">
+              <Button variant="outline" className="gap-2">
+                <Activity className="h-4 w-4" />
+                Detox Programs
+              </Button>
+            </Link>
             <Link to="/treatment-types/residential-inpatient">
               <Button variant="outline" className="gap-2">
                 <Home className="h-4 w-4" />
                 Residential Inpatient
               </Button>
             </Link>
-            <Link to="/treatment-types/dual-diagnosis">
+            <Link to="/treatment-types/dual-diagnosis-treatment">
               <Button variant="outline" className="gap-2">
                 <Brain className="h-4 w-4" />
                 Dual Diagnosis
