@@ -161,6 +161,11 @@ serve(async (req) => {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       customer_creation: customerId ? undefined : "always",
+      // Required for existing customers with tax_id_collection
+      customer_update: customerId ? {
+        name: "auto",
+        address: "auto",
+      } : undefined,
       billing_address_collection: "required",
       payment_method_types: ["card"],
       line_items: [
@@ -189,9 +194,6 @@ serve(async (req) => {
       custom_text: {
         submit: {
           message: `Start receiving ${plan === 'featured' ? 'exclusive' : 'qualified'} leads immediately after checkout.`,
-        },
-        after_submit: {
-          message: "Your subscription will begin immediately and renew monthly.",
         },
       },
       // Allow tax ID collection for business customers
