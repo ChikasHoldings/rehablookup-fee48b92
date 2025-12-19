@@ -12,16 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-recovery.jpg";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
-  Shield, 
-  Phone, 
-  CheckCircle, 
-  Users, 
-  Heart, 
-  Clock,
   ArrowRight,
   Star,
-  BadgeCheck,
-  Headphones,
   Pill,
   Brain,
   Home,
@@ -31,8 +23,13 @@ import {
   Quote,
   BookOpen,
   Calendar,
+  CheckCircle,
   Search,
-  MapPin
+  Users,
+  Phone,
+  Heart,
+  MapPin,
+  Clock,
 } from "lucide-react";
 
 const blogArticles = [
@@ -125,12 +122,6 @@ const treatmentOptions = [
   },
 ];
 
-const trustBadges = [
-  { icon: BadgeCheck, label: "Verified Centers" },
-  { icon: Shield, label: "Insurance Accepted" },
-  { icon: Headphones, label: "24/7 Support" },
-  { icon: Users, label: "10,000+ Helped" },
-];
 
 const Index = () => {
   const { data: approvedFacilities = [], isLoading: isFacilitiesLoading } = useApprovedFacilities();
@@ -233,111 +224,48 @@ const Index = () => {
         description="Search verified addiction treatment centers and find the right path to recovery. Compare rehab facilities, check insurance coverage, and get help today. 24/7 support available."
         canonical="/"
       />
-      {/* Hero + Trust Bar Viewport Wrapper */}
-      <div className="relative flex min-h-[calc(100vh-64px)] md:min-h-[calc(100vh-72px)] flex-col">
-        {/* Hero Section */}
-        <section className="relative flex flex-1 overflow-hidden">
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${heroImage})` }}
-          />
-          
-          {/* Light overlay with gradient for depth */}
-          <div className="absolute inset-0 bg-gradient-to-b from-card/90 via-card/85 to-card/95" />
-          
-          {/* Decorative elements */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-32 -right-32 h-[400px] w-[400px] rounded-full bg-primary/8 blur-3xl" />
-            <div className="absolute -bottom-32 -left-32 h-[300px] w-[300px] rounded-full bg-accent/6 blur-3xl" />
-          </div>
+      
+      {/* Hero Section - Rehabs.com Style */}
+      <section className="relative overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        />
+        
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/60" />
 
-          {/* Content Container - Optimized for tablet */}
-          <div className="container relative flex flex-1 flex-col justify-center py-6 sm:py-8 md:py-6 lg:py-10">
-            <div className="mx-auto w-full max-w-3xl lg:max-w-4xl text-center px-4 md:px-6">
-              {/* Trust Badge */}
-              <div className="mb-4 md:mb-5 lg:mb-6 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-3 py-1.5 md:px-4 md:py-2 shadow-sm animate-fade-in backdrop-blur-sm">
-                <Star className="h-3.5 w-3.5 md:h-4 md:w-4 fill-accent text-accent" />
-                <span className="text-xs md:text-sm font-semibold text-accent tracking-wide">
-                  Trusted by 10,000+ families
-                </span>
-              </div>
+        {/* Content */}
+        <div className="container relative py-16 md:py-20 lg:py-24">
+          <div className="mx-auto max-w-4xl text-center">
+            {/* Headline */}
+            <h1 className="mb-4 font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.5rem] animate-fade-in">
+              Find Drug & Alcohol Rehab Options
+            </h1>
 
-              {/* Headline - Tablet-optimized sizing */}
-              <h1 className="mb-3 md:mb-4 lg:mb-5 font-display text-2xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-3xl md:text-[2.5rem] lg:text-5xl xl:text-6xl animate-fade-in" style={{ animationDelay: "50ms" }}>
-                Find the Right Path to{" "}
-                <span className="text-primary relative inline-block">
-                  Recovery
-                  <svg className="absolute -bottom-0.5 md:-bottom-1 left-0 w-full h-1.5 md:h-2 text-primary/30" viewBox="0 0 200 8" preserveAspectRatio="none">
-                    <path d="M0 7 Q50 0, 100 7 T200 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                  </svg>
-                </span>
-              </h1>
+            {/* Subheadline */}
+            <p className="mb-8 md:mb-10 text-base md:text-lg text-white/85 animate-fade-in max-w-2xl mx-auto" style={{ animationDelay: "50ms" }}>
+              Find and compare addiction treatment facilities across the United States.
+            </p>
 
-              {/* Subheadline - Tablet spacing */}
-              <p className="mb-5 md:mb-6 lg:mb-8 text-sm md:text-base lg:text-lg text-foreground/75 animate-fade-in max-w-md md:max-w-lg lg:max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "100ms" }}>
-                Search verified treatment centers and take the first step toward a healthier future.
-              </p>
-
-              {/* Search Form */}
-              <div className="mb-5 md:mb-6 lg:mb-8 animate-fade-in" style={{ animationDelay: "150ms" }}>
-                <SearchForm variant="compact-hero" />
-              </div>
-
-              {/* Trust Badges - Tablet-optimized grid */}
-              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-x-6 lg:gap-x-8">
-                {trustBadges.map((badge, index) => (
-                  <div 
-                    key={badge.label} 
-                    className="flex items-center gap-1.5 md:gap-2 text-foreground/70 transition-all duration-300 hover:text-primary group animate-fade-in opacity-0"
-                    style={{ 
-                      animationDelay: `${400 + index * 100}ms`,
-                      animationFillMode: 'forwards'
-                    }}
-                  >
-                    <div className="flex h-7 w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-105">
-                      <badge.icon className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
-                    </div>
-                    <span className="text-xs md:text-sm font-medium">{badge.label}</span>
-                  </div>
-                ))}
-              </div>
+            {/* Search Form - Directory Style */}
+            <div className="animate-fade-in" style={{ animationDelay: "100ms" }}>
+              <SearchForm variant="directory" />
             </div>
-          </div>
-        </section>
 
-        {/* Trust Bar - Tablet-optimized */}
-        <div className="relative shrink-0 border-y border-border bg-primary py-3 md:py-3.5 lg:py-4">
-          <div className="container">
-            <div className="flex items-center justify-center gap-x-3 gap-y-2 sm:gap-x-6 md:gap-x-8 lg:gap-x-12 flex-wrap md:flex-nowrap">
-              <div className="flex items-center gap-1.5 md:gap-2 shrink-0 group">
-                <div className="flex h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                  <Shield className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-accent" />
-                </div>
-                <span className="text-[11px] md:text-xs lg:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">Licensed & Accredited</span>
-              </div>
-              <div className="flex items-center gap-1.5 md:gap-2 shrink-0 group">
-                <div className="flex h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                  <Clock className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-accent" />
-                </div>
-                <span className="text-[11px] md:text-xs lg:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">24/7 Support</span>
-              </div>
-              <div className="flex items-center gap-1.5 md:gap-2 shrink-0 group">
-                <div className="flex h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                  <Heart className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-accent" />
-                </div>
-                <span className="text-[11px] md:text-xs lg:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">Free Assessment</span>
-              </div>
-              <div className="flex items-center gap-1.5 md:gap-2 shrink-0 group">
-                <div className="flex h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                  <CheckCircle className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-accent" />
-                </div>
-                <span className="text-[11px] md:text-xs lg:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">Insurance Verified</span>
-              </div>
+            {/* Provider CTA */}
+            <div className="mt-6 animate-fade-in" style={{ animationDelay: "150ms" }}>
+              <Link 
+                to="/for-providers" 
+                className="inline-flex items-center gap-1 text-sm text-white/80 hover:text-white underline underline-offset-4 transition-colors"
+              >
+                Get Listed On Our Site
+              </Link>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Featured Centers */}
       <section className="section-padding-lg">
