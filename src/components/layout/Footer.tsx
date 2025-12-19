@@ -27,14 +27,28 @@ const footerLinks = {
 };
 
 const popularLocations = [
-  { label: "California", href: "/locations/california" },
-  { label: "Florida", href: "/locations/florida" },
-  { label: "Texas", href: "/locations/texas" },
-  { label: "Arizona", href: "/locations/arizona" },
-  { label: "New York", href: "/locations/new-york" },
-  { label: "Colorado", href: "/locations/colorado" },
-  { label: "Pennsylvania", href: "/locations/pennsylvania" },
-  { label: "Ohio", href: "/locations/ohio" },
+  // States
+  { label: "California", href: "/locations/california", type: "state" },
+  { label: "Florida", href: "/locations/florida", type: "state" },
+  { label: "Texas", href: "/locations/texas", type: "state" },
+  { label: "Arizona", href: "/locations/arizona", type: "state" },
+  { label: "New York", href: "/locations/new-york", type: "state" },
+  { label: "Colorado", href: "/locations/colorado", type: "state" },
+];
+
+const popularCities = [
+  { label: "Los Angeles, CA", href: "/locations/california/los-angeles" },
+  { label: "Miami, FL", href: "/locations/florida/miami" },
+  { label: "Houston, TX", href: "/locations/texas/houston" },
+  { label: "Phoenix, AZ", href: "/locations/arizona/phoenix" },
+  { label: "New York City", href: "/locations/new-york/new-york-city" },
+  { label: "Denver, CO", href: "/locations/colorado/denver" },
+  { label: "San Diego, CA", href: "/locations/california/san-diego" },
+  { label: "Tampa, FL", href: "/locations/florida/tampa" },
+  { label: "Dallas, TX", href: "/locations/texas/dallas" },
+  { label: "Scottsdale, AZ", href: "/locations/arizona/scottsdale" },
+  { label: "Chicago, IL", href: "/locations/illinois/chicago" },
+  { label: "Atlanta, GA", href: "/locations/georgia/atlanta" },
 ];
 
 const socialLinks = [
@@ -196,28 +210,54 @@ export function Footer() {
       {/* Popular Locations - SEO Section */}
       <div className="border-t border-white/10">
         <div className="container py-6">
-          <div className="flex items-center gap-2 mb-4">
-            <MapPin className="h-4 w-4 text-accent" />
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
-              Popular Locations
-            </h4>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {popularLocations.map((location) => (
-              <Link
-                key={location.href}
-                to={location.href}
-                className="rounded-full bg-white/5 px-3 py-1.5 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
-              >
-                {location.label}
-              </Link>
-            ))}
-            <Link
-              to="/locations"
-              className="rounded-full bg-accent/20 px-3 py-1.5 text-xs text-accent hover:bg-accent/30 transition-colors"
-            >
-              View All States →
-            </Link>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Popular States */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className="h-4 w-4 text-accent" />
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
+                  Popular States
+                </h4>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {popularLocations.map((location) => (
+                  <Link
+                    key={location.href}
+                    to={location.href}
+                    className="rounded-full bg-white/5 px-3 py-1.5 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                  >
+                    {location.label}
+                  </Link>
+                ))}
+                <Link
+                  to="/locations"
+                  className="rounded-full bg-accent/20 px-3 py-1.5 text-xs text-accent hover:bg-accent/30 transition-colors"
+                >
+                  All States →
+                </Link>
+              </div>
+            </div>
+
+            {/* Popular Cities */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className="h-4 w-4 text-accent" />
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
+                  Popular Cities
+                </h4>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {popularCities.map((city) => (
+                  <Link
+                    key={city.href}
+                    to={city.href}
+                    className="rounded-full bg-white/5 px-3 py-1.5 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                  >
+                    {city.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
