@@ -150,6 +150,29 @@
     text-wrap: balance;
   }
 
+  /* Standardized section spacing for public pages */
+  .section-padding {
+    @apply py-14 px-4 md:py-20 md:px-6;
+  }
+  
+  .section-padding-lg {
+    @apply py-16 px-4 md:py-24 md:px-6;
+  }
+  
+  .section-padding-sm {
+    @apply py-10 px-4 md:py-14 md:px-6;
+  }
+  
+  /* Consistent section header spacing */
+  .section-header {
+    @apply mb-10 md:mb-12 text-center;
+  }
+  
+  /* Content max-width for readability */
+  .content-prose {
+    @apply max-w-2xl mx-auto;
+  }
+
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
