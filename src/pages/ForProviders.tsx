@@ -73,7 +73,7 @@ const benefits = [
   {
     icon: BarChart3,
     title: "Real-Time Analytics",
-    description: "Track every view, click, and inquiry with precision.",
+    description: "Track every view, click, and lead with precision.",
     stat: "24/7",
     statLabel: "Live Dashboard",
   },
@@ -882,7 +882,7 @@ const ForProviders = () => {
                     Are leads really exclusive? How does that work?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground pb-5">
-                    Yes, 100% exclusive. When a family submits an inquiry for your facility, that lead is delivered only to you—never shared with competitors. Unlike other platforms that sell the same lead to 5-10 centers, we believe in quality over quantity. You get the full opportunity to connect without racing against others.
+                    Yes, 100% exclusive for Featured providers. When a family submits a request for your facility, that lead is delivered only to you—never shared with competitors. Unlike other platforms that sell the same lead to 5-10 centers, we believe in quality over quantity. You get the full opportunity to connect without racing against others.
                   </AccordionContent>
                 </AccordionItem>
 
@@ -891,7 +891,7 @@ const ForProviders = () => {
                     How does pricing work? Are there any hidden fees?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground pb-5">
-                    Our pricing is straightforward with no hidden fees. The Basic plan is free forever with 1 direct inquiry. Professional is $399/month for up to 25 exclusive leads, and Featured is $1,099/month for up to 75 leads plus premium placement. All paid plans include a 14-day free trial—no credit card required to start.
+                    Our pricing is straightforward with no hidden fees. The Basic plan is free forever with 1 lead (lifetime). Professional is $399/month for up to 100 leads (shared with max 2 providers), and Featured is $1,099/month for up to 100 exclusive leads plus premium placement. All paid plans include a 14-day free trial—no credit card required to start.
                   </AccordionContent>
                 </AccordionItem>
 

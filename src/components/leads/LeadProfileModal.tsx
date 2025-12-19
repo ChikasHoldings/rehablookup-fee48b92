@@ -367,7 +367,7 @@ export function LeadProfileModal({
                   ) : (
                     <Badge variant="outline" className="gap-1.5 text-xs font-medium">
                       <FileText className="h-3 w-3" />
-                      Direct Inquiry
+                      Profile Lead
                     </Badge>
                   )}
                 </div>
@@ -865,7 +865,7 @@ export function LeadProfileModal({
                   <div className="grid gap-3 text-sm sm:grid-cols-3">
                     <div>
                       <span className="text-muted-foreground block text-xs">Source</span>
-                      <span className="font-medium">{lead.source || "Direct Inquiry"}</span>
+                      <span className="font-medium">{lead.source || "Profile Lead"}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block text-xs">Submitted</span>

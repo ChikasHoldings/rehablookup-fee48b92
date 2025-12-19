@@ -127,7 +127,7 @@ const faqCategories = [
     faqs: [
       {
         question: "What analytics are available?",
-        answer: "Your dashboard includes profile views, unique visitors, inquiry rates, conversion metrics, and engagement trends. Premium plans include advanced analytics with demographic insights, referral sources, and competitive benchmarking.",
+        answer: "Your dashboard includes profile views, unique visitors, lead rates, conversion metrics, and engagement trends. Premium plans include advanced analytics with demographic insights, referral sources, and competitive benchmarking.",
       },
       {
         question: "How often is analytics data updated?",
