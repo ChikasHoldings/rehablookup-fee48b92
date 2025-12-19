@@ -30,6 +30,7 @@ import {
   Send,
   Lock,
   Share2,
+  ArrowRightLeft,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +78,7 @@ import { calculateLeadScore, getScoreColor, type LeadScoringInput } from "@/lib/
 import { LeadProfileModal } from "@/components/leads/LeadProfileModal";
 import { RoutingLogsTable } from "@/components/admin/RoutingLogsTable";
 import { LeadOverrideDialog } from "@/components/admin/LeadOverrideDialog";
+import { LeadReassignDialog } from "@/components/admin/LeadReassignDialog";
 import { cn } from "@/lib/utils";
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
@@ -497,6 +499,7 @@ export default function AdminLeads() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
+  const [showReassignDialog, setShowReassignDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Handle date preset changes
@@ -1444,9 +1447,21 @@ export default function AdminLeads() {
                                     </DropdownMenuItem>
                                   )}
                                   {lead.qualified && !lead.facility_id && (
-                                    <DropdownMenuItem onClick={() => openOverrideDialog(lead)}>
+                                    <DropdownMenuItem onClick={() => {
+                                      setSelectedLead(lead);
+                                      setShowOverrideDialog(true);
+                                    }}>
                                       <Send className="h-4 w-4 mr-2" />
                                       Route to Provider
+                                    </DropdownMenuItem>
+                                  )}
+                                  {lead.facility_id && (
+                                    <DropdownMenuItem onClick={() => {
+                                      setSelectedLead(lead);
+                                      setShowReassignDialog(true);
+                                    }}>
+                                      <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                      Reassign Lead
                                     </DropdownMenuItem>
                                   )}
                                 </DropdownMenuContent>
@@ -1829,6 +1844,14 @@ export default function AdminLeads() {
         lead={selectedLead}
         open={showOverrideDialog}
         onOpenChange={setShowOverrideDialog}
+      />
+
+      {/* Lead Reassign Dialog */}
+      <LeadReassignDialog
+        lead={selectedLead}
+        currentFacility={selectedLead?.facility_id ? facilitiesMap.get(selectedLead.facility_id) || null : null}
+        open={showReassignDialog}
+        onOpenChange={setShowReassignDialog}
       />
     </div>
   );
