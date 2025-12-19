@@ -591,32 +591,164 @@ const StatePage = () => {
         </div>
       </section>
 
-      {/* SEO Content */}
-      <section className="border-t bg-secondary/30 py-12">
+      {/* SEO Content - Types of Treatment */}
+      <section className="border-t bg-secondary/30 section-padding">
         <div className="container">
-          <div className="mx-auto max-w-3xl">
-            <h2 className="text-2xl font-bold text-foreground">
-              About Addiction Treatment in {stateData.name}
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-2xl font-bold text-foreground mb-6">
+              Types of Addiction Treatment in {stateData.name}
             </h2>
-            <div className="mt-4 space-y-4 text-muted-foreground leading-relaxed">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-4 text-muted-foreground leading-relaxed">
+                <p>
+                  {stateData.name} offers comprehensive addiction treatment services including medical detoxification, 
+                  residential inpatient programs, partial hospitalization (PHP), intensive outpatient (IOP), 
+                  and standard outpatient therapy. Each level of care addresses different stages of recovery.
+                </p>
+                <p>
+                  <strong className="text-foreground">Drug Rehab in {stateData.name}</strong> — Specialized programs 
+                  treating opioid addiction, stimulant abuse, benzodiazepine dependency, and polysubstance use 
+                  with medication-assisted treatment (MAT) and evidence-based therapies.
+                </p>
+              </div>
+              <div className="space-y-4 text-muted-foreground leading-relaxed">
+                <p>
+                  <strong className="text-foreground">Alcohol Rehab in {stateData.name}</strong> — Medically supervised 
+                  detox, 12-step programs, cognitive behavioral therapy, and relapse prevention strategies 
+                  designed specifically for alcohol use disorder recovery.
+                </p>
+                <p>
+                  <strong className="text-foreground">Dual Diagnosis Treatment</strong> — Many {stateData.abbreviation} facilities 
+                  provide integrated care for co-occurring mental health conditions like depression, anxiety, 
+                  PTSD, and bipolar disorder alongside addiction treatment.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SEO Content - Inpatient vs Outpatient */}
+      <section className="border-t bg-card section-padding">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-2xl font-bold text-foreground mb-6">
+              Inpatient vs Outpatient Rehab in {stateData.name}
+            </h2>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-xl border bg-background p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <Home className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground">Inpatient Rehab in {stateData.abbreviation}</h3>
+                </div>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    24/7 medical supervision and support
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    Structured environment free from triggers
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    Intensive therapy (30-90 day programs)
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    Best for severe addiction or co-occurring disorders
+                  </li>
+                </ul>
+              </div>
+              <div className="rounded-xl border bg-background p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <Stethoscope className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground">Outpatient Rehab in {stateData.abbreviation}</h3>
+                </div>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    Maintain work, school, or family obligations
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    Flexible scheduling (evenings/weekends)
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    Lower cost than residential programs
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    Ideal for mild-to-moderate addiction or step-down care
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SEO Content - How to Choose */}
+      <section className="border-t bg-secondary/30 section-padding">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-2xl font-bold text-foreground mb-6">
+              How to Choose a Rehab Center in {stateData.name}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { title: "Verify Accreditation", desc: "Look for Joint Commission or CARF accreditation ensuring quality standards" },
+                { title: "Check Treatment Approaches", desc: "Ensure they offer evidence-based therapies like CBT, DBT, or MAT" },
+                { title: "Review Staff Credentials", desc: "Licensed counselors, physicians, and addiction specialists on staff" },
+                { title: "Confirm Insurance Coverage", desc: `Verify your plan is accepted by ${stateData.abbreviation} facilities` },
+                { title: "Consider Location", desc: "Close to home for family involvement or away for focused recovery" },
+                { title: "Evaluate Aftercare Support", desc: "Strong alumni programs and ongoing support improve long-term success" },
+              ].map((item, idx) => (
+                <div key={idx} className="rounded-lg border bg-card p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {idx + 1}
+                    </div>
+                    <h3 className="font-semibold text-foreground text-sm">{item.title}</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SEO Content - Insurance & Payment */}
+      <section className="border-t bg-card section-padding">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-2xl font-bold text-foreground mb-6">
+              Insurance & Payment Options in {stateData.name}
+            </h2>
+            <div className="space-y-4 text-muted-foreground leading-relaxed mb-6">
               <p>
-                {stateData.name} offers a range of addiction treatment options including medical detox, 
-                residential inpatient programs, outpatient services, and specialized therapy programs. 
-                Whether you're seeking help for drug addiction, alcohol dependency, or co-occurring 
-                mental health conditions, {stateData.name} has qualified treatment providers ready to help.
+                Most rehab centers in {stateData.name} accept major health insurance plans under the 
+                Affordable Care Act (ACA) and Mental Health Parity laws. This includes private insurance, 
+                employer-sponsored plans, {stateData.abbreviation} Medicaid, and Medicare coverage for addiction treatment.
               </p>
               <p>
-                Treatment centers in {stateData.name} utilize evidence-based approaches including 
-                cognitive behavioral therapy (CBT), dialectical behavior therapy (DBT), medication-assisted 
-                treatment (MAT), and holistic therapies. Many facilities accept major insurance plans 
-                and offer financing options to make recovery accessible.
+                For those without insurance, many {stateData.abbreviation} facilities offer sliding-scale fees based on income, 
+                payment plans, and some provide state-funded or free treatment options through SAMHSA grants.
               </p>
-              <p>
-                With {stateData.cities.length} major cities offering treatment services, finding a 
-                convenient location for your recovery journey is easier than ever. Our directory includes 
-                both luxury residential facilities and affordable community-based programs to fit every 
-                budget and treatment need.
-              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+              {["Medicaid", "Medicare", "Private Insurance", "Self-Pay Options"].map((option) => (
+                <div key={option} className="flex items-center gap-2 rounded-lg border bg-background p-3">
+                  <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                  <span className="text-sm font-medium text-foreground">{option}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
