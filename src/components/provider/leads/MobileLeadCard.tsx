@@ -257,11 +257,11 @@ export const MobileLeadCard = memo(function MobileLeadCard({
                 </Badge>
               )}
               
-              {/* Exclusivity Badge */}
+              {/* Exclusivity Badge - per spec labels */}
               {exclusivity === 'shared' && (
                 <Badge variant="outline" className="h-6 px-2 text-[10px] border-blue-300 bg-blue-50 text-blue-700 font-medium dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
                   <Share2 className="h-3 w-3 mr-1" />
-                  Shared
+                  Shared (Max 2)
                 </Badge>
               )}
               {exclusivity === 'exclusive' && (
