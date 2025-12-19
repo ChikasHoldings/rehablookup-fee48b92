@@ -131,12 +131,13 @@ export default function ProviderDashboardPage() {
     staleTime: 1000 * 60,
   });
 
-  // Real-time subscription for leads and views
+  // Real-time subscription for dashboard-specific data (recent-leads, total-leads-count)
+  // Note: provider-data is already handled by useProviderData hook's own realtime subscriptions
   useEffect(() => {
     if (!facilityId) return;
     
     const leadsChannel = supabase
-      .channel("dashboard-leads")
+      .channel(`dashboard-leads-${facilityId}`)
       .on(
         "postgres_changes",
         {
@@ -146,32 +147,15 @@ export default function ProviderDashboardPage() {
           filter: `facility_id=eq.${facilityId}`,
         },
         () => {
+          // Only invalidate dashboard-specific queries, not provider-data (handled by hook)
           queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
           queryClient.invalidateQueries({ queryKey: ["total-leads-count", facilityId] });
-        }
-      )
-      .subscribe();
-
-    const viewsChannel = supabase
-      .channel("dashboard-views")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "facility_views",
-          filter: `facility_id=eq.${facilityId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["provider-data", facilityId] });
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(leadsChannel);
-      supabase.removeChannel(viewsChannel);
     };
   }, [facilityId, queryClient]);
 
