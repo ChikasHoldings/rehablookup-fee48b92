@@ -372,8 +372,40 @@ export default function ProviderListingPage() {
     localStorage.setItem('provider-listing-expanded-sections', JSON.stringify([...expandedSections]));
   }, [expandedSections]);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const prevFacilityIdRef = useRef<string | null>(null);
   const { toast } = useToast();
-  const { selectedFacility } = useSelectedFacility();
+  const { selectedFacility, setHasUnsavedChanges } = useSelectedFacility();
+
+  // Reset state when facility changes
+  useEffect(() => {
+    if (selectedFacility?.id && prevFacilityIdRef.current !== selectedFacility.id) {
+      // Clear any pending auto-save
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+      
+      // Reset form state
+      setFacility(null);
+      setHasChanges(false);
+      setShowSaved(false);
+      setTouchedFields(new Set());
+      setFieldErrors({});
+      setNewService("");
+      setNewInsurance("");
+      setVerificationCode("");
+      setCodeSent(false);
+      setVerificationError(null);
+      setHasUnsavedChanges(false);
+      
+      prevFacilityIdRef.current = selectedFacility.id;
+    }
+  }, [selectedFacility?.id, setHasUnsavedChanges]);
+
+  // Sync hasChanges to context
+  useEffect(() => {
+    setHasUnsavedChanges(hasChanges);
+  }, [hasChanges, setHasUnsavedChanges]);
 
   // Reply email verification state
   const [verificationCode, setVerificationCode] = useState("");

@@ -35,6 +35,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,7 +90,13 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading } = useProviderNotifications();
   const { data: subscription } = useSubscription();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
-  const { selectedFacility, setSelectedFacility } = useSelectedFacility();
+  const { 
+    selectedFacility, 
+    requestFacilitySwitch, 
+    pendingFacilitySwitch, 
+    confirmFacilitySwitch, 
+    cancelFacilitySwitch 
+  } = useSelectedFacility();
   
   const recentNotifications = notifications.slice(0, 5);
   const currentPlan = subscription?.plan || "basic";
@@ -157,7 +173,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
   const handleFacilitySelect = (facility: ProviderFacility) => {
     if (facility.id !== selectedFacility?.id) {
-      setSelectedFacility(facility);
+      requestFacilitySwitch(facility);
     }
   };
 
@@ -554,6 +570,24 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           />
         </div>
       )}
+
+      {/* Unsaved Changes Confirmation Dialog */}
+      <AlertDialog open={!!pendingFacilitySwitch} onOpenChange={(open) => !open && cancelFacilitySwitch()}>
+        <AlertDialogContent className="bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes on this listing. Are you sure you want to switch locations? Your changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelFacilitySwitch}>Stay Here</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmFacilitySwitch} className="bg-destructive hover:bg-destructive/90">
+              Discard & Switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 }
