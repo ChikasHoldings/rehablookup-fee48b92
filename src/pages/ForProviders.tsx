@@ -39,6 +39,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
 import providerDashboardMockup from "@/assets/provider-dashboard-mockup.jpg";
 
@@ -847,6 +853,101 @@ const ForProviders = () => {
 
             {/* Collapsible Comparison Table */}
             <ComparisonTable />
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="py-16 md:py-20 bg-muted/30">
+          <div className="container px-5 md:px-6">
+            <div className="text-center mb-12">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">Frequently Asked Questions</span>
+              </div>
+              <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
+                Got Questions? We've Got Answers
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                Everything you need to know about partnering with RehabLookup.
+              </p>
+            </div>
+
+            <div className="max-w-3xl mx-auto">
+              <Accordion type="single" collapsible className="space-y-4">
+                <AccordionItem value="exclusivity" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
+                    Are leads really exclusive? How does that work?
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    Yes, 100% exclusive. When a family submits an inquiry for your facility, that lead is delivered only to you—never shared with competitors. Unlike other platforms that sell the same lead to 5-10 centers, we believe in quality over quantity. You get the full opportunity to connect without racing against others.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="pricing" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
+                    How does pricing work? Are there any hidden fees?
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    Our pricing is straightforward with no hidden fees. The Basic plan is free forever with 1 direct inquiry. Professional is $399/month for up to 25 exclusive leads, and Featured is $1,099/month for up to 75 leads plus premium placement. All paid plans include a 14-day free trial—no credit card required to start.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="setup" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
+                    How long does it take to get started?
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    Most providers complete their profile and go live in under 10 minutes. Simply create an account, fill in your facility details, add photos, and you're ready to receive leads. Our onboarding wizard guides you through each step, and our support team is available if you need help.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="quality" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
+                    What kind of lead quality can I expect?
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    Our leads are high-intent families actively seeking treatment—not cold prospects from purchased lists. Each lead includes verified contact information, insurance details, treatment preferences, and urgency level. We use quality scoring to help you prioritize, and our Professional and Featured plans include advanced filtering to match your ideal patient profile.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="cancel" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
+                    Can I cancel or change my plan anytime?
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    Absolutely. There are no long-term contracts or cancellation fees. You can upgrade, downgrade, or cancel your plan at any time from your dashboard. Changes take effect at your next billing cycle. We're confident in our service and want you to stay because of results, not obligations.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="support" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
+                    What kind of support do you offer?
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    All plans include email support with same-day responses. Professional and Featured plans get priority support with faster response times. Featured partners also receive a dedicated account manager for strategic guidance. We're here to help you maximize your admissions and get the most from our platform.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="multiple" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
+                    Can I list multiple facilities?
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    Yes! The Basic plan includes 1 facility location, Professional supports up to 3 locations, and Featured allows up to 5 locations under one account. Each location gets its own profile, lead inbox, and analytics. Need more locations? Contact our sales team for enterprise solutions.
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              <div className="text-center mt-10">
+                <p className="text-muted-foreground mb-4">Still have questions?</p>
+                <Link to="/contact">
+                  <Button variant="outline" className="gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Contact Our Team
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
 
