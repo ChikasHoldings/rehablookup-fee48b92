@@ -292,33 +292,55 @@ const Index = () => {
 
             {/* Insurance Logos */}
             <div className="flex-1 lg:max-w-2xl">
-              <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-                {[
-                  { name: "Aetna", color: "#7C3AED" },
-                  { name: "Ambetter", color: "#059669" },
-                  { name: "Anthem", color: "#0891B2" },
-                  { name: "Blue Cross", color: "#2563EB" },
-                  { name: "Carelon", color: "#16A34A" },
-                  { name: "Cigna", color: "#EA580C" },
-                  { name: "Humana", color: "#65A30D" },
-                  { name: "Kaiser", color: "#0284C7" },
-                  { name: "Magellan", color: "#7C3AED" },
-                  { name: "Medicare", color: "#DC2626" },
-                  { name: "United", color: "#2563EB" },
-                  { name: "Tricare", color: "#0D9488" },
-                ].map((insurance) => (
-                  <div
-                    key={insurance.name}
-                    className="flex h-16 items-center justify-center rounded-lg border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md"
-                  >
-                    <span 
-                      className="text-xs font-bold text-center"
-                      style={{ color: insurance.color }}
-                    >
-                      {insurance.name}
-                    </span>
-                  </div>
-                ))}
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+                {/* Aetna - has logo */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <img src="/insurance-logos/aetna.svg" alt="Aetna" className="h-6 md:h-7 w-auto object-contain" />
+                </div>
+                {/* Anthem - styled text */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <span className="text-sm md:text-base font-bold text-[#0891B2]">Anthem</span>
+                </div>
+                {/* BCBS - has logo */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" className="h-8 md:h-10 w-auto object-contain" />
+                </div>
+                {/* Cigna - has logo */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <img src="/insurance-logos/cigna.svg" alt="Cigna" className="h-5 md:h-6 w-auto object-contain" />
+                </div>
+                {/* Humana - styled text */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <span className="text-sm md:text-base font-bold text-[#84CC16]">Humana</span>
+                </div>
+                {/* Kaiser - has logo */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" className="h-6 md:h-7 w-auto object-contain" />
+                </div>
+                {/* Medicare - styled text */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <span className="text-sm md:text-base font-bold text-[#DC2626]">Medicare</span>
+                </div>
+                {/* Medicaid - styled text */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <span className="text-sm md:text-base font-bold text-[#2563EB]">Medicaid</span>
+                </div>
+                {/* United - has logo */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <img src="/insurance-logos/united.svg" alt="UnitedHealthcare" className="h-6 md:h-7 w-auto object-contain" />
+                </div>
+                {/* Tricare - styled text */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <span className="text-sm md:text-base font-bold text-[#0D9488]">TRICARE</span>
+                </div>
+                {/* Magellan - styled text */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
+                  <span className="text-sm md:text-base font-bold text-[#7C3AED]">Magellan</span>
+                </div>
+                {/* More indicator */}
+                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2 transition-all hover:border-primary/30">
+                  <span className="text-xs md:text-sm font-medium text-muted-foreground">+ More</span>
+                </div>
               </div>
             </div>
           </div>
