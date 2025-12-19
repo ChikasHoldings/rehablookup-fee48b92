@@ -11,6 +11,8 @@ import { PageLoading } from "@/components/ui/page-loading";
 // Eagerly load all public pages for instant navigation
 import Index from "./pages/Index";
 import RehabCenters from "./pages/RehabCenters";
+import StatePage from "./pages/StatePage";
+import CityPage from "./pages/CityPage";
 import TreatmentCenterProfile from "./pages/TreatmentCenterProfile";
 import CenterProfile from "./pages/CenterProfile";
 import TreatmentTypes from "./pages/TreatmentTypes";
