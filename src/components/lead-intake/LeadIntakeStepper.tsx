@@ -1,35 +1,35 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { STEP_LABELS, TOTAL_STEPS } from "./types";
 
-interface RequestHelpStepperProps {
+interface LeadIntakeStepperProps {
   currentStep: number;
-  totalSteps: number;
 }
 
-const stepLabels = ["About You", "Treatment", "Insurance", "Contact"];
-
-export function RequestHelpStepper({ currentStep, totalSteps }: RequestHelpStepperProps) {
+export function LeadIntakeStepper({ currentStep }: LeadIntakeStepperProps) {
   return (
     <div className="mb-6 md:mb-8">
       {/* Mobile: Progress bar with step indicator */}
       <div className="md:hidden">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-base font-medium text-foreground">{stepLabels[currentStep - 1]}</span>
+          <span className="text-base font-medium text-foreground">
+            {STEP_LABELS[currentStep - 1]}
+          </span>
           <span className="text-sm text-muted-foreground">
-            {currentStep} of {totalSteps}
+            Step {currentStep} of {TOTAL_STEPS}
           </span>
         </div>
         <div className="w-full bg-muted rounded-full h-2">
           <div 
             className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+            style={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
           />
         </div>
       </div>
 
       {/* Desktop: Full stepper */}
       <div className="hidden md:flex items-center justify-between">
-        {stepLabels.map((label, index) => {
+        {STEP_LABELS.map((label, index) => {
           const stepNumber = index + 1;
           const isCompleted = stepNumber < currentStep;
           const isCurrent = stepNumber === currentStep;
@@ -56,7 +56,7 @@ export function RequestHelpStepper({ currentStep, totalSteps }: RequestHelpStepp
                   {label}
                 </span>
               </div>
-              {index < totalSteps - 1 && (
+              {index < TOTAL_STEPS - 1 && (
                 <div
                   className={cn(
                     "flex-1 h-0.5 mx-4",
