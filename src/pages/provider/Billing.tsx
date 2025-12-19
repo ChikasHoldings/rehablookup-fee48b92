@@ -36,6 +36,7 @@ import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
+import { SubscriptionHistoryWidget } from "@/components/provider/SubscriptionHistoryWidget";
 
 export default function ProviderBillingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -766,33 +767,14 @@ export default function ProviderBillingPage() {
           </Card>
         </Collapsible>
 
-        {/* Billing Portal - Only for subscribed users */}
-        {isSubscribed && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">Billing Portal</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    View invoices, update payment methods, or modify your subscription
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  onClick={handleManageSubscription} 
-                  disabled={portalLoading}
-                >
-                  {portalLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                  )}
-                  Open Portal
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Subscription History Widget */}
+        <SubscriptionHistoryWidget 
+          isSubscribed={isSubscribed} 
+          onSubscriptionChange={() => {
+            refetch();
+            refetchProvider();
+          }}
+        />
       </div>
     </div>
   );
