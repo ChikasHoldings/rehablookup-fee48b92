@@ -44,6 +44,7 @@ import { BasicPlanUpgradeBanner } from "@/components/provider/BasicPlanUpgradeBa
 import { OnboardingTour } from "@/components/provider/OnboardingTour";
 import { LeadUsageProgressCard } from "@/components/provider/LeadUsageProgressCard";
 import { cn } from "@/lib/utils";
+import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
 
 interface Lead {
   id: string;
@@ -144,6 +145,7 @@ export default function ProviderDashboardPage() {
   const planKey = subscription?.plan || "basic";
   const locationLimit = PLAN_DETAILS[planKey]?.location_limit ?? 1;
   const usedLocations = facilities?.length ?? 0;
+  const facilityIds = facilities?.map(f => f.id) ?? [];
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -434,6 +436,11 @@ export default function ProviderDashboardPage() {
             action={{ label: subscription?.subscribed ? "Manage" : "Upgrade", href: "/provider/billing" }}
           />
         </div>
+
+        {/* Lead Conversion Analytics Widget */}
+        {planKey !== "basic" && facilityIds.length > 0 && (
+          <LeadConversionWidget facilityIds={facilityIds} />
+        )}
 
         {/* Leads Awaiting Follow-up */}
         {planKey !== "basic" && urgentLeads.length > 0 && (
