@@ -19,8 +19,8 @@ import {
   Mail,
   MessageSquare,
   Clock,
-  HelpCircle,
-  Send,
+  ArrowRight,
+  ChevronRight,
 } from "lucide-react";
 
 const supportTopics = [
@@ -42,19 +42,15 @@ const providerNavLinks = [
 const faqs = [
   {
     question: "How do I update my facility listing?",
-    answer: "Log into your provider dashboard and click 'Edit Listing' to update your facility information, photos, and programs.",
+    answer: "Log into your dashboard and click 'Edit Listing'.",
   },
   {
     question: "How long does verification take?",
-    answer: "Verification typically takes 2-3 business days. You'll receive an email notification once complete.",
+    answer: "Typically 2-3 business days.",
   },
   {
     question: "How do I respond to inquiries?",
-    answer: "Inquiries are sent to your registered email. You can also view and manage them in your dashboard.",
-  },
-  {
-    question: "Can I upgrade my listing?",
-    answer: "Yes, contact our team to learn about featured placement and premium listing options.",
+    answer: "Via email or your dashboard.",
   },
 ];
 
@@ -93,48 +89,47 @@ export default function ProviderSupport() {
       />
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="bg-muted/30 py-12 md:py-16">
-          <div className="container px-5 md:px-6">
-            <div className="text-center max-w-2xl mx-auto">
-              <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-                Provider Support
-              </h1>
-              <p className="text-muted-foreground">
-                Get help with your listing, account, or platform questions.
-              </p>
-            </div>
+        {/* Hero */}
+        <section className="border-b border-border/50 py-10 md:py-14">
+          <div className="container">
+            <h1 className="font-display text-2xl md:text-3xl font-semibold text-foreground">
+              Support
+            </h1>
+            <p className="mt-2 text-muted-foreground max-w-lg">
+              Questions about your listing or account? We're here to help.
+            </p>
           </div>
         </section>
 
         {/* Main Content */}
-        <section className="py-12 md:py-16">
+        <section className="py-10 md:py-14">
           <div className="container">
-            <div className="grid gap-12 lg:grid-cols-5">
-              {/* Contact Form - Takes more space */}
-              <div className="lg:col-span-3">
-                <div className="rounded-xl border border-border bg-card p-6 md:p-8">
-                  <h2 className="font-display text-xl font-semibold text-foreground mb-1">
-                    Send us a message
+            <div className="grid gap-10 lg:grid-cols-3">
+              {/* Contact Form */}
+              <div className="lg:col-span-2">
+                <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Send a message
                   </h2>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    We typically respond within 24 hours.
+                  <p className="text-sm text-muted-foreground mt-1 mb-6">
+                    We'll get back to you within 24 hours.
                   </p>
 
                   <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Name</Label>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="name" className="text-sm">Name</Label>
                         <Input
                           id="name"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="Your name"
                           required
+                          className="h-11"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="email" className="text-sm">Email</Label>
                         <Input
                           id="email"
                           type="email"
@@ -142,16 +137,17 @@ export default function ProviderSupport() {
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="you@facility.com"
                           required
+                          className="h-11"
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="topic">Topic</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="topic" className="text-sm">Topic</Label>
                       <Select value={topic} onValueChange={setTopic} required>
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Select a topic" />
+                        <SelectTrigger className="h-11 bg-background">
+                          <SelectValue placeholder="What can we help with?" />
                         </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
+                        <SelectContent className="bg-card border-border z-50">
                           {supportTopics.map((t) => (
                             <SelectItem key={t.value} value={t.value}>
                               {t.label}
@@ -160,83 +156,115 @@ export default function ProviderSupport() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="message">Message</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="message" className="text-sm">Message</Label>
                       <Textarea
                         id="message"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Describe your issue or question..."
-                        rows={5}
+                        placeholder="Describe your question or issue..."
+                        rows={4}
                         required
                         className="resize-none"
                       />
                     </div>
-                    <Button type="submit" disabled={isSubmitting} className="gap-2">
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting} 
+                      className="h-11 px-6 gap-2"
+                    >
                       {isSubmitting ? "Sending..." : "Send Message"}
-                      {!isSubmitting && <Send className="h-4 w-4" />}
+                      {!isSubmitting && <ArrowRight className="h-4 w-4" />}
                     </Button>
                   </form>
                 </div>
               </div>
 
               {/* Sidebar */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Contact Info */}
-                <div className="rounded-xl border border-border bg-card p-6">
-                  <h3 className="font-semibold text-foreground mb-4">Contact Info</h3>
+              <div className="space-y-5">
+                {/* Contact Methods */}
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                  <h3 className="text-sm font-medium text-foreground mb-4">Other ways to reach us</h3>
                   <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Email</p>
-                        <a href="mailto:providers@rehablookup.com" className="text-sm text-primary hover:underline">
+                    <a 
+                      href="mailto:providers@rehablookup.com" 
+                      className="flex items-center gap-3 group"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                        <Mail className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                          Email us
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
                           providers@rehablookup.com
-                        </a>
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                    </a>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                        <MessageSquare className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Live chat</p>
+                        <p className="text-xs text-muted-foreground">In your dashboard</p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <MessageSquare className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Live Chat</p>
-                        <p className="text-sm text-muted-foreground">Available in dashboard</p>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                        <Clock className="h-4 w-4" />
                       </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
                       <div>
-                        <p className="text-sm font-medium text-foreground">Hours</p>
-                        <p className="text-sm text-muted-foreground">Mon-Fri, 9am-6pm EST</p>
+                        <p className="text-sm font-medium text-foreground">Business hours</p>
+                        <p className="text-xs text-muted-foreground">Mon-Fri, 9am-6pm EST</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Quick FAQ */}
-                <div className="rounded-xl border border-border bg-card p-6">
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-foreground">Quick FAQ</h3>
-                    <Link to="/provider-faq" className="text-sm text-primary hover:underline">
-                      View all
+                    <h3 className="text-sm font-medium text-foreground">Common questions</h3>
+                    <Link 
+                      to="/provider-faq" 
+                      className="text-xs text-primary hover:underline inline-flex items-center gap-0.5"
+                    >
+                      See all
+                      <ChevronRight className="h-3 w-3" />
                     </Link>
                   </div>
                   <div className="space-y-3">
                     {faqs.map((faq, index) => (
-                      <div key={index} className="border-b border-border last:border-0 pb-3 last:pb-0">
-                        <p className="text-sm font-medium text-foreground mb-1">{faq.question}</p>
-                        <p className="text-sm text-muted-foreground">{faq.answer}</p>
+                      <div 
+                        key={index} 
+                        className="pb-3 border-b border-border/50 last:border-0 last:pb-0"
+                      >
+                        <p className="text-sm font-medium text-foreground leading-snug">
+                          {faq.question}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {faq.answer}
+                        </p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Help Link */}
-                <Button variant="outline" asChild className="w-full gap-2">
-                  <Link to="/provider-resources">
-                    <HelpCircle className="h-4 w-4" />
-                    Browse Resources
-                  </Link>
-                </Button>
+                {/* Resources Link */}
+                <Link 
+                  to="/provider-resources"
+                  className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm hover:border-primary/30 hover:bg-muted/30 transition-colors group"
+                >
+                  <span className="text-sm font-medium text-foreground">
+                    Browse help resources
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                </Link>
               </div>
             </div>
           </div>
