@@ -1,9 +1,11 @@
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Accordion,
   AccordionContent,
@@ -20,6 +22,8 @@ import {
   BarChart3,
   Settings,
   MessageSquare,
+  Search,
+  X,
 } from "lucide-react";
 
 const providerNavLinks = [
@@ -182,6 +186,30 @@ const faqCategories = [
 ];
 
 export default function ProviderFAQ() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return faqCategories;
+
+    const query = searchQuery.toLowerCase().trim();
+    
+    return faqCategories
+      .map((category) => ({
+        ...category,
+        faqs: category.faqs.filter(
+          (faq) =>
+            faq.question.toLowerCase().includes(query) ||
+            faq.answer.toLowerCase().includes(query)
+        ),
+      }))
+      .filter((category) => category.faqs.length > 0);
+  }, [searchQuery]);
+
+  const totalResults = filteredCategories.reduce(
+    (acc, cat) => acc + cat.faqs.length,
+    0
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SEO
@@ -237,59 +265,115 @@ export default function ProviderFAQ() {
           </div>
         </section>
 
-        {/* Quick Navigation */}
+        {/* Search & Quick Navigation */}
         <section className="border-b border-border bg-card py-6 sticky top-0 z-40">
           <div className="container px-5 md:px-6">
-            <div className="flex flex-wrap justify-center gap-2">
-              {faqCategories.map((category) => (
-                <a
-                  key={category.id}
-                  href={`#${category.id}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-accent/30 hover:bg-accent/5 hover:text-accent"
-                >
-                  <category.icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{category.title}</span>
-                  <span className="sm:hidden">{category.title.split(' ')[0]}</span>
-                </a>
-              ))}
+            {/* Search Bar */}
+            <div className="max-w-xl mx-auto mb-5">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search FAQs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 pr-10 h-12 rounded-xl text-base"
+                  maxLength={100}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+              {searchQuery && (
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  {totalResults === 0
+                    ? "No results found"
+                    : `Found ${totalResults} result${totalResults === 1 ? "" : "s"}`}
+                </p>
+              )}
             </div>
+
+            {/* Category Navigation - hide when searching */}
+            {!searchQuery && (
+              <div className="flex flex-wrap justify-center gap-2">
+                {faqCategories.map((category) => (
+                  <a
+                    key={category.id}
+                    href={`#${category.id}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-accent/30 hover:bg-accent/5 hover:text-accent"
+                  >
+                    <category.icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{category.title}</span>
+                    <span className="sm:hidden">{category.title.split(' ')[0]}</span>
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
         {/* FAQ Categories */}
         <section className="py-16 md:py-20">
           <div className="container px-5 md:px-6">
-            <div className="space-y-12">
-              {faqCategories.map((category) => (
-                <div key={category.id} id={category.id} className="scroll-mt-24">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
-                      <category.icon className="h-5 w-5 text-accent" />
-                    </div>
-                    <h2 className="font-display text-2xl font-bold text-foreground">
-                      {category.title}
-                    </h2>
-                  </div>
-
-                  <Accordion type="single" collapsible className="space-y-3">
-                    {category.faqs.map((faq, index) => (
-                      <AccordionItem
-                        key={index}
-                        value={`${category.id}-${index}`}
-                        className="rounded-xl border border-border bg-card px-6 data-[state=open]:shadow-sm data-[state=open]:border-accent/20 transition-all"
-                      >
-                        <AccordionTrigger className="text-left font-display text-base font-semibold text-foreground hover:no-underline hover:text-accent py-5 transition-colors">
-                          {faq.question}
-                        </AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
-                          {faq.answer}
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
+            {filteredCategories.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
+                  <Search className="h-8 w-8 text-muted-foreground" />
                 </div>
-              ))}
-            </div>
+                <h3 className="font-display text-xl font-semibold text-foreground mb-2">
+                  No Results Found
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Try adjusting your search terms or browse all categories.
+                </p>
+                <Button variant="outline" onClick={() => setSearchQuery("")}>
+                  Clear Search
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-12">
+                {filteredCategories.map((category) => (
+                  <div key={category.id} id={category.id} className="scroll-mt-24">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+                        <category.icon className="h-5 w-5 text-accent" />
+                      </div>
+                      <h2 className="font-display text-2xl font-bold text-foreground">
+                        {category.title}
+                      </h2>
+                      {searchQuery && (
+                        <span className="text-sm text-muted-foreground">
+                          ({category.faqs.length} result{category.faqs.length === 1 ? "" : "s"})
+                        </span>
+                      )}
+                    </div>
+
+                    <Accordion type="single" collapsible className="space-y-3" defaultValue={searchQuery ? `${category.id}-0` : undefined}>
+                      {category.faqs.map((faq, index) => (
+                        <AccordionItem
+                          key={index}
+                          value={`${category.id}-${index}`}
+                          className="rounded-xl border border-border bg-card px-6 data-[state=open]:shadow-sm data-[state=open]:border-accent/20 transition-all"
+                        >
+                          <AccordionTrigger className="text-left font-display text-base font-semibold text-foreground hover:no-underline hover:text-accent py-5 transition-colors">
+                            {faq.question}
+                          </AccordionTrigger>
+                          <AccordionContent className="text-muted-foreground pb-5 leading-relaxed">
+                            {faq.answer}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
