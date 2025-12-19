@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +59,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useProviderData } from "@/hooks/useProviderData";
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 
 interface NotificationPreferences {
   email_lead_alerts: boolean;
@@ -76,19 +77,49 @@ interface NotificationPreferences {
   default_snooze_duration: string;
 }
 
+interface ProfileFormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  job_title: string;
+  primary_contact_name: string;
+}
+
+// Password validation helpers
+const validatePassword = (password: string) => {
+  const checks = {
+    minLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+  };
+  const isValid = Object.values(checks).every(Boolean);
+  return { checks, isValid };
+};
+
+// Phone validation
+const validatePhone = (phone: string): boolean => {
+  if (!phone) return true; // Optional field
+  const cleaned = phone.replace(/\D/g, '');
+  return cleaned.length >= 10 && cleaned.length <= 15;
+};
+
+const formatPhone = (phone: string): string => {
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  }
+  return phone;
+};
+
 export default function ProviderSettingsPage() {
   const navigate = useNavigate();
   const { data: providerData, isLoading } = useProviderData();
-  const [localProfile, setLocalProfile] = useState<{
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-    job_title: string;
-    primary_contact_name: string;
-  } | null>(null);
+  const [localProfile, setLocalProfile] = useState<ProfileFormData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
   
   // Password states
   const [currentPassword, setCurrentPassword] = useState("");
@@ -97,6 +128,7 @@ export default function ProviderSettingsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   
   // Delete account states
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -121,6 +153,11 @@ export default function ProviderSettingsPage() {
   const [defaultSnoozeDuration, setDefaultSnoozeDuration] = useState('1_day');
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [notificationsSaved, setNotificationsSaved] = useState(false);
+  
+  // Tab state & unsaved changes
+  const [activeTab, setActiveTab] = useState("profile");
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -148,6 +185,86 @@ export default function ProviderSettingsPage() {
     },
   });
 
+  // Initial profile from providerData
+  const initialProfile = useMemo(() => {
+    if (!providerData?.profile) return null;
+    return {
+      first_name: providerData.profile.first_name,
+      last_name: providerData.profile.last_name,
+      email: providerData.profile.email,
+      phone: providerData.profile.phone || "",
+      job_title: providerData.profile.job_title || "",
+      primary_contact_name: (providerData.profile as any).primary_contact_name || "",
+    };
+  }, [providerData?.profile]);
+
+  // Use local state for edits, fall back to initial data
+  const profile = localProfile || initialProfile;
+
+  // Check if profile has unsaved changes
+  const hasProfileChanges = useMemo(() => {
+    if (!localProfile || !initialProfile) return false;
+    return (
+      localProfile.first_name !== initialProfile.first_name ||
+      localProfile.last_name !== initialProfile.last_name ||
+      localProfile.phone !== initialProfile.phone ||
+      localProfile.job_title !== initialProfile.job_title ||
+      localProfile.primary_contact_name !== initialProfile.primary_contact_name
+    );
+  }, [localProfile, initialProfile]);
+
+  // Check if notifications have unsaved changes
+  const initialNotificationState = useMemo(() => {
+    if (!notificationPrefs) return null;
+    return {
+      emailLeadAlerts: notificationPrefs.email_lead_alerts,
+      emailWeeklyDigest: notificationPrefs.email_weekly_digest,
+      emailProductUpdates: notificationPrefs.email_product_updates,
+      smsLeadAlerts: notificationPrefs.sms_lead_alerts,
+      browserNotifications: notificationPrefs.browser_notifications,
+      leadNotificationFrequency: notificationPrefs.lead_notification_frequency || 'instant',
+      notifyNewLeads: notificationPrefs.notify_new_leads ?? true,
+      notifyLeadStatusChanges: notificationPrefs.notify_lead_status_changes ?? true,
+      notifyLeadLimitWarnings: notificationPrefs.notify_lead_limit_warnings ?? true,
+      notifyFacilityViews: notificationPrefs.notify_facility_views ?? false,
+      digestTime: notificationPrefs.digest_time || '09:00',
+      followupRemindersEnabled: notificationPrefs.followup_reminders_enabled ?? true,
+      defaultSnoozeDuration: notificationPrefs.default_snooze_duration || '1_day',
+    };
+  }, [notificationPrefs]);
+
+  const hasNotificationChanges = useMemo(() => {
+    if (!initialNotificationState) return false;
+    return (
+      emailLeadAlerts !== initialNotificationState.emailLeadAlerts ||
+      emailWeeklyDigest !== initialNotificationState.emailWeeklyDigest ||
+      emailProductUpdates !== initialNotificationState.emailProductUpdates ||
+      smsLeadAlerts !== initialNotificationState.smsLeadAlerts ||
+      browserNotifications !== initialNotificationState.browserNotifications ||
+      leadNotificationFrequency !== initialNotificationState.leadNotificationFrequency ||
+      notifyNewLeads !== initialNotificationState.notifyNewLeads ||
+      notifyLeadStatusChanges !== initialNotificationState.notifyLeadStatusChanges ||
+      notifyLeadLimitWarnings !== initialNotificationState.notifyLeadLimitWarnings ||
+      notifyFacilityViews !== initialNotificationState.notifyFacilityViews ||
+      digestTime !== initialNotificationState.digestTime ||
+      followupRemindersEnabled !== initialNotificationState.followupRemindersEnabled ||
+      defaultSnoozeDuration !== initialNotificationState.defaultSnoozeDuration
+    );
+  }, [
+    emailLeadAlerts, emailWeeklyDigest, emailProductUpdates, smsLeadAlerts,
+    browserNotifications, leadNotificationFrequency, notifyNewLeads,
+    notifyLeadStatusChanges, notifyLeadLimitWarnings, notifyFacilityViews,
+    digestTime, followupRemindersEnabled, defaultSnoozeDuration,
+    initialNotificationState
+  ]);
+
+  // Has any unsaved changes in current tab
+  const hasUnsavedChanges = useMemo(() => {
+    if (activeTab === 'profile') return hasProfileChanges;
+    if (activeTab === 'notifications') return hasNotificationChanges;
+    return false;
+  }, [activeTab, hasProfileChanges, hasNotificationChanges]);
+
   // Sync notification preferences state when data loads
   useEffect(() => {
     if (notificationPrefs) {
@@ -167,6 +284,41 @@ export default function ProviderSettingsPage() {
     }
   }, [notificationPrefs]);
 
+  // Handle tab change with unsaved changes check
+  const handleTabChange = useCallback((newTab: string) => {
+    if (hasUnsavedChanges && newTab !== activeTab) {
+      setPendingTab(newTab);
+      setShowUnsavedDialog(true);
+    } else {
+      setActiveTab(newTab);
+    }
+  }, [hasUnsavedChanges, activeTab]);
+
+  const handleDiscardChanges = () => {
+    // Reset to initial state
+    setLocalProfile(null);
+    if (notificationPrefs) {
+      setEmailLeadAlerts(notificationPrefs.email_lead_alerts);
+      setEmailWeeklyDigest(notificationPrefs.email_weekly_digest);
+      setEmailProductUpdates(notificationPrefs.email_product_updates);
+      setSmsLeadAlerts(notificationPrefs.sms_lead_alerts);
+      setBrowserNotifications(notificationPrefs.browser_notifications);
+      setLeadNotificationFrequency(notificationPrefs.lead_notification_frequency || 'instant');
+      setNotifyNewLeads(notificationPrefs.notify_new_leads ?? true);
+      setNotifyLeadStatusChanges(notificationPrefs.notify_lead_status_changes ?? true);
+      setNotifyLeadLimitWarnings(notificationPrefs.notify_lead_limit_warnings ?? true);
+      setNotifyFacilityViews(notificationPrefs.notify_facility_views ?? false);
+      setDigestTime(notificationPrefs.digest_time || '09:00');
+      setFollowupRemindersEnabled(notificationPrefs.followup_reminders_enabled ?? true);
+      setDefaultSnoozeDuration(notificationPrefs.default_snooze_duration || '1_day');
+    }
+    if (pendingTab) {
+      setActiveTab(pendingTab);
+    }
+    setShowUnsavedDialog(false);
+    setPendingTab(null);
+  };
+
   // Save notification preferences
   const handleSaveNotifications = async () => {
     setIsSavingNotifications(true);
@@ -174,6 +326,11 @@ export default function ProviderSettingsPage() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       setIsSavingNotifications(false);
+      toast({
+        title: "Session expired",
+        description: "Please log in again to save your preferences.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -194,53 +351,44 @@ export default function ProviderSettingsPage() {
       default_snooze_duration: defaultSnoozeDuration,
     };
 
-    // Check if preferences exist
-    const { data: existing } = await supabase
-      .from("notification_preferences")
-      .select("id")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
-    let error;
-    if (existing) {
-      // Update existing
-      const result = await supabase
+    try {
+      // Check if preferences exist
+      const { data: existing } = await supabase
         .from("notification_preferences")
-        .update({
-          email_lead_alerts: emailLeadAlerts,
-          email_weekly_digest: emailWeeklyDigest,
-          email_product_updates: emailProductUpdates,
-          sms_lead_alerts: smsLeadAlerts,
-          browser_notifications: browserNotifications,
-          lead_notification_frequency: leadNotificationFrequency,
-          notify_new_leads: notifyNewLeads,
-          notify_lead_status_changes: notifyLeadStatusChanges,
-          notify_lead_limit_warnings: notifyLeadLimitWarnings,
-          notify_facility_views: notifyFacilityViews,
-          digest_time: digestTime,
-          followup_reminders_enabled: followupRemindersEnabled,
-          default_snooze_duration: defaultSnoozeDuration,
-        })
-        .eq("user_id", session.user.id);
-      error = result.error;
-    } else {
-      // Insert new
-      const result = await supabase
-        .from("notification_preferences")
-        .insert(preferences);
-      error = result.error;
-    }
+        .select("id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
 
-    setIsSavingNotifications(false);
+      let error;
+      if (existing) {
+        const result = await supabase
+          .from("notification_preferences")
+          .update({
+            email_lead_alerts: emailLeadAlerts,
+            email_weekly_digest: emailWeeklyDigest,
+            email_product_updates: emailProductUpdates,
+            sms_lead_alerts: smsLeadAlerts,
+            browser_notifications: browserNotifications,
+            lead_notification_frequency: leadNotificationFrequency,
+            notify_new_leads: notifyNewLeads,
+            notify_lead_status_changes: notifyLeadStatusChanges,
+            notify_lead_limit_warnings: notifyLeadLimitWarnings,
+            notify_facility_views: notifyFacilityViews,
+            digest_time: digestTime,
+            followup_reminders_enabled: followupRemindersEnabled,
+            default_snooze_duration: defaultSnoozeDuration,
+          })
+          .eq("user_id", session.user.id);
+        error = result.error;
+      } else {
+        const result = await supabase
+          .from("notification_preferences")
+          .insert(preferences);
+        error = result.error;
+      }
 
-    if (error) {
-      console.error("Error saving notification preferences:", error);
-      toast({
-        title: "Error saving preferences",
-        description: "Failed to save notification preferences. Please try again.",
-        variant: "destructive",
-      });
-    } else {
+      if (error) throw error;
+
       setNotificationsSaved(true);
       setTimeout(() => setNotificationsSaved(false), 2000);
       queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
@@ -248,47 +396,66 @@ export default function ProviderSettingsPage() {
         title: "Preferences saved",
         description: "Your notification preferences have been updated.",
       });
+    } catch (error) {
+      console.error("Error saving notification preferences:", error);
+      toast({
+        title: "Error saving preferences",
+        description: "Failed to save notification preferences. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingNotifications(false);
     }
   };
 
-  // Use local state for edits, fall back to cached data
-  const profile = localProfile || (providerData?.profile ? {
-    first_name: providerData.profile.first_name,
-    last_name: providerData.profile.last_name,
-    email: providerData.profile.email,
-    phone: providerData.profile.phone || "",
-    job_title: providerData.profile.job_title || "",
-    primary_contact_name: (providerData.profile as any).primary_contact_name || "",
-  } : null);
+  // Validate profile form
+  const validateProfileForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    if (!profile?.first_name?.trim()) {
+      errors.first_name = "First name is required";
+    }
+    if (!profile?.last_name?.trim()) {
+      errors.last_name = "Last name is required";
+    }
+    if (profile?.phone && !validatePhone(profile.phone)) {
+      errors.phone = "Please enter a valid phone number";
+    }
+    
+    setProfileErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSaveProfile = async () => {
     if (!profile) return;
+    if (!validateProfileForm()) return;
 
     setIsSaving(true);
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        first_name: profile.first_name,
-        last_name: profile.last_name,
-        phone: profile.phone || null,
-        job_title: profile.job_title || null,
-        primary_contact_name: profile.primary_contact_name || null,
-      })
-      .eq("user_id", session.user.id);
-
-    setIsSaving(false);
-
-    if (error) {
+    if (!session) {
+      setIsSaving(false);
       toast({
-        title: "Error saving",
-        description: "Failed to update profile. Please try again.",
+        title: "Session expired",
+        description: "Please log in again to save your profile.",
         variant: "destructive",
       });
-    } else {
-      // Log profile update activity
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          first_name: profile.first_name.trim(),
+          last_name: profile.last_name.trim(),
+          phone: profile.phone ? formatPhone(profile.phone) : null,
+          job_title: profile.job_title?.trim() || null,
+          primary_contact_name: profile.primary_contact_name?.trim() || null,
+        })
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
+
       logActivity.mutate({
         userId: session.user.id,
         eventType: "profile_update",
@@ -297,58 +464,57 @@ export default function ProviderSettingsPage() {
       
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 2000);
+      setLocalProfile(null); // Reset local state so it picks up fresh data
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
       toast({
         title: "Profile updated",
         description: "Your account information has been saved.",
       });
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      toast({
+        title: "Error saving",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdatePassword = async () => {
+    setPasswordError(null);
+    
     if (!newPassword || !confirmPassword) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all password fields.",
-        variant: "destructive",
-      });
+      setPasswordError("Please fill in all password fields");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "New password and confirmation must match.",
-        variant: "destructive",
-      });
+      setPasswordError("New password and confirmation must match");
       return;
     }
 
-    if (newPassword.length < 8) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 8 characters.",
-        variant: "destructive",
-      });
+    const { isValid, checks } = validatePassword(newPassword);
+    if (!isValid) {
+      const missing = [];
+      if (!checks.minLength) missing.push("at least 8 characters");
+      if (!checks.hasUppercase) missing.push("an uppercase letter");
+      if (!checks.hasLowercase) missing.push("a lowercase letter");
+      if (!checks.hasNumber) missing.push("a number");
+      setPasswordError(`Password must contain ${missing.join(", ")}`);
       return;
     }
 
     setIsUpdatingPassword(true);
     
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-
-    setIsUpdatingPassword(false);
-
-    if (error) {
-      toast({
-        title: "Error updating password",
-        description: error.message,
-        variant: "destructive",
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
       });
-    } else {
-      // Log password change activity
+
+      if (error) throw error;
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         logActivity.mutate({
@@ -365,6 +531,10 @@ export default function ProviderSettingsPage() {
         title: "Password updated",
         description: "Your password has been changed successfully.",
       });
+    } catch (error: any) {
+      setPasswordError(error?.message || "Failed to update password");
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -387,34 +557,22 @@ export default function ProviderSettingsPage() {
       }
 
       // Delete user's facility and related data (cascades via FK)
-      const { error: facilityError } = await supabase
+      await supabase
         .from("facilities")
         .delete()
         .eq("user_id", session.user.id);
 
-      if (facilityError) {
-        console.error("Error deleting facility:", facilityError);
-      }
-
       // Delete profile
-      const { error: profileError } = await supabase
+      await supabase
         .from("profiles")
         .delete()
         .eq("user_id", session.user.id);
 
-      if (profileError) {
-        console.error("Error deleting profile:", profileError);
-      }
-
       // Delete notification preferences
-      const { error: notifError } = await supabase
+      await supabase
         .from("notification_preferences")
         .delete()
         .eq("user_id", session.user.id);
-
-      if (notifError) {
-        console.error("Error deleting notification preferences:", notifError);
-      }
 
       // Sign out and redirect
       await supabase.auth.signOut();
@@ -442,7 +600,6 @@ export default function ProviderSettingsPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // Log session signout activity before signing out
       if (session) {
         logActivity.mutate({
           userId: session.user.id,
@@ -473,14 +630,23 @@ export default function ProviderSettingsPage() {
   };
 
   const updateField = (field: string, value: string) => {
-    if (profile) {
-      setLocalProfile({ ...profile, [field]: value });
+    const current = profile || initialProfile;
+    if (current) {
+      setLocalProfile({ ...current, [field]: value });
+      // Clear error for this field
+      if (profileErrors[field]) {
+        setProfileErrors(prev => {
+          const next = { ...prev };
+          delete next[field];
+          return next;
+        });
+      }
     }
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="p-4 md:p-6 lg:p-8 space-y-6">
         <div>
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-64" />
@@ -494,841 +660,915 @@ export default function ProviderSettingsPage() {
   return (
     <div className="p-4 md:p-6 lg:p-8">
       <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">
-          Settings
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage your account, security, and notification preferences
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="profile" className="w-full">
-        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <TabsList className="w-max md:w-full justify-start border-b border-border bg-transparent p-0 h-auto">
-            <TabsTrigger 
-              value="profile" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
-            >
-              <User className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
-            >
-              <Shield className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-              Security
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notifications" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
-            >
-              <Bell className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger 
-              value="sessions" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
-            >
-              <Globe className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-              Sessions
-            </TabsTrigger>
-            <TabsTrigger 
-              value="activity" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
-            >
-              <Activity className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-              Activity
-            </TabsTrigger>
-          </TabsList>
+        {/* Page Header */}
+        <div>
+          <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">
+            Settings
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your account, security, and notification preferences
+          </p>
         </div>
 
-        {/* Profile Tab */}
-        <TabsContent value="profile" className="mt-6 space-y-6">
-          {/* Account Information */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold">Personal Information</CardTitle>
-              <CardDescription className="text-sm">
-                Update your personal details and contact information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="grid gap-4 sm:grid-cols-2">
+        {/* Unsaved Changes Dialog */}
+        <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have unsaved changes. Would you like to save them before switching tabs?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setShowUnsavedDialog(false);
+                setPendingTab(null);
+              }}>
+                Cancel
+              </AlertDialogCancel>
+              <Button
+                variant="outline"
+                onClick={handleDiscardChanges}
+              >
+                Discard
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (activeTab === 'profile') {
+                    await handleSaveProfile();
+                  } else if (activeTab === 'notifications') {
+                    await handleSaveNotifications();
+                  }
+                  if (pendingTab) {
+                    setActiveTab(pendingTab);
+                  }
+                  setShowUnsavedDialog(false);
+                  setPendingTab(null);
+                }}
+              >
+                Save & Continue
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="w-max md:w-full justify-start border-b border-border bg-transparent p-0 h-auto">
+              <TabsTrigger 
+                value="profile" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
+              >
+                <User className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                Profile
+                {hasProfileChanges && <span className="ml-1.5 h-2 w-2 rounded-full bg-primary" />}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="security" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
+              >
+                <Shield className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                Security
+              </TabsTrigger>
+              <TabsTrigger 
+                value="notifications" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
+              >
+                <Bell className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                Notifications
+                {hasNotificationChanges && <span className="ml-1.5 h-2 w-2 rounded-full bg-primary" />}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="sessions" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
+              >
+                <Globe className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                Sessions
+              </TabsTrigger>
+              <TabsTrigger 
+                value="activity" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
+              >
+                <Activity className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                Activity
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="mt-6 space-y-6">
+            {/* Account Information */}
+            <Card className="border-border shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold">Personal Information</CardTitle>
+                <CardDescription className="text-sm">
+                  Update your personal details and contact information
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-sm font-medium">
+                      First Name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="firstName"
+                      value={profile?.first_name || ""}
+                      onChange={(e) => updateField("first_name", e.target.value)}
+                      className={`h-10 ${profileErrors.first_name ? "border-destructive" : ""}`}
+                    />
+                    {profileErrors.first_name && (
+                      <p className="text-xs text-destructive">{profileErrors.first_name}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-sm font-medium">
+                      Last Name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="lastName"
+                      value={profile?.last_name || ""}
+                      onChange={(e) => updateField("last_name", e.target.value)}
+                      className={`h-10 ${profileErrors.last_name ? "border-destructive" : ""}`}
+                    />
+                    {profileErrors.last_name && (
+                      <p className="text-xs text-destructive">{profileErrors.last_name}</p>
+                    )}
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-sm font-medium">
-                    First Name
+                  <Label htmlFor="jobTitle" className="text-sm font-medium">
+                    Job Title
                   </Label>
                   <Input
-                    id="firstName"
-                    value={profile?.first_name || ""}
-                    onChange={(e) => updateField("first_name", e.target.value)}
+                    id="jobTitle"
+                    value={profile?.job_title || ""}
+                    onChange={(e) => updateField("job_title", e.target.value)}
+                    placeholder="e.g., Facility Director"
                     className="h-10"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-sm font-medium">
-                    Last Name
+                  <Label htmlFor="primaryContactName" className="text-sm font-medium">
+                    Primary Contact Name
                   </Label>
                   <Input
-                    id="lastName"
-                    value={profile?.last_name || ""}
-                    onChange={(e) => updateField("last_name", e.target.value)}
+                    id="primaryContactName"
+                    value={profile?.primary_contact_name || ""}
+                    onChange={(e) => updateField("primary_contact_name", e.target.value)}
+                    placeholder="Name shown in outgoing emails"
                     className="h-10"
                   />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="jobTitle" className="text-sm font-medium">
-                  Job Title
-                </Label>
-                <Input
-                  id="jobTitle"
-                  value={profile?.job_title || ""}
-                  onChange={(e) => updateField("job_title", e.target.value)}
-                  placeholder="e.g., Facility Director"
-                  className="h-10"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="primaryContactName" className="text-sm font-medium">
-                  Primary Contact Name
-                </Label>
-                <Input
-                  id="primaryContactName"
-                  value={profile?.primary_contact_name || ""}
-                  onChange={(e) => updateField("primary_contact_name", e.target.value)}
-                  placeholder="Name shown in outgoing emails"
-                  className="h-10"
-                />
-                <p className="text-xs text-muted-foreground">
-                  This name will be used in emails sent to leads on your behalf
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  Email Address
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="email"
-                    type="email"
-                    value={profile?.email || ""}
-                    disabled
-                    className="h-10 bg-muted/50 flex-1"
-                  />
-                  <Badge variant="secondary" className="h-10 px-3 flex items-center">
-                    <CheckCircle className="h-3 w-3 mr-1.5" />
-                    Verified
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Contact support to change your email address
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
-                  <Smartphone className="h-4 w-4 text-muted-foreground" />
-                  Phone Number
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={profile?.phone || ""}
-                  onChange={(e) => updateField("phone", e.target.value)}
-                  placeholder="(555) 123-4567"
-                  className="h-10"
-                />
-              </div>
-
-              <div className="flex items-center justify-end pt-2">
-                <Button 
-                  onClick={handleSaveProfile} 
-                  disabled={isSaving} 
-                  className="gap-2"
-                  size="sm"
-                >
-                  {showSaved ? (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Saved
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      {isSaving ? "Saving..." : "Save Changes"}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Timezone & Language */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                Regional Settings
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Configure your timezone and language preferences
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Timezone</Label>
-                  <Input
-                    value="America/New_York (EST)"
-                    disabled
-                    className="h-10 bg-muted/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Language</Label>
-                  <Input
-                    value="English (US)"
-                    disabled
-                    className="h-10 bg-muted/50"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Help & Support */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                Help & Support
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Get help with your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Dashboard Tour</p>
                   <p className="text-xs text-muted-foreground">
-                    Replay the onboarding tour to learn about dashboard features
+                    This name will be used in emails sent to leads on your behalf
                   </p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    resetOnboardingTour();
-                    navigate("/provider/dashboard");
-                    toast({
-                      title: "Tour restarted",
-                      description: "The onboarding tour will start on your dashboard.",
-                    });
-                  }}
-                  className="gap-2"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Restart Tour
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        {/* Security Tab */}
-        <TabsContent value="security" className="mt-6 space-y-6">
-          {/* Change Password */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Key className="h-4 w-4 text-muted-foreground" />
-                Change Password
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Update your password to keep your account secure
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword" className="text-sm font-medium">
-                  Current Password
-                </Label>
-                <div className="relative">
-                  <Input 
-                    id="currentPassword" 
-                    type={showCurrentPassword ? "text" : "password"}
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="h-10 pr-10" 
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-              
-              <div className="grid gap-4 sm:grid-cols-2">
+                <Separator />
+
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword" className="text-sm font-medium">
-                    New Password
+                  <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    Email Address
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profile?.email || ""}
+                      disabled
+                      className="h-10 bg-muted/50 flex-1"
+                    />
+                    <Badge variant="secondary" className="h-10 px-3 flex items-center">
+                      <CheckCircle className="h-3 w-3 mr-1.5" />
+                      Verified
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Contact support to change your email address
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
+                    <Smartphone className="h-4 w-4 text-muted-foreground" />
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={profile?.phone || ""}
+                    onChange={(e) => updateField("phone", e.target.value)}
+                    placeholder="(555) 123-4567"
+                    className={`h-10 ${profileErrors.phone ? "border-destructive" : ""}`}
+                  />
+                  {profileErrors.phone && (
+                    <p className="text-xs text-destructive">{profileErrors.phone}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end pt-2">
+                  <Button 
+                    onClick={handleSaveProfile} 
+                    disabled={isSaving || !hasProfileChanges} 
+                    className="gap-2"
+                    size="sm"
+                  >
+                    {showSaved ? (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        {isSaving ? "Saving..." : "Save Changes"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Timezone & Language */}
+            <Card className="border-border shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  Regional Settings
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Configure your timezone and language preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Timezone</Label>
+                    <Input
+                      value="America/New_York (EST)"
+                      disabled
+                      className="h-10 bg-muted/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Language</Label>
+                    <Input
+                      value="English (US)"
+                      disabled
+                      className="h-10 bg-muted/50"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Help & Support */}
+            <Card className="border-border shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  Help & Support
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Get help with your account
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Dashboard Tour</p>
+                    <p className="text-xs text-muted-foreground">
+                      Replay the onboarding tour to learn about dashboard features
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      resetOnboardingTour();
+                      navigate("/provider/dashboard");
+                      toast({
+                        title: "Tour restarted",
+                        description: "The onboarding tour will start on your dashboard.",
+                      });
+                    }}
+                    className="gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Restart Tour
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Security Tab */}
+          <TabsContent value="security" className="mt-6 space-y-6">
+            {/* Change Password */}
+            <Card className="border-border shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Key className="h-4 w-4 text-muted-foreground" />
+                  Change Password
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Update your password to keep your account secure
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword" className="text-sm font-medium">
+                    Current Password
                   </Label>
                   <div className="relative">
                     <Input 
-                      id="newPassword" 
-                      type={showNewPassword ? "text" : "password"}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
+                      id="currentPassword" 
+                      type={showCurrentPassword ? "text" : "password"}
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
                       className="h-10 pr-10" 
                     />
                     <button
                       type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
-                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                    Confirm New Password
-                  </Label>
-                  <Input 
-                    id="confirmPassword" 
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="h-10" 
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-                <p className="font-medium text-foreground mb-1">Password requirements:</p>
-                <ul className="list-disc list-inside space-y-0.5">
-                  <li>Minimum 8 characters</li>
-                  <li>Include uppercase and lowercase letters</li>
-                  <li>Include at least one number</li>
-                </ul>
-              </div>
-
-              <div className="flex justify-end">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleUpdatePassword}
-                  disabled={isUpdatingPassword}
-                  className="gap-2"
-                >
-                  <Lock className="h-4 w-4" />
-                  {isUpdatingPassword ? "Updating..." : "Update Password"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Two-Factor Authentication - Planned Feature */}
-          <Card className="border-border shadow-sm opacity-60">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Shield className="h-4 w-4 text-muted-foreground" />
-                Two-Factor Authentication
-                <Badge variant="secondary" className="text-xs ml-2">Planned</Badge>
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Enhanced account security will be available in a future update
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          {/* Sessions */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold">Active Sessions</CardTitle>
-              <CardDescription className="text-sm">
-                Manage devices where you're currently logged in
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Globe className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground flex items-center gap-2">
-                      Current Session
-                      <Badge variant="secondary" className="text-xs">Active</Badge>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      This device • Last active now
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-2 text-muted-foreground"
-                  onClick={handleSignOutAllSessions}
-                  disabled={isSigningOutAll}
-                >
-                  {isSigningOutAll ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <LogOut className="h-4 w-4" />
-                  )}
-                  Sign Out All Sessions
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Danger Zone */}
-          <Card className="border-destructive/30 shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold text-destructive flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                Danger Zone
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Irreversible actions for your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/20 bg-destructive/5">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Delete Account</p>
-                  <p className="text-xs text-muted-foreground">
-                    Permanently delete your account and all associated data
-                  </p>
-                </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" className="gap-2">
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription className="space-y-3">
-                        <p>
-                          This action cannot be undone. This will permanently delete your account, 
-                          facility listing, leads, and all associated data from our servers.
-                        </p>
-                        <div className="space-y-2">
-                          <Label htmlFor="deleteConfirm" className="text-sm font-medium text-foreground">
-                            Type DELETE to confirm
-                          </Label>
-                          <Input
-                            id="deleteConfirm"
-                            value={deleteConfirmText}
-                            onChange={(e) => setDeleteConfirmText(e.target.value)}
-                            placeholder="DELETE"
-                            className="font-mono"
-                          />
-                        </div>
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>Cancel</AlertDialogCancel>
-                      <Button 
-                        variant="destructive"
-                        onClick={handleDeleteAccount}
-                        disabled={isDeletingAccount || deleteConfirmText !== "DELETE"}
+                
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword" className="text-sm font-medium">
+                      New Password
+                    </Label>
+                    <div className="relative">
+                      <Input 
+                        id="newPassword" 
+                        type={showNewPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => {
+                          setNewPassword(e.target.value);
+                          setPasswordError(null);
+                        }}
+                        className="h-10 pr-10" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
-                        {isDeletingAccount ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Deleting...
-                          </>
-                        ) : (
-                          "Delete Account"
-                        )}
-                      </Button>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notifications Tab */}
-        <TabsContent value="notifications" className="mt-6 space-y-6">
-          {/* Lead Notification Frequency */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                Lead Email Delivery
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Choose how often you want to receive lead notification emails
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <RadioGroup 
-                value={leadNotificationFrequency} 
-                onValueChange={(value) => setLeadNotificationFrequency(value as typeof leadNotificationFrequency)}
-                className="space-y-3"
-              >
-                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="instant" id="instant" />
-                  <Label htmlFor="instant" className="flex-1 cursor-pointer">
-                    <span className="text-sm font-medium">Instant</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">Get notified immediately when you receive a new lead</p>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="daily_digest" id="daily_digest" />
-                  <Label htmlFor="daily_digest" className="flex-1 cursor-pointer">
-                    <span className="text-sm font-medium">Daily Digest</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">Receive a summary of all leads once per day</p>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="weekly_digest" id="weekly_digest" />
-                  <Label htmlFor="weekly_digest" className="flex-1 cursor-pointer">
-                    <span className="text-sm font-medium">Weekly Digest</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">Receive a weekly summary with all leads</p>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="none" id="none" />
-                  <Label htmlFor="none" className="flex-1 cursor-pointer">
-                    <span className="text-sm font-medium">None</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">Don't send lead notification emails (still visible in dashboard)</p>
-                  </Label>
-                </div>
-              </RadioGroup>
-              
-              {(leadNotificationFrequency === 'daily_digest' || leadNotificationFrequency === 'weekly_digest') && (
-                <div className="pt-4 border-t border-border">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-sm font-medium">Delivery Time</Label>
-                      <p className="text-xs text-muted-foreground mt-0.5">When should we send your digest?</p>
+                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
-                    <Select value={digestTime} onValueChange={setDigestTime}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="06:00">6:00 AM</SelectItem>
-                        <SelectItem value="07:00">7:00 AM</SelectItem>
-                        <SelectItem value="08:00">8:00 AM</SelectItem>
-                        <SelectItem value="09:00">9:00 AM</SelectItem>
-                        <SelectItem value="10:00">10:00 AM</SelectItem>
-                        <SelectItem value="12:00">12:00 PM</SelectItem>
-                        <SelectItem value="17:00">5:00 PM</SelectItem>
-                        <SelectItem value="18:00">6:00 PM</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                      Confirm New Password
+                    </Label>
+                    <Input 
+                      id="confirmPassword" 
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setPasswordError(null);
+                      }}
+                      className="h-10" 
+                    />
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Event Types to Notify */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                Event Types
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Choose which events you want to be notified about
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-0">
-              <div className="flex items-center justify-between py-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">New Leads</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    When someone submits a request through your profile
-                  </p>
-                </div>
-                <Switch
-                  checked={notifyNewLeads}
-                  onCheckedChange={setNotifyNewLeads}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between py-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Lead Status Changes</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    When a lead's status is updated (contacted, converted, etc.)
-                  </p>
-                </div>
-                <Switch
-                  checked={notifyLeadStatusChanges}
-                  onCheckedChange={setNotifyLeadStatusChanges}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between py-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Lead Limit Warnings</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    When you're approaching your monthly lead limit
-                  </p>
-                </div>
-                <Switch
-                  checked={notifyLeadLimitWarnings}
-                  onCheckedChange={setNotifyLeadLimitWarnings}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between py-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Facility Views</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Weekly summary of how many people viewed your profile
-                  </p>
-                </div>
-                <Switch
-                  checked={notifyFacilityViews}
-                  onCheckedChange={setNotifyFacilityViews}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                {newPassword && (
+                  <PasswordStrengthIndicator password={newPassword} />
+                )}
 
-          {/* Other Email Notifications */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                Other Emails
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Additional email notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-0">
-              <div className="flex items-center justify-between py-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Weekly Performance Digest</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Summary of your facility's performance metrics
-                  </p>
-                </div>
-                <Switch
-                  checked={emailWeeklyDigest}
-                  onCheckedChange={setEmailWeeklyDigest}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between py-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Product Updates</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    New features, improvements, and platform news
-                  </p>
-                </div>
-                <Switch
-                  checked={emailProductUpdates}
-                  onCheckedChange={setEmailProductUpdates}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                {passwordError && (
+                  <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                    {passwordError}
+                  </div>
+                )}
 
-          {/* SMS Notifications */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Smartphone className="h-4 w-4 text-muted-foreground" />
-                SMS Notifications
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Text message alerts for urgent updates
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between py-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Lead Alerts via SMS</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Receive a text message when you get a new lead
-                  </p>
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleUpdatePassword}
+                    disabled={isUpdatingPassword || !newPassword || !confirmPassword}
+                    className="gap-2"
+                  >
+                    {isUpdatingPassword ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}
+                    {isUpdatingPassword ? "Updating..." : "Update Password"}
+                  </Button>
                 </div>
-                <Switch
-                  checked={smsLeadAlerts}
-                  onCheckedChange={setSmsLeadAlerts}
-                />
-              </div>
-              {!profile?.phone && (
-                <div className="mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Add a phone number in your profile to enable SMS notifications
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Browser Notifications */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                Browser Notifications
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Desktop push notifications while using the platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between py-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Push Notifications</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Get real-time browser notifications for new leads
-                  </p>
-                </div>
-                <Switch
-                  checked={browserNotifications}
-                  onCheckedChange={setBrowserNotifications}
-                />
-              </div>
-            </CardContent>
-          </Card>
+            {/* Two-Factor Authentication - Planned Feature */}
+            <Card className="border-border shadow-sm opacity-60">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  Two-Factor Authentication
+                  <Badge variant="secondary" className="text-xs ml-2">Coming Soon</Badge>
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Enhanced account security will be available in a future update
+                </CardDescription>
+              </CardHeader>
+            </Card>
 
-          {/* Follow-up Reminders */}
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                Follow-up Reminders
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Configure how lead follow-up reminders work
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between py-2">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Enable Follow-up Reminders</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Get reminded to follow up on leads you haven't contacted
-                  </p>
-                </div>
-                <Switch
-                  checked={followupRemindersEnabled}
-                  onCheckedChange={setFollowupRemindersEnabled}
-                />
-              </div>
-              
-              {followupRemindersEnabled && (
-                <div className="pt-2 border-t border-border">
-                  <div className="space-y-3">
+            {/* Sessions */}
+            <Card className="border-border shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold">Active Sessions</CardTitle>
+                <CardDescription className="text-sm">
+                  Manage devices where you're currently logged in
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Globe className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <Label className="text-sm font-medium">Default Snooze Duration</Label>
-                      <p className="text-xs text-muted-foreground mt-0.5 mb-3">
-                        When you snooze a lead reminder, how long should it wait?
+                      <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                        Current Session
+                        <Badge variant="secondary" className="text-xs">Active</Badge>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        This device • Last active now
                       </p>
                     </div>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2 text-muted-foreground"
+                    onClick={handleSignOutAllSessions}
+                    disabled={isSigningOutAll}
+                  >
+                    {isSigningOutAll ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="h-4 w-4" />
+                    )}
+                    Sign Out All Sessions
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Danger Zone */}
+            <Card className="border-destructive/30 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold text-destructive flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Danger Zone
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Irreversible actions for your account
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/20 bg-destructive/5">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Delete Account</p>
+                    <p className="text-xs text-muted-foreground">
+                      Permanently delete your account and all associated data
+                    </p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-3">
+                          <p>
+                            This action cannot be undone. This will permanently delete your account, 
+                            facility listing, leads, and all associated data from our servers.
+                          </p>
+                          <div className="space-y-2">
+                            <Label htmlFor="deleteConfirm" className="text-sm font-medium text-foreground">
+                              Type DELETE to confirm
+                            </Label>
+                            <Input
+                              id="deleteConfirm"
+                              value={deleteConfirmText}
+                              onChange={(e) => setDeleteConfirmText(e.target.value)}
+                              placeholder="DELETE"
+                              className="font-mono"
+                            />
+                          </div>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setDeleteConfirmText("")}>Cancel</AlertDialogCancel>
+                        <Button 
+                          variant="destructive"
+                          onClick={handleDeleteAccount}
+                          disabled={isDeletingAccount || deleteConfirmText !== "DELETE"}
+                        >
+                          {isDeletingAccount ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Deleting...
+                            </>
+                          ) : (
+                            "Delete Account"
+                          )}
+                        </Button>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="mt-6 space-y-6">
+            {isLoadingNotifications ? (
+              <div className="space-y-4">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
+              </div>
+            ) : (
+              <>
+                {/* Lead Notification Frequency */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      Lead Email Delivery
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Choose how often you want to receive lead notification emails
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <RadioGroup 
-                      value={defaultSnoozeDuration} 
-                      onValueChange={setDefaultSnoozeDuration}
-                      className="grid grid-cols-2 gap-2"
+                      value={leadNotificationFrequency} 
+                      onValueChange={(value) => setLeadNotificationFrequency(value as typeof leadNotificationFrequency)}
+                      className="space-y-3"
                     >
-                      <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="4_hours" id="snooze_4h" />
-                        <Label htmlFor="snooze_4h" className="flex-1 cursor-pointer">
-                          <span className="text-sm font-medium">4 hours</span>
+                      <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="instant" id="instant" />
+                        <Label htmlFor="instant" className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium">Instant</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">Get notified immediately when you receive a new lead</p>
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="1_day" id="snooze_1d" />
-                        <Label htmlFor="snooze_1d" className="flex-1 cursor-pointer">
-                          <span className="text-sm font-medium">1 day</span>
+                      <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="daily_digest" id="daily_digest" />
+                        <Label htmlFor="daily_digest" className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium">Daily Digest</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">Receive a summary of all leads once per day</p>
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="3_days" id="snooze_3d" />
-                        <Label htmlFor="snooze_3d" className="flex-1 cursor-pointer">
-                          <span className="text-sm font-medium">3 days</span>
+                      <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="weekly_digest" id="weekly_digest" />
+                        <Label htmlFor="weekly_digest" className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium">Weekly Digest</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">Receive a weekly summary with all leads</p>
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                        <RadioGroupItem value="1_week" id="snooze_1w" />
-                        <Label htmlFor="snooze_1w" className="flex-1 cursor-pointer">
-                          <span className="text-sm font-medium">1 week</span>
+                      <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="none" id="none" />
+                        <Label htmlFor="none" className="flex-1 cursor-pointer">
+                          <span className="text-sm font-medium">None</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">Don't send lead notification emails (still visible in dashboard)</p>
                         </Label>
                       </div>
                     </RadioGroup>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-2">
-                      <BellOff className="h-3 w-3" />
-                      Snoozed leads won't trigger follow-up reminders until the duration passes
-                    </p>
-                  </div>
+                    
+                    {(leadNotificationFrequency === 'daily_digest' || leadNotificationFrequency === 'weekly_digest') && (
+                      <div className="pt-4 border-t border-border">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-sm font-medium">Delivery Time</Label>
+                            <p className="text-xs text-muted-foreground mt-0.5">When should we send your digest?</p>
+                          </div>
+                          <Select value={digestTime} onValueChange={setDigestTime}>
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="06:00">6:00 AM</SelectItem>
+                              <SelectItem value="07:00">7:00 AM</SelectItem>
+                              <SelectItem value="08:00">8:00 AM</SelectItem>
+                              <SelectItem value="09:00">9:00 AM</SelectItem>
+                              <SelectItem value="10:00">10:00 AM</SelectItem>
+                              <SelectItem value="12:00">12:00 PM</SelectItem>
+                              <SelectItem value="17:00">5:00 PM</SelectItem>
+                              <SelectItem value="18:00">6:00 PM</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Event Types to Notify */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-muted-foreground" />
+                      Event Types
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Choose which events you want to be notified about
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-0">
+                    <div className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">New Leads</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          When someone submits a request through your profile
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notifyNewLeads}
+                        onCheckedChange={setNotifyNewLeads}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Lead Status Changes</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          When a lead's status is updated (contacted, converted, etc.)
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notifyLeadStatusChanges}
+                        onCheckedChange={setNotifyLeadStatusChanges}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Lead Limit Warnings</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          When you're approaching your monthly lead limit
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notifyLeadLimitWarnings}
+                        onCheckedChange={setNotifyLeadLimitWarnings}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Facility Views</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Weekly summary of how many people viewed your profile
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notifyFacilityViews}
+                        onCheckedChange={setNotifyFacilityViews}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Other Email Notifications */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      Other Emails
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Additional email notifications
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-0">
+                    <div className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Weekly Performance Digest</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Summary of your facility's performance metrics
+                        </p>
+                      </div>
+                      <Switch
+                        checked={emailWeeklyDigest}
+                        onCheckedChange={setEmailWeeklyDigest}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Product Updates</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          New features, improvements, and platform news
+                        </p>
+                      </div>
+                      <Switch
+                        checked={emailProductUpdates}
+                        onCheckedChange={setEmailProductUpdates}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* SMS Notifications */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-muted-foreground" />
+                      SMS Notifications
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Text message alerts for urgent updates
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Lead Alerts via SMS</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Receive a text message when you get a new lead
+                        </p>
+                      </div>
+                      <Switch
+                        checked={smsLeadAlerts}
+                        onCheckedChange={setSmsLeadAlerts}
+                        disabled={!profile?.phone}
+                      />
+                    </div>
+                    {!profile?.phone && (
+                      <div className="mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                          Add a phone number in your profile to enable SMS notifications
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Browser Notifications */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-muted-foreground" />
+                      Browser Notifications
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Desktop push notifications while using the platform
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Push Notifications</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Get real-time browser notifications for new leads
+                        </p>
+                      </div>
+                      <Switch
+                        checked={browserNotifications}
+                        onCheckedChange={setBrowserNotifications}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Follow-up Reminders */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      Follow-up Reminders
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Configure how lead follow-up reminders work
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between py-2">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Enable Follow-up Reminders</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Get reminded to follow up on leads you haven't contacted
+                        </p>
+                      </div>
+                      <Switch
+                        checked={followupRemindersEnabled}
+                        onCheckedChange={setFollowupRemindersEnabled}
+                      />
+                    </div>
+                    
+                    {followupRemindersEnabled && (
+                      <div className="pt-2 border-t border-border">
+                        <div className="space-y-3">
+                          <div>
+                            <Label className="text-sm font-medium">Default Snooze Duration</Label>
+                            <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+                              When you snooze a lead reminder, how long should it wait?
+                            </p>
+                          </div>
+                          <RadioGroup 
+                            value={defaultSnoozeDuration} 
+                            onValueChange={setDefaultSnoozeDuration}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                              <RadioGroupItem value="4_hours" id="snooze_4h" />
+                              <Label htmlFor="snooze_4h" className="flex-1 cursor-pointer">
+                                <span className="text-sm font-medium">4 hours</span>
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                              <RadioGroupItem value="1_day" id="snooze_1d" />
+                              <Label htmlFor="snooze_1d" className="flex-1 cursor-pointer">
+                                <span className="text-sm font-medium">1 day</span>
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                              <RadioGroupItem value="3_days" id="snooze_3d" />
+                              <Label htmlFor="snooze_3d" className="flex-1 cursor-pointer">
+                                <span className="text-sm font-medium">3 days</span>
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+                              <RadioGroupItem value="1_week" id="snooze_1w" />
+                              <Label htmlFor="snooze_1w" className="flex-1 cursor-pointer">
+                                <span className="text-sm font-medium">1 week</span>
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-2">
+                            <BellOff className="h-3 w-3" />
+                            Snoozed leads won't trigger follow-up reminders until the duration passes
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Save Notification Preferences */}
+                <div className="flex justify-end">
+                  <Button 
+                    size="sm" 
+                    className="gap-2"
+                    onClick={handleSaveNotifications}
+                    disabled={isSavingNotifications || !hasNotificationChanges}
+                  >
+                    {isSavingNotifications ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : notificationsSaved ? (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Save Preferences
+                      </>
+                    )}
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </>
+            )}
+          </TabsContent>
 
-          {/* Save Notification Preferences */}
-          <div className="flex justify-end">
-            <Button 
-              size="sm" 
-              className="gap-2"
-              onClick={handleSaveNotifications}
-              disabled={isSavingNotifications}
-            >
-              {isSavingNotifications ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : notificationsSaved ? (
-                <>
-                  <CheckCircle className="h-4 w-4" />
-                  Saved
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Preferences
-                </>
-              )}
-            </Button>
-          </div>
-        </TabsContent>
+          {/* Sessions Tab */}
+          <TabsContent value="sessions" className="mt-6">
+            <SessionManagementTab />
+          </TabsContent>
 
-        {/* Sessions Tab */}
-        <TabsContent value="sessions" className="mt-6">
-          <SessionManagementTab />
-        </TabsContent>
-
-        {/* Activity Tab */}
-        <TabsContent value="activity" className="mt-6">
-          <ActivityLogTab />
-        </TabsContent>
-      </Tabs>
+          {/* Activity Tab */}
+          <TabsContent value="activity" className="mt-6">
+            <ActivityLogTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
