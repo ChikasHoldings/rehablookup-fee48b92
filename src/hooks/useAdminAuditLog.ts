@@ -114,6 +114,10 @@ export const AdminAuditActions = {
   SECURITY_BLOCK_ADDED: "security_block_added",
   SECURITY_BLOCK_REMOVED: "security_block_removed",
   
+  // Location change actions
+  LOCATION_CHANGE_APPROVED: "location_change_approved",
+  LOCATION_CHANGE_REJECTED: "location_change_rejected",
+  
   // Settings actions
   PLATFORM_SETTINGS_UPDATED: "platform_settings_updated",
   AUDIT_LOGS_CLEANED: "audit_logs_cleaned",

@@ -740,6 +740,66 @@ export type Database = {
           },
         ]
       }
+      facility_pending_changes: {
+        Row: {
+          changed_fields: string[]
+          created_at: string
+          facility_id: string
+          id: string
+          pending_payload: Json
+          pending_status: string
+          provider_id: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by_admin_id: string | null
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          changed_fields?: string[]
+          created_at?: string
+          facility_id: string
+          id?: string
+          pending_payload?: Json
+          pending_status?: string
+          provider_id: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by_admin_id?: string | null
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          changed_fields?: string[]
+          created_at?: string
+          facility_id?: string
+          id?: string
+          pending_payload?: Json
+          pending_status?: string
+          provider_id?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by_admin_id?: string | null
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_pending_changes_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_pending_changes_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_services: {
         Row: {
           created_at: string
