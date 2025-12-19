@@ -26,14 +26,38 @@ const featuredArticles = [
   },
 ];
 
-// Popular locations for SEO
+// Popular locations for SEO - using correct route pattern /rehab-centers/:state/:city
 const popularLocations = [
-  { name: "California", path: "/locations/california", cities: ["Los Angeles", "San Diego", "San Francisco"] },
-  { name: "Florida", path: "/locations/florida", cities: ["Miami", "Tampa", "Orlando"] },
-  { name: "Texas", path: "/locations/texas", cities: ["Houston", "Dallas", "Austin"] },
-  { name: "New York", path: "/locations/new-york", cities: ["New York City", "Buffalo", "Rochester"] },
-  { name: "Arizona", path: "/locations/arizona", cities: ["Phoenix", "Scottsdale", "Tucson"] },
-  { name: "Colorado", path: "/locations/colorado", cities: ["Denver", "Boulder", "Colorado Springs"] },
+  { name: "California", slug: "california", path: "/rehab-centers/california", cities: [
+    { name: "Los Angeles", slug: "los-angeles" },
+    { name: "San Diego", slug: "san-diego" },
+    { name: "San Francisco", slug: "san-francisco" },
+  ]},
+  { name: "Florida", slug: "florida", path: "/rehab-centers/florida", cities: [
+    { name: "Miami", slug: "miami" },
+    { name: "Tampa", slug: "tampa" },
+    { name: "Orlando", slug: "orlando" },
+  ]},
+  { name: "Texas", slug: "texas", path: "/rehab-centers/texas", cities: [
+    { name: "Houston", slug: "houston" },
+    { name: "Dallas", slug: "dallas" },
+    { name: "Austin", slug: "austin" },
+  ]},
+  { name: "New York", slug: "new-york", path: "/rehab-centers/new-york", cities: [
+    { name: "New York City", slug: "new-york-city" },
+    { name: "Buffalo", slug: "buffalo" },
+    { name: "Rochester", slug: "rochester" },
+  ]},
+  { name: "Arizona", slug: "arizona", path: "/rehab-centers/arizona", cities: [
+    { name: "Phoenix", slug: "phoenix" },
+    { name: "Scottsdale", slug: "scottsdale" },
+    { name: "Tucson", slug: "tucson" },
+  ]},
+  { name: "Colorado", slug: "colorado", path: "/rehab-centers/colorado", cities: [
+    { name: "Denver", slug: "denver" },
+    { name: "Boulder", slug: "boulder" },
+    { name: "Colorado Springs", slug: "colorado-springs" },
+  ]},
 ];
 
 // Treatment types for SEO
@@ -181,12 +205,12 @@ export function Footer() {
                   </Link>
                   <ul className="mt-1.5 space-y-1">
                     {location.cities.map((city) => (
-                      <li key={city}>
+                      <li key={city.slug}>
                         <Link 
-                          to={`${location.path}/${city.toLowerCase().replace(/\s+/g, '-')}`}
+                          to={`/rehab-centers/${location.slug}/${city.slug}`}
                           className="text-xs text-slate-400 transition-colors hover:text-slate-200"
                         >
-                          {city}
+                          {city.name}
                         </Link>
                       </li>
                     ))}
