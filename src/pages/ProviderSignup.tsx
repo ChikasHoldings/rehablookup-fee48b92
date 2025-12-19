@@ -33,10 +33,6 @@ import {
   Lock,
   Image as ImageIcon,
   ShieldCheck,
-  Sparkles,
-  Users,
-  TrendingUp,
-  Shield,
   Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -653,114 +649,60 @@ export default function ProviderSignup() {
         variant="provider"
       />
 
-      <main className="flex-1 py-6 md:py-12">
-        <div className="container px-5 md:px-4">
-          <div className="mx-auto max-w-2xl">
-            {/* Value Proposition Banner */}
-            {currentStep === 1 && (
-              <div className="mb-6 md:mb-8 rounded-2xl md:rounded-xl border border-accent/30 bg-gradient-to-br from-accent/5 via-background to-primary/5 p-5 md:p-8">
-                <div className="flex items-center gap-3 md:gap-2 mb-4 md:mb-3">
-                  <div className="flex h-10 w-10 md:h-8 md:w-8 items-center justify-center rounded-full bg-accent/15">
-                    <Sparkles className="h-5 w-5 md:h-4 md:w-4 text-accent" />
-                  </div>
-                  <span className="text-sm font-semibold text-accent uppercase tracking-wide">Exclusive Leads</span>
-                </div>
-                <h2 className="text-xl md:text-xl font-bold text-foreground mb-3 md:mb-2">
-                  Connect with families seeking treatment
-                </h2>
-                <p className="text-base md:text-base text-muted-foreground mb-6 md:mb-5">
-                  No shared leads. No bidding. No race to call. Each lead is delivered exclusively to one provider.
-                </p>
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-4">
-                  <div className="flex items-start gap-4 md:gap-3">
-                    <div className="flex h-12 w-12 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-xl md:rounded-lg bg-primary/10">
-                      <Users className="h-6 w-6 md:h-4 md:w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-base md:text-sm text-foreground">Exclusive Leads</p>
-                      <p className="text-sm md:text-xs text-muted-foreground">Never shared between providers</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4 md:gap-3">
-                    <div className="flex h-12 w-12 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-xl md:rounded-lg bg-primary/10">
-                      <TrendingUp className="h-6 w-6 md:h-4 md:w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-base md:text-sm text-foreground">Qualified Inquiries</p>
-                      <p className="text-sm md:text-xs text-muted-foreground">Pre-screened and verified</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4 md:gap-3">
-                    <div className="flex h-12 w-12 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-xl md:rounded-lg bg-primary/10">
-                      <Shield className="h-6 w-6 md:h-4 md:w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-base md:text-sm text-foreground">No Commitment</p>
-                      <p className="text-sm md:text-xs text-muted-foreground">Free to list, upgrade anytime</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
+      <main className="flex-1 py-8 md:py-16">
+        <div className="container px-4 md:px-6">
+          <div className="mx-auto max-w-xl">
             {/* Header & Progress */}
-            <div className="mb-6 md:mb-8">
-              <div className="text-center mb-5 md:mb-6">
+            <div className="mb-8">
+              <div className="text-center mb-6">
                 <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
                   List Your Facility
                 </h1>
-                <p className="mt-2 text-base md:text-base text-muted-foreground">
-                  Step {currentStep} of {steps.length}: {steps[currentStep - 1].name}
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  Step {currentStep} of {steps.length} — {steps[currentStep - 1].name}
                 </p>
               </div>
 
               {/* Progress bar */}
-              <div className="h-2 md:h-1.5 rounded-full bg-muted overflow-hidden">
+              <div className="h-1 rounded-full bg-muted overflow-hidden">
                 <div 
                   className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${(currentStep / steps.length) * 100}%` }}
                 />
               </div>
 
-              {/* Step indicators - horizontal scroll on mobile */}
-              <div className="mt-4 flex justify-between overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              {/* Step indicators */}
+              <div className="mt-5 flex justify-center gap-2">
                 {steps.map((step) => (
                   <button
                     key={step.id}
                     onClick={() => {
-                      // Only allow going back to completed steps
                       if (step.id < currentStep) {
-                        // Don't allow going back to verify step if already verified
                         if (step.id === 2 && emailVerified) return;
                         setCurrentStep(step.id);
                       }
                     }}
                     disabled={step.id > currentStep || (step.id === 2 && emailVerified)}
                     className={cn(
-                      "flex flex-col items-center gap-2 md:gap-1.5 text-xs transition-colors min-w-[48px] px-1",
-                      currentStep === step.id
-                        ? "text-primary font-medium"
-                        : step.id < currentStep
-                        ? "text-accent cursor-pointer hover:text-accent/80"
-                        : "text-muted-foreground cursor-not-allowed",
+                      "flex items-center justify-center transition-all",
                       step.id === 2 && emailVerified && "cursor-not-allowed opacity-50"
                     )}
+                    title={step.name}
                   >
                     <div className={cn(
-                      "flex h-10 w-10 md:h-8 md:w-8 items-center justify-center rounded-full transition-all",
+                      "flex h-8 w-8 items-center justify-center rounded-full transition-all",
                       currentStep === step.id
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary text-primary-foreground ring-2 ring-primary/20 ring-offset-2 ring-offset-background"
                         : step.id < currentStep
-                        ? "bg-accent/15 text-accent"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-accent text-accent-foreground cursor-pointer hover:bg-accent/80"
+                        : "bg-muted text-muted-foreground cursor-not-allowed"
                     )}>
                       {step.id < currentStep ? (
-                        <CheckCircle className="h-5 w-5 md:h-4 md:w-4" />
+                        <CheckCircle className="h-4 w-4" />
                       ) : (
-                        <step.icon className="h-5 w-5 md:h-4 md:w-4" />
+                        <step.icon className="h-4 w-4" />
                       )}
                     </div>
-                    <span className="hidden sm:block">{step.name}</span>
                   </button>
                 ))}
               </div>
@@ -768,120 +710,115 @@ export default function ProviderSignup() {
 
             {/* Step 1: Account Info */}
             {currentStep === 1 && (
-              <div className="space-y-5 md:space-y-6 animate-fade-in rounded-2xl md:rounded-xl border border-border bg-card p-5 md:p-8 shadow-card">
-                <div>
-                  <p className="text-base md:text-sm text-muted-foreground">
-                    Create your provider account to manage your facility listing.
-                  </p>
-                </div>
-
-                <div className="grid gap-5 md:gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-base md:text-sm font-medium">First Name *</Label>
-                    <Input
-                      id="firstName"
-                      value={formData.firstName}
-                      onChange={(e) => updateFormData("firstName", e.target.value)}
-                      placeholder="John"
-                      className="h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-base md:text-sm font-medium">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      value={formData.lastName}
-                      onChange={(e) => updateFormData("lastName", e.target.value)}
-                      placeholder="Smith"
-                      className="h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="jobTitle" className="text-base md:text-sm font-medium">Job Title</Label>
-                  <Input
-                    id="jobTitle"
-                    value={formData.jobTitle}
-                    onChange={(e) => updateFormData("jobTitle", e.target.value)}
-                    placeholder="Admissions Director"
-                    className="h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-base md:text-sm font-medium">Email Address *</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => {
-                        updateFormData("email", e.target.value);
-                        // Reset email verification if email changes
-                        if (emailVerified) {
-                          setEmailVerified(false);
-                        }
-                      }}
-                      placeholder="john@facility.com"
-                      className="pl-12 md:pl-10 h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                    />
-                  </div>
-                  {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
-                    <p className="text-sm md:text-xs text-destructive">Please enter a valid email address</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-base md:text-sm font-medium">Phone Number *</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => updateFormData("phone", e.target.value)}
-                      placeholder="(555) 123-4567"
-                      className="pl-12 md:pl-10 h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-5 md:gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-base md:text-sm font-medium">Password *</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div className="space-y-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="firstName" className="text-sm font-medium">First Name *</Label>
                       <Input
-                        id="password"
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => updateFormData("password", e.target.value)}
-                        placeholder="••••••••"
-                        className="pl-12 md:pl-10 h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
+                        id="firstName"
+                        value={formData.firstName}
+                        onChange={(e) => updateFormData("firstName", e.target.value)}
+                        placeholder="John"
+                        className="h-10"
                       />
                     </div>
-                    {formData.password && formData.password.length < 6 && (
-                      <p className="text-sm md:text-xs text-destructive">Password must be at least 6 characters</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-base md:text-sm font-medium">Confirm Password *</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="lastName" className="text-sm font-medium">Last Name *</Label>
                       <Input
-                        id="confirmPassword"
-                        type="password"
-                        value={formData.confirmPassword}
-                        onChange={(e) => updateFormData("confirmPassword", e.target.value)}
-                        placeholder="••••••••"
-                        className="pl-12 md:pl-10 h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
+                        id="lastName"
+                        value={formData.lastName}
+                        onChange={(e) => updateFormData("lastName", e.target.value)}
+                        placeholder="Smith"
+                        className="h-10"
                       />
                     </div>
-                    {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                      <p className="text-sm md:text-xs text-destructive">Passwords do not match</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="jobTitle" className="text-sm font-medium">Job Title</Label>
+                    <Input
+                      id="jobTitle"
+                      value={formData.jobTitle}
+                      onChange={(e) => updateFormData("jobTitle", e.target.value)}
+                      placeholder="Admissions Director"
+                      className="h-10"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className="text-sm font-medium">Email Address *</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => {
+                          updateFormData("email", e.target.value);
+                          if (emailVerified) {
+                            setEmailVerified(false);
+                          }
+                        }}
+                        placeholder="john@facility.com"
+                        className="pl-10 h-10"
+                      />
+                    </div>
+                    {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                      <p className="text-xs text-destructive">Please enter a valid email address</p>
                     )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone" className="text-sm font-medium">Phone Number *</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => updateFormData("phone", e.target.value)}
+                        placeholder="(555) 123-4567"
+                        className="pl-10 h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="password" className="text-sm font-medium">Password *</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          id="password"
+                          type="password"
+                          value={formData.password}
+                          onChange={(e) => updateFormData("password", e.target.value)}
+                          placeholder="••••••••"
+                          className="pl-10 h-10"
+                        />
+                      </div>
+                      {formData.password && formData.password.length < 6 && (
+                        <p className="text-xs text-destructive">Password must be at least 6 characters</p>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password *</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={formData.confirmPassword}
+                          onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+                          placeholder="••••••••"
+                          className="pl-10 h-10"
+                        />
+                      </div>
+                      {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                        <p className="text-xs text-destructive">Passwords do not match</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -898,235 +835,227 @@ export default function ProviderSignup() {
 
             {/* Step 3: Facility Info */}
             {currentStep === 3 && (
-              <div className="space-y-5 md:space-y-6 animate-fade-in rounded-2xl md:rounded-xl border border-border bg-card p-5 md:p-8 shadow-card">
-                <div>
-                  <p className="text-base md:text-sm text-muted-foreground">
-                    Tell us about your treatment facility.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="facilityName" className="text-base md:text-sm font-medium">Facility Name *</Label>
-                  <div className="relative">
-                    <Building2 className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="facilityName"
-                      value={formData.facilityName}
-                      onChange={(e) => updateFormData("facilityName", e.target.value)}
-                      placeholder="Serenity Recovery Center"
-                      className="pl-12 md:pl-10 h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="facilityType" className="text-base md:text-sm font-medium">Facility Type *</Label>
-                  <Select
-                    value={formData.facilityType}
-                    onValueChange={(value) => updateFormData("facilityType", value)}
-                  >
-                    <SelectTrigger className="h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg">
-                      <SelectValue placeholder="Select facility type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {facilityTypes.map((type) => (
-                        <SelectItem key={type} value={type} className="py-3 md:py-2">
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-5 md:gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="facilityPhone" className="text-base md:text-sm font-medium">Facility Phone *</Label>
+              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div className="space-y-5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="facilityName" className="text-sm font-medium">Facility Name *</Label>
                     <div className="relative">
-                      <Phone className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        id="facilityPhone"
-                        type="tel"
-                        value={formData.facilityPhone}
-                        onChange={(e) => updateFormData("facilityPhone", e.target.value)}
-                        placeholder="(555) 123-4567"
-                        className="pl-12 md:pl-10 h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
+                        id="facilityName"
+                        value={formData.facilityName}
+                        onChange={(e) => updateFormData("facilityName", e.target.value)}
+                        placeholder="Serenity Recovery Center"
+                        className="pl-10 h-10"
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="facilityEmail" className="text-base md:text-sm font-medium">Facility Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="facilityEmail"
-                        type="email"
-                        value={formData.facilityEmail}
-                        onChange={(e) => updateFormData("facilityEmail", e.target.value)}
-                        placeholder="info@facility.com"
-                        className="pl-12 md:pl-10 h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                      />
-                    </div>
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="website" className="text-base md:text-sm font-medium">Website</Label>
-                  <div className="relative">
-                    <Globe className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="website"
-                      value={formData.website}
-                      onChange={(e) => updateFormData("website", e.target.value)}
-                      placeholder="https://www.yourfacility.com"
-                      className="pl-12 md:pl-10 h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address" className="text-base md:text-sm font-medium">Street Address *</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="address"
-                      value={formData.address}
-                      onChange={(e) => updateFormData("address", e.target.value)}
-                      placeholder="123 Recovery Lane"
-                      className="pl-12 md:pl-10 h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-5 md:gap-4 sm:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="city" className="text-base md:text-sm font-medium">City *</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) => updateFormData("city", e.target.value)}
-                      placeholder="Los Angeles"
-                      className="h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state" className="text-base md:text-sm font-medium">State *</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="facilityType" className="text-sm font-medium">Facility Type *</Label>
                     <Select
-                      value={formData.state}
-                      onValueChange={(value) => updateFormData("state", value)}
+                      value={formData.facilityType}
+                      onValueChange={(value) => updateFormData("facilityType", value)}
                     >
-                      <SelectTrigger className="h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg">
-                        <SelectValue placeholder="Select" />
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Select facility type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {states.map((state) => (
-                          <SelectItem key={state} value={state} className="py-3 md:py-2">
-                            {state}
+                        {facilityTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zipCode" className="text-base md:text-sm font-medium">ZIP Code *</Label>
-                    <Input
-                      id="zipCode"
-                      value={formData.zipCode}
-                      onChange={(e) => updateFormData("zipCode", e.target.value)}
-                      placeholder="90210"
-                      className="h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg"
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="facilityPhone" className="text-sm font-medium">Facility Phone *</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          id="facilityPhone"
+                          type="tel"
+                          value={formData.facilityPhone}
+                          onChange={(e) => updateFormData("facilityPhone", e.target.value)}
+                          placeholder="(555) 123-4567"
+                          className="pl-10 h-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="facilityEmail" className="text-sm font-medium">Facility Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          id="facilityEmail"
+                          type="email"
+                          value={formData.facilityEmail}
+                          onChange={(e) => updateFormData("facilityEmail", e.target.value)}
+                          placeholder="info@facility.com"
+                          className="pl-10 h-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="website" className="text-sm font-medium">Website</Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="website"
+                        value={formData.website}
+                        onChange={(e) => updateFormData("website", e.target.value)}
+                        placeholder="https://www.yourfacility.com"
+                        className="pl-10 h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="address" className="text-sm font-medium">Street Address *</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="address"
+                        value={formData.address}
+                        onChange={(e) => updateFormData("address", e.target.value)}
+                        placeholder="123 Recovery Lane"
+                        className="pl-10 h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="city" className="text-sm font-medium">City *</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => updateFormData("city", e.target.value)}
+                        placeholder="Los Angeles"
+                        className="h-10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="state" className="text-sm font-medium">State *</Label>
+                      <Select
+                        value={formData.state}
+                        onValueChange={(value) => updateFormData("state", value)}
+                      >
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {states.map((state) => (
+                            <SelectItem key={state} value={state}>
+                              {state}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="zipCode" className="text-sm font-medium">ZIP Code *</Label>
+                      <Input
+                        id="zipCode"
+                        value={formData.zipCode}
+                        onChange={(e) => updateFormData("zipCode", e.target.value)}
+                        placeholder="90210"
+                        className="h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="description" className="text-sm font-medium">Facility Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => updateFormData("description", e.target.value)}
+                      placeholder="Tell potential clients about your facility, treatment philosophy, and what makes you unique..."
+                      rows={3}
+                      className="min-h-[100px]"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description" className="text-base md:text-sm font-medium">Facility Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => updateFormData("description", e.target.value)}
-                    placeholder="Tell potential clients about your facility, treatment philosophy, and what makes you unique..."
-                    rows={4}
-                    className="text-base md:text-sm rounded-xl md:rounded-lg min-h-[120px]"
-                  />
                 </div>
               </div>
             )}
 
             {/* Step 4: Branding */}
             {currentStep === 4 && (
-              <div className="space-y-5 md:space-y-6 animate-fade-in rounded-2xl md:rounded-xl border border-border bg-card p-5 md:p-8 shadow-card">
-                <div>
-                  <p className="text-base md:text-sm text-muted-foreground">
-                    Add your logo and gallery images to make your listing stand out.
-                  </p>
-                </div>
-
-                {/* Logo Upload */}
-                <div className="space-y-3">
-                  <Label className="text-base md:text-sm font-medium">Facility Logo</Label>
-                  {formData.logoPreview ? (
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={formData.logoPreview}
-                        alt="Logo preview"
-                        className="h-24 w-24 md:h-20 md:w-20 rounded-xl md:rounded-lg object-cover border"
-                      />
-                      <Button variant="outline" onClick={removeLogo} className="h-12 md:h-9 px-5 md:px-4 rounded-xl md:rounded-lg">
-                        Remove
-                      </Button>
-                    </div>
-                  ) : (
-                    <label className="border-2 border-dashed border-border rounded-2xl md:rounded-lg p-8 md:p-6 text-center block cursor-pointer hover:border-primary/50 transition-colors">
-                      <ImageIcon className="mx-auto h-12 w-12 md:h-10 md:w-10 text-muted-foreground mb-3 md:mb-2" />
-                      <span className="text-primary hover:underline text-base md:text-sm font-medium">
-                        Upload logo
-                      </span>
-                      <Input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogoSelect}
-                        className="hidden"
-                      />
-                      <p className="text-sm md:text-xs text-muted-foreground mt-2 md:mt-1">
-                        PNG, JPG, or WebP (max 5MB)
-                      </p>
-                    </label>
-                  )}
-                </div>
-
-                {/* Gallery Upload */}
-                <div className="space-y-3">
-                  <Label className="text-base md:text-sm font-medium">Gallery Images ({formData.galleryPreviews.length}/5)</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-3">
-                    {formData.galleryPreviews.map((preview, index) => (
-                      <div key={index} className="relative group">
+              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div className="space-y-5">
+                  {/* Logo Upload */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Facility Logo</Label>
+                    {formData.logoPreview ? (
+                      <div className="flex items-center gap-4">
                         <img
-                          src={preview}
-                          alt={`Gallery ${index + 1}`}
-                          className="aspect-video w-full rounded-xl md:rounded-lg object-cover border"
+                          src={formData.logoPreview}
+                          alt="Logo preview"
+                          className="h-16 w-16 rounded-lg object-cover border"
                         />
-                        <button
-                          onClick={() => removeGalleryImage(index)}
-                          className="absolute top-2 right-2 md:top-1 md:right-1 bg-destructive text-destructive-foreground rounded-full p-2 md:p-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                        >
-                          <CheckCircle className="h-4 w-4 md:h-3 md:w-3" />
-                        </button>
+                        <Button variant="outline" size="sm" onClick={removeLogo}>
+                          Remove
+                        </Button>
                       </div>
-                    ))}
-                    {formData.galleryPreviews.length < 5 && (
-                      <label className="border-2 border-dashed border-border rounded-xl md:rounded-lg aspect-video flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
-                        <ImageIcon className="h-10 w-10 md:h-8 md:w-8 text-muted-foreground mb-2 md:mb-1" />
-                        <span className="text-sm md:text-xs text-muted-foreground">Add image</span>
+                    ) : (
+                      <label className="border-2 border-dashed border-border rounded-lg p-6 text-center block cursor-pointer hover:border-primary/50 transition-colors">
+                        <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                        <span className="text-primary hover:underline text-sm font-medium">
+                          Upload logo
+                        </span>
                         <Input
+                          id="logo-upload"
                           type="file"
                           accept="image/*"
-                          multiple
-                          onChange={handleGallerySelect}
+                          onChange={handleLogoSelect}
                           className="hidden"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PNG, JPG, or WebP (max 5MB)
+                        </p>
                       </label>
                     )}
+                  </div>
+
+                  {/* Gallery Upload */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Gallery Images ({formData.galleryPreviews.length}/5)</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {formData.galleryPreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={preview}
+                            alt={`Gallery ${index + 1}`}
+                            className="aspect-video w-full rounded-lg object-cover border"
+                          />
+                          <button
+                            onClick={() => removeGalleryImage(index)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      {formData.galleryPreviews.length < 5 && (
+                        <label className="border-2 border-dashed border-border rounded-lg aspect-video flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+                          <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
+                          <span className="text-xs text-muted-foreground">Add image</span>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleGallerySelect}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1134,88 +1063,82 @@ export default function ProviderSignup() {
 
             {/* Step 5: Services */}
             {currentStep === 5 && (
-              <div className="space-y-5 md:space-y-6 animate-fade-in rounded-2xl md:rounded-xl border border-border bg-card p-5 md:p-8 shadow-card">
-                <div>
-                  <p className="text-base md:text-sm text-muted-foreground">
-                    Select the treatment services and programs you offer.
-                  </p>
-                </div>
+              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div className="space-y-5">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Treatment Types *</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {treatmentTypes.map((treatment) => (
+                        <div
+                          key={treatment}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={treatment}
+                            checked={formData.selectedTreatments.includes(treatment)}
+                            onCheckedChange={() => toggleArrayItem("selectedTreatments", treatment)}
+                          />
+                          <Label htmlFor={treatment} className="text-sm font-normal cursor-pointer">
+                            {treatment}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-                <div className="space-y-4 md:space-y-3">
-                  <Label className="text-base md:text-sm font-medium">Treatment Types *</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-2">
-                    {treatmentTypes.map((treatment) => (
-                      <div
-                        key={treatment}
-                        className="flex items-center space-x-3 md:space-x-2 py-2 md:py-0"
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="bedCount" className="text-sm font-medium">Bed Count</Label>
+                      <Select
+                        value={formData.bedCount}
+                        onValueChange={(value) => updateFormData("bedCount", value)}
                       >
-                        <Checkbox
-                          id={treatment}
-                          checked={formData.selectedTreatments.includes(treatment)}
-                          onCheckedChange={() => toggleArrayItem("selectedTreatments", treatment)}
-                          className="h-6 w-6 md:h-4 md:w-4 rounded-md md:rounded"
-                        />
-                        <Label htmlFor={treatment} className="text-base md:text-sm font-normal cursor-pointer py-1">
-                          {treatment}
-                        </Label>
-                      </div>
-                    ))}
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1-10">1-10</SelectItem>
+                          <SelectItem value="11-25">11-25</SelectItem>
+                          <SelectItem value="26-50">26-50</SelectItem>
+                          <SelectItem value="51-100">51-100</SelectItem>
+                          <SelectItem value="100+">100+</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="genderServed" className="text-sm font-medium">Gender Served</Label>
+                      <Select
+                        value={formData.genderServed}
+                        onValueChange={(value) => updateFormData("genderServed", value)}
+                      >
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All Genders">All Genders</SelectItem>
+                          <SelectItem value="Men Only">Men Only</SelectItem>
+                          <SelectItem value="Women Only">Women Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid gap-5 md:gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="bedCount" className="text-base md:text-sm font-medium">Bed Count</Label>
-                    <Select
-                      value={formData.bedCount}
-                      onValueChange={(value) => updateFormData("bedCount", value)}
-                    >
-                      <SelectTrigger className="h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1-10" className="py-3 md:py-2">1-10</SelectItem>
-                        <SelectItem value="11-25" className="py-3 md:py-2">11-25</SelectItem>
-                        <SelectItem value="26-50" className="py-3 md:py-2">26-50</SelectItem>
-                        <SelectItem value="51-100" className="py-3 md:py-2">51-100</SelectItem>
-                        <SelectItem value="100+" className="py-3 md:py-2">100+</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="genderServed" className="text-base md:text-sm font-medium">Gender Served</Label>
-                    <Select
-                      value={formData.genderServed}
-                      onValueChange={(value) => updateFormData("genderServed", value)}
-                    >
-                      <SelectTrigger className="h-14 md:h-10 text-base md:text-sm rounded-xl md:rounded-lg">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All Genders" className="py-3 md:py-2">All Genders</SelectItem>
-                        <SelectItem value="Men Only" className="py-3 md:py-2">Men Only</SelectItem>
-                        <SelectItem value="Women Only" className="py-3 md:py-2">Women Only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-4 md:space-y-3">
-                  <Label className="text-base md:text-sm font-medium">Age Groups Served</Label>
-                  <div className="flex flex-wrap gap-4 md:gap-2">
-                    {["Adults (18+)", "Young Adults (18-25)", "Adolescents (13-17)", "Seniors (65+)"].map((age) => (
-                      <div key={age} className="flex items-center space-x-3 md:space-x-2 py-2 md:py-0">
-                        <Checkbox
-                          id={age}
-                          checked={formData.ageGroups.includes(age)}
-                          onCheckedChange={() => toggleArrayItem("ageGroups", age)}
-                          className="h-6 w-6 md:h-4 md:w-4 rounded-md md:rounded"
-                        />
-                        <Label htmlFor={age} className="text-base md:text-sm font-normal cursor-pointer py-1">
-                          {age}
-                        </Label>
-                      </div>
-                    ))}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Age Groups Served</Label>
+                    <div className="flex flex-wrap gap-x-4 gap-y-2">
+                      {["Adults (18+)", "Young Adults (18-25)", "Adolescents (13-17)", "Seniors (65+)"].map((age) => (
+                        <div key={age} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={age}
+                            checked={formData.ageGroups.includes(age)}
+                            onCheckedChange={() => toggleArrayItem("ageGroups", age)}
+                          />
+                          <Label htmlFor={age} className="text-sm font-normal cursor-pointer">
+                            {age}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1223,64 +1146,57 @@ export default function ProviderSignup() {
 
             {/* Step 6: Insurance */}
             {currentStep === 6 && (
-              <div className="space-y-5 md:space-y-6 animate-fade-in rounded-2xl md:rounded-xl border border-border bg-card p-5 md:p-8 shadow-card">
-                <div>
-                  <p className="text-base md:text-sm text-muted-foreground">
-                    Select the insurance providers you accept.
-                  </p>
-                </div>
-
-                <div className="space-y-4 md:space-y-3">
-                  <Label className="text-base md:text-sm font-medium">Accepted Insurance *</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-2">
-                    {insuranceProviders.map((insurance) => (
-                      <div
-                        key={insurance}
-                        className="flex items-center space-x-3 md:space-x-2 py-2 md:py-0"
-                      >
-                        <Checkbox
-                          id={insurance}
-                          checked={formData.selectedInsurance.includes(insurance)}
-                          onCheckedChange={() => toggleArrayItem("selectedInsurance", insurance)}
-                          className="h-6 w-6 md:h-4 md:w-4 rounded-md md:rounded"
-                        />
-                        <Label htmlFor={insurance} className="text-base md:text-sm font-normal cursor-pointer py-1">
-                          {insurance}
-                        </Label>
-                      </div>
-                    ))}
+              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div className="space-y-5">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Accepted Insurance *</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {insuranceProviders.map((insurance) => (
+                        <div
+                          key={insurance}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={insurance}
+                            checked={formData.selectedInsurance.includes(insurance)}
+                            onCheckedChange={() => toggleArrayItem("selectedInsurance", insurance)}
+                          />
+                          <Label htmlFor={insurance} className="text-sm font-normal cursor-pointer">
+                            {insurance}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="licensingInfo" className="text-base md:text-sm font-medium">Licensing Information</Label>
-                  <Textarea
-                    id="licensingInfo"
-                    value={formData.licensingInfo}
-                    onChange={(e) => updateFormData("licensingInfo", e.target.value)}
-                    placeholder="e.g., State License #12345, DEA Registration..."
-                    rows={2}
-                    className="text-base md:text-sm rounded-xl md:rounded-lg"
-                  />
-                </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="licensingInfo" className="text-sm font-medium">Licensing Information</Label>
+                    <Textarea
+                      id="licensingInfo"
+                      value={formData.licensingInfo}
+                      onChange={(e) => updateFormData("licensingInfo", e.target.value)}
+                      placeholder="e.g., State License #12345, DEA Registration..."
+                      rows={2}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="accreditations" className="text-base md:text-sm font-medium">Accreditations</Label>
-                  <Textarea
-                    id="accreditations"
-                    value={formData.accreditations}
-                    onChange={(e) => updateFormData("accreditations", e.target.value)}
-                    placeholder="e.g., JCAHO, CARF, LegitScript Certified..."
-                    rows={2}
-                    className="text-base md:text-sm rounded-xl md:rounded-lg"
-                  />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="accreditations" className="text-sm font-medium">Accreditations</Label>
+                    <Textarea
+                      id="accreditations"
+                      value={formData.accreditations}
+                      onChange={(e) => updateFormData("accreditations", e.target.value)}
+                      placeholder="e.g., JCAHO, CARF, LegitScript Certified..."
+                      rows={2}
+                    />
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Step 7: Plan Selection */}
             {currentStep === 7 && (
-              <div className="rounded-2xl md:rounded-xl border border-border bg-card p-5 md:p-8 shadow-card">
+              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
                 <PlanSelectionStep
                   selectedPlan={formData.selectedPlan}
                   onPlanSelect={(plan) => updateFormData("selectedPlan", plan)}
@@ -1290,158 +1206,155 @@ export default function ProviderSignup() {
 
             {/* Step 8: Review */}
             {currentStep === 8 && (
-              <div className="space-y-5 md:space-y-6 animate-fade-in rounded-2xl md:rounded-xl border border-border bg-card p-5 md:p-8 shadow-card">
-                <div>
-                  <p className="text-base md:text-sm text-muted-foreground">
-                    Review your information before submitting.
-                  </p>
-                </div>
-
-                {/* Account Summary */}
-                <div className="space-y-3 md:space-y-2">
-                  <h3 className="font-medium flex items-center gap-2 text-base md:text-sm">
-                    <User className="h-5 w-5 md:h-4 md:w-4" /> Account
-                  </h3>
-                  <div className="bg-muted/50 rounded-xl md:rounded-lg p-5 md:p-4 text-base md:text-sm space-y-2 md:space-y-1">
-                    <p><span className="text-muted-foreground">Name:</span> {formData.firstName} {formData.lastName}</p>
-                    <p><span className="text-muted-foreground">Email:</span> {formData.email} <span className="text-accent text-sm md:text-xs">✓ Verified</span></p>
-                    <p><span className="text-muted-foreground">Phone:</span> {formData.phone}</p>
-                    {formData.jobTitle && <p><span className="text-muted-foreground">Title:</span> {formData.jobTitle}</p>}
-                  </div>
-                </div>
-
-                {/* Facility Summary */}
-                <div className="space-y-3 md:space-y-2">
-                  <h3 className="font-medium flex items-center gap-2 text-base md:text-sm">
-                    <Building2 className="h-5 w-5 md:h-4 md:w-4" /> Facility
-                  </h3>
-                  <div className="bg-muted/50 rounded-xl md:rounded-lg p-5 md:p-4 text-base md:text-sm space-y-2 md:space-y-1">
-                    <p><span className="text-muted-foreground">Name:</span> {formData.facilityName}</p>
-                    <p><span className="text-muted-foreground">Type:</span> {formData.facilityType}</p>
-                    <p><span className="text-muted-foreground">Address:</span> {formData.address}, {formData.city}, {formData.state} {formData.zipCode}</p>
-                    <p><span className="text-muted-foreground">Phone:</span> {formData.facilityPhone}</p>
-                    {formData.website && <p><span className="text-muted-foreground">Website:</span> {formData.website}</p>}
-                  </div>
-                </div>
-
-                {/* Services Summary */}
-                <div className="space-y-3 md:space-y-2">
-                  <h3 className="font-medium flex items-center gap-2 text-base md:text-sm">
-                    <Stethoscope className="h-5 w-5 md:h-4 md:w-4" /> Services
-                  </h3>
-                  <div className="bg-muted/50 rounded-xl md:rounded-lg p-5 md:p-4 text-sm">
-                    <div className="flex flex-wrap gap-2 md:gap-1">
-                      {formData.selectedTreatments.map((t) => (
-                        <span key={t} className="bg-primary/10 text-primary px-3 md:px-2 py-1 md:py-0.5 rounded-lg md:rounded text-sm md:text-xs">
-                          {t}
-                        </span>
-                      ))}
+              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div className="space-y-4">
+                  {/* Account Summary */}
+                  <div className="space-y-2">
+                    <h3 className="font-medium flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4" /> Account
+                    </h3>
+                    <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
+                      <p><span className="text-muted-foreground">Name:</span> {formData.firstName} {formData.lastName}</p>
+                      <p><span className="text-muted-foreground">Email:</span> {formData.email} <span className="text-accent text-xs">✓ Verified</span></p>
+                      <p><span className="text-muted-foreground">Phone:</span> {formData.phone}</p>
+                      {formData.jobTitle && <p><span className="text-muted-foreground">Title:</span> {formData.jobTitle}</p>}
                     </div>
                   </div>
-                </div>
 
-                {/* Insurance Summary */}
-                <div className="space-y-3 md:space-y-2">
-                  <h3 className="font-medium flex items-center gap-2 text-base md:text-sm">
-                    <CreditCard className="h-5 w-5 md:h-4 md:w-4" /> Insurance
-                  </h3>
-                  <div className="bg-muted/50 rounded-xl md:rounded-lg p-5 md:p-4 text-sm">
-                    <div className="flex flex-wrap gap-2 md:gap-1">
-                      {formData.selectedInsurance.map((i) => (
-                        <span key={i} className="bg-accent/10 text-accent px-3 md:px-2 py-1 md:py-0.5 rounded-lg md:rounded text-sm md:text-xs">
-                          {i}
-                        </span>
-                      ))}
+                  {/* Facility Summary */}
+                  <div className="space-y-2">
+                    <h3 className="font-medium flex items-center gap-2 text-sm">
+                      <Building2 className="h-4 w-4" /> Facility
+                    </h3>
+                    <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
+                      <p><span className="text-muted-foreground">Name:</span> {formData.facilityName}</p>
+                      <p><span className="text-muted-foreground">Type:</span> {formData.facilityType}</p>
+                      <p><span className="text-muted-foreground">Address:</span> {formData.address}, {formData.city}, {formData.state} {formData.zipCode}</p>
+                      <p><span className="text-muted-foreground">Phone:</span> {formData.facilityPhone}</p>
+                      {formData.website && <p><span className="text-muted-foreground">Website:</span> {formData.website}</p>}
                     </div>
                   </div>
-                </div>
 
-                {/* Plan Summary */}
-                <div className="space-y-3 md:space-y-2">
-                  <h3 className="font-medium flex items-center gap-2 text-base md:text-sm">
-                    <Crown className="h-5 w-5 md:h-4 md:w-4" /> Selected Plan
-                  </h3>
-                  <div className={cn(
-                    "rounded-xl md:rounded-lg p-5 md:p-4 text-base md:text-sm",
-                    formData.selectedPlan === "basic" && "bg-muted/50",
-                    formData.selectedPlan === "professional" && "bg-primary/5 border border-primary/20",
-                    formData.selectedPlan === "featured" && "bg-accent/5 border border-accent/30"
-                  )}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-foreground">
-                          {PLAN_DETAILS[formData.selectedPlan].name}
-                        </p>
-                        <p className="text-sm md:text-xs text-muted-foreground">
-                          {formData.selectedPlan === "basic" 
-                            ? "Free forever" 
-                            : `${PLAN_DETAILS[formData.selectedPlan].price}${PLAN_DETAILS[formData.selectedPlan].period}`}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm md:text-xs text-muted-foreground">
-                          {PLAN_DETAILS[formData.selectedPlan].qualified_lead_limit === 0 
-                            ? "No qualified leads" 
-                            : `${PLAN_DETAILS[formData.selectedPlan].qualified_lead_limit} leads/mo`}
-                        </p>
+                  {/* Services Summary */}
+                  <div className="space-y-2">
+                    <h3 className="font-medium flex items-center gap-2 text-sm">
+                      <Stethoscope className="h-4 w-4" /> Services
+                    </h3>
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="flex flex-wrap gap-1.5">
+                        {formData.selectedTreatments.map((t) => (
+                          <span key={t} className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs">
+                            {t}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                    {formData.selectedPlan !== "basic" && (
-                      <p className="mt-3 md:mt-2 text-sm md:text-xs text-muted-foreground">
-                        You'll be redirected to complete payment after account creation.
-                      </p>
-                    )}
                   </div>
-                </div>
 
-                {/* Terms */}
-                <div className="flex items-start space-x-4 md:space-x-3 pt-5 md:pt-4 border-t">
-                  <Checkbox
-                    id="terms"
-                    checked={formData.agreeToTerms}
-                    onCheckedChange={(checked) => updateFormData("agreeToTerms", checked)}
-                    className="h-6 w-6 md:h-4 md:w-4 rounded-md md:rounded mt-0.5"
-                  />
-                  <Label htmlFor="terms" className="text-base md:text-sm font-normal leading-relaxed cursor-pointer">
-                    I agree to the{" "}
-                    <Link to="/terms-of-service" className="text-primary hover:underline" target="_blank">
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
-                      Privacy Policy
-                    </Link>
-                    . I confirm that all information provided is accurate.
-                  </Label>
+                  {/* Insurance Summary */}
+                  <div className="space-y-2">
+                    <h3 className="font-medium flex items-center gap-2 text-sm">
+                      <CreditCard className="h-4 w-4" /> Insurance
+                    </h3>
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="flex flex-wrap gap-1.5">
+                        {formData.selectedInsurance.map((i) => (
+                          <span key={i} className="bg-accent/10 text-accent px-2 py-0.5 rounded text-xs">
+                            {i}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Plan Summary */}
+                  <div className="space-y-2">
+                    <h3 className="font-medium flex items-center gap-2 text-sm">
+                      <Crown className="h-4 w-4" /> Selected Plan
+                    </h3>
+                    <div className={cn(
+                      "rounded-lg p-3 text-sm",
+                      formData.selectedPlan === "basic" && "bg-muted/50",
+                      formData.selectedPlan === "professional" && "bg-primary/5 border border-primary/20",
+                      formData.selectedPlan === "featured" && "bg-accent/5 border border-accent/30"
+                    )}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {PLAN_DETAILS[formData.selectedPlan].name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formData.selectedPlan === "basic" 
+                              ? "Free forever" 
+                              : `${PLAN_DETAILS[formData.selectedPlan].price}${PLAN_DETAILS[formData.selectedPlan].period}`}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">
+                            {PLAN_DETAILS[formData.selectedPlan].qualified_lead_limit === 0 
+                              ? "No qualified leads" 
+                              : `${PLAN_DETAILS[formData.selectedPlan].qualified_lead_limit} leads/mo`}
+                          </p>
+                        </div>
+                      </div>
+                      {formData.selectedPlan !== "basic" && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          You'll be redirected to complete payment after account creation.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Terms */}
+                  <div className="flex items-start space-x-3 pt-4 border-t">
+                    <Checkbox
+                      id="terms"
+                      checked={formData.agreeToTerms}
+                      onCheckedChange={(checked) => updateFormData("agreeToTerms", checked)}
+                      className="mt-0.5"
+                    />
+                    <Label htmlFor="terms" className="text-sm font-normal leading-relaxed cursor-pointer">
+                      I agree to the{" "}
+                      <Link to="/terms-of-service" className="text-primary hover:underline" target="_blank">
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link to="/privacy-policy" className="text-primary hover:underline" target="_blank">
+                        Privacy Policy
+                      </Link>
+                      . I confirm that all information provided is accurate.
+                    </Label>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Navigation Buttons */}
-            <div className="mt-6 flex justify-between gap-4">
+            <div className="mt-8 flex justify-between gap-4">
               {currentStep > 1 && currentStep !== 2 && (
                 <Button
                   variant="outline"
                   onClick={prevStep}
                   disabled={isSubmitting}
-                  className="h-14 md:h-10 px-6 md:px-4 text-base md:text-sm rounded-xl md:rounded-lg"
+                  size="default"
                 >
-                  <ArrowLeft className="mr-2 h-5 w-5 md:h-4 md:w-4" />
+                  <ArrowLeft className="mr-2 h-4 w-4" />
                   Back
                 </Button>
               )}
               {currentStep === 2 && (
-                <div /> // Placeholder for flex spacing
+                <div />
               )}
 
               {currentStep < 8 && currentStep !== 2 && (
                 <Button
                   onClick={nextStep}
                   disabled={!canProceed()}
-                  className="ml-auto h-14 md:h-10 px-8 md:px-6 text-base md:text-sm font-semibold rounded-xl md:rounded-lg"
+                  className="ml-auto"
+                  size="default"
                 >
                   Continue
-                  <ArrowRight className="ml-2 h-5 w-5 md:h-4 md:w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
 
@@ -1449,16 +1362,17 @@ export default function ProviderSignup() {
                 <Button
                   onClick={handleSubmit}
                   disabled={!canProceed() || isSubmitting}
-                  className="ml-auto h-14 md:h-10 px-6 md:px-4 text-base md:text-sm font-semibold rounded-xl md:rounded-lg"
+                  className="ml-auto"
+                  size="default"
                 >
                   {isSubmitting ? "Creating Account..." : formData.selectedPlan === "basic" ? "Create Account" : "Create Account & Subscribe"}
-                  <CheckCircle className="ml-2 h-5 w-5 md:h-4 md:w-4" />
+                  <CheckCircle className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>
 
             {/* Already have account */}
-            <p className="mt-6 text-center text-base md:text-sm text-muted-foreground py-2">
+            <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link to="/provider-login" className="text-primary hover:underline font-medium">
                 Sign in
