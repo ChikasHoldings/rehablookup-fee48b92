@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, MapPin, Stethoscope, Phone, CreditCard } from "lucide-react";
+import { Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, MapPin, Phone, CreditCard } from "lucide-react";
 
 const crisisHotlines = [
   { name: "SAMHSA", phone: "1-800-662-4357", description: "24/7 free & confidential" },
@@ -156,7 +156,7 @@ export function Footer() {
 
           {/* Links Grid */}
           <div className="lg:col-span-9">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:grid-cols-4">
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40 mb-3">
                   Find Help
@@ -169,6 +169,24 @@ export function Footer() {
                         className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
                       >
                         {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40 mb-3">
+                  Treatment
+                </h4>
+                <ul className="space-y-2">
+                  {treatmentTypes.map((type) => (
+                    <li key={type.href}>
+                      <Link 
+                        to={type.href} 
+                        className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                      >
+                        {type.label}
                       </Link>
                     </li>
                   ))}
@@ -218,7 +236,7 @@ export function Footer() {
       {/* SEO Links Section */}
       <div className="border-t border-white/10 bg-white/[0.02]">
         <div className="container py-8">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 md:grid-cols-3 lg:grid-cols-3">
             {/* States */}
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -262,27 +280,6 @@ export function Footer() {
                     className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/60 hover:bg-white/10 hover:text-primary-foreground transition-colors"
                   >
                     {city.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Treatment Types */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Stethoscope className="h-4 w-4 text-accent" />
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40">
-                  Treatment
-                </h4>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {treatmentTypes.map((type) => (
-                  <Link
-                    key={type.href}
-                    to={type.href}
-                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/60 hover:bg-white/10 hover:text-primary-foreground transition-colors"
-                  >
-                    {type.label}
                   </Link>
                 ))}
               </div>
