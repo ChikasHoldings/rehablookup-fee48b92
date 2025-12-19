@@ -37,6 +37,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { SubscriptionHistoryWidget } from "@/components/provider/SubscriptionHistoryWidget";
+import { PaymentMethodCard } from "@/components/provider/PaymentMethodCard";
 
 export default function ProviderBillingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -534,6 +535,12 @@ export default function ProviderBillingPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Payment Method Card */}
+        <PaymentMethodCard 
+          onManagePayment={handleManageSubscription}
+          portalLoading={portalLoading}
+        />
 
         {/* Promo Code - Compact */}
         {currentPlan !== "featured" && (
