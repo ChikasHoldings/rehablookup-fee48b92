@@ -19,11 +19,18 @@ import {
 
 const treatmentTypes = [
   {
+    icon: Sparkles,
+    title: "Detox Programs",
+    description: "Medically supervised withdrawal management with 24/7 monitoring to safely detox from drugs and alcohol.",
+    features: ["Medical supervision", "Withdrawal management", "Medication support", "Treatment transition"],
+    link: "/treatment-types/detox-programs",
+  },
+  {
     icon: Pill,
     title: "Drug Addiction Treatment",
     description: "Comprehensive programs for substance abuse including opioids, stimulants, benzodiazepines, and other controlled substances.",
     features: ["Medical detoxification", "Individual therapy", "Group counseling", "Relapse prevention"],
-    link: "/treatment-types/drug-addiction",
+    link: "/treatment-types/drug-addiction-treatment",
   },
   {
     icon: Activity,
@@ -37,7 +44,7 @@ const treatmentTypes = [
     title: "Dual Diagnosis Treatment",
     description: "Integrated treatment addressing both addiction and co-occurring mental health conditions like depression, anxiety, and PTSD.",
     features: ["Psychiatric evaluation", "Medication management", "Trauma-informed care", "Holistic therapies"],
-    link: "/treatment-types/dual-diagnosis",
+    link: "/treatment-types/dual-diagnosis-treatment",
   },
   {
     icon: Home,
@@ -54,7 +61,7 @@ const treatmentTypes = [
     link: "/treatment-types/outpatient-programs",
   },
   {
-    icon: Sparkles,
+    icon: Heart,
     title: "Holistic & Alternative",
     description: "Complementary approaches that address mind, body, and spirit for whole-person healing.",
     features: ["Yoga & meditation", "Art & music therapy", "Equine therapy", "Nutritional counseling"],

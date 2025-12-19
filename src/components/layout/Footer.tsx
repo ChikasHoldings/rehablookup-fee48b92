@@ -62,7 +62,7 @@ const popularLocations = [
 
 // Treatment types for SEO
 const treatmentTypes = [
-  { name: "Detox Programs", path: "/treatment-types/drug-addiction-treatment" },
+  { name: "Detox Programs", path: "/treatment-types/detox-programs" },
   { name: "Inpatient Rehab", path: "/treatment-types/residential-inpatient" },
   { name: "Outpatient Programs", path: "/treatment-types/outpatient-programs" },
   { name: "Alcohol Rehab", path: "/treatment-types/alcohol-rehabilitation" },
