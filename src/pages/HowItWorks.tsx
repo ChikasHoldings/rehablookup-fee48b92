@@ -109,7 +109,7 @@ const HowItWorks = () => {
             <CheckCircle className="h-5 w-5 text-accent" />
             <span className="text-base font-medium text-primary-foreground">Simple 3-Step Process</span>
           </div>
-          <h1 className="mb-5 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+          <h1 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             How It Works
           </h1>
           <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto leading-relaxed md:text-xl">

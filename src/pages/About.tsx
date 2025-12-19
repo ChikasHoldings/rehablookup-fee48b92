@@ -133,7 +133,7 @@ const About = () => {
               <Heart className="h-5 w-5 text-accent" />
               <span className="text-base font-medium text-primary-foreground">Our Story</span>
             </div>
-            <h1 className="mb-6 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+            <h1 className="mb-6 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               About RehabLookup
             </h1>
             <p className="text-lg text-primary-foreground/80 leading-relaxed md:text-xl max-w-2xl mx-auto">
