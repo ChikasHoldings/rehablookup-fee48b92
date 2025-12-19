@@ -266,7 +266,7 @@ export default function ProviderDashboardPage() {
       </div>
 
       {/* Lead Limit Banners */}
-      <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
+      <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} plan={planKey as "basic" | "professional" | "featured"} />
       <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
 
       {/* Basic Plan Upgrade Banner - show when no leads waiting banner */}
