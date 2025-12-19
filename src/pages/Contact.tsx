@@ -138,7 +138,7 @@ const Contact = () => {
       </section>
 
       {/* Contact Methods Cards */}
-      <section className="py-12 px-4 md:py-16 md:px-6 bg-gradient-to-b from-background to-muted/30">
+      <section className="section-padding-sm bg-gradient-to-b from-background to-muted/30">
         <div className="container">
           <div className="grid gap-5 md:grid-cols-3 max-w-4xl mx-auto">
             {contactMethods.map((method, index) => (
@@ -180,7 +180,7 @@ const Contact = () => {
       </section>
 
       {/* Main Contact Section */}
-      <section className="py-12 px-4 md:py-20 md:px-6">
+      <section className="section-padding">
         <div className="container">
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 max-w-6xl mx-auto">
             {/* Contact Form */}

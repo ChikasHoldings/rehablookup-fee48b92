@@ -340,7 +340,7 @@ const Index = () => {
       </div>
 
       {/* Featured Centers */}
-      <section className="py-20 md:py-24">
+      <section className="section-padding-lg">
         <div className="container">
           {/* Section Header */}
           <div className="mb-12 flex flex-col items-center text-center">
@@ -386,7 +386,7 @@ const Index = () => {
       </section>
 
       {/* Treatment Options */}
-      <section className="py-20 md:py-24 bg-primary">
+      <section className="section-padding-lg bg-primary">
         <div className="container">
           {/* Section Header */}
           <div className="mb-12 text-center">
@@ -460,7 +460,7 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 md:py-24">
+      <section className="section-padding-lg">
         <div className="container">
           {/* Section Header */}
           <div className="mb-14 text-center">
@@ -563,7 +563,7 @@ const Index = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-20 md:py-24 bg-muted/30 overflow-hidden">
+      <section className="section-padding-lg bg-muted/30 overflow-hidden">
         <div className="container">
           <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-20">
             {/* Content */}
@@ -660,7 +660,7 @@ const Index = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 md:py-24 bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
+      <section className="section-padding-lg bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
         <div className="container">
           {/* Section Header */}
           <div className="mb-14 text-center">
@@ -745,7 +745,7 @@ const Index = () => {
       </section>
 
       {/* Resources / Blog Section */}
-      <section className="py-20 md:py-24 bg-muted/30">
+      <section className="section-padding-lg bg-muted/30">
         <div className="container">
           {/* Section Header */}
           <div className="mb-12 flex flex-col items-center text-center md:flex-row md:items-end md:justify-between md:text-left">
@@ -831,7 +831,7 @@ const Index = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="py-16 md:py-20">
+      <section className="section-padding-lg">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
             <h2 className="mb-4 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
