@@ -268,7 +268,7 @@ const Contact = () => {
                           className="h-12 w-full appearance-none rounded-xl border border-input bg-background px-4 text-base text-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-all duration-200"
                         >
                           <option value="">Select a subject</option>
-                          <option value="general">General Inquiry</option>
+                          <option value="general">General Question</option>
                           <option value="listing">Facility Listing</option>
                           <option value="feedback">Feedback</option>
                           <option value="technical">Technical Issue</option>
