@@ -193,23 +193,23 @@ const ForProviders = () => {
       {showAnnouncement && (
         <div className="sticky top-0 z-[60] bg-gradient-to-r from-accent via-accent/95 to-accent text-accent-foreground">
           <div className="container px-4">
-            <div className="flex items-center justify-center gap-2 py-2 relative">
-              <Sparkles className="h-3.5 w-3.5 shrink-0 animate-pulse" />
-              <p className="text-xs font-medium text-center">
+            <div className="flex items-center justify-center gap-2.5 py-2.5 relative">
+              <Sparkles className="h-4 w-4 shrink-0 animate-pulse" />
+              <p className="text-sm font-medium text-center">
                 <span className="font-bold">Limited Time:</span> Get 50% off your first 3 months
                 <Link 
                   to="/provider-signup" 
-                  className="ml-1.5 underline underline-offset-2 hover:no-underline font-semibold"
+                  className="ml-2 underline underline-offset-2 hover:no-underline font-semibold"
                 >
                   Claim Offer →
                 </Link>
               </p>
               <button
                 onClick={() => setShowAnnouncement(false)}
-                className="absolute right-0 p-1 rounded-full hover:bg-white/20 transition-colors"
+                className="absolute right-0 p-1.5 rounded-full hover:bg-white/20 transition-colors"
                 aria-label="Dismiss announcement"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -225,65 +225,65 @@ const ForProviders = () => {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background py-10 md:py-14">
-          <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-accent/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4" />
-          <div className="absolute bottom-0 left-0 w-[180px] h-[180px] bg-primary/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/4" />
+        <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background py-12 md:py-16">
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-accent/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4" />
+          <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-primary/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/4" />
           
-          <div className="container relative z-10 px-4">
-            <div className="max-w-2xl mx-auto text-center">
+          <div className="container relative z-10 px-5 md:px-6">
+            <div className="max-w-3xl mx-auto text-center">
               {/* Trust badges */}
-              <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-                <div className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1">
-                  <Award className="h-3 w-3 text-accent" />
-                  <span className="text-[11px] font-medium text-accent">#1 Treatment Directory</span>
+              <div className="flex flex-wrap items-center justify-center gap-3 mb-5">
+                <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                  <Award className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-medium text-accent">#1 Treatment Directory</span>
                 </div>
-                <div className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1">
-                  <Shield className="h-3 w-3 text-primary" />
-                  <span className="text-[11px] font-medium text-primary">500+ Verified Partners</span>
+                <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">500+ Verified Partners</span>
                 </div>
               </div>
 
-              <h1 className="mb-3 font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground leading-tight">
+              <h1 className="mb-4 font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
                 Fill Your Beds With
                 <span className="text-primary"> Qualified Admissions</span>
               </h1>
               
-              <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-5 leading-relaxed">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
                 Join the network trusted by 500+ treatment centers. Connect with families 
                 actively seeking treatment—not tire kickers.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col items-center justify-center gap-2.5 sm:flex-row mb-6">
+              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row mb-8">
                 <Link to="/provider-signup">
-                  <Button size="sm" className="gap-1.5 h-9 px-5 text-xs font-semibold rounded-md shadow-md hover:shadow-lg transition-all">
+                  <Button size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all">
                     Start Free Trial
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
                 <Link to="/contact">
-                  <Button variant="outline" size="sm" className="gap-1.5 h-9 px-5 text-xs font-semibold rounded-md">
-                    <Phone className="h-3.5 w-3.5" />
+                  <Button variant="outline" size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl">
+                    <Phone className="h-5 w-5" />
                     Schedule Demo
                   </Button>
                 </Link>
               </div>
 
               {/* Social proof */}
-              <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <div className="flex -space-x-1">
+              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="flex -space-x-2">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-primary/70 border-2 border-background flex items-center justify-center">
-                        <span className="text-[9px] font-bold text-primary-foreground">{String.fromCharCode(64 + i)}</span>
+                      <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 border-2 border-background flex items-center justify-center">
+                        <span className="text-xs font-bold text-primary-foreground">{String.fromCharCode(64 + i)}</span>
                       </div>
                     ))}
                   </div>
                   <span className="font-medium">500+ facilities trust us</span>
                 </div>
-                <div className="flex items-center gap-0.5">
+                <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <Star key={i} className="h-3 w-3 fill-accent text-accent" />
+                    <Star key={i} className="h-4 w-4 fill-accent text-accent" />
                   ))}
                   <span className="ml-1 font-medium">4.9/5 rating</span>
                 </div>
@@ -293,9 +293,9 @@ const ForProviders = () => {
         </section>
 
         {/* Stats Bar */}
-        <section className="border-y border-border bg-card py-4">
-          <div className="container px-4">
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 text-center">
+        <section className="border-y border-border bg-card py-8">
+          <div className="container px-5 md:px-6">
+            <div className="grid grid-cols-2 gap-8 md:grid-cols-4 text-center">
               {[
                 { value: "10K+", label: "Families Helped Monthly" },
                 { value: "500+", label: "Verified Partners" },
@@ -304,12 +304,12 @@ const ForProviders = () => {
               ].map((stat, index) => (
                 <div key={stat.label} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
                   <div className={cn(
-                    "font-display text-xl md:text-2xl font-bold mb-0.5",
+                    "font-display text-3xl md:text-4xl font-bold mb-1",
                     stat.accent ? "text-accent" : "text-primary"
                   )}>
                     {stat.value}
                   </div>
-                  <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -317,38 +317,38 @@ const ForProviders = () => {
         </section>
 
         {/* Benefits Grid */}
-        <section className="py-10 md:py-12">
-          <div className="container px-4">
-            <div className="text-center mb-8">
-              <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1">
-                <TrendingUp className="h-3 w-3 text-accent" />
-                <span className="text-[11px] font-medium text-accent">Why Choose RehabLookup</span>
+        <section className="py-16 md:py-20">
+          <div className="container px-5 md:px-6">
+            <div className="text-center mb-12">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <TrendingUp className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">Why Choose RehabLookup</span>
               </div>
-              <h2 className="mb-2 font-display text-lg md:text-xl font-bold text-foreground">
+              <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
                 Everything You Need to Grow Admissions
               </h2>
-              <p className="text-xs text-muted-foreground max-w-md mx-auto">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Our platform is built specifically for treatment centers.
               </p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {benefits.map((benefit, index) => (
-                <AnimatedCard key={benefit.title} delay={index * 60}>
-                  <div className="group h-full rounded-lg border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 hover:border-accent/30">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent/10 transition-colors group-hover:bg-accent/20">
-                        <benefit.icon className="h-4 w-4 text-accent" />
+                <AnimatedCard key={benefit.title} delay={index * 75}>
+                  <div className="group h-full rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-accent/30">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 transition-colors group-hover:bg-accent/20">
+                        <benefit.icon className="h-6 w-6 text-accent" />
                       </div>
                       <div className="text-right">
-                        <div className="text-base font-bold text-primary">{benefit.stat}</div>
-                        <div className="text-[9px] text-muted-foreground">{benefit.statLabel}</div>
+                        <div className="text-2xl font-bold text-primary">{benefit.stat}</div>
+                        <div className="text-xs text-muted-foreground">{benefit.statLabel}</div>
                       </div>
                     </div>
-                    <h3 className="mb-1.5 font-display text-sm font-semibold text-foreground">
+                    <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
                       {benefit.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-muted-foreground leading-relaxed">
                       {benefit.description}
                     </p>
                   </div>
@@ -359,22 +359,22 @@ const ForProviders = () => {
         </section>
 
         {/* How It Works */}
-        <section className="py-10 md:py-12 bg-gradient-to-b from-muted/50 to-background">
-          <div className="container px-4">
-            <div className="text-center mb-8">
-              <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1">
-                <Clock className="h-3 w-3 text-accent" />
-                <span className="text-[11px] font-medium text-accent">Get Started in Minutes</span>
+        <section className="py-16 md:py-20 bg-gradient-to-b from-muted/50 to-background">
+          <div className="container px-5 md:px-6">
+            <div className="text-center mb-12">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <Clock className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">Get Started in Minutes</span>
               </div>
-              <h2 className="mb-2 font-display text-lg md:text-xl font-bold text-foreground">
+              <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
                 Simple 3-Step Process
               </h2>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
                 Join our network quickly and start receiving qualified leads.
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3 max-w-2xl mx-auto">
+            <div className="grid gap-8 md:grid-cols-3 max-w-4xl mx-auto">
               {[
                 { 
                   step: 1, 
@@ -397,34 +397,34 @@ const ForProviders = () => {
               ].map((item, index) => (
                 <div
                   key={item.step}
-                  className="relative rounded-lg border border-border bg-card p-5 shadow-sm text-center animate-fade-in"
+                  className="relative rounded-xl border border-border bg-card p-8 shadow-sm text-center animate-fade-in"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {index < 2 && (
-                    <div className="hidden md:block absolute top-1/2 -right-2 w-4 border-t-2 border-dashed border-accent/30" />
+                    <div className="hidden md:block absolute top-1/2 -right-4 w-8 border-t-2 border-dashed border-accent/30" />
                   )}
                   
-                  <div className="mb-3 mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-sm font-bold text-accent-foreground shadow">
+                  <div className="mb-4 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-xl font-bold text-accent-foreground shadow-md">
                     {item.step}
                   </div>
-                  <div className="mb-2 mx-auto flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
-                    <item.icon className="h-3.5 w-3.5 text-primary" />
+                  <div className="mb-4 mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                    <item.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="mb-1.5 font-display text-sm font-semibold text-foreground">
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
                     {item.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground">
                     {item.description}
                   </p>
                 </div>
               ))}
             </div>
 
-            <div className="text-center mt-6">
+            <div className="text-center mt-10">
               <Link to="/provider-signup">
-                <Button size="sm" className="gap-1.5 h-8 px-5 text-xs font-semibold rounded-md">
+                <Button size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl">
                   Get Started Now
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
             </div>
@@ -432,35 +432,35 @@ const ForProviders = () => {
         </section>
 
         {/* Features Section with Dashboard Image */}
-        <section className="py-10 md:py-12">
-          <div className="container px-4">
-            <div className="grid gap-8 lg:grid-cols-2 items-center">
+        <section className="py-16 md:py-20">
+          <div className="container px-5 md:px-6">
+            <div className="grid gap-12 lg:grid-cols-2 items-center">
               <div>
-                <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1">
-                  <CheckCircle className="h-3 w-3 text-accent" />
-                  <span className="text-[11px] font-medium text-accent">Full Feature Set</span>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                  <CheckCircle className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-medium text-accent">Full Feature Set</span>
                 </div>
-                <h2 className="mb-3 font-display text-lg md:text-xl font-bold text-foreground">
+                <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
                   Everything You Need to Succeed
                 </h2>
-                <p className="mb-4 text-xs text-muted-foreground leading-relaxed">
+                <p className="mb-8 text-lg text-muted-foreground leading-relaxed">
                   Our platform gives you the tools to showcase your facility, connect with families, and grow your admissions.
                 </p>
 
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {listingFeatures.map((feature, index) => (
-                    <li key={feature.text} className="flex items-start gap-2 animate-fade-in" style={{ animationDelay: `${index * 40}ms` }}>
+                    <li key={feature.text} className="flex items-start gap-3 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
                       <div className={cn(
-                        "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
+                        "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
                         feature.highlight ? "bg-accent/15" : "bg-primary/10"
                       )}>
                         <Check className={cn(
-                          "h-2.5 w-2.5",
+                          "h-3.5 w-3.5",
                           feature.highlight ? "text-accent" : "text-primary"
                         )} />
                       </div>
                       <span className={cn(
-                        "text-xs text-foreground",
+                        "text-foreground",
                         feature.highlight && "font-medium"
                       )}>{feature.text}</span>
                     </li>
@@ -469,7 +469,7 @@ const ForProviders = () => {
               </div>
 
               <div className="relative">
-                <div className="rounded-xl overflow-hidden border border-border shadow-lg bg-card">
+                <div className="rounded-2xl overflow-hidden border border-border shadow-xl bg-card">
                   <img 
                     src={providerDashboardMockup} 
                     alt="RehabLookup Provider Dashboard showing analytics, lead notifications, and facility management" 
@@ -478,20 +478,20 @@ const ForProviders = () => {
                 </div>
                 
                 {/* Floating badge */}
-                <div className="absolute -bottom-3 -left-3 md:-left-4 rounded-lg bg-primary px-3 py-2 shadow-lg">
-                  <div className="flex items-center gap-2 text-primary-foreground">
-                    <BarChart3 className="h-4 w-4 text-accent" />
+                <div className="absolute -bottom-4 -left-4 md:-left-6 rounded-xl bg-primary px-4 py-3 shadow-lg">
+                  <div className="flex items-center gap-3 text-primary-foreground">
+                    <BarChart3 className="h-5 w-5 text-accent" />
                     <div>
-                      <div className="text-xs font-bold">Real-Time Analytics</div>
-                      <div className="text-[10px] opacity-80">Track every metric</div>
+                      <div className="text-sm font-bold">Real-Time Analytics</div>
+                      <div className="text-xs opacity-80">Track every metric</div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="absolute -top-3 -right-3 rounded-lg bg-accent px-2.5 py-1.5 shadow-md animate-float">
-                  <div className="flex items-center gap-1 text-accent-foreground">
-                    <Zap className="h-3 w-3" />
-                    <span className="text-[10px] font-bold">Live Dashboard</span>
+                <div className="absolute -top-4 -right-4 rounded-xl bg-accent px-4 py-2 shadow-md animate-float">
+                  <div className="flex items-center gap-2 text-accent-foreground">
+                    <Zap className="h-4 w-4" />
+                    <span className="text-sm font-bold">Live Dashboard</span>
                   </div>
                 </div>
               </div>
@@ -500,41 +500,41 @@ const ForProviders = () => {
         </section>
 
         {/* Testimonials */}
-        <section className="py-10 md:py-12 bg-gradient-to-b from-muted/50 to-background">
-          <div className="container px-4">
-            <div className="text-center mb-8">
-              <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1">
-                <Quote className="h-3 w-3 text-accent" />
-                <span className="text-[11px] font-medium text-accent">Partner Success Stories</span>
+        <section className="py-16 md:py-20 bg-gradient-to-b from-muted/50 to-background">
+          <div className="container px-5 md:px-6">
+            <div className="text-center mb-12">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <Quote className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">Partner Success Stories</span>
               </div>
-              <h2 className="mb-2 font-display text-lg md:text-xl font-bold text-foreground">
+              <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
                 Trusted by Leading Treatment Centers
               </h2>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
                 See how our partners are transforming their admissions.
               </p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {testimonials.map((testimonial, index) => (
-                <AnimatedCard key={testimonial.author} delay={index * 80}>
-                  <div className="h-full flex flex-col rounded-lg border border-border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-3">
-                      <Quote className="h-5 w-5 text-accent/30" />
+                <AnimatedCard key={testimonial.author} delay={index * 100}>
+                  <div className="h-full flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between mb-4">
+                      <Quote className="h-8 w-8 text-accent/30" />
                       <div className="text-right">
-                        <div className="text-base font-bold text-accent">{testimonial.metric}</div>
-                        <div className="text-[9px] text-muted-foreground">{testimonial.metricLabel}</div>
+                        <div className="text-2xl font-bold text-accent">{testimonial.metric}</div>
+                        <div className="text-xs text-muted-foreground">{testimonial.metricLabel}</div>
                       </div>
                     </div>
                     
-                    <blockquote className="flex-1 text-xs text-foreground/90 leading-relaxed mb-3">
+                    <blockquote className="flex-1 text-foreground/90 leading-relaxed mb-4">
                       "{testimonial.quote}"
                     </blockquote>
                     
-                    <div className="border-t border-border pt-3">
-                      <p className="font-semibold text-xs text-foreground">{testimonial.author}</p>
-                      <p className="text-[10px] text-muted-foreground">{testimonial.role}</p>
-                      <p className="text-[10px] text-primary font-medium mt-0.5">{testimonial.facility}, {testimonial.location}</p>
+                    <div className="border-t border-border pt-4">
+                      <p className="font-semibold text-foreground">{testimonial.author}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                      <p className="text-sm text-primary font-medium mt-0.5">{testimonial.facility}, {testimonial.location}</p>
                     </div>
                   </div>
                 </AnimatedCard>
@@ -544,52 +544,52 @@ const ForProviders = () => {
         </section>
 
         {/* Pricing Section */}
-        <section className="py-10 md:py-12">
-          <div className="container px-4">
-            <div className="text-center mb-8">
-              <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1">
-                <Star className="h-3 w-3 text-accent" />
-                <span className="text-[11px] font-medium text-accent">Simple Pricing</span>
+        <section className="py-16 md:py-20">
+          <div className="container px-5 md:px-6">
+            <div className="text-center mb-12">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <Star className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">Simple Pricing</span>
               </div>
-              <h2 className="mb-2 font-display text-lg md:text-xl font-bold text-foreground">
+              <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
                 Plans That Scale With You
               </h2>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
                 Start free and upgrade as you grow. No hidden fees.
               </p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3 max-w-3xl mx-auto">
+            <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
               {pricingPlans.map((plan, index) => (
-                <AnimatedCard key={plan.name} delay={index * 80}>
+                <AnimatedCard key={plan.name} delay={index * 100}>
                   <div className={cn(
-                    "relative h-full flex flex-col rounded-lg border p-5 transition-all",
+                    "relative h-full flex flex-col rounded-2xl border p-8 transition-all",
                     plan.highlight 
-                      ? "border-accent bg-gradient-to-b from-accent/5 to-background shadow-md scale-[1.02]" 
+                      ? "border-accent bg-gradient-to-b from-accent/5 to-background shadow-lg scale-[1.02]" 
                       : "border-border bg-card"
                   )}>
                     {plan.popular && (
-                      <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-0.5 text-[10px] font-semibold text-accent-foreground shadow">
-                          <Sparkles className="h-2.5 w-2.5" />
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1 text-sm font-semibold text-accent-foreground shadow-md">
+                          <Sparkles className="h-3.5 w-3.5" />
                           Most Popular
                         </span>
                       </div>
                     )}
                     
-                    <div className="mb-3">
-                      <h3 className="font-display text-sm font-semibold text-foreground mb-0.5">{plan.name}</h3>
-                      <div className="flex items-baseline gap-0.5">
-                        <span className="text-xl font-bold text-foreground">{plan.price}</span>
-                        <span className="text-xs text-muted-foreground">{plan.period}</span>
+                    <div className="mb-6">
+                      <h3 className="font-display text-xl font-semibold text-foreground mb-2">{plan.name}</h3>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                        <span className="text-lg text-muted-foreground">{plan.period}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{plan.description}</p>
+                      <p className="text-muted-foreground mt-2">{plan.description}</p>
                     </div>
                     
-                    <ul className="flex-1 space-y-1.5 mb-4">
+                    <ul className="flex-1 space-y-3 mb-8">
                       {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-1.5 text-[11px]">
-                          <CheckCircle className="h-3 w-3 text-accent shrink-0 mt-0.5" />
+                        <li key={feature} className="flex items-start gap-2.5">
+                          <CheckCircle className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                           <span className="text-foreground">{feature}</span>
                         </li>
                       ))}
@@ -598,11 +598,11 @@ const ForProviders = () => {
                     <Link to={plan.name === "Premium" ? "/contact" : "/provider-signup"}>
                       <Button 
                         variant={plan.highlight ? "default" : "outline"} 
-                        size="sm"
-                        className="w-full h-8 text-xs font-semibold rounded-md"
+                        size="lg"
+                        className="w-full h-12 text-base font-semibold rounded-xl"
                       >
                         {plan.cta}
-                        <ArrowRight className="h-3 w-3 ml-1" />
+                        <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </Link>
                   </div>
@@ -610,39 +610,39 @@ const ForProviders = () => {
               ))}
             </div>
 
-            <p className="text-center text-[10px] text-muted-foreground mt-4">
+            <p className="text-center text-sm text-muted-foreground mt-8">
               All plans include 14-day free trial • No credit card required • Cancel anytime
             </p>
           </div>
         </section>
 
         {/* Final CTA */}
-        <section className="py-10 md:py-12 bg-gradient-to-b from-primary/5 to-background">
-          <div className="container px-4">
-            <div className="mx-auto max-w-xl rounded-lg border border-accent/20 bg-gradient-to-br from-primary via-primary to-primary/90 p-6 text-center shadow-lg">
-              <div className="mb-3 inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/10 backdrop-blur">
-                <HeartHandshake className="h-5 w-5 text-accent" />
+        <section className="py-16 md:py-20 bg-gradient-to-b from-primary/5 to-background">
+          <div className="container px-5 md:px-6">
+            <div className="mx-auto max-w-2xl rounded-2xl border border-accent/20 bg-gradient-to-br from-primary via-primary to-primary/90 p-10 text-center shadow-xl">
+              <div className="mb-4 inline-flex items-center justify-center h-14 w-14 rounded-full bg-white/10 backdrop-blur">
+                <HeartHandshake className="h-7 w-7 text-accent" />
               </div>
-              <h2 className="mb-2 font-display text-lg md:text-xl font-bold text-primary-foreground">
+              <h2 className="mb-4 font-display text-2xl md:text-3xl font-bold text-primary-foreground">
                 Ready to Transform Your Admissions?
               </h2>
-              <p className="mb-4 text-xs text-primary-foreground/80 max-w-md mx-auto">
+              <p className="mb-8 text-lg text-primary-foreground/80 max-w-lg mx-auto">
                 Join 500+ treatment centers connecting with families who need their help.
               </p>
-              <div className="flex flex-col items-center justify-center gap-2 sm:flex-row">
+              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link to="/provider-signup">
-                  <Button variant="hero-light" size="sm" className="gap-1.5 h-8 px-5 text-xs font-semibold rounded-md">
+                  <Button variant="hero-light" size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl">
                     Start Free Trial
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
                 <Link to="/contact">
-                  <Button variant="outline" size="sm" className="gap-1.5 h-8 px-5 text-xs font-semibold rounded-md bg-transparent border-white/30 text-primary-foreground hover:bg-white/10">
+                  <Button variant="outline" size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl bg-transparent border-white/30 text-primary-foreground hover:bg-white/10">
                     Talk to Sales
                   </Button>
                 </Link>
               </div>
-              <p className="mt-3 text-[10px] text-primary-foreground/60">
+              <p className="mt-6 text-sm text-primary-foreground/60">
                 No credit card required • Setup in 10 minutes • Cancel anytime
               </p>
             </div>
