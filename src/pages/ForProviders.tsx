@@ -148,28 +148,32 @@ const ForProviders = () => {
       />
       
       <main className="flex-1">
-      {/* Hero - Navy background */}
-      <section className="bg-primary py-12 md:py-16">
-        <div className="container text-center px-5 md:px-6">
-          <div className="mb-4 md:mb-4 inline-flex items-center gap-2.5 md:gap-2 rounded-full bg-white/10 px-5 md:px-4 py-2.5 md:py-1.5">
+      {/* Hero - Light background */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-muted/40 to-background py-12 md:py-16">
+        {/* Subtle decorative elements */}
+        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        
+        <div className="container relative z-10 text-center px-5 md:px-6">
+          <div className="mb-4 md:mb-4 inline-flex items-center gap-2.5 md:gap-2 rounded-full bg-accent/10 px-5 md:px-4 py-2.5 md:py-1.5">
             <Building2 className="h-5 w-5 md:h-4 md:w-4 text-accent" />
-            <span className="text-base md:text-sm font-medium text-primary-foreground">For Treatment Centers</span>
+            <span className="text-base md:text-sm font-medium text-accent">For Treatment Centers</span>
           </div>
-          <h1 className="mb-4 md:mb-3 font-display text-3xl md:text-3xl lg:text-4xl font-bold text-primary-foreground">
+          <h1 className="mb-4 md:mb-3 font-display text-3xl md:text-3xl lg:text-4xl font-bold text-foreground">
             Partner With RehabLookup
           </h1>
-          <p className="text-lg md:text-base text-primary-foreground/80 max-w-2xl mx-auto mb-8">
+          <p className="text-lg md:text-base text-muted-foreground max-w-2xl mx-auto mb-8">
             Join our network of verified treatment centers and connect with families seeking quality addiction care.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
             <Link to="/provider-signup" className="w-full sm:w-auto">
-              <Button variant="hero-light" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+              <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
                 List Your Facility
                 <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
               </Button>
             </Link>
             <Link to="/provider-login" className="w-full sm:w-auto">
-              <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg border-white/30 text-white hover:bg-white/10 hover:text-white">
+              <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
                 Sign In
                 <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
               </Button>
