@@ -37,7 +37,7 @@ import {
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
-import { OnboardingChecklist } from "@/components/provider/OnboardingChecklist";
+
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { BasicPlanUpgradeBanner } from "@/components/provider/BasicPlanUpgradeBanner";
 import { OnboardingTour } from "@/components/provider/OnboardingTour";
@@ -348,12 +348,23 @@ export default function ProviderDashboardPage() {
           )}
         </div>
 
-        {/* Onboarding Checklist */}
-        {providerData?.facility && (
-          <OnboardingChecklist 
-            facilityId={providerData.facility.id} 
-            facilityData={providerData.facility}
-          />
+        {/* Profile Completion Prompt */}
+        {providerData?.facility && !providerData.facility.description && (
+          <Link to="/provider/listing" className="block">
+            <Card className="border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <FileEdit className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Complete your profile</span> to attract more families
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </CardContent>
+            </Card>
+          </Link>
         )}
 
         {/* Status Banner - Only for non-approved */}
