@@ -167,7 +167,6 @@ function ProviderShellContent() {
           facilityId={facility?.id}
           facilitySlug={facility?.slug}
           facilityLogo={facility?.logo_url}
-          facilityStatus={facility?.status}
           userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
           onLogout={handleLogout}
         />
