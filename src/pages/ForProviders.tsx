@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { SEO } from "@/components/SEO";
+import { AnimatedCard } from "@/components/ui/animated-card";
 import {
   Building2,
   Users,
@@ -194,21 +195,19 @@ const ForProviders = () => {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {benefits.map((benefit, index) => (
-              <div
-                key={benefit.title}
-                className="group rounded-2xl md:rounded-xl border border-border bg-card p-7 md:p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30 animate-fade-in"
-                style={{ animationDelay: `${index * 75}ms` }}
-              >
-                <div className="mb-5 md:mb-4 flex h-14 w-14 md:h-12 md:w-12 items-center justify-center rounded-xl bg-accent/10 transition-colors group-hover:bg-accent/20">
-                  <benefit.icon className="h-7 w-7 md:h-6 md:w-6 text-accent" />
+              <AnimatedCard key={benefit.title} delay={index * 100}>
+                <div className="group h-full rounded-2xl md:rounded-xl border border-border bg-card p-7 md:p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
+                  <div className="mb-5 md:mb-4 flex h-14 w-14 md:h-12 md:w-12 items-center justify-center rounded-xl bg-accent/10 transition-colors group-hover:bg-accent/20">
+                    <benefit.icon className="h-7 w-7 md:h-6 md:w-6 text-accent" />
+                  </div>
+                  <h3 className="mb-3 md:mb-2 font-display text-xl md:text-lg font-semibold text-foreground">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-base md:text-sm text-muted-foreground">
+                    {benefit.description}
+                  </p>
                 </div>
-                <h3 className="mb-3 md:mb-2 font-display text-xl md:text-lg font-semibold text-foreground">
-                  {benefit.title}
-                </h3>
-                <p className="text-base md:text-sm text-muted-foreground">
-                  {benefit.description}
-                </p>
-              </div>
+              </AnimatedCard>
             ))}
           </div>
         </div>
