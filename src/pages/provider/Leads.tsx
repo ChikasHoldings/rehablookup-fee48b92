@@ -48,6 +48,10 @@ import { LeadDetailPanel, type Lead } from "@/components/provider/leads/LeadDeta
 import { MobileLeadCard } from "@/components/provider/leads/MobileLeadCard";
 import { calculateLeadScore } from "@/lib/leadScoring";
 import { useSubscription } from "@/hooks/useSubscription";
+import { 
+  LeadLimitReachedBanner, 
+  LeadLimitWarningBanner 
+} from "@/components/provider/LeadUsageIndicator";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -394,6 +398,21 @@ export default function ProviderLeadsPage() {
           )}
         </div>
       </div>
+
+      {/* Lead Limit Banners - Consistent with Dashboard */}
+      {(!isMobile || mobileView === 'list') && (
+        <div className="flex-shrink-0 px-4 md:px-6 space-y-2">
+          <LeadLimitReachedBanner 
+            usedLeads={thisMonthQualified.length} 
+            leadLimit={leadLimit} 
+            plan={currentPlan as "basic" | "professional" | "featured"} 
+          />
+          <LeadLimitWarningBanner 
+            usedLeads={thisMonthQualified.length} 
+            leadLimit={leadLimit} 
+          />
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
