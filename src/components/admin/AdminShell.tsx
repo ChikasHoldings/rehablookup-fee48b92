@@ -58,7 +58,7 @@ export function AdminShell() {
     clearForcePasswordChange,
     requireMfaSetup,
     completeMfaSetup,
-    isLoading, 
+    isInitialized,
     logout 
   } = useAdminAuth();
   const mainContentRef = useRef<HTMLDivElement>(null);
@@ -74,14 +74,16 @@ export function AdminShell() {
     }
   }, [location.pathname]);
 
-  if (isLoading) {
+  // Don't render anything until we know auth status (prevents flash)
+  if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-900 border-t-transparent" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-900 border-t-transparent" />
       </div>
     );
   }
 
+  // Redirect handled in hook, but don't render if not admin
   if (!isAdmin) {
     return null;
   }
