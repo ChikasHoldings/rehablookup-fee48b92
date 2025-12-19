@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 // Plan configuration matching check-subscription (supports both old and new product IDs)
-// Basic plan: 1 lifetime lead (direct inquiry only, no routed leads)
+// Basic plan: 1 lifetime lead (direct submissions only, no routed leads)
 const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; lifetime_limit?: number }> = {
   basic: { product_ids: [], lead_limit: 1, lifetime_limit: 1 }, // 1 lifetime lead
   professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 25 },
@@ -474,7 +474,7 @@ async function sendLeadLimitWarningEmail(
   const headerEmoji = isBasicPlan ? "🚨" : "⚠️";
   const headerTitle = isBasicPlan ? "Urgent: Lead Limit Warning" : "Lead Limit Warning";
   const urgencyMessage = isBasicPlan 
-    ? "Your free plan leads are almost exhausted. Upgrade now to keep receiving inquiries!"
+    ? "Your free plan leads are almost exhausted. Upgrade now to keep receiving leads!"
     : "You're approaching your monthly lead limit";
 
   const emailHtml = `
@@ -519,8 +519,8 @@ async function sendLeadLimitWarningEmail(
     
     <p style="color: #4b5563; font-size: 15px; margin-bottom: 24px;">
       ${isBasicPlan 
-        ? "You're on the Basic plan with limited leads. <strong>Upgrade to Professional</strong> to unlock 25 qualified leads per month plus unlimited direct inquiries!"
-        : "Once you reach your limit, new leads will be paused until next month. <strong>Upgrade your plan now</strong> to continue receiving valuable patient inquiries without interruption."
+        ? "You're on the Basic plan with limited leads. <strong>Upgrade to Professional</strong> to unlock more qualified leads per month!"
+        : "Once you reach your limit, new leads will be paused until next month. <strong>Upgrade your plan now</strong> to continue receiving valuable patient leads without interruption."
       }
     </p>
     
@@ -733,7 +733,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Return a user-friendly message - don't expose internal details
         return new Response(
           JSON.stringify({ 
-            error: "This facility is not currently accepting new inquiries. Please try another facility or contact us directly.",
+            error: "This facility is not currently accepting new requests. Please try another facility or contact us directly.",
             code: "FACILITY_UNAVAILABLE"
           }),
           { status: 503, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -771,7 +771,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Lead created successfully:", lead.id, "Validation: valid");
 
-    // ============ CREATE ROUTING LOG FOR DIRECT INQUIRIES ============
+    // ============ CREATE ROUTING LOG FOR DIRECT LEADS ============
     try {
       const planName = capCheckResult?.planName || "basic";
       const usedLeads = capCheckResult?.usedLeads || 0;
@@ -780,12 +780,12 @@ const handler = async (req: Request): Promise<Response> => {
       await supabase.from("lead_routing_logs").insert({
         lead_id: lead.id,
         assigned_provider_id: body.facilityId,
-        assignment_reason: `Direct profile inquiry to ${body.facilityName} (${planName} plan)`,
+        assignment_reason: `Direct profile lead to ${body.facilityName} (${planName} plan)`,
         plan_tier: planName,
         subscription_status: planName !== "basic" ? "active" : "none",
         lead_limit: leadLimit,
         used_leads: usedLeads,
-        routing_source: "direct_inquiry",
+        routing_source: "direct",
         requested_facility_id: body.facilityId,
         eligibility_check_result: {
           source: "direct_profile_form",
@@ -797,7 +797,7 @@ const handler = async (req: Request): Promise<Response> => {
           timestamp: new Date().toISOString(),
         },
       });
-      console.log("Routing log created for direct inquiry:", lead.id);
+      console.log("Routing log created for direct lead:", lead.id);
     } catch (routingLogError) {
       console.error("Failed to create routing log:", routingLogError);
       // Non-blocking - continue with email notification

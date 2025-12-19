@@ -34,7 +34,7 @@ const templates: Record<string, { name: string; subject: string; body: string; c
     subject: "Thanks for reaching out to {{facilityName}}",
     body: `Hi {{leadName}},
 
-Thank you for reaching out to {{facilityName}}. We received your inquiry and want you to know we're here to help.
+Thank you for reaching out to {{facilityName}}. We received your request and want you to know we're here to help.
 
 {{customNote}}
 
@@ -49,10 +49,10 @@ Warmly,
   welcome_professional: {
     name: "Professional Introduction",
     category: "Welcome",
-    subject: "Your inquiry has been received - {{facilityName}}",
+    subject: "Your request has been received - {{facilityName}}",
     body: `Hi {{leadName}},
 
-Thank you for contacting {{facilityName}}. Your inquiry has been received by our admissions team.
+Thank you for contacting {{facilityName}}. Your request has been received by our admissions team.
 
 {{customNote}}
 
@@ -68,7 +68,7 @@ Best regards,
     subject: "A personal note from our team - {{facilityName}}",
     body: `Hi {{leadName}},
 
-I wanted to personally reach out after receiving your inquiry. At {{facilityName}}, we believe every person's journey is unique, and we're honored you're considering us.
+I wanted to personally reach out after receiving your request. At {{facilityName}}, we believe every person's journey is unique, and we're honored you're considering us.
 
 {{customNote}}
 
@@ -100,7 +100,7 @@ With hope,
     subject: "Here's what happens next - {{facilityName}}",
     body: `Hi {{leadName}},
 
-Thanks for your inquiry to {{facilityName}}. Here's what you can expect from us:
+Thanks for your request to {{facilityName}}. Here's what you can expect from us:
 
 1. We'll call within 24 hours to learn about your situation
 2. We'll verify your insurance coverage at no cost

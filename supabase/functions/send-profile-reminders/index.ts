@@ -137,7 +137,7 @@ function generateReminderEmail(firstName: string, facilityName: string, completi
                 <tr>
                   <td style="padding: 16px;">
                     <p style="margin: 0; color: hsl(32, 81%, 29%); font-size: 14px; line-height: 1.5;">
-                      💡 <strong>Tip:</strong> Complete profiles receive up to 3x more inquiries from families seeking treatment.
+                      💡 <strong>Tip:</strong> Complete profiles receive up to 3x more leads from families seeking treatment.
                     </p>
                   </td>
                 </tr>

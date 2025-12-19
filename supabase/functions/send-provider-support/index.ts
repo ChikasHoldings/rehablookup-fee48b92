@@ -15,7 +15,7 @@ interface ProviderSupportRequest {
 
 const topicLabels: Record<string, string> = {
   listing: "Listing & Profile",
-  leads: "Leads & Inquiries",
+  leads: "Leads & Requests",
   billing: "Billing & Payments",
   technical: "Technical Issue",
   account: "Account Settings",
