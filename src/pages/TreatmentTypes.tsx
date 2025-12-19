@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { usStates } from "@/data/usStates";
 import {
   Pill,
   Brain,
@@ -175,32 +176,7 @@ const TreatmentTypes = () => {
               Detox Programs by State
             </h3>
             <div className="flex flex-wrap gap-2">
-              {[
-                { name: "California", slug: "california" },
-                { name: "Florida", slug: "florida" },
-                { name: "Texas", slug: "texas" },
-                { name: "New York", slug: "new-york" },
-                { name: "Arizona", slug: "arizona" },
-                { name: "Colorado", slug: "colorado" },
-                { name: "Pennsylvania", slug: "pennsylvania" },
-                { name: "Illinois", slug: "illinois" },
-                { name: "Ohio", slug: "ohio" },
-                { name: "Georgia", slug: "georgia" },
-                { name: "New Jersey", slug: "new-jersey" },
-                { name: "Massachusetts", slug: "massachusetts" },
-                { name: "Washington", slug: "washington" },
-                { name: "Michigan", slug: "michigan" },
-                { name: "North Carolina", slug: "north-carolina" },
-                { name: "Virginia", slug: "virginia" },
-                { name: "Tennessee", slug: "tennessee" },
-                { name: "Maryland", slug: "maryland" },
-                { name: "Indiana", slug: "indiana" },
-                { name: "Missouri", slug: "missouri" },
-                { name: "Nevada", slug: "nevada" },
-                { name: "Oregon", slug: "oregon" },
-                { name: "Kentucky", slug: "kentucky" },
-                { name: "Utah", slug: "utah" },
-              ].map((state) => (
+              {usStates.map((state) => (
                 <Link key={state.slug} to={`/treatment-types/detox-programs/${state.slug}`}>
                   <Button variant="outline" size="sm">
                     {state.name}
@@ -217,32 +193,7 @@ const TreatmentTypes = () => {
               Inpatient Rehab by State
             </h3>
             <div className="flex flex-wrap gap-2">
-              {[
-                { name: "California", slug: "california" },
-                { name: "Florida", slug: "florida" },
-                { name: "Texas", slug: "texas" },
-                { name: "New York", slug: "new-york" },
-                { name: "Arizona", slug: "arizona" },
-                { name: "Colorado", slug: "colorado" },
-                { name: "Pennsylvania", slug: "pennsylvania" },
-                { name: "Illinois", slug: "illinois" },
-                { name: "Ohio", slug: "ohio" },
-                { name: "Georgia", slug: "georgia" },
-                { name: "New Jersey", slug: "new-jersey" },
-                { name: "Massachusetts", slug: "massachusetts" },
-                { name: "Washington", slug: "washington" },
-                { name: "Michigan", slug: "michigan" },
-                { name: "North Carolina", slug: "north-carolina" },
-                { name: "Virginia", slug: "virginia" },
-                { name: "Tennessee", slug: "tennessee" },
-                { name: "Maryland", slug: "maryland" },
-                { name: "Indiana", slug: "indiana" },
-                { name: "Missouri", slug: "missouri" },
-                { name: "Nevada", slug: "nevada" },
-                { name: "Oregon", slug: "oregon" },
-                { name: "Kentucky", slug: "kentucky" },
-                { name: "Utah", slug: "utah" },
-              ].map((state) => (
+              {usStates.map((state) => (
                 <Link key={state.slug} to={`/treatment-types/residential-inpatient/${state.slug}`}>
                   <Button variant="outline" size="sm">
                     {state.name}
@@ -259,32 +210,7 @@ const TreatmentTypes = () => {
               Outpatient Programs by State
             </h3>
             <div className="flex flex-wrap gap-2">
-              {[
-                { name: "California", slug: "california" },
-                { name: "Florida", slug: "florida" },
-                { name: "Texas", slug: "texas" },
-                { name: "New York", slug: "new-york" },
-                { name: "Arizona", slug: "arizona" },
-                { name: "Colorado", slug: "colorado" },
-                { name: "Pennsylvania", slug: "pennsylvania" },
-                { name: "Illinois", slug: "illinois" },
-                { name: "Ohio", slug: "ohio" },
-                { name: "Georgia", slug: "georgia" },
-                { name: "New Jersey", slug: "new-jersey" },
-                { name: "Massachusetts", slug: "massachusetts" },
-                { name: "Washington", slug: "washington" },
-                { name: "Michigan", slug: "michigan" },
-                { name: "North Carolina", slug: "north-carolina" },
-                { name: "Virginia", slug: "virginia" },
-                { name: "Tennessee", slug: "tennessee" },
-                { name: "Maryland", slug: "maryland" },
-                { name: "Indiana", slug: "indiana" },
-                { name: "Missouri", slug: "missouri" },
-                { name: "Nevada", slug: "nevada" },
-                { name: "Oregon", slug: "oregon" },
-                { name: "Kentucky", slug: "kentucky" },
-                { name: "Utah", slug: "utah" },
-              ].map((state) => (
+              {usStates.map((state) => (
                 <Link key={state.slug} to={`/treatment-types/outpatient-programs/${state.slug}`}>
                   <Button variant="outline" size="sm">
                     {state.name}
