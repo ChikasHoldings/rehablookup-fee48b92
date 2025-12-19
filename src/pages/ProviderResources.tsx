@@ -207,61 +207,36 @@ export default function ProviderResources() {
       />
       
       <main className="flex-1">
-        {/* Hero Section - Light Background */}
-        <section className="relative bg-gradient-to-b from-muted/50 to-background py-16 md:py-20 overflow-hidden">
-          {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+        {/* Hero Section - Light Background, Streamlined */}
+        <section className="relative bg-gradient-to-b from-muted/40 to-background py-12 md:py-16 overflow-hidden">
+          {/* Subtle Decorative Elements */}
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+          <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
           
           <div className="container relative z-10 px-5 md:px-6">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <div className="mb-5 inline-flex items-center gap-2.5 rounded-full bg-accent/10 px-4 py-2 border border-accent/20">
-                  <Sparkles className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-semibold text-accent">Provider Resources</span>
-                </div>
-                <h1 className="font-display text-4xl font-bold text-foreground md:text-5xl leading-tight">
-                  Everything You Need to <span className="text-accent">Succeed</span>
-                </h1>
-                <p className="mt-5 text-lg text-muted-foreground max-w-xl">
-                  Access comprehensive guides, video tutorials, and tools to maximize your facility's visibility and connect with more families.
-                </p>
-                <div className="mt-8 flex flex-col sm:flex-row items-start gap-3">
-                  <Link to="/provider-login">
-                    <Button size="lg" className="gap-2 h-12 px-6 rounded-xl text-base font-semibold shadow-md hover:shadow-lg transition-all">
-                      Access Dashboard
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <a href="#resources">
-                    <Button variant="outline" size="lg" className="gap-2 h-12 px-6 rounded-xl text-base">
-                      Browse Resources
-                    </Button>
-                  </a>
-                </div>
+            <div className="text-center max-w-3xl mx-auto">
+              <div className="mb-4 md:mb-4 inline-flex items-center gap-2.5 md:gap-2 rounded-full bg-accent/10 px-5 md:px-4 py-2.5 md:py-1.5">
+                <Sparkles className="h-5 w-5 md:h-4 md:w-4 text-accent" />
+                <span className="text-base md:text-sm font-medium text-accent">Provider Resources</span>
               </div>
-              
-              {/* Hero Image */}
-              <div className="relative hidden lg:block">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-border">
-                  <img 
-                    src={heroImage} 
-                    alt="Provider Dashboard Analytics"
-                    className="w-full h-auto"
-                  />
-                </div>
-                {/* Floating Stats Card */}
-                <div className="absolute -bottom-6 -left-6 bg-card rounded-xl shadow-elevated border border-border p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                      <TrendingUp className="h-5 w-5 text-accent" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-foreground">500+</p>
-                      <p className="text-xs text-muted-foreground">Partner Facilities</p>
-                    </div>
-                  </div>
-                </div>
+              <h1 className="mb-4 md:mb-3 font-display text-3xl md:text-3xl lg:text-4xl font-bold text-foreground">
+                Tools & Guides for Success
+              </h1>
+              <p className="text-lg md:text-base text-muted-foreground max-w-2xl mx-auto mb-8">
+                Access comprehensive guides, video tutorials, and tools to maximize your facility's visibility and connect with more families.
+              </p>
+              <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
+                <Link to="/provider-login" className="w-full sm:w-auto">
+                  <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+                    Access Dashboard
+                    <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
+                  </Button>
+                </Link>
+                <a href="#resources" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+                    Browse Resources
+                  </Button>
+                </a>
               </div>
             </div>
           </div>
