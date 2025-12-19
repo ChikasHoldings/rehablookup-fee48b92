@@ -67,6 +67,7 @@ const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminLeadRouting = lazy(() => import("./pages/admin/AdminLeadRouting"));
 const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
+const AdminLocationChanges = lazy(() => import("./pages/admin/AdminLocationChanges"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -137,6 +138,7 @@ const App = () => (
               <Route path="users" element={<AdminUsers />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
               <Route path="security-logs" element={<AdminSecurityLogs />} />
+              <Route path="location-changes" element={<AdminLocationChanges />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="profile" element={<AdminProfile />} />
