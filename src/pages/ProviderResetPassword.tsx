@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, ArrowRight, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -266,9 +267,7 @@ export default function ProviderResetPassword() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  At least 8 characters with uppercase, lowercase, and number
-                </p>
+                <PasswordStrengthIndicator password={password} />
               </div>
 
               <div className="space-y-1.5">

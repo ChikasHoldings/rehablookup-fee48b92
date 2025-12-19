@@ -40,6 +40,7 @@ import { compressImage, validateImageFile } from "@/lib/imageUtils";
 import { PlanSelectionStep } from "@/components/provider/PlanSelectionStep";
 import { PLAN_DETAILS } from "@/hooks/useSubscription";
 import { providerNavLinks } from "@/data/providerNavLinks";
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 
 const getBrowserInfo = (): { browser: string; os: string; device: string } => {
   const ua = navigator.userAgent;
@@ -798,9 +799,7 @@ export default function ProviderSignup() {
                           className="pl-10 h-10"
                         />
                       </div>
-                      {formData.password && formData.password.length < 6 && (
-                        <p className="text-xs text-destructive">Password must be at least 6 characters</p>
-                      )}
+                      <PasswordStrengthIndicator password={formData.password} />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password *</Label>
