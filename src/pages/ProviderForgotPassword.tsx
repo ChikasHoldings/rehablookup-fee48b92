@@ -109,12 +109,12 @@ export default function ProviderForgotPassword() {
           variant="provider"
         />
         
-        <main className="flex flex-1 items-center justify-center px-4 py-12 md:py-16">
-          <div className="w-full max-w-sm space-y-8">
-            {/* Success Icon */}
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-primary" />
+        <main className="flex flex-1 items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md animate-step-enter">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-7 w-7 text-primary" />
               </div>
               <h1 className="font-display text-2xl font-bold text-foreground">
                 Check Your Email
@@ -122,41 +122,42 @@ export default function ProviderForgotPassword() {
               <p className="mt-2 text-sm text-muted-foreground">
                 We've sent a password reset link to:
               </p>
-              <p className="mt-1 font-medium text-foreground">{email}</p>
+              <p className="mt-1 text-sm font-medium text-foreground">{email}</p>
             </div>
 
-            {/* Instructions */}
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Click the link in the email to reset your password. The link will expire in 1 hour.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                If you don't see the email, check your spam folder.
-              </p>
-            </div>
+            {/* Card Container */}
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+              <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Click the link in the email to reset your password. The link will expire in 1 hour.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  If you don't see the email, check your spam folder.
+                </p>
+              </div>
 
-            {/* Actions */}
-            <div className="space-y-3">
-              <Button
-                variant="outline"
-                className="w-full h-11"
-                onClick={handleResend}
-                disabled={isLoading}
-              >
-                {isLoading ? "Sending..." : "Resend Email"}
-              </Button>
-              
-              <Link to="/provider-login" className="block">
-                <Button variant="ghost" className="w-full h-11">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Sign In
+              <div className="space-y-3">
+                <Button
+                  variant="outline"
+                  className="w-full h-10 text-sm"
+                  onClick={handleResend}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Resend Email"}
                 </Button>
-              </Link>
+                
+                <Link to="/provider-login" className="block">
+                  <Button variant="ghost" className="w-full h-10 text-sm">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Sign In
+                  </Button>
+                </Link>
+              </div>
             </div>
 
-            {/* Support */}
-            <div className="pt-4 border-t border-border">
-              <p className="text-center text-xs text-muted-foreground">
+            {/* Footer Links */}
+            <div className="mt-6 text-center">
+              <p className="text-xs text-muted-foreground">
                 Need help?{" "}
                 <Link to="/provider-support" className="text-primary hover:underline">
                   Contact support
@@ -180,10 +181,10 @@ export default function ProviderForgotPassword() {
         variant="provider"
       />
       
-      <main className="flex flex-1 items-center justify-center px-4 py-12 md:py-16">
-        <div className="w-full max-w-sm space-y-8">
+      <main className="flex flex-1 items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md animate-step-enter">
           {/* Header */}
-          <div className="text-center">
+          <div className="text-center mb-6">
             <h1 className="font-display text-2xl font-bold text-foreground">
               Forgot Password?
             </h1>
@@ -192,52 +193,53 @@ export default function ProviderForgotPassword() {
             </p>
           </div>
 
-          {/* Reset Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@facility.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 pl-10"
-                  required
-                  autoFocus
-                />
+          {/* Card Container */}
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@facility.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-10 pl-10 text-sm"
+                    required
+                    autoFocus
+                  />
+                </div>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full h-11"
-              disabled={isLoading}
-            >
-              {isLoading ? "Sending..." : "Send Reset Link"}
-              {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
-            </Button>
-          </form>
-
-          {/* Back to Login */}
-          <div className="pt-4 border-t border-border">
-            <Link to="/provider-login" className="block">
-              <Button variant="ghost" className="w-full h-11">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Sign In
+              <Button
+                type="submit"
+                className="w-full h-10 text-sm font-semibold"
+                disabled={isLoading}
+              >
+                {isLoading ? "Sending..." : "Send Reset Link"}
+                {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
               </Button>
-            </Link>
+
+              <Link to="/provider-login" className="block">
+                <Button variant="ghost" className="w-full h-10 text-sm">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Sign In
+                </Button>
+              </Link>
+            </form>
           </div>
 
-          {/* Support */}
-          <p className="text-center text-xs text-muted-foreground">
-            Don't have an account?{" "}
-            <Link to="/provider-signup" className="text-primary hover:underline">
-              List your facility
-            </Link>
-          </p>
+          {/* Footer Links */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link to="/provider-signup" className="text-primary hover:underline font-medium">
+                List your facility
+              </Link>
+            </p>
+          </div>
         </div>
       </main>
       
