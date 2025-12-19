@@ -33,7 +33,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubscription, PLAN_DETAILS, DIRECT_INQUIRY_CLARIFICATION, EXCLUSIVITY_MESSAGE } from "@/hooks/useSubscription";
+import { useSubscription, PLAN_DETAILS, EXCLUSIVITY_MESSAGE } from "@/hooks/useSubscription";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -666,22 +666,14 @@ export default function ProviderBillingPage() {
                           : "bg-muted text-muted-foreground"
                     }`}>
                       {plan.key === "basic" 
-                        ? "1 direct inquiry (lifetime)"
-                        : `${plan.qualified_lead_limit || plan.lead_limit} exclusive qualified leads/month`
+                        ? `${plan.lead_limit} qualified lead (lifetime)`
+                        : `${plan.lead_limit} ${plan.exclusivity} qualified leads/month`
                       }
                     </div>
                     {(plan.key === "professional" || plan.key === "featured") && (
-                      <>
-                        <p className="text-[11px] text-muted-foreground px-1 italic">
-                          {(plan as any).microcopy}
-                        </p>
-                        <div className="text-xs font-medium px-3 py-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200 group relative">
-                          + Unlimited direct profile inquiries
-                          <span className="hidden group-hover:block absolute left-0 right-0 top-full mt-1 p-2 bg-foreground text-background text-[10px] rounded z-10">
-                            {DIRECT_INQUIRY_CLARIFICATION}
-                          </span>
-                        </div>
-                      </>
+                      <p className="text-[11px] text-muted-foreground px-1 italic">
+                        {(plan as any).microcopy}
+                      </p>
                     )}
                     <div className={`text-xs font-medium px-3 py-1.5 rounded-lg ${
                       plan.key === "featured"

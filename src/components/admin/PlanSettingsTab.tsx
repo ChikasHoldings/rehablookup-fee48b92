@@ -331,8 +331,7 @@ export function PlanSettingsTab() {
                 <span className="text-2xl font-bold">Free</span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• {PLAN_DETAILS.basic.qualified_lead_limit} qualified leads/month</li>
-                <li>• {PLAN_DETAILS.basic.direct_lead_limit === -1 ? "Unlimited" : PLAN_DETAILS.basic.direct_lead_limit} direct inquiry</li>
+                <li>• {PLAN_DETAILS.basic.lead_limit} qualified lead (lifetime)</li>
                 <li>• Basic profile listing</li>
                 <li>• Hidden phone/website</li>
               </ul>
@@ -345,8 +344,7 @@ export function PlanSettingsTab() {
                 <span className="text-2xl font-bold">${getPriceNumber(PLAN_DETAILS.professional.price)}<span className="text-sm font-normal">/mo</span></span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• {PLAN_DETAILS.professional.qualified_lead_limit} exclusive qualified leads/month</li>
-                <li>• Unlimited direct inquiries</li>
+                <li>• {PLAN_DETAILS.professional.lead_limit} shared qualified leads/month</li>
                 <li>• Full contact visibility</li>
                 <li>• Standard search placement</li>
               </ul>
@@ -359,8 +357,7 @@ export function PlanSettingsTab() {
                 <span className="text-2xl font-bold">${getPriceNumber(PLAN_DETAILS.featured.price)}<span className="text-sm font-normal">/mo</span></span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• {PLAN_DETAILS.featured.qualified_lead_limit} exclusive qualified leads/month</li>
-                <li>• Unlimited direct inquiries</li>
+                <li>• {PLAN_DETAILS.featured.lead_limit} exclusive qualified leads/month</li>
                 <li>• Homepage featured placement</li>
                 <li>• Priority search ranking</li>
               </ul>

@@ -122,13 +122,9 @@ export function PlanSelectionStep({ selectedPlan, onPlanSelect }: PlanSelectionS
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Qualified Leads</span>
                   <span className="font-semibold text-foreground">
-                    {plan.qualified_lead_limit === 0 ? "None" : `${plan.qualified_lead_limit}/mo`}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Direct Inquiries</span>
-                  <span className="font-semibold text-foreground">
-                    {plan.direct_lead_limit === -1 ? "Unlimited" : plan.direct_lead_limit === 1 ? "1 lifetime" : plan.direct_lead_limit}
+                    {plan.key === "basic" 
+                      ? `${plan.lead_limit} lifetime` 
+                      : `${plan.lead_limit}/mo (${plan.exclusivity})`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">

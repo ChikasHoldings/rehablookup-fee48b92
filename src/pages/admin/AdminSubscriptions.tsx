@@ -383,7 +383,7 @@ export default function AdminSubscriptions() {
         facility_city: facility?.city,
         facility_state: facility?.state,
         leads_used: leadsUsed,
-        lead_limit: planDetails?.qualified_lead_limit || 4,
+        lead_limit: planDetails?.lead_limit || 100,
       };
     });
   }, [stripeStats?.subscriptions, emailToProfile, userToFacility, leadCounts]);
