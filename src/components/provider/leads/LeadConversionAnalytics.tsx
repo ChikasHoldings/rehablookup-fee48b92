@@ -26,6 +26,8 @@ interface Lead {
   who_seeking_help: string | null;
   preferred_contact: string;
   message: string | null;
+  exclusivity?: string | null;
+  qualified?: boolean | null;
 }
 
 interface LeadConversionAnalyticsProps {
