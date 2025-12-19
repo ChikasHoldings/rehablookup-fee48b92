@@ -237,6 +237,25 @@ export default function ProviderFAQ() {
           </div>
         </section>
 
+        {/* Quick Navigation */}
+        <section className="border-b border-border bg-card py-6 sticky top-0 z-40">
+          <div className="container px-5 md:px-6">
+            <div className="flex flex-wrap justify-center gap-2">
+              {faqCategories.map((category) => (
+                <a
+                  key={category.id}
+                  href={`#${category.id}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-accent/30 hover:bg-accent/5 hover:text-accent"
+                >
+                  <category.icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{category.title}</span>
+                  <span className="sm:hidden">{category.title.split(' ')[0]}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* FAQ Categories */}
         <section className="py-16 md:py-20">
           <div className="container px-5 md:px-6">
