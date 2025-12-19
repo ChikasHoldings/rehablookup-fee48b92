@@ -20,19 +20,36 @@ export interface TreatmentCenter {
 // Production: No static mock data - all facilities come from the database
 export const treatmentCenters: TreatmentCenter[] = [];
 
-export const treatmentTypes = ["Detox", "Inpatient", "Outpatient", "Dual Diagnosis"];
+export const treatmentTypes = [
+  "Detox",
+  "Inpatient",
+  "Outpatient",
+  "Dual Diagnosis",
+  "Residential Treatment",
+  "Partial Hospitalization (PHP)",
+  "Intensive Outpatient (IOP)",
+];
 
 export const insuranceProviders = [
-  "Blue Cross Blue Shield",
   "Aetna",
+  "Ambetter",
+  "Anthem",
+  "Blue Cross Blue Shield",
+  "Carelon",
   "Cigna",
-  "United Healthcare",
   "Humana",
   "Kaiser Permanente",
+  "Magellan",
   "Medicare",
   "Medicaid",
+  "Molina Healthcare",
+  "MultiPlan",
+  "Oscar Health",
+  "Oxford",
   "Tricare",
-  "Other"
+  "United Healthcare",
+  "Self-Pay",
+  "Other",
 ];
 
 export const usStates = [
