@@ -314,7 +314,7 @@ export default function ProviderDashboardPage() {
             
             {/* Blurred Leads Preview */}
             <div className="mt-4 pt-4 border-t border-border/50">
-              <p className="text-xs text-muted-foreground mb-3">Recent inquiries:</p>
+              <p className="text-xs text-muted-foreground mb-3">Recent leads:</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {['Sarah M.', 'John D.', 'Michael R.'].slice(0, Math.min(3, totalLeadsCount)).map((name, idx) => (
                   <Link 
@@ -415,12 +415,12 @@ export default function ProviderDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Leads - different display for Basic vs Paid plans */}
+        {/* Leads */}
         <Card className="group hover:shadow-md transition-all active:scale-[0.98] touch-manipulation">
           <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                {planKey === "basic" ? "Direct Inquiry" : "Leads"}
+                Qualified Leads
               </CardTitle>
               <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
                 <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" />
@@ -434,10 +434,10 @@ export default function ProviderDashboardPage() {
               <div className="space-y-1.5">
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-2xl sm:text-3xl font-bold text-foreground">{monthlyLeadsCount}</span>
-                  <span className="text-base sm:text-lg text-muted-foreground">/ 1</span>
+                  <span className="text-base sm:text-lg text-muted-foreground">/ {leadLimit}</span>
                 </div>
                 <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">
-                  {monthlyLeadsCount >= 1 ? "Limit reached" : "1 inquiry (lifetime)"}
+                  {monthlyLeadsCount >= leadLimit ? "Limit reached" : `${leadLimit} lead (lifetime)`}
                 </p>
                 <Button variant="link" className="h-auto p-0 text-[10px] sm:text-xs text-primary" asChild>
                   <Link to="/provider/billing">
