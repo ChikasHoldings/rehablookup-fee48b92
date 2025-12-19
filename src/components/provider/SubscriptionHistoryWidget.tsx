@@ -176,8 +176,36 @@ export function SubscriptionHistoryWidget({
     }
   };
 
+  // Non-subscribed users see upgrade prompt instead of billing details
   if (!isSubscribed) {
-    return null;
+    return (
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Receipt className="h-4 w-4" />
+                Subscription & Billing
+              </CardTitle>
+              <CardDescription>View history and manage your subscription</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6 space-y-3">
+            <div className="h-12 w-12 rounded-full bg-muted mx-auto flex items-center justify-center">
+              <CreditCard className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-medium text-foreground">No Active Subscription</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Upgrade to a paid plan to access billing history and subscription management.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
