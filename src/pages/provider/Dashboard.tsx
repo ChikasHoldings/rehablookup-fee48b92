@@ -450,6 +450,7 @@ export default function ProviderDashboardPage() {
               <LeadUsageIndicator 
                 usedLeads={monthlyLeadsCount} 
                 leadLimit={leadLimit}
+                exclusivity={planKey === "featured" ? "exclusive" : planKey === "professional" ? "shared" : undefined}
               />
             )}
           </CardContent>
