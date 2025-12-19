@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from "react";
 import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
 
 interface SelectedFacilityContextType {
@@ -6,7 +6,6 @@ interface SelectedFacilityContextType {
   setSelectedFacility: (facility: ProviderFacility) => void;
   requestFacilitySwitch: (facility: ProviderFacility) => void;
   isLoading: boolean;
-  // Unsaved changes handling
   hasUnsavedChanges: boolean;
   setHasUnsavedChanges: (value: boolean) => void;
   pendingFacilitySwitch: ProviderFacility | null;
@@ -16,63 +15,57 @@ interface SelectedFacilityContextType {
 
 const SelectedFacilityContext = createContext<SelectedFacilityContextType | undefined>(undefined);
 
+// Get initial facility from localStorage synchronously
+function getInitialFacility(): ProviderFacility | null {
+  try {
+    const stored = localStorage.getItem("selectedFacilityData");
+    if (stored) {
+      return JSON.parse(stored) as ProviderFacility;
+    }
+    const storedId = localStorage.getItem("selectedFacilityId");
+    if (storedId) {
+      return { id: storedId } as ProviderFacility;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
 export function SelectedFacilityProvider({ children }: { children: ReactNode }) {
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
-  const [selectedFacility, setSelectedFacilityState] = useState<ProviderFacility | null>(() => {
-    // Try to restore from localStorage immediately on mount for instant UI
-    const storedFacilityId = localStorage.getItem("selectedFacilityId");
-    return storedFacilityId ? { id: storedFacilityId } as ProviderFacility : null;
-  });
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [selectedFacility, setSelectedFacilityState] = useState<ProviderFacility | null>(getInitialFacility);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pendingFacilitySwitch, setPendingFacilitySwitch] = useState<ProviderFacility | null>(null);
 
-  // Initialize/update selected facility from fetched facilities
+  // Update selected facility when facilities load
   useEffect(() => {
-    if (facilitiesLoading) return;
+    if (facilitiesLoading || facilities.length === 0) return;
     
-    // If no facilities, still mark as initialized
-    if (facilities.length === 0) {
-      setSelectedFacilityState(null);
-      setIsInitialized(true);
-      return;
-    }
-    
-    const storedFacilityId = localStorage.getItem("selectedFacilityId");
-    
-    if (storedFacilityId) {
-      const storedFacility = facilities.find(f => f.id === storedFacilityId);
-      if (storedFacility) {
-        setSelectedFacilityState(storedFacility);
-        setIsInitialized(true);
+    // If we have a selected facility, try to find the full version
+    if (selectedFacility?.id) {
+      const fullFacility = facilities.find(f => f.id === selectedFacility.id);
+      if (fullFacility) {
+        setSelectedFacilityState(fullFacility);
+        localStorage.setItem("selectedFacilityData", JSON.stringify(fullFacility));
         return;
       }
     }
     
-    // Default to first facility if no stored selection or stored facility not found
+    // Default to first facility
     setSelectedFacilityState(facilities[0]);
     localStorage.setItem("selectedFacilityId", facilities[0].id);
-    setIsInitialized(true);
-  }, [facilities, facilitiesLoading]);
-
-  // Keep selected facility in sync with facilities list (in case of updates)
-  useEffect(() => {
-    if (!selectedFacility || facilities.length === 0) return;
-    
-    const updatedFacility = facilities.find(f => f.id === selectedFacility.id);
-    if (updatedFacility && JSON.stringify(updatedFacility) !== JSON.stringify(selectedFacility)) {
-      setSelectedFacilityState(updatedFacility);
-    }
-  }, [facilities, selectedFacility]);
+    localStorage.setItem("selectedFacilityData", JSON.stringify(facilities[0]));
+  }, [facilities, facilitiesLoading, selectedFacility?.id]);
 
   const setSelectedFacility = useCallback((facility: ProviderFacility) => {
     setSelectedFacilityState(facility);
     localStorage.setItem("selectedFacilityId", facility.id);
+    localStorage.setItem("selectedFacilityData", JSON.stringify(facility));
     setHasUnsavedChanges(false);
     setPendingFacilitySwitch(null);
   }, []);
 
-  // Request to switch facility - checks for unsaved changes first
   const requestFacilitySwitch = useCallback((facility: ProviderFacility) => {
     if (facility.id === selectedFacility?.id) return;
     
@@ -93,20 +86,20 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
     setPendingFacilitySwitch(null);
   }, []);
 
+  const value = useMemo(() => ({
+    selectedFacility,
+    setSelectedFacility,
+    requestFacilitySwitch,
+    isLoading: false, // Never block - we use cached data
+    hasUnsavedChanges,
+    setHasUnsavedChanges,
+    pendingFacilitySwitch,
+    confirmFacilitySwitch,
+    cancelFacilitySwitch,
+  }), [selectedFacility, setSelectedFacility, requestFacilitySwitch, hasUnsavedChanges, pendingFacilitySwitch, confirmFacilitySwitch, cancelFacilitySwitch]);
+
   return (
-    <SelectedFacilityContext.Provider
-      value={{
-        selectedFacility,
-        setSelectedFacility,
-        requestFacilitySwitch,
-        isLoading: facilitiesLoading && !isInitialized,
-        hasUnsavedChanges,
-        setHasUnsavedChanges,
-        pendingFacilitySwitch,
-        confirmFacilitySwitch,
-        cancelFacilitySwitch,
-      }}
-    >
+    <SelectedFacilityContext.Provider value={value}>
       {children}
     </SelectedFacilityContext.Provider>
   );
@@ -120,7 +113,6 @@ export function useSelectedFacility() {
   return context;
 }
 
-// Optional version that doesn't throw - returns null if not in provider context
 export function useSelectedFacilityOptional() {
   const context = useContext(SelectedFacilityContext);
   return context ?? { 
