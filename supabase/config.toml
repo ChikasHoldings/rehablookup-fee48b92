@@ -164,3 +164,6 @@ verify_jwt = true
 
 [functions.validate-promo-code]
 verify_jwt = true
+
+[functions.send-provider-support]
+verify_jwt = false
