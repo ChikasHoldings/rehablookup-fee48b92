@@ -44,14 +44,14 @@ const treatmentTypes = [
     title: "Residential Inpatient",
     description: "24/7 structured care in a supportive residential environment for intensive, focused recovery.",
     features: ["Round-the-clock supervision", "Structured daily schedule", "Therapeutic community", "Life skills training"],
-    link: "/rehab-centers?type=inpatient",
+    link: "/treatment-types/residential-inpatient",
   },
   {
     icon: Stethoscope,
     title: "Outpatient Programs",
     description: "Flexible treatment options allowing you to maintain work, school, and family commitments while receiving care.",
     features: ["Intensive outpatient (IOP)", "Partial hospitalization (PHP)", "Evening programs", "Telehealth options"],
-    link: "/rehab-centers?type=outpatient",
+    link: "/treatment-types/outpatient-programs",
   },
   {
     icon: Sparkles,
