@@ -186,6 +186,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/locations" className="text-sm text-slate-300 transition-colors hover:text-white">
+                  Browse by Location
+                </Link>
+              </li>
+              <li>
                 <Link to="/treatment-types" className="text-sm text-slate-300 transition-colors hover:text-white">
                   Treatment Types
                 </Link>
