@@ -239,14 +239,14 @@ const Index = () => {
         {/* Content */}
         <div className="container relative py-12 md:py-14 lg:py-16">
           <div className="mx-auto max-w-4xl text-center">
-            {/* Headline - SEO optimized with primary keywords */}
+            {/* Headline */}
             <h1 className="mb-3 font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Find Addiction Treatment Centers Near You
+              Find the Right Path to Recovery
             </h1>
 
-            {/* Subheadline - Value proposition with secondary keywords */}
-            <p className="mb-6 md:mb-8 text-sm md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
-              Compare verified rehab facilities, check insurance coverage, and start your recovery journey today.
+            {/* Subheadline */}
+            <p className="mb-6 md:mb-8 text-sm md:text-base text-white/90 animate-fade-in max-w-lg mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
+              Compare verified treatment centers and check your insurance coverage.
             </p>
 
             {/* Search Form - Directory Style */}
