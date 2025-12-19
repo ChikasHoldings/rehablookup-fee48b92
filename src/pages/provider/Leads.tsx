@@ -57,6 +57,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { toast } from "sonner";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
+import { LeadLimitUpgradeModal } from "@/components/provider/LeadLimitUpgradeModal";
+import { useProviderData } from "@/hooks/useProviderData";
 
 interface DateRange {
   from: Date | undefined;
@@ -90,9 +92,11 @@ export default function ProviderLeadsPage() {
   const queryClient = useQueryClient();
   const { facilities } = useProviderFacilities();
   const { data: subscription } = useSubscription();
+  const { data: providerData } = useProviderData(facilities[0]?.id);
   const isMobile = useIsMobile();
   const currentPlan = subscription?.plan || "basic";
-  const leadLimit = currentPlan === "basic" ? 1 : (subscription?.lead_limit ?? 25);
+  const leadLimit = subscription?.lead_limit ?? 0;
+  const monthlyLeadsUsed = providerData?.monthlyLeadsCount ?? 0;
 
   // Create facility lookup map for quick access
   const facilityMap = useMemo(() => {
@@ -875,6 +879,13 @@ export default function ProviderLeadsPage() {
           lead={emailLead}
         />
       )}
+
+      {/* Lead Limit Upgrade Modal */}
+      <LeadLimitUpgradeModal
+        usedLeads={monthlyLeadsUsed}
+        leadLimit={leadLimit}
+        currentPlan={currentPlan}
+      />
     </div>
   );
 }
