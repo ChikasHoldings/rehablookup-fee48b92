@@ -11,9 +11,10 @@ import {
   Building2, 
   ChevronRight, 
   Phone,
-  Star,
   ArrowRight,
-  Map
+  Map,
+  Globe,
+  Compass
 } from "lucide-react";
 
 const Locations = () => {
@@ -46,6 +47,14 @@ const Locations = () => {
       return next;
     });
   };
+
+  // Region data
+  const regions = [
+    { name: "Northeast", icon: Compass, states: ["new-york", "massachusetts", "pennsylvania", "new-jersey", "connecticut"] },
+    { name: "Southeast", icon: Compass, states: ["florida", "georgia", "north-carolina", "south-carolina", "tennessee"] },
+    { name: "West", icon: Compass, states: ["california", "arizona", "colorado", "washington", "oregon"] },
+    { name: "Midwest", icon: Compass, states: ["illinois", "ohio", "michigan", "minnesota", "wisconsin"] },
+  ];
 
   // Structured data for SEO
   const structuredData = {
@@ -83,28 +92,29 @@ const Locations = () => {
       />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-12 md:py-16">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-14 md:py-20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
         <div className="container relative">
-          <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm border border-white/10">
               <Map className="h-4 w-4" />
-              Location Directory
+              Nationwide Directory
             </div>
             
             <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Rehab Centers by Location
             </h1>
             
-            <p className="mt-4 text-lg text-white/80 leading-relaxed max-w-2xl">
+            <p className="mx-auto mt-5 text-lg text-white/80 leading-relaxed max-w-2xl">
               Browse verified addiction treatment facilities across all 50 US states and major cities. 
               Find quality care close to home or explore destination treatment options.
             </p>
 
             {/* Search */}
-            <div className="mt-8 max-w-xl">
+            <div className="mx-auto mt-8 max-w-lg">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -112,19 +122,29 @@ const Locations = () => {
                   placeholder="Search states or cities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-14 w-full rounded-xl border-0 bg-white pl-12 pr-4 text-base shadow-lg placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-white/50"
+                  className="h-14 w-full rounded-2xl border-0 bg-white pl-12 pr-4 text-base shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-white/50"
                 />
               </div>
             </div>
 
-            <div className="mt-6 flex items-center gap-6 text-white/80 text-sm">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-white/80 text-sm">
               <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                <span><strong className="text-white">50</strong> States</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                  <Globe className="h-4 w-4" />
+                </div>
+                <span><strong className="text-white">50</strong> States Covered</span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span><strong className="text-white">150+</strong> Cities</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <span><strong className="text-white">150+</strong> Major Cities</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+                  <Building2 className="h-4 w-4" />
+                </div>
+                <span><strong className="text-white">Verified</strong> Facilities</span>
               </div>
             </div>
           </div>
@@ -132,27 +152,33 @@ const Locations = () => {
       </section>
 
       {/* Top Cities Section */}
-      <section className="border-b bg-card py-10">
+      <section className="border-b bg-card py-12 md:py-14">
         <div className="container">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Popular Cities</h2>
-              <p className="text-sm text-muted-foreground">Top treatment destinations across the country</p>
-            </div>
+          <div className="mb-8 text-center">
+            <span className="text-sm font-medium text-primary uppercase tracking-wider">Featured Destinations</span>
+            <h2 className="mt-2 text-2xl font-bold text-foreground">Popular Treatment Cities</h2>
+            <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
+              Top locations for addiction treatment with the most comprehensive care options
+            </p>
           </div>
           
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
-            {topCities.slice(0, 10).map(city => (
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            {topCities.slice(0, 10).map((city, index) => (
               <Link
                 key={`${city.state.slug}-${city.slug}`}
                 to={`/rehab-centers/${city.state.slug}/${city.slug}`}
-                className="group flex items-center gap-3 rounded-xl border bg-background p-4 transition-all hover:border-primary hover:shadow-md"
+                className="group relative flex items-center gap-3 rounded-xl border bg-background p-4 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                {index < 3 && (
+                  <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground shadow-sm">
+                    #{index + 1}
+                  </div>
+                )}
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   {city.state.abbreviation}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                  <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                     {city.name}
                   </p>
                   <p className="text-xs text-muted-foreground">{city.state.name}</p>
@@ -164,77 +190,82 @@ const Locations = () => {
       </section>
 
       {/* All States Directory */}
-      <section className="bg-background py-10 md:py-14">
+      <section className="bg-background py-12 md:py-16">
         <div className="container">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">Browse by State</h2>
-            <p className="mt-1 text-muted-foreground">
+          <div className="mb-10 text-center">
+            <span className="text-sm font-medium text-primary uppercase tracking-wider">Complete Directory</span>
+            <h2 className="mt-2 text-2xl font-bold text-foreground md:text-3xl">Browse All States</h2>
+            <p className="mt-2 text-muted-foreground">
               {filteredStates.length === statesData.length 
-                ? "All 50 states with city-level directories"
+                ? "Explore treatment options in all 50 states"
                 : `${filteredStates.length} states matching "${searchQuery}"`
               }
             </p>
           </div>
 
           {filteredStates.length === 0 ? (
-            <div className="rounded-xl border bg-card p-12 text-center">
-              <Search className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">No Results Found</h3>
+            <div className="mx-auto max-w-md rounded-2xl border bg-card p-12 text-center shadow-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <Search className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="mt-5 text-lg font-semibold">No Results Found</h3>
               <p className="mt-2 text-muted-foreground">
                 Try searching for a different state or city name.
               </p>
               <Button 
                 variant="outline" 
-                className="mt-4"
+                className="mt-6"
                 onClick={() => setSearchQuery("")}
               >
                 Clear Search
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {filteredStates.map(state => {
                 const isExpanded = expandedStates.has(state.slug);
-                const displayCities = isExpanded ? state.cities : state.cities.slice(0, 3);
-                const hasMoreCities = state.cities.length > 3;
+                const displayCities = isExpanded ? state.cities : state.cities.slice(0, 4);
+                const hasMoreCities = state.cities.length > 4;
 
                 return (
                   <div
                     key={state.slug}
-                    className="rounded-xl border bg-card overflow-hidden transition-shadow hover:shadow-md"
+                    className="group rounded-2xl border bg-card overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary/30"
                   >
                     {/* State Header */}
                     <Link
                       to={`/rehab-centers/${state.slug}`}
-                      className="group flex items-center justify-between border-b bg-secondary/30 p-4 transition-colors hover:bg-secondary/50"
+                      className="flex items-center justify-between border-b bg-gradient-to-r from-secondary/50 to-secondary/30 p-5 transition-colors hover:from-primary/10 hover:to-primary/5"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm">
                           {state.abbreviation}
                         </div>
                         <div>
                           <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
                             {state.name}
                           </h3>
-                          <p className="text-xs text-muted-foreground">
-                            {state.cities.length} cities
+                          <p className="text-sm text-muted-foreground">
+                            {state.cities.length} cities available
                           </p>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-all group-hover:translate-x-1" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background shadow-sm transition-all group-hover:bg-primary group-hover:shadow-md">
+                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary-foreground transition-colors" />
+                      </div>
                     </Link>
 
                     {/* Cities List */}
-                    <div className="p-4">
-                      <div className="space-y-1">
+                    <div className="p-5">
+                      <div className="grid grid-cols-2 gap-2">
                         {displayCities.map(city => (
                           <Link
                             key={city.slug}
                             to={`/rehab-centers/${state.slug}/${city.slug}`}
-                            className="group flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-secondary"
+                            className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all hover:bg-primary/5 hover:translate-x-0.5"
                           >
-                            <MapPin className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
-                            <span className="text-foreground group-hover:text-primary">{city.name}</span>
+                            <MapPin className="h-3.5 w-3.5 text-primary/60" />
+                            <span className="text-foreground truncate hover:text-primary">{city.name}</span>
                           </Link>
                         ))}
                       </div>
@@ -242,12 +273,15 @@ const Locations = () => {
                       {hasMoreCities && (
                         <button
                           onClick={() => toggleState(state.slug)}
-                          className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border/60 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:border-primary/50 hover:text-primary hover:bg-primary/5"
                         >
                           {isExpanded ? (
-                            <>Show less</>
+                            <>Show fewer cities</>
                           ) : (
-                            <>+{state.cities.length - 3} more cities</>
+                            <>
+                              <span>+{state.cities.length - 4} more cities</span>
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </>
                           )}
                         </button>
                       )}
@@ -261,118 +295,69 @@ const Locations = () => {
       </section>
 
       {/* Quick Links by Region */}
-      <section className="border-t bg-secondary/30 py-10">
+      <section className="border-t bg-gradient-to-b from-secondary/50 to-secondary/20 py-12 md:py-14">
         <div className="container">
-          <h2 className="mb-6 text-xl font-bold text-foreground">Browse by Region</h2>
+          <div className="mb-10 text-center">
+            <span className="text-sm font-medium text-primary uppercase tracking-wider">Quick Access</span>
+            <h2 className="mt-2 text-2xl font-bold text-foreground">Browse by Region</h2>
+          </div>
           
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {/* Northeast */}
-            <div>
-              <h3 className="mb-3 font-semibold text-foreground flex items-center gap-2">
-                <Star className="h-4 w-4 text-primary" />
-                Northeast
-              </h3>
-              <div className="space-y-1">
-                {["new-york", "massachusetts", "pennsylvania", "new-jersey", "connecticut"].map(slug => {
-                  const state = statesData.find(s => s.slug === slug);
-                  return state ? (
-                    <Link
-                      key={slug}
-                      to={`/rehab-centers/${slug}`}
-                      className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {state.name}
-                    </Link>
-                  ) : null;
-                })}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {regions.map((region) => (
+              <div key={region.name} className="rounded-2xl border bg-card p-6 transition-shadow hover:shadow-md">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                    <region.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground">{region.name}</h3>
+                </div>
+                <div className="space-y-2">
+                  {region.states.map(slug => {
+                    const state = statesData.find(s => s.slug === slug);
+                    return state ? (
+                      <Link
+                        key={slug}
+                        to={`/rehab-centers/${slug}`}
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <ChevronRight className="h-3 w-3" />
+                        {state.name}
+                      </Link>
+                    ) : null;
+                  })}
+                </div>
               </div>
-            </div>
-
-            {/* Southeast */}
-            <div>
-              <h3 className="mb-3 font-semibold text-foreground flex items-center gap-2">
-                <Star className="h-4 w-4 text-primary" />
-                Southeast
-              </h3>
-              <div className="space-y-1">
-                {["florida", "georgia", "north-carolina", "south-carolina", "tennessee"].map(slug => {
-                  const state = statesData.find(s => s.slug === slug);
-                  return state ? (
-                    <Link
-                      key={slug}
-                      to={`/rehab-centers/${slug}`}
-                      className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {state.name}
-                    </Link>
-                  ) : null;
-                })}
-              </div>
-            </div>
-
-            {/* West */}
-            <div>
-              <h3 className="mb-3 font-semibold text-foreground flex items-center gap-2">
-                <Star className="h-4 w-4 text-primary" />
-                West
-              </h3>
-              <div className="space-y-1">
-                {["california", "arizona", "colorado", "washington", "oregon"].map(slug => {
-                  const state = statesData.find(s => s.slug === slug);
-                  return state ? (
-                    <Link
-                      key={slug}
-                      to={`/rehab-centers/${slug}`}
-                      className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {state.name}
-                    </Link>
-                  ) : null;
-                })}
-              </div>
-            </div>
-
-            {/* Midwest */}
-            <div>
-              <h3 className="mb-3 font-semibold text-foreground flex items-center gap-2">
-                <Star className="h-4 w-4 text-primary" />
-                Midwest
-              </h3>
-              <div className="space-y-1">
-                {["illinois", "ohio", "michigan", "minnesota", "wisconsin"].map(slug => {
-                  const state = statesData.find(s => s.slug === slug);
-                  return state ? (
-                    <Link
-                      key={slug}
-                      to={`/rehab-centers/${slug}`}
-                      className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {state.name}
-                    </Link>
-                  ) : null;
-                })}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="bg-primary py-12">
-        <div className="container text-center">
-          <h2 className="text-2xl font-bold text-white md:text-3xl">
-            Need Help Finding Treatment?
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-white/80">
-            Our team can help you find the right treatment center based on your location, 
-            insurance, and specific needs.
-          </p>
-          <Link to="/request-help" className="mt-6 inline-block">
-            <Button size="lg" variant="secondary" className="gap-2">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-14 md:py-16">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+        
+        <div className="container relative text-center">
+          <div className="mx-auto max-w-2xl">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm">
               <Phone className="h-4 w-4" />
-              Get Personalized Recommendations
-            </Button>
-          </Link>
+              Free Consultation
+            </div>
+            
+            <h2 className="text-2xl font-bold text-white md:text-3xl">
+              Need Help Finding the Right Treatment?
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-white/80 leading-relaxed">
+              Our dedicated team can help you find the perfect treatment center based on your location, 
+              insurance coverage, and specific recovery needs.
+            </p>
+            
+            <Link to="/request-help" className="mt-8 inline-block">
+              <Button size="lg" variant="secondary" className="gap-2 h-12 px-8 text-base shadow-lg hover:shadow-xl transition-shadow">
+                Get Personalized Recommendations
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
     </Layout>
