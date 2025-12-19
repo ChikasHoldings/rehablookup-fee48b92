@@ -62,6 +62,7 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminFlaggedImages = lazy(() => import("./pages/admin/AdminFlaggedImages"));
+const AdminCredentials = lazy(() => import("./pages/admin/AdminCredentials"));
 const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminLeadRouting = lazy(() => import("./pages/admin/AdminLeadRouting"));
@@ -131,6 +132,7 @@ const App = () => (
               <Route path="lead-routing" element={<AdminLeadRouting />} />
               <Route path="subscriptions" element={<AdminSubscriptions />} />
               <Route path="featured" element={<AdminFeatured />} />
+              <Route path="credentials" element={<AdminCredentials />} />
               <Route path="flagged-images" element={<AdminFlaggedImages />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
