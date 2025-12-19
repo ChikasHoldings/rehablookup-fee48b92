@@ -74,12 +74,7 @@ export function SubscriptionHistoryWidget({
 
   const fetchBillingHistory = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase.functions.invoke("get-provider-subscription", {
-        body: { userId: user.id },
-      });
+      const { data, error } = await supabase.functions.invoke("get-billing-history");
 
       if (error) throw error;
 

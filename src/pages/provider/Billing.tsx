@@ -8,7 +8,6 @@ import {
   Clock, 
   Loader2, 
   ExternalLink,
-  Star,
   TrendingUp,
   X,
   Users,
@@ -17,13 +16,12 @@ import {
   RefreshCw,
   Tag,
   CheckCircle2,
-  XCircle,
   ChevronDown,
   Shield,
-  Sparkles
+  Sparkles,
+  Info
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

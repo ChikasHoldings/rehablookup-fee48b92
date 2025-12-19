@@ -8,8 +8,8 @@ const corsHeaders = {
 };
 
 // Support both old and new Stripe product IDs
-const PROFESSIONAL_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_SHmIFMgcVkqixh"];
-const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_SHmJIiVALcuWdF"];
+const PROFESSIONAL_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_SHmIFMgcVkqixh", "prod_Tbyz1bf6iYyzYd"];
+const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_SHmJIiVALcuWdF", "prod_TbyzJVNOQL71NN"];
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[GET-PROVIDER-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
