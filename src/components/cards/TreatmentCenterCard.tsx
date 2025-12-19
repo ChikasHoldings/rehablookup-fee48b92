@@ -19,6 +19,7 @@ interface TreatmentCenterCardProps {
     facilityType?: string | null;
   };
   featured?: boolean;
+  variant?: "default" | "compact";
 }
 
 // Comparison function for memo - only re-render if relevant props changed
@@ -31,6 +32,7 @@ function arePropsEqual(
   
   return (
     prevProps.featured === nextProps.featured &&
+    prevProps.variant === nextProps.variant &&
     prevCenter.id === nextCenter.id &&
     prevCenter.name === nextCenter.name &&
     prevCenter.slug === nextCenter.slug &&
@@ -53,7 +55,7 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, featured }: TreatmentCenterCardProps) {
+export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, featured, variant = "default" }: TreatmentCenterCardProps) {
   const [logoError, setLogoError] = useState(false);
   const cardRef = useRef<HTMLElement>(null);
   const hasTrackedImpression = useRef(false);
@@ -113,6 +115,176 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
     }
   }, [center.isFromDatabase, center.id, trackClickToCall]);
 
+  // Compact horizontal layout for mobile
+  if (variant === "compact") {
+    return (
+      <article
+        ref={cardRef}
+        className={cn(
+          "group relative flex overflow-hidden rounded-xl border bg-card transition-all duration-200",
+          "active:scale-[0.98]",
+          showFeaturedBadge 
+            ? "border-amber-200/70 shadow-md ring-1 ring-amber-300/30" 
+            : "border-border/60 shadow-sm"
+        )}
+      >
+        {/* Left accent bar */}
+        <div className={cn(
+          "w-1 shrink-0",
+          showFeaturedBadge 
+            ? "bg-gradient-to-b from-amber-400 to-amber-500"
+            : "bg-gradient-to-b from-primary/40 to-primary/60"
+        )} />
+
+        {/* Logo */}
+        <div className="relative shrink-0 p-3 flex items-center">
+          <div 
+            className={cn(
+              "h-14 w-14 overflow-hidden rounded-lg",
+              showFeaturedBadge 
+                ? "ring-1 ring-amber-300/60 shadow-sm" 
+                : "ring-1 ring-border/80 shadow-sm"
+            )}
+          >
+            {hasValidLogo ? (
+              <img 
+                src={center.logo_url!} 
+                alt={`${center.name} logo`}
+                className="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <div className={cn(
+                "flex h-full w-full items-center justify-center",
+                showFeaturedBadge 
+                  ? "bg-gradient-to-br from-amber-50 to-amber-100"
+                  : "bg-gradient-to-br from-secondary to-secondary/70"
+              )}>
+                <span className={cn(
+                  "font-display text-base font-bold",
+                  showFeaturedBadge ? "text-amber-600" : "text-primary"
+                )}>
+                  {initials}
+                </span>
+              </div>
+            )}
+          </div>
+          {/* Verified Badge */}
+          {center.verified && (
+            <div className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow ring-2 ring-card">
+              <ShieldCheck className="h-3 w-3 text-white" />
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 py-3 pr-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h3 className={cn(
+                "font-display text-sm font-semibold leading-tight line-clamp-1",
+                showFeaturedBadge ? "text-foreground" : "text-foreground"
+              )}>
+                {center.name}
+              </h3>
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className={cn(
+                  "h-3 w-3 shrink-0",
+                  showFeaturedBadge ? "text-amber-500" : "text-primary/60"
+                )} />
+                <span className="truncate">{center.city}, {center.state}</span>
+              </p>
+            </div>
+            {showFeaturedBadge && (
+              <Badge className="shrink-0 gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">
+                <Crown className="h-2.5 w-2.5" />
+                Featured
+              </Badge>
+            )}
+          </div>
+
+          {/* Tags row */}
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            {yearsInBusiness && yearsInBusiness > 0 && (
+              <span className={cn(
+                "inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md",
+                showFeaturedBadge 
+                  ? "bg-amber-100/80 text-amber-700"
+                  : "bg-primary/10 text-primary"
+              )}>
+                <Calendar className="h-2.5 w-2.5" />
+                {yearsInBusiness}+ yrs
+              </span>
+            )}
+            {center.treatmentTypes.slice(0, 2).map((type) => (
+              <Badge 
+                key={type} 
+                variant="secondary" 
+                className={cn(
+                  "text-[10px] font-medium px-1.5 py-0.5 rounded-md",
+                  showFeaturedBadge 
+                    ? "bg-amber-50/80 text-amber-800 border border-amber-200/60"
+                    : "bg-secondary/80 text-secondary-foreground border-0"
+                )}
+              >
+                {type}
+              </Badge>
+            ))}
+            {center.treatmentTypes.length > 2 && (
+              <Badge 
+                variant="outline" 
+                className="text-[10px] px-1.5 py-0.5 text-muted-foreground border-dashed rounded-md"
+              >
+                +{center.treatmentTypes.length - 2}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col justify-center gap-1.5 p-2 shrink-0">
+          <Link 
+            to={detailsUrl} 
+            state={{ fromSearch: true }}
+            onClick={handleFeaturedClick}
+          >
+            <Button 
+              variant="default" 
+              size="sm"
+              className={cn(
+                "h-8 px-3 text-xs font-semibold",
+                showFeaturedBadge 
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
+                  : ""
+              )}
+            >
+              View
+              <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
+          </Link>
+          <a href={`tel:${center.phone}`} onClick={handleCallClick}>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className={cn(
+                "h-8 w-full text-xs",
+                showFeaturedBadge 
+                  ? "border-amber-300 text-amber-600 hover:bg-amber-500 hover:text-white hover:border-amber-500"
+                  : "hover:bg-primary hover:text-primary-foreground hover:border-primary"
+              )}
+            >
+              <Phone className="h-3 w-3 mr-1" />
+              Call
+            </Button>
+          </a>
+        </div>
+      </article>
+    );
+  }
+
+  // Default vertical card layout
   return (
     <article
       ref={cardRef}
