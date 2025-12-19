@@ -27,10 +27,19 @@ import {
   Phone,
   Target,
   Check,
+  ChevronDown,
+  Calculator,
+  DollarSign,
 } from "lucide-react";
 import { useState } from "react";
 import { providerNavLinks } from "@/data/providerNavLinks";
 import { cn } from "@/lib/utils";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Slider } from "@/components/ui/slider";
 import providerDashboardMockup from "@/assets/provider-dashboard-mockup.jpg";
 
 const benefits = [
@@ -176,6 +185,210 @@ const pricingPlans = [
     microcopy: "Priority access to exclusive leads with maximum visibility.",
   },
 ];
+
+// ROI Calculator Component
+const ROICalculator = () => {
+  const [leadsPerMonth, setLeadsPerMonth] = useState([15]);
+  const [conversionRate, setConversionRate] = useState([20]);
+  const [avgRevenuePerAdmission, setAvgRevenuePerAdmission] = useState([15000]);
+
+  const monthlyAdmissions = Math.round((leadsPerMonth[0] * conversionRate[0]) / 100);
+  const monthlyRevenue = monthlyAdmissions * avgRevenuePerAdmission[0];
+  const annualRevenue = monthlyRevenue * 12;
+  const planCost = leadsPerMonth[0] <= 25 ? 399 : 1099;
+  const roi = monthlyRevenue > 0 ? Math.round(((monthlyRevenue - planCost) / planCost) * 100) : 0;
+
+  return (
+    <div className="mt-16 max-w-3xl mx-auto">
+      <div className="rounded-2xl border border-border bg-card p-8 shadow-lg">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mb-4">
+            <Calculator className="h-6 w-6 text-primary" />
+          </div>
+          <h3 className="text-2xl font-bold text-foreground mb-2">ROI Calculator</h3>
+          <p className="text-muted-foreground">See your potential return on investment</p>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-2">
+          {/* Inputs */}
+          <div className="space-y-6">
+            <div>
+              <div className="flex justify-between mb-3">
+                <label className="text-sm font-medium text-foreground">Leads per Month</label>
+                <span className="text-sm font-bold text-primary">{leadsPerMonth[0]}</span>
+              </div>
+              <Slider
+                value={leadsPerMonth}
+                onValueChange={setLeadsPerMonth}
+                min={1}
+                max={75}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                <span>1</span>
+                <span>75</span>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-3">
+                <label className="text-sm font-medium text-foreground">Conversion Rate</label>
+                <span className="text-sm font-bold text-primary">{conversionRate[0]}%</span>
+              </div>
+              <Slider
+                value={conversionRate}
+                onValueChange={setConversionRate}
+                min={5}
+                max={50}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                <span>5%</span>
+                <span>50%</span>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-3">
+                <label className="text-sm font-medium text-foreground">Avg Revenue per Admission</label>
+                <span className="text-sm font-bold text-primary">${avgRevenuePerAdmission[0].toLocaleString()}</span>
+              </div>
+              <Slider
+                value={avgRevenuePerAdmission}
+                onValueChange={setAvgRevenuePerAdmission}
+                min={5000}
+                max={50000}
+                step={1000}
+                className="w-full"
+              />
+              <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                <span>$5K</span>
+                <span>$50K</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Results */}
+          <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl p-6 space-y-4">
+            <div className="flex items-center justify-between py-3 border-b border-border/50">
+              <span className="text-muted-foreground">Monthly Admissions</span>
+              <span className="text-xl font-bold text-foreground">{monthlyAdmissions}</span>
+            </div>
+            <div className="flex items-center justify-between py-3 border-b border-border/50">
+              <span className="text-muted-foreground">Monthly Revenue</span>
+              <span className="text-xl font-bold text-foreground">${monthlyRevenue.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between py-3 border-b border-border/50">
+              <span className="text-muted-foreground">Annual Revenue</span>
+              <span className="text-xl font-bold text-accent">${annualRevenue.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between py-3 pt-4">
+              <span className="text-foreground font-medium">Estimated ROI</span>
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-accent" />
+                <span className="text-2xl font-bold text-accent">{roi > 0 ? `${roi}%` : "N/A"}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground text-center pt-2">
+              Based on {leadsPerMonth[0] <= 25 ? "Professional" : "Featured"} plan at ${planCost}/mo
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Comparison Table Component
+const ComparisonTable = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const features = [
+    { feature: "Monthly Lead Limit", basic: "1 lifetime", professional: "25/month", featured: "75/month" },
+    { feature: "Exclusive Leads", basic: true, professional: true, featured: true },
+    { feature: "Lead Quality Score", basic: false, professional: true, featured: true },
+    { feature: "Email Notifications", basic: true, professional: true, featured: true },
+    { feature: "Lead Management Dashboard", basic: true, professional: true, featured: true },
+    { feature: "Priority Lead Routing", basic: false, professional: true, featured: true },
+    { feature: "Featured Homepage Placement", basic: false, professional: false, featured: true },
+    { feature: "Enhanced Profile Badge", basic: false, professional: false, featured: true },
+    { feature: "Priority Support", basic: false, professional: true, featured: true },
+    { feature: "Analytics & Reporting", basic: false, professional: true, featured: true },
+    { feature: "Lead Limit Override", basic: false, professional: false, featured: true },
+  ];
+
+  return (
+    <div className="mt-12 max-w-4xl mx-auto">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-center gap-2 py-4 text-foreground hover:text-primary transition-colors group">
+            <span className="text-lg font-semibold">Compare All Features</span>
+            <ChevronDown className={cn(
+              "h-5 w-5 transition-transform duration-200",
+              isOpen && "rotate-180"
+            )} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+          <div className="overflow-x-auto pt-4">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-4 px-4 text-foreground font-semibold">Feature</th>
+                  <th className="text-center py-4 px-4 text-foreground font-semibold">Basic</th>
+                  <th className="text-center py-4 px-4 text-foreground font-semibold bg-accent/5 border-x border-accent/20">Professional</th>
+                  <th className="text-center py-4 px-4 text-foreground font-semibold">Featured</th>
+                </tr>
+              </thead>
+              <tbody>
+                {features.map((row, index) => (
+                  <tr key={index} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                    <td className="py-4 px-4 text-foreground">{row.feature}</td>
+                    <td className="text-center py-4 px-4">
+                      {typeof row.basic === "boolean" ? (
+                        row.basic ? (
+                          <CheckCircle className="h-5 w-5 text-accent mx-auto" />
+                        ) : (
+                          <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+                        )
+                      ) : (
+                        <span className="text-muted-foreground text-sm">{row.basic}</span>
+                      )}
+                    </td>
+                    <td className="text-center py-4 px-4 bg-accent/5 border-x border-accent/20">
+                      {typeof row.professional === "boolean" ? (
+                        row.professional ? (
+                          <CheckCircle className="h-5 w-5 text-accent mx-auto" />
+                        ) : (
+                          <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+                        )
+                      ) : (
+                        <span className="text-foreground font-medium text-sm">{row.professional}</span>
+                      )}
+                    </td>
+                    <td className="text-center py-4 px-4">
+                      {typeof row.featured === "boolean" ? (
+                        row.featured ? (
+                          <CheckCircle className="h-5 w-5 text-accent mx-auto" />
+                        ) : (
+                          <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+                        )
+                      ) : (
+                        <span className="text-muted-foreground text-sm">{row.featured}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+};
 
 const ForProviders = () => {
   const [showAnnouncement, setShowAnnouncement] = useState(true);
@@ -629,76 +842,11 @@ const ForProviders = () => {
               All plans include 14-day free trial • No credit card required • Cancel anytime
             </p>
 
-            {/* Comparison Table */}
-            <div className="mt-16 max-w-4xl mx-auto">
-              <h3 className="text-2xl font-bold text-center text-foreground mb-8">
-                Compare All Features
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-4 px-4 text-foreground font-semibold">Feature</th>
-                      <th className="text-center py-4 px-4 text-foreground font-semibold">Basic</th>
-                      <th className="text-center py-4 px-4 text-foreground font-semibold bg-accent/5 border-x border-accent/20">Professional</th>
-                      <th className="text-center py-4 px-4 text-foreground font-semibold">Featured</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { feature: "Monthly Lead Limit", basic: "1 lifetime", professional: "25/month", featured: "75/month" },
-                      { feature: "Exclusive Leads", basic: true, professional: true, featured: true },
-                      { feature: "Lead Quality Score", basic: false, professional: true, featured: true },
-                      { feature: "Email Notifications", basic: true, professional: true, featured: true },
-                      { feature: "Lead Management Dashboard", basic: true, professional: true, featured: true },
-                      { feature: "Priority Lead Routing", basic: false, professional: true, featured: true },
-                      { feature: "Featured Homepage Placement", basic: false, professional: false, featured: true },
-                      { feature: "Enhanced Profile Badge", basic: false, professional: false, featured: true },
-                      { feature: "Priority Support", basic: false, professional: true, featured: true },
-                      { feature: "Analytics & Reporting", basic: false, professional: true, featured: true },
-                      { feature: "Lead Limit Override", basic: false, professional: false, featured: true },
-                    ].map((row, index) => (
-                      <tr key={index} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                        <td className="py-4 px-4 text-foreground">{row.feature}</td>
-                        <td className="text-center py-4 px-4">
-                          {typeof row.basic === "boolean" ? (
-                            row.basic ? (
-                              <CheckCircle className="h-5 w-5 text-accent mx-auto" />
-                            ) : (
-                              <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-muted-foreground text-sm">{row.basic}</span>
-                          )}
-                        </td>
-                        <td className="text-center py-4 px-4 bg-accent/5 border-x border-accent/20">
-                          {typeof row.professional === "boolean" ? (
-                            row.professional ? (
-                              <CheckCircle className="h-5 w-5 text-accent mx-auto" />
-                            ) : (
-                              <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-foreground font-medium text-sm">{row.professional}</span>
-                          )}
-                        </td>
-                        <td className="text-center py-4 px-4">
-                          {typeof row.featured === "boolean" ? (
-                            row.featured ? (
-                              <CheckCircle className="h-5 w-5 text-accent mx-auto" />
-                            ) : (
-                              <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-muted-foreground text-sm">{row.featured}</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            {/* ROI Calculator */}
+            <ROICalculator />
+
+            {/* Collapsible Comparison Table */}
+            <ComparisonTable />
           </div>
         </section>
 
