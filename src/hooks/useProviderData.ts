@@ -165,7 +165,7 @@ export function useProviderData(facilityId?: string) {
         
         leadsCount = totalCount || 0;
 
-        // Fetch monthly leads count (current month)
+        // Fetch monthly QUALIFIED leads count (current month) - this is what counts against the cap
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
@@ -174,6 +174,7 @@ export function useProviderData(facilityId?: string) {
           .from("leads")
           .select("*", { count: "exact", head: true })
           .eq("facility_id", facilityData.id)
+          .eq("qualified", true) // Only count qualified leads against the cap
           .gte("created_at", startOfMonth.toISOString());
         
         monthlyLeadsCount = monthlyCount || 0;
