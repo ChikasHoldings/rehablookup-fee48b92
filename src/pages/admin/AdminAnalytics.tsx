@@ -16,7 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
-import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Route, ShieldCheck, Gauge, AlertTriangle, GitCompare, Minus, Clock, UserPlus, Mail, Phone, Sparkles, ChevronRight } from "lucide-react";
+import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Route, ShieldCheck, Gauge, AlertTriangle, GitCompare, Minus, Clock, UserPlus, Mail, Phone, Sparkles, ChevronRight, Filter } from "lucide-react";
+import { LeadFormAnalytics } from "@/components/admin/LeadFormAnalytics";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -1248,6 +1249,10 @@ export default function AdminAnalytics() {
             <TrendingDown className="h-4 w-4 mr-2" />
             Retention
           </TabsTrigger>
+          <TabsTrigger value="form-conversion" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Filter className="h-4 w-4 mr-2" />
+            Form Conversion
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="traffic" className="space-y-4">
@@ -1844,6 +1849,10 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="form-conversion" className="space-y-4">
+          <LeadFormAnalytics dateRange={dateRange} />
         </TabsContent>
       </Tabs>
 
