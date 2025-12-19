@@ -37,8 +37,10 @@ import {
   ZoomIn,
   Award,
   History,
+  Gauge,
 } from "lucide-react";
 import { ProviderActivityTimeline } from "@/components/admin/ProviderActivityTimeline";
+import { ManageLeadCapDialog } from "@/components/admin/ManageLeadCapDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -122,6 +124,8 @@ type Facility = {
   lead_limit_override: number | null;
   slug: string | null;
   user_id: string;
+  bonus_leads?: number;
+  leads_reset_at?: string | null;
 };
 
 type Lead = {
@@ -210,6 +214,10 @@ export default function AdminProviders() {
     action: "suspend" | "reactivate" | "reject";
     provider: Facility;
   } | null>(null);
+
+  // Lead cap management state
+  const [showLeadCapDialog, setShowLeadCapDialog] = useState(false);
+  const [leadCapProvider, setLeadCapProvider] = useState<Facility | null>(null);
 
   // Invalidate all provider queries for real-time updates
   const invalidateProviderQueries = useCallback(() => {
@@ -991,6 +999,13 @@ export default function AdminProviders() {
                         <DropdownMenuItem onClick={() => handleToggleFeatured(provider.id, provider.featured)}>
                           <Star className="h-4 w-4 mr-2" />
                           {provider.featured ? "Remove Featured" : "Mark as Featured"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setLeadCapProvider(provider);
+                          setShowLeadCapDialog(true);
+                        }}>
+                          <Gauge className="h-4 w-4 mr-2" />
+                          Manage Lead Cap
                         </DropdownMenuItem>
                         
                         <DropdownMenuSeparator />
@@ -1966,6 +1981,13 @@ export default function AdminProviders() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Lead Cap Management Dialog */}
+      <ManageLeadCapDialog
+        open={showLeadCapDialog}
+        onOpenChange={setShowLeadCapDialog}
+        facility={leadCapProvider}
+      />
     </div>
   );
 }
