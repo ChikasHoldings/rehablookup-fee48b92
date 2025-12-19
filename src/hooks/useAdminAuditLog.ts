@@ -76,6 +76,8 @@ export const AdminAuditActions = {
   // Lead actions
   LEAD_ASSIGNED: "lead_assigned",
   LEAD_STATUS_CHANGED: "lead_status_changed",
+  LEAD_QUALIFIED: "lead_qualified",
+  LEAD_OVERRIDE: "lead_override",
   
   // User management
   ADMIN_USER_CREATED: "admin_user_created",

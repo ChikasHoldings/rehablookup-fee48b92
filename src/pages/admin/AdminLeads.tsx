@@ -26,6 +26,8 @@ import {
   Copy,
   ShieldAlert,
   FileWarning,
+  ShieldCheck,
+  Send,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,6 +74,7 @@ import { toast } from "sonner";
 import { calculateLeadScore, getScoreColor, type LeadScoringInput } from "@/lib/leadScoring";
 import { LeadProfileModal } from "@/components/leads/LeadProfileModal";
 import { RoutingLogsTable } from "@/components/admin/RoutingLogsTable";
+import { LeadOverrideDialog } from "@/components/admin/LeadOverrideDialog";
 import { cn } from "@/lib/utils";
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
@@ -418,6 +421,7 @@ export default function AdminLeads() {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showOverrideDialog, setShowOverrideDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Handle date preset changes
@@ -727,6 +731,11 @@ export default function AdminLeads() {
   const openLeadProfile = (lead: Lead) => {
     setSelectedLead(lead);
     setShowProfileModal(true);
+  };
+
+  const openOverrideDialog = (lead: Lead) => {
+    setSelectedLead(lead);
+    setShowOverrideDialog(true);
   };
 
   // Stats
@@ -1211,6 +1220,18 @@ export default function AdminLeads() {
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Details
                                   </DropdownMenuItem>
+                                  {(!lead.qualified || lead.assignment_status === "unqualified_not_routed") && (
+                                    <DropdownMenuItem onClick={() => openOverrideDialog(lead)}>
+                                      <ShieldCheck className="h-4 w-4 mr-2" />
+                                      Override & Route
+                                    </DropdownMenuItem>
+                                  )}
+                                  {lead.qualified && !lead.facility_id && (
+                                    <DropdownMenuItem onClick={() => openOverrideDialog(lead)}>
+                                      <Send className="h-4 w-4 mr-2" />
+                                      Route to Provider
+                                    </DropdownMenuItem>
+                                  )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
@@ -1496,6 +1517,10 @@ export default function AdminLeads() {
                                   <Eye className="h-4 w-4 mr-2" />
                                   View Details
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openOverrideDialog(lead)}>
+                                  <ShieldCheck className="h-4 w-4 mr-2" />
+                                  Override & Route
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -1580,6 +1605,13 @@ export default function AdminLeads() {
         onOpenChange={setShowProfileModal}
         isAdmin
         facilities={facilities || []}
+      />
+
+      {/* Lead Override Dialog */}
+      <LeadOverrideDialog
+        lead={selectedLead}
+        open={showOverrideDialog}
+        onOpenChange={setShowOverrideDialog}
       />
     </div>
   );
