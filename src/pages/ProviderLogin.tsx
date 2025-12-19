@@ -486,191 +486,194 @@ export default function ProviderLogin() {
         variant="provider"
       />
       
-      <main className="flex flex-1 items-center justify-center px-5 py-10 md:px-4 md:py-16">
-        <div className="w-full max-w-sm space-y-6 md:space-y-8">
-          <div className="text-center">
-            <h1 className="font-display text-2xl md:text-2xl font-bold text-foreground">
+      <main className="flex flex-1 items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md animate-step-enter">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h1 className="font-display text-2xl font-bold text-foreground">
               Provider Sign In
             </h1>
-            <p className="mt-2 text-base md:text-sm text-muted-foreground">
+            <p className="mt-2 text-sm text-muted-foreground">
               Access your facility dashboard
             </p>
           </div>
 
-          {/* Lockout Alert */}
-          {isLocked && (
-            <Alert variant="destructive" className="py-4">
-              <Clock className="h-5 w-5 md:h-4 md:w-4" />
-              <AlertDescription className="ml-2 text-sm md:text-sm">
-                Account temporarily locked due to too many failed attempts. 
-                Please try again in <strong>{formatTimeRemaining(lockoutTimeRemaining)}</strong>.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Warning for failed attempts */}
-          {!isLocked && failedAttempts > 0 && failedAttempts < MAX_ATTEMPTS && (
-            <Alert variant="default" className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 py-4">
-              <AlertTriangle className="h-5 w-5 md:h-4 md:w-4 text-yellow-600" />
-              <AlertDescription className="ml-2 text-sm text-yellow-800 dark:text-yellow-200">
-                {MAX_ATTEMPTS - failedAttempts} login attempt{MAX_ATTEMPTS - failedAttempts !== 1 ? 's' : ''} remaining before temporary lockout.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-5 md:space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-base md:text-sm font-medium">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@facility.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 md:h-11 pl-12 md:pl-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                  required
-                  autoComplete="email"
-                  autoFocus
-                  disabled={isLocked}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-base md:text-sm font-medium">Password</Label>
-                <Link 
-                  to="/provider-forgot-password" 
-                  className="text-sm md:text-xs text-primary hover:underline py-1"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-4 md:left-3 top-1/2 h-5 w-5 md:h-4 md:w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-14 md:h-11 pl-12 md:pl-10 pr-12 md:pr-10 text-base md:text-sm rounded-xl md:rounded-lg"
-                  required
-                  autoComplete="current-password"
-                  disabled={isLocked}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 md:right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
-                  tabIndex={-1}
-                  disabled={isLocked}
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5 md:h-4 md:w-4" /> : <Eye className="h-5 w-5 md:h-4 md:w-4" />}
-                </button>
-              </div>
-            </div>
-
-            {/* CAPTCHA Challenge */}
-            {showCaptcha && captcha && !isLocked && (
-              <div className="space-y-3 p-5 md:p-4 rounded-xl md:rounded-lg border border-border bg-muted/30">
-                <div className="flex items-center gap-2 text-base md:text-sm font-medium text-foreground">
-                  <ShieldCheck className="h-5 w-5 md:h-4 md:w-4 text-primary" />
-                  Security Verification
-                </div>
-                <p className="text-sm md:text-xs text-muted-foreground">
-                  Please solve this math problem to verify you're human.
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 flex items-center gap-2 p-4 md:p-3 rounded-lg md:rounded-md bg-background border border-border">
-                    <span className="font-mono text-xl md:text-lg font-bold text-foreground">
-                      {captcha.num1} {captcha.operator} {captcha.num2} =
-                    </span>
-                    <Input
-                      type="number"
-                      value={captchaAnswer}
-                      onChange={(e) => {
-                        setCaptchaAnswer(e.target.value);
-                        setCaptchaError(false);
-                      }}
-                      className={`w-24 md:w-20 h-12 md:h-9 text-center font-mono text-xl md:text-lg rounded-lg ${
-                        captchaError ? "border-destructive" : ""
-                      }`}
-                      placeholder="?"
-                      required
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={refreshCaptcha}
-                    className="shrink-0 h-12 w-12 md:h-10 md:w-10 rounded-xl md:rounded-lg"
-                    title="Get new problem"
-                  >
-                    <RefreshCw className="h-5 w-5 md:h-4 md:w-4" />
-                  </Button>
-                </div>
-                {captchaError && (
-                  <p className="text-sm md:text-xs text-destructive">
-                    Incorrect answer. Please try again.
-                  </p>
-                )}
-              </div>
+          {/* Card Container */}
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-5">
+            {/* Lockout Alert */}
+            {isLocked && (
+              <Alert variant="destructive" className="py-3">
+                <Clock className="h-4 w-4" />
+                <AlertDescription className="ml-2 text-sm">
+                  Account temporarily locked due to too many failed attempts. 
+                  Please try again in <strong>{formatTimeRemaining(lockoutTimeRemaining)}</strong>.
+                </AlertDescription>
+              </Alert>
             )}
 
-            <div className="flex items-center space-x-3 md:space-x-2 py-1">
-              <Checkbox
-                id="rememberMe"
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked === true)}
-                disabled={isLocked}
-                className="h-6 w-6 md:h-4 md:w-4 rounded-md md:rounded"
-              />
-              <label
-                htmlFor="rememberMe"
-                className="text-base md:text-sm text-muted-foreground cursor-pointer select-none py-2"
-              >
-                Remember me for 30 days
-              </label>
-            </div>
+            {/* Warning for failed attempts */}
+            {!isLocked && failedAttempts > 0 && failedAttempts < MAX_ATTEMPTS && (
+              <Alert variant="default" className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 py-3">
+                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                <AlertDescription className="ml-2 text-sm text-yellow-800 dark:text-yellow-200">
+                  {MAX_ATTEMPTS - failedAttempts} login attempt{MAX_ATTEMPTS - failedAttempts !== 1 ? 's' : ''} remaining before temporary lockout.
+                </AlertDescription>
+              </Alert>
+            )}
 
-            <Button
-              type="submit"
-              className="w-full h-14 md:h-11 text-base md:text-sm font-semibold rounded-xl md:rounded-lg"
-              disabled={isLoading || isLocked}
-            >
-              {isLoading ? (
-                <>
-                  <span className="animate-spin rounded-full h-5 w-5 md:h-4 md:w-4 border-b-2 border-white mr-2" />
-                  Signing in...
-                </>
-              ) : isLocked ? (
-                <>
-                  <Clock className="mr-2 h-5 w-5 md:h-4 md:w-4" />
-                  Locked
-                </>
-              ) : (
-                <>
-                  Sign In
-                  <ArrowRight className="ml-2 h-5 w-5 md:h-4 md:w-4" />
-                </>
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@facility.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-10 pl-10 text-sm"
+                    required
+                    autoComplete="email"
+                    autoFocus
+                    disabled={isLocked}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                  <Link 
+                    to="/provider-forgot-password" 
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-10 pl-10 pr-10 text-sm"
+                    required
+                    autoComplete="current-password"
+                    disabled={isLocked}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                    disabled={isLocked}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* CAPTCHA Challenge */}
+              {showCaptcha && captcha && !isLocked && (
+                <div className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                    Security Verification
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Please solve this math problem to verify you're human.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 flex items-center gap-2 p-3 rounded-md bg-background border border-border">
+                      <span className="font-mono text-lg font-bold text-foreground">
+                        {captcha.num1} {captcha.operator} {captcha.num2} =
+                      </span>
+                      <Input
+                        type="number"
+                        value={captchaAnswer}
+                        onChange={(e) => {
+                          setCaptchaAnswer(e.target.value);
+                          setCaptchaError(false);
+                        }}
+                        className={`w-20 h-9 text-center font-mono text-lg ${
+                          captchaError ? "border-destructive" : ""
+                        }`}
+                        placeholder="?"
+                        required
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={refreshCaptcha}
+                      className="shrink-0 h-10 w-10"
+                      title="Get new problem"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {captchaError && (
+                    <p className="text-xs text-destructive">
+                      Incorrect answer. Please try again.
+                    </p>
+                  )}
+                </div>
               )}
-            </Button>
-          </form>
 
-          {/* Footer */}
-          <div className="space-y-4 pt-5 md:pt-4 border-t border-border">
-            <p className="text-center text-base md:text-sm text-muted-foreground py-1">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                  disabled={isLocked}
+                />
+                <label
+                  htmlFor="rememberMe"
+                  className="text-sm text-muted-foreground cursor-pointer select-none"
+                >
+                  Remember me for 30 days
+                </label>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-10 text-sm font-semibold"
+                disabled={isLoading || isLocked}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Signing in...
+                  </>
+                ) : isLocked ? (
+                  <>
+                    <Clock className="mr-2 h-4 w-4" />
+                    Locked
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </div>
+
+          {/* Footer Links */}
+          <div className="mt-6 space-y-3 text-center">
+            <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link to="/provider-signup" className="text-primary hover:underline font-medium">
                 List your facility
               </Link>
             </p>
-            <p className="text-center text-sm md:text-xs text-muted-foreground py-1">
+            <p className="text-xs text-muted-foreground">
               Need help?{" "}
               <Link to="/provider-support" className="text-primary hover:underline">
                 Contact support
