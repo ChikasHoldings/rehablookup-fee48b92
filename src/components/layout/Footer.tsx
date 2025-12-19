@@ -44,13 +44,22 @@ const footerLinks = {
 };
 
 const popularLocations = [
-  // States
-  { label: "California", href: "/locations/california", type: "state" },
-  { label: "Florida", href: "/locations/florida", type: "state" },
-  { label: "Texas", href: "/locations/texas", type: "state" },
-  { label: "Arizona", href: "/locations/arizona", type: "state" },
-  { label: "New York", href: "/locations/new-york", type: "state" },
-  { label: "Colorado", href: "/locations/colorado", type: "state" },
+  { label: "California", href: "/locations/california" },
+  { label: "Florida", href: "/locations/florida" },
+  { label: "Texas", href: "/locations/texas" },
+  { label: "Arizona", href: "/locations/arizona" },
+  { label: "New York", href: "/locations/new-york" },
+  { label: "Colorado", href: "/locations/colorado" },
+  { label: "Pennsylvania", href: "/locations/pennsylvania" },
+  { label: "Ohio", href: "/locations/ohio" },
+  { label: "Illinois", href: "/locations/illinois" },
+  { label: "Georgia", href: "/locations/georgia" },
+  { label: "New Jersey", href: "/locations/new-jersey" },
+  { label: "Massachusetts", href: "/locations/massachusetts" },
+  { label: "Washington", href: "/locations/washington" },
+  { label: "Tennessee", href: "/locations/tennessee" },
+  { label: "North Carolina", href: "/locations/north-carolina" },
+  { label: "Michigan", href: "/locations/michigan" },
 ];
 
 const popularCities = [
