@@ -19,7 +19,8 @@ import {
   Lock,
   TrendingUp,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  X
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -148,6 +149,28 @@ export default function ProviderDashboardPage() {
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [profilePromptDismissed, setProfilePromptDismissed] = useState(() => {
+    if (!facilityId) return false;
+    const dismissed = localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
+    return dismissed === "true";
+  });
+
+  // Reset dismissed state when facility changes
+  useEffect(() => {
+    if (facilityId) {
+      const dismissed = localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
+      setProfilePromptDismissed(dismissed === "true");
+    }
+  }, [facilityId]);
+
+  const handleDismissProfilePrompt = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (facilityId) {
+      localStorage.setItem(`profile-prompt-dismissed-${facilityId}`, "true");
+      setProfilePromptDismissed(true);
+    }
+  };
 
   // Fetch recent leads
   const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
@@ -381,7 +404,7 @@ export default function ProviderDashboardPage() {
         </div>
 
         {/* Profile Completion Prompt */}
-        {providerData?.facility && (() => {
+        {providerData?.facility && !profilePromptDismissed && (() => {
           const f = providerData.facility;
           const missingFields: string[] = [];
           if (!f.description) missingFields.push("description");
@@ -410,7 +433,16 @@ export default function ProviderDashboardPage() {
                       <span className="font-medium text-foreground">{missingText}</span> to attract more families
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-2">
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <button
+                      onClick={handleDismissProfilePrompt}
+                      className="p-1 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Dismiss"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </CardContent>
               </Card>
             </Link>
