@@ -23,19 +23,13 @@ import {
   Lightbulb,
   CheckCircle,
   ArrowRight,
-  Play,
-  Clock,
   Star,
   Zap,
   MessageSquare,
   BarChart3,
   Award,
   Sparkles,
-  ExternalLink,
 } from "lucide-react";
-import heroImage from "@/assets/provider-resources-hero.jpg";
-import supportImage from "@/assets/provider-support-cta.jpg";
-import videoThumb from "@/assets/video-tutorial-thumb.jpg";
 
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
@@ -153,24 +147,6 @@ const faqs = [
   {
     question: "What if I need to pause my listing?",
     answer: "You can temporarily pause your listing from the dashboard settings. This is useful during renovations or capacity limitations. Your listing data will be preserved.",
-  },
-];
-
-const videoTutorials = [
-  {
-    title: "Getting Started with Your Dashboard",
-    duration: "5:30",
-    category: "Beginner",
-  },
-  {
-    title: "Optimizing Your Facility Profile",
-    duration: "8:15",
-    category: "Optimization",
-  },
-  {
-    title: "Managing and Responding to Leads",
-    duration: "6:45",
-    category: "Leads",
   },
 ];
 
@@ -316,69 +292,6 @@ export default function ProviderResources() {
           </div>
         </section>
 
-        {/* Video Tutorials Section */}
-        <section id="videos" className="py-20 md:py-24 bg-muted/30 border-y border-border scroll-mt-20">
-          <div className="container px-5 md:px-6">
-            <div className="mb-14 text-center">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                <Video className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">Video Tutorials</span>
-              </div>
-              <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                Learn With Step-by-Step Videos
-              </h2>
-              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                Watch our comprehensive video guides to master your provider dashboard.
-              </p>
-            </div>
-
-            <div className="grid gap-8 md:grid-cols-3">
-              {videoTutorials.map((video, index) => (
-                <AnimatedCard key={video.title} delay={index * 100}>
-                  <div className="group cursor-pointer rounded-2xl border border-border bg-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1">
-                    <div className="relative aspect-video overflow-hidden">
-                      <img 
-                        src={videoThumb} 
-                        alt={video.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/95 shadow-xl group-hover:scale-110 group-hover:bg-accent transition-all duration-300">
-                          <Play className="h-7 w-7 text-primary group-hover:text-white ml-1 transition-colors" />
-                        </div>
-                      </div>
-                      <div className="absolute top-4 left-4">
-                        <span className="rounded-lg bg-accent px-3 py-1 text-xs font-bold text-white uppercase tracking-wide">
-                          {video.category}
-                        </span>
-                      </div>
-                      <div className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-lg bg-black/70 backdrop-blur-sm px-3 py-1.5">
-                        <Clock className="h-3.5 w-3.5 text-white" />
-                        <span className="text-sm font-medium text-white">{video.duration}</span>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <h3 className="font-display text-lg font-bold text-foreground group-hover:text-accent transition-colors">
-                        {video.title}
-                      </h3>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Learn the essentials with this comprehensive tutorial
-                      </p>
-                    </div>
-                  </div>
-                </AnimatedCard>
-              ))}
-            </div>
-
-            <div className="mt-12 text-center">
-              <Button variant="outline" size="lg" className="gap-2 h-12 rounded-xl">
-                View All Tutorials
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </section>
 
         {/* Listing Optimization Tips */}
         <section id="listing-tips" className="py-20 md:py-24 scroll-mt-20">
@@ -492,46 +405,31 @@ export default function ProviderResources() {
           </div>
         </section>
 
-        {/* Support CTA - Light Background */}
+        {/* Support CTA - Clean centered design */}
         <section className="py-16 md:py-20">
           <div className="container px-5 md:px-6">
-            <div className="mx-auto max-w-5xl rounded-3xl bg-gradient-to-br from-accent/5 via-accent/10 to-muted/50 border border-accent/20 p-10 md:p-14 overflow-hidden relative">
-              {/* Background Image */}
-              <div className="absolute right-0 top-0 bottom-0 w-1/3 hidden lg:block">
-                <img 
-                  src={supportImage} 
-                  alt="" 
-                  className="h-full w-full object-cover opacity-40"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-transparent to-transparent" />
+            <div className="mx-auto max-w-3xl rounded-2xl md:rounded-xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-8 lg:p-12 text-center">
+              <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 border border-accent/20">
+                <Users className="h-7 w-7 text-accent" />
               </div>
-              
-              {/* Decorative Elements */}
-              <div className="absolute top-10 right-1/4 w-32 h-32 bg-accent/10 rounded-full blur-3xl" />
-              
-              <div className="relative z-10 max-w-xl">
-                <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 border border-accent/20">
-                  <Users className="h-7 w-7 text-accent" />
-                </div>
-                <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-                  Need Personalized Help?
-                </h2>
-                <p className="mt-4 text-lg text-muted-foreground">
-                  Our dedicated provider support team is here to help you succeed. Get personalized assistance with your listing and strategy.
-                </p>
-                <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                  <Link to="/provider-support">
-                    <Button size="lg" className="gap-2 h-12 px-6 rounded-xl text-base font-semibold shadow-md">
-                      Contact Support
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link to="/provider-login">
-                    <Button variant="outline" size="lg" className="gap-2 h-12 px-6 rounded-xl text-base">
-                      Sign In
-                    </Button>
-                  </Link>
-                </div>
+              <h2 className="mb-4 md:mb-3 font-display text-2xl md:text-xl lg:text-2xl font-bold text-foreground">
+                Need Personalized Help?
+              </h2>
+              <p className="mb-8 md:mb-6 text-lg md:text-base text-muted-foreground max-w-xl mx-auto">
+                Our dedicated provider support team is here to help you succeed. Get personalized assistance with your listing and strategy.
+              </p>
+              <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
+                <Link to="/provider-support" className="w-full sm:w-auto">
+                  <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+                    Contact Support
+                    <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
+                  </Button>
+                </Link>
+                <Link to="/provider-login" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+                    Sign In
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
