@@ -39,10 +39,10 @@ export function BasicPlanUpgradeBanner({ hasLeadsWaiting }: BasicPlanUpgradeBann
   if (isDismissed) return null;
 
   const benefits = [
-    { icon: Users, text: "25 exclusive leads/month" },
+    { icon: Users, text: "100 qualified leads/month" },
     { icon: Phone, text: "Show phone & website" },
     { icon: TrendingUp, text: "Priority in search" },
-    { icon: Shield, text: "Verified badge" },
+    { icon: Shield, text: "Lead management dashboard" },
   ];
 
   return (
