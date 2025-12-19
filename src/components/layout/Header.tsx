@@ -22,7 +22,7 @@ const defaultNavLinks: NavLink[] = [
   { href: "/rehab-centers", label: "Find Rehab" },
   { href: "/locations", label: "Locations" },
   { href: "/treatment-types", label: "Treatment Types" },
-  { href: "/how-it-works", label: "How It Works" },
+  { href: "/faq", label: "FAQ" },
   { href: "/for-providers", label: "For Providers" },
 ];
 
@@ -318,11 +318,11 @@ export function Header({
                 <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </PrefetchLink>
               <PrefetchLink
-                to="/faq"
+                to="/resources"
                 onClick={() => setMobileMenuOpen(false)}
                 className="group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all duration-200"
               >
-                <span>FAQ</span>
+                <span>Resources</span>
                 <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
               </PrefetchLink>
             </div>
