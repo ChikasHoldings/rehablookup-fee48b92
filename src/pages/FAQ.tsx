@@ -281,7 +281,7 @@ const FAQ = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative bg-primary py-16 px-4 md:py-20 md:px-6 overflow-hidden">
+      <section className="relative bg-primary py-12 px-4 md:py-16 md:px-6 overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
@@ -290,35 +290,35 @@ const FAQ = () => {
         
         <div className="container relative">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 backdrop-blur-sm border border-white/10">
-              <HelpCircle className="h-5 w-5 text-accent" />
-              <span className="text-base font-medium text-primary-foreground">Frequently Asked Questions</span>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
+              <HelpCircle className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-primary-foreground">Frequently Asked Questions</span>
             </div>
-            <h1 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
+            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               How Can We Help You?
             </h1>
-            <p className="mb-8 text-lg text-primary-foreground/80 leading-relaxed max-w-xl mx-auto md:text-xl">
+            <p className="mb-6 text-base text-primary-foreground/80 leading-relaxed max-w-xl mx-auto md:text-lg">
               Find answers to common questions about addiction treatment, insurance, family support, and recovery.
             </p>
             
             {/* Enhanced Search Bar */}
-            <div className="relative mx-auto max-w-xl">
+            <div className="relative mx-auto max-w-lg">
               <div className="relative">
-                <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Search for answers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-14 rounded-2xl border-0 bg-card pl-14 pr-14 text-base shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
+                  className="h-12 rounded-xl border-0 bg-card pl-11 pr-11 text-sm shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
                   >
                     <span className="sr-only">Clear search</span>
-                    <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
@@ -326,7 +326,7 @@ const FAQ = () => {
               </div>
               
               {/* Search hint */}
-              <p className="mt-3 text-sm text-primary-foreground/60">
+              <p className="mt-2 text-xs text-primary-foreground/60">
                 Try searching "insurance", "detox", or "family support"
               </p>
             </div>
@@ -335,19 +335,19 @@ const FAQ = () => {
       </section>
 
       {/* Category Filters */}
-      <section className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md py-4 px-4 md:py-5 md:px-6 shadow-sm">
+      <section className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md py-3 px-4 md:py-4 md:px-6 shadow-sm">
         <div className="container">
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0 md:mx-0 md:px-0 scrollbar-hide">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`h-11 rounded-full px-5 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+              className={`h-9 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 ${
                 selectedCategory === null 
-                  ? "bg-primary text-primary-foreground shadow-lg" 
+                  ? "bg-primary text-primary-foreground shadow-md" 
                   : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               All Topics
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                 selectedCategory === null ? "bg-white/20" : "bg-background"
               }`}>
                 {faqCategories.reduce((acc, cat) => acc + cat.faqs.length, 0)}
@@ -357,15 +357,15 @@ const FAQ = () => {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`h-11 rounded-full px-5 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-2 ${
+                className={`h-9 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 ${
                   selectedCategory === category.id 
-                    ? "bg-primary text-primary-foreground shadow-lg" 
+                    ? "bg-primary text-primary-foreground shadow-md" 
                     : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                <category.icon className="h-4 w-4" />
+                <category.icon className="h-3.5 w-3.5" />
                 {category.name}
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                   selectedCategory === category.id ? "bg-white/20" : "bg-background"
                 }`}>
                   {category.faqs.length}
@@ -377,13 +377,13 @@ const FAQ = () => {
       </section>
 
       {/* FAQ Content */}
-      <section className="py-12 px-4 md:py-16 md:px-6 bg-gradient-to-b from-background to-muted/30">
+      <section className="py-10 px-4 md:py-14 md:px-6 bg-gradient-to-b from-background to-muted/30">
         <div className="container">
           {/* Search Results Info */}
           {searchQuery && (
-            <div className="mb-8 flex items-center justify-center gap-3">
-              <div className="flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm">
-                <Search className="h-4 w-4 text-accent" />
+            <div className="mb-6 flex items-center justify-center gap-3">
+              <div className="flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1.5 text-sm">
+                <Search className="h-3.5 w-3.5 text-accent" />
                 <span className="text-muted-foreground">
                   Found <span className="font-semibold text-foreground">{totalResults}</span> result{totalResults !== 1 ? 's' : ''} for 
                   <span className="font-semibold text-foreground ml-1">"{searchQuery}"</span>
@@ -399,24 +399,24 @@ const FAQ = () => {
           )}
 
           {filteredCategories.length === 0 ? (
-            <div className="mx-auto max-w-md text-center py-16">
-              <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-muted to-muted/50">
-                <Search className="h-10 w-10 text-muted-foreground" />
+            <div className="mx-auto max-w-md text-center py-12">
+              <div className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-muted to-muted/50">
+                <Search className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="mb-3 font-display text-2xl font-bold text-foreground">No Results Found</h3>
-              <p className="mb-8 text-muted-foreground leading-relaxed">
+              <h3 className="mb-2 font-display text-xl font-bold text-foreground">No Results Found</h3>
+              <p className="mb-6 text-sm text-muted-foreground leading-relaxed">
                 We couldn't find any questions matching your search. Try different keywords or browse by category.
               </p>
               <Button 
                 onClick={() => { setSearchQuery(""); setSelectedCategory(null); }}
-                className="h-12 px-8 gap-2"
+                className="h-10 px-6 gap-2 text-sm"
               >
                 <ArrowRight className="h-4 w-4 rotate-180" />
                 View All Questions
               </Button>
             </div>
           ) : (
-            <div className="mx-auto max-w-4xl space-y-12">
+            <div className="mx-auto max-w-3xl space-y-10">
               {filteredCategories.map((category, catIndex) => (
                 <div 
                   key={category.id} 
@@ -424,41 +424,41 @@ const FAQ = () => {
                   style={{ animationDelay: `${catIndex * 100}ms` }}
                 >
                   {/* Category Header */}
-                  <div className="mb-6 flex items-center gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 ring-1 ring-accent/20">
-                      <category.icon className="h-7 w-7 text-accent" />
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent/20 to-accent/10 ring-1 ring-accent/20">
+                      <category.icon className="h-5 w-5 text-accent" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <h2 className="font-display text-xl font-bold text-foreground">
+                      <div className="flex items-center gap-2">
+                        <h2 className="font-display text-lg font-bold text-foreground">
                           {category.name}
                         </h2>
-                        <span className="text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+                        <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                           {category.faqs.length} questions
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">{category.description}</p>
+                      <p className="text-sm text-muted-foreground">{category.description}</p>
                     </div>
                   </div>
 
                   {/* Enhanced FAQ Accordion */}
-                  <Accordion type="single" collapsible className="space-y-3">
+                  <Accordion type="single" collapsible className="space-y-2">
                     {category.faqs.map((faq, index) => (
                       <AccordionItem
                         key={index}
                         value={`${category.id}-${index}`}
-                        className="group rounded-2xl border border-border bg-card overflow-hidden transition-all duration-300 hover:border-accent/30 hover:shadow-elevated data-[state=open]:border-accent/40 data-[state=open]:shadow-xl data-[state=open]:bg-gradient-to-br data-[state=open]:from-card data-[state=open]:to-accent/5"
+                        className="group rounded-xl border border-border bg-card overflow-hidden transition-all duration-300 hover:border-accent/30 hover:shadow-md data-[state=open]:border-accent/40 data-[state=open]:shadow-lg data-[state=open]:bg-gradient-to-br data-[state=open]:from-card data-[state=open]:to-accent/5"
                       >
-                        <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline py-5 px-6 gap-4 [&>svg]:shrink-0 [&>svg]:h-5 [&>svg]:w-5 [&>svg]:text-muted-foreground [&>svg]:transition-transform [&[data-state=open]>svg]:text-accent group-hover:text-accent transition-colors">
-                          <span className="flex items-start gap-3">
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent mt-0.5">
+                        <AccordionTrigger className="text-left text-sm font-semibold text-foreground hover:no-underline py-4 px-5 gap-3 [&>svg]:shrink-0 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-muted-foreground [&>svg]:transition-transform [&[data-state=open]>svg]:text-accent group-hover:text-accent transition-colors">
+                          <span className="flex items-start gap-2.5">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-accent/10 text-xs font-bold text-accent mt-0.5">
                               {index + 1}
                             </span>
                             <span>{faq.question}</span>
                           </span>
                         </AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground pb-6 px-6 leading-relaxed">
-                          <div className="pl-10 pt-2 border-l-2 border-accent/20 ml-3">
+                        <AccordionContent className="text-sm text-muted-foreground pb-5 px-5 leading-relaxed">
+                          <div className="pl-8 pt-1 border-l-2 border-accent/20 ml-3">
                             {faq.answer}
                           </div>
                         </AccordionContent>
@@ -473,34 +473,34 @@ const FAQ = () => {
       </section>
 
       {/* Help CTA */}
-      <section className="py-16 px-4 bg-muted/30 md:py-20 md:px-6">
+      <section className="py-12 px-4 bg-muted/30 md:py-16 md:px-6">
         <div className="container">
-          <div className="mx-auto max-w-3xl rounded-3xl border border-accent/20 bg-gradient-to-br from-accent/5 via-card to-accent/10 p-10 md:p-12 text-center relative overflow-hidden">
+          <div className="mx-auto max-w-2xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 via-card to-accent/10 p-8 md:p-10 text-center relative overflow-hidden">
             {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full blur-xl" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl" />
+            <div className="absolute bottom-0 left-0 w-20 h-20 bg-primary/5 rounded-full blur-xl" />
             
             <div className="relative">
-              <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent/80 shadow-xl">
-                <HelpCircle className="h-8 w-8 text-white" />
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/80 shadow-lg">
+                <HelpCircle className="h-6 w-6 text-white" />
               </div>
-              <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
+              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
                 Still Have Questions?
               </h2>
-              <p className="mb-8 text-muted-foreground max-w-xl mx-auto leading-relaxed">
+              <p className="mb-6 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
                 Our compassionate support team is here to answer your questions and help you find the right treatment center for your needs.
               </p>
-              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link to="/request-help?source=faq_cta">
-                  <Button size="lg" className="h-14 gap-2 text-base font-semibold px-8 hover:scale-105 transition-transform">
-                    <Heart className="h-5 w-5" />
+                  <Button size="default" className="h-10 gap-2 text-sm font-semibold px-6 hover:scale-105 transition-transform">
+                    <Heart className="h-4 w-4" />
                     Request Help
                   </Button>
                 </Link>
                 <Link to="/contact">
-                  <Button variant="outline" size="lg" className="h-14 gap-2 text-base font-semibold px-8 hover:scale-105 transition-transform">
+                  <Button variant="outline" size="default" className="h-10 gap-2 text-sm font-semibold px-6 hover:scale-105 transition-transform">
                     Contact Us
-                    <ArrowRight className="h-5 w-5" />
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
