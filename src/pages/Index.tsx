@@ -290,56 +290,64 @@ const Index = () => {
               </Link>
             </div>
 
-            {/* Insurance Logos */}
+            {/* Insurance Logos - Horizontal scroll on mobile, grid on desktop */}
             <div className="flex-1 lg:max-w-2xl">
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-                {/* Aetna - has logo */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <img src="/insurance-logos/aetna.svg" alt="Aetna" className="h-6 md:h-7 w-auto object-contain" />
+              {/* Mobile: Horizontal scroll carousel */}
+              <div className="relative -mx-4 px-4 sm:mx-0 sm:px-0">
+                <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory sm:grid sm:grid-cols-4 sm:overflow-visible sm:pb-0 md:grid-cols-6">
+                  {/* Aetna - has logo */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <img src="/insurance-logos/aetna.svg" alt="Aetna" className="h-6 md:h-7 w-auto object-contain" />
+                  </div>
+                  {/* Anthem - styled text */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <span className="text-sm md:text-base font-bold text-[#0891B2]">Anthem</span>
+                  </div>
+                  {/* BCBS - has logo */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" className="h-8 md:h-10 w-auto object-contain" />
+                  </div>
+                  {/* Cigna - has logo */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <img src="/insurance-logos/cigna.svg" alt="Cigna" className="h-5 md:h-6 w-auto object-contain" />
+                  </div>
+                  {/* Humana - styled text */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <span className="text-sm md:text-base font-bold text-[#84CC16]">Humana</span>
+                  </div>
+                  {/* Kaiser - has logo */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" className="h-6 md:h-7 w-auto object-contain" />
+                  </div>
+                  {/* Medicare - styled text */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <span className="text-sm md:text-base font-bold text-[#DC2626]">Medicare</span>
+                  </div>
+                  {/* Medicaid - styled text */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <span className="text-sm md:text-base font-bold text-[#2563EB]">Medicaid</span>
+                  </div>
+                  {/* United - has logo */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <img src="/insurance-logos/united.svg" alt="UnitedHealthcare" className="h-6 md:h-7 w-auto object-contain" />
+                  </div>
+                  {/* Tricare - styled text */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <span className="text-sm md:text-base font-bold text-[#0D9488]">TRICARE</span>
+                  </div>
+                  {/* Magellan - styled text */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md sm:min-w-0 sm:shrink md:h-16">
+                    <span className="text-sm md:text-base font-bold text-[#7C3AED]">Magellan</span>
+                  </div>
+                  {/* More indicator */}
+                  <div className="flex h-14 min-w-[100px] shrink-0 snap-start items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2 transition-all hover:border-primary/30 sm:min-w-0 sm:shrink md:h-16">
+                    <span className="text-xs md:text-sm font-medium text-muted-foreground">+ More</span>
+                  </div>
                 </div>
-                {/* Anthem - styled text */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <span className="text-sm md:text-base font-bold text-[#0891B2]">Anthem</span>
-                </div>
-                {/* BCBS - has logo */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" className="h-8 md:h-10 w-auto object-contain" />
-                </div>
-                {/* Cigna - has logo */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <img src="/insurance-logos/cigna.svg" alt="Cigna" className="h-5 md:h-6 w-auto object-contain" />
-                </div>
-                {/* Humana - styled text */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <span className="text-sm md:text-base font-bold text-[#84CC16]">Humana</span>
-                </div>
-                {/* Kaiser - has logo */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" className="h-6 md:h-7 w-auto object-contain" />
-                </div>
-                {/* Medicare - styled text */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <span className="text-sm md:text-base font-bold text-[#DC2626]">Medicare</span>
-                </div>
-                {/* Medicaid - styled text */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <span className="text-sm md:text-base font-bold text-[#2563EB]">Medicaid</span>
-                </div>
-                {/* United - has logo */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <img src="/insurance-logos/united.svg" alt="UnitedHealthcare" className="h-6 md:h-7 w-auto object-contain" />
-                </div>
-                {/* Tricare - styled text */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <span className="text-sm md:text-base font-bold text-[#0D9488]">TRICARE</span>
-                </div>
-                {/* Magellan - styled text */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 transition-all hover:border-primary/30 hover:shadow-md">
-                  <span className="text-sm md:text-base font-bold text-[#7C3AED]">Magellan</span>
-                </div>
-                {/* More indicator */}
-                <div className="flex h-14 md:h-16 items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2 transition-all hover:border-primary/30">
-                  <span className="text-xs md:text-sm font-medium text-muted-foreground">+ More</span>
+                {/* Scroll hint for mobile */}
+                <div className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground sm:hidden">
+                  <span>Swipe to see more</span>
+                  <ArrowRight className="h-3 w-3" />
                 </div>
               </div>
             </div>
