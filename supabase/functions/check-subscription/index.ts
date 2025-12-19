@@ -7,33 +7,38 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration - Basic plan gets 1 lifetime lead (direct inquiry only)
-const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; qualified_lead_limit: number; direct_lead_limit: number; name: string; featured: boolean }> = {
+// UNIFIED LEAD SYSTEM: Plan configuration
+// Professional = 100 shared leads/month (max 2 providers per lead)
+// Featured = 100 exclusive leads/month (1 provider per lead)
+const PLAN_CONFIG: Record<string, { 
+  product_ids: string[]; 
+  lead_limit: number; 
+  name: string; 
+  featured: boolean;
+  exclusivity: 'shared' | 'exclusive';
+}> = {
   basic: {
     product_ids: [],
-    lead_limit: 1, // 1 lifetime lead (direct inquiry only)
-    qualified_lead_limit: 0, // No routed/qualified leads
-    direct_lead_limit: 1, // 1 lifetime direct inquiry
+    lead_limit: 1, // 1 lifetime lead only
     name: "Basic Listing",
     featured: false,
+    exclusivity: 'exclusive',
   },
   professional: {
     // Support both old and new product IDs for existing subscriptions
     product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"],
-    lead_limit: 25, // 25 exclusive qualified leads/month
-    qualified_lead_limit: 25,
-    direct_lead_limit: -1, // Unlimited direct leads from profile
+    lead_limit: 100, // 100 shared qualified leads/month
     name: "Professional",
     featured: false,
+    exclusivity: 'shared',
   },
   featured: {
     // Support both old and new product IDs for existing subscriptions
     product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"],
-    lead_limit: 75, // 75 exclusive qualified leads/month
-    qualified_lead_limit: 75,
-    direct_lead_limit: -1, // Unlimited direct leads
+    lead_limit: 100, // 100 exclusive qualified leads/month
     name: "Featured",
     featured: true,
+    exclusivity: 'exclusive',
   },
 };
 
@@ -82,10 +87,9 @@ serve(async (req) => {
           plan: "basic",
           plan_name: PLAN_CONFIG.basic.name,
           lead_limit: PLAN_CONFIG.basic.lead_limit,
-          qualified_lead_limit: PLAN_CONFIG.basic.qualified_lead_limit,
-          direct_lead_limit: PLAN_CONFIG.basic.direct_lead_limit,
           subscription_end: null,
           is_featured: false,
+          exclusivity: PLAN_CONFIG.basic.exclusivity,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -111,10 +115,9 @@ serve(async (req) => {
           plan: "basic",
           plan_name: PLAN_CONFIG.basic.name,
           lead_limit: PLAN_CONFIG.basic.lead_limit,
-          qualified_lead_limit: PLAN_CONFIG.basic.qualified_lead_limit,
-          direct_lead_limit: PLAN_CONFIG.basic.direct_lead_limit,
           subscription_end: null,
           is_featured: false,
+          exclusivity: PLAN_CONFIG.basic.exclusivity,
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -140,7 +143,7 @@ serve(async (req) => {
       planConfig = PLAN_CONFIG.featured;
     }
 
-    logStep("Determined plan", { plan, leadLimit: planConfig.lead_limit, qualifiedLeadLimit: planConfig.qualified_lead_limit, featured: planConfig.featured });
+    logStep("Determined plan", { plan, leadLimit: planConfig.lead_limit, featured: planConfig.featured, exclusivity: planConfig.exclusivity });
 
     return new Response(
       JSON.stringify({
@@ -148,11 +151,10 @@ serve(async (req) => {
         plan,
         plan_name: planConfig.name,
         lead_limit: planConfig.lead_limit,
-        qualified_lead_limit: planConfig.qualified_lead_limit,
-        direct_lead_limit: planConfig.direct_lead_limit,
         subscription_end: subscriptionEnd,
         product_id: productId,
         is_featured: planConfig.featured,
+        exclusivity: planConfig.exclusivity,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

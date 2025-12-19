@@ -968,10 +968,12 @@ export type Database = {
           assignment_reason: string
           created_at: string
           eligibility_check_result: Json | null
+          exclusivity: string | null
           id: string
           lead_id: string | null
           lead_limit: number | null
           plan_tier: string | null
+          provider_routing_order: number | null
           requested_facility_id: string | null
           routing_source: string
           subscription_status: string | null
@@ -982,10 +984,12 @@ export type Database = {
           assignment_reason: string
           created_at?: string
           eligibility_check_result?: Json | null
+          exclusivity?: string | null
           id?: string
           lead_id?: string | null
           lead_limit?: number | null
           plan_tier?: string | null
+          provider_routing_order?: number | null
           requested_facility_id?: string | null
           routing_source?: string
           subscription_status?: string | null
@@ -996,10 +1000,12 @@ export type Database = {
           assignment_reason?: string
           created_at?: string
           eligibility_check_result?: Json | null
+          exclusivity?: string | null
           id?: string
           lead_id?: string | null
           lead_limit?: number | null
           plan_tier?: string | null
+          provider_routing_order?: number | null
           requested_facility_id?: string | null
           routing_source?: string
           subscription_status?: string | null
@@ -1053,6 +1059,7 @@ export type Database = {
           dual_diagnosis: string | null
           email: string
           email_verified: boolean | null
+          exclusivity: string | null
           facility_id: string | null
           follow_up_reminder_sent_at: string | null
           id: string
@@ -1070,6 +1077,8 @@ export type Database = {
           qualification_reason: string | null
           qualified: boolean | null
           quality_flag: string | null
+          routing_order: number | null
+          shared_with: string[] | null
           snooze_until: string | null
           source: string | null
           status: string
@@ -1086,6 +1095,7 @@ export type Database = {
           dual_diagnosis?: string | null
           email: string
           email_verified?: boolean | null
+          exclusivity?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           id?: string
@@ -1103,6 +1113,8 @@ export type Database = {
           qualification_reason?: string | null
           qualified?: boolean | null
           quality_flag?: string | null
+          routing_order?: number | null
+          shared_with?: string[] | null
           snooze_until?: string | null
           source?: string | null
           status?: string
@@ -1119,6 +1131,7 @@ export type Database = {
           dual_diagnosis?: string | null
           email?: string
           email_verified?: boolean | null
+          exclusivity?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           id?: string
@@ -1136,6 +1149,8 @@ export type Database = {
           qualification_reason?: string | null
           qualified?: boolean | null
           quality_flag?: string | null
+          routing_order?: number | null
+          shared_with?: string[] | null
           snooze_until?: string | null
           source?: string | null
           status?: string
