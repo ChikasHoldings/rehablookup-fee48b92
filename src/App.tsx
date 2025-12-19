@@ -35,19 +35,19 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
-// Provider Panel - lazy load shell and pages
-const ProviderShell = lazy(() => import("./components/provider/ProviderShell").then(m => ({ default: m.ProviderShell })));
-const ProviderDashboardPage = lazy(() => import("./pages/provider/Dashboard"));
-const ProviderListingPage = lazy(() => import("./pages/provider/Listing"));
-const ProviderLeadsPage = lazy(() => import("./pages/provider/Leads"));
-const ProviderAnalyticsPage = lazy(() => import("./pages/provider/Analytics"));
-const ProviderBillingPage = lazy(() => import("./pages/provider/Billing"));
-const ProviderSettingsPage = lazy(() => import("./pages/provider/Settings"));
-const ProviderNotificationsPage = lazy(() => import("./pages/provider/Notifications"));
-const ProviderHelpPage = lazy(() => import("./pages/provider/Help"));
-const ProviderKnowledgeBasePage = lazy(() => import("./pages/provider/KnowledgeBase"));
-const ProviderImageGuidelines = lazy(() => import("./pages/provider/ImageGuidelines"));
-const ProviderAddLocation = lazy(() => import("./pages/provider/AddLocation"));
+// Provider Panel - eagerly load for instant navigation
+import { ProviderShell } from "./components/provider/ProviderShell";
+import ProviderDashboardPage from "./pages/provider/Dashboard";
+import ProviderListingPage from "./pages/provider/Listing";
+import ProviderLeadsPage from "./pages/provider/Leads";
+import ProviderAnalyticsPage from "./pages/provider/Analytics";
+import ProviderBillingPage from "./pages/provider/Billing";
+import ProviderSettingsPage from "./pages/provider/Settings";
+import ProviderNotificationsPage from "./pages/provider/Notifications";
+import ProviderHelpPage from "./pages/provider/Help";
+import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
+import ProviderImageGuidelines from "./pages/provider/ImageGuidelines";
+import ProviderAddLocation from "./pages/provider/AddLocation";
 
 // Admin Panel - lazy load shell and pages
 const AdminShell = lazy(() => import("./components/admin/AdminShell").then(m => ({ default: m.AdminShell })));
