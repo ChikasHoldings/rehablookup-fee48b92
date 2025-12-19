@@ -201,7 +201,8 @@ export default function ProviderDashboardPage() {
       return (data || []) as Lead[];
     },
     enabled: !!facilityId,
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnMount: false,
   });
 
   // Fetch total leads count for Basic plan
@@ -217,7 +218,8 @@ export default function ProviderDashboardPage() {
       return count || 0;
     },
     enabled: !!facilityId && planKey === "basic",
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
   });
 
   // Fetch services count for profile completion
@@ -233,7 +235,8 @@ export default function ProviderDashboardPage() {
       return count || 0;
     },
     enabled: !!facilityId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
+    refetchOnMount: false,
   });
 
   // Fetch insurance count for profile completion
@@ -249,7 +252,8 @@ export default function ProviderDashboardPage() {
       return count || 0;
     },
     enabled: !!facilityId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
+    refetchOnMount: false,
   });
 
   // Real-time subscription

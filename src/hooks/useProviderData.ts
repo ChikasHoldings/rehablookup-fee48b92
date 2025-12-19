@@ -188,8 +188,9 @@ export function useProviderData(facilityId?: string) {
         monthlyLeadsCount,
       };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+    staleTime: 1000 * 60 * 10, // 10 minutes - prevent refetching on navigation
+    gcTime: 1000 * 60 * 60, // 1 hour cache
     refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch when component remounts (navigation)
   });
 }

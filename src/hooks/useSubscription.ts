@@ -50,9 +50,10 @@ export function useSubscription() {
         return DEFAULT_SUBSCRIPTION;
       }
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 10, // 10 minutes - subscription doesn't change often
+    gcTime: 1000 * 60 * 60, // 1 hour cache
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Don't refetch when component remounts (navigation)
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });

@@ -12,14 +12,38 @@ import { useQueryClient } from "@tanstack/react-query";
 import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Memoized sidebar to prevent re-renders
 const MemoizedSidebar = memo(ProviderSidebar);
 const MemoizedHeader = memo(ProviderHeader);
 
+// Lightweight header skeleton for initial load only
+function HeaderSkeleton() {
+  return (
+    <div className="h-16 border-b bg-background flex items-center px-4 gap-4">
+      <Skeleton className="h-8 w-8 rounded-lg" />
+      <Skeleton className="h-5 w-32" />
+      <div className="flex-1" />
+      <Skeleton className="h-8 w-8 rounded-full" />
+    </div>
+  );
+}
+
+function SidebarSkeleton() {
+  return (
+    <div className="p-3 space-y-2">
+      {[...Array(6)].map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full rounded-xl" />
+      ))}
+    </div>
+  );
+}
+
 function ProviderShellContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
   const mainContentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,7 +51,7 @@ function ProviderShellContent() {
   const queryClient = useQueryClient();
   const { selectedFacility, isLoading: facilityLoading } = useSelectedFacility();
 
-  const { data: providerData, isLoading, error } = useProviderData(selectedFacility?.id);
+  const { data: providerData, isLoading } = useProviderData(selectedFacility?.id);
   
   // Track navigation for Sentry breadcrumbs
   useSentryBreadcrumbs();
@@ -39,10 +63,14 @@ function ProviderShellContent() {
     }
   }, [location.pathname]);
 
-  // Auth check effect
+  // Auth check effect - only runs once on mount
   useEffect(() => {
+    let mounted = true;
+    
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!mounted) return;
       
       if (!session) {
         clearSentryUser();
@@ -57,6 +85,7 @@ function ProviderShellContent() {
         role: "provider",
       });
       
+      setHasSession(true);
       setIsAuthChecked(true);
     };
 
@@ -64,14 +93,20 @@ function ProviderShellContent() {
       (event, session) => {
         if (!session) {
           clearSentryUser();
+          setHasSession(false);
           navigate("/provider-login", { replace: true });
+        } else {
+          setHasSession(true);
         }
       }
     );
 
     checkAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleLogout = useCallback(async () => {
@@ -134,8 +169,9 @@ function ProviderShellContent() {
     setSidebarOpen(true);
   }, []);
 
-  // Show loading only on initial auth check
-  if (!isAuthChecked || facilityLoading || (isLoading && !providerData)) {
+  // Only show full-page blocking spinner on INITIAL auth check before we know if there's a session
+  // After initial check, keep layout visible and show content skeletons instead
+  if (!isAuthChecked) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center animate-fade-in">
@@ -150,32 +186,39 @@ function ProviderShellContent() {
     );
   }
 
-  if (error) {
-    navigate("/provider-login", { replace: true });
+  // If no session after auth check, don't render (will redirect)
+  if (!hasSession) {
     return null;
   }
 
   const profile = providerData?.profile;
   const facility = selectedFacility || providerData?.facility;
+  
+  // Determine if we're still loading initial data (show skeleton header/sidebar)
+  const isInitialDataLoading = facilityLoading && !selectedFacility;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Fixed Header - z-50 to stay on top */}
       <div className="flex-shrink-0 z-50">
-        <MemoizedHeader
-          facilityName={facility?.name}
-          facilityId={facility?.id}
-          facilitySlug={facility?.slug}
-          facilityLogo={facility?.logo_url}
-          userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
-          onLogout={handleLogout}
-        />
+        {isInitialDataLoading ? (
+          <HeaderSkeleton />
+        ) : (
+          <MemoizedHeader
+            facilityName={facility?.name}
+            facilityId={facility?.id}
+            facilitySlug={facility?.slug}
+            facilityLogo={facility?.logo_url}
+            userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
+            onLogout={handleLogout}
+          />
+        )}
       </div>
 
       <div className="flex flex-1 min-h-0">
         {/* Fixed Desktop Sidebar - z-40 below header */}
         <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
-          <MemoizedSidebar />
+          {isInitialDataLoading ? <SidebarSkeleton /> : <MemoizedSidebar />}
         </aside>
 
         {/* Mobile Sidebar Sheet - accessed via "More" button */}

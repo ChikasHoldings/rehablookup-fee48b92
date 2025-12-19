@@ -18,17 +18,22 @@ const SelectedFacilityContext = createContext<SelectedFacilityContextType | unde
 
 export function SelectedFacilityProvider({ children }: { children: ReactNode }) {
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
-  const [selectedFacility, setSelectedFacilityState] = useState<ProviderFacility | null>(null);
+  const [selectedFacility, setSelectedFacilityState] = useState<ProviderFacility | null>(() => {
+    // Try to restore from localStorage immediately on mount for instant UI
+    const storedFacilityId = localStorage.getItem("selectedFacilityId");
+    return storedFacilityId ? { id: storedFacilityId } as ProviderFacility : null;
+  });
   const [isInitialized, setIsInitialized] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pendingFacilitySwitch, setPendingFacilitySwitch] = useState<ProviderFacility | null>(null);
 
-  // Initialize selected facility from localStorage or first available facility
+  // Initialize/update selected facility from fetched facilities
   useEffect(() => {
     if (facilitiesLoading) return;
     
     // If no facilities, still mark as initialized
     if (facilities.length === 0) {
+      setSelectedFacilityState(null);
       setIsInitialized(true);
       return;
     }
@@ -94,7 +99,7 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
         selectedFacility,
         setSelectedFacility,
         requestFacilitySwitch,
-        isLoading: facilitiesLoading || !isInitialized,
+        isLoading: facilitiesLoading && !isInitialized,
         hasUnsavedChanges,
         setHasUnsavedChanges,
         pendingFacilitySwitch,
