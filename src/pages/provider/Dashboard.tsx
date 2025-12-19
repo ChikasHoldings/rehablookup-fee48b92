@@ -149,26 +149,40 @@ export default function ProviderDashboardPage() {
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [profilePromptDismissed, setProfilePromptDismissed] = useState(() => {
-    if (!facilityId) return false;
-    const dismissed = localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
-    return dismissed === "true";
+  const [profilePromptDismissedFields, setProfilePromptDismissedFields] = useState<string | null>(() => {
+    if (!facilityId) return null;
+    return localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
   });
 
   // Reset dismissed state when facility changes
   useEffect(() => {
     if (facilityId) {
-      const dismissed = localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
-      setProfilePromptDismissed(dismissed === "true");
+      setProfilePromptDismissedFields(localStorage.getItem(`profile-prompt-dismissed-${facilityId}`));
     }
   }, [facilityId]);
 
-  const handleDismissProfilePrompt = (e: React.MouseEvent) => {
+  // Compute missing fields
+  const computeMissingFields = () => {
+    if (!providerData?.facility) return [];
+    const f = providerData.facility;
+    const missing: string[] = [];
+    if (!f.description) missing.push("description");
+    if (!f.phone) missing.push("phone");
+    if (!f.address || !f.city || !f.state || !f.zip_code) missing.push("address");
+    if (!f.logo_url) missing.push("logo");
+    if (!f.gallery_urls || f.gallery_urls.length === 0) missing.push("photos");
+    if (servicesCount === 0) missing.push("services");
+    if (insuranceCount === 0) missing.push("insurance");
+    return missing.sort();
+  };
+
+  const handleDismissProfilePrompt = (e: React.MouseEvent, missingFields: string[]) => {
     e.preventDefault();
     e.stopPropagation();
     if (facilityId) {
-      localStorage.setItem(`profile-prompt-dismissed-${facilityId}`, "true");
-      setProfilePromptDismissed(true);
+      const fieldsKey = missingFields.sort().join(",");
+      localStorage.setItem(`profile-prompt-dismissed-${facilityId}`, fieldsKey);
+      setProfilePromptDismissedFields(fieldsKey);
     }
   };
 
@@ -404,18 +418,14 @@ export default function ProviderDashboardPage() {
         </div>
 
         {/* Profile Completion Prompt */}
-        {providerData?.facility && !profilePromptDismissed && (() => {
-          const f = providerData.facility;
-          const missingFields: string[] = [];
-          if (!f.description) missingFields.push("description");
-          if (!f.phone) missingFields.push("phone");
-          if (!f.address || !f.city || !f.state || !f.zip_code) missingFields.push("address");
-          if (!f.logo_url) missingFields.push("logo");
-          if (!f.gallery_urls || f.gallery_urls.length === 0) missingFields.push("photos");
-          if (servicesCount === 0) missingFields.push("services");
-          if (insuranceCount === 0) missingFields.push("insurance");
+        {providerData?.facility && (() => {
+          const missingFields = computeMissingFields();
           
           if (missingFields.length === 0) return null;
+          
+          // Check if dismissed for the same set of missing fields
+          const currentFieldsKey = missingFields.join(",");
+          if (profilePromptDismissedFields === currentFieldsKey) return null;
           
           const missingText = missingFields.length === 1 
             ? `Add your ${missingFields[0]}` 
@@ -436,7 +446,7 @@ export default function ProviderDashboardPage() {
                   <div className="flex items-center gap-2">
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     <button
-                      onClick={handleDismissProfilePrompt}
+                      onClick={(e) => handleDismissProfilePrompt(e, missingFields)}
                       className="p-1 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
                       aria-label="Dismiss"
                     >
