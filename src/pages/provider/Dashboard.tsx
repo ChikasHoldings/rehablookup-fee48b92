@@ -183,6 +183,38 @@ export default function ProviderDashboardPage() {
     staleTime: 1000 * 60,
   });
 
+  // Fetch services count for profile completion
+  const { data: servicesCount = 0 } = useQuery({
+    queryKey: ["services-count", facilityId],
+    queryFn: async (): Promise<number> => {
+      if (!facilityId) return 0;
+      const { count, error } = await supabase
+        .from("facility_services")
+        .select("*", { count: "exact", head: true })
+        .eq("facility_id", facilityId);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Fetch insurance count for profile completion
+  const { data: insuranceCount = 0 } = useQuery({
+    queryKey: ["insurance-count", facilityId],
+    queryFn: async (): Promise<number> => {
+      if (!facilityId) return 0;
+      const { count, error } = await supabase
+        .from("facility_insurance")
+        .select("*", { count: "exact", head: true })
+        .eq("facility_id", facilityId);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 5,
+  });
+
   // Real-time subscription
   useEffect(() => {
     if (!facilityId) return;
@@ -357,6 +389,8 @@ export default function ProviderDashboardPage() {
           if (!f.address || !f.city || !f.state || !f.zip_code) missingFields.push("address");
           if (!f.logo_url) missingFields.push("logo");
           if (!f.gallery_urls || f.gallery_urls.length === 0) missingFields.push("photos");
+          if (servicesCount === 0) missingFields.push("services");
+          if (insuranceCount === 0) missingFields.push("insurance");
           
           if (missingFields.length === 0) return null;
           
