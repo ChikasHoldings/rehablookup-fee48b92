@@ -567,7 +567,7 @@ const ForProviders = () => {
                 </div>
               </div>
 
-              <h1 className="mb-4 font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+              <h1 className="mb-4 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight">
                 Fill Your Beds With
                 <span className="text-primary"> Qualified Admissions</span>
               </h1>

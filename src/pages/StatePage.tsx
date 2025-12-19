@@ -119,7 +119,7 @@ const StatePage = () => {
               {stateData.abbreviation} Treatment Centers
             </div>
             
-            <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
               Drug & Alcohol Rehab Centers in {stateData.name}
             </h1>
             

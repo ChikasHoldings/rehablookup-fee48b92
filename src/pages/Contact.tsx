@@ -108,7 +108,7 @@ const Contact = () => {
             <MessageSquare className="h-5 w-5 text-accent" />
             <span className="text-base font-medium text-primary-foreground">Get In Touch</span>
           </div>
-          <h1 className="mb-5 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+          <h1 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
             Contact Us
           </h1>
           <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-xl">

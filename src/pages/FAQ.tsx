@@ -294,7 +294,7 @@ const FAQ = () => {
               <HelpCircle className="h-5 w-5 text-accent" />
               <span className="text-base font-medium text-primary-foreground">Frequently Asked Questions</span>
             </div>
-            <h1 className="mb-5 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
+            <h1 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               How Can We Help You?
             </h1>
             <p className="mb-8 text-lg text-primary-foreground/80 leading-relaxed max-w-xl mx-auto md:text-xl">
