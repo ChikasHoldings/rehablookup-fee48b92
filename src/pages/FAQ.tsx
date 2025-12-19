@@ -14,13 +14,12 @@ import {
   Search, 
   HelpCircle, 
   ArrowRight,
-  Pill,
-  DollarSign,
   Heart,
-  Users,
-  Clock,
-  Shield,
-  ChevronDown
+  Phone,
+  Lock,
+  Stethoscope,
+  DollarSign,
+  Building2
 } from "lucide-react";
 
 interface FAQItem {
@@ -38,170 +37,146 @@ interface FAQCategory {
 
 const faqCategories: FAQCategory[] = [
   {
-    id: "treatment-basics",
-    name: "Treatment Basics",
-    icon: Pill,
-    description: "Understanding addiction treatment and what to expect",
+    id: "getting-help",
+    name: "Getting Help",
+    icon: Phone,
+    description: "Starting your journey to recovery",
     faqs: [
       {
-        question: "How do I know if I or my loved one needs rehab?",
-        answer: "Signs that treatment may be needed include inability to control substance use, withdrawal symptoms when not using, neglecting responsibilities, and continued use despite negative consequences. If substance use is affecting health, relationships, or daily life, it may be time to seek professional help. A professional assessment can help determine the appropriate level of care."
+        question: "How do I know if treatment is needed?",
+        answer: "If substance use is affecting your health, relationships, work, or daily responsibilities, it may be time to seek help. Common signs include difficulty controlling use, experiencing withdrawal symptoms, and continuing despite negative consequences. Speaking with a healthcare professional or addiction specialist can help clarify your situation and options."
       },
       {
-        question: "What is the difference between inpatient and outpatient treatment?",
-        answer: "Inpatient (residential) treatment requires living at the facility 24/7 and provides intensive, structured care with round-the-clock medical supervision. Outpatient treatment allows you to live at home while attending scheduled therapy sessions, typically ranging from a few hours per week to several hours per day. The best option depends on the severity of addiction, your support system, work obligations, and personal circumstances."
+        question: "What is the first step to getting help?",
+        answer: "The first step is reaching out. You can call a treatment center directly, speak with your doctor, or use our Request Help form to connect with facilities that match your needs. Many people also start by talking to a trusted friend or family member. Remember, asking for help is a sign of strength."
       },
       {
-        question: "What types of therapies are used in addiction treatment?",
-        answer: "Common evidence-based therapies include Cognitive Behavioral Therapy (CBT), Dialectical Behavior Therapy (DBT), Motivational Interviewing, Group Therapy, Family Therapy, and 12-Step Facilitation. Many programs also incorporate holistic approaches like yoga, meditation, art therapy, and equine therapy. Treatment plans are typically customized to each individual's needs."
+        question: "Can I get help for someone else?",
+        answer: "Yes. Many families initiate the process on behalf of a loved one. You can research facilities, verify insurance, and even arrange admissions. However, for voluntary treatment, the individual must ultimately agree to participate. Professional interventionists can help if your loved one is resistant to seeking help."
       },
       {
-        question: "How long does rehab typically last?",
-        answer: "Treatment duration varies based on individual needs. Short-term programs typically last 28-30 days, while long-term programs can be 60-90 days or longer. Some individuals benefit from extended care lasting 6 months to a year. Research shows that longer treatment periods often lead to better outcomes. Your treatment team will help determine the appropriate length of stay based on your progress."
+        question: "Is treatment available 24/7?",
+        answer: "Most treatment centers have admissions teams available around the clock. Crisis situations can be addressed immediately, and many facilities offer same-day or next-day intake assessments. Our support team is also available 24/7 to help you find appropriate care quickly."
       },
       {
-        question: "What is medical detox and when is it necessary?",
-        answer: "Medical detoxification is a supervised process of safely withdrawing from substances while managing withdrawal symptoms. It's typically necessary for alcohol, benzodiazepines, and opioid dependence, where withdrawal can be uncomfortable or even dangerous. Medical detox provides 24/7 monitoring and medication-assisted treatment to ensure safety and comfort during this initial phase of recovery."
+        question: "What if I'm not ready for rehab but need support?",
+        answer: "There are many levels of care available. Outpatient counseling, support groups like AA or NA, and telehealth therapy offer support without requiring residential treatment. Speaking with a professional can help you understand your options and find an approach that feels right for where you are."
       }
     ]
   },
   {
-    id: "insurance-costs",
-    name: "Insurance & Costs",
+    id: "matching-privacy",
+    name: "Matching & Privacy",
+    icon: Lock,
+    description: "How we connect you with care",
+    faqs: [
+      {
+        question: "How does RehabLookup match me with treatment centers?",
+        answer: "We consider your location preferences, insurance coverage, treatment needs (substance type, co-occurring conditions), and program preferences (inpatient vs. outpatient, specialized programs). Our goal is to connect you with facilities that genuinely fit your situation, not just any available option."
+      },
+      {
+        question: "Is my information kept confidential?",
+        answer: "Absolutely. Your privacy is protected by HIPAA regulations and our strict privacy policies. We only share your contact information with facilities you specifically select. We never sell your data to third parties, and all communications are encrypted."
+      },
+      {
+        question: "Will my employer find out if I seek treatment?",
+        answer: "Treatment records are protected health information and cannot be disclosed to employers without your consent. Many people use FMLA (Family and Medical Leave Act) to take time off for treatment without disclosing the specific reason. Your treatment center can provide guidance on protecting your privacy."
+      },
+      {
+        question: "Can I remain anonymous when searching?",
+        answer: "Yes. You can browse our directory, read about treatment options, and research facilities without providing any personal information. You only share your details when you choose to contact a specific facility or request personalized help."
+      },
+      {
+        question: "How do you verify treatment centers?",
+        answer: "We verify state licensing, accreditation from organizations like The Joint Commission or CARF, and confirm that facilities meet quality standards. Our team regularly reviews listings for accuracy and monitors feedback to ensure the information we provide is trustworthy."
+      }
+    ]
+  },
+  {
+    id: "treatment-options",
+    name: "Treatment Options",
+    icon: Stethoscope,
+    description: "Understanding different programs",
+    faqs: [
+      {
+        question: "What is the difference between inpatient and outpatient?",
+        answer: "Inpatient (residential) treatment means living at the facility full-time, typically for 30-90 days, with 24/7 support and structured programming. Outpatient treatment allows you to live at home while attending scheduled sessions. The right choice depends on the severity of addiction, your support system at home, and personal circumstances."
+      },
+      {
+        question: "What is medical detox?",
+        answer: "Medical detoxification is supervised withdrawal from substances in a clinical setting. Medical staff monitor vital signs and provide medications to manage withdrawal symptoms safely. Detox is typically necessary for alcohol, opioids, and benzodiazepines, where withdrawal can be medically serious."
+      },
+      {
+        question: "What therapies are used in treatment?",
+        answer: "Evidence-based approaches include Cognitive Behavioral Therapy (CBT), Dialectical Behavior Therapy (DBT), Motivational Interviewing, and group therapy. Many programs also offer family therapy, trauma-informed care, and holistic options like meditation, yoga, and art therapy. Treatment is typically individualized."
+      },
+      {
+        question: "How long does treatment typically last?",
+        answer: "Program lengths vary: detox typically lasts 5-10 days, short-term residential is usually 28-30 days, and long-term programs run 60-90 days or longer. Outpatient programs can last several months. Research suggests longer engagement with treatment supports better outcomes."
+      },
+      {
+        question: "What is dual diagnosis treatment?",
+        answer: "Dual diagnosis (or co-occurring disorders) treatment addresses both addiction and mental health conditions like depression, anxiety, or PTSD simultaneously. Treating both conditions together is important because they often influence each other. Many facilities specialize in this integrated approach."
+      },
+      {
+        question: "What happens after completing a program?",
+        answer: "Aftercare planning begins before discharge and typically includes ongoing therapy, support group participation, and possibly sober living arrangements. Many facilities offer alumni programs and continued support. Building a recovery-focused lifestyle with healthy routines and supportive relationships is key to long-term success."
+      }
+    ]
+  },
+  {
+    id: "cost-insurance",
+    name: "Cost & Insurance",
     icon: DollarSign,
-    description: "Payment options and insurance coverage information",
+    description: "Affording quality treatment",
     faqs: [
       {
         question: "Does insurance cover addiction treatment?",
-        answer: "Most health insurance plans cover some form of addiction treatment under mental health benefits, thanks to the Mental Health Parity and Addiction Equity Act. Coverage varies by provider and plan, but typically includes detox, inpatient, outpatient, and medication-assisted treatment. Contact your insurance provider or the treatment center's admissions team to verify your specific benefits."
+        answer: "Most health insurance plans cover addiction treatment under mental health benefits, required by the Mental Health Parity Act. Coverage typically includes detox, residential, and outpatient programs. The extent of coverage depends on your specific plan. We can help you verify your benefits with facilities."
       },
       {
-        question: "What if I don't have insurance?",
-        answer: "Many treatment centers offer alternative payment options including sliding scale fees based on income, payment plans, scholarships, and state-funded programs. Some facilities accept Medicaid or Medicare. Non-profit organizations and community health centers may also provide free or low-cost treatment options. Don't let lack of insurance prevent you from seeking help."
+        question: "What if I do not have insurance?",
+        answer: "Many options exist for those without insurance: state-funded programs, sliding scale fees based on income, payment plans, scholarships, and nonprofit treatment centers. Medicaid covers treatment in many states. Do not let concerns about cost prevent you from exploring your options."
       },
       {
-        question: "How much does rehab typically cost?",
-        answer: "Treatment costs vary widely depending on the type of program, location, amenities, and length of stay. Outpatient programs may cost $1,000-$10,000, while residential treatment can range from $10,000-$30,000+ per month. Luxury facilities may charge $50,000 or more. However, many effective treatment options exist at various price points, and most centers work with patients on payment options."
+        question: "How much does treatment cost without insurance?",
+        answer: "Costs vary significantly: outpatient programs may range from $1,000-$10,000, while residential treatment can cost $10,000-$30,000 or more per month. Luxury facilities charge higher rates. However, many effective programs exist at various price points, and most will work with you on payment."
       },
       {
-        question: "Can I use my HSA or FSA for treatment?",
-        answer: "Yes, Health Savings Accounts (HSA) and Flexible Spending Accounts (FSA) can typically be used to pay for qualified addiction treatment expenses. This includes detox, inpatient and outpatient treatment, therapy, and prescribed medications. Check with your account administrator and the treatment facility for specific eligible expenses."
+        question: "Can I use HSA or FSA funds for treatment?",
+        answer: "Yes. Health Savings Accounts and Flexible Spending Accounts can typically be used for addiction treatment expenses, including detox, therapy, residential care, and prescribed medications. Check with your account administrator for specific eligible expenses."
       },
       {
-        question: "What does 'in-network' vs 'out-of-network' mean for treatment?",
-        answer: "In-network facilities have negotiated rates with your insurance company, typically resulting in lower out-of-pocket costs. Out-of-network facilities don't have these agreements, so you may pay higher co-pays or a larger portion of the cost. Some plans offer out-of-network benefits, while others don't. Always verify coverage before starting treatment."
+        question: "What is in-network vs. out-of-network coverage?",
+        answer: "In-network facilities have contracts with your insurance company, usually resulting in lower out-of-pocket costs. Out-of-network facilities may still be covered, but at a higher cost to you. Some insurance plans offer out-of-network benefits while others do not. Always verify coverage before admission."
       }
     ]
   },
   {
-    id: "family-support",
-    name: "Family & Support",
-    icon: Users,
-    description: "How families can help and participate in recovery",
+    id: "for-providers",
+    name: "For Providers",
+    icon: Building2,
+    description: "Information for treatment facilities",
     faqs: [
       {
-        question: "How can I support a loved one in treatment?",
-        answer: "Supporting a loved one includes educating yourself about addiction, attending family therapy sessions, participating in family programs offered by the treatment center, maintaining healthy boundaries, taking care of your own mental health, and being patient with the recovery process. Joining support groups like Al-Anon or Nar-Anon can also provide valuable guidance and community."
+        question: "How can my facility be listed on RehabLookup?",
+        answer: "Treatment centers can apply through our For Providers page. We review licensing, accreditation, and credentials before approval. All facilities must meet our quality standards and provide accurate information. The listing process is straightforward and our team is available to assist."
       },
       {
-        question: "Can family members visit during residential treatment?",
-        answer: "Most residential programs have designated visiting hours and family weekends. Some facilities restrict visits during the initial detox and stabilization period to allow the patient to focus on their recovery. Family involvement is generally encouraged as it's a key factor in long-term success. Policies vary by facility, so check with the specific program."
+        question: "What are the requirements to be listed?",
+        answer: "Facilities must have valid state licensing, appropriate accreditation, and a track record of providing quality care. We verify credentials and may request documentation. Facilities must keep their profile information accurate and current."
       },
       {
-        question: "What is family therapy and why is it important?",
-        answer: "Family therapy addresses how addiction has affected family dynamics, improves communication, establishes healthy boundaries, and helps family members understand their role in supporting recovery. It can heal relationships damaged by addiction and create a stronger support system. Many programs offer family education sessions, therapy, and multi-day family programs."
+        question: "How are leads distributed?",
+        answer: "When someone requests information about treatment, we connect them with facilities that match their specific needs, location, and insurance. We prioritize quality matches over quantity, ensuring that inquiries go to facilities genuinely suited to help each individual."
       },
       {
-        question: "How do I stage an intervention?",
-        answer: "A professional intervention involves gathering family and friends to encourage a loved one to seek treatment. It's recommended to work with a certified intervention specialist who can guide the process, prepare participants, and handle difficult situations. The goal is to express concern lovingly while presenting treatment options and consequences if help is refused."
+        question: "Is there a cost to list my facility?",
+        answer: "We offer different listing options including both free and premium tiers. Basic listings are available at no cost, while featured placements and additional visibility options are available through our subscription plans. Visit our For Providers page for current pricing and options."
       },
       {
-        question: "Should children be told about a parent's addiction treatment?",
-        answer: "Age-appropriate honesty is generally recommended. Children often sense when something is wrong, and secrets can create anxiety. Explain that their parent is getting help for an illness, that addiction is not the child's fault, and that the family will receive support too. Many treatment programs offer resources specifically for explaining addiction to children."
-      }
-    ]
-  },
-  {
-    id: "recovery-aftercare",
-    name: "Recovery & Aftercare",
-    icon: Heart,
-    description: "Life after treatment and maintaining sobriety",
-    faqs: [
-      {
-        question: "What happens after completing a treatment program?",
-        answer: "Aftercare is crucial for long-term recovery. This typically includes continued therapy (individual and group), participation in support groups like AA or NA, possible sober living arrangements, medication management if applicable, and building a recovery-oriented lifestyle. Most treatment centers create a comprehensive aftercare plan before discharge."
-      },
-      {
-        question: "What is a sober living home?",
-        answer: "Sober living homes are structured, substance-free residences for people in recovery. They provide a transitional environment between treatment and independent living, with house rules, peer support, and often required participation in recovery activities. Residents typically pay rent and may continue working or attending school while maintaining their sobriety."
-      },
-      {
-        question: "How do I prevent relapse?",
-        answer: "Relapse prevention involves identifying triggers, developing coping strategies, maintaining a support network, attending therapy and support groups, practicing self-care, and following your aftercare plan. Warning signs to watch for include isolating, skipping meetings, romanticizing past use, and major life stress. Having a plan for high-risk situations is essential."
-      },
-      {
-        question: "Is relapse a sign of failure?",
-        answer: "No. Relapse is often part of the recovery process, not a sign of failure. Addiction is a chronic condition, and like other chronic diseases, setbacks can occur. What matters is responding to relapse quickly by reaching out for help, returning to treatment if needed, and learning from the experience to strengthen your recovery going forward."
-      },
-      {
-        question: "How long does recovery take?",
-        answer: "Recovery is a lifelong journey, not a destination. While acute treatment may last weeks or months, maintaining sobriety requires ongoing effort and support. Many people find that recovery becomes easier over time as new habits form and life improves. The brain also continues to heal for years after achieving sobriety, with continued improvements in cognitive function and emotional regulation."
-      }
-    ]
-  },
-  {
-    id: "treatment-process",
-    name: "Treatment Process",
-    icon: Clock,
-    description: "What to expect during the treatment journey",
-    faqs: [
-      {
-        question: "What should I bring to residential treatment?",
-        answer: "Most programs provide a packing list, but typically you should bring comfortable clothing, toiletries (no alcohol-based products), prescription medications in original bottles, insurance and ID cards, a list of emergency contacts, and personal items like photos or journals. Leave valuables, electronics (policies vary), and any prohibited items at home."
-      },
-      {
-        question: "Can I work or go to school during treatment?",
-        answer: "Outpatient programs are designed to accommodate work and school schedules, with sessions in the evenings or mornings. Intensive Outpatient Programs (IOP) require more time but can still allow for reduced work schedules. Residential treatment typically requires taking leave from work or school, though some facilities offer educational and vocational services on-site."
-      },
-      {
-        question: "Will I have access to my phone during treatment?",
-        answer: "Policies vary by facility. Many residential programs restrict or limit phone access, especially during the initial weeks, to minimize distractions and allow full focus on recovery. Some allow scheduled phone times for family calls. Outpatient programs generally don't restrict phone use outside of session times."
-      },
-      {
-        question: "What is a typical day like in residential treatment?",
-        answer: "A typical day includes structured activities: wake-up and morning meditation, breakfast, individual and group therapy sessions, educational lectures, lunch, recreational activities or exercise, more therapy, dinner, evening support groups or leisure time, and lights out. Programs vary, but most provide a balanced mix of treatment, education, and personal time."
-      },
-      {
-        question: "Can I leave treatment early if I want to?",
-        answer: "Adults in voluntary treatment can legally leave at any time (AMA - Against Medical Advice), though this is strongly discouraged as it increases relapse risk. Staff will discuss concerns and try to address any issues. Completing treatment significantly improves outcomes. Some insurance policies may not cover treatment left early, and court-ordered patients may face legal consequences."
-      }
-    ]
-  },
-  {
-    id: "using-rehablookup",
-    name: "Using RehabLookup",
-    icon: Shield,
-    description: "How our service works and what we offer",
-    faqs: [
-      {
-        question: "Is RehabLookup free to use?",
-        answer: "Yes, RehabLookup is completely free for individuals and families searching for treatment. We provide information, reviews, and connection services at no cost to you. Our goal is to help you find the right treatment center for your specific needs without any financial barrier."
-      },
-      {
-        question: "How does RehabLookup verify treatment centers?",
-        answer: "We verify that listed facilities are properly licensed and accredited by recognized organizations such as The Joint Commission, CARF, or state licensing boards. We also confirm insurance acceptance, review treatment modalities offered, and monitor user feedback. Our team regularly updates listings to ensure accuracy."
-      },
-      {
-        question: "Is my search confidential?",
-        answer: "Absolutely. Your privacy is our priority. We do not share your personal information with third parties without your consent. When you submit a contact request, only the facility you selected receives your information. We use encryption and follow healthcare privacy best practices to protect your data."
-      },
-      {
-        question: "Can I speak to someone for help choosing a facility?",
-        answer: "Yes, our support team is available 24/7 to help you navigate options, answer questions, and connect you with appropriate treatment centers. Visit our Request Help page to get personalized assistance. Our team understands this is a difficult time and provides compassionate, non-judgmental support."
-      },
-      {
-        question: "How do treatment centers get listed on RehabLookup?",
-        answer: "Treatment centers can apply to be listed on our platform. We review their licensing, accreditation, and credentials before approval. Listed facilities must meet our quality standards and maintain accurate information. Centers cannot pay for better placement or reviews. For more information, visit our For Providers page."
+        question: "How do I update my facility information?",
+        answer: "Listed providers can access their dashboard to update contact information, services offered, insurance accepted, and other details. Changes are reviewed to ensure accuracy before going live. Our support team can assist with any updates or questions."
       }
     ]
   }
@@ -308,102 +283,75 @@ const FAQ = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative bg-primary py-12 px-4 md:py-16 md:px-6 overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
+      <section className="relative bg-primary py-10 px-4 md:py-14 overflow-hidden">
+        {/* Subtle decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-56 h-56 bg-accent/10 rounded-full blur-3xl" />
         </div>
         
         <div className="container relative">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
-              <HelpCircle className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Frequently Asked Questions</span>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              How Can We Help You?
+          <div className="mx-auto max-w-2xl text-center">
+            <h1 className="mb-3 text-2xl font-bold text-primary-foreground md:text-3xl">
+              Frequently Asked Questions
             </h1>
-            <p className="mb-6 text-base text-primary-foreground/80 leading-relaxed max-w-xl mx-auto md:text-lg">
-              Find answers to common questions about addiction treatment, insurance, family support, and recovery.
+            <p className="mb-6 text-sm text-primary-foreground/80 leading-relaxed max-w-lg mx-auto md:text-base">
+              Find answers to common questions about finding treatment, costs, privacy, and how RehabLookup works.
             </p>
             
-            {/* Enhanced Search Bar */}
-            <div className="relative mx-auto max-w-lg">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search for answers..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-12 rounded-xl border-0 bg-card pl-11 pr-11 text-sm shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                  >
-                    <span className="sr-only">Clear search</span>
-                    <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-              
-              {/* Search hint */}
-              <p className="mt-2 text-xs text-primary-foreground/60">
-                Try searching "insurance", "detox", or "family support"
-              </p>
+            {/* Search Bar */}
+            <div className="relative mx-auto max-w-md">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search questions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-11 rounded-lg border-0 bg-card pl-11 pr-10 text-sm shadow-lg placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <svg className="h-3 w-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>
       </section>
 
       {/* Quick Jump Navigation */}
-      <section className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md py-3 px-4 md:py-4 md:px-6 shadow-sm">
+      <section className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md py-2.5 px-4 shadow-sm">
         <div className="container">
-          <div className="flex flex-col gap-2">
-            {/* Filter/Jump buttons */}
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0 md:mx-0 md:px-0 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0 md:mx-0 md:px-0 scrollbar-hide">
+            <button
+              onClick={() => {
+                setSelectedCategory(null);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="h-8 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 bg-primary text-primary-foreground"
+            >
+              All
+            </button>
+            {faqCategories.map((category) => (
               <button
+                key={category.id}
                 onClick={() => {
                   setSelectedCategory(null);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  setTimeout(() => scrollToCategory(category.id), 50);
                 }}
-                className={`h-9 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 ${
-                  selectedCategory === null 
-                    ? "bg-primary text-primary-foreground shadow-md" 
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
+                className="h-8 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted"
               >
-                All Topics
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                  selectedCategory === null ? "bg-white/20" : "bg-background"
-                }`}>
-                  {faqCategories.reduce((acc, cat) => acc + cat.faqs.length, 0)}
-                </span>
+                <category.icon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{category.name}</span>
+                <span className="sm:hidden">{category.name.split(" ")[0]}</span>
               </button>
-              {faqCategories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => {
-                    setSelectedCategory(null); // Clear filter to show all
-                    setTimeout(() => scrollToCategory(category.id), 50);
-                  }}
-                  className={`h-9 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center gap-1.5 ${
-                    selectedCategory === category.id 
-                      ? "bg-primary text-primary-foreground shadow-md" 
-                      : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  <category.icon className="h-3.5 w-3.5" />
-                  {category.name}
-                  <ChevronDown className="h-3 w-3 opacity-60" />
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -448,52 +396,44 @@ const FAQ = () => {
               </Button>
             </div>
           ) : (
-            <div className="mx-auto max-w-3xl space-y-10">
+            <div className="mx-auto max-w-3xl space-y-12">
               {displayCategories.map((category, catIndex) => (
                 <div 
                   key={category.id}
                   id={category.id}
-                  className="animate-fade-in scroll-mt-36"
-                  style={{ animationDelay: `${catIndex * 100}ms` }}
+                  className="animate-fade-in scroll-mt-32"
+                  style={{ animationDelay: `${catIndex * 80}ms` }}
                 >
-                  {/* Category Header */}
-                  <div className="mb-5 flex items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent/20 to-accent/10 ring-1 ring-accent/20">
-                      <category.icon className="h-5 w-5 text-accent" />
+                  {/* Category Header - matches site section headers */}
+                  <div className="mb-6 flex items-center gap-3 pb-3 border-b border-border">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <category.icon className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h2 className="font-display text-lg font-bold text-foreground">
-                          {category.name}
-                        </h2>
-                        <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                          {category.faqs.length} questions
-                        </span>
-                      </div>
+                      <h2 className="text-lg font-semibold text-foreground md:text-xl">
+                        {category.name}
+                      </h2>
                       <p className="text-sm text-muted-foreground">{category.description}</p>
                     </div>
                   </div>
 
-                  {/* Enhanced FAQ Accordion */}
-                  <Accordion type="single" collapsible className="space-y-2">
+                  {/* FAQ Accordion - standardized typography */}
+                  <Accordion type="single" collapsible className="space-y-2.5">
                     {category.faqs.map((faq, index) => (
                       <AccordionItem
                         key={index}
                         value={`${category.id}-${index}`}
-                        className="group rounded-xl border border-border bg-card overflow-hidden transition-all duration-300 hover:border-accent/30 hover:shadow-md data-[state=open]:border-accent/40 data-[state=open]:shadow-lg data-[state=open]:bg-gradient-to-br data-[state=open]:from-card data-[state=open]:to-accent/5"
+                        className="group border border-border rounded-lg bg-card overflow-hidden transition-all duration-200 hover:border-primary/20 data-[state=open]:border-primary/30 data-[state=open]:shadow-sm"
                       >
-                        <AccordionTrigger className="text-left text-sm font-semibold text-foreground hover:no-underline py-4 px-5 gap-3 [&>svg]:shrink-0 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-muted-foreground [&>svg]:transition-transform [&[data-state=open]>svg]:text-accent group-hover:text-accent transition-colors">
-                          <span className="flex items-start gap-2.5">
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-accent/10 text-xs font-bold text-accent mt-0.5">
-                              {index + 1}
-                            </span>
-                            <span>{faq.question}</span>
+                        <AccordionTrigger className="text-left py-4 px-4 md:px-5 gap-3 hover:no-underline [&>svg]:shrink-0 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-muted-foreground [&>svg]:transition-colors [&[data-state=open]>svg]:text-primary">
+                          <span className="text-sm font-medium text-foreground leading-snug group-hover:text-primary transition-colors md:text-base">
+                            {faq.question}
                           </span>
                         </AccordionTrigger>
-                        <AccordionContent className="text-sm text-muted-foreground pb-5 px-5 leading-relaxed">
-                          <div className="pl-8 pt-1 border-l-2 border-accent/20 ml-3">
+                        <AccordionContent className="px-4 pb-4 md:px-5 md:pb-5">
+                          <p className="text-sm text-muted-foreground leading-relaxed md:text-base md:leading-relaxed">
                             {faq.answer}
-                          </div>
+                          </p>
                         </AccordionContent>
                       </AccordionItem>
                     ))}
