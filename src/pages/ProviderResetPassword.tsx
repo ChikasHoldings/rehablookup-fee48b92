@@ -145,7 +145,7 @@ export default function ProviderResetPassword() {
         <main className="flex flex-1 items-center justify-center px-4 py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-            <p className="mt-4 text-muted-foreground">Verifying reset link...</p>
+            <p className="mt-4 text-sm text-muted-foreground">Verifying reset link...</p>
           </div>
         </main>
         <Footer />
@@ -163,11 +163,11 @@ export default function ProviderResetPassword() {
           variant="provider"
         />
         <main className="flex flex-1 items-center justify-center px-4 py-12">
-          <div className="w-full max-w-sm space-y-6 text-center">
-            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
-              <Lock className="h-8 w-8 text-destructive" />
-            </div>
-            <div>
+          <div className="w-full max-w-md animate-step-enter">
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="h-7 w-7 text-destructive" />
+              </div>
               <h1 className="font-display text-2xl font-bold text-foreground">
                 Invalid or Expired Link
               </h1>
@@ -175,11 +175,18 @@ export default function ProviderResetPassword() {
                 This password reset link is invalid or has expired. Please request a new one.
               </p>
             </div>
-            <Link to="/provider-login">
-              <Button className="w-full">
-                Back to Login
-              </Button>
-            </Link>
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <Link to="/provider-forgot-password" className="block">
+                <Button className="w-full h-10 text-sm font-semibold">
+                  Request New Link
+                </Button>
+              </Link>
+              <Link to="/provider-login" className="block mt-3">
+                <Button variant="ghost" className="w-full h-10 text-sm">
+                  Back to Sign In
+                </Button>
+              </Link>
+            </div>
           </div>
         </main>
         <Footer />
@@ -197,18 +204,16 @@ export default function ProviderResetPassword() {
           variant="provider"
         />
         <main className="flex flex-1 items-center justify-center px-4 py-12">
-          <div className="w-full max-w-sm space-y-6 text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle className="h-8 w-8 text-primary" />
+          <div className="w-full max-w-md animate-step-enter text-center">
+            <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-7 w-7 text-primary" />
             </div>
-            <div>
-              <h1 className="font-display text-2xl font-bold text-foreground">
-                Password Reset Successfully
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Your password has been updated. Redirecting to login...
-              </p>
-            </div>
+            <h1 className="font-display text-2xl font-bold text-foreground">
+              Password Reset Successfully
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your password has been updated. Redirecting to login...
+            </p>
           </div>
         </main>
         <Footer />
@@ -225,10 +230,10 @@ export default function ProviderResetPassword() {
         variant="provider"
       />
       
-      <main className="flex flex-1 items-center justify-center px-4 py-12 md:py-16">
-        <div className="w-full max-w-sm space-y-8">
+      <main className="flex flex-1 items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md animate-step-enter">
           {/* Header */}
-          <div className="text-center">
+          <div className="text-center mb-6">
             <h1 className="font-display text-2xl font-bold text-foreground">
               Reset Your Password
             </h1>
@@ -237,70 +242,72 @@ export default function ProviderResetPassword() {
             </p>
           </div>
 
-          {/* Reset Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+          {/* Card Container */}
+          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-sm font-medium">New Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-10 pl-10 pr-10 text-sm"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  At least 8 characters with uppercase, lowercase, and number
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                At least 8 characters with uppercase, lowercase, and number
-              </p>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="h-11 pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="h-10 pl-10 pr-10 text-sm"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full h-11"
-              disabled={isLoading}
-            >
-              {isLoading ? "Resetting..." : "Reset Password"}
-              {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                className="w-full h-10 text-sm font-semibold"
+                disabled={isLoading}
+              >
+                {isLoading ? "Resetting..." : "Reset Password"}
+                {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
+              </Button>
+            </form>
+          </div>
 
-          {/* Footer */}
-          <div className="pt-4 border-t border-border">
-            <p className="text-center text-sm text-muted-foreground">
+          {/* Footer Links */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
               Remember your password?{" "}
               <Link to="/provider-login" className="text-primary hover:underline font-medium">
                 Sign in
