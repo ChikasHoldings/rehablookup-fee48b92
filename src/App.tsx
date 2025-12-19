@@ -17,6 +17,9 @@ import Locations from "./pages/Locations";
 import TreatmentCenterProfile from "./pages/TreatmentCenterProfile";
 import CenterProfile from "./pages/CenterProfile";
 import TreatmentTypes from "./pages/TreatmentTypes";
+import DrugAddictionTreatment from "./pages/treatment-types/DrugAddictionTreatment";
+import AlcoholRehabilitation from "./pages/treatment-types/AlcoholRehabilitation";
+import DualDiagnosisTreatment from "./pages/treatment-types/DualDiagnosisTreatment";
 import HowItWorks from "./pages/HowItWorks";
 import ForProviders from "./pages/ForProviders";
 import ProviderResources from "./pages/ProviderResources";
@@ -98,6 +101,9 @@ const App = () => (
             <Route path="/rehab-centers/:stateSlug" element={<StatePage />} />
             <Route path="/center/:slug" element={<CenterProfile />} />
             <Route path="/treatment-types" element={<TreatmentTypes />} />
+            <Route path="/treatment-types/drug-addiction" element={<DrugAddictionTreatment />} />
+            <Route path="/treatment-types/alcohol-rehabilitation" element={<AlcoholRehabilitation />} />
+            <Route path="/treatment-types/dual-diagnosis" element={<DualDiagnosisTreatment />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/request-help" element={<RequestHelp />} />
             <Route path="/lp/treatment" element={<AdLanding />} />
