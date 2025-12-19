@@ -42,6 +42,7 @@ import { OnboardingChecklist } from "@/components/provider/OnboardingChecklist";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { BasicPlanUpgradeBanner } from "@/components/provider/BasicPlanUpgradeBanner";
 import { OnboardingTour } from "@/components/provider/OnboardingTour";
+import { LeadUsageProgressCard } from "@/components/provider/LeadUsageProgressCard";
 
 interface Lead {
   id: string;
@@ -386,6 +387,15 @@ export default function ProviderDashboardPage() {
       {/* Featured Analytics Widget - only for Featured plan subscribers */}
       {planKey === "featured" && facility?.id && (
         <FeaturedAnalyticsWidget facilityId={facility.id} />
+      )}
+
+      {/* Lead Usage Progress Card - for paid plans */}
+      {(planKey === "professional" || planKey === "featured") && (
+        <LeadUsageProgressCard 
+          usedLeads={monthlyLeadsCount} 
+          leadLimit={leadLimit}
+          plan={planKey as "professional" | "featured"}
+        />
       )}
 
       {/* Metrics Grid - 2 cols on mobile, 4 on desktop */}
