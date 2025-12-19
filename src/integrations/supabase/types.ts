@@ -566,6 +566,60 @@ export type Database = {
           },
         ]
       }
+      facility_credential_documents: {
+        Row: {
+          document_name: string
+          document_type: string
+          document_url: string
+          facility_id: string
+          id: string
+          rejection_reason: string | null
+          status: string
+          uploaded_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          document_name: string
+          document_type: string
+          document_url: string
+          facility_id: string
+          id?: string
+          rejection_reason?: string | null
+          status?: string
+          uploaded_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          document_name?: string
+          document_type?: string
+          document_url?: string
+          facility_id?: string
+          id?: string
+          rejection_reason?: string | null
+          status?: string
+          uploaded_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_credential_documents_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_credential_documents_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_credentials: {
         Row: {
           accreditations: string | null
