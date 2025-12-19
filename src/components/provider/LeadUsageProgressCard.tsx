@@ -53,29 +53,36 @@ export function LeadUsageProgressCard({
 
   const remainingLeads = Math.max(0, leadLimit - usedLeads);
   const usagePercent = Math.min((usedLeads / leadLimit) * 100, 100);
-  const isNearLimit = usagePercent >= 80 && usagePercent < 100;
+  
+  // Per spec: 0-60% neutral, 60-85% warning, 85-100% alert
+  const isWarning = usagePercent >= 60 && usagePercent < 85;
+  const isAlert = usagePercent >= 85 && usagePercent < 100;
   const isAtLimit = usagePercent >= 100;
 
   const exclusivity = plan === "featured" ? "exclusive" : "shared";
 
-  // Get progress bar color based on usage
+  // Get progress bar color based on usage - follows spec thresholds
   const getProgressColor = () => {
     if (isAtLimit) return "[&>div]:bg-destructive";
-    if (isNearLimit) return "[&>div]:bg-amber-500";
+    if (isAlert) return "[&>div]:bg-red-500";
+    if (isWarning) return "[&>div]:bg-amber-500";
+    // Neutral state: 0-60%
     return plan === "featured" ? "[&>div]:bg-accent" : "[&>div]:bg-primary";
   };
 
-  // Get border color based on plan
+  // Get border color based on usage state
   const getBorderColor = () => {
     if (isAtLimit) return "border-destructive/30";
-    if (isNearLimit) return "border-amber-500/30";
+    if (isAlert) return "border-red-500/30";
+    if (isWarning) return "border-amber-500/30";
     return plan === "featured" ? "border-accent/30" : "border-primary/30";
   };
 
-  // Get background gradient based on plan
+  // Get background gradient based on usage state
   const getBackground = () => {
     if (isAtLimit) return "bg-destructive/5";
-    if (isNearLimit) return "bg-amber-500/5";
+    if (isAlert) return "bg-red-500/5";
+    if (isWarning) return "bg-amber-500/5";
     return plan === "featured" 
       ? "bg-gradient-to-r from-accent/5 via-background to-primary/5" 
       : "bg-primary/5";
@@ -91,10 +98,10 @@ export function LeadUsageProgressCard({
               <div className="flex items-center gap-2">
                 <div className={cn(
                   "h-8 w-8 rounded-lg flex items-center justify-center",
-                  isAtLimit ? "bg-destructive/15" : isNearLimit ? "bg-amber-500/15" : plan === "featured" ? "bg-accent/15" : "bg-primary/15"
+                  isAtLimit ? "bg-destructive/15" : (isAlert || isWarning) ? "bg-amber-500/15" : plan === "featured" ? "bg-accent/15" : "bg-primary/15"
                 )}>
-                  {isAtLimit || isNearLimit ? (
-                    <AlertTriangle className={cn("h-4 w-4", isAtLimit ? "text-destructive" : "text-amber-600")} />
+                  {isAtLimit || isAlert || isWarning ? (
+                    <AlertTriangle className={cn("h-4 w-4", isAtLimit ? "text-destructive" : isAlert ? "text-red-600" : "text-amber-600")} />
                   ) : (
                     <TrendingUp className={cn("h-4 w-4", plan === "featured" ? "text-accent" : "text-primary")} />
                   )}
@@ -104,29 +111,29 @@ export function LeadUsageProgressCard({
                 </div>
               </div>
               
-              {/* Exclusivity badge */}
+              {/* Exclusivity badge - per spec: clear plan clarity labels */}
               {exclusivity === "exclusive" ? (
                 <Badge variant="outline" className="gap-1 text-xs border-accent/50 bg-accent/10 text-accent">
                   <Star className="h-3 w-3" />
-                  Exclusive
+                  Exclusive Leads Only
                 </Badge>
               ) : (
                 <Badge variant="outline" className="gap-1 text-xs border-primary/50 bg-primary/10 text-primary">
                   <Share2 className="h-3 w-3" />
-                  Shared
+                  Shared Leads (Max 2 Providers)
                 </Badge>
               )}
             </div>
 
-            {/* Progress bar */}
+            {/* Progress bar - real-time updates, per spec styling */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  {usedLeads} of {leadLimit} leads used
+                  Leads Used: {usedLeads} / {leadLimit}
                 </span>
                 <span className={cn(
                   "font-semibold",
-                  isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-foreground"
+                  isAtLimit ? "text-destructive" : isAlert ? "text-red-600" : isWarning ? "text-amber-600" : "text-foreground"
                 )}>
                   {Math.round(usagePercent)}%
                 </span>
@@ -141,10 +148,10 @@ export function LeadUsageProgressCard({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <p className={cn(
                 "text-sm font-medium",
-                isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-muted-foreground"
+                isAtLimit ? "text-destructive" : isAlert ? "text-red-600" : isWarning ? "text-amber-600" : "text-muted-foreground"
               )}>
                 {isAtLimit 
-                  ? "Lead cap reached — excluded from routing until next billing cycle" 
+                  ? "You've reached your monthly lead limit. Lead delivery will resume at the start of your next billing cycle." 
                   : `${remainingLeads} lead${remainingLeads !== 1 ? 's' : ''} remaining this month`
                 }
               </p>

@@ -45,13 +45,16 @@ export function LeadUsageIndicator({
   }
 
   const usagePercent = Math.min((usedLeads / leadLimit) * 100, 100);
-  const isNearLimit = usagePercent >= 80 && usagePercent < 100;
+  // Per spec: 0-60% neutral, 60-85% warning (amber), 85-100% alert (red)
+  const isWarning = usagePercent >= 60 && usagePercent < 85;
+  const isAlert = usagePercent >= 85 && usagePercent < 100;
   const isAtLimit = usagePercent >= 100;
 
-  // Determine progress bar color
+  // Determine progress bar color per spec thresholds
   const getProgressColor = () => {
     if (isAtLimit) return "bg-destructive";
-    if (isNearLimit) return "bg-amber-500";
+    if (isAlert) return "bg-red-500";
+    if (isWarning) return "bg-amber-500";
     return "bg-primary";
   };
 
@@ -62,7 +65,7 @@ export function LeadUsageIndicator({
       return (
         <Badge variant="outline" className="gap-1 text-xs border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-700 dark:text-amber-400">
           <Star className="h-3 w-3" />
-          Exclusive
+          Exclusive Leads Only
         </Badge>
       );
     }
@@ -70,7 +73,7 @@ export function LeadUsageIndicator({
     return (
       <Badge variant="outline" className="gap-1 text-xs border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:border-blue-700 dark:text-blue-400">
         <Share2 className="h-3 w-3" />
-        Shared
+        Shared (Max 2 Providers)
       </Badge>
     );
   };
@@ -80,8 +83,8 @@ export function LeadUsageIndicator({
       <div className={`flex items-center gap-3 ${className}`}>
         <div className="flex items-center gap-2 text-sm">
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Leads:</span>
-          <span className={`font-semibold ${isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-foreground"}`}>
+          <span className="text-muted-foreground">Leads Used:</span>
+          <span className={`font-semibold ${isAtLimit ? "text-destructive" : isAlert ? "text-red-600" : isWarning ? "text-amber-600" : "text-foreground"}`}>
             {usedLeads} / {leadLimit}
           </span>
         </div>
@@ -104,18 +107,18 @@ export function LeadUsageIndicator({
           <span className="text-sm font-medium text-muted-foreground">Monthly Lead Usage</span>
           <ExclusivityBadge />
         </div>
-        <span className={`text-sm font-semibold ${isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-foreground"}`}>
+        <span className={`text-sm font-semibold ${isAtLimit ? "text-destructive" : isAlert ? "text-red-600" : isWarning ? "text-amber-600" : "text-foreground"}`}>
           {usedLeads} / {leadLimit}
         </span>
       </div>
       <Progress 
         value={usagePercent} 
-        className={`h-2 ${isAtLimit ? "[&>div]:bg-destructive" : isNearLimit ? "[&>div]:bg-amber-500" : ""}`}
+        className={`h-2 ${isAtLimit ? "[&>div]:bg-destructive" : isAlert ? "[&>div]:bg-red-500" : isWarning ? "[&>div]:bg-amber-500" : ""}`}
       />
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           {isAtLimit 
-            ? "Limit reached for this month" 
+            ? "You've reached your monthly lead limit. Lead delivery will resume at the start of your next billing cycle." 
             : `${leadLimit - usedLeads} leads remaining this month`
           }
         </p>
@@ -143,13 +146,14 @@ export function LeadLimitWarningBanner({ usedLeads, leadLimit }: LeadLimitBanner
     return sessionStorage.getItem(storageKey) === "true";
   });
 
-  // Don't show warning for 0-limit plans or when not near limit
+  // Don't show warning for 0-limit plans or when not in warning range
   if (leadLimit === 0) return null;
   
   const usagePercent = (usedLeads / leadLimit) * 100;
-  const isNearLimit = usagePercent >= 80 && usagePercent < 100;
+  // Per spec: show warning at 60-85% (amber), 85-100% shows alert state
+  const showWarning = usagePercent >= 60 && usagePercent < 100;
 
-  if (!isNearLimit || isDismissed) return null;
+  if (!showWarning || isDismissed) return null;
 
   const handleDismiss = () => {
     sessionStorage.setItem(storageKey, "true");
@@ -210,25 +214,29 @@ export function LeadLimitReachedBanner({ usedLeads, leadLimit, plan = "basic" }:
   return (
     <Alert variant="destructive" className="bg-destructive/5 border-destructive/30 relative">
       <AlertCircle className="h-4 w-4" />
-      <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8">
-        <div className="flex items-center gap-2">
-          <span>
-            You've reached your monthly lead limit ({leadLimit} leads).
+      <AlertDescription className="flex flex-col gap-3 pr-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <span className="font-medium">
+            You've reached your monthly lead limit.
           </span>
           {isProfessionalPlan ? (
-            <Badge variant="outline" className="gap-1 text-xs border-blue-300 bg-blue-50 text-blue-700">
+            <Badge variant="outline" className="gap-1 text-xs border-blue-300 bg-blue-50 text-blue-700 w-fit">
               <Share2 className="h-3 w-3" />
-              Shared leads
+              Shared (Max 2 Providers)
             </Badge>
           ) : plan === "featured" ? (
-            <Badge variant="outline" className="gap-1 text-xs border-amber-300 bg-amber-50 text-amber-700">
+            <Badge variant="outline" className="gap-1 text-xs border-amber-300 bg-amber-50 text-amber-700 w-fit">
               <Star className="h-3 w-3" />
-              Exclusive leads
+              Exclusive Leads Only
             </Badge>
           ) : null}
         </div>
+        <p className="text-sm text-destructive/80">
+          Lead delivery will resume at the start of your next billing cycle.
+        </p>
+        {/* Per spec: Optional CTA for Professional only. Featured gets no upsell, just clarity. */}
         {isProfessionalPlan && (
-          <Button size="sm" className="shrink-0 gap-1.5" asChild>
+          <Button size="sm" className="shrink-0 gap-1.5 w-fit" asChild>
             <Link to="/provider/billing">
               <Zap className="h-3.5 w-3.5" />
               Upgrade to Featured
