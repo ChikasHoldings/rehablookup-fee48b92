@@ -93,7 +93,15 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
   
   // Check if user has dismissed the current celebration session
   const dismissedKey = `profile-complete-dismissed-${facilityId}`;
-  const wasDismissedInStorage = typeof window !== 'undefined' && localStorage.getItem(dismissedKey) === 'true';
+  const [storageChecked, setStorageChecked] = useState(false);
+  const [wasDismissedInStorage, setWasDismissedInStorage] = useState(false);
+  
+  // Check localStorage after mount to prevent SSR/hydration issues
+  useEffect(() => {
+    const dismissed = localStorage.getItem(dismissedKey) === 'true';
+    setWasDismissedInStorage(dismissed);
+    setStorageChecked(true);
+  }, [dismissedKey]);
 
   // Fetch services count with real-time updates
   const { data: servicesCount = 0 } = useQuery({
@@ -262,6 +270,9 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
 
   // Trigger celebration when reaching 100% (only if not already celebrated)
   useEffect(() => {
+    // Wait for localStorage check before deciding on celebration
+    if (!storageChecked) return;
+    
     if (
       isComplete && 
       !alreadyCelebrated &&
@@ -286,12 +297,18 @@ export function OnboardingChecklist({ facilityId, facilityData }: OnboardingChec
         body: { facilityId }
       }).catch(console.error);
     }
-  }, [isComplete, alreadyCelebrated, facilityId, wasDismissedInStorage, queryClient]);
+  }, [isComplete, alreadyCelebrated, facilityId, wasDismissedInStorage, storageChecked, queryClient]);
 
   const handleDismissCelebration = () => {
     localStorage.setItem(dismissedKey, 'true');
+    setWasDismissedInStorage(true);
     setShowCelebration(false);
   };
+
+  // Don't render anything until we've checked localStorage to prevent flash
+  if (!storageChecked) {
+    return null;
+  }
 
   // If profile is complete and already celebrated in database, hide completely
   if (isComplete && alreadyCelebrated) {
