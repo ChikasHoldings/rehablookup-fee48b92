@@ -1,22 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, TrendingUp, Zap, X, Lock, Crown, Users } from "lucide-react";
+import { AlertCircle, TrendingUp, Zap, X, Lock, Crown, Users, Star, Share2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 interface LeadUsageIndicatorProps {
   usedLeads: number;
   leadLimit: number;
   variant?: "compact" | "full";
   className?: string;
+  exclusivity?: "shared" | "exclusive";
 }
 
 export function LeadUsageIndicator({ 
   usedLeads, 
   leadLimit, 
   variant = "full",
-  className = "" 
+  className = "",
+  exclusivity
 }: LeadUsageIndicatorProps) {
   // Handle 0 lead limit case (Basic plan)
   if (leadLimit === 0) {
@@ -52,6 +55,26 @@ export function LeadUsageIndicator({
     return "bg-primary";
   };
 
+  const ExclusivityBadge = () => {
+    if (!exclusivity) return null;
+    
+    if (exclusivity === "exclusive") {
+      return (
+        <Badge variant="outline" className="gap-1 text-xs border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-700 dark:text-amber-400">
+          <Star className="h-3 w-3" />
+          Exclusive
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge variant="outline" className="gap-1 text-xs border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:border-blue-700 dark:text-blue-400">
+        <Share2 className="h-3 w-3" />
+        Shared
+      </Badge>
+    );
+  };
+
   if (variant === "compact") {
     return (
       <div className={`flex items-center gap-3 ${className}`}>
@@ -68,6 +91,7 @@ export function LeadUsageIndicator({
             style={{ width: `${usagePercent}%` }}
           />
         </div>
+        <ExclusivityBadge />
       </div>
     );
   }
@@ -78,6 +102,7 @@ export function LeadUsageIndicator({
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium text-muted-foreground">Monthly Lead Usage</span>
+          <ExclusivityBadge />
         </div>
         <span className={`text-sm font-semibold ${isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-foreground"}`}>
           {usedLeads} / {leadLimit}
@@ -87,12 +112,22 @@ export function LeadUsageIndicator({
         value={usagePercent} 
         className={`h-2 ${isAtLimit ? "[&>div]:bg-destructive" : isNearLimit ? "[&>div]:bg-amber-500" : ""}`}
       />
-      <p className="text-xs text-muted-foreground">
-        {isAtLimit 
-          ? "Limit reached for this month" 
-          : `${leadLimit - usedLeads} leads remaining this month`
-        }
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {isAtLimit 
+            ? "Limit reached for this month" 
+            : `${leadLimit - usedLeads} leads remaining this month`
+          }
+        </p>
+        {exclusivity && (
+          <p className="text-xs text-muted-foreground">
+            {exclusivity === "exclusive" 
+              ? "Leads sent only to you"
+              : "Leads shared with up to 2 providers"
+            }
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -126,7 +161,7 @@ export function LeadLimitWarningBanner({ usedLeads, leadLimit }: LeadLimitBanner
       <TrendingUp className="h-4 w-4 text-amber-600" />
       <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8">
         <span className="text-amber-800 dark:text-amber-200">
-          You're nearing your monthly lead limit ({usedLeads}/{leadLimit}). Upgrade to keep receiving inquiries.
+          You're nearing your monthly lead limit ({usedLeads}/{leadLimit}). Upgrade to keep receiving leads.
         </span>
         <Button size="sm" variant="outline" className="shrink-0 border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/50" asChild>
           <Link to="/provider/billing">
@@ -150,10 +185,9 @@ interface LeadLimitReachedBannerProps {
   usedLeads: number;
   leadLimit: number;
   plan?: "basic" | "professional" | "featured";
-  isQualifiedLeads?: boolean;
 }
 
-export function LeadLimitReachedBanner({ usedLeads, leadLimit, plan = "basic", isQualifiedLeads = false }: LeadLimitReachedBannerProps) {
+export function LeadLimitReachedBanner({ usedLeads, leadLimit, plan = "basic" }: LeadLimitReachedBannerProps) {
   const storageKey = `lead_reached_dismissed_${leadLimit}_${plan}`;
   const [isDismissed, setIsDismissed] = useState(() => {
     return sessionStorage.getItem(storageKey) === "true";
@@ -172,26 +206,35 @@ export function LeadLimitReachedBanner({ usedLeads, leadLimit, plan = "basic", i
   };
 
   const isProfessionalPlan = plan === "professional";
-  const upgradePlan = isProfessionalPlan ? "Featured" : "Professional";
 
   return (
     <Alert variant="destructive" className="bg-destructive/5 border-destructive/30 relative">
       <AlertCircle className="h-4 w-4" />
       <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8">
-        <div>
+        <div className="flex items-center gap-2">
           <span>
-            You've reached your monthly {isQualifiedLeads ? "qualified " : ""}lead limit ({leadLimit} leads).
-            {isProfessionalPlan && (
-              <span className="text-green-600 dark:text-green-400 ml-1">Direct profile inquiries still unlimited.</span>
-            )}
+            You've reached your monthly lead limit ({leadLimit} leads).
           </span>
+          {isProfessionalPlan ? (
+            <Badge variant="outline" className="gap-1 text-xs border-blue-300 bg-blue-50 text-blue-700">
+              <Share2 className="h-3 w-3" />
+              Shared leads
+            </Badge>
+          ) : plan === "featured" ? (
+            <Badge variant="outline" className="gap-1 text-xs border-amber-300 bg-amber-50 text-amber-700">
+              <Star className="h-3 w-3" />
+              Exclusive leads
+            </Badge>
+          ) : null}
         </div>
-        <Button size="sm" className="shrink-0 gap-1.5" asChild>
-          <Link to="/provider/billing">
-            <Zap className="h-3.5 w-3.5" />
-            Upgrade to {upgradePlan}
-          </Link>
-        </Button>
+        {isProfessionalPlan && (
+          <Button size="sm" className="shrink-0 gap-1.5" asChild>
+            <Link to="/provider/billing">
+              <Zap className="h-3.5 w-3.5" />
+              Upgrade to Featured
+            </Link>
+          </Button>
+        )}
       </AlertDescription>
       <button
         onClick={handleDismiss}
@@ -231,22 +274,19 @@ interface LeadLimitOverlayProps {
   leadLimit: number;
   hiddenLeadsCount: number;
   plan?: "basic" | "professional" | "featured";
-  isQualifiedOnly?: boolean; // For Professional plan, only qualified leads count toward limit
 }
 
 export function LeadLimitOverlay({ 
   usedLeads, 
   leadLimit, 
   hiddenLeadsCount, 
-  plan = "basic",
-  isQualifiedOnly = false 
+  plan = "basic"
 }: LeadLimitOverlayProps) {
   const isAtLimit = usedLeads >= leadLimit;
   
   if (!isAtLimit || hiddenLeadsCount === 0) return null;
 
   const isProfessionalPlan = plan === "professional";
-  const upgradePlan = isProfessionalPlan ? "Featured" : "Professional";
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
@@ -255,33 +295,45 @@ export function LeadLimitOverlay({
           <Lock className="h-8 w-8 text-primary" />
         </div>
         <h3 className="text-xl font-bold text-foreground mb-2">
-          {hiddenLeadsCount} Qualified {hiddenLeadsCount === 1 ? 'Lead' : 'Leads'} Waiting
+          {hiddenLeadsCount} {hiddenLeadsCount === 1 ? 'Lead' : 'Leads'} Waiting
         </h3>
-        <p className="text-muted-foreground mb-2">
-          You&apos;ve used all {leadLimit} qualified leads included in your {plan === "basic" ? "Basic" : "Professional"} plan this month.
+        <p className="text-muted-foreground mb-3">
+          You've used all {leadLimit} leads included in your {plan === "basic" ? "Basic" : plan === "professional" ? "Professional" : "Featured"} plan this month.
         </p>
+        
         {isProfessionalPlan && (
-          <p className="text-sm text-green-600 dark:text-green-400 mb-3">
-            ✓ Direct leads from your profile are still unlimited
-          </p>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Badge variant="outline" className="gap-1 text-xs border-blue-300 bg-blue-50 text-blue-700">
+              <Share2 className="h-3 w-3" />
+              Currently receiving shared leads
+            </Badge>
+          </div>
         )}
+        
         <p className="text-sm font-medium text-foreground mb-6">
-          Upgrade to {upgradePlan} to unlock {hiddenLeadsCount === 1 ? 'this lead' : `these ${hiddenLeadsCount} leads`} and contact them immediately!
+          {isProfessionalPlan 
+            ? `Upgrade to Featured for exclusive leads - sent only to you!`
+            : `Upgrade to start receiving leads and grow your admissions.`
+          }
         </p>
         
         <div className="space-y-3">
           <Button size="lg" className="w-full gap-2" asChild>
             <Link to="/provider/billing">
               <Crown className="h-5 w-5" />
-              Upgrade to {upgradePlan}
+              {isProfessionalPlan ? "Upgrade to Featured" : "View Plans"}
             </Link>
           </Button>
-          <p className="text-xs text-muted-foreground">
-            {plan === "basic" 
-              ? "Professional: 25 qualified leads + unlimited direct • Featured: 75 + unlimited"
-              : "Featured: 75 qualified leads/month + unlimited direct inquiries"
-            }
-          </p>
+          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Share2 className="h-3 w-3" />
+              <span>Professional: Shared leads</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Star className="h-3 w-3" />
+              <span>Featured: Exclusive leads</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
