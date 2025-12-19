@@ -42,7 +42,6 @@ interface ProviderHeaderProps {
   facilityId?: string;
   facilitySlug?: string | null;
   facilityLogo?: string | null;
-  facilityStatus?: string;
   userName?: string;
   onLogout: () => void;
 }
@@ -56,33 +55,9 @@ const notificationIcons: Record<string, React.ReactNode> = {
   system: <Settings className="h-4 w-4 text-muted-foreground" />,
 };
 
-const getStatusConfig = (status: string) => {
-  switch (status) {
-    case "approved":
-      return { 
-        label: "Live", 
-        dotClass: "bg-green-500",
-        textClass: "text-green-400"
-      };
-    case "pending":
-      return { 
-        label: "Pending", 
-        dotClass: "bg-amber-500",
-        textClass: "text-amber-400"
-      };
-    default:
-      return { 
-        label: "Inactive", 
-        dotClass: "bg-white/50",
-        textClass: "text-white/70"
-      };
-  }
-};
-
-export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, facilityStatus, userName, onLogout }: ProviderHeaderProps) {
+export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
-  const statusConfig = getStatusConfig(facilityStatus || "inactive");
   
   const { notifications, unreadCount, markAsRead, isLoading } = useProviderNotifications();
   const { data: subscription } = useSubscription();
@@ -174,14 +149,6 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
         {/* Right - Actions */}
         <div className="flex items-center gap-1 sm:gap-1.5">
-          {/* Status Indicator - Hidden on mobile, compact on tablet */}
-          <div className="hidden md:flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 rounded-full bg-white/15 border border-white/20 mr-1 lg:mr-2">
-            <span className={`h-2 w-2 rounded-full ${statusConfig.dotClass} animate-pulse`} />
-            <span className="hidden lg:inline text-xs text-white/80">Status:</span>
-            <span className={`text-xs font-semibold ${statusConfig.textClass}`}>
-              {statusConfig.label}
-            </span>
-          </div>
 
           {/* Mobile Search Toggle */}
           <Button
