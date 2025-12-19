@@ -235,7 +235,7 @@ const DualDiagnosisTreatment = () => {
       </section>
 
       {/* What is Dual Diagnosis */}
-      <section className="py-12 md:py-16">
+      <section className="section-padding">
         <div className="container">
           <div className="mx-auto max-w-3xl text-center mb-12">
             <h2 className="text-2xl font-bold text-foreground md:text-3xl">
@@ -278,7 +278,7 @@ const DualDiagnosisTreatment = () => {
       </section>
 
       {/* Treatment Components */}
-      <section className="bg-secondary/30 py-12 md:py-16">
+      <section className="bg-secondary/30 section-padding">
         <div className="container">
           <div className="mb-8 text-center">
             <h2 className="text-2xl font-bold text-foreground md:text-3xl">
@@ -307,7 +307,7 @@ const DualDiagnosisTreatment = () => {
       </section>
 
       {/* Warning Signs */}
-      <section className="py-12 md:py-16">
+      <section className="section-padding">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="rounded-2xl border bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 p-8 md:p-10">
@@ -350,7 +350,7 @@ const DualDiagnosisTreatment = () => {
       </section>
 
       {/* Related Centers */}
-      <section className="bg-secondary/30 py-12 md:py-16">
+      <section className="bg-secondary/30 section-padding">
         <div className="container">
           <div className="mb-8 flex items-center justify-between">
             <div>
@@ -378,7 +378,7 @@ const DualDiagnosisTreatment = () => {
       </section>
 
       {/* FAQ Section */}
-      <section className="border-t bg-card py-12">
+      <section className="border-t bg-card section-padding">
         <div className="container">
           <div className="mx-auto max-w-3xl">
             <div className="mb-8 text-center">
@@ -429,7 +429,7 @@ const DualDiagnosisTreatment = () => {
       </section>
 
       {/* Other Treatment Types */}
-      <section className="border-t bg-secondary/30 py-10">
+      <section className="border-t bg-secondary/30 section-padding-sm">
         <div className="container">
           <h2 className="mb-6 text-center text-xl font-bold text-foreground">
             Explore Other Treatment Types
@@ -458,7 +458,7 @@ const DualDiagnosisTreatment = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-12 md:py-16">
+      <section className="section-padding">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
             <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">

@@ -641,8 +641,8 @@ const ForProviders = () => {
         </section>
 
         {/* Benefits Grid */}
-        <section className="py-16 md:py-20">
-          <div className="container px-5 md:px-6">
+        <section className="section-padding">
+          <div className="container">
             <div className="text-center mb-12">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
                 <TrendingUp className="h-4 w-4 text-accent" />
@@ -683,8 +683,8 @@ const ForProviders = () => {
         </section>
 
         {/* How It Works */}
-        <section className="py-16 md:py-20 bg-gradient-to-b from-muted/50 to-background">
-          <div className="container px-5 md:px-6">
+        <section className="section-padding bg-gradient-to-b from-muted/50 to-background">
+          <div className="container">
             <div className="text-center mb-12">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
                 <Clock className="h-4 w-4 text-accent" />
@@ -756,8 +756,8 @@ const ForProviders = () => {
         </section>
 
         {/* Features Section with Dashboard Image */}
-        <section className="py-16 md:py-20">
-          <div className="container px-5 md:px-6">
+        <section className="section-padding">
+          <div className="container">
             <div className="grid gap-12 lg:grid-cols-2 items-center">
               <div>
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
@@ -824,8 +824,8 @@ const ForProviders = () => {
         </section>
 
         {/* Testimonials */}
-        <section className="py-16 md:py-20 bg-gradient-to-b from-muted/50 to-background">
-          <div className="container px-5 md:px-6">
+        <section className="section-padding bg-gradient-to-b from-muted/50 to-background">
+          <div className="container">
             <div className="text-center mb-12">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
                 <Quote className="h-4 w-4 text-accent" />
@@ -868,8 +868,8 @@ const ForProviders = () => {
         </section>
 
         {/* Pricing Section */}
-        <section className="py-16 md:py-20">
-          <div className="container px-5 md:px-6">
+        <section className="section-padding">
+          <div className="container">
             <div className="text-center mb-12">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
                 <Star className="h-4 w-4 text-accent" />
@@ -1005,8 +1005,8 @@ const ForProviders = () => {
         </section>
 
         {/* FAQ Section */}
-        <section className="py-16 md:py-20 bg-muted/30">
-          <div className="container px-5 md:px-6">
+        <section className="section-padding bg-muted/30">
+          <div className="container">
             <div className="text-center mb-12">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5">
                 <MessageSquare className="h-4 w-4 text-primary" />
@@ -1100,8 +1100,8 @@ const ForProviders = () => {
         </section>
 
         {/* Final CTA */}
-        <section className="py-16 md:py-20 bg-gradient-to-b from-primary/5 to-background">
-          <div className="container px-5 md:px-6">
+        <section className="section-padding bg-gradient-to-b from-primary/5 to-background">
+          <div className="container">
             <div className="mx-auto max-w-2xl rounded-2xl border border-accent/20 bg-gradient-to-br from-primary via-primary to-primary/90 p-10 text-center shadow-xl">
               <div className="mb-4 inline-flex items-center justify-center h-14 w-14 rounded-full bg-white/10 backdrop-blur">
                 <HeartHandshake className="h-7 w-7 text-accent" />
