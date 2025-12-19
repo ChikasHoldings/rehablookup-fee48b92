@@ -43,9 +43,11 @@ interface Invoice {
 interface SubscriptionDetails {
   id: string;
   status: string;
+  current_period_start?: number;
   current_period_end: number;
   cancel_at_period_end: boolean;
   canceled_at?: number;
+  plan?: string;
 }
 
 interface SubscriptionHistoryWidgetProps {
@@ -273,8 +275,20 @@ export function SubscriptionHistoryWidget({
           </AlertDialog>
         </div>
 
-        {/* Subscription Status */}
-        {subscription?.cancel_at_period_end && (
+        {/* Subscription Status Alerts */}
+        {subscription?.status === "past_due" && (
+          <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium text-red-800">Payment Failed</p>
+              <p className="text-red-700">
+                Your subscription payment failed. Please update your payment method to continue receiving leads.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {subscription?.cancel_at_period_end && subscription.status !== "past_due" && (
           <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
             <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-sm">
