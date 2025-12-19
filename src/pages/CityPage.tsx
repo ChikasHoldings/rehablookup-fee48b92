@@ -25,8 +25,23 @@ import {
   AlertTriangle,
   ChevronDown,
   HelpCircle,
-  Home
+  Home,
+  Pill,
+  Brain,
+  Activity,
+  Stethoscope,
+  Sparkles
 } from "lucide-react";
+
+// Treatment types for internal linking
+const treatmentTypesData = [
+  { icon: Pill, title: "Drug Addiction", link: "/treatment-types", param: "?type=drug" },
+  { icon: Activity, title: "Alcohol Rehab", link: "/treatment-types", param: "?type=alcohol" },
+  { icon: Brain, title: "Dual Diagnosis", link: "/treatment-types", param: "?type=dual-diagnosis" },
+  { icon: Home, title: "Residential Inpatient", link: "/treatment-types", param: "?type=inpatient" },
+  { icon: Stethoscope, title: "Outpatient Programs", link: "/treatment-types", param: "?type=outpatient" },
+  { icon: Sparkles, title: "Holistic Therapy", link: "/treatment-types", param: "?type=holistic" },
+];
 import { cn } from "@/lib/utils";
 
 // City images mapping
@@ -498,6 +513,43 @@ const CityPage = () => {
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Treatment Types Section */}
+      <section className="border-t bg-card py-10">
+        <div className="container">
+          <div className="mb-6 text-center">
+            <h2 className="text-xl font-bold text-foreground md:text-2xl">
+              Types of Treatment in {cityData.name}
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Explore different addiction treatment approaches available in {cityData.name}, {stateData.abbreviation}
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+            {treatmentTypesData.map((type) => (
+              <Link
+                key={type.title}
+                to={type.link}
+                className="group flex flex-col items-center rounded-xl border bg-background p-4 text-center transition-all hover:border-primary/30 hover:shadow-md"
+              >
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                  <type.icon className="h-6 w-6 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-foreground">{type.title}</span>
+                <ArrowRight className="mt-2 h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+              </Link>
+            ))}
+          </div>
+          <div className="mt-6 text-center">
+            <Link to="/treatment-types">
+              <Button variant="outline" className="gap-2">
+                View All Treatment Types
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
