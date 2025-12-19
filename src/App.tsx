@@ -30,6 +30,8 @@ import StateInpatientRehab from "./pages/treatment-types/StateInpatientRehab";
 import CityInpatientRehab from "./pages/treatment-types/CityInpatientRehab";
 import StateOutpatientPrograms from "./pages/treatment-types/StateOutpatientPrograms";
 import CityOutpatientPrograms from "./pages/treatment-types/CityOutpatientPrograms";
+import StateDualDiagnosis from "./pages/treatment-types/StateDualDiagnosis";
+import CityDualDiagnosis from "./pages/treatment-types/CityDualDiagnosis";
 import HowItWorks from "./pages/HowItWorks";
 import ForProviders from "./pages/ForProviders";
 import ProviderResources from "./pages/ProviderResources";
@@ -114,6 +116,9 @@ const App = () => (
             <Route path="/treatment-types/drug-addiction" element={<DrugAddictionTreatment />} />
             <Route path="/treatment-types/alcohol-rehabilitation" element={<AlcoholRehabilitation />} />
             <Route path="/treatment-types/dual-diagnosis" element={<DualDiagnosisTreatment />} />
+            <Route path="/treatment-types/dual-diagnosis-treatment" element={<DualDiagnosisTreatment />} />
+            <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug" element={<StateDualDiagnosis />} />
+            <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug/:citySlug" element={<CityDualDiagnosis />} />
             <Route path="/treatment-types/residential-inpatient" element={<ResidentialInpatient />} />
             <Route path="/treatment-types/residential-inpatient/:stateSlug" element={<StateInpatientRehab />} />
             <Route path="/treatment-types/residential-inpatient/:stateSlug/:citySlug" element={<CityInpatientRehab />} />

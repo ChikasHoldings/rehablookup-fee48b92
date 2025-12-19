@@ -204,7 +204,7 @@ const TreatmentTypes = () => {
           </div>
 
           {/* Outpatient by State */}
-          <div>
+          <div className="mb-8">
             <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <Stethoscope className="h-5 w-5 text-accent" />
               Outpatient Programs by State
@@ -212,6 +212,23 @@ const TreatmentTypes = () => {
             <div className="flex flex-wrap gap-2">
               {usStates.map((state) => (
                 <Link key={state.slug} to={`/treatment-types/outpatient-programs/${state.slug}`}>
+                  <Button variant="outline" size="sm">
+                    {state.name}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Dual Diagnosis by State */}
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Brain className="h-5 w-5 text-accent" />
+              Dual Diagnosis by State
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {usStates.map((state) => (
+                <Link key={state.slug} to={`/treatment-types/dual-diagnosis-treatment/${state.slug}`}>
                   <Button variant="outline" size="sm">
                     {state.name}
                   </Button>
