@@ -1,10 +1,17 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
 
 interface SelectedFacilityContextType {
   selectedFacility: ProviderFacility | null;
   setSelectedFacility: (facility: ProviderFacility) => void;
+  requestFacilitySwitch: (facility: ProviderFacility) => void;
   isLoading: boolean;
+  // Unsaved changes handling
+  hasUnsavedChanges: boolean;
+  setHasUnsavedChanges: (value: boolean) => void;
+  pendingFacilitySwitch: ProviderFacility | null;
+  confirmFacilitySwitch: () => void;
+  cancelFacilitySwitch: () => void;
 }
 
 const SelectedFacilityContext = createContext<SelectedFacilityContextType | undefined>(undefined);
@@ -13,6 +20,8 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
   const [selectedFacility, setSelectedFacilityState] = useState<ProviderFacility | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [pendingFacilitySwitch, setPendingFacilitySwitch] = useState<ProviderFacility | null>(null);
 
   // Initialize selected facility from localStorage or first available facility
   useEffect(() => {
@@ -51,17 +60,46 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
     }
   }, [facilities, selectedFacility]);
 
-  const setSelectedFacility = (facility: ProviderFacility) => {
+  const setSelectedFacility = useCallback((facility: ProviderFacility) => {
     setSelectedFacilityState(facility);
     localStorage.setItem("selectedFacilityId", facility.id);
-  };
+    setHasUnsavedChanges(false);
+    setPendingFacilitySwitch(null);
+  }, []);
+
+  // Request to switch facility - checks for unsaved changes first
+  const requestFacilitySwitch = useCallback((facility: ProviderFacility) => {
+    if (facility.id === selectedFacility?.id) return;
+    
+    if (hasUnsavedChanges) {
+      setPendingFacilitySwitch(facility);
+    } else {
+      setSelectedFacility(facility);
+    }
+  }, [hasUnsavedChanges, selectedFacility?.id, setSelectedFacility]);
+
+  const confirmFacilitySwitch = useCallback(() => {
+    if (pendingFacilitySwitch) {
+      setSelectedFacility(pendingFacilitySwitch);
+    }
+  }, [pendingFacilitySwitch, setSelectedFacility]);
+
+  const cancelFacilitySwitch = useCallback(() => {
+    setPendingFacilitySwitch(null);
+  }, []);
 
   return (
     <SelectedFacilityContext.Provider
       value={{
         selectedFacility,
         setSelectedFacility,
+        requestFacilitySwitch,
         isLoading: facilitiesLoading || !isInitialized,
+        hasUnsavedChanges,
+        setHasUnsavedChanges,
+        pendingFacilitySwitch,
+        confirmFacilitySwitch,
+        cancelFacilitySwitch,
       }}
     >
       {children}
@@ -80,5 +118,15 @@ export function useSelectedFacility() {
 // Optional version that doesn't throw - returns null if not in provider context
 export function useSelectedFacilityOptional() {
   const context = useContext(SelectedFacilityContext);
-  return context ?? { selectedFacility: null, setSelectedFacility: () => {}, isLoading: false };
+  return context ?? { 
+    selectedFacility: null, 
+    setSelectedFacility: () => {}, 
+    requestFacilitySwitch: () => {},
+    isLoading: false,
+    hasUnsavedChanges: false,
+    setHasUnsavedChanges: () => {},
+    pendingFacilitySwitch: null,
+    confirmFacilitySwitch: () => {},
+    cancelFacilitySwitch: () => {},
+  };
 }
