@@ -10,11 +10,11 @@ import {
   Search, 
   Building2, 
   ChevronRight, 
-  Phone,
   ArrowRight,
   Map,
   Globe,
-  Compass
+  Compass,
+  Heart
 } from "lucide-react";
 
 const Locations = () => {
@@ -333,30 +333,30 @@ const Locations = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-14 md:py-16">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
-        
-        <div className="container relative text-center">
-          <div className="mx-auto max-w-2xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm">
-              <Phone className="h-4 w-4" />
-              Free Consultation
-            </div>
-            
-            <h2 className="text-2xl font-bold text-white md:text-3xl">
+      <section className="py-16 md:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
               Need Help Finding the Right Treatment?
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-white/80 leading-relaxed">
+            <p className="mb-6 text-muted-foreground max-w-xl mx-auto">
               Our dedicated team can help you find the perfect treatment center based on your location, 
               insurance coverage, and specific recovery needs.
             </p>
-            
-            <Link to="/request-help" className="mt-8 inline-block">
-              <Button size="lg" variant="secondary" className="gap-2 h-12 px-8 text-base shadow-lg hover:shadow-xl transition-shadow">
-                Get Personalized Recommendations
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link to="/request-help">
+                <Button size="lg" className="gap-2">
+                  <Heart className="h-4 w-4" />
+                  Get Personalized Help
+                </Button>
+              </Link>
+              <Link to="/rehab-centers">
+                <Button variant="outline" size="lg" className="gap-2">
+                  Browse All Centers
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

@@ -320,21 +320,31 @@ const CityPage = () => {
       )}
 
       {/* CTA Section */}
-      <section className="bg-primary py-12">
-        <div className="container text-center">
-          <h2 className="text-2xl font-bold text-white md:text-3xl">
-            Need Help Finding Treatment in {cityData.name}?
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-white/80">
-            Our team can help you find the right treatment center based on your specific needs, 
-            insurance coverage, and preferences.
-          </p>
-          <Link to="/request-help" className="mt-6 inline-block">
-            <Button size="lg" variant="secondary" className="gap-2">
-              <Phone className="h-4 w-4" />
-              Get Free Assistance
-            </Button>
-          </Link>
+      <section className="py-16 md:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
+            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
+              Need Help Finding Treatment in {cityData.name}?
+            </h2>
+            <p className="mb-6 text-muted-foreground max-w-xl mx-auto">
+              Our team can help you find the right treatment center based on your specific needs, 
+              insurance coverage, and preferences.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link to="/request-help">
+                <Button size="lg" className="gap-2">
+                  <Heart className="h-4 w-4" />
+                  Get Free Assistance
+                </Button>
+              </Link>
+              <Link to={`/rehab-centers/${stateData.slug}`}>
+                <Button variant="outline" size="lg" className="gap-2">
+                  View All {stateData.name} Centers
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </Layout>
