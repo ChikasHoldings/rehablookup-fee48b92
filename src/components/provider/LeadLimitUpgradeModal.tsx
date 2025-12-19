@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -27,14 +27,13 @@ interface LeadLimitUpgradeModalProps {
 const STORAGE_KEY = "lead_limit_upgrade_modal_dismissed";
 const DISMISS_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
-export const LeadLimitUpgradeModal = forwardRef<HTMLDivElement, LeadLimitUpgradeModalProps>(
-  function LeadLimitUpgradeModal({
-    usedLeads,
-    leadLimit,
-    currentPlan,
-    isOpen: controlledOpen,
-    onClose,
-  }, ref) {
+export function LeadLimitUpgradeModal({
+  usedLeads,
+  leadLimit,
+  currentPlan,
+  isOpen: controlledOpen,
+  onClose,
+}: LeadLimitUpgradeModalProps) {
   const navigate = useNavigate();
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -159,4 +158,4 @@ export const LeadLimitUpgradeModal = forwardRef<HTMLDivElement, LeadLimitUpgrade
       </DialogContent>
     </Dialog>
   );
-});
+}
