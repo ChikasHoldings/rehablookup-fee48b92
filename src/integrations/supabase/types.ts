@@ -367,6 +367,7 @@ export type Database = {
           address: string
           admin_notes: string | null
           bed_count: string | null
+          bonus_leads: number | null
           city: string
           created_at: string
           description: string | null
@@ -380,6 +381,7 @@ export type Database = {
           id: string
           last_featured_shown_at: string | null
           lead_limit_override: number | null
+          leads_reset_at: string | null
           logo_url: string | null
           name: string
           phone: string
@@ -404,6 +406,7 @@ export type Database = {
           address: string
           admin_notes?: string | null
           bed_count?: string | null
+          bonus_leads?: number | null
           city: string
           created_at?: string
           description?: string | null
@@ -417,6 +420,7 @@ export type Database = {
           id?: string
           last_featured_shown_at?: string | null
           lead_limit_override?: number | null
+          leads_reset_at?: string | null
           logo_url?: string | null
           name: string
           phone: string
@@ -441,6 +445,7 @@ export type Database = {
           address?: string
           admin_notes?: string | null
           bed_count?: string | null
+          bonus_leads?: number | null
           city?: string
           created_at?: string
           description?: string | null
@@ -454,6 +459,7 @@ export type Database = {
           id?: string
           last_featured_shown_at?: string | null
           lead_limit_override?: number | null
+          leads_reset_at?: string | null
           logo_url?: string | null
           name?: string
           phone?: string

@@ -1,12 +1,14 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { AlertTriangle, TrendingUp, ArrowUpRight, Users, Gauge } from "lucide-react";
+import { AlertTriangle, TrendingUp, ArrowUpRight, Users, Gauge, Settings2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { ManageLeadCapDialog } from "./ManageLeadCapDialog";
 
 interface ProviderLeadUsage {
   facilityId: string;
@@ -17,9 +19,18 @@ interface ProviderLeadUsage {
   leadLimit: number;
   usagePercent: number;
   plan: string;
+  bonusLeads?: number;
 }
 
 export default function LeadCapMonitorWidget() {
+  const [selectedProvider, setSelectedProvider] = useState<{
+    id: string;
+    name: string;
+    user_id: string;
+    bonus_leads?: number;
+  } | null>(null);
+  const [showManageDialog, setShowManageDialog] = useState(false);
+
   const { data: providersAtRisk, isLoading } = useQuery<ProviderLeadUsage[]>({
     queryKey: ["admin-lead-cap-monitor"],
     queryFn: async () => {
@@ -224,20 +235,40 @@ export default function LeadCapMonitorWidget() {
                     </span>
                     {getStatusBadge(provider.usagePercent)}
                   </div>
-                  <Badge 
-                    variant="outline" 
-                    className={`text-[10px] capitalize shrink-0 ${
-                      provider.plan === "featured" 
-                        ? "border-amber-300 bg-amber-50 text-amber-700" 
-                        : "border-blue-300 bg-blue-50 text-blue-700"
-                    }`}
-                  >
-                    {provider.plan}
-                  </Badge>
+                  <div className="flex items-center gap-1.5">
+                    <Badge 
+                      variant="outline" 
+                      className={`text-[10px] capitalize shrink-0 ${
+                        provider.plan === "featured" 
+                          ? "border-amber-300 bg-amber-50 text-amber-700" 
+                          : "border-blue-300 bg-blue-50 text-blue-700"
+                      }`}
+                    >
+                      {provider.plan}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedProvider({
+                          id: provider.facilityId,
+                          name: provider.facilityName,
+                          user_id: provider.userId,
+                          bonus_leads: provider.bonusLeads,
+                        });
+                        setShowManageDialog(true);
+                      }}
+                      title="Manage lead cap"
+                    >
+                      <Settings2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{provider.usedLeads} / {provider.leadLimit} leads</span>
+                    <span>{provider.usedLeads} / {provider.leadLimit}{provider.bonusLeads ? ` (+${provider.bonusLeads})` : ""} leads</span>
                     <span className={provider.usagePercent >= 100 ? "text-destructive font-medium" : ""}>
                       {provider.usagePercent}%
                     </span>
@@ -271,6 +302,13 @@ export default function LeadCapMonitorWidget() {
           </div>
         )}
       </CardContent>
+
+      {/* Lead Cap Management Dialog */}
+      <ManageLeadCapDialog
+        open={showManageDialog}
+        onOpenChange={setShowManageDialog}
+        facility={selectedProvider}
+      />
     </Card>
   );
 }
