@@ -173,3 +173,6 @@ verify_jwt = true
 
 [functions.get-payment-method]
 verify_jwt = true
+
+[functions.track-provider-event]
+verify_jwt = false

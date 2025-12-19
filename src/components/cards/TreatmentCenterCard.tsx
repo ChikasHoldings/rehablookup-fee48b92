@@ -4,8 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, ArrowRight, Crown, Calendar, ShieldCheck } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 
 interface TreatmentCenterCardProps {
   center: TreatmentCenter & { 
@@ -54,6 +55,9 @@ function getInitials(name: string): string {
 
 export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, featured }: TreatmentCenterCardProps) {
   const [logoError, setLogoError] = useState(false);
+  const cardRef = useRef<HTMLElement>(null);
+  const hasTrackedImpression = useRef(false);
+  const { trackImpression, trackClickToCall } = useProviderEventTracking();
   
   const detailsUrl = center.isFromDatabase && center.slug 
     ? `/center/${center.slug}` 
@@ -67,6 +71,30 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
     ? new Date().getFullYear() - center.year_established 
     : null;
 
+  // Track impression when card is visible
+  useEffect(() => {
+    if (!center.isFromDatabase || !center.id || hasTrackedImpression.current) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasTrackedImpression.current) {
+            hasTrackedImpression.current = true;
+            trackImpression(center.id, "search");
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [center.isFromDatabase, center.id, trackImpression]);
+
   const handleFeaturedClick = useCallback(async () => {
     if (showFeaturedBadge && center.isFromDatabase && center.id) {
       try {
@@ -79,8 +107,15 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
     }
   }, [showFeaturedBadge, center.isFromDatabase, center.id]);
 
+  const handleCallClick = useCallback(() => {
+    if (center.isFromDatabase && center.id) {
+      trackClickToCall(center.id, "search");
+    }
+  }, [center.isFromDatabase, center.id, trackClickToCall]);
+
   return (
     <article
+      ref={cardRef}
       className={cn(
         "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300",
         "hover:shadow-xl hover:-translate-y-1",
@@ -248,7 +283,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Button>
           </Link>
-          <a href={`tel:${center.phone}`}>
+          <a href={`tel:${center.phone}`} onClick={handleCallClick}>
             <Button 
               variant="outline" 
               size="icon"
