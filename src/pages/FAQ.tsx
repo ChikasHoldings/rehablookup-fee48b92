@@ -275,7 +275,7 @@ const FAQ = () => {
             </p>
             
             {/* Search Bar */}
-            <div className="relative mx-auto max-w-md">
+            <div className="relative mx-auto max-w-md mb-8">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
@@ -296,11 +296,32 @@ const FAQ = () => {
                 </button>
               )}
             </div>
+
+            {/* Quick Jump Navigation */}
+            <div className="flex flex-wrap justify-center gap-2">
+              {faqCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => {
+                    setSelectedCategory(null);
+                    setSearchQuery("");
+                    setTimeout(() => {
+                      document.getElementById(category.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                  }}
+                  className="group flex items-center gap-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 px-3 py-2 text-sm font-medium text-primary-foreground/90 hover:text-primary-foreground transition-all"
+                >
+                  <category.icon className="h-4 w-4 text-accent" />
+                  <span>{category.name}</span>
+                  <ArrowRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Category Filters */}
+      {/* Sticky Category Filter */}
       <section className="sticky top-16 z-30 border-b border-border bg-card/95 backdrop-blur-md py-3 px-4 shadow-sm">
         <div className="container max-w-4xl mx-auto">
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0 scrollbar-hide">
@@ -380,7 +401,7 @@ const FAQ = () => {
           ) : (
             <div className="space-y-10">
               {filteredCategories.map((category) => (
-                <div key={category.id}>
+                <div key={category.id} id={category.id} className="scroll-mt-28">
                   {/* Category Header */}
                   <div className="mb-4 flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
