@@ -34,11 +34,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 import { TrustBadgesInline, TrustBadgesSection } from "@/components/trust/TrustBadgesSection";
 import { cn } from "@/lib/utils";
+import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 
 interface FacilityData {
   id: string;
@@ -159,6 +160,7 @@ const CenterProfile = () => {
   const [reportImageOpen, setReportImageOpen] = useState(false);
   const [reportImageUrl, setReportImageUrl] = useState<string>("");
   const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
+  const { trackProfileView, trackClickToCall, trackWebsiteClick } = useProviderEventTracking();
   
   const fromSearch = location.state?.fromSearch;
   const openModalFromNav = location.state?.openRequestModal;
@@ -342,23 +344,33 @@ const CenterProfile = () => {
 
   useEffect(() => {
     if (facility?.id) {
+      // Track view in facility_views (existing system)
       supabase.functions.invoke("track-view", {
         body: { facilityId: facility.id },
       });
+      // Track profile view in provider_events (new analytics system)
+      trackProfileView(facility.id);
     }
-  }, [facility?.id]);
+  }, [facility?.id, trackProfileView]);
 
   const scrollToContact = () => {
     contactFormRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const trackInteraction = (type: "call" | "website") => {
+  const trackInteraction = useCallback((type: "call" | "website") => {
     if (facility?.id) {
+      // Track in facility_interactions (existing system)
       supabase.functions.invoke("track-interaction", {
         body: { facilityId: facility.id, interactionType: type },
       });
+      // Track in provider_events (new analytics system)
+      if (type === "call") {
+        trackClickToCall(facility.id, "profile");
+      } else {
+        trackWebsiteClick(facility.id, "profile");
+      }
     }
-  };
+  }, [facility?.id, trackClickToCall, trackWebsiteClick]);
 
   if (isLoading) {
     return (

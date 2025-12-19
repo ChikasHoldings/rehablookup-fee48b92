@@ -1313,6 +1313,48 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          facility_id: string
+          id: string
+          page_context: string | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          facility_id: string
+          id?: string
+          page_context?: string | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          facility_id?: string
+          id?: string
+          page_context?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_events_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_events_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_notifications: {
         Row: {
           created_at: string
