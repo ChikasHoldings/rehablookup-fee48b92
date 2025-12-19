@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -105,7 +105,8 @@ interface LeadDetailPanelProps {
   exclusivity?: 'shared' | 'exclusive' | null;
 }
 
-export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: LeadDetailPanelProps) {
+export const LeadDetailPanel = forwardRef<HTMLDivElement, LeadDetailPanelProps>(
+  function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }, ref) {
   const [newNote, setNewNote] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("details");
@@ -697,4 +698,4 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
       </Tabs>
     </div>
   );
-}
+});
