@@ -174,25 +174,6 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
         {/* Right - Actions */}
         <div className="flex items-center gap-1 sm:gap-1.5">
-          {/* Plan Badge - Mobile (icon only) */}
-          <Link 
-            to="/provider/billing"
-            className={`flex sm:hidden items-center justify-center h-8 w-8 rounded-full ${planConfig.bgClass} border border-white/20 transition-all duration-200 active:scale-95`}
-          >
-            <planConfig.icon className={`h-4 w-4 ${planConfig.textClass}`} />
-          </Link>
-          
-          {/* Plan Badge - Desktop */}
-          <Link 
-            to="/provider/billing"
-            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full ${planConfig.bgClass} border border-white/20 mr-1 lg:mr-2 transition-all duration-200 hover:scale-105 hover:shadow-lg`}
-          >
-            <planConfig.icon className={`h-3.5 w-3.5 ${planConfig.textClass}`} />
-            <span className={`text-xs font-bold ${planConfig.textClass}`}>
-              {planConfig.label}
-            </span>
-          </Link>
-
           {/* Status Indicator - Hidden on mobile, compact on tablet */}
           <div className="hidden md:flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 rounded-full bg-white/15 border border-white/20 mr-1 lg:mr-2">
             <span className={`h-2 w-2 rounded-full ${statusConfig.dotClass} animate-pulse`} />
@@ -322,7 +303,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                 <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white hidden sm:block" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-card" sideOffset={8}>
+            <DropdownMenuContent align="end" className="w-64 bg-card" sideOffset={8}>
               <DropdownMenuLabel className="font-normal py-3">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden">
@@ -332,13 +313,63 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                       initials
                     )}
                   </div>
-                  <div className="flex flex-col min-w-0">
+                  <div className="flex flex-col min-w-0 flex-1">
                     <p className="text-sm font-semibold truncate">{userName || "Provider"}</p>
                     <p className="text-xs text-muted-foreground">Manage account</p>
                   </div>
                 </div>
               </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+              
+              {/* Plan Badge Section */}
+              <div className="px-2 pb-2">
+                <Link 
+                  to="/provider/billing"
+                  className={`flex items-center justify-between w-full p-2.5 rounded-lg ${
+                    subscription?.plan === 'featured' 
+                      ? 'bg-gradient-to-r from-amber-500/10 to-yellow-400/10 border border-amber-500/20' 
+                      : subscription?.plan === 'professional'
+                        ? 'bg-gradient-to-r from-emerald-500/10 to-teal-400/10 border border-emerald-500/20'
+                        : 'bg-muted/50 border border-border'
+                  } hover:opacity-90 transition-all group`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                      subscription?.plan === 'featured'
+                        ? 'bg-gradient-to-br from-amber-500 to-yellow-400'
+                        : subscription?.plan === 'professional'
+                          ? 'bg-gradient-to-br from-emerald-500 to-teal-400'
+                          : 'bg-muted-foreground/20'
+                    }`}>
+                      <planConfig.icon className={`h-4 w-4 ${
+                        subscription?.plan === 'featured' || subscription?.plan === 'professional'
+                          ? 'text-white'
+                          : 'text-muted-foreground'
+                      }`} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className={`text-sm font-semibold ${
+                        subscription?.plan === 'featured'
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : subscription?.plan === 'professional'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-muted-foreground'
+                      }`}>
+                        {planConfig.label} Plan
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {subscription?.plan === 'basic' ? 'Upgrade for more leads' : '100 leads/month'}
+                      </span>
+                    </div>
+                  </div>
+                  {subscription?.plan === 'basic' && (
+                    <span className="text-xs font-medium text-primary group-hover:underline">
+                      Upgrade
+                    </span>
+                  )}
+                </Link>
+              </div>
+              
+              <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to="/provider/listing" className="flex items-center gap-2.5 cursor-pointer py-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
