@@ -1,29 +1,19 @@
 import { Link } from "react-router-dom";
-import { Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin, Stethoscope, Phone, CreditCard } from "lucide-react";
+import { Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, MapPin, Stethoscope, Phone, CreditCard } from "lucide-react";
 
 const crisisHotlines = [
-  { name: "SAMHSA Helpline", phone: "1-800-662-4357", description: "24/7, free, confidential" },
-  { name: "988 Suicide & Crisis", phone: "988", description: "Call or text anytime" },
-  { name: "Crisis Text Line", phone: "Text HOME to 741741", description: "Free 24/7 support" },
-];
-
-const insuranceTypes = [
-  { label: "Medicaid", href: "/rehab-centers?insurance=medicaid" },
-  { label: "Medicare", href: "/rehab-centers?insurance=medicare" },
-  { label: "Private Insurance", href: "/rehab-centers?insurance=private" },
-  { label: "Blue Cross Blue Shield", href: "/rehab-centers?insurance=bcbs" },
-  { label: "Aetna", href: "/rehab-centers?insurance=aetna" },
-  { label: "Cigna", href: "/rehab-centers?insurance=cigna" },
-  { label: "United Healthcare", href: "/rehab-centers?insurance=uhc" },
-  { label: "Self-Pay Options", href: "/rehab-centers?insurance=self-pay" },
+  { name: "SAMHSA", phone: "1-800-662-4357", description: "24/7 free & confidential" },
+  { name: "988 Crisis Line", phone: "988", description: "Call or text" },
+  { name: "Crisis Text", phone: "Text HOME to 741741", description: "24/7 support" },
 ];
 
 const footerLinks = {
   findHelp: [
     { label: "Find Rehab Centers", href: "/rehab-centers" },
-    { label: "Browse Locations", href: "/locations" },
+    { label: "Browse by Location", href: "/locations" },
     { label: "Treatment Types", href: "/treatment-types" },
     { label: "Request Help", href: "/request-help?source=footer" },
+    { label: "How It Works", href: "/how-it-works" },
   ],
   resources: [
     { label: "Recovery Resources", href: "/resources" },
@@ -35,7 +25,7 @@ const footerLinks = {
     { label: "List Your Facility", href: "/for-providers" },
     { label: "Provider Resources", href: "/provider-resources" },
     { label: "Provider Login", href: "/provider-login" },
-    { label: "Provider Support", href: "/provider-support" },
+    { label: "Provider FAQ", href: "/provider-faq" },
   ],
   legal: [
     { label: "Privacy Policy", href: "/privacy-policy" },
@@ -43,49 +33,38 @@ const footerLinks = {
   ],
 };
 
-const popularLocations = [
-  { label: "California", href: "/locations/california" },
-  { label: "Florida", href: "/locations/florida" },
-  { label: "Texas", href: "/locations/texas" },
-  { label: "Arizona", href: "/locations/arizona" },
-  { label: "New York", href: "/locations/new-york" },
-  { label: "Colorado", href: "/locations/colorado" },
-  { label: "Pennsylvania", href: "/locations/pennsylvania" },
-  { label: "Ohio", href: "/locations/ohio" },
-  { label: "Illinois", href: "/locations/illinois" },
-  { label: "Georgia", href: "/locations/georgia" },
-  { label: "New Jersey", href: "/locations/new-jersey" },
-  { label: "Massachusetts", href: "/locations/massachusetts" },
-  { label: "Washington", href: "/locations/washington" },
-  { label: "Tennessee", href: "/locations/tennessee" },
-  { label: "North Carolina", href: "/locations/north-carolina" },
-  { label: "Michigan", href: "/locations/michigan" },
+const popularStates = [
+  "California", "Florida", "Texas", "Arizona", "New York", "Colorado",
+  "Pennsylvania", "Ohio", "Illinois", "Georgia", "New Jersey", "Massachusetts",
+  "Washington", "Tennessee", "North Carolina", "Michigan",
 ];
 
 const popularCities = [
-  { label: "Los Angeles, CA", href: "/locations/california/los-angeles" },
-  { label: "Miami, FL", href: "/locations/florida/miami" },
-  { label: "Houston, TX", href: "/locations/texas/houston" },
-  { label: "Phoenix, AZ", href: "/locations/arizona/phoenix" },
+  { label: "Los Angeles", href: "/locations/california/los-angeles" },
+  { label: "Miami", href: "/locations/florida/miami" },
+  { label: "Houston", href: "/locations/texas/houston" },
+  { label: "Phoenix", href: "/locations/arizona/phoenix" },
   { label: "New York City", href: "/locations/new-york/new-york-city" },
-  { label: "Denver, CO", href: "/locations/colorado/denver" },
-  { label: "San Diego, CA", href: "/locations/california/san-diego" },
-  { label: "Tampa, FL", href: "/locations/florida/tampa" },
-  { label: "Dallas, TX", href: "/locations/texas/dallas" },
-  { label: "Scottsdale, AZ", href: "/locations/arizona/scottsdale" },
-  { label: "Chicago, IL", href: "/locations/illinois/chicago" },
-  { label: "Atlanta, GA", href: "/locations/georgia/atlanta" },
+  { label: "Denver", href: "/locations/colorado/denver" },
+  { label: "San Diego", href: "/locations/california/san-diego" },
+  { label: "Chicago", href: "/locations/illinois/chicago" },
+  { label: "Atlanta", href: "/locations/georgia/atlanta" },
+  { label: "Dallas", href: "/locations/texas/dallas" },
 ];
 
 const treatmentTypes = [
   { label: "Medical Detox", href: "/treatment-types/medical-detox" },
-  { label: "Residential Inpatient", href: "/treatment-types/residential-inpatient" },
-  { label: "Outpatient Programs", href: "/treatment-types/outpatient-programs" },
+  { label: "Inpatient Rehab", href: "/treatment-types/residential-inpatient" },
+  { label: "Outpatient", href: "/treatment-types/outpatient-programs" },
   { label: "Dual Diagnosis", href: "/treatment-types/dual-diagnosis" },
   { label: "Alcohol Rehab", href: "/treatment-types/alcohol-rehabilitation" },
-  { label: "Drug Addiction", href: "/treatment-types/drug-addiction" },
-  { label: "Holistic Therapy", href: "/treatment-types/holistic-therapy" },
+  { label: "Drug Treatment", href: "/treatment-types/drug-addiction" },
+  { label: "Holistic", href: "/treatment-types/holistic-therapy" },
   { label: "Luxury Rehab", href: "/treatment-types/luxury-rehab" },
+];
+
+const insuranceTypes = [
+  "Medicaid", "Medicare", "Blue Cross", "Aetna", "Cigna", "United", "Self-Pay"
 ];
 
 const socialLinks = [
@@ -98,51 +77,67 @@ const socialLinks = [
 export function Footer() {
   return (
     <footer className="bg-primary text-primary-foreground">
+      {/* Crisis Hotlines - Top Priority */}
+      <div className="bg-destructive/15 border-b border-white/10">
+        <div className="container py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 sm:gap-8">
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-semibold text-primary-foreground">
+                Immediate Help:
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              {crisisHotlines.map((hotline) => (
+                <a
+                  key={hotline.name}
+                  href={hotline.phone.startsWith("Text") ? undefined : `tel:${hotline.phone.replace(/-/g, "")}`}
+                  className="text-sm text-primary-foreground/90 hover:text-accent transition-colors"
+                >
+                  <span className="font-medium">{hotline.name}:</span>{" "}
+                  <span className="text-accent font-semibold">{hotline.phone}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Footer */}
-      <div className="container py-12 md:py-16">
+      <div className="container py-12 md:py-14">
         <div className="grid gap-10 lg:grid-cols-12">
           {/* Brand Column */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-3 space-y-5">
             <Link to="/" className="inline-block">
               <img 
                 src="/logo-dark.svg" 
-                alt="Rehab-Lookup" 
-                className="h-14 w-auto"
+                alt="RehabLookup" 
+                className="h-12 w-auto"
                 loading="lazy"
               />
             </Link>
             
-            {/* CTA and Contact */}
-            <div className="flex flex-col gap-3">
-              <Link
-                to="/request-help?source=footer_cta"
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90 transition-colors w-fit"
-              >
-                Get Help Now
-                <ChevronRight className="h-4 w-4" />
-              </Link>
+            <div className="space-y-3">
               <a 
                 href="mailto:help@rehablookup.com" 
                 className="flex items-center gap-2 text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
               >
                 <Mail className="h-4 w-4 text-accent" />
-                <span>help@rehablookup.com</span>
+                help@rehablookup.com
               </a>
+              <div className="flex items-center gap-3 text-xs text-primary-foreground/50">
+                <div className="flex items-center gap-1.5">
+                  <Shield className="h-3.5 w-3.5 text-accent" />
+                  <span>Verified</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-accent" />
+                  <span>24/7</span>
+                </div>
+              </div>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2 text-xs text-primary-foreground/60">
-                <Shield className="h-4 w-4 text-accent" />
-                <span>Verified Centers</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-primary-foreground/60">
-                <Clock className="h-4 w-4 text-accent" />
-                <span>24/7 Support</span>
-              </div>
-            </div>
-
-            {/* Social Links */}
             <div className="flex items-center gap-2">
               {socialLinks.map((social) => (
                 <a
@@ -150,7 +145,7 @@ export function Footer() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-primary-foreground/70 transition-all hover:bg-accent hover:text-accent-foreground"
+                  className="flex h-8 w-8 items-center justify-center rounded-md bg-white/10 text-primary-foreground/60 transition-all hover:bg-accent hover:text-accent-foreground"
                   aria-label={social.label}
                 >
                   <social.icon className="h-4 w-4" />
@@ -159,15 +154,14 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Links Columns */}
-          <div className="lg:col-span-8">
-            <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
-              {/* Find Help */}
+          {/* Links Grid */}
+          <div className="lg:col-span-9">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-3">
               <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50 mb-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40 mb-3">
                   Find Help
                 </h4>
-                <ul className="space-y-2.5">
+                <ul className="space-y-2">
                   {footerLinks.findHelp.map((link) => (
                     <li key={link.href}>
                       <Link 
@@ -181,12 +175,11 @@ export function Footer() {
                 </ul>
               </div>
 
-              {/* Resources */}
               <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50 mb-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40 mb-3">
                   Resources
                 </h4>
-                <ul className="space-y-2.5">
+                <ul className="space-y-2">
                   {footerLinks.resources.map((link) => (
                     <li key={link.href}>
                       <Link 
@@ -200,12 +193,11 @@ export function Footer() {
                 </ul>
               </div>
 
-              {/* For Providers */}
               <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50 mb-4">
-                  Providers
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40 mb-3">
+                  For Providers
                 </h4>
-                <ul className="space-y-2.5">
+                <ul className="space-y-2">
                   {footerLinks.providers.map((link) => (
                     <li key={link.href}>
                       <Link 
@@ -223,43 +215,43 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Popular Locations & Treatment Types - SEO Section */}
-      <div className="border-t border-white/10">
-        <div className="container py-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {/* Popular States */}
+      {/* SEO Links Section */}
+      <div className="border-t border-white/10 bg-white/[0.02]">
+        <div className="container py-8">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {/* States */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <MapPin className="h-4 w-4 text-accent" />
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
-                  Popular States
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40">
+                  States
                 </h4>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {popularLocations.map((location) => (
+                {popularStates.map((state) => (
                   <Link
-                    key={location.href}
-                    to={location.href}
-                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                    key={state}
+                    to={`/locations/${state.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/60 hover:bg-white/10 hover:text-primary-foreground transition-colors"
                   >
-                    {location.label}
+                    {state}
                   </Link>
                 ))}
                 <Link
                   to="/locations"
-                  className="rounded-full bg-accent/20 px-2.5 py-1 text-xs text-accent hover:bg-accent/30 transition-colors"
+                  className="rounded-full bg-accent/20 px-2.5 py-1 text-xs text-accent hover:bg-accent/30 transition-colors font-medium"
                 >
-                  All →
+                  All States →
                 </Link>
               </div>
             </div>
 
-            {/* Popular Cities */}
+            {/* Cities */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <MapPin className="h-4 w-4 text-accent" />
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
-                  Popular Cities
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40">
+                  Cities
                 </h4>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -267,7 +259,7 @@ export function Footer() {
                   <Link
                     key={city.href}
                     to={city.href}
-                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/60 hover:bg-white/10 hover:text-primary-foreground transition-colors"
                   >
                     {city.label}
                   </Link>
@@ -279,77 +271,42 @@ export function Footer() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Stethoscope className="h-4 w-4 text-accent" />
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
-                  Treatment Types
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40">
+                  Treatment
                 </h4>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {treatmentTypes.map((treatment) => (
+                {treatmentTypes.map((type) => (
                   <Link
-                    key={treatment.href}
-                    to={treatment.href}
-                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                    key={type.href}
+                    to={type.href}
+                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/60 hover:bg-white/10 hover:text-primary-foreground transition-colors"
                   >
-                    {treatment.label}
+                    {type.label}
                   </Link>
                 ))}
-                <Link
-                  to="/treatment-types"
-                  className="rounded-full bg-accent/20 px-2.5 py-1 text-xs text-accent hover:bg-accent/30 transition-colors"
-                >
-                  All →
-                </Link>
               </div>
             </div>
 
-            {/* Insurance Types */}
+            {/* Insurance */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <CreditCard className="h-4 w-4 text-accent" />
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
-                  Insurance Accepted
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/40">
+                  Insurance
                 </h4>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {insuranceTypes.map((insurance) => (
                   <Link
-                    key={insurance.href}
-                    to={insurance.href}
-                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                    key={insurance}
+                    to={`/rehab-centers?insurance=${insurance.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/60 hover:bg-white/10 hover:text-primary-foreground transition-colors"
                   >
-                    {insurance.label}
+                    {insurance}
                   </Link>
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Crisis Hotlines Section */}
-      <div className="border-t border-white/10 bg-destructive/10">
-        <div className="container py-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-destructive" />
-              <span className="text-sm font-semibold text-primary-foreground">
-                Need Immediate Help?
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 md:gap-6">
-              {crisisHotlines.map((hotline) => (
-                <div key={hotline.name} className="flex items-center gap-2">
-                  <a
-                    href={hotline.phone.startsWith("Text") ? undefined : `tel:${hotline.phone.replace(/-/g, "")}`}
-                    className="text-sm font-medium text-primary-foreground hover:text-accent transition-colors"
-                  >
-                    {hotline.name}: <span className="text-accent">{hotline.phone}</span>
-                  </a>
-                  <span className="hidden md:inline text-xs text-primary-foreground/50">
-                    ({hotline.description})
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -357,22 +314,18 @@ export function Footer() {
 
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
-        <div className="container py-5">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-primary-foreground/50">
+        <div className="container py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-primary-foreground/40">
               <span>© {new Date().getFullYear()} RehabLookup</span>
-              <span className="hidden sm:inline">•</span>
-              {footerLinks.legal.map((link, index) => (
-                <span key={link.href} className="flex items-center gap-x-4">
-                  <Link to={link.href} className="hover:text-primary-foreground transition-colors">
-                    {link.label}
-                  </Link>
-                  {index < footerLinks.legal.length - 1 && <span className="hidden sm:inline">•</span>}
-                </span>
+              {footerLinks.legal.map((link) => (
+                <Link key={link.href} to={link.href} className="hover:text-primary-foreground transition-colors">
+                  {link.label}
+                </Link>
               ))}
             </div>
-            <p className="text-xs text-primary-foreground/40 max-w-md md:text-right">
-              RehabLookup is a directory service. We are not a treatment provider.
+            <p className="text-xs text-primary-foreground/30">
+              Directory service only. Not a treatment provider.
             </p>
           </div>
         </div>
