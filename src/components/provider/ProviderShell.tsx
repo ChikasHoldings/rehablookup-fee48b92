@@ -12,46 +12,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // Memoized sidebar to prevent re-renders
 const MemoizedSidebar = memo(ProviderSidebar);
 const MemoizedHeader = memo(ProviderHeader);
 
-// Lightweight header skeleton for initial load only
-function HeaderSkeleton() {
-  return (
-    <div className="h-16 border-b bg-background flex items-center px-4 gap-4">
-      <Skeleton className="h-8 w-8 rounded-lg" />
-      <Skeleton className="h-5 w-32" />
-      <div className="flex-1" />
-      <Skeleton className="h-8 w-8 rounded-full" />
-    </div>
-  );
-}
-
-function SidebarSkeleton() {
-  return (
-    <div className="p-3 space-y-2">
-      {[...Array(6)].map((_, i) => (
-        <Skeleton key={i} className="h-12 w-full rounded-xl" />
-      ))}
-    </div>
-  );
-}
-
 function ProviderShellContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
-  const [hasSession, setHasSession] = useState(false);
   const mainContentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { selectedFacility, isLoading: facilityLoading } = useSelectedFacility();
+  const { selectedFacility } = useSelectedFacility();
+  const hasRedirected = useRef(false);
 
-  const { data: providerData, isLoading } = useProviderData(selectedFacility?.id);
+  const { data: providerData } = useProviderData(selectedFacility?.id);
   
   // Track navigation for Sentry breadcrumbs
   useSentryBreadcrumbs();
@@ -63,58 +39,47 @@ function ProviderShellContent() {
     }
   }, [location.pathname]);
 
-  // Auth check effect - only runs once on mount
+  // Auth check - non-blocking, just redirects if no session
   useEffect(() => {
-    let mounted = true;
+    if (hasRedirected.current) return;
     
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (!mounted) return;
-      
       if (!session) {
+        hasRedirected.current = true;
         clearSentryUser();
         navigate("/provider-login", { replace: true });
         return;
       }
       
-      // Set Sentry user context for error tracking
+      // Set Sentry user context
       setSentryUser({
         id: session.user.id,
         email: session.user.email,
         role: "provider",
       });
-      
-      setHasSession(true);
-      setIsAuthChecked(true);
     };
+
+    checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (!session) {
+        if (!session && !hasRedirected.current) {
+          hasRedirected.current = true;
           clearSentryUser();
-          setHasSession(false);
           navigate("/provider-login", { replace: true });
-        } else {
-          setHasSession(true);
         }
       }
     );
 
-    checkAuth();
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleLogout = useCallback(async () => {
     try {
-      // Log logout activity before signing out
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Fire and forget - don't block logout on activity logging
         supabase.functions.invoke("log-activity", {
           body: {
             user_id: session.user.id,
@@ -124,14 +89,10 @@ function ProviderShellContent() {
         }).catch(console.error);
       }
       
-      // Clear Sentry user context
       clearSentryUser();
-
-      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error("Logout error:", error);
         toast({
           title: "Logout failed",
           description: "Please try again or refresh the page.",
@@ -140,16 +101,11 @@ function ProviderShellContent() {
         return;
       }
 
-      // Clear all provider data caches
       queryClient.clear();
-
-      // Show success toast
       toast({
         title: "Signed out",
         description: "You've been successfully logged out.",
       });
-
-      // Navigate to login
       navigate("/provider-login", { replace: true });
     } catch (err) {
       console.error("Logout exception:", err);
@@ -169,59 +125,30 @@ function ProviderShellContent() {
     setSidebarOpen(true);
   }, []);
 
-  // Only show full-page blocking spinner on INITIAL auth check before we know if there's a session
-  // After initial check, keep layout visible and show content skeletons instead
-  if (!isAuthChecked) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center animate-fade-in">
-          <div className="relative">
-            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          </div>
-          <p className="mt-4 text-sm text-muted-foreground">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If no session after auth check, don't render (will redirect)
-  if (!hasSession) {
-    return null;
-  }
-
   const profile = providerData?.profile;
   const facility = selectedFacility || providerData?.facility;
-  
-  // Determine if we're still loading initial data (show skeleton header/sidebar)
-  const isInitialDataLoading = facilityLoading && !selectedFacility;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
-      {/* Fixed Header - z-50 to stay on top */}
+      {/* Fixed Header */}
       <div className="flex-shrink-0 z-50">
-        {isInitialDataLoading ? (
-          <HeaderSkeleton />
-        ) : (
-          <MemoizedHeader
-            facilityName={facility?.name}
-            facilityId={facility?.id}
-            facilitySlug={facility?.slug}
-            facilityLogo={facility?.logo_url}
-            userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
-            onLogout={handleLogout}
-          />
-        )}
+        <MemoizedHeader
+          facilityName={facility?.name}
+          facilityId={facility?.id}
+          facilitySlug={facility?.slug}
+          facilityLogo={facility?.logo_url}
+          userName={profile ? `${profile.first_name} ${profile.last_name}` : undefined}
+          onLogout={handleLogout}
+        />
       </div>
 
       <div className="flex flex-1 min-h-0">
-        {/* Fixed Desktop Sidebar - z-40 below header */}
+        {/* Fixed Desktop Sidebar */}
         <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
-          {isInitialDataLoading ? <SidebarSkeleton /> : <MemoizedSidebar />}
+          <MemoizedSidebar />
         </aside>
 
-        {/* Mobile Sidebar Sheet - accessed via "More" button */}
+        {/* Mobile Sidebar Sheet */}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetContent side="left" className="w-[280px] sm:w-72 p-0 border-r-0">
             <div className="flex flex-col h-full bg-card">
@@ -235,7 +162,7 @@ function ProviderShellContent() {
           </SheetContent>
         </Sheet>
 
-        {/* Main Content Area - with bottom padding on mobile for nav bar */}
+        {/* Main Content Area */}
         <main 
           ref={mainContentRef} 
           className="flex-1 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
@@ -246,13 +173,12 @@ function ProviderShellContent() {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation - PWA style */}
+      {/* Mobile Bottom Navigation */}
       <MobileBottomNav onMoreClick={handleMoreClick} />
     </div>
   );
 }
 
-// Wrap with provider
 export function ProviderShell() {
   return (
     <SelectedFacilityProvider>
