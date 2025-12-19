@@ -53,7 +53,6 @@ export function useSubscription() {
 }
 
 // UNIFIED LEAD SYSTEM: Plan definitions
-// - All leads are now "qualified leads" (no more "inquiry" distinction)
 // - Professional: 100 shared leads/month (max 2 providers per lead)
 // - Featured: 100 exclusive leads/month (1 provider per lead)
 export const PLAN_DETAILS = {

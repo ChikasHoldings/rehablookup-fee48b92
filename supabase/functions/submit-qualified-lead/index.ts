@@ -1662,56 +1662,139 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     // ============ LOG ROUTING DECISION (Primary Provider) ============
+    // IMPORTANT: lead_deducted_at is set ONLY when the lead is actually routed to a provider
+    // This prevents duplicate deductions and enables audit tracking
+    const leadDeductedAt = primaryFacilityId && isQualified ? new Date().toISOString() : null;
+    
     try {
-      await supabase.from("lead_routing_logs").insert({
-        lead_id: lead.id,
-        assigned_provider_id: primaryFacilityId,
-        assignment_reason: assignmentReason,
-        plan_tier: primaryPlanName,
-        subscription_status: primaryFacilityId ? "active" : null,
-        lead_limit: primaryPlanName ? PLAN_CONFIG[primaryPlanName as keyof typeof PLAN_CONFIG]?.lead_limit : null,
-        used_leads: eligibilityResult?.usedLeads ?? null,
-        routing_source: leadData.facilityId ? "direct" : "system",
-        requested_facility_id: leadData.facilityId || null,
-        exclusivity: leadExclusivity,
-        provider_routing_order: 1,
-        eligibility_check_result: {
-          request_id: requestId,
-          qualified: isQualified,
-          email_verified: emailVerified,
-          assignment_status: assignmentStatus,
-          exclusivity: leadExclusivity,
-          scoring_breakdown: scoringBreakdown,
-          lead_location: {
-            city_state: leadData.locationCityState,
-            zip: leadData.locationZip,
-          },
-          lead_criteria: {
-            level_of_care: leadData.levelOfCare,
-            insurance_type: leadData.insuranceType,
-            urgency: leadData.urgency,
-          },
-        },
-      });
-      
-      // Log secondary provider for shared leads
-      if (secondaryFacilityId && leadExclusivity === 'shared') {
+      // Check for duplicate routing to prevent over-routing
+      if (primaryFacilityId) {
+        const { data: existingRoute } = await supabase
+          .from("lead_routing_logs")
+          .select("id")
+          .eq("lead_id", lead.id)
+          .eq("assigned_provider_id", primaryFacilityId)
+          .maybeSingle();
+        
+        if (existingRoute) {
+          log(requestId, "WARN", "Duplicate routing prevented for primary provider", { 
+            leadId: lead.id, 
+            providerId: primaryFacilityId 
+          });
+        } else {
+          await supabase.from("lead_routing_logs").insert({
+            lead_id: lead.id,
+            assigned_provider_id: primaryFacilityId,
+            assignment_reason: assignmentReason,
+            plan_tier: primaryPlanName,
+            subscription_status: primaryFacilityId ? "active" : null,
+            lead_limit: primaryPlanName ? PLAN_CONFIG[primaryPlanName as keyof typeof PLAN_CONFIG]?.lead_limit : null,
+            used_leads: eligibilityResult?.usedLeads ?? null,
+            routing_source: leadData.facilityId ? "direct" : "system",
+            requested_facility_id: leadData.facilityId || null,
+            exclusivity: leadExclusivity,
+            provider_routing_order: 1,
+            lead_deducted_at: leadDeductedAt,
+            eligibility_check_result: {
+              request_id: requestId,
+              provider_id: primaryFacilityId,
+              plan_type: primaryPlanName,
+              exclusivity: leadExclusivity,
+              routing_order: 1,
+              qualified: isQualified,
+              email_verified: emailVerified,
+              assignment_status: assignmentStatus,
+              scoring_breakdown: scoringBreakdown,
+              lead_location: {
+                city_state: leadData.locationCityState,
+                zip: leadData.locationZip,
+              },
+              lead_criteria: {
+                level_of_care: leadData.levelOfCare,
+                insurance_type: leadData.insuranceType,
+                urgency: leadData.urgency,
+              },
+            },
+          });
+          
+          log(requestId, "INFO", "Primary routing logged", {
+            leadId: lead.id,
+            providerId: primaryFacilityId,
+            planType: primaryPlanName,
+            exclusivity: leadExclusivity,
+            routingOrder: 1,
+            leadDeductedAt,
+          });
+        }
+      } else {
+        // Log unassigned lead for tracking
         await supabase.from("lead_routing_logs").insert({
           lead_id: lead.id,
-          assigned_provider_id: secondaryFacilityId,
-          assignment_reason: `Shared lead - secondary assignment`,
-          plan_tier: "professional",
-          subscription_status: "active",
-          lead_limit: PLAN_CONFIG.professional.lead_limit,
-          routing_source: "system",
-          exclusivity: 'shared',
-          provider_routing_order: 2,
+          assigned_provider_id: null,
+          assignment_reason: assignmentReason,
+          plan_tier: null,
+          subscription_status: null,
+          routing_source: leadData.facilityId ? "direct" : "system",
+          requested_facility_id: leadData.facilityId || null,
+          exclusivity: leadExclusivity,
+          provider_routing_order: 0,
+          lead_deducted_at: null, // No deduction for unassigned leads
           eligibility_check_result: {
             request_id: requestId,
-            is_secondary: true,
-            primary_provider: primaryFacilityName,
+            qualified: isQualified,
+            assignment_status: assignmentStatus,
+            reason: "No eligible provider found",
           },
         });
+      }
+      
+      // Log secondary provider for shared leads (with duplicate prevention)
+      if (secondaryFacilityId && leadExclusivity === 'shared') {
+        const { data: existingSecondaryRoute } = await supabase
+          .from("lead_routing_logs")
+          .select("id")
+          .eq("lead_id", lead.id)
+          .eq("assigned_provider_id", secondaryFacilityId)
+          .maybeSingle();
+        
+        if (existingSecondaryRoute) {
+          log(requestId, "WARN", "Duplicate routing prevented for secondary provider", { 
+            leadId: lead.id, 
+            providerId: secondaryFacilityId 
+          });
+        } else {
+          const secondaryDeductedAt = new Date().toISOString();
+          await supabase.from("lead_routing_logs").insert({
+            lead_id: lead.id,
+            assigned_provider_id: secondaryFacilityId,
+            assignment_reason: `Shared lead - secondary assignment`,
+            plan_tier: "professional",
+            subscription_status: "active",
+            lead_limit: PLAN_CONFIG.professional.lead_limit,
+            routing_source: "system",
+            exclusivity: 'shared',
+            provider_routing_order: 2,
+            lead_deducted_at: secondaryDeductedAt,
+            eligibility_check_result: {
+              request_id: requestId,
+              provider_id: secondaryFacilityId,
+              plan_type: "professional",
+              exclusivity: 'shared',
+              routing_order: 2,
+              is_secondary: true,
+              primary_provider: primaryFacilityName,
+            },
+          });
+          
+          log(requestId, "INFO", "Secondary routing logged", {
+            leadId: lead.id,
+            providerId: secondaryFacilityId,
+            planType: "professional",
+            exclusivity: 'shared',
+            routingOrder: 2,
+            leadDeductedAt: secondaryDeductedAt,
+          });
+        }
       }
     } catch (logError) {
       log(requestId, "ERROR", "Failed to create routing log", { error: String(logError) });
