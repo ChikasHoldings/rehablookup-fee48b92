@@ -30,6 +30,7 @@ import {
   ChevronDown,
   Calculator,
   DollarSign,
+  Crown,
 } from "lucide-react";
 import { useState } from "react";
 import { providerNavLinks } from "@/data/providerNavLinks";
@@ -139,61 +140,103 @@ const pricingPlans = [
     name: "Basic",
     price: "Free",
     period: "",
-    description: "Get listed and be discoverable",
+    description: "Get listed and start receiving leads",
+    icon: Sparkles,
+    gradient: "from-slate-500 to-slate-600",
     features: [
-      "Public provider profile",
-      "Listed in search results",
-      "Facility name, location & services",
-      "1 lead (lifetime limit)",
-      "Basic dashboard (views & clicks)",
+      { text: "Public provider profile", included: true },
+      { text: "Listed in search results", included: true },
+      { text: "Basic facility details", included: true },
+      { text: "5 leads per month", included: true, highlight: true },
+      { text: "Basic analytics dashboard", included: true },
+      { text: "Email notifications", included: true },
+      { text: "1 facility location", included: true },
+    ],
+    limitations: [
+      "Shared leads with other providers",
+      "Standard search placement",
     ],
     cta: "Start Free",
+    ctaVariant: "outline" as const,
     popular: false,
-    highlight: false,
-    microcopy: null,
-    exclusivityNote: "Shared leads only",
+    exclusivityBadge: "Shared Leads",
+    exclusivityColor: "bg-slate-500/10 text-slate-600 border-slate-500/20",
   },
   {
     name: "Professional",
     price: "$399",
     period: "/mo",
-    description: "Exclusive leads + steady visibility",
+    description: "Exclusive leads for serious growth",
+    icon: Star,
+    gradient: "from-emerald-500 to-teal-500",
     features: [
-      "25 leads/month",
-      "All leads are exclusive to you",
-      "Unlimited calls & website visits",
-      "Up to 3 facility locations",
-      "Email lead notifications",
-      "Lead management dashboard",
-      "Performance analytics",
+      { text: "Everything in Basic, plus:", included: true, isHeader: true },
+      { text: "25 exclusive leads/month", included: true, highlight: true },
+      { text: "100% lead exclusivity", included: true, highlight: true },
+      { text: "Lead quality scoring", included: true },
+      { text: "Advanced analytics & reporting", included: true },
+      { text: "Up to 3 facility locations", included: true },
+      { text: "Priority lead routing", included: true },
+      { text: "Email & SMS notifications", included: true },
     ],
-    cta: "Get Started",
+    limitations: [],
+    cta: "Start 14-Day Trial",
+    ctaVariant: "default" as const,
     popular: true,
-    highlight: true,
-    microcopy: "Every lead is delivered exclusively to you — never shared.",
-    exclusivityNote: "100% Exclusive",
+    exclusivityBadge: "100% Exclusive",
+    exclusivityColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   },
   {
     name: "Featured",
     price: "$1,099",
     period: "/mo",
-    description: "Maximum visibility & priority access",
+    description: "Maximum visibility & premium placement",
+    icon: Crown,
+    gradient: "from-amber-500 to-yellow-500",
     features: [
-      "75 leads/month",
-      "All leads are exclusive to you",
-      "Homepage featured placement",
-      "Priority search placement",
-      "Gold Featured badge",
-      "Up to 5 facility locations",
-      "Priority email support",
+      { text: "Everything in Professional, plus:", included: true, isHeader: true },
+      { text: "100 exclusive leads/month", included: true, highlight: true },
+      { text: "Homepage featured placement", included: true, highlight: true },
+      { text: "Priority search ranking", included: true },
+      { text: "Gold verified badge", included: true },
+      { text: "Up to 5 facility locations", included: true },
+      { text: "Dedicated account manager", included: true },
+      { text: "Priority support (< 2hr response)", included: true },
+      { text: "Custom lead routing rules", included: true },
     ],
-    cta: "Get Started",
+    limitations: [],
+    cta: "Contact Sales",
+    ctaVariant: "default" as const,
     popular: false,
-    highlight: false,
-    microcopy: "Priority access with maximum visibility and exclusive leads.",
-    exclusivityNote: "100% Exclusive",
+    exclusivityBadge: "100% Exclusive + Priority",
+    exclusivityColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   },
 ];
+
+// Feature type for pricing
+type PricingFeature = {
+  text: string;
+  included: boolean;
+  highlight?: boolean;
+  isHeader?: boolean;
+};
+
+// Plan type
+type PricingPlan = {
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  icon: typeof Sparkles;
+  gradient: string;
+  features: PricingFeature[];
+  limitations: string[];
+  cta: string;
+  ctaVariant: "default" | "outline";
+  popular: boolean;
+  exclusivityBadge: string;
+  exclusivityColor: string;
+};
 
 // ROI Calculator Component
 const ROICalculator = () => {
@@ -204,8 +247,9 @@ const ROICalculator = () => {
   const monthlyAdmissions = Math.round((leadsPerMonth[0] * conversionRate[0]) / 100);
   const monthlyRevenue = monthlyAdmissions * avgRevenuePerAdmission[0];
   const annualRevenue = monthlyRevenue * 12;
-  const planCost = leadsPerMonth[0] <= 25 ? 399 : 1099;
-  const roi = monthlyRevenue > 0 ? Math.round(((monthlyRevenue - planCost) / planCost) * 100) : 0;
+  const planCost = leadsPerMonth[0] <= 5 ? 0 : leadsPerMonth[0] <= 25 ? 399 : 1099;
+  const planName = leadsPerMonth[0] <= 5 ? "Basic (Free)" : leadsPerMonth[0] <= 25 ? "Professional" : "Featured";
+  const roi = planCost > 0 && monthlyRevenue > 0 ? Math.round(((monthlyRevenue - planCost) / planCost) * 100) : monthlyRevenue > 0 ? Infinity : 0;
 
   return (
     <div className="mt-16 max-w-3xl mx-auto">
@@ -230,13 +274,13 @@ const ROICalculator = () => {
                 value={leadsPerMonth}
                 onValueChange={setLeadsPerMonth}
                 min={1}
-                max={75}
+                max={100}
                 step={1}
                 className="w-full"
               />
               <div className="flex justify-between mt-1 text-xs text-muted-foreground">
                 <span>1</span>
-                <span>75</span>
+                <span>100</span>
               </div>
             </div>
 
@@ -297,11 +341,13 @@ const ROICalculator = () => {
               <span className="text-foreground font-medium">Estimated ROI</span>
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-accent" />
-                <span className="text-2xl font-bold text-accent">{roi > 0 ? `${roi}%` : "N/A"}</span>
+                <span className="text-2xl font-bold text-accent">
+                  {roi === Infinity ? "∞" : roi > 0 ? `${roi}%` : "N/A"}
+                </span>
               </div>
             </div>
             <p className="text-xs text-muted-foreground text-center pt-2">
-              Based on {leadsPerMonth[0] <= 25 ? "Professional" : "Featured"} plan at ${planCost}/mo
+              Based on {planName} plan{planCost > 0 ? ` at $${planCost}/mo` : ""}
             </p>
           </div>
         </div>
@@ -314,26 +360,55 @@ const ROICalculator = () => {
 const ComparisonTable = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const features = [
-    { feature: "Monthly Lead Limit", basic: "1 lifetime", professional: "25/month", featured: "75/month" },
-    { feature: "Lead Exclusivity", basic: "Shared", professional: "Exclusive", featured: "Exclusive" },
-    { feature: "Lead Quality Score", basic: false, professional: true, featured: true },
-    { feature: "Email Notifications", basic: true, professional: true, featured: true },
-    { feature: "Lead Management Dashboard", basic: true, professional: true, featured: true },
-    { feature: "Priority Lead Routing", basic: false, professional: true, featured: true },
-    { feature: "Featured Homepage Placement", basic: false, professional: false, featured: true },
-    { feature: "Enhanced Profile Badge", basic: false, professional: false, featured: true },
-    { feature: "Priority Support", basic: false, professional: true, featured: true },
-    { feature: "Analytics & Reporting", basic: false, professional: true, featured: true },
-    { feature: "Lead Limit Override", basic: false, professional: false, featured: true },
+  const featureCategories = [
+    {
+      category: "Lead Generation",
+      features: [
+        { feature: "Monthly Lead Limit", basic: "5/month", professional: "25/month", featured: "100/month" },
+        { feature: "Lead Exclusivity", basic: "Shared", professional: "Exclusive", featured: "Exclusive + Priority" },
+        { feature: "Lead Quality Scoring", basic: false, professional: true, featured: true },
+        { feature: "Priority Lead Routing", basic: false, professional: true, featured: true },
+        { feature: "Custom Routing Rules", basic: false, professional: false, featured: true },
+      ],
+    },
+    {
+      category: "Visibility & Placement",
+      features: [
+        { feature: "Search Listing", basic: true, professional: true, featured: true },
+        { feature: "Priority Search Ranking", basic: false, professional: true, featured: true },
+        { feature: "Homepage Featured Section", basic: false, professional: false, featured: true },
+        { feature: "Gold Verified Badge", basic: false, professional: false, featured: true },
+      ],
+    },
+    {
+      category: "Tools & Analytics",
+      features: [
+        { feature: "Provider Dashboard", basic: true, professional: true, featured: true },
+        { feature: "Basic Analytics", basic: true, professional: true, featured: true },
+        { feature: "Advanced Reporting", basic: false, professional: true, featured: true },
+        { feature: "Lead Conversion Tracking", basic: false, professional: true, featured: true },
+        { feature: "ROI Analytics", basic: false, professional: false, featured: true },
+      ],
+    },
+    {
+      category: "Account & Support",
+      features: [
+        { feature: "Facility Locations", basic: "1", professional: "Up to 3", featured: "Up to 5" },
+        { feature: "Email Notifications", basic: true, professional: true, featured: true },
+        { feature: "SMS Notifications", basic: false, professional: true, featured: true },
+        { feature: "Priority Support", basic: false, professional: true, featured: true },
+        { feature: "Dedicated Account Manager", basic: false, professional: false, featured: true },
+        { feature: "Response Time SLA", basic: "48hr", professional: "24hr", featured: "< 2hr" },
+      ],
+    },
   ];
 
   return (
-    <div className="mt-12 max-w-4xl mx-auto">
+    <div className="mt-12 max-w-5xl mx-auto">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <button className="w-full flex items-center justify-center gap-2 py-4 text-foreground hover:text-primary transition-colors group">
-            <span className="text-lg font-semibold">Compare All Features</span>
+            <span className="text-lg font-semibold">View Complete Feature Comparison</span>
             <ChevronDown className={cn(
               "h-5 w-5 transition-transform duration-200",
               isOpen && "rotate-180"
@@ -341,54 +416,81 @@ const ComparisonTable = () => {
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
-          <div className="overflow-x-auto pt-4">
+          <div className="overflow-x-auto pt-4 pb-2">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-4 px-4 text-foreground font-semibold">Feature</th>
-                  <th className="text-center py-4 px-4 text-foreground font-semibold">Basic</th>
-                  <th className="text-center py-4 px-4 text-foreground font-semibold bg-accent/5 border-x border-accent/20">Professional</th>
-                  <th className="text-center py-4 px-4 text-foreground font-semibold">Featured</th>
+                <tr className="border-b-2 border-border">
+                  <th className="text-left py-4 px-4 text-foreground font-semibold w-[40%]">Feature</th>
+                  <th className="text-center py-4 px-4 w-[20%]">
+                    <div className="flex flex-col items-center gap-1">
+                      <Sparkles className="h-5 w-5 text-slate-500" />
+                      <span className="font-semibold text-foreground">Basic</span>
+                      <span className="text-xs text-muted-foreground">Free</span>
+                    </div>
+                  </th>
+                  <th className="text-center py-4 px-4 w-[20%] bg-emerald-500/5 border-x-2 border-emerald-500/20 rounded-t-xl">
+                    <div className="flex flex-col items-center gap-1">
+                      <Star className="h-5 w-5 text-emerald-500" />
+                      <span className="font-semibold text-foreground">Professional</span>
+                      <span className="text-xs text-emerald-600 font-medium">$399/mo</span>
+                    </div>
+                  </th>
+                  <th className="text-center py-4 px-4 w-[20%]">
+                    <div className="flex flex-col items-center gap-1">
+                      <Crown className="h-5 w-5 text-amber-500" />
+                      <span className="font-semibold text-foreground">Featured</span>
+                      <span className="text-xs text-amber-600 font-medium">$1,099/mo</span>
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {features.map((row, index) => (
-                  <tr key={index} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                    <td className="py-4 px-4 text-foreground">{row.feature}</td>
-                    <td className="text-center py-4 px-4">
-                      {typeof row.basic === "boolean" ? (
-                        row.basic ? (
-                          <CheckCircle className="h-5 w-5 text-accent mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
-                        )
-                      ) : (
-                        <span className="text-muted-foreground text-sm">{row.basic}</span>
-                      )}
-                    </td>
-                    <td className="text-center py-4 px-4 bg-accent/5 border-x border-accent/20">
-                      {typeof row.professional === "boolean" ? (
-                        row.professional ? (
-                          <CheckCircle className="h-5 w-5 text-accent mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
-                        )
-                      ) : (
-                        <span className="text-foreground font-medium text-sm">{row.professional}</span>
-                      )}
-                    </td>
-                    <td className="text-center py-4 px-4">
-                      {typeof row.featured === "boolean" ? (
-                        row.featured ? (
-                          <CheckCircle className="h-5 w-5 text-accent mx-auto" />
-                        ) : (
-                          <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
-                        )
-                      ) : (
-                        <span className="text-muted-foreground text-sm">{row.featured}</span>
-                      )}
-                    </td>
-                  </tr>
+                {featureCategories.map((category, catIndex) => (
+                  <>
+                    <tr key={`cat-${catIndex}`} className="bg-muted/30">
+                      <td colSpan={4} className="py-3 px-4 text-sm font-semibold text-foreground uppercase tracking-wide">
+                        {category.category}
+                      </td>
+                    </tr>
+                    {category.features.map((row, index) => (
+                      <tr key={`${catIndex}-${index}`} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                        <td className="py-3.5 px-4 text-foreground text-sm">{row.feature}</td>
+                        <td className="text-center py-3.5 px-4">
+                          {typeof row.basic === "boolean" ? (
+                            row.basic ? (
+                              <CheckCircle className="h-5 w-5 text-emerald-500 mx-auto" />
+                            ) : (
+                              <X className="h-5 w-5 text-muted-foreground/30 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-muted-foreground text-sm">{row.basic}</span>
+                          )}
+                        </td>
+                        <td className="text-center py-3.5 px-4 bg-emerald-500/5 border-x-2 border-emerald-500/20">
+                          {typeof row.professional === "boolean" ? (
+                            row.professional ? (
+                              <CheckCircle className="h-5 w-5 text-emerald-500 mx-auto" />
+                            ) : (
+                              <X className="h-5 w-5 text-muted-foreground/30 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-emerald-600 font-medium text-sm">{row.professional}</span>
+                          )}
+                        </td>
+                        <td className="text-center py-3.5 px-4">
+                          {typeof row.featured === "boolean" ? (
+                            row.featured ? (
+                              <CheckCircle className="h-5 w-5 text-amber-500 mx-auto" />
+                            ) : (
+                              <X className="h-5 w-5 text-muted-foreground/30 mx-auto" />
+                            )
+                          ) : (
+                            <span className="text-amber-600 font-medium text-sm">{row.featured}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </>
                 ))}
               </tbody>
             </table>
@@ -791,60 +893,106 @@ const ForProviders = () => {
             </div>
 
             <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-              {pricingPlans.map((plan, index) => (
-                <AnimatedCard key={plan.name} delay={index * 100}>
-                  <div className={cn(
-                    "relative h-full flex flex-col rounded-2xl border p-8 transition-all",
-                    plan.highlight 
-                      ? "border-accent bg-gradient-to-b from-accent/5 to-background shadow-lg scale-[1.02]" 
-                      : "border-border bg-card"
-                  )}>
-                    {plan.popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1 text-sm font-semibold text-accent-foreground shadow-md">
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Most Popular
-                        </span>
+              {pricingPlans.map((plan, index) => {
+                const PlanIcon = plan.icon;
+                return (
+                  <AnimatedCard key={plan.name} delay={index * 100}>
+                    <div className={cn(
+                      "relative h-full flex flex-col rounded-2xl border p-8 transition-all",
+                      plan.popular 
+                        ? "border-emerald-500/50 bg-gradient-to-b from-emerald-500/5 to-background shadow-lg shadow-emerald-500/10 scale-[1.02]" 
+                        : "border-border bg-card hover:border-border/80 hover:shadow-md"
+                    )}>
+                      {plan.popular && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-1 text-sm font-semibold text-white shadow-md">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Most Popular
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Plan Header */}
+                      <div className="mb-6">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={cn(
+                            "h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br",
+                            plan.gradient
+                          )}>
+                            <PlanIcon className="h-5 w-5 text-white" />
+                          </div>
+                          <h3 className="font-display text-xl font-bold text-foreground">{plan.name}</h3>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                          <span className="text-lg text-muted-foreground">{plan.period}</span>
+                        </div>
+                        <p className="text-muted-foreground mt-2 text-sm">{plan.description}</p>
                       </div>
-                    )}
-                    
-                    <div className="mb-6">
-                      <h3 className="font-display text-xl font-semibold text-foreground mb-2">{plan.name}</h3>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                        <span className="text-lg text-muted-foreground">{plan.period}</span>
+
+                      {/* Exclusivity Badge */}
+                      <div className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold mb-5 w-fit",
+                        plan.exclusivityColor
+                      )}>
+                        <Shield className="h-3 w-3" />
+                        {plan.exclusivityBadge}
                       </div>
-                      <p className="text-muted-foreground mt-2">{plan.description}</p>
+                      
+                      {/* Features */}
+                      <ul className="flex-1 space-y-2.5 mb-6">
+                        {plan.features.map((feature, idx) => (
+                          <li key={idx} className={cn(
+                            "flex items-start gap-2.5",
+                            feature.isHeader && "mt-0 mb-1"
+                          )}>
+                            {feature.isHeader ? (
+                              <span className="text-sm font-medium text-muted-foreground">{feature.text}</span>
+                            ) : (
+                              <>
+                                <CheckCircle className={cn(
+                                  "h-4.5 w-4.5 shrink-0 mt-0.5",
+                                  feature.highlight ? "text-emerald-500" : "text-muted-foreground"
+                                )} />
+                                <span className={cn(
+                                  "text-sm",
+                                  feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"
+                                )}>{feature.text}</span>
+                              </>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+
+                      {/* Limitations */}
+                      {plan.limitations.length > 0 && (
+                        <div className="mb-5 pt-4 border-t border-border/50">
+                          {plan.limitations.map((limitation, idx) => (
+                            <p key={idx} className="text-xs text-muted-foreground/70 flex items-center gap-1.5 mb-1">
+                              <X className="h-3 w-3" />
+                              {limitation}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <Link to={plan.name === "Featured" ? "/contact" : "/provider-signup"}>
+                        <Button 
+                          variant={plan.ctaVariant} 
+                          size="lg"
+                          className={cn(
+                            "w-full h-12 text-base font-semibold rounded-xl",
+                            plan.popular && "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 border-0"
+                          )}
+                        >
+                          {plan.cta}
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      </Link>
                     </div>
-                    
-                    <ul className="flex-1 space-y-3 mb-6">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2.5">
-                          <CheckCircle className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                          <span className="text-foreground">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    
-                    {plan.microcopy && (
-                      <p className="text-xs text-primary font-medium bg-primary/5 rounded-lg px-3 py-2 mb-6 text-center">
-                        {plan.microcopy}
-                      </p>
-                    )}
-                    
-                    <Link to="/provider-signup">
-                      <Button 
-                        variant={plan.highlight ? "default" : "outline"} 
-                        size="lg"
-                        className="w-full h-12 text-base font-semibold rounded-xl"
-                      >
-                        {plan.cta}
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </Link>
-                  </div>
-                </AnimatedCard>
-              ))}
+                  </AnimatedCard>
+                );
+              })}
             </div>
 
             <p className="text-center text-sm text-muted-foreground mt-8">
