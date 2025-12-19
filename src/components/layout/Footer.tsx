@@ -1,5 +1,11 @@
 import { Link } from "react-router-dom";
-import { Heart, Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin, Stethoscope } from "lucide-react";
+import { Heart, Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin, Stethoscope, Phone } from "lucide-react";
+
+const crisisHotlines = [
+  { name: "SAMHSA Helpline", phone: "1-800-662-4357", description: "24/7, free, confidential" },
+  { name: "988 Suicide & Crisis", phone: "988", description: "Call or text anytime" },
+  { name: "Crisis Text Line", phone: "Text HOME to 741741", description: "Free 24/7 support" },
+];
 
 const footerLinks = {
   findHelp: [
@@ -295,6 +301,35 @@ export function Footer() {
                   All →
                 </Link>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Crisis Hotlines Section */}
+      <div className="border-t border-white/10 bg-destructive/10">
+        <div className="container py-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-semibold text-primary-foreground">
+                Need Immediate Help?
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 md:gap-6">
+              {crisisHotlines.map((hotline) => (
+                <div key={hotline.name} className="flex items-center gap-2">
+                  <a
+                    href={hotline.phone.startsWith("Text") ? undefined : `tel:${hotline.phone.replace(/-/g, "")}`}
+                    className="text-sm font-medium text-primary-foreground hover:text-accent transition-colors"
+                  >
+                    {hotline.name}: <span className="text-accent">{hotline.phone}</span>
+                  </a>
+                  <span className="hidden md:inline text-xs text-primary-foreground/50">
+                    ({hotline.description})
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
