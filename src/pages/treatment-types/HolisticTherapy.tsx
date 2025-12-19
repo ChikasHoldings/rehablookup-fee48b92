@@ -221,7 +221,7 @@ const HolisticTherapy = () => {
       </section>
 
       {/* What is Holistic Therapy */}
-      <section className="py-16 md:py-20">
+      <section className="section-padding">
         <div className="container">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
@@ -235,7 +235,7 @@ const HolisticTherapy = () => {
       </section>
 
       {/* Types of Holistic Therapies */}
-      <section className="bg-muted/30 py-16 md:py-20">
+      <section className="bg-muted/30 section-padding">
         <div className="container">
           <div className="mb-12 text-center">
             <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
@@ -268,7 +268,7 @@ const HolisticTherapy = () => {
       </section>
 
       {/* Benefits */}
-      <section className="py-16 md:py-20">
+      <section className="section-padding">
         <div className="container">
           <div className="mb-12 text-center">
             <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
@@ -301,7 +301,7 @@ const HolisticTherapy = () => {
       </section>
 
       {/* How It Works */}
-      <section className="bg-muted/30 py-16 md:py-20">
+      <section className="bg-muted/30 section-padding">
         <div className="container">
           <div className="mb-12 text-center">
             <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
@@ -343,7 +343,7 @@ const HolisticTherapy = () => {
       </section>
 
       {/* Featured Centers */}
-      <section className="py-16 md:py-20">
+      <section className="section-padding">
         <div className="container">
           <div className="mb-12 text-center">
             <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
@@ -386,7 +386,7 @@ const HolisticTherapy = () => {
       </section>
 
       {/* FAQs */}
-      <section className="bg-muted/30 py-16 md:py-20">
+      <section className="bg-muted/30 section-padding">
         <div className="container">
           <div className="mb-12 text-center">
             <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
@@ -418,7 +418,7 @@ const HolisticTherapy = () => {
       </section>
 
       {/* Other Treatment Types */}
-      <section className="py-16 md:py-20">
+      <section className="section-padding-sm">
         <div className="container">
           <div className="mb-8 text-center">
             <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
@@ -439,7 +439,7 @@ const HolisticTherapy = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="py-16 md:py-20">
+      <section className="section-padding">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
             <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">

@@ -498,8 +498,8 @@ const Resources = () => {
       </section>
 
       {/* Featured Articles */}
-      <section className="py-14 md:py-20 border-b border-border bg-gradient-to-b from-muted/30 to-background">
-        <div className="container px-5 md:px-6">
+      <section className="section-padding border-b border-border bg-gradient-to-b from-muted/30 to-background">
+        <div className="container">
           <div className="mb-10 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -526,8 +526,8 @@ const Resources = () => {
       </section>
 
       {/* All Articles with Filters */}
-      <section className="py-14 md:py-20">
-        <div className="container px-5 md:px-6">
+      <section className="section-padding">
+        <div className="container">
           {/* Search and Filters */}
           <div className="mb-10 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -620,8 +620,8 @@ const Resources = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-muted/30">
-        <div className="container px-5 md:px-6">
+      <section className="section-padding bg-muted/30">
+        <div className="container">
           <div className="mx-auto max-w-3xl rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-accent/10 p-8 md:p-12 text-center relative overflow-hidden">
             {/* Background decoration */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />

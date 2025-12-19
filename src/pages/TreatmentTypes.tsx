@@ -111,7 +111,7 @@ const TreatmentTypes = () => {
       </section>
 
       {/* Treatment Types Grid */}
-      <section className="py-16 md:py-20">
+      <section className="section-padding">
         <div className="container">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {treatmentTypes.map((type, index) => (
@@ -150,7 +150,7 @@ const TreatmentTypes = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="py-16 md:py-20">
+      <section className="section-padding">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
             <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
