@@ -21,6 +21,7 @@ import {
   Mail,
   Share2,
   Star,
+  Download,
 } from "lucide-react";
 import {
   Select,
@@ -60,6 +61,7 @@ import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 import { LeadLimitUpgradeModal } from "@/components/provider/LeadLimitUpgradeModal";
 import { useProviderData } from "@/hooks/useProviderData";
 import { Card } from "@/components/ui/card";
+import { exportLeadsToCSV } from "@/lib/csvExport";
 
 interface DateRange {
   from: Date | undefined;
@@ -308,6 +310,21 @@ export default function ProviderLeadsPage() {
     ? true // Always show as at limit for basic to encourage upgrade
     : thisMonthQualified.length >= leadLimit;
 
+  // CSV Export handler
+  const handleExportCSV = useCallback(() => {
+    if (filteredLeads.length === 0) {
+      toast.error("No leads to export");
+      return;
+    }
+    try {
+      exportLeadsToCSV(filteredLeads);
+      toast.success(`Exported ${filteredLeads.length} leads to CSV`);
+    } catch (error) {
+      toast.error("Failed to export leads");
+      console.error("CSV export error:", error);
+    }
+  }, [filteredLeads]);
+
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col" {...swipeHandlers}>
       {/* Header */}
@@ -342,67 +359,83 @@ export default function ProviderLeadsPage() {
             </div>
           </div>
           
-          {/* Detailed Upgrade Indicator - Right aligned in header */}
-          {showUpgradeIndicator && (!isMobile || mobileView === 'list') && (subscription?.plan !== "featured") && (
-            <div className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg border flex-shrink-0",
-              currentPlan === "basic"
-                ? "bg-primary/5 border-primary/20"
-                : isAtLimit
-                  ? "bg-destructive/5 border-destructive/20"
-                  : "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
-            )}>
-              {/* Usage Info */}
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className={cn(
-                    "h-3.5 w-3.5",
-                    currentPlan === "basic" ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-600 dark:text-amber-400"
-                  )} />
-                  <span className={cn(
-                    "text-xs font-semibold",
-                    currentPlan === "basic" ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-700 dark:text-amber-300"
-                  )}>
-                    {currentPlan === "basic"
-                      ? "Upgrade to view leads"
-                      : isAtLimit 
-                        ? "Limit reached!" 
-                        : "Approaching limit"
-                    }
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className={cn(
-                        "h-full transition-all rounded-full",
-                        isAtLimit ? "bg-destructive" : currentPlan === "basic" ? "bg-primary" : "bg-amber-500"
-                      )}
-                      style={{ width: `${Math.min((currentPlan === "basic" ? 100 : thisMonthQualified.length / leadLimit * 100), 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium">
-                    {currentPlan === "basic" ? `${totalLeadsCount} waiting` : `${thisMonthQualified.length}/${leadLimit}`}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Upgrade Button */}
-              <Button 
-                size="sm" 
-                className={cn(
-                  "h-7 px-2.5 text-xs gap-1.5",
-                  isAtLimit && "animate-subtle-pulse"
-                )}
-                asChild
+          {/* Right side - Export button and Upgrade Indicator */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* CSV Export Button */}
+            {(!isMobile || mobileView === 'list') && currentPlan !== "basic" && filteredLeads.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                className="gap-1.5 text-xs h-8"
               >
-                <Link to="/provider/billing">
-                  <Zap className="h-3 w-3" />
-                  <span className="hidden sm:inline">Upgrade</span>
-                </Link>
+                <Download className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Export CSV</span>
               </Button>
-            </div>
-          )}
+            )}
+            
+            {/* Detailed Upgrade Indicator */}
+            {showUpgradeIndicator && (!isMobile || mobileView === 'list') && (subscription?.plan !== "featured") && (
+              <div className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-lg border",
+                currentPlan === "basic"
+                  ? "bg-primary/5 border-primary/20"
+                  : isAtLimit
+                    ? "bg-destructive/5 border-destructive/20"
+                    : "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
+              )}>
+                {/* Usage Info */}
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className={cn(
+                      "h-3.5 w-3.5",
+                      currentPlan === "basic" ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-600 dark:text-amber-400"
+                    )} />
+                    <span className={cn(
+                      "text-xs font-semibold",
+                      currentPlan === "basic" ? "text-primary" : isAtLimit ? "text-destructive" : "text-amber-700 dark:text-amber-300"
+                    )}>
+                      {currentPlan === "basic"
+                        ? "Upgrade to view leads"
+                        : isAtLimit 
+                          ? "Limit reached!" 
+                          : "Approaching limit"
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={cn(
+                          "h-full transition-all rounded-full",
+                          isAtLimit ? "bg-destructive" : currentPlan === "basic" ? "bg-primary" : "bg-amber-500"
+                        )}
+                        style={{ width: `${Math.min((currentPlan === "basic" ? 100 : thisMonthQualified.length / leadLimit * 100), 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {currentPlan === "basic" ? `${totalLeadsCount} waiting` : `${thisMonthQualified.length}/${leadLimit}`}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Upgrade Button */}
+                <Button 
+                  size="sm" 
+                  className={cn(
+                    "h-7 px-2.5 text-xs gap-1.5",
+                    isAtLimit && "animate-subtle-pulse"
+                  )}
+                  asChild
+                >
+                  <Link to="/provider/billing">
+                    <Zap className="h-3 w-3" />
+                    <span className="hidden sm:inline">Upgrade</span>
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
