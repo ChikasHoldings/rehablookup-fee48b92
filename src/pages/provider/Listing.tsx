@@ -134,6 +134,14 @@ const availableServices = [
   "Mental Health Services",
 ];
 
+const availableAgeGroups = [
+  "Adults (18+)",
+  "Young Adults (18-25)",
+  "Adolescents (13-17)",
+  "Seniors (65+)",
+  "All Ages",
+];
+
 const availableInsurance = [
   "Aetna",
   "Blue Cross Blue Shield",
@@ -360,6 +368,7 @@ export default function ProviderListingPage() {
   const [showSaved, setShowSaved] = useState(false);
   const [newService, setNewService] = useState("");
   const [newInsurance, setNewInsurance] = useState("");
+  const [newAgeGroup, setNewAgeGroup] = useState("");
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
@@ -393,6 +402,7 @@ export default function ProviderListingPage() {
       setFieldErrors({});
       setNewService("");
       setNewInsurance("");
+      setNewAgeGroup("");
       setVerificationCode("");
       setCodeSent(false);
       setVerificationError(null);
@@ -456,6 +466,20 @@ export default function ProviderListingPage() {
       const { data } = await supabase
         .from("facility_insurance")
         .select("id, insurance_name")
+        .eq("facility_id", selectedFacility.id);
+      return data || [];
+    },
+    enabled: !!selectedFacility?.id,
+  });
+
+  // Fetch age groups
+  const { data: ageGroups = [], refetch: refetchAgeGroups } = useQuery({
+    queryKey: ["facility-age-groups", selectedFacility?.id],
+    queryFn: async () => {
+      if (!selectedFacility?.id) return [];
+      const { data } = await supabase
+        .from("facility_age_groups")
+        .select("id, age_group")
         .eq("facility_id", selectedFacility.id);
       return data || [];
     },
@@ -569,12 +593,29 @@ export default function ProviderListingPage() {
       )
       .subscribe();
 
+    const ageGroupsChannel = supabase
+      .channel(`age-groups-${selectedFacility.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_age_groups",
+          filter: `facility_id=eq.${selectedFacility.id}`,
+        },
+        () => {
+          refetchAgeGroups();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(facilityChannel);
       supabase.removeChannel(servicesChannel);
       supabase.removeChannel(insuranceChannel);
+      supabase.removeChannel(ageGroupsChannel);
     };
-  }, [selectedFacility?.id, queryClient, refetchServices, refetchInsurance]);
+  }, [selectedFacility?.id, queryClient, refetchServices, refetchInsurance, refetchAgeGroups]);
 
   // Auto-save function (silent, no toast)
   const performAutoSave = useCallback(async () => {
@@ -875,6 +916,41 @@ export default function ProviderListingPage() {
       refetchInsurance();
       if (facility) {
         queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
+        queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
+      }
+    }
+  };
+
+  const handleAddAgeGroup = async (ageGroup: string) => {
+    if (!facility || !ageGroup.trim()) return;
+    
+    const { error } = await supabase
+      .from("facility_age_groups")
+      .insert({ facility_id: facility.id, age_group: ageGroup.trim() });
+
+    if (error) {
+      toast({ title: "Failed to add age group", variant: "destructive" });
+    } else {
+      setNewAgeGroup("");
+      refetchAgeGroups();
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
+      toast({ title: "Age group added" });
+    }
+  };
+
+  const handleRemoveAgeGroup = async (ageGroupId: string) => {
+    const { error } = await supabase
+      .from("facility_age_groups")
+      .delete()
+      .eq("id", ageGroupId);
+
+    if (error) {
+      toast({ title: "Failed to remove age group", variant: "destructive" });
+    } else {
+      refetchAgeGroups();
+      if (facility) {
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       }
@@ -1897,6 +1973,83 @@ export default function ProviderListingPage() {
                       <Button 
                         onClick={() => handleAddInsurance(newInsurance)}
                         disabled={!newInsurance}
+                        className="h-11 gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add
+                      </Button>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            {/* Age Groups Served */}
+            <Collapsible open={expandedSections.has("ageGroups")} onOpenChange={() => toggleSection("ageGroups")}>
+              <Card className="overflow-hidden border-border/60 shadow-sm">
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="pb-4 bg-gradient-to-r from-violet-500/5 to-transparent cursor-pointer hover:bg-violet-500/10 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <SectionHeader
+                        icon={Users}
+                        iconColor="bg-violet-500/10 text-violet-600"
+                        title="Age Groups Served"
+                        description="Specify which age demographics you treat"
+                        badge={
+                          ageGroups.length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {ageGroups.length} group{ageGroups.length !== 1 ? "s" : ""}
+                            </Badge>
+                          )
+                        }
+                      />
+                      {expandedSections.has("ageGroups") ? (
+                        <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
+                      )}
+                    </div>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="space-y-4 pt-2">
+                    {ageGroups.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {ageGroups.map((ag) => (
+                          <TagChip
+                            key={ag.id}
+                            label={ag.age_group}
+                            onRemove={() => handleRemoveAgeGroup(ag.id)}
+                            variant="default"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-4 px-3 rounded-lg border border-dashed border-border bg-muted/30 text-center">
+                        <p className="text-sm text-muted-foreground">
+                          No age groups added yet. Specify which age groups you serve to help families find appropriate care.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Select value={newAgeGroup} onValueChange={setNewAgeGroup}>
+                        <SelectTrigger className="h-11 flex-1">
+                          <SelectValue placeholder="Select age group to add..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card max-h-[200px]">
+                          {availableAgeGroups
+                            .filter(ag => !ageGroups.some(existing => existing.age_group === ag))
+                            .map((ag) => (
+                              <SelectItem key={ag} value={ag}>
+                                {ag}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        onClick={() => handleAddAgeGroup(newAgeGroup)}
+                        disabled={!newAgeGroup}
                         className="h-11 gap-2"
                       >
                         <Plus className="h-4 w-4" />
