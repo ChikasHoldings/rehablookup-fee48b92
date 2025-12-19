@@ -2,6 +2,12 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// Product IDs for plan identification
+const PRODUCT_IDS = {
+  professional: "prod_Tbyz1bf6iYyzYd",
+  featured: "prod_TbyzJVNOQL71NN",
+};
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -57,22 +63,37 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
-    // Get active subscription
+    // Get subscriptions (including past_due status)
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      status: "active",
       limit: 1,
     });
 
-    const activeSubscription = subscriptions.data[0];
+    // Find active or past_due subscription
+    const activeSubscription = subscriptions.data.find(
+      (sub: any) => sub.status === "active" || sub.status === "past_due" || sub.status === "trialing"
+    );
+
+    // Determine plan from product ID
+    let planName = null;
+    if (activeSubscription) {
+      const productId = activeSubscription.items.data[0]?.price?.product as string;
+      if (productId === PRODUCT_IDS.featured) {
+        planName = "featured";
+      } else if (productId === PRODUCT_IDS.professional) {
+        planName = "professional";
+      }
+    }
 
     // Build subscription data for UI
     const subscriptionData = activeSubscription ? {
       id: activeSubscription.id,
       status: activeSubscription.status,
+      current_period_start: activeSubscription.current_period_start,
       current_period_end: activeSubscription.current_period_end,
       cancel_at_period_end: activeSubscription.cancel_at_period_end,
       canceled_at: activeSubscription.canceled_at,
+      plan: planName,
     } : null;
 
     // Get recent invoices

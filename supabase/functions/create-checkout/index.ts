@@ -7,10 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Price IDs for subscription plans - updated pricing
+// Price IDs for subscription plans
 const PRICE_IDS = {
-  professional: "price_1Sel1C9fxdThyiakWLfgbl9K", // $399/mo, 25 exclusive leads
-  featured: "price_1Sel1P9fxdThyiakj5MaAvOE", // $1,099/mo, 75 exclusive leads
+  professional: "price_1Sel1C9fxdThyiakWLfgbl9K", // $399/mo - 100 shared leads
+  featured: "price_1Sel1P9fxdThyiakj5MaAvOE", // $1,099/mo - 100 exclusive leads
 };
 
 const logStep = (step: string, details?: unknown) => {
