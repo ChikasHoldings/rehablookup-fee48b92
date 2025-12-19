@@ -13,6 +13,11 @@ const PRICE_IDS = {
   featured: "price_1Sel1P9fxdThyiakj5MaAvOE", // $1,099/mo - 100 exclusive leads
 };
 
+const PLAN_NAMES = {
+  professional: "Professional",
+  featured: "Featured",
+};
+
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
@@ -25,28 +30,33 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
   try {
     logStep("Function started");
 
-    const { plan, promoCode } = await req.json();
-    logStep("Requested plan", { plan, promoCode: promoCode ? "provided" : "none" });
+    const { plan, promoCode, action } = await req.json();
+    logStep("Request received", { plan, action, promoCode: promoCode ? "provided" : "none" });
 
+    // Validate plan
     if (!plan || !PRICE_IDS[plan as keyof typeof PRICE_IDS]) {
       throw new Error("Invalid plan selected. Available plans: professional, featured");
     }
 
     const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
-    logStep("Using price ID", { priceId });
+    const planName = PLAN_NAMES[plan as keyof typeof PLAN_NAMES];
+    logStep("Using price ID", { priceId, planName });
 
+    // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    
+    const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
@@ -58,25 +68,86 @@ serve(async (req) => {
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
+    let existingSubscription: Stripe.Subscription | null = null;
+
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Found existing customer", { customerId });
+
+      // Check for existing active subscription
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
+
+      if (subscriptions.data.length > 0) {
+        existingSubscription = subscriptions.data[0];
+        logStep("Found existing subscription", { 
+          subscriptionId: existingSubscription.id,
+          currentPriceId: existingSubscription.items.data[0]?.price.id
+        });
+      }
     }
 
     const origin = req.headers.get("origin") || "https://rehablookup.com";
 
-    // If promo code provided, look up the promotion code to get its ID
+    // If upgrading existing subscription, use Stripe's billing portal or update directly
+    if (existingSubscription && action === "upgrade") {
+      const currentPriceId = existingSubscription.items.data[0]?.price.id;
+      
+      // If same plan, no change needed
+      if (currentPriceId === priceId) {
+        return new Response(
+          JSON.stringify({ error: "You are already on this plan", alreadySubscribed: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+
+      // Update subscription with proration
+      logStep("Updating existing subscription", { 
+        subscriptionId: existingSubscription.id,
+        fromPrice: currentPriceId,
+        toPrice: priceId
+      });
+
+      await stripe.subscriptions.update(existingSubscription.id, {
+        items: [{
+          id: existingSubscription.items.data[0].id,
+          price: priceId,
+        }],
+        proration_behavior: 'create_prorations',
+        metadata: {
+          user_id: user.id,
+          plan: plan,
+          upgraded_at: new Date().toISOString(),
+        },
+      });
+
+      logStep("Subscription upgraded successfully");
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Upgraded to ${planName} successfully`,
+          upgraded: true 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
+    // Look up promo code if provided
     let discounts: { promotion_code: string }[] | undefined;
     if (promoCode) {
       try {
         const promoCodes = await stripe.promotionCodes.list({
-          code: promoCode,
+          code: promoCode.trim().toUpperCase(),
           active: true,
           limit: 1,
         });
         if (promoCodes.data.length > 0) {
           discounts = [{ promotion_code: promoCodes.data[0].id }];
-          logStep("Promo code found and will be applied", { promoCodeId: promoCodes.data[0].id });
+          logStep("Promo code applied", { promoCodeId: promoCodes.data[0].id });
         } else {
           logStep("Promo code not found or inactive", { promoCode });
         }
@@ -85,9 +156,13 @@ serve(async (req) => {
       }
     }
 
-    const sessionConfig: any = {
+    // Build checkout session config
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
+      customer_creation: customerId ? undefined : "always",
+      billing_address_collection: "required",
+      payment_method_types: ["card"],
       line_items: [
         {
           price: priceId,
@@ -95,17 +170,37 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/provider/billing?success=true`,
+      success_url: `${origin}/provider/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/provider/billing?canceled=true`,
       metadata: {
         user_id: user.id,
         plan: plan,
+        plan_name: planName,
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
           plan: plan,
+          plan_name: planName,
+          created_via: "checkout",
         },
+      },
+      // Custom text for the checkout page
+      custom_text: {
+        submit: {
+          message: `Start receiving ${plan === 'featured' ? 'exclusive' : 'qualified'} leads immediately after checkout.`,
+        },
+        after_submit: {
+          message: "Your subscription will begin immediately and renew monthly.",
+        },
+      },
+      // Allow tax ID collection for business customers
+      tax_id_collection: {
+        enabled: true,
+      },
+      // Phone number collection
+      phone_number_collection: {
+        enabled: true,
       },
     };
 
@@ -118,9 +213,13 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
-    logStep("Checkout session created", { sessionId: session.id, hasDiscount: !!discounts });
+    logStep("Checkout session created", { 
+      sessionId: session.id, 
+      hasDiscount: !!discounts,
+      planName 
+    });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

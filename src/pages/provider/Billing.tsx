@@ -60,25 +60,32 @@ export default function ProviderBillingPage() {
   useEffect(() => {
     const success = searchParams.get("success");
     const canceled = searchParams.get("canceled");
+    const sessionId = searchParams.get("session_id");
     
     if (success === "true") {
-      toast({
-        title: "Subscription Updated!",
-        description: "Your plan has been changed successfully.",
-      });
+      // Clean up URL params immediately
       setSearchParams({});
+      
+      toast({
+        title: "🎉 Welcome to Your New Plan!",
+        description: sessionId 
+          ? "Your subscription is now active. You'll start receiving qualified leads immediately."
+          : "Your plan has been updated successfully.",
+      });
+      
+      // Refresh all relevant data
       refetch();
       refetchProvider();
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
       queryClient.invalidateQueries({ queryKey: ["subscription"] });
       queryClient.invalidateQueries({ queryKey: ["facility-plan"] });
     } else if (canceled === "true") {
+      setSearchParams({});
       toast({
         variant: "destructive",
         title: "Checkout Canceled",
-        description: "Your subscription was not changed.",
+        description: "No changes were made to your subscription.",
       });
-      setSearchParams({});
     }
   }, [searchParams, setSearchParams, toast, refetch, refetchProvider, queryClient]);
 
@@ -120,14 +127,43 @@ export default function ProviderBillingPage() {
   const handleCheckout = async (plan: "professional" | "featured") => {
     setCheckoutLoading(plan);
     try {
+      // Determine if this is an upgrade for existing subscribers
+      const isUpgradeAction = isSubscribed && !cancelAtPeriodEnd;
+      
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { 
           plan,
-          promoCode: promoValidation.isValid ? promoCode.trim().toUpperCase() : undefined
+          promoCode: promoValidation.isValid ? promoCode.trim().toUpperCase() : undefined,
+          action: isUpgradeAction ? "upgrade" : "new"
         },
       });
 
       if (error) throw error;
+      
+      // Handle direct upgrade (no checkout needed)
+      if (data?.upgraded) {
+        toast({
+          title: "🚀 Plan Upgraded!",
+          description: data.message || `You're now on the ${plan === 'featured' ? 'Featured' : 'Professional'} plan.`,
+        });
+        refetch();
+        refetchProvider();
+        queryClient.invalidateQueries({ queryKey: ["subscription"] });
+        queryClient.invalidateQueries({ queryKey: ["facility-plan"] });
+        return;
+      }
+      
+      // Handle already subscribed error
+      if (data?.alreadySubscribed) {
+        toast({
+          variant: "destructive",
+          title: "Already Subscribed",
+          description: data.error || "You're already on this plan.",
+        });
+        return;
+      }
+      
+      // Redirect to Stripe Checkout
       if (data?.url) {
         window.open(data.url, "_blank");
       }
@@ -136,7 +172,7 @@ export default function ProviderBillingPage() {
       toast({
         variant: "destructive",
         title: "Checkout Failed",
-        description: "Unable to start checkout. Please try again.",
+        description: err instanceof Error ? err.message : "Unable to start checkout. Please try again.",
       });
     } finally {
       setCheckoutLoading(null);
