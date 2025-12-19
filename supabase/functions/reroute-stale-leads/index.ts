@@ -10,11 +10,34 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ============ PLAN CONFIGURATION ============
-const PLAN_CONFIG: Record<string, { product_ids: string[]; qualified_lead_limit: number; priority_score: number }> = {
-  basic: { product_ids: [], qualified_lead_limit: 0, priority_score: 0 },
-  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], qualified_lead_limit: 25, priority_score: 15 },
-  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], qualified_lead_limit: 75, priority_score: 30 },
+// ============ PLAN CONFIGURATION (Aligned with submit-qualified-lead) ============
+// Basic = 0 leads (excluded from routing)
+// Professional = 100 shared leads/month (max 2 providers per lead)
+// Featured = 100 exclusive leads/month (1 provider per lead)
+const PLAN_CONFIG: Record<string, { 
+  product_ids: string[]; 
+  lead_limit: number; 
+  priority_score: number;
+  exclusivity: 'shared' | 'exclusive';
+}> = {
+  basic: { 
+    product_ids: [], 
+    lead_limit: 0, 
+    priority_score: 0,
+    exclusivity: 'exclusive'
+  },
+  professional: { 
+    product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], 
+    lead_limit: 100, // 100 shared leads/month
+    priority_score: 15,
+    exclusivity: 'shared'
+  },
+  featured: { 
+    product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], 
+    lead_limit: 100, // 100 exclusive leads/month
+    priority_score: 30,
+    exclusivity: 'exclusive'
+  },
 };
 
 const PAID_PLANS = ["professional", "featured"];
@@ -157,10 +180,10 @@ async function getEligibleProviders(
           const productId = subscriptions.data[0].items.data[0].price.product as string;
           if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
             planName = "featured";
-            leadLimit = PLAN_CONFIG.featured.qualified_lead_limit;
+            leadLimit = PLAN_CONFIG.featured.lead_limit;
           } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
             planName = "professional";
-            leadLimit = PLAN_CONFIG.professional.qualified_lead_limit;
+            leadLimit = PLAN_CONFIG.professional.lead_limit;
           }
         }
       }
@@ -530,7 +553,11 @@ serve(async (req) => {
         continue;
       }
 
-      // Log routing decision
+      // Determine exclusivity based on plan
+      const exclusivity = PLAN_CONFIG[bestProvider.provider.planName as keyof typeof PLAN_CONFIG]?.exclusivity || 'exclusive';
+      const leadDeductedAt = new Date().toISOString();
+
+      // Log routing decision with full details
       await supabase.from("lead_routing_logs").insert({
         lead_id: lead.id,
         requested_facility_id: lead.facility_id,
@@ -540,11 +567,15 @@ serve(async (req) => {
         plan_tier: bestProvider.provider.planName,
         lead_limit: bestProvider.provider.leadLimit,
         used_leads: bestProvider.provider.usedLeads,
+        exclusivity: exclusivity,
+        provider_routing_order: 1,
+        lead_deducted_at: leadDeductedAt,
         eligibility_check_result: {
           request_id: requestId,
           stale_hours: 24,
           original_provider: lead.facility_id,
           scoring_breakdown: bestProvider.breakdown,
+          exclusivity: exclusivity,
           new_provider: {
             id: bestProvider.provider.facilityId,
             name: bestProvider.provider.facilityName,
@@ -553,6 +584,12 @@ serve(async (req) => {
           },
         },
       });
+      
+      // Update the lead with exclusivity
+      await supabase
+        .from("leads")
+        .update({ exclusivity: exclusivity })
+        .eq("id", lead.id);
 
       // Create notifications
       await supabase.from("provider_notifications").insert({
