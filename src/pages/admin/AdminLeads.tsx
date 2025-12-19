@@ -21,6 +21,11 @@ import {
   XCircle,
   CalendarIcon,
   PieChart,
+  ShieldX,
+  Ban,
+  Copy,
+  ShieldAlert,
+  FileWarning,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +66,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { calculateLeadScore, getScoreColor, type LeadScoringInput } from "@/lib/leadScoring";
@@ -137,6 +143,8 @@ type Lead = {
   assignment_status: string | null;
   assignment_reason: string | null;
   assigned_at: string | null;
+  validation_status: string | null;
+  quality_flag: string | null;
 };
 
 type Facility = {
@@ -245,6 +253,11 @@ function AssignmentStatusBadge({ lead }: { lead: Lead }) {
       icon: <XCircle className="h-3 w-3" />, 
       className: "bg-slate-50 text-slate-600 border-slate-200" 
     },
+    unqualified_not_routed: { 
+      label: "Blocked", 
+      icon: <Ban className="h-3 w-3" />, 
+      className: "bg-red-50 text-red-700 border-red-200" 
+    },
   };
 
   const { label, icon, className } = config[status] || config.pending;
@@ -265,6 +278,94 @@ function AssignmentStatusBadge({ lead }: { lead: Lead }) {
         )}
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+// Block Reason Badge Component
+function BlockReasonBadge({ lead }: { lead: Lead }) {
+  const reasons: { icon: React.ReactNode; label: string; className: string }[] = [];
+
+  // Check validation status
+  if (lead.validation_status === "invalid_contact") {
+    reasons.push({
+      icon: <ShieldX className="h-3 w-3" />,
+      label: "Invalid Contact",
+      className: "bg-red-50 text-red-700 border-red-200",
+    });
+  }
+
+  // Check quality flag
+  if (lead.quality_flag === "spam") {
+    reasons.push({
+      icon: <ShieldAlert className="h-3 w-3" />,
+      label: "Spam Detected",
+      className: "bg-orange-50 text-orange-700 border-orange-200",
+    });
+  } else if (lead.quality_flag === "bot") {
+    reasons.push({
+      icon: <Bot className="h-3 w-3" />,
+      label: "Bot Detected",
+      className: "bg-purple-50 text-purple-700 border-purple-200",
+    });
+  } else if (lead.quality_flag === "duplicate") {
+    reasons.push({
+      icon: <Copy className="h-3 w-3" />,
+      label: "Duplicate",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+    });
+  }
+
+  // Parse qualification_reason for more detail
+  if (lead.qualification_reason) {
+    const reason = lead.qualification_reason.toLowerCase();
+    if (reason.includes("invalid phone") && !reasons.some(r => r.label === "Invalid Contact")) {
+      reasons.push({
+        icon: <Phone className="h-3 w-3" />,
+        label: "Invalid Phone",
+        className: "bg-red-50 text-red-700 border-red-200",
+      });
+    }
+    if (reason.includes("invalid email") && !reasons.some(r => r.label === "Invalid Contact")) {
+      reasons.push({
+        icon: <Mail className="h-3 w-3" />,
+        label: "Invalid Email",
+        className: "bg-red-50 text-red-700 border-red-200",
+      });
+    }
+    if (reason.includes("duplicate") && !reasons.some(r => r.label === "Duplicate")) {
+      reasons.push({
+        icon: <Copy className="h-3 w-3" />,
+        label: "Duplicate",
+        className: "bg-amber-50 text-amber-700 border-amber-200",
+      });
+    }
+    if (reason.includes("location") || reason.includes("service area")) {
+      reasons.push({
+        icon: <MapPin className="h-3 w-3" />,
+        label: "Location Mismatch",
+        className: "bg-slate-50 text-slate-600 border-slate-200",
+      });
+    }
+  }
+
+  // Fallback if no specific reason found
+  if (reasons.length === 0 && !lead.qualified) {
+    reasons.push({
+      icon: <FileWarning className="h-3 w-3" />,
+      label: "Failed Validation",
+      className: "bg-slate-50 text-slate-600 border-slate-200",
+    });
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {reasons.map((reason, index) => (
+        <Badge key={index} variant="outline" className={`gap-1 text-xs ${reason.className}`}>
+          {reason.icon}
+          {reason.label}
+        </Badge>
+      ))}
+    </div>
   );
 }
 
@@ -301,6 +402,9 @@ export default function AdminLeads() {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { logError, logInfo } = useAdminErrorHandler("AdminLeads");
+  const [activeTab, setActiveTab] = useState<"all" | "blocked">(
+    searchParams.get("blocked") === "true" ? "blocked" : "all"
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [assignmentFilter, setAssignmentFilter] = useState(
     searchParams.get("unassigned") === "true" ? "unassigned" : "all"
@@ -309,6 +413,7 @@ export default function AdminLeads() {
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [qualifiedFilter, setQualifiedFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
+  const [blockReasonFilter, setBlockReasonFilter] = useState("all");
   const [datePreset, setDatePreset] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -362,19 +467,43 @@ export default function AdminLeads() {
     };
   }, [invalidateLeadsQueries]);
 
-  // Fetch total count for pagination
+  // Fetch total count for pagination (qualified leads for "all" tab)
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-leads-count", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["admin-leads-count", activeTab, assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, blockReasonFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       try {
         let query = supabase
           .from("leads")
           .select("id", { count: "exact", head: true });
 
-        if (assignmentFilter === "unassigned") {
-          query = query.is("facility_id", null);
-        } else if (assignmentFilter === "assigned") {
-          query = query.not("facility_id", "is", null);
+        // Tab-based filtering
+        if (activeTab === "blocked") {
+          // Show only unqualified/blocked leads
+          query = query.or("qualified.eq.false,assignment_status.eq.unqualified_not_routed");
+          
+          // Block reason filter
+          if (blockReasonFilter !== "all") {
+            if (blockReasonFilter === "invalid_contact") {
+              query = query.eq("validation_status", "invalid_contact");
+            } else if (blockReasonFilter === "spam") {
+              query = query.eq("quality_flag", "spam");
+            } else if (blockReasonFilter === "bot") {
+              query = query.eq("quality_flag", "bot");
+            } else if (blockReasonFilter === "duplicate") {
+              query = query.eq("quality_flag", "duplicate");
+            }
+          }
+        } else {
+          // All tab - apply regular filters
+          if (assignmentFilter === "unassigned") {
+            query = query.is("facility_id", null);
+          } else if (assignmentFilter === "assigned") {
+            query = query.not("facility_id", "is", null);
+          }
+
+          if (qualifiedFilter !== "all") {
+            query = query.eq("qualified", qualifiedFilter === "qualified");
+          }
         }
 
         if (statusFilter !== "all") {
@@ -385,12 +514,8 @@ export default function AdminLeads() {
           query = query.eq("urgency", urgencyFilter);
         }
 
-        if (qualifiedFilter !== "all") {
-          query = query.eq("qualified", qualifiedFilter === "qualified");
-        }
-
         if (searchQuery) {
-          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
         }
 
         // Date range filter
@@ -405,7 +530,35 @@ export default function AdminLeads() {
         if (error) throw error;
         return count || 0;
       } catch (error) {
-        logError("fetch_leads_count", error, { assignmentFilter, statusFilter });
+        logError("fetch_leads_count", error, { activeTab, assignmentFilter, statusFilter });
+        throw error;
+      }
+    },
+  });
+
+  // Fetch blocked leads count for tab badge
+  const { data: blockedCount } = useQuery({
+    queryKey: ["admin-blocked-leads-count", dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryFn: async () => {
+      try {
+        let query = supabase
+          .from("leads")
+          .select("id", { count: "exact", head: true })
+          .or("qualified.eq.false,assignment_status.eq.unqualified_not_routed");
+
+        // Date range filter
+        if (dateRange.from) {
+          query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+        }
+        if (dateRange.to) {
+          query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
+        }
+
+        const { count, error } = await query;
+        if (error) throw error;
+        return count || 0;
+      } catch (error) {
+        logError("fetch_blocked_leads_count", error);
         throw error;
       }
     },
@@ -413,7 +566,7 @@ export default function AdminLeads() {
 
   // Fetch leads with pagination
   const { data: leads, isLoading } = useQuery({
-    queryKey: ["admin-leads", assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["admin-leads", activeTab, assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, blockReasonFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       try {
         const from = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -425,10 +578,34 @@ export default function AdminLeads() {
           .order("created_at", { ascending: false })
           .range(from, to);
 
-        if (assignmentFilter === "unassigned") {
-          query = query.is("facility_id", null);
-        } else if (assignmentFilter === "assigned") {
-          query = query.not("facility_id", "is", null);
+        // Tab-based filtering
+        if (activeTab === "blocked") {
+          // Show only unqualified/blocked leads
+          query = query.or("qualified.eq.false,assignment_status.eq.unqualified_not_routed");
+          
+          // Block reason filter
+          if (blockReasonFilter !== "all") {
+            if (blockReasonFilter === "invalid_contact") {
+              query = query.eq("validation_status", "invalid_contact");
+            } else if (blockReasonFilter === "spam") {
+              query = query.eq("quality_flag", "spam");
+            } else if (blockReasonFilter === "bot") {
+              query = query.eq("quality_flag", "bot");
+            } else if (blockReasonFilter === "duplicate") {
+              query = query.eq("quality_flag", "duplicate");
+            }
+          }
+        } else {
+          // All tab - apply regular filters
+          if (assignmentFilter === "unassigned") {
+            query = query.is("facility_id", null);
+          } else if (assignmentFilter === "assigned") {
+            query = query.not("facility_id", "is", null);
+          }
+
+          if (qualifiedFilter !== "all") {
+            query = query.eq("qualified", qualifiedFilter === "qualified");
+          }
         }
 
         if (statusFilter !== "all") {
@@ -439,12 +616,8 @@ export default function AdminLeads() {
           query = query.eq("urgency", urgencyFilter);
         }
 
-        if (qualifiedFilter !== "all") {
-          query = query.eq("qualified", qualifiedFilter === "qualified");
-        }
-
         if (searchQuery) {
-          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+          query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
         }
 
         // Date range filter
@@ -459,7 +632,7 @@ export default function AdminLeads() {
         if (error) throw error;
         return data as Lead[];
       } catch (error) {
-        logError("fetch_leads", error, { assignmentFilter, statusFilter, currentPage });
+        logError("fetch_leads", error, { activeTab, assignmentFilter, statusFilter, currentPage });
         throw error;
       }
     },
@@ -744,347 +917,658 @@ export default function AdminLeads() {
         </CardContent>
       </Card>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or email..."
-                  value={searchQuery}
-                  onChange={(e) => handleFilterChange(setSearchQuery)(e.target.value)}
-                  className="pl-9"
-                />
+      {/* Tabs for All Leads vs Blocked */}
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as "all" | "blocked"); setCurrentPage(1); }}>
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="all" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            All Leads
+          </TabsTrigger>
+          <TabsTrigger value="blocked" className="flex items-center gap-2">
+            <Ban className="h-4 w-4" />
+            Blocked / Unqualified
+            {blockedCount ? (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {blockedCount}
+              </Badge>
+            ) : null}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all" className="space-y-4 mt-4">
+          {/* Filters for All Leads */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name, email, or phone..."
+                      value={searchQuery}
+                      onChange={(e) => handleFilterChange(setSearchQuery)(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={assignmentFilter} onValueChange={handleFilterChange(setAssignmentFilter)}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Assignment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Leads</SelectItem>
+                        <SelectItem value="assigned">Assigned</SelectItem>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={qualifiedFilter} onValueChange={handleFilterChange(setQualifiedFilter)}>
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue placeholder="Qualification" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="qualified">Qualified</SelectItem>
+                        <SelectItem value="unqualified">Unqualified</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={statusFilter} onValueChange={handleFilterChange(setStatusFilter)}>
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="contacted">Contacted</SelectItem>
+                        <SelectItem value="qualified">Qualified</SelectItem>
+                        <SelectItem value="converted">Converted</SelectItem>
+                        <SelectItem value="lost">Lost</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={urgencyFilter} onValueChange={handleFilterChange(setUrgencyFilter)}>
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue placeholder="Urgency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Urgency</SelectItem>
+                        <SelectItem value="immediate">Immediate</SelectItem>
+                        <SelectItem value="within-week">This Week</SelectItem>
+                        <SelectItem value="within-month">This Month</SelectItem>
+                        <SelectItem value="researching">Researching</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={scoreFilter} onValueChange={handleFilterChange(setScoreFilter)}>
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Score" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Grades</SelectItem>
+                        <SelectItem value="A">Grade A</SelectItem>
+                        <SelectItem value="B">Grade B</SelectItem>
+                        <SelectItem value="C">Grade C</SelectItem>
+                        <SelectItem value="D">Grade D</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {/* Date Range Filter */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                    <SelectTrigger className="w-[140px]">
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Date Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DATE_PRESETS.map((preset) => (
+                        <SelectItem key={preset.value} value={preset.value}>
+                          {preset.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {datePreset === "custom" && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[240px] justify-start text-left font-normal",
+                            !dateRange.from && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateRange.from ? (
+                            dateRange.to ? (
+                              <>
+                                {format(dateRange.from, "MMM d, yyyy")} - {format(dateRange.to, "MMM d, yyyy")}
+                              </>
+                            ) : (
+                              format(dateRange.from, "MMM d, yyyy")
+                            )
+                          ) : (
+                            <span>Pick a date range</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          initialFocus
+                          mode="range"
+                          defaultMonth={dateRange.from}
+                          selected={{ from: dateRange.from, to: dateRange.to }}
+                          onSelect={(range) => {
+                            setDateRange({ from: range?.from, to: range?.to });
+                            setCurrentPage(1);
+                          }}
+                          numberOfMonths={2}
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                  {(dateRange.from || dateRange.to) && (
+                    <Badge variant="secondary" className="text-xs">
+                      {dateRange.from && dateRange.to
+                        ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`
+                        : dateRange.from
+                        ? `From ${format(dateRange.from, "MMM d, yyyy")}`
+                        : `Until ${format(dateRange.to!, "MMM d, yyyy")}`}
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Select value={assignmentFilter} onValueChange={handleFilterChange(setAssignmentFilter)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Assignment" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Leads</SelectItem>
-                    <SelectItem value="assigned">Assigned</SelectItem>
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={qualifiedFilter} onValueChange={handleFilterChange(setQualifiedFilter)}>
-                  <SelectTrigger className="w-[130px]">
-                    <SelectValue placeholder="Qualification" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="qualified">Qualified</SelectItem>
-                    <SelectItem value="unqualified">Unqualified</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={handleFilterChange(setStatusFilter)}>
-                  <SelectTrigger className="w-[130px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="contacted">Contacted</SelectItem>
-                    <SelectItem value="qualified">Qualified</SelectItem>
-                    <SelectItem value="converted">Converted</SelectItem>
-                    <SelectItem value="lost">Lost</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={urgencyFilter} onValueChange={handleFilterChange(setUrgencyFilter)}>
-                  <SelectTrigger className="w-[130px]">
-                    <SelectValue placeholder="Urgency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Urgency</SelectItem>
-                    <SelectItem value="immediate">Immediate</SelectItem>
-                    <SelectItem value="within-week">This Week</SelectItem>
-                    <SelectItem value="within-month">This Month</SelectItem>
-                    <SelectItem value="researching">Researching</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={scoreFilter} onValueChange={handleFilterChange(setScoreFilter)}>
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue placeholder="Score" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Grades</SelectItem>
-                    <SelectItem value="A">Grade A</SelectItem>
-                    <SelectItem value="B">Grade B</SelectItem>
-                    <SelectItem value="C">Grade C</SelectItem>
-                    <SelectItem value="D">Grade D</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            {/* Date Range Filter */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                <SelectTrigger className="w-[140px]">
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Date Range" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_PRESETS.map((preset) => (
-                    <SelectItem key={preset.value} value={preset.value}>
-                      {preset.label}
-                    </SelectItem>
+            </CardContent>
+          </Card>
+
+          {/* All Leads Table */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Leads ({totalCount || 0})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-6 space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
                   ))}
-                </SelectContent>
-              </Select>
-              {datePreset === "custom" && (
-                <Popover>
-                  <PopoverTrigger asChild>
+                </div>
+              ) : filteredLeads && filteredLeads.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Score</TableHead>
+                        <TableHead>Qualified</TableHead>
+                        <TableHead>Assignment</TableHead>
+                        <TableHead>Provider</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Submitted</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLeads.map((lead) => {
+                        const assignedFacility = lead.facility_id ? facilitiesMap.get(lead.facility_id) : null;
+                        
+                        return (
+                          <TableRow key={lead.id} className="group">
+                            <TableCell>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => openLeadProfile(lead)}
+                                    className="font-medium text-primary hover:underline focus:outline-none focus:underline truncate max-w-[200px] text-left"
+                                  >
+                                    {lead.name}
+                                  </button>
+                                  {lead.email_verified && (
+                                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                                  )}
+                                  <UrgencyIndicator urgency={lead.urgency} />
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
+                                  <span className="flex items-center gap-1 truncate max-w-[180px]">
+                                    <Mail className="h-3 w-3 shrink-0" />
+                                    {lead.email}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Phone className="h-3 w-3" />
+                                    {lead.phone}
+                                  </span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <LeadScoreBadge lead={lead} />
+                            </TableCell>
+                            <TableCell>
+                              {lead.qualified ? (
+                                <Badge className="bg-green-100 text-green-700 border-green-200">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Qualified
+                                </Badge>
+                              ) : (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="outline" className="text-muted-foreground">
+                                        <XCircle className="h-3 w-3 mr-1" />
+                                        Unqualified
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    {lead.qualification_reason && (
+                                      <TooltipContent>
+                                        <p>{lead.qualification_reason}</p>
+                                      </TooltipContent>
+                                    )}
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <AssignmentStatusBadge lead={lead} />
+                            </TableCell>
+                            <TableCell>
+                              {assignedFacility ? (
+                                <div className="flex items-center gap-2">
+                                  <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium truncate max-w-[150px]">{assignedFacility.name}</p>
+                                    <p className="text-xs text-muted-foreground">{assignedFacility.city}, {assignedFacility.state}</p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {lead.location_city_state ? (
+                                <span className="flex items-center gap-1 text-sm">
+                                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                                  {lead.location_city_state}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm text-muted-foreground">
+                                {format(new Date(lead.created_at), "MMM d, h:mm a")}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openLeadProfile(lead)}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-center py-8 text-muted-foreground">No leads found</p>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} leads
+                  </p>
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      className={cn(
-                        "w-[240px] justify-start text-left font-normal",
-                        !dateRange.from && "text-muted-foreground"
-                      )}
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateRange.from ? (
-                        dateRange.to ? (
-                          <>
-                            {format(dateRange.from, "MMM d, yyyy")} - {format(dateRange.to, "MMM d, yyyy")}
-                          </>
-                        ) : (
-                          format(dateRange.from, "MMM d, yyyy")
-                        )
-                      ) : (
-                        <span>Pick a date range</span>
-                      )}
+                      Previous
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarComponent
-                      initialFocus
-                      mode="range"
-                      defaultMonth={dateRange.from}
-                      selected={{ from: dateRange.from, to: dateRange.to }}
-                      onSelect={(range) => {
-                        setDateRange({ from: range?.from, to: range?.to });
-                        setCurrentPage(1);
-                      }}
-                      numberOfMonths={2}
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum: number;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            className="w-8 h-8 p-0"
+                            onClick={() => setCurrentPage(pageNum)}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
               )}
-              {(dateRange.from || dateRange.to) && (
-                <Badge variant="secondary" className="text-xs">
-                  {dateRange.from && dateRange.to
-                    ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`
-                    : dateRange.from
-                    ? `From ${format(dateRange.from, "MMM d, yyyy")}`
-                    : `Until ${format(dateRange.to!, "MMM d, yyyy")}`}
-                </Badge>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Leads Table */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Leads ({totalCount || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : filteredLeads && filteredLeads.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Qualified</TableHead>
-                    <TableHead>Assignment</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLeads.map((lead) => {
-                    const assignedFacility = lead.facility_id ? facilitiesMap.get(lead.facility_id) : null;
-                    
-                    return (
-                      <TableRow key={lead.id} className="group">
-                        <TableCell>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => openLeadProfile(lead)}
-                                className="font-medium text-primary hover:underline focus:outline-none focus:underline truncate max-w-[200px] text-left"
-                              >
-                                {lead.name}
-                              </button>
-                              {lead.email_verified && (
-                                <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                              )}
-                              <UrgencyIndicator urgency={lead.urgency} />
-                            </div>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-                              <span className="flex items-center gap-1 truncate max-w-[180px]">
-                                <Mail className="h-3 w-3 shrink-0" />
-                                {lead.email}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
-                                {lead.phone}
-                              </span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <LeadScoreBadge lead={lead} />
-                        </TableCell>
-                        <TableCell>
-                          {lead.qualified ? (
-                            <Badge className="bg-green-100 text-green-700 border-green-200">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Qualified
-                            </Badge>
-                          ) : (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="text-muted-foreground">
-                                    <XCircle className="h-3 w-3 mr-1" />
-                                    Unqualified
-                                  </Badge>
-                                </TooltipTrigger>
-                                {lead.qualification_reason && (
-                                  <TooltipContent>
-                                    <p>{lead.qualification_reason}</p>
-                                  </TooltipContent>
-                                )}
-                              </Tooltip>
-                            </TooltipProvider>
+        <TabsContent value="blocked" className="space-y-4 mt-4">
+          {/* Filters for Blocked Leads */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name, email, or phone..."
+                      value={searchQuery}
+                      onChange={(e) => handleFilterChange(setSearchQuery)(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={blockReasonFilter} onValueChange={handleFilterChange(setBlockReasonFilter)}>
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue placeholder="Block Reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Reasons</SelectItem>
+                        <SelectItem value="invalid_contact">Invalid Contact</SelectItem>
+                        <SelectItem value="spam">Spam</SelectItem>
+                        <SelectItem value="bot">Bot Detected</SelectItem>
+                        <SelectItem value="duplicate">Duplicate</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {/* Date Range Filter */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                    <SelectTrigger className="w-[140px]">
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Date Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DATE_PRESETS.map((preset) => (
+                        <SelectItem key={preset.value} value={preset.value}>
+                          {preset.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {datePreset === "custom" && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[240px] justify-start text-left font-normal",
+                            !dateRange.from && "text-muted-foreground"
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <AssignmentStatusBadge lead={lead} />
-                        </TableCell>
-                        <TableCell>
-                          {assignedFacility ? (
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium truncate max-w-[150px]">{assignedFacility.name}</p>
-                                <p className="text-xs text-muted-foreground">{assignedFacility.city}, {assignedFacility.state}</p>
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateRange.from ? (
+                            dateRange.to ? (
+                              <>
+                                {format(dateRange.from, "MMM d, yyyy")} - {format(dateRange.to, "MMM d, yyyy")}
+                              </>
+                            ) : (
+                              format(dateRange.from, "MMM d, yyyy")
+                            )
+                          ) : (
+                            <span>Pick a date range</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          initialFocus
+                          mode="range"
+                          defaultMonth={dateRange.from}
+                          selected={{ from: dateRange.from, to: dateRange.to }}
+                          onSelect={(range) => {
+                            setDateRange({ from: range?.from, to: range?.to });
+                            setCurrentPage(1);
+                          }}
+                          numberOfMonths={2}
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                  {(dateRange.from || dateRange.to) && (
+                    <Badge variant="secondary" className="text-xs">
+                      {dateRange.from && dateRange.to
+                        ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`
+                        : dateRange.from
+                        ? `From ${format(dateRange.from, "MMM d, yyyy")}`
+                        : `Until ${format(dateRange.to!, "MMM d, yyyy")}`}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Blocked Leads Table */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldX className="h-5 w-5 text-red-500" />
+                  Blocked / Unqualified Leads ({totalCount || 0})
+                </CardTitle>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        These leads were not routed
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Leads shown here failed qualification checks and were not counted toward provider monthly caps.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <CardDescription>
+                Leads that failed validation, were flagged as spam/bot, or were duplicates
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="p-6 space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : filteredLeads && filteredLeads.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Block Reasons</TableHead>
+                        <TableHead>Qualification Details</TableHead>
+                        <TableHead>Source</TableHead>
+                        <TableHead>Submitted</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLeads.map((lead) => (
+                        <TableRow key={lead.id} className="group">
+                          <TableCell>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => openLeadProfile(lead)}
+                                  className="font-medium text-primary hover:underline focus:outline-none focus:underline truncate max-w-[200px] text-left"
+                                >
+                                  {lead.name}
+                                </button>
+                              </div>
+                              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
+                                <span className="flex items-center gap-1 truncate max-w-[180px]">
+                                  <Mail className="h-3 w-3 shrink-0" />
+                                  {lead.email}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3" />
+                                  {lead.phone}
+                                </span>
                               </div>
                             </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {lead.location_city_state ? (
-                            <span className="flex items-center gap-1 text-sm">
-                              <MapPin className="h-3 w-3 text-muted-foreground" />
-                              {lead.location_city_state}
+                          </TableCell>
+                          <TableCell>
+                            <BlockReasonBadge lead={lead} />
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-[250px]">
+                              {lead.qualification_reason ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <p className="text-sm text-muted-foreground truncate cursor-help">
+                                        {lead.qualification_reason}
+                                      </p>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="max-w-xs">{lead.qualification_reason}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {SOURCE_LABELS[lead.source || "direct"] || lead.source || "Direct"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {format(new Date(lead.created_at), "MMM d, h:mm a")}
                             </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(lead.created_at), "MMM d, h:mm a")}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openLeadProfile(lead)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p className="text-center py-8 text-muted-foreground">No leads found</p>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t">
-              <p className="text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} leads
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum: number;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        className="w-8 h-8 p-0"
-                        onClick={() => setCurrentPage(pageNum)}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openLeadProfile(lead)}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              ) : (
+                <div className="text-center py-12">
+                  <ShieldX className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground">No blocked or unqualified leads found</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Leads that fail validation will appear here
+                  </p>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} leads
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum: number;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            className="w-8 h-8 p-0"
+                            onClick={() => setCurrentPage(pageNum)}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Routing Logs (Collapsible) */}
       <RoutingLogsTable />
