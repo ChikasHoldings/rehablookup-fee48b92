@@ -395,6 +395,7 @@ export default function ProviderDashboardPage() {
           usedLeads={monthlyLeadsCount} 
           leadLimit={leadLimit}
           plan={planKey as "professional" | "featured"}
+          subscriptionEnd={subscription?.subscription_end}
         />
       )}
 

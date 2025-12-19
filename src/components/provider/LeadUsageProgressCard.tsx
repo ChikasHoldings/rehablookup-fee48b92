@@ -1,15 +1,17 @@
 import { Link } from "react-router-dom";
-import { TrendingUp, Zap, Star, Share2, Crown, AlertTriangle } from "lucide-react";
+import { TrendingUp, Zap, Star, Share2, Crown, AlertTriangle, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { differenceInDays, endOfMonth, startOfMonth, addMonths, format } from "date-fns";
 
 interface LeadUsageProgressCardProps {
   usedLeads: number;
   leadLimit: number;
   plan: "basic" | "professional" | "featured";
+  subscriptionEnd?: string | null;
   className?: string;
 }
 
@@ -17,12 +19,37 @@ export function LeadUsageProgressCard({
   usedLeads,
   leadLimit,
   plan,
+  subscriptionEnd,
   className,
 }: LeadUsageProgressCardProps) {
   // Don't show for Basic plan (they have different messaging)
   if (plan === "basic" || leadLimit === 0) {
     return null;
   }
+
+  // Calculate days until billing cycle resets
+  const calculateBillingCycleReset = () => {
+    if (subscriptionEnd) {
+      // Use subscription end date as the reset point
+      const endDate = new Date(subscriptionEnd);
+      const now = new Date();
+      const daysRemaining = differenceInDays(endDate, now);
+      return {
+        daysRemaining: Math.max(0, daysRemaining),
+        resetDate: endDate,
+      };
+    }
+    // Fallback: use end of current month
+    const now = new Date();
+    const monthEnd = endOfMonth(now);
+    const daysRemaining = differenceInDays(monthEnd, now);
+    return {
+      daysRemaining: Math.max(0, daysRemaining),
+      resetDate: monthEnd,
+    };
+  };
+
+  const { daysRemaining, resetDate } = calculateBillingCycleReset();
 
   const remainingLeads = Math.max(0, leadLimit - usedLeads);
   const usagePercent = Math.min((usedLeads / leadLimit) * 100, 100);
@@ -110,8 +137,8 @@ export function LeadUsageProgressCard({
               />
             </div>
 
-            {/* Remaining leads text */}
-            <div className="flex items-center justify-between">
+            {/* Remaining leads and billing cycle */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <p className={cn(
                 "text-sm font-medium",
                 isAtLimit ? "text-destructive" : isNearLimit ? "text-amber-600" : "text-muted-foreground"
@@ -121,6 +148,20 @@ export function LeadUsageProgressCard({
                   : `${remainingLeads} lead${remainingLeads !== 1 ? 's' : ''} remaining this month`
                 }
               </p>
+              
+              {/* Billing cycle countdown */}
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                <span>
+                  {daysRemaining === 0 
+                    ? "Resets today" 
+                    : daysRemaining === 1 
+                      ? "Resets tomorrow" 
+                      : `Resets in ${daysRemaining} days`
+                  }
+                  <span className="hidden sm:inline"> ({format(resetDate, "MMM d")})</span>
+                </span>
+              </div>
             </div>
           </div>
 
