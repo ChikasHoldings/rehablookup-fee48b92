@@ -4,7 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { usStates } from "@/data/usStates";
+import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import {
   Brain,
@@ -429,28 +429,11 @@ const DualDiagnosisTreatment = () => {
         </div>
       </section>
 
-      {/* State Dual Diagnosis Pages */}
-      <section className="bg-secondary/30 section-padding">
-        <div className="container">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-              Find Dual Diagnosis Treatment by State
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Browse integrated mental health and addiction treatment in your state
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            {usStates.map((state) => (
-              <Link key={state.slug} to={`/treatment-types/dual-diagnosis-treatment/${state.slug}`}>
-                <Button variant="outline" size="sm">
-                  {state.name}
-                </Button>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      <StateLinksSection
+        title="Find Dual Diagnosis Treatment by State"
+        subtitle="Browse integrated mental health and addiction treatment in your state"
+        basePath="/treatment-types/dual-diagnosis-treatment"
+      />
 
       {/* Other Treatment Types */}
       <section className="border-t section-padding-sm">

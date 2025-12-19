@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { usStates } from "@/data/usStates";
+import { StateLinksGroup } from "@/components/treatment/StateLinksSection";
 import {
   Pill,
   Brain,
@@ -169,73 +169,30 @@ const TreatmentTypes = () => {
             </p>
           </div>
 
-          {/* Detox by State */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-accent" />
-              Detox Programs by State
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {usStates.map((state) => (
-                <Link key={state.slug} to={`/treatment-types/detox-programs/${state.slug}`}>
-                  <Button variant="outline" size="sm">
-                    {state.name}
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <StateLinksGroup
+            title="Detox Programs by State"
+            basePath="/treatment-types/detox-programs"
+            icon={Sparkles}
+          />
 
-          {/* Inpatient by State */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Home className="h-5 w-5 text-accent" />
-              Inpatient Rehab by State
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {usStates.map((state) => (
-                <Link key={state.slug} to={`/treatment-types/residential-inpatient/${state.slug}`}>
-                  <Button variant="outline" size="sm">
-                    {state.name}
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <StateLinksGroup
+            title="Inpatient Rehab by State"
+            basePath="/treatment-types/residential-inpatient"
+            icon={Home}
+          />
 
-          {/* Outpatient by State */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Stethoscope className="h-5 w-5 text-accent" />
-              Outpatient Programs by State
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {usStates.map((state) => (
-                <Link key={state.slug} to={`/treatment-types/outpatient-programs/${state.slug}`}>
-                  <Button variant="outline" size="sm">
-                    {state.name}
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <StateLinksGroup
+            title="Outpatient Programs by State"
+            basePath="/treatment-types/outpatient-programs"
+            icon={Stethoscope}
+          />
 
-          {/* Dual Diagnosis by State */}
-          <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Brain className="h-5 w-5 text-accent" />
-              Dual Diagnosis by State
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {usStates.map((state) => (
-                <Link key={state.slug} to={`/treatment-types/dual-diagnosis-treatment/${state.slug}`}>
-                  <Button variant="outline" size="sm">
-                    {state.name}
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <StateLinksGroup
+            title="Dual Diagnosis by State"
+            basePath="/treatment-types/dual-diagnosis-treatment"
+            icon={Brain}
+            className=""
+          />
         </div>
       </section>
 

@@ -4,7 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { usStates } from "@/data/usStates";
+import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import {
   Home,
@@ -408,28 +408,12 @@ const ResidentialInpatient = () => {
         </div>
       </section>
 
-      {/* State Inpatient Pages */}
-      <section className="bg-secondary/30 section-padding">
-        <div className="container">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-              Find Inpatient Rehab by State
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Browse residential treatment programs in your state
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            {usStates.map((state) => (
-              <Link key={state.slug} to={`/treatment-types/residential-inpatient/${state.slug}`}>
-                <Button variant="outline" size="sm">
-                  Inpatient in {state.name}
-                </Button>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      <StateLinksSection
+        title="Find Inpatient Rehab by State"
+        subtitle="Browse residential treatment programs in your state"
+        basePath="/treatment-types/residential-inpatient"
+        buttonPrefix="Inpatient in"
+      />
 
       {/* Other Treatment Types */}
       <section className="border-t section-padding-sm">
