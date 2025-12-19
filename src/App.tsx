@@ -22,6 +22,7 @@ import AlcoholRehabilitation from "./pages/treatment-types/AlcoholRehabilitation
 import DualDiagnosisTreatment from "./pages/treatment-types/DualDiagnosisTreatment";
 import ResidentialInpatient from "./pages/treatment-types/ResidentialInpatient";
 import OutpatientPrograms from "./pages/treatment-types/OutpatientPrograms";
+import HolisticTherapy from "./pages/treatment-types/HolisticTherapy";
 import HowItWorks from "./pages/HowItWorks";
 import ForProviders from "./pages/ForProviders";
 import ProviderResources from "./pages/ProviderResources";
@@ -108,6 +109,7 @@ const App = () => (
             <Route path="/treatment-types/dual-diagnosis" element={<DualDiagnosisTreatment />} />
             <Route path="/treatment-types/residential-inpatient" element={<ResidentialInpatient />} />
             <Route path="/treatment-types/outpatient-programs" element={<OutpatientPrograms />} />
+            <Route path="/treatment-types/holistic-therapy" element={<HolisticTherapy />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/request-help" element={<RequestHelp />} />
             <Route path="/lp/treatment" element={<AdLanding />} />

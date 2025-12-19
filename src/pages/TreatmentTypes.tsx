@@ -58,7 +58,7 @@ const treatmentTypes = [
     title: "Holistic & Alternative",
     description: "Complementary approaches that address mind, body, and spirit for whole-person healing.",
     features: ["Yoga & meditation", "Art & music therapy", "Equine therapy", "Nutritional counseling"],
-    link: "/rehab-centers?type=holistic",
+    link: "/treatment-types/holistic-therapy",
   },
 ];
 
