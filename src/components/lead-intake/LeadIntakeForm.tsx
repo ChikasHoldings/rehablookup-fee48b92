@@ -56,18 +56,25 @@ export function LeadIntakeForm({ className }: LeadIntakeFormProps) {
   return (
     <div className={className}>
       {/* Header */}
-      <div className="text-center mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+          </span>
+          Free & Confidential
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Get Help Now
         </h1>
         {facilityName && (
-          <p className="text-base md:text-base text-muted-foreground">
+          <p className="text-base text-muted-foreground max-w-md mx-auto">
             Requesting information from <span className="font-medium text-foreground">{facilityName}</span>
           </p>
         )}
         {!facilityName && (
-          <p className="text-base md:text-base text-muted-foreground">
-            Complete this form and we'll connect you with the right treatment center
+          <p className="text-base text-muted-foreground max-w-md mx-auto">
+            Complete this short form and we'll connect you with verified treatment centers
           </p>
         )}
       </div>
@@ -76,7 +83,7 @@ export function LeadIntakeForm({ className }: LeadIntakeFormProps) {
       <LeadIntakeStepper currentStep={currentStep} />
 
       {/* Form Steps */}
-      <div ref={formSectionRef} className="bg-card rounded-2xl border border-border p-5 md:p-8 shadow-sm scroll-mt-4">
+      <div ref={formSectionRef} className="bg-card rounded-2xl border border-border p-6 md:p-8 shadow-lg shadow-primary/5 scroll-mt-4">
         {currentStep === 1 && (
           <StepImmediateNeed
             formData={formData}
