@@ -135,6 +135,7 @@ const pricingPlans = [
     cta: "Start Free",
     popular: false,
     highlight: false,
+    microcopy: null,
   },
   {
     name: "Professional",
@@ -153,6 +154,7 @@ const pricingPlans = [
     cta: "Get Started",
     popular: true,
     highlight: true,
+    microcopy: "Each lead is delivered exclusively to you — never shared.",
   },
   {
     name: "Featured",
@@ -171,6 +173,7 @@ const pricingPlans = [
     cta: "Get Started",
     popular: false,
     highlight: false,
+    microcopy: "Priority access to exclusive leads with maximum visibility.",
   },
 ];
 
@@ -554,9 +557,15 @@ const ForProviders = () => {
               <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
                 Plans That Scale With You
               </h2>
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-4">
                 Start free and upgrade as you grow. No hidden fees.
               </p>
+              
+              {/* Exclusivity Badge */}
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-5 py-2">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">No shared leads. No bidding. No race to call.</span>
+              </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
@@ -586,7 +595,7 @@ const ForProviders = () => {
                       <p className="text-muted-foreground mt-2">{plan.description}</p>
                     </div>
                     
-                    <ul className="flex-1 space-y-3 mb-8">
+                    <ul className="flex-1 space-y-3 mb-6">
                       {plan.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-2.5">
                           <CheckCircle className="h-5 w-5 text-accent shrink-0 mt-0.5" />
@@ -594,6 +603,12 @@ const ForProviders = () => {
                         </li>
                       ))}
                     </ul>
+                    
+                    {plan.microcopy && (
+                      <p className="text-xs text-primary font-medium bg-primary/5 rounded-lg px-3 py-2 mb-6 text-center">
+                        {plan.microcopy}
+                      </p>
+                    )}
                     
                     <Link to="/provider-signup">
                       <Button 
