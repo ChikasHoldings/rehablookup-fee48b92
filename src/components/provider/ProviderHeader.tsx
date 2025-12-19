@@ -17,10 +17,14 @@ import {
   AlertTriangle,
   BellOff,
   HelpCircle,
-  User,
   Crown,
   Star,
   Sparkles,
+  MapPin,
+  Check,
+  Plus,
+  Lock,
+  AlertCircle,
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import {
@@ -33,9 +37,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useProviderNotifications } from "@/hooks/useProviderNotifications";
 import { ProviderSearchCommand } from "./ProviderSearchCommand";
-import { FacilityLocationDropdown } from "./FacilityLocationDropdown";
+import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
+import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { cn } from "@/lib/utils";
 
 interface ProviderHeaderProps {
   facilityName?: string;
@@ -55,13 +62,32 @@ const notificationIcons: Record<string, React.ReactNode> = {
   system: <Settings className="h-4 w-4 text-muted-foreground" />,
 };
 
+const getLocationLimit = (plan: string): number => {
+  switch (plan) {
+    case "featured":
+      return 5;
+    case "professional":
+      return 3;
+    default:
+      return 1;
+  }
+};
+
 export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   
-  const { notifications, unreadCount, markAsRead, isLoading } = useProviderNotifications();
+  const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading } = useProviderNotifications();
   const { data: subscription } = useSubscription();
+  const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
+  const { selectedFacility, setSelectedFacility } = useSelectedFacility();
+  
   const recentNotifications = notifications.slice(0, 5);
+  const currentPlan = subscription?.plan || "basic";
+  const locationLimit = getLocationLimit(currentPlan);
+  const canAddMore = facilities.length < locationLimit;
+  const approvedFacilities = facilities.filter(f => f.status === "approved");
+  const pendingFacilities = facilities.filter(f => f.status === "pending");
 
   const getPlanBadgeConfig = (plan: string) => {
     switch (plan) {
@@ -103,14 +129,12 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
       markAsRead(notification.id);
     }
     
-    // Check for explicit link in metadata
     const metadata = notification.metadata as Record<string, any> | null;
     if (metadata?.link) {
       navigate(metadata.link);
       return;
     }
     
-    // Type-based routing
     if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
       navigate("/provider/leads");
     } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
@@ -120,26 +144,44 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     } else if (notification.type === "system") {
       navigate("/provider/notifications");
     } else {
-      // Default to notifications page
       navigate("/provider/notifications");
     }
+  };
+
+  const handleFacilitySelect = (facility: ProviderFacility) => {
+    if (facility.id !== selectedFacility?.id) {
+      setSelectedFacility(facility);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === "approved") {
+      return (
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-600 border-green-500/20">
+          Live
+        </Badge>
+      );
+    }
+    if (status === "pending") {
+      return (
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-600 border-amber-500/20">
+          Pending
+        </Badge>
+      );
+    }
+    return null;
   };
 
   return (
     <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
       <div className="h-16 md:h-[72px] max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4">
-        {/* Left - Logo & Facility Selector */}
-        <div className="flex items-center min-w-0 gap-1.5 sm:gap-2">
-          <div className="flex items-center shrink-0">
-            <img 
-              src="/logo-dark.svg" 
-              alt="Rehab-Lookup" 
-              className="h-9 sm:h-10 md:h-11 w-auto"
-            />
-          </div>
-          
-          {/* Enhanced Location Dropdown */}
-          <FacilityLocationDropdown />
+        {/* Left - Logo */}
+        <div className="flex items-center shrink-0">
+          <img 
+            src="/logo-dark.svg" 
+            alt="Rehab-Lookup" 
+            className="h-9 sm:h-10 md:h-11 w-auto"
+          />
         </div>
 
         {/* Center - Search (Desktop) */}
@@ -199,7 +241,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                 )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {isLoading ? (
+              {notificationsLoading ? (
                 <div className="py-8 text-center">
                   <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
                 </div>
@@ -253,24 +295,32 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
           <div className="hidden sm:block h-6 sm:h-7 w-px bg-white/30 mx-1 sm:mx-2" />
 
-          {/* Account */}
+          {/* Account & Location Merged Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-1.5 sm:gap-2.5 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="gap-1.5 sm:gap-2 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/30 border border-white/30 flex items-center justify-center text-xs sm:text-sm font-semibold text-white overflow-hidden">
-                  {facilityLogo ? (
+                  {selectedFacility?.logo_url ? (
+                    <img src={selectedFacility.logo_url} alt="" className="h-full w-full object-cover" />
+                  ) : facilityLogo ? (
                     <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
                   ) : (
                     initials
                   )}
                 </div>
-                <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white hidden sm:block" />
+                <div className="hidden sm:flex flex-col items-start min-w-0">
+                  <span className="text-xs font-medium text-white/90 truncate max-w-[120px]">
+                    {selectedFacility?.name || facilityName || "Select Facility"}
+                  </span>
+                </div>
+                <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white shrink-0" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 bg-card" sideOffset={8}>
+            <DropdownMenuContent align="end" className="w-72 bg-card" sideOffset={8}>
+              {/* User Info Header */}
               <DropdownMenuLabel className="font-normal py-3">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden">
@@ -282,13 +332,173 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
                     <p className="text-sm font-semibold truncate">{userName || "Provider"}</p>
-                    <p className="text-xs text-muted-foreground">Manage account</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {selectedFacility?.name || facilityName || "No facility selected"}
+                    </p>
                   </div>
                 </div>
               </DropdownMenuLabel>
               
+              <DropdownMenuSeparator />
+
+              {/* Your Locations Section */}
+              <div className="px-3 py-2 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Your Locations</span>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {facilities.length} / {locationLimit}
+                  </Badge>
+                </div>
+                {!canAddMore && (
+                  <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Upgrade for more locations
+                  </p>
+                )}
+              </div>
+
+              {/* Location List */}
+              {facilitiesLoading ? (
+                <div className="p-3 space-y-2">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="flex items-center gap-2.5">
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24 mt-1" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : facilities.length === 0 ? (
+                <div className="p-4 text-center">
+                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center mx-auto mb-2">
+                    <Building2 className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No facilities yet</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">Add your first location</p>
+                </div>
+              ) : (
+                <div className="max-h-[180px] overflow-y-auto">
+                  {/* Approved facilities */}
+                  {approvedFacilities.map((facility) => (
+                    <DropdownMenuItem 
+                      key={facility.id}
+                      className={cn(
+                        "flex items-center justify-between cursor-pointer py-2.5 px-3",
+                        facility.id === selectedFacility?.id && "bg-primary/5"
+                      )}
+                      onClick={() => handleFacilitySelect(facility)}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                          {facility.logo_url ? (
+                            <img src={facility.logo_url} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <Building2 className="h-4 w-4 text-primary" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-sm">{facility.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {facility.city}, {facility.state}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {getStatusBadge(facility.status)}
+                        {facility.id === selectedFacility?.id && (
+                          <Check className="h-4 w-4 text-primary" />
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+
+                  {/* Pending facilities */}
+                  {pendingFacilities.length > 0 && (
+                    <>
+                      {approvedFacilities.length > 0 && (
+                        <div className="px-3 py-1.5">
+                          <span className="text-xs text-muted-foreground">Pending Review</span>
+                        </div>
+                      )}
+                      {pendingFacilities.map((facility) => (
+                        <DropdownMenuItem 
+                          key={facility.id}
+                          className={cn(
+                            "flex items-center justify-between cursor-pointer py-2.5 px-3 opacity-75",
+                            facility.id === selectedFacility?.id && "bg-primary/5 opacity-100"
+                          )}
+                          onClick={() => handleFacilitySelect(facility)}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 overflow-hidden">
+                              {facility.logo_url ? (
+                                <img src={facility.logo_url} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                <AlertCircle className="h-4 w-4 text-amber-600" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-medium text-sm">{facility.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {facility.city}, {facility.state}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {getStatusBadge(facility.status)}
+                            {facility.id === selectedFacility?.id && (
+                              <Check className="h-4 w-4 text-primary" />
+                            )}
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Add New Location */}
+              <DropdownMenuSeparator />
+              {canAddMore ? (
+                <DropdownMenuItem asChild>
+                  <Link 
+                    to="/provider/add-location" 
+                    className="flex items-center gap-2.5 cursor-pointer text-primary py-2.5 px-3"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Plus className="h-4 w-4" />
+                    </div>
+                    <span className="font-medium">Add New Location</span>
+                  </Link>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem asChild>
+                  <Link 
+                    to="/provider/billing" 
+                    className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                      <Crown className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-medium text-sm">Upgrade for More</span>
+                      <p className="text-xs text-muted-foreground">
+                        {currentPlan === "professional" ? "Featured: up to 5" : "Upgrade plan"}
+                      </p>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              
+              <DropdownMenuSeparator />
+
               {/* Plan Badge Section */}
-              <div className="px-2 pb-2">
+              <div className="px-2 py-2">
                 <Link 
                   to="/provider/billing"
                   className={`flex items-center justify-between w-full p-2.5 rounded-lg ${
@@ -337,6 +547,8 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               </div>
               
               <DropdownMenuSeparator />
+              
+              {/* Account Actions */}
               <DropdownMenuItem asChild>
                 <Link to="/provider/listing" className="flex items-center gap-2.5 cursor-pointer py-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
