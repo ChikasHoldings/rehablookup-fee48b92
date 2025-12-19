@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, Phone, Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin } from "lucide-react";
+import { Heart, Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin, Stethoscope } from "lucide-react";
 
 const footerLinks = {
   findHelp: [
@@ -49,6 +49,17 @@ const popularCities = [
   { label: "Scottsdale, AZ", href: "/locations/arizona/scottsdale" },
   { label: "Chicago, IL", href: "/locations/illinois/chicago" },
   { label: "Atlanta, GA", href: "/locations/georgia/atlanta" },
+];
+
+const treatmentTypes = [
+  { label: "Medical Detox", href: "/treatment-types/medical-detox" },
+  { label: "Residential Inpatient", href: "/treatment-types/residential-inpatient" },
+  { label: "Outpatient Programs", href: "/treatment-types/outpatient-programs" },
+  { label: "Dual Diagnosis", href: "/treatment-types/dual-diagnosis" },
+  { label: "Alcohol Rehab", href: "/treatment-types/alcohol-rehabilitation" },
+  { label: "Drug Addiction", href: "/treatment-types/drug-addiction" },
+  { label: "Holistic Therapy", href: "/treatment-types/holistic-therapy" },
+  { label: "Luxury Rehab", href: "/treatment-types/luxury-rehab" },
 ];
 
 const socialLinks = [
@@ -207,10 +218,10 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Popular Locations - SEO Section */}
+      {/* Popular Locations & Treatment Types - SEO Section */}
       <div className="border-t border-white/10">
         <div className="container py-6">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-3">
             {/* Popular States */}
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -219,21 +230,21 @@ export function Footer() {
                   Popular States
                 </h4>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {popularLocations.map((location) => (
                   <Link
                     key={location.href}
                     to={location.href}
-                    className="rounded-full bg-white/5 px-3 py-1.5 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
                   >
                     {location.label}
                   </Link>
                 ))}
                 <Link
                   to="/locations"
-                  className="rounded-full bg-accent/20 px-3 py-1.5 text-xs text-accent hover:bg-accent/30 transition-colors"
+                  className="rounded-full bg-accent/20 px-2.5 py-1 text-xs text-accent hover:bg-accent/30 transition-colors"
                 >
-                  All States →
+                  All →
                 </Link>
               </div>
             </div>
@@ -246,16 +257,43 @@ export function Footer() {
                   Popular Cities
                 </h4>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {popularCities.map((city) => (
                   <Link
                     key={city.href}
                     to={city.href}
-                    className="rounded-full bg-white/5 px-3 py-1.5 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
                   >
                     {city.label}
                   </Link>
                 ))}
+              </div>
+            </div>
+
+            {/* Treatment Types */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Stethoscope className="h-4 w-4 text-accent" />
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
+                  Treatment Types
+                </h4>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {treatmentTypes.map((treatment) => (
+                  <Link
+                    key={treatment.href}
+                    to={treatment.href}
+                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                  >
+                    {treatment.label}
+                  </Link>
+                ))}
+                <Link
+                  to="/treatment-types"
+                  className="rounded-full bg-accent/20 px-2.5 py-1 text-xs text-accent hover:bg-accent/30 transition-colors"
+                >
+                  All →
+                </Link>
               </div>
             </div>
           </div>
