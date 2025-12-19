@@ -19,7 +19,9 @@ import {
   ChevronDown,
   Shield,
   Sparkles,
-  Info
+  Info,
+  AlertTriangle,
+  Calendar
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -206,6 +208,9 @@ export default function ProviderBillingPage() {
   const leadLimit = subscription?.lead_limit || 0;
   const usedLeads = providerData?.monthlyLeadsCount || 0;
   const leadUsagePercent = leadLimit > 0 ? Math.min((usedLeads / leadLimit) * 100, 100) : 0;
+  const subscriptionStatus = subscription?.status;
+  const cancelAtPeriodEnd = subscription?.cancel_at_period_end || false;
+  const isPastDue = subscriptionStatus === "past_due";
 
   const plans = [
     { 
@@ -430,6 +435,49 @@ export default function ProviderBillingPage() {
           </Button>
         </div>
 
+        {/* Status Alerts */}
+        {isPastDue && (
+          <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium text-red-800">Payment Failed</p>
+              <p className="text-sm text-red-700 mt-1">
+                Your subscription payment failed. Please update your payment method to continue receiving leads.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleManageSubscription}
+              disabled={portalLoading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Fix Payment"}
+            </Button>
+          </div>
+        )}
+
+        {cancelAtPeriodEnd && !isPastDue && isSubscribed && (
+          <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <Clock className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium text-amber-800">Subscription Ending</p>
+              <p className="text-sm text-amber-700 mt-1">
+                Your subscription is scheduled to end on {subscription?.subscription_end ? format(new Date(subscription.subscription_end), "MMMM d, yyyy") : "the end of your billing period"}. 
+                You can reactivate anytime before then.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleManageSubscription}
+              disabled={portalLoading}
+              className="border-amber-300 text-amber-700 hover:bg-amber-100"
+            >
+              {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reactivate"}
+            </Button>
+          </div>
+        )}
+
         {/* Current Plan Card */}
         <Card className="overflow-hidden">
           <CardContent className="p-6">
@@ -456,7 +504,17 @@ export default function ProviderBillingPage() {
                     <h2 className="text-lg font-semibold text-foreground">
                       {subscriptionLoading ? "Loading..." : subscription?.plan_name || "Basic Listing"}
                     </h2>
-                    {isSubscribed ? (
+                    {isPastDue ? (
+                      <Badge className="bg-red-50 text-red-700 border-red-200">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        Past Due
+                      </Badge>
+                    ) : cancelAtPeriodEnd && isSubscribed ? (
+                      <Badge className="bg-amber-50 text-amber-700 border-amber-200">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Ending Soon
+                      </Badge>
+                    ) : isSubscribed ? (
                       <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Active</Badge>
                     ) : (
                       <Badge variant="secondary">Free</Badge>
@@ -465,14 +523,33 @@ export default function ProviderBillingPage() {
                       <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
+                  
+                  {/* Billing cycle info */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1.5 text-sm text-muted-foreground">
                     {isSubscribed && subscription?.subscription_end ? (
-                      <span>Renews {format(new Date(subscription.subscription_end), "MMM d, yyyy")}</span>
+                      <>
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {cancelAtPeriodEnd ? (
+                            <span className="text-amber-600">Ends {format(new Date(subscription.subscription_end), "MMM d, yyyy")}</span>
+                          ) : (
+                            <span>Renews {format(new Date(subscription.subscription_end), "MMM d, yyyy")}</span>
+                          )}
+                        </span>
+                        {currentPlan === "professional" && (
+                          <span className="text-xs bg-muted px-2 py-0.5 rounded">$399/mo</span>
+                        )}
+                        {currentPlan === "featured" && (
+                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">$1,099/mo</span>
+                        )}
+                      </>
                     ) : (
-                      <span>Upgrade to start receiving qualified leads</span>
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        Upgrade to start receiving qualified leads
+                      </span>
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
 
@@ -512,7 +589,7 @@ export default function ProviderBillingPage() {
                     )}
                   </Button>
                 )}
-                {currentPlan !== "featured" && (
+                {currentPlan !== "featured" && !cancelAtPeriodEnd && (
                   <Button 
                     size="sm"
                     onClick={() => handleCheckout(currentPlan === "basic" ? "professional" : "featured")}
