@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
 import providerDashboardMockup from "@/assets/provider-dashboard-mockup.jpg";
+import rehabFacilityHero from "@/assets/rehab-facility-hero.jpg";
 
 const benefits = [
   {
@@ -140,75 +141,75 @@ const pricingPlans = [
     name: "Basic",
     price: "Free",
     period: "",
-    description: "Get listed and start receiving leads",
+    description: "Get listed and be discoverable",
     icon: Sparkles,
     gradient: "from-slate-500 to-slate-600",
     features: [
       { text: "Public provider profile", included: true },
       { text: "Listed in search results", included: true },
-      { text: "Basic facility details", included: true },
-      { text: "5 leads per month", included: true, highlight: true },
-      { text: "Basic analytics dashboard", included: true },
-      { text: "Email notifications", included: true },
+      { text: "Facility name, location & services", included: true },
+      { text: "Basic dashboard (views & clicks)", included: true },
       { text: "1 facility location", included: true },
     ],
     limitations: [
-      "Shared leads with other providers",
-      "Standard search placement",
+      "Phone number hidden on profile",
+      "Website link hidden on profile",
+      "No qualified leads",
+      "No lead notifications",
     ],
     cta: "Start Free",
     ctaVariant: "outline" as const,
     popular: false,
-    exclusivityBadge: "Shared Leads",
+    exclusivityBadge: "Visibility Only",
     exclusivityColor: "bg-slate-500/10 text-slate-600 border-slate-500/20",
   },
   {
     name: "Professional",
     price: "$399",
     period: "/mo",
-    description: "Exclusive leads for serious growth",
+    description: "Shared leads + steady visibility",
     icon: Star,
     gradient: "from-emerald-500 to-teal-500",
     features: [
       { text: "Everything in Basic, plus:", included: true, isHeader: true },
-      { text: "25 exclusive leads/month", included: true, highlight: true },
-      { text: "100% lead exclusivity", included: true, highlight: true },
-      { text: "Lead quality scoring", included: true },
-      { text: "Advanced analytics & reporting", included: true },
+      { text: "100 qualified leads/month", included: true, highlight: true },
+      { text: "Shared with max 1 other provider", included: true },
+      { text: "Phone & website visible on profile", included: true, highlight: true },
       { text: "Up to 3 facility locations", included: true },
-      { text: "Priority lead routing", included: true },
-      { text: "Email & SMS notifications", included: true },
+      { text: "Email lead notifications", included: true },
+      { text: "Lead management dashboard", included: true },
+      { text: "Performance analytics & insights", included: true },
     ],
     limitations: [],
-    cta: "Start 14-Day Trial",
+    cta: "Get Started",
     ctaVariant: "default" as const,
     popular: true,
-    exclusivityBadge: "100% Exclusive",
+    exclusivityBadge: "Shared Leads",
     exclusivityColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   },
   {
     name: "Featured",
     price: "$1,099",
     period: "/mo",
-    description: "Maximum visibility & premium placement",
+    description: "Exclusive leads & maximum visibility",
     icon: Crown,
     gradient: "from-amber-500 to-yellow-500",
     features: [
       { text: "Everything in Professional, plus:", included: true, isHeader: true },
       { text: "100 exclusive leads/month", included: true, highlight: true },
-      { text: "Homepage featured placement", included: true, highlight: true },
-      { text: "Priority search ranking", included: true },
-      { text: "Gold verified badge", included: true },
+      { text: "Never shared with other providers", included: true, highlight: true },
+      { text: "Homepage featured placement", included: true },
+      { text: "Priority search placement", included: true },
+      { text: "Gold Featured badge", included: true },
       { text: "Up to 5 facility locations", included: true },
-      { text: "Dedicated account manager", included: true },
-      { text: "Priority support (< 2hr response)", included: true },
-      { text: "Custom lead routing rules", included: true },
+      { text: "Priority email support", included: true },
+      { text: "Advanced analytics", included: true },
     ],
     limitations: [],
-    cta: "Contact Sales",
+    cta: "Upgrade Now",
     ctaVariant: "default" as const,
     popular: false,
-    exclusivityBadge: "100% Exclusive + Priority",
+    exclusivityBadge: "100% Exclusive",
     exclusivityColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   },
 ];
@@ -247,8 +248,8 @@ const ROICalculator = () => {
   const monthlyAdmissions = Math.round((leadsPerMonth[0] * conversionRate[0]) / 100);
   const monthlyRevenue = monthlyAdmissions * avgRevenuePerAdmission[0];
   const annualRevenue = monthlyRevenue * 12;
-  const planCost = leadsPerMonth[0] <= 5 ? 0 : leadsPerMonth[0] <= 25 ? 399 : 1099;
-  const planName = leadsPerMonth[0] <= 5 ? "Basic (Free)" : leadsPerMonth[0] <= 25 ? "Professional" : "Featured";
+  const planCost = leadsPerMonth[0] === 0 ? 0 : leadsPerMonth[0] <= 100 ? 399 : 1099;
+  const planName = leadsPerMonth[0] === 0 ? "Basic (Free)" : leadsPerMonth[0] <= 100 ? "Professional" : "Featured";
   const roi = planCost > 0 && monthlyRevenue > 0 ? Math.round(((monthlyRevenue - planCost) / planCost) * 100) : monthlyRevenue > 0 ? Infinity : 0;
 
   return (
@@ -364,41 +365,37 @@ const ComparisonTable = () => {
     {
       category: "Lead Generation",
       features: [
-        { feature: "Monthly Lead Limit", basic: "5/month", professional: "25/month", featured: "100/month" },
-        { feature: "Lead Exclusivity", basic: "Shared", professional: "Exclusive", featured: "Exclusive + Priority" },
-        { feature: "Lead Quality Scoring", basic: false, professional: true, featured: true },
-        { feature: "Priority Lead Routing", basic: false, professional: true, featured: true },
-        { feature: "Custom Routing Rules", basic: false, professional: false, featured: true },
+        { feature: "Qualified Leads", basic: "—", professional: "100/month", featured: "100/month" },
+        { feature: "Lead Exclusivity", basic: "—", professional: "Shared (max 2)", featured: "100% Exclusive" },
+        { feature: "Email Lead Notifications", basic: false, professional: true, featured: true },
+        { feature: "Lead Management Dashboard", basic: false, professional: true, featured: true },
       ],
     },
     {
       category: "Visibility & Placement",
       features: [
-        { feature: "Search Listing", basic: true, professional: true, featured: true },
-        { feature: "Priority Search Ranking", basic: false, professional: true, featured: true },
+        { feature: "Listed in Search Results", basic: true, professional: true, featured: true },
+        { feature: "Phone & Website Visible", basic: false, professional: true, featured: true },
+        { feature: "Priority Search Placement", basic: false, professional: false, featured: true },
         { feature: "Homepage Featured Section", basic: false, professional: false, featured: true },
-        { feature: "Gold Verified Badge", basic: false, professional: false, featured: true },
+        { feature: "Gold Featured Badge", basic: false, professional: false, featured: true },
       ],
     },
     {
       category: "Tools & Analytics",
       features: [
         { feature: "Provider Dashboard", basic: true, professional: true, featured: true },
-        { feature: "Basic Analytics", basic: true, professional: true, featured: true },
-        { feature: "Advanced Reporting", basic: false, professional: true, featured: true },
-        { feature: "Lead Conversion Tracking", basic: false, professional: true, featured: true },
-        { feature: "ROI Analytics", basic: false, professional: false, featured: true },
+        { feature: "Views & Clicks Analytics", basic: true, professional: true, featured: true },
+        { feature: "Performance Analytics", basic: false, professional: true, featured: true },
+        { feature: "Advanced Analytics", basic: false, professional: false, featured: true },
       ],
     },
     {
       category: "Account & Support",
       features: [
         { feature: "Facility Locations", basic: "1", professional: "Up to 3", featured: "Up to 5" },
-        { feature: "Email Notifications", basic: true, professional: true, featured: true },
-        { feature: "SMS Notifications", basic: false, professional: true, featured: true },
-        { feature: "Priority Support", basic: false, professional: true, featured: true },
-        { feature: "Dedicated Account Manager", basic: false, professional: false, featured: true },
-        { feature: "Response Time SLA", basic: "48hr", professional: "24hr", featured: "< 2hr" },
+        { feature: "Standard Support", basic: true, professional: true, featured: true },
+        { feature: "Priority Email Support", basic: false, professional: false, featured: true },
       ],
     },
   ];
@@ -798,8 +795,8 @@ const ForProviders = () => {
               <div className="relative">
                 <div className="rounded-2xl overflow-hidden border border-border shadow-xl bg-card">
                   <img 
-                    src={providerDashboardMockup} 
-                    alt="RehabLookup Provider Dashboard showing analytics, lead notifications, and facility management" 
+                    src={rehabFacilityHero} 
+                    alt="Modern professional rehabilitation treatment center with serene landscaping" 
                     className="w-full h-auto"
                   />
                 </div>
