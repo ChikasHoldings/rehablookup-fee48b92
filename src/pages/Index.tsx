@@ -30,7 +30,6 @@ import {
   Sparkles,
   Quote,
   BookOpen,
-  Calendar,
   Search,
   MapPin
 } from "lucide-react";
@@ -137,12 +136,10 @@ const Index = () => {
   
   // Get homepage featured centers (max 6, with rotation from backend)
   const featuredCenters = useMemo(() => {
-    // Get facilities that are designated for homepage display (isHomepageFeatured from rotation)
     const homepageFeatured = approvedFacilities
       .filter((f: any) => f.isHomepageFeatured || f.hasFeaturedSubscription)
       .slice(0, 6);
     
-    // Get static featured centers as fallback (add missing properties for type compatibility)
     const staticFeatured = treatmentCenters
       .filter((c) => c.featured)
       .map((c) => ({
@@ -154,7 +151,6 @@ const Index = () => {
         hasFeaturedSubscription: false,
       }));
     
-    // Combine: prioritize Featured subscription holders, fill remaining slots with static
     const combined = [...homepageFeatured];
     const remainingSlots = 6 - combined.length;
     
@@ -179,7 +175,6 @@ const Index = () => {
     
     hasTrackedImpressions.current = true;
     
-    // Track impression for each featured facility
     for (const facility of featuredDbFacilities) {
       try {
         await supabase.functions.invoke("track-featured-analytics", {
@@ -196,35 +191,6 @@ const Index = () => {
       trackFeaturedImpressions();
     }
   }, [featuredCenters, trackFeaturedImpressions]);
-  // Parallax effect for Why Choose Us image
-  const parallaxRef = useRef<HTMLDivElement>(null);
-  const [parallaxOffset, setParallaxOffset] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!parallaxRef.current) return;
-      
-      const rect = parallaxRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      // Calculate how far the element is from the center of the viewport
-      const elementCenter = rect.top + rect.height / 2;
-      const viewportCenter = windowHeight / 2;
-      const distance = elementCenter - viewportCenter;
-      
-      // Only apply parallax when element is in view
-      if (rect.top < windowHeight && rect.bottom > 0) {
-        // Subtle parallax: move image slightly opposite to scroll direction
-        const offset = distance * 0.08;
-        setParallaxOffset(offset);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial call
-    
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <Layout>
@@ -233,152 +199,96 @@ const Index = () => {
         description="Search verified addiction treatment centers and find the right path to recovery. Compare rehab facilities, check insurance coverage, and get help today. 24/7 support available."
         canonical="/"
       />
-      {/* Hero + Trust Bar Viewport Wrapper */}
-      <div className="relative flex min-h-[calc(100vh-64px)] md:min-h-[calc(100vh-72px)] flex-col">
-        {/* Hero Section */}
-        <section className="relative flex flex-1 overflow-hidden">
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${heroImage})` }}
-          />
-          
-          {/* Light overlay with gradient for depth */}
-          <div className="absolute inset-0 bg-gradient-to-b from-card/90 via-card/85 to-card/95" />
-          
-          {/* Decorative elements */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-32 -right-32 h-[400px] w-[400px] rounded-full bg-primary/8 blur-3xl" />
-            <div className="absolute -bottom-32 -left-32 h-[300px] w-[300px] rounded-full bg-accent/6 blur-3xl" />
-          </div>
 
-          {/* Content Container - Optimized for tablet */}
-          <div className="container relative flex flex-1 flex-col justify-center py-6 sm:py-8 md:py-6 lg:py-10">
-            <div className="mx-auto w-full max-w-3xl lg:max-w-4xl text-center px-4 md:px-6">
-              {/* Trust Badge */}
-              <div className="mb-4 md:mb-5 lg:mb-6 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-3 py-1.5 md:px-4 md:py-2 shadow-sm animate-fade-in backdrop-blur-sm">
-                <Star className="h-3.5 w-3.5 md:h-4 md:w-4 fill-accent text-accent" />
-                <span className="text-xs md:text-sm font-semibold text-accent tracking-wide">
-                  Trusted by 10,000+ families
-                </span>
-              </div>
+      {/* Hero Section - Full bleed image with overlay */}
+      <section className="relative min-h-[520px] md:min-h-[580px] lg:min-h-[620px] flex items-center">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        />
+        
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-foreground/60" />
 
-              {/* Headline - Tablet-optimized sizing */}
-              <h1 className="mb-3 md:mb-4 lg:mb-5 font-display text-2xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-3xl md:text-[2.5rem] lg:text-5xl xl:text-6xl animate-fade-in" style={{ animationDelay: "50ms" }}>
-                Find the Right Path to{" "}
-                <span className="text-primary relative inline-block">
-                  Recovery
-                  <svg className="absolute -bottom-0.5 md:-bottom-1 left-0 w-full h-1.5 md:h-2 text-primary/30" viewBox="0 0 200 8" preserveAspectRatio="none">
-                    <path d="M0 7 Q50 0, 100 7 T200 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                  </svg>
-                </span>
-              </h1>
+        {/* Content */}
+        <div className="container relative z-10 py-16 md:py-20 lg:py-24">
+          <div className="mx-auto max-w-3xl text-center">
+            {/* Headline */}
+            <h1 className="mb-4 font-display text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl lg:text-[3.5rem]">
+              Find the Right Path to Recovery
+            </h1>
 
-              {/* Subheadline - Tablet spacing */}
-              <p className="mb-5 md:mb-6 lg:mb-8 text-sm md:text-base lg:text-lg text-foreground/75 animate-fade-in max-w-md md:max-w-lg lg:max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "100ms" }}>
-                Search verified treatment centers and take the first step toward a healthier future.
-              </p>
+            {/* Subheadline */}
+            <p className="mb-8 text-base text-white/90 md:text-lg lg:text-xl max-w-2xl mx-auto">
+              Search verified treatment centers and take the first step toward a healthier future.
+            </p>
 
-              {/* Search Form */}
-              <div className="mb-5 md:mb-6 lg:mb-8 animate-fade-in" style={{ animationDelay: "150ms" }}>
-                <SearchForm variant="compact-hero" />
-              </div>
-
-              {/* Trust Badges - Tablet-optimized grid */}
-              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-x-6 lg:gap-x-8">
-                {trustBadges.map((badge, index) => (
-                  <div 
-                    key={badge.label} 
-                    className="flex items-center gap-1.5 md:gap-2 text-foreground/70 transition-all duration-300 hover:text-primary group animate-fade-in opacity-0"
-                    style={{ 
-                      animationDelay: `${400 + index * 100}ms`,
-                      animationFillMode: 'forwards'
-                    }}
-                  >
-                    <div className="flex h-7 w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20 transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-105">
-                      <badge.icon className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary" />
-                    </div>
-                    <span className="text-xs md:text-sm font-medium">{badge.label}</span>
-                  </div>
-                ))}
-              </div>
+            {/* Search Form */}
+            <div className="mb-8">
+              <SearchForm variant="compact-hero" />
             </div>
-          </div>
-        </section>
 
-        {/* Trust Bar - Tablet-optimized */}
-        <div className="relative shrink-0 border-y border-border bg-primary py-3 md:py-3.5 lg:py-4">
-          <div className="container">
-            <div className="flex items-center justify-center gap-x-3 gap-y-2 sm:gap-x-6 md:gap-x-8 lg:gap-x-12 flex-wrap md:flex-nowrap">
-              <div className="flex items-center gap-1.5 md:gap-2 shrink-0 group">
-                <div className="flex h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                  <Shield className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-accent" />
-                </div>
-                <span className="text-[11px] md:text-xs lg:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">Licensed & Accredited</span>
-              </div>
-              <div className="flex items-center gap-1.5 md:gap-2 shrink-0 group">
-                <div className="flex h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                  <Clock className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-accent" />
-                </div>
-                <span className="text-[11px] md:text-xs lg:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">24/7 Support</span>
-              </div>
-              <div className="flex items-center gap-1.5 md:gap-2 shrink-0 group">
-                <div className="flex h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                  <Heart className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-accent" />
-                </div>
-                <span className="text-[11px] md:text-xs lg:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">Free Assessment</span>
-              </div>
-              <div className="flex items-center gap-1.5 md:gap-2 shrink-0 group">
-                <div className="flex h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/15">
-                  <CheckCircle className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-accent" />
-                </div>
-                <span className="text-[11px] md:text-xs lg:text-sm font-medium text-primary-foreground/90 whitespace-nowrap">Insurance Verified</span>
-              </div>
-            </div>
+            {/* Provider Link */}
+            <p className="text-sm text-white/70">
+              <Link to="/for-providers" className="underline hover:text-white">
+                Get Listed On Our Site
+              </Link>
+            </p>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Trust Bar */}
+      <section className="border-b border-border bg-card py-4">
+        <div className="container">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:gap-x-12 lg:gap-x-16">
+            {trustBadges.map((badge) => (
+              <div 
+                key={badge.label} 
+                className="flex items-center gap-2 text-muted-foreground"
+              >
+                <badge.icon className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">{badge.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Featured Centers */}
-      <section className="section-padding-lg">
+      <section className="py-16 md:py-20 lg:py-24">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-12 flex flex-col items-center text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-              <Star className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-accent">Featured Facilities</span>
-            </div>
-            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+          <div className="mb-10 md:mb-12 text-center">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">
+              Featured Facilities
+            </p>
+            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               Top-Rated Treatment Centers
             </h2>
-            <p className="max-w-xl text-muted-foreground">
+            <p className="max-w-2xl mx-auto text-muted-foreground">
               Hand-selected facilities known for exceptional care, verified outcomes, and compassionate treatment.
             </p>
           </div>
 
-          {/* Cards Grid - Up to 6 featured centers */}
+          {/* Cards Grid */}
           {isFacilitiesLoading ? (
             <FeaturedCentersLoading />
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredCenters.map((center, index) => (
-                <div 
-                  key={center.id} 
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <TreatmentCenterCard center={center} featured />
-                </div>
+              {featuredCenters.map((center) => (
+                <TreatmentCenterCard key={center.id} center={center} featured />
               ))}
             </div>
           )}
 
           {/* View All Link */}
-          <div className="mt-12 text-center">
+          <div className="mt-10 md:mt-12 text-center">
             <Link to="/rehab-centers">
-              <Button variant="outline" size="lg" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
+              <Button variant="outline" size="lg" className="gap-2">
                 View All Centers
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -386,73 +296,52 @@ const Index = () => {
       </section>
 
       {/* Treatment Options */}
-      <section className="section-padding-lg bg-primary">
+      <section className="py-16 md:py-20 lg:py-24 bg-primary">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-12 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Treatment Programs</span>
-            </div>
-            <h2 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
+          <div className="mb-10 md:mb-12 text-center">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-accent">
+              Treatment Programs
+            </p>
+            <h2 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               Comprehensive Care for Every Need
             </h2>
-            <p className="mx-auto max-w-xl text-primary-foreground/70">
+            <p className="mx-auto max-w-2xl text-primary-foreground/80">
               Find specialized treatment programs tailored to your unique situation and recovery goals.
             </p>
           </div>
 
           {/* Options Grid */}
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {treatmentOptions.map((option, index) => (
+            {treatmentOptions.map((option) => (
               <Link
                 key={option.title}
                 to={option.link}
-                className="group animate-fade-in opacity-0"
-                style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+                className="group"
               >
-                <div className="relative h-full rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-500 hover:bg-white/15 hover:border-accent/50 hover:-translate-y-2 hover:shadow-2xl hover:shadow-accent/20">
-                  {/* Decorative glow - enhanced */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/10 via-transparent to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                  
-                  {/* Shimmer effect on hover */}
-                  <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+                <div className="h-full rounded-xl border border-white/10 bg-white/5 p-6 hover:bg-white/10 transition-colors">
+                  {/* Icon */}
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-accent/20">
+                    <option.icon className="h-6 w-6 text-accent" />
                   </div>
                   
-                  {/* Icon - Enhanced with pulse and rotate on hover */}
-                  <div className="relative mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 ring-1 ring-accent/30 transition-all duration-500 group-hover:ring-accent/60 group-hover:shadow-lg group-hover:shadow-accent/30 group-hover:scale-110 group-hover:rotate-3">
-                    <option.icon className="h-8 w-8 text-accent transition-all duration-500 group-hover:scale-110" />
-                    {/* Icon glow */}
-                    <div className="absolute inset-0 rounded-2xl bg-accent/20 blur-xl opacity-0 transition-opacity duration-500 group-hover:opacity-60" />
-                  </div>
-                  
-                  <h3 className="relative mb-2 font-display text-lg font-semibold text-primary-foreground transition-colors duration-300 group-hover:text-accent">
+                  <h3 className="mb-2 font-display text-lg font-semibold text-primary-foreground">
                     {option.title}
                   </h3>
-                  <p className="relative text-sm text-primary-foreground/70 leading-relaxed">
+                  <p className="text-sm text-primary-foreground/70 leading-relaxed">
                     {option.description}
                   </p>
-                  
-                  {/* Hover arrow - Enhanced */}
-                  <div className="relative mt-5 flex items-center gap-2 text-sm font-medium text-accent translate-y-2 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                    <span>Explore options</span>
-                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
-                  
-                  {/* Corner accent */}
-                  <div className="absolute bottom-0 right-0 h-24 w-24 rounded-tl-full bg-gradient-to-tl from-accent/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 </div>
               </Link>
             ))}
           </div>
 
           {/* CTA */}
-          <div className="mt-12 text-center">
+          <div className="mt-10 md:mt-12 text-center">
             <Link to="/rehab-centers">
-              <Button variant="hero-light" size="lg" className="gap-2 group shadow-lg hover:shadow-xl transition-shadow">
+              <Button variant="secondary" size="lg" className="gap-2">
                 Explore All Treatment Options
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -460,15 +349,14 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="section-padding-lg">
+      <section className="py-16 md:py-20 lg:py-24">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-14 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-              <CheckCircle className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-accent">Simple Process</span>
-            </div>
-            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+          <div className="mb-12 md:mb-14 text-center">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">
+              Simple Process
+            </p>
+            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               How It Works
             </h2>
             <p className="mx-auto max-w-xl text-muted-foreground">
@@ -476,15 +364,9 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Steps - Enhanced Horizontal Timeline */}
-          <div className="relative max-w-4xl mx-auto">
-            {/* Animated connector line */}
-            <div className="absolute top-12 left-[16.67%] right-[16.67%] hidden md:block">
-              <div className="h-0.5 bg-border" />
-              <div className="absolute inset-0 h-0.5 bg-gradient-to-r from-accent via-primary to-accent animate-pulse" style={{ opacity: 0.5 }} />
-            </div>
-            
-            <div className="grid gap-10 md:grid-cols-3 md:gap-8">
+          {/* Steps */}
+          <div className="max-w-4xl mx-auto">
+            <div className="grid gap-8 md:grid-cols-3 md:gap-6">
               {[
                 {
                   step: 1,
@@ -504,57 +386,35 @@ const Index = () => {
                   description: "Contact centers directly or request a callback from our team.",
                   icon: Phone,
                 },
-              ].map((item, index) => (
-                <div
-                  key={item.step}
-                  className="group relative text-center animate-fade-in opacity-0"
-                  style={{ animationDelay: `${200 + index * 200}ms`, animationFillMode: 'forwards' }}
-                >
-                  {/* Step circle - Enhanced */}
-                  <div className="relative mx-auto mb-6 h-24 w-24">
-                    {/* Outer ring with pulse */}
-                    <div className="absolute inset-0 rounded-full bg-accent/20 animate-ping" style={{ animationDuration: '3s', animationDelay: `${index * 0.5}s` }} />
-                    
-                    {/* Main circle */}
-                    <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-accent/30 bg-card shadow-lg transition-all duration-500 group-hover:border-accent group-hover:shadow-xl group-hover:shadow-accent/20 group-hover:scale-105">
-                      {/* Inner gradient circle */}
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent/15 to-primary/10 transition-all duration-500 group-hover:from-accent/25 group-hover:to-primary/20">
-                        <item.icon className="h-7 w-7 text-accent transition-transform duration-500 group-hover:scale-110" />
-                      </div>
+              ].map((item) => (
+                <div key={item.step} className="text-center">
+                  {/* Step circle */}
+                  <div className="relative mx-auto mb-5 h-20 w-20">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-border bg-card">
+                      <item.icon className="h-8 w-8 text-primary" />
                     </div>
-                    
-                    {/* Step number badge - Enhanced */}
-                    <div className="absolute -top-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-primary text-sm font-bold text-accent-foreground shadow-lg ring-4 ring-background transition-transform duration-300 group-hover:scale-110">
+                    {/* Step number badge */}
+                    <div className="absolute -top-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                       {item.step}
                     </div>
                   </div>
                   
-                  {/* Arrow connector (visible on desktop between items) */}
-                  {index < 2 && (
-                    <div className="absolute top-10 -right-4 hidden md:flex items-center text-accent/40 group-hover:text-accent transition-colors duration-300">
-                      <ArrowRight className="h-6 w-6" />
-                    </div>
-                  )}
-                  
-                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
                     {item.title}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
                     {item.description}
                   </p>
-                  
-                  {/* Hover indicator line */}
-                  <div className="mt-4 mx-auto h-1 w-0 rounded-full bg-gradient-to-r from-accent to-primary transition-all duration-500 group-hover:w-16" />
                 </div>
               ))}
             </div>
 
             {/* CTA */}
-            <div className="mt-14 text-center">
+            <div className="mt-12 text-center">
               <Link to="/rehab-centers">
-                <Button size="lg" className="gap-2 group shadow-lg hover:shadow-xl transition-all duration-300">
+                <Button size="lg" className="gap-2">
                   Start Your Search
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -563,96 +423,76 @@ const Index = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="section-padding-lg bg-muted/30 overflow-hidden">
+      <section className="py-16 md:py-20 lg:py-24 bg-muted/40">
         <div className="container">
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-20">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
             {/* Content */}
-            <div className="animate-fade-in order-2 lg:order-1">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                <Heart className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">Why Choose Us</span>
-              </div>
-              <h2 className="mb-5 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+            <div className="order-2 lg:order-1">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">
+                Why Choose Us
+              </p>
+              <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                 Trusted by Families Across America
               </h2>
-              <p className="mb-8 text-muted-foreground leading-relaxed max-w-lg">
+              <p className="mb-8 text-muted-foreground leading-relaxed">
                 We understand that finding addiction treatment is one of the most important decisions 
                 your family will make. That's why we're committed to transparency, accuracy, and compassion.
               </p>
 
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {[
                   "Every facility verified for licensing & accreditation",
                   "Transparent program and cost information",
                   "No hidden fees or surprise referrals",
                   "Confidential, secure communication",
                   "24/7 support for urgent situations",
-                ].map((item, index) => (
-                  <li key={item} className="flex items-start gap-3 group animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 ring-1 ring-accent/25 transition-all group-hover:ring-accent/40 group-hover:bg-accent/25">
-                      <CheckCircle className="h-3 w-3 text-accent" />
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <CheckCircle className="h-3.5 w-3.5 text-primary" />
                     </div>
-                    <span className="text-foreground text-sm md:text-base">{item}</span>
+                    <span className="text-foreground">{item}</span>
                   </li>
                 ))}
               </ul>
 
               <div className="mt-8">
                 <Link to="/about">
-                  <Button variant="outline" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
+                  <Button variant="outline" className="gap-2">
                     Learn More About Us
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            {/* Image with Stats Overlay + Parallax */}
-            <div ref={parallaxRef} className="relative animate-fade-in order-1 lg:order-2" style={{ animationDelay: "0.1s" }}>
-              {/* Decorative background element */}
-              <div className="absolute -inset-4 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent rounded-3xl blur-2xl opacity-60" />
-              
-              <div className="relative">
-                {/* Main image container with parallax */}
-                <div className="relative overflow-hidden rounded-2xl shadow-elevated ring-1 ring-border/50">
-                  <div 
-                    className="w-full aspect-[4/3] overflow-hidden"
-                    style={{ transform: `translateY(${parallaxOffset}px)` }}
-                  >
-                    <img 
-                      src={whyChooseUsImage} 
-                      alt="Healthcare professional consulting with a family about treatment options"
-                      className="w-full h-[120%] object-cover transition-transform duration-100 ease-out"
-                      style={{ transform: `translateY(-10%)` }}
-                    />
-                  </div>
-                  
-                  {/* Subtle overlay for depth */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent" />
-                  
-                  {/* Stats Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-                    <div className="grid grid-cols-4 gap-2 sm:gap-4">
-                      {[
-                        { value: "10K+", label: "Families", accent: true },
-                        { value: "500+", label: "Centers", accent: true },
-                        { value: "50", label: "States", accent: true },
-                        { value: "24/7", label: "Support", accent: false },
-                      ].map((stat, index) => (
-                        <div key={stat.label} className="text-center group" style={{ animationDelay: `${index * 50}ms` }}>
-                          <div className={`font-display text-lg sm:text-xl md:text-2xl font-bold transition-transform group-hover:scale-110 ${stat.accent ? 'text-accent' : 'text-primary-foreground'}`}>
-                            {stat.value}
-                          </div>
-                          <p className="text-[10px] sm:text-xs text-primary-foreground/80 font-medium">{stat.label}</p>
+            {/* Image with Stats */}
+            <div className="relative order-1 lg:order-2">
+              <div className="relative overflow-hidden rounded-xl">
+                <img 
+                  src={whyChooseUsImage} 
+                  alt="Healthcare professional consulting with a family about treatment options"
+                  className="w-full aspect-[4/3] object-cover"
+                />
+                
+                {/* Stats Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-primary/95 p-4 sm:p-5">
+                  <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                    {[
+                      { value: "10K+", label: "Families" },
+                      { value: "500+", label: "Centers" },
+                      { value: "50", label: "States" },
+                      { value: "24/7", label: "Support" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="text-center">
+                        <div className="font-display text-lg sm:text-xl md:text-2xl font-bold text-accent">
+                          {stat.value}
                         </div>
-                      ))}
-                    </div>
+                        <p className="text-[10px] sm:text-xs text-primary-foreground/80">{stat.label}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                
-                {/* Decorative accent corner */}
-                <div className="absolute -bottom-3 -right-3 h-24 w-24 rounded-2xl bg-accent/20 -z-10" />
-                <div className="absolute -top-3 -left-3 h-16 w-16 rounded-xl bg-primary/10 -z-10" />
               </div>
             </div>
           </div>
@@ -660,15 +500,14 @@ const Index = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="section-padding-lg bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
+      <section className="py-16 md:py-20 lg:py-24">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-14 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-              <Quote className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-accent">Testimonials</span>
-            </div>
-            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+          <div className="mb-12 md:mb-14 text-center">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">
+              Testimonials
+            </p>
+            <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
               Stories of Hope and Recovery
             </h2>
             <p className="mx-auto max-w-xl text-muted-foreground">
@@ -676,67 +515,44 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Testimonials Grid - Enhanced */}
-          <div className="grid gap-8 md:grid-cols-3">
-            {testimonials.map((testimonial, index) => (
+          {/* Testimonials Grid */}
+          <div className="grid gap-6 md:grid-cols-3">
+            {testimonials.map((testimonial) => (
               <div
                 key={testimonial.name}
-                className="group animate-fade-in opacity-0"
-                style={{ animationDelay: `${200 + index * 150}ms`, animationFillMode: 'forwards' }}
+                className="rounded-xl border border-border bg-card p-6 md:p-8"
               >
-                <div className="relative h-full rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-muted/30 p-8 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-accent/40">
-                  {/* Background glow on hover */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 via-transparent to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                  
-                  {/* Large decorative quote - Enhanced */}
-                  <div className="absolute -top-5 left-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-primary shadow-xl shadow-accent/30 ring-4 ring-background transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                      <Quote className="h-6 w-6 text-accent-foreground" />
-                    </div>
+                {/* Quote icon */}
+                <div className="mb-4">
+                  <Quote className="h-8 w-8 text-primary/20" />
+                </div>
+                
+                {/* Rating */}
+                <div className="mb-4 flex gap-1">
+                  {Array.from({ length: testimonial.rating }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-accent text-accent" />
+                  ))}
+                </div>
+                
+                {/* Quote */}
+                <blockquote className="mb-6">
+                  <p className="text-foreground leading-relaxed">
+                    "{testimonial.quote}"
+                  </p>
+                </blockquote>
+                
+                {/* Author */}
+                <div className="flex items-center gap-3 pt-4 border-t border-border">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    {testimonial.name.charAt(0)}
                   </div>
-                  
-                  {/* Rating - Animated stars */}
-                  <div className="relative mt-5 mb-5 flex gap-1">
-                    {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <Star 
-                        key={i} 
-                        className="h-5 w-5 fill-accent text-accent transition-all duration-300 hover:scale-125"
-                        style={{ 
-                          animationDelay: `${400 + index * 150 + i * 100}ms`,
-                        }}
-                      />
-                    ))}
-                  </div>
-                  
-                  {/* Quote - Enhanced typography */}
-                  <blockquote className="relative mb-6">
-                    <p className="text-foreground leading-relaxed text-[15px]">
-                      <span className="text-accent/60 text-xl leading-none">"</span>
-                      {testimonial.quote}
-                      <span className="text-accent/60 text-xl leading-none">"</span>
+                  <div>
+                    <p className="font-semibold text-foreground">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {testimonial.location}
                     </p>
-                  </blockquote>
-                  
-                  {/* Author - Enhanced */}
-                  <div className="relative flex items-center gap-4 pt-5 border-t border-border/50">
-                    <div className="relative">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 text-base font-bold text-primary ring-2 ring-primary/20 transition-all duration-300 group-hover:ring-primary/40">
-                        {testimonial.name.charAt(0)}
-                      </div>
-                      {/* Online indicator */}
-                      <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-background" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {testimonial.location}
-                      </p>
-                    </div>
                   </div>
-                  
-                  {/* Decorative corner accent */}
-                  <div className="absolute bottom-0 right-0 h-20 w-20 rounded-tl-3xl bg-gradient-to-tl from-accent/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 </div>
               </div>
             ))}
@@ -745,16 +561,15 @@ const Index = () => {
       </section>
 
       {/* Resources / Blog Section */}
-      <section className="section-padding-lg bg-muted/30">
+      <section className="py-16 md:py-20 lg:py-24 bg-muted/40">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-12 flex flex-col items-center text-center md:flex-row md:items-end md:justify-between md:text-left">
+          <div className="mb-10 md:mb-12 flex flex-col items-center text-center md:flex-row md:items-end md:justify-between md:text-left">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                <BookOpen className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">Resources</span>
-              </div>
-              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">
+                Resources
+              </p>
+              <h2 className="mb-3 font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                 Resources & Guides
               </h2>
               <p className="max-w-xl text-muted-foreground">
@@ -762,35 +577,33 @@ const Index = () => {
               </p>
             </div>
             <Link to="/resources" className="mt-6 md:mt-0">
-              <Button variant="outline" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
+              <Button variant="outline" className="gap-2">
                 View All Articles
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
 
           {/* Articles Grid */}
-          <div className="grid gap-6 md:gap-8 md:grid-cols-3">
-            {blogArticles.map((article, index) => (
+          <div className="grid gap-6 md:grid-cols-3">
+            {blogArticles.map((article) => (
               <Link
                 key={article.id}
                 to={`/resources/${article.id}`}
-                className="group animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group"
               >
-                <article className="h-full rounded-2xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
+                <article className="h-full rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors">
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
                     <img 
                       src={article.image} 
                       alt={article.title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="h-full w-full object-cover"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
                     {/* Category Badge */}
-                    <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
-                      <BookOpen className="h-3 w-3 text-accent" />
+                    <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-foreground">
+                      <BookOpen className="h-3 w-3 text-primary" />
                       {article.category}
                     </span>
                   </div>
@@ -820,7 +633,7 @@ const Index = () => {
                     {/* Read More Link */}
                     <div className="flex items-center gap-1.5 text-sm font-semibold text-primary">
                       Read article
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      <ArrowRight className="h-4 w-4" />
                     </div>
                   </div>
                 </article>
@@ -831,10 +644,10 @@ const Index = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="section-padding-lg">
+      <section className="py-16 md:py-20 lg:py-24">
         <div className="container">
-          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-4 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+          <div className="mx-auto max-w-3xl rounded-xl border border-border bg-card p-8 md:p-12 text-center">
+            <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
               Ready to Take the First Step?
             </h2>
             <p className="mb-8 text-muted-foreground max-w-xl mx-auto">
