@@ -1247,7 +1247,7 @@ export default function ProviderListingPage() {
           <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
             {/* Logo & Photos */}
             <Collapsible open={expandedSections.has("photos")} onOpenChange={() => toggleSection("photos")}>
-              <Card className="overflow-hidden border-border/60 shadow-sm">
+              <Card className="border-border/60 shadow-sm">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="pb-4 bg-gradient-to-r from-purple-500/5 to-transparent cursor-pointer hover:bg-purple-500/10 transition-colors">
                     <div className="flex items-center justify-between">
@@ -1325,7 +1325,7 @@ export default function ProviderListingPage() {
 
             {/* Basic Information */}
             <Collapsible open={expandedSections.has("basic")} onOpenChange={() => toggleSection("basic")}>
-              <Card className="overflow-hidden border-border/60 shadow-sm">
+              <Card className="border-border/60 shadow-sm">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent cursor-pointer hover:bg-primary/10 transition-colors">
                     <div className="flex items-center justify-between">
@@ -1425,7 +1425,7 @@ export default function ProviderListingPage() {
 
             {/* Location */}
             <Collapsible open={expandedSections.has("location")} onOpenChange={() => toggleSection("location")}>
-              <Card className="overflow-hidden border-border/60 shadow-sm">
+              <Card className="border-border/60 shadow-sm">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="pb-4 bg-gradient-to-r from-blue-500/5 to-transparent cursor-pointer hover:bg-blue-500/10 transition-colors">
                     <div className="flex items-center justify-between">
@@ -1539,7 +1539,7 @@ export default function ProviderListingPage() {
 
             {/* Contact Information */}
             <Collapsible open={expandedSections.has("contact")} onOpenChange={() => toggleSection("contact")}>
-              <Card className="overflow-hidden border-border/60 shadow-sm">
+              <Card className="border-border/60 shadow-sm">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="pb-4 bg-gradient-to-r from-green-500/5 to-transparent cursor-pointer hover:bg-green-500/10 transition-colors">
                     <div className="flex items-center justify-between">
@@ -1780,7 +1780,7 @@ export default function ProviderListingPage() {
 
             {/* Program Details */}
             <Collapsible open={expandedSections.has("program")} onOpenChange={() => toggleSection("program")}>
-              <Card className="overflow-hidden border-border/60 shadow-sm">
+              <Card className="border-border/60 shadow-sm">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="pb-4 bg-gradient-to-r from-indigo-500/5 to-transparent cursor-pointer hover:bg-indigo-500/10 transition-colors">
                     <div className="flex items-center justify-between">
@@ -1842,7 +1842,7 @@ export default function ProviderListingPage() {
 
             {/* Services Offered */}
             <Collapsible open={expandedSections.has("services")} onOpenChange={() => toggleSection("services")}>
-              <Card className="overflow-hidden border-border/60 shadow-sm">
+              <Card className="border-border/60 shadow-sm">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="pb-4 bg-gradient-to-r from-teal-500/5 to-transparent cursor-pointer hover:bg-teal-500/10 transition-colors">
                     <div className="flex items-center justify-between">
@@ -1915,7 +1915,7 @@ export default function ProviderListingPage() {
 
             {/* Insurance Accepted */}
             <Collapsible open={expandedSections.has("insurance")} onOpenChange={() => toggleSection("insurance")}>
-              <Card className="overflow-hidden border-border/60 shadow-sm">
+              <Card className="border-border/60 shadow-sm">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="pb-4 bg-gradient-to-r from-amber-500/5 to-transparent cursor-pointer hover:bg-amber-500/10 transition-colors">
                     <div className="flex items-center justify-between">
@@ -1988,7 +1988,7 @@ export default function ProviderListingPage() {
 
             {/* Age Groups Served */}
             <Collapsible open={expandedSections.has("ageGroups")} onOpenChange={() => toggleSection("ageGroups")}>
-              <Card className="overflow-hidden border-border/60 shadow-sm">
+              <Card className="border-border/60 shadow-sm">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="pb-4 bg-gradient-to-r from-violet-500/5 to-transparent cursor-pointer hover:bg-violet-500/10 transition-colors">
                     <div className="flex items-center justify-between">
@@ -2065,7 +2065,7 @@ export default function ProviderListingPage() {
 
             {/* Trust & Credentials */}
             <Collapsible open={expandedSections.has("trust")} onOpenChange={() => toggleSection("trust")}>
-              <Card className="overflow-hidden border-border/60 shadow-sm">
+              <Card className="border-border/60 shadow-sm">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="pb-4 bg-gradient-to-r from-emerald-500/5 to-transparent cursor-pointer hover:bg-emerald-500/10 transition-colors">
                     <div className="flex items-center justify-between">
