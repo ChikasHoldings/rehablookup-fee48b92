@@ -491,6 +491,7 @@ export default function AdminLeads() {
   const [qualifiedFilter, setQualifiedFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
   const [blockReasonFilter, setBlockReasonFilter] = useState("all");
+  const [exclusivityFilter, setExclusivityFilter] = useState("all");
   const [datePreset, setDatePreset] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -547,7 +548,7 @@ export default function AdminLeads() {
 
   // Fetch total count for pagination (qualified leads for "all" tab)
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-leads-count", activeTab, assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, blockReasonFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["admin-leads-count", activeTab, assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, blockReasonFilter, exclusivityFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       try {
         let query = supabase
@@ -581,6 +582,11 @@ export default function AdminLeads() {
 
           if (qualifiedFilter !== "all") {
             query = query.eq("qualified", qualifiedFilter === "qualified");
+          }
+
+          // Exclusivity filter
+          if (exclusivityFilter !== "all") {
+            query = query.eq("exclusivity", exclusivityFilter);
           }
         }
 
@@ -644,7 +650,7 @@ export default function AdminLeads() {
 
   // Fetch leads with pagination
   const { data: leads, isLoading } = useQuery({
-    queryKey: ["admin-leads", activeTab, assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, blockReasonFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["admin-leads", activeTab, assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, blockReasonFilter, exclusivityFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       try {
         const from = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -683,6 +689,11 @@ export default function AdminLeads() {
 
           if (qualifiedFilter !== "all") {
             query = query.eq("qualified", qualifiedFilter === "qualified");
+          }
+
+          // Exclusivity filter
+          if (exclusivityFilter !== "all") {
+            query = query.eq("exclusivity", exclusivityFilter);
           }
         }
 
@@ -1089,6 +1100,16 @@ export default function AdminLeads() {
                         <SelectItem value="B">Grade B</SelectItem>
                         <SelectItem value="C">Grade C</SelectItem>
                         <SelectItem value="D">Grade D</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={exclusivityFilter} onValueChange={handleFilterChange(setExclusivityFilter)}>
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue placeholder="Exclusivity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Leads</SelectItem>
+                        <SelectItem value="exclusive">Exclusive</SelectItem>
+                        <SelectItem value="shared">Shared</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
