@@ -176,3 +176,6 @@ verify_jwt = true
 
 [functions.track-provider-event]
 verify_jwt = false
+
+[functions.send-credential-notification]
+verify_jwt = true
