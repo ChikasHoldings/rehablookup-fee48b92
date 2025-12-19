@@ -1,10 +1,21 @@
 import { Link } from "react-router-dom";
-import { Heart, Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin, Stethoscope, Phone } from "lucide-react";
+import { Heart, Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin, Stethoscope, Phone, CreditCard } from "lucide-react";
 
 const crisisHotlines = [
   { name: "SAMHSA Helpline", phone: "1-800-662-4357", description: "24/7, free, confidential" },
   { name: "988 Suicide & Crisis", phone: "988", description: "Call or text anytime" },
   { name: "Crisis Text Line", phone: "Text HOME to 741741", description: "Free 24/7 support" },
+];
+
+const insuranceTypes = [
+  { label: "Medicaid", href: "/rehab-centers?insurance=medicaid" },
+  { label: "Medicare", href: "/rehab-centers?insurance=medicare" },
+  { label: "Private Insurance", href: "/rehab-centers?insurance=private" },
+  { label: "Blue Cross Blue Shield", href: "/rehab-centers?insurance=bcbs" },
+  { label: "Aetna", href: "/rehab-centers?insurance=aetna" },
+  { label: "Cigna", href: "/rehab-centers?insurance=cigna" },
+  { label: "United Healthcare", href: "/rehab-centers?insurance=uhc" },
+  { label: "Self-Pay Options", href: "/rehab-centers?insurance=self-pay" },
 ];
 
 const footerLinks = {
@@ -227,7 +238,7 @@ export function Footer() {
       {/* Popular Locations & Treatment Types - SEO Section */}
       <div className="border-t border-white/10">
         <div className="container py-6">
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {/* Popular States */}
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -300,6 +311,27 @@ export function Footer() {
                 >
                   All →
                 </Link>
+              </div>
+            </div>
+
+            {/* Insurance Types */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <CreditCard className="h-4 w-4 text-accent" />
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
+                  Insurance Accepted
+                </h4>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {insuranceTypes.map((insurance) => (
+                  <Link
+                    key={insurance.href}
+                    to={insurance.href}
+                    className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+                  >
+                    {insurance.label}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
