@@ -23,15 +23,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 
 export default function ProviderAnalyticsPage() {
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
   
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
-  const [selectedPreset, setSelectedPreset] = useState<string>("all");
+  // Default to current billing cycle
+  const [dateRange, setDateRange] = useState<DateRange>(() => ({
+    from: startOfMonth(new Date()),
+    to: new Date()
+  }));
+  const [selectedPreset, setSelectedPreset] = useState<string>("billing_cycle");
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Real-time subscription for analytics updates
@@ -90,11 +94,14 @@ export default function ProviderAnalyticsPage() {
   };
 
   const clearDateFilter = () => {
-    setDateRange({ from: undefined, to: undefined });
-    setSelectedPreset("all");
+    setDateRange({ from: startOfMonth(new Date()), to: new Date() });
+    setSelectedPreset("billing_cycle");
   };
 
   const getSelectedLabel = () => {
+    if (selectedPreset === "billing_cycle") {
+      return "Current Billing Cycle";
+    }
     if (selectedPreset === "custom" && dateRange.from) {
       if (dateRange.to) {
         return `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`;
@@ -102,10 +109,10 @@ export default function ProviderAnalyticsPage() {
       return `From ${format(dateRange.from, "MMM d, yyyy")}`;
     }
     const preset = DATE_RANGE_PRESETS.find(p => p.value === selectedPreset);
-    return preset?.label || "All Time";
+    return preset?.label || "Current Billing Cycle";
   };
 
-  const hasActiveFilter = selectedPreset !== "all";
+  const hasActiveFilter = selectedPreset !== "billing_cycle";
 
   return (
     <div className="p-4 md:p-6 lg:p-8">

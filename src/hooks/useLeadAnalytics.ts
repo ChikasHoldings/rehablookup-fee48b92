@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, subMonths, format, startOfDay, endOfDay, isWithinInterval, subDays, subWeeks } from "date-fns";
+import { startOfMonth, subMonths, format, startOfDay, endOfDay, isWithinInterval, subDays } from "date-fns";
 
 export interface Lead {
   id: string;
@@ -19,6 +19,8 @@ export interface Lead {
   primary_substance: string[] | null;
   who_seeking_help: string | null;
   message: string | null;
+  exclusivity: string | null;
+  qualified: boolean | null;
 }
 
 export interface DateRange {
@@ -30,8 +32,11 @@ export interface LeadAnalytics {
   // Monthly trend data
   monthlyTrends: { month: string; leads: number }[];
   
-  // Status breakdown
+  // Status breakdown (qualified/rejected/duplicate)
   statusBreakdown: { status: string; count: number; percentage: number }[];
+  
+  // Exclusivity breakdown (shared/exclusive)
+  exclusivityBreakdown: { type: string; count: number; percentage: number }[];
   
   // Conversion funnel
   conversionFunnel: {
@@ -43,7 +48,7 @@ export interface LeadAnalytics {
   
   // Response metrics
   responseMetrics: {
-    avgResponseTime: number; // in hours
+    avgResponseTime: number;
     respondedWithin24h: number;
     respondedWithin48h: number;
     notResponded: number;
@@ -54,9 +59,16 @@ export interface LeadAnalytics {
   
   // Summary stats
   totalLeads: number;
+  qualifiedLeads: number;
+  rejectedLeads: number;
+  duplicateLeads: number;
   thisMonthLeads: number;
   lastMonthLeads: number;
   growthRate: number;
+  
+  // Lead cap info
+  leadsRemaining: number;
+  leadCap: number;
   
   // Date range info
   dateRangeLabel?: string;
@@ -113,6 +125,7 @@ function getEmptyAnalytics(): LeadAnalytics {
   return {
     monthlyTrends: [],
     statusBreakdown: [],
+    exclusivityBreakdown: [],
     conversionFunnel: { new: 0, contacted: 0, qualified: 0, converted: 0 },
     responseMetrics: {
       avgResponseTime: 0,
@@ -122,9 +135,14 @@ function getEmptyAnalytics(): LeadAnalytics {
     },
     contactPreference: [],
     totalLeads: 0,
+    qualifiedLeads: 0,
+    rejectedLeads: 0,
+    duplicateLeads: 0,
     thisMonthLeads: 0,
     lastMonthLeads: 0,
     growthRate: 0,
+    leadsRemaining: 100,
+    leadCap: 100,
     leads: [],
   };
 }
@@ -135,7 +153,7 @@ function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: Dat
   const lastMonthStart = startOfMonth(subMonths(now, 1));
   const lastMonthEnd = startOfMonth(now);
 
-  // Monthly trends (last 6 months or based on date range)
+  // Monthly trends (last 6 months)
   const monthlyTrends: { month: string; leads: number }[] = [];
   for (let i = 5; i >= 0; i--) {
     const monthStart = startOfMonth(subMonths(now, i));
@@ -150,7 +168,7 @@ function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: Dat
     });
   }
 
-  // Status breakdown
+  // Status breakdown - use workflow status for conversion tracking
   const statusCounts: Record<string, number> = {};
   leads.forEach(lead => {
     statusCounts[lead.status] = (statusCounts[lead.status] || 0) + 1;
@@ -162,6 +180,26 @@ function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: Dat
     percentage: leads.length > 0 ? Math.round((count / leads.length) * 100) : 0,
   }));
 
+  // Exclusivity breakdown
+  const exclusivityCounts: Record<string, number> = { shared: 0, exclusive: 0 };
+  leads.forEach(lead => {
+    const exclusivity = lead.exclusivity || 'shared';
+    exclusivityCounts[exclusivity] = (exclusivityCounts[exclusivity] || 0) + 1;
+  });
+  
+  const exclusivityBreakdown = Object.entries(exclusivityCounts)
+    .filter(([_, count]) => count > 0)
+    .map(([type, count]) => ({
+      type: type === 'exclusive' ? 'Exclusive' : 'Shared',
+      count,
+      percentage: leads.length > 0 ? Math.round((count / leads.length) * 100) : 0,
+    }));
+
+  // Lead quality counts
+  const qualifiedLeads = leads.filter(l => l.qualified === true || l.status !== 'rejected' && l.status !== 'duplicate').length;
+  const rejectedLeads = leads.filter(l => l.status === 'rejected' || l.qualified === false).length;
+  const duplicateLeads = leads.filter(l => l.status === 'duplicate').length;
+
   // Conversion funnel
   const conversionFunnel = {
     new: leads.filter(l => l.status === "new").length,
@@ -170,12 +208,12 @@ function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: Dat
     converted: leads.filter(l => l.status === "converted").length,
   };
 
-  // Response metrics (simulate based on status - in real app would track timestamps)
+  // Response metrics (simulate based on status)
   const newLeads = leads.filter(l => l.status === "new").length;
   const respondedLeads = leads.filter(l => l.status !== "new").length;
   
   const responseMetrics = {
-    avgResponseTime: respondedLeads > 0 ? 12 : 0, // Simulated
+    avgResponseTime: respondedLeads > 0 ? 12 : 0,
     respondedWithin24h: Math.round(respondedLeads * 0.6),
     respondedWithin48h: Math.round(respondedLeads * 0.3),
     notResponded: newLeads,
@@ -192,7 +230,7 @@ function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: Dat
     count,
   }));
 
-  // Summary stats - use filtered leads for current stats but all leads for comparison
+  // Summary stats - current billing cycle (this month)
   const thisMonthLeads = leads.filter(l => new Date(l.created_at) >= thisMonthStart).length;
   const lastMonthLeads = leads.filter(l => {
     const date = new Date(l.created_at);
@@ -202,6 +240,14 @@ function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: Dat
   const growthRate = lastMonthLeads > 0 
     ? Math.round(((thisMonthLeads - lastMonthLeads) / lastMonthLeads) * 100)
     : thisMonthLeads > 0 ? 100 : 0;
+
+  // Lead cap calculations (100 per billing cycle)
+  const leadCap = 100;
+  const currentCycleQualifiedLeads = allTimeLeads.filter(l => {
+    const date = new Date(l.created_at);
+    return date >= thisMonthStart && (l.qualified !== false && l.status !== 'rejected' && l.status !== 'duplicate');
+  }).length;
+  const leadsRemaining = Math.max(0, leadCap - currentCycleQualifiedLeads);
 
   // Generate date range label
   let dateRangeLabel: string | undefined;
@@ -216,13 +262,19 @@ function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: Dat
   return {
     monthlyTrends,
     statusBreakdown,
+    exclusivityBreakdown,
     conversionFunnel,
     responseMetrics,
     contactPreference,
     totalLeads: leads.length,
+    qualifiedLeads,
+    rejectedLeads,
+    duplicateLeads,
     thisMonthLeads,
     lastMonthLeads,
     growthRate,
+    leadsRemaining,
+    leadCap,
     dateRangeLabel,
     leads,
   };
@@ -241,6 +293,7 @@ function formatStatus(status: string): string {
 
 // Preset date ranges
 export const DATE_RANGE_PRESETS = [
+  { label: "Current Billing Cycle", value: "billing_cycle", getRange: () => ({ from: startOfMonth(new Date()), to: new Date() }) },
   { label: "All Time", value: "all", getRange: () => ({ from: undefined, to: undefined }) },
   { label: "Last 7 Days", value: "7d", getRange: () => ({ from: subDays(new Date(), 7), to: new Date() }) },
   { label: "Last 14 Days", value: "14d", getRange: () => ({ from: subDays(new Date(), 14), to: new Date() }) },
