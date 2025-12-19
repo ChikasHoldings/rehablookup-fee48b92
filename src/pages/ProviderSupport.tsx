@@ -17,13 +17,11 @@ import {
   Send,
   ArrowRight,
   Headphones,
-  CheckCircle,
   ChevronRight,
-  Phone,
   FileText,
   Sparkles,
+  Phone,
 } from "lucide-react";
-import supportImage from "@/assets/provider-support-cta.jpg";
 
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
@@ -48,13 +46,6 @@ const faqs = [
     question: "Can I upgrade my listing?",
     answer: "Yes, contact our team to learn about featured placement and premium listing options.",
   },
-];
-
-const supportFeatures = [
-  "Average response time under 2 hours",
-  "Dedicated account managers for premium listings",
-  "Technical support for dashboard issues",
-  "Guidance on listing optimization",
 ];
 
 export default function ProviderSupport() {
@@ -90,77 +81,36 @@ export default function ProviderSupport() {
       />
 
       <main className="flex-1">
-        {/* Hero Section - Light styling */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-muted/50 to-background py-16 md:py-24">
-          {/* Decorative elements */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-            <div className="absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-accent/5 blur-3xl" />
-          </div>
+        {/* Hero Section - Centered, streamlined */}
+        <section className="relative overflow-hidden bg-gradient-to-b from-muted/40 to-background py-12 md:py-16">
+          {/* Subtle decorative elements */}
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+          <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
 
-          <div className="container relative">
-            <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 mb-6">
-                  <Headphones className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-primary">Provider Support</span>
-                </div>
-                
-                <h1 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-                  We're Here to
-                  <span className="block text-primary">Help You Succeed</span>
-                </h1>
-                
-                <p className="mt-6 text-lg text-muted-foreground max-w-lg">
-                  Get dedicated support from our team of experts. Whether you need help with your listing or have questions about our platform, we're just a message away.
-                </p>
-
-                <ul className="mt-8 space-y-3">
-                  {supportFeatures.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-3 text-muted-foreground">
-                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-8 flex flex-wrap gap-4">
-                  <Button size="lg" className="gap-2" asChild>
-                    <a href="#contact-form">
-                      Contact Support
-                      <ArrowRight className="h-4 w-4" />
-                    </a>
-                  </Button>
-                  <Button variant="outline" size="lg" asChild>
-                    <Link to="/provider-resources">
-                      View Resources
-                    </Link>
-                  </Button>
-                </div>
+          <div className="container relative z-10 px-5 md:px-6">
+            <div className="text-center max-w-3xl mx-auto">
+              <div className="mb-4 md:mb-4 inline-flex items-center gap-2.5 md:gap-2 rounded-full bg-accent/10 px-5 md:px-4 py-2.5 md:py-1.5">
+                <Headphones className="h-5 w-5 md:h-4 md:w-4 text-accent" />
+                <span className="text-base md:text-sm font-medium text-accent">Provider Support</span>
               </div>
-
-              <div className="relative">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <img 
-                    src={supportImage} 
-                    alt="Support team ready to help"
-                    className="w-full h-auto"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
-                </div>
-                
-                {/* Floating card */}
-                <div className="absolute -bottom-6 -left-6 rounded-xl bg-card border border-border p-4 shadow-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
-                      <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">Support Online</p>
-                      <p className="text-xs text-muted-foreground">Avg. response: 2 hours</p>
-                    </div>
-                  </div>
-                </div>
+              <h1 className="mb-4 md:mb-3 font-display text-3xl md:text-3xl lg:text-4xl font-bold text-foreground">
+                We're Here to Help
+              </h1>
+              <p className="text-lg md:text-base text-muted-foreground max-w-2xl mx-auto mb-8">
+                Get dedicated support from our team of experts. Whether you need help with your listing or have questions about our platform, we're just a message away.
+              </p>
+              <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
+                <a href="#contact-form" className="w-full sm:w-auto">
+                  <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+                    Contact Support
+                    <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
+                  </Button>
+                </a>
+                <Link to="/provider-resources" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+                    View Resources
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
