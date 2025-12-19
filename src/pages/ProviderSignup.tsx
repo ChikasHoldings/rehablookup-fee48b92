@@ -1290,9 +1290,9 @@ export default function ProviderSignup() {
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-muted-foreground">
-                            {PLAN_DETAILS[formData.selectedPlan].qualified_lead_limit === 0 
-                              ? "No qualified leads" 
-                              : `${PLAN_DETAILS[formData.selectedPlan].qualified_lead_limit} leads/mo`}
+                            {formData.selectedPlan === "basic" 
+                              ? `${PLAN_DETAILS[formData.selectedPlan].lead_limit} lead (lifetime)` 
+                              : `${PLAN_DETAILS[formData.selectedPlan].lead_limit} leads/mo`}
                           </p>
                         </div>
                       </div>
