@@ -118,7 +118,9 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const resend = new Resend(resendApiKey);
-    const emailResponse = await resend.emails.send({
+    
+    // Send notification to support team
+    const supportEmailResponse = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: ["providers@rehablookup.com"],
       subject: `[Provider Support] ${topicLabel} - ${name}`,
@@ -126,7 +128,71 @@ const handler = async (req: Request): Promise<Response> => {
       reply_to: email,
     });
 
-    console.log("[SEND-PROVIDER-SUPPORT] Email sent:", emailResponse);
+    console.log("[SEND-PROVIDER-SUPPORT] Support email sent:", supportEmailResponse);
+
+    // Send confirmation email to user
+    const confirmationHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+          
+          <tr>
+            <td style="background: #1B365D; padding: 20px 28px;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 600;">
+                We've Received Your Message
+              </h1>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding: 28px;">
+              <p style="margin: 0 0 16px 0; font-size: 15px; color: #111827; line-height: 1.6;">
+                Hi ${name},
+              </p>
+              <p style="margin: 0 0 16px 0; font-size: 15px; color: #111827; line-height: 1.6;">
+                Thank you for reaching out to our provider support team. We've received your message regarding <strong>${topicLabel}</strong> and will get back to you within 24 hours.
+              </p>
+              
+              <div style="background: #f9fafb; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                <p style="margin: 0 0 6px 0; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Your Message</p>
+                <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.5; white-space: pre-wrap;">${message}</p>
+              </div>
+              
+              <p style="margin: 0 0 16px 0; font-size: 15px; color: #111827; line-height: 1.6;">
+                In the meantime, you might find answers in our <a href="https://rehablookup.com/provider-faq" style="color: #1B365D; text-decoration: underline;">Provider FAQ</a> or <a href="https://rehablookup.com/provider-resources" style="color: #1B365D; text-decoration: underline;">Resources</a> section.
+              </p>
+              
+              <p style="margin: 24px 0 0 0; font-size: 14px; color: #6b7280;">
+                Best regards,<br>
+                The RehabLookup Team
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+
+    const confirmationResponse = await resend.emails.send({
+      from: "RehabLookup <no-reply@rehablookup.com>",
+      to: [email],
+      subject: "We've received your support request",
+      html: confirmationHtml,
+    });
+
+    console.log("[SEND-PROVIDER-SUPPORT] Confirmation email sent:", confirmationResponse);
 
     return new Response(
       JSON.stringify({ success: true }),
