@@ -26,6 +26,8 @@ import HolisticTherapy from "./pages/treatment-types/HolisticTherapy";
 import DetoxPrograms from "./pages/treatment-types/DetoxPrograms";
 import StateDetoxPrograms from "./pages/treatment-types/StateDetoxPrograms";
 import CityDetoxPrograms from "./pages/treatment-types/CityDetoxPrograms";
+import StateInpatientRehab from "./pages/treatment-types/StateInpatientRehab";
+import CityInpatientRehab from "./pages/treatment-types/CityInpatientRehab";
 import HowItWorks from "./pages/HowItWorks";
 import ForProviders from "./pages/ForProviders";
 import ProviderResources from "./pages/ProviderResources";
@@ -111,6 +113,8 @@ const App = () => (
             <Route path="/treatment-types/alcohol-rehabilitation" element={<AlcoholRehabilitation />} />
             <Route path="/treatment-types/dual-diagnosis" element={<DualDiagnosisTreatment />} />
             <Route path="/treatment-types/residential-inpatient" element={<ResidentialInpatient />} />
+            <Route path="/treatment-types/residential-inpatient/:stateSlug" element={<StateInpatientRehab />} />
+            <Route path="/treatment-types/residential-inpatient/:stateSlug/:citySlug" element={<CityInpatientRehab />} />
             <Route path="/treatment-types/outpatient-programs" element={<OutpatientPrograms />} />
             <Route path="/treatment-types/holistic-therapy" element={<HolisticTherapy />} />
             <Route path="/treatment-types/detox-programs" element={<DetoxPrograms />} />
