@@ -438,8 +438,44 @@ const DetoxPrograms = () => {
         </div>
       </section>
 
+      {/* State Detox Pages */}
+      <section className="bg-secondary/30 section-padding">
+        <div className="container">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+              Find Detox Centers by State
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Browse medical detox programs in your state
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            {[
+              { name: "California", slug: "california" },
+              { name: "Florida", slug: "florida" },
+              { name: "Texas", slug: "texas" },
+              { name: "New York", slug: "new-york" },
+              { name: "Arizona", slug: "arizona" },
+              { name: "Colorado", slug: "colorado" },
+              { name: "Pennsylvania", slug: "pennsylvania" },
+              { name: "Illinois", slug: "illinois" },
+              { name: "Ohio", slug: "ohio" },
+              { name: "Georgia", slug: "georgia" },
+              { name: "New Jersey", slug: "new-jersey" },
+              { name: "Massachusetts", slug: "massachusetts" },
+            ].map((state) => (
+              <Link key={state.slug} to={`/treatment-types/detox-programs/${state.slug}`}>
+                <Button variant="outline" size="sm">
+                  Detox in {state.name}
+                </Button>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Other Treatment Types */}
-      <section className="border-t bg-secondary/30 section-padding-sm">
+      <section className="border-t section-padding-sm">
         <div className="container">
           <h2 className="mb-6 text-center text-xl font-bold text-foreground">
             Continue Your Recovery Journey
