@@ -179,3 +179,6 @@ verify_jwt = false
 
 [functions.send-credential-notification]
 verify_jwt = true
+
+[functions.update-stripe-products]
+verify_jwt = false
