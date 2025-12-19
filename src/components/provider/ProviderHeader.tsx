@@ -25,6 +25,7 @@ import {
   Plus,
   Lock,
   AlertCircle,
+  ChevronRight,
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import {
@@ -33,7 +34,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -89,33 +89,40 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   const approvedFacilities = facilities.filter(f => f.status === "approved");
   const pendingFacilities = facilities.filter(f => f.status === "pending");
 
-  const getPlanBadgeConfig = (plan: string) => {
+  const getPlanConfig = (plan: string) => {
     switch (plan) {
       case "featured":
         return {
           label: "Featured",
           icon: Crown,
-          bgClass: "bg-gradient-to-r from-amber-500 to-yellow-400",
-          textClass: "text-white",
+          gradient: "from-amber-500 to-yellow-400",
+          textColor: "text-amber-600 dark:text-amber-400",
+          bgColor: "bg-amber-500/10",
+          borderColor: "border-amber-500/20",
         };
       case "professional":
         return {
-          label: "Pro",
+          label: "Professional",
           icon: Star,
-          bgClass: "bg-gradient-to-r from-emerald-500 to-teal-400",
-          textClass: "text-white",
+          gradient: "from-emerald-500 to-teal-400",
+          textColor: "text-emerald-600 dark:text-emerald-400",
+          bgColor: "bg-emerald-500/10",
+          borderColor: "border-emerald-500/20",
         };
       default:
         return {
           label: "Basic",
           icon: Sparkles,
-          bgClass: "bg-white/20",
-          textClass: "text-white/80",
+          gradient: "from-slate-400 to-slate-500",
+          textColor: "text-muted-foreground",
+          bgColor: "bg-muted/50",
+          borderColor: "border-border",
         };
     }
   };
 
-  const planConfig = getPlanBadgeConfig(subscription?.plan || "basic");
+  const planConfig = getPlanConfig(subscription?.plan || "basic");
+  const PlanIcon = planConfig.icon;
   
   const initials = userName
     ?.split(" ")
@@ -152,24 +159,6 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     if (facility.id !== selectedFacility?.id) {
       setSelectedFacility(facility);
     }
-  };
-
-  const getStatusBadge = (status: string) => {
-    if (status === "approved") {
-      return (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-600 border-green-500/20">
-          Live
-        </Badge>
-      );
-    }
-    if (status === "pending") {
-      return (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-600 border-amber-500/20">
-          Pending
-        </Badge>
-      );
-    }
-    return null;
   };
 
   return (
@@ -232,14 +221,14 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 bg-card" sideOffset={8}>
-              <DropdownMenuLabel className="flex items-center justify-between py-3">
-                <span className="font-semibold">Notifications</span>
+              <div className="flex items-center justify-between py-3 px-3">
+                <span className="font-semibold text-sm">Notifications</span>
                 {unreadCount > 0 && (
                   <Badge variant="secondary" className="text-xs h-5 px-2">
                     {unreadCount} new
                   </Badge>
                 )}
-              </DropdownMenuLabel>
+              </div>
               <DropdownMenuSeparator />
               {notificationsLoading ? (
                 <div className="py-8 text-center">
@@ -316,14 +305,14 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                     {selectedFacility?.name || facilityName || "Select Facility"}
                   </span>
                 </div>
-                <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white shrink-0" />
+                <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white/70 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 bg-card" sideOffset={8}>
-              {/* User Info Header */}
-              <DropdownMenuLabel className="font-normal py-3">
+            <DropdownMenuContent align="end" className="w-[280px] p-0 bg-card shadow-xl border-border/50" sideOffset={8}>
+              {/* User Profile Header */}
+              <div className="p-4 bg-gradient-to-br from-muted/30 to-muted/10">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden">
+                  <div className="h-11 w-11 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden shadow-sm">
                     {facilityLogo ? (
                       <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -331,257 +320,225 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                     )}
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{userName || "Provider"}</p>
+                    <p className="text-sm font-semibold truncate text-foreground">{userName || "Provider"}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {selectedFacility?.name || facilityName || "No facility selected"}
+                      {selectedFacility?.city && selectedFacility?.state 
+                        ? `${selectedFacility.city}, ${selectedFacility.state}` 
+                        : "Manage your account"}
                     </p>
                   </div>
                 </div>
-              </DropdownMenuLabel>
-              
-              <DropdownMenuSeparator />
-
-              {/* Your Locations Section */}
-              <div className="px-3 py-2 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Your Locations</span>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {facilities.length} / {locationLimit}
-                  </Badge>
-                </div>
-                {!canAddMore && (
-                  <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
-                    <Lock className="h-3 w-3" />
-                    Upgrade for more locations
-                  </p>
-                )}
               </div>
 
-              {/* Location List */}
-              {facilitiesLoading ? (
-                <div className="p-3 space-y-2">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="flex items-center gap-2.5">
-                      <Skeleton className="h-8 w-8 rounded-lg" />
-                      <div className="flex-1">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-24 mt-1" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : facilities.length === 0 ? (
-                <div className="p-4 text-center">
-                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center mx-auto mb-2">
-                    <Building2 className="h-5 w-5 text-muted-foreground" />
+              {/* Plan Badge - Compact */}
+              <Link 
+                to="/provider/billing"
+                className={cn(
+                  "flex items-center justify-between mx-3 my-2.5 px-3 py-2 rounded-lg transition-all",
+                  planConfig.bgColor,
+                  "border",
+                  planConfig.borderColor,
+                  "hover:opacity-80"
+                )}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className={cn(
+                    "h-7 w-7 rounded-full flex items-center justify-center bg-gradient-to-br",
+                    planConfig.gradient
+                  )}>
+                    <PlanIcon className="h-3.5 w-3.5 text-white" />
                   </div>
-                  <p className="text-sm text-muted-foreground">No facilities yet</p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">Add your first location</p>
+                  <div className="flex flex-col">
+                    <span className={cn("text-xs font-semibold", planConfig.textColor)}>
+                      {planConfig.label} Plan
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {subscription?.plan === 'basic' ? 'Upgrade available' : 'Active subscription'}
+                    </span>
+                  </div>
                 </div>
-              ) : (
-                <div className="max-h-[180px] overflow-y-auto">
-                  {/* Approved facilities */}
-                  {approvedFacilities.map((facility) => (
-                    <DropdownMenuItem 
-                      key={facility.id}
-                      className={cn(
-                        "flex items-center justify-between cursor-pointer py-2.5 px-3",
-                        facility.id === selectedFacility?.id && "bg-primary/5"
-                      )}
-                      onClick={() => handleFacilitySelect(facility)}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+
+              <DropdownMenuSeparator className="my-0" />
+
+              {/* Locations Section */}
+              <div className="py-2">
+                <div className="flex items-center justify-between px-3 py-1.5">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Locations</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    {facilities.length}/{locationLimit}
+                  </span>
+                </div>
+
+                {/* Location List */}
+                {facilitiesLoading ? (
+                  <div className="px-3 py-2 space-y-2">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="flex items-center gap-2.5">
+                        <Skeleton className="h-8 w-8 rounded-lg" />
+                        <div className="flex-1">
+                          <Skeleton className="h-3.5 w-28" />
+                          <Skeleton className="h-2.5 w-20 mt-1" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : facilities.length === 0 ? (
+                  <div className="px-3 py-4 text-center">
+                    <Building2 className="h-8 w-8 text-muted-foreground/30 mx-auto mb-1.5" />
+                    <p className="text-xs text-muted-foreground">No facilities yet</p>
+                  </div>
+                ) : (
+                  <div className="max-h-[140px] overflow-y-auto px-1.5">
+                    {/* Approved facilities */}
+                    {approvedFacilities.map((facility) => (
+                      <button 
+                        key={facility.id}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-left",
+                          facility.id === selectedFacility?.id 
+                            ? "bg-primary/8 border border-primary/20" 
+                            : "hover:bg-muted/50"
+                        )}
+                        onClick={() => handleFacilitySelect(facility)}
+                      >
+                        <div className={cn(
+                          "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden",
+                          facility.id === selectedFacility?.id ? "bg-primary/15" : "bg-muted"
+                        )}>
                           {facility.logo_url ? (
                             <img src={facility.logo_url} alt="" className="h-full w-full object-cover" />
                           ) : (
-                            <Building2 className="h-4 w-4 text-primary" />
+                            <Building2 className={cn(
+                              "h-4 w-4",
+                              facility.id === selectedFacility?.id ? "text-primary" : "text-muted-foreground"
+                            )} />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium text-sm">{facility.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className={cn(
+                            "truncate text-sm",
+                            facility.id === selectedFacility?.id ? "font-medium text-foreground" : "text-foreground/80"
+                          )}>
+                            {facility.name}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground truncate">
                             {facility.city}, {facility.state}
                           </p>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {getStatusBadge(facility.status)}
-                        {facility.id === selectedFacility?.id && (
-                          <Check className="h-4 w-4 text-primary" />
-                        )}
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-
-                  {/* Pending facilities */}
-                  {pendingFacilities.length > 0 && (
-                    <>
-                      {approvedFacilities.length > 0 && (
-                        <div className="px-3 py-1.5">
-                          <span className="text-xs text-muted-foreground">Pending Review</span>
-                        </div>
-                      )}
-                      {pendingFacilities.map((facility) => (
-                        <DropdownMenuItem 
-                          key={facility.id}
-                          className={cn(
-                            "flex items-center justify-between cursor-pointer py-2.5 px-3 opacity-75",
-                            facility.id === selectedFacility?.id && "bg-primary/5 opacity-100"
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                          {facility.id === selectedFacility?.id && (
+                            <Check className="h-4 w-4 text-primary" />
                           )}
-                          onClick={() => handleFacilitySelect(facility)}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 overflow-hidden">
-                              {facility.logo_url ? (
-                                <img src={facility.logo_url} alt="" className="h-full w-full object-cover" />
-                              ) : (
-                                <AlertCircle className="h-4 w-4 text-amber-600" />
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate font-medium text-sm">{facility.name}</p>
-                              <p className="text-xs text-muted-foreground truncate">
-                                {facility.city}, {facility.state}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {getStatusBadge(facility.status)}
-                            {facility.id === selectedFacility?.id && (
-                              <Check className="h-4 w-4 text-primary" />
-                            )}
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                    </>
-                  )}
-                </div>
-              )}
+                        </div>
+                      </button>
+                    ))}
 
-              {/* Add New Location */}
-              <DropdownMenuSeparator />
-              {canAddMore ? (
-                <DropdownMenuItem asChild>
+                    {/* Pending facilities */}
+                    {pendingFacilities.map((facility) => (
+                      <button 
+                        key={facility.id}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors text-left opacity-70",
+                          facility.id === selectedFacility?.id 
+                            ? "bg-amber-500/5 border border-amber-500/20" 
+                            : "hover:bg-muted/50"
+                        )}
+                        onClick={() => handleFacilitySelect(facility)}
+                      >
+                        <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 overflow-hidden">
+                          {facility.logo_url ? (
+                            <img src={facility.logo_url} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4 text-amber-600" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm text-foreground/80">{facility.name}</p>
+                          <p className="text-[11px] text-muted-foreground truncate">Pending review</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          {facility.id === selectedFacility?.id && (
+                            <Check className="h-4 w-4 text-amber-600" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add Location Link */}
+                {canAddMore ? (
                   <Link 
                     to="/provider/add-location" 
-                    className="flex items-center gap-2.5 cursor-pointer text-primary py-2.5 px-3"
+                    className="flex items-center gap-2.5 mx-1.5 mt-1 px-2 py-2 rounded-md text-primary hover:bg-primary/5 transition-colors"
                   >
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center border border-dashed border-primary/30">
                       <Plus className="h-4 w-4" />
                     </div>
-                    <span className="font-medium">Add New Location</span>
+                    <span className="text-sm font-medium">Add Location</span>
                   </Link>
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem asChild>
+                ) : (
                   <Link 
                     to="/provider/billing" 
-                    className="flex items-center gap-2.5 cursor-pointer py-2.5 px-3"
+                    className="flex items-center gap-2.5 mx-1.5 mt-1 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
                   >
-                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                      <Crown className="h-4 w-4 text-amber-600" />
+                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
-                    <div className="flex-1">
-                      <span className="font-medium text-sm">Upgrade for More</span>
-                      <p className="text-xs text-muted-foreground">
-                        {currentPlan === "professional" ? "Featured: up to 5" : "Upgrade plan"}
-                      </p>
-                    </div>
+                    <span className="text-sm text-muted-foreground">Upgrade for more</span>
                   </Link>
-                </DropdownMenuItem>
-              )}
-              
-              <DropdownMenuSeparator />
-
-              {/* Plan Badge Section */}
-              <div className="px-2 py-2">
-                <Link 
-                  to="/provider/billing"
-                  className={`flex items-center justify-between w-full p-2.5 rounded-lg ${
-                    subscription?.plan === 'featured' 
-                      ? 'bg-gradient-to-r from-amber-500/10 to-yellow-400/10 border border-amber-500/20' 
-                      : subscription?.plan === 'professional'
-                        ? 'bg-gradient-to-r from-emerald-500/10 to-teal-400/10 border border-emerald-500/20'
-                        : 'bg-muted/50 border border-border'
-                  } hover:opacity-90 transition-all group`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                      subscription?.plan === 'featured'
-                        ? 'bg-gradient-to-br from-amber-500 to-yellow-400'
-                        : subscription?.plan === 'professional'
-                          ? 'bg-gradient-to-br from-emerald-500 to-teal-400'
-                          : 'bg-muted-foreground/20'
-                    }`}>
-                      <planConfig.icon className={`h-4 w-4 ${
-                        subscription?.plan === 'featured' || subscription?.plan === 'professional'
-                          ? 'text-white'
-                          : 'text-muted-foreground'
-                      }`} />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className={`text-sm font-semibold ${
-                        subscription?.plan === 'featured'
-                          ? 'text-amber-600 dark:text-amber-400'
-                          : subscription?.plan === 'professional'
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : 'text-muted-foreground'
-                      }`}>
-                        {planConfig.label} Plan
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {subscription?.plan === 'basic' ? 'Upgrade for more leads' : '100 leads/month'}
-                      </span>
-                    </div>
-                  </div>
-                  {subscription?.plan === 'basic' && (
-                    <span className="text-xs font-medium text-primary group-hover:underline">
-                      Upgrade
-                    </span>
-                  )}
-                </Link>
+                )}
               </div>
               
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="my-0" />
               
-              {/* Account Actions */}
-              <DropdownMenuItem asChild>
-                <Link to="/provider/listing" className="flex items-center gap-2.5 cursor-pointer py-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  My Listing
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/provider/settings" className="flex items-center gap-2.5 cursor-pointer py-2">
-                  <Settings className="h-4 w-4 text-muted-foreground" />
-                  Account Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/provider/billing" className="flex items-center gap-2.5 cursor-pointer py-2">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  Billing & Plans
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/provider/help" className="flex items-center gap-2.5 cursor-pointer py-2">
-                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  Help & Support
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={onLogout}
-                className="flex items-center gap-2.5 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 py-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </DropdownMenuItem>
+              {/* Quick Actions */}
+              <div className="py-1.5">
+                <DropdownMenuItem asChild>
+                  <Link to="/provider/listing" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">My Listing</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/provider/settings" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
+                    <Settings className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/provider/billing" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
+                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Billing</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/provider/help" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Help</span>
+                  </Link>
+                </DropdownMenuItem>
+              </div>
+              
+              <DropdownMenuSeparator className="my-0" />
+              
+              {/* Sign Out */}
+              <div className="p-1.5">
+                <DropdownMenuItem 
+                  onClick={onLogout}
+                  className="flex items-center gap-3 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 py-2 px-3 mx-0 rounded-md"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="text-sm">Sign Out</span>
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
