@@ -976,6 +976,7 @@ export type Database = {
           eligibility_check_result: Json | null
           exclusivity: string | null
           id: string
+          lead_deducted_at: string | null
           lead_id: string | null
           lead_limit: number | null
           plan_tier: string | null
@@ -992,6 +993,7 @@ export type Database = {
           eligibility_check_result?: Json | null
           exclusivity?: string | null
           id?: string
+          lead_deducted_at?: string | null
           lead_id?: string | null
           lead_limit?: number | null
           plan_tier?: string | null
@@ -1008,6 +1010,7 @@ export type Database = {
           eligibility_check_result?: Json | null
           exclusivity?: string | null
           id?: string
+          lead_deducted_at?: string | null
           lead_id?: string | null
           lead_limit?: number | null
           plan_tier?: string | null
