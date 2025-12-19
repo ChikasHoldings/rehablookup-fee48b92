@@ -287,24 +287,23 @@ Choose the plan that matches your facility's goals.
 ## Available Plans
 
 ### Basic Plan
-- Up to 10 leads/month
+- Free listing (no leads included)
 - Standard listing placement
 - Email support
-- Basic analytics
 
 ### Professional Plan
-- Up to 50 leads/month
+- Up to 100 qualified leads/month (shared with max 2 providers)
 - Featured listing badge
 - Priority support
 - Advanced analytics
-- Lead export
+- Up to 3 facility locations
 
-### Enterprise Plan
-- Unlimited leads
-- Premium placement
-- Dedicated account manager
-- Custom integrations
-- Multi-location support
+### Featured Plan
+- Up to 100 exclusive qualified leads/month (100% exclusive)
+- Homepage featured placement
+- Priority support
+- Premium analytics
+- Up to 5 facility locations
 
 ## Upgrading Your Plan
 
