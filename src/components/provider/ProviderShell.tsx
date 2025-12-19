@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, memo, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ProviderHeader } from "./ProviderHeader";
@@ -13,9 +13,7 @@ import { SelectedFacilityProvider, useSelectedFacility } from "@/contexts/Select
 import { setSentryUser, clearSentryUser } from "@/lib/sentry";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 
-// Memoized sidebar to prevent re-renders
-const MemoizedSidebar = memo(ProviderSidebar);
-const MemoizedHeader = memo(ProviderHeader);
+// Use components directly - memo can cause issues with hot reloading
 
 function ProviderShellContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -132,7 +130,7 @@ function ProviderShellContent() {
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Fixed Header */}
       <div className="flex-shrink-0 z-50">
-        <MemoizedHeader
+        <ProviderHeader
           facilityName={facility?.name}
           facilityId={facility?.id}
           facilitySlug={facility?.slug}
@@ -145,7 +143,7 @@ function ProviderShellContent() {
       <div className="flex flex-1 min-h-0">
         {/* Fixed Desktop Sidebar */}
         <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
-          <MemoizedSidebar />
+          <ProviderSidebar />
         </aside>
 
         {/* Mobile Sidebar Sheet */}
@@ -156,7 +154,7 @@ function ProviderShellContent() {
                 <p className="font-display font-semibold text-foreground">Menu</p>
               </div>
               <div className="flex-1 overflow-y-auto">
-                <MemoizedSidebar onNavigate={handleCloseSidebar} />
+                <ProviderSidebar onNavigate={handleCloseSidebar} />
               </div>
             </div>
           </SheetContent>
