@@ -234,18 +234,18 @@ const Index = () => {
         />
         
         {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70" />
 
         {/* Content */}
-        <div className="container relative py-16 md:py-20 lg:py-24">
+        <div className="container relative py-12 md:py-14 lg:py-16">
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
-            <h1 className="mb-4 font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.5rem] animate-fade-in">
+            <h1 className="mb-3 font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
               Find Drug & Alcohol Rehab Options
             </h1>
 
             {/* Subheadline */}
-            <p className="mb-8 md:mb-10 text-base md:text-lg text-white/85 animate-fade-in max-w-2xl mx-auto" style={{ animationDelay: "50ms" }}>
+            <p className="mb-6 md:mb-8 text-sm md:text-base text-white/85 animate-fade-in max-w-xl mx-auto" style={{ animationDelay: "50ms" }}>
               Find and compare addiction treatment facilities across the United States.
             </p>
 
@@ -255,13 +255,45 @@ const Index = () => {
             </div>
 
             {/* Provider CTA */}
-            <div className="mt-6 animate-fade-in" style={{ animationDelay: "150ms" }}>
+            <div className="mt-5 animate-fade-in" style={{ animationDelay: "150ms" }}>
               <Link 
                 to="/for-providers" 
-                className="inline-flex items-center gap-1 text-sm text-white/80 hover:text-white underline underline-offset-4 transition-colors"
+                className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"
               >
                 Get Listed On Our Site
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Bar */}
+      <section className="relative bg-primary border-y border-primary-foreground/10">
+        <div className="container py-4 md:py-5">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 md:gap-x-10 lg:gap-x-14">
+            <div className="flex items-center gap-2 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
+                <CheckCircle className="h-4 w-4 text-accent" />
+              </div>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Verified Centers</span>
+            </div>
+            <div className="flex items-center gap-2 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
+                <Heart className="h-4 w-4 text-accent" />
+              </div>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">10,000+ Helped</span>
+            </div>
+            <div className="flex items-center gap-2 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
+                <Clock className="h-4 w-4 text-accent" />
+              </div>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">24/7 Support</span>
+            </div>
+            <div className="flex items-center gap-2 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 transition-all group-hover:bg-white/15 group-hover:ring-white/30">
+                <Phone className="h-4 w-4 text-accent" />
+              </div>
+              <span className="text-xs md:text-sm font-medium text-primary-foreground/90">Free Consultation</span>
             </div>
           </div>
         </div>
