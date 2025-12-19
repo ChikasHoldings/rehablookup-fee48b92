@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Upload, 
@@ -14,7 +21,8 @@ import {
   CheckCircle, 
   Clock,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +32,7 @@ interface CredentialDocument {
   document_name: string;
   document_url: string;
   document_type: string;
+  document_category?: string;
   status: 'pending' | 'verified' | 'rejected';
   uploaded_at: string;
   verified_at?: string | null;
@@ -44,11 +53,78 @@ const ALLOWED_FILE_TYPES = [
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+// Document category definitions with keywords for auto-detection
+const DOCUMENT_CATEGORIES = [
+  { value: 'license', label: 'License', keywords: ['license', 'lic', 'licensing', 'licensed'] },
+  { value: 'certificate', label: 'Certificate', keywords: ['certificate', 'cert', 'certification', 'certified', 'carf', 'jcaho', 'joint commission'] },
+  { value: 'insurance', label: 'Insurance', keywords: ['insurance', 'liability', 'malpractice', 'coverage', 'policy', 'insured'] },
+  { value: 'accreditation', label: 'Accreditation', keywords: ['accreditation', 'accredited', 'accredit'] },
+  { value: 'dea', label: 'DEA Registration', keywords: ['dea', 'drug enforcement', 'controlled substance'] },
+  { value: 'npi', label: 'NPI Documentation', keywords: ['npi', 'national provider'] },
+  { value: 'business', label: 'Business License', keywords: ['business', 'llc', 'incorporation', 'articles', 'ein', 'tax'] },
+  { value: 'staff', label: 'Staff Credentials', keywords: ['staff', 'employee', 'personnel', 'clinician', 'therapist', 'counselor', 'doctor', 'nurse'] },
+  { value: 'other', label: 'Other', keywords: [] },
+];
+
+// Auto-detect document category from filename and document name
+function detectDocumentCategory(fileName: string, documentName: string): { category: string; confidence: 'high' | 'medium' | 'low' } {
+  const searchText = `${fileName} ${documentName}`.toLowerCase();
+  
+  let bestMatch = { category: 'other', score: 0 };
+  
+  for (const cat of DOCUMENT_CATEGORIES) {
+    if (cat.value === 'other') continue;
+    
+    let matchScore = 0;
+    for (const keyword of cat.keywords) {
+      if (searchText.includes(keyword)) {
+        // Longer keywords get higher scores for more specific matches
+        matchScore += keyword.length;
+      }
+    }
+    
+    if (matchScore > bestMatch.score) {
+      bestMatch = { category: cat.value, score: matchScore };
+    }
+  }
+  
+  // Determine confidence based on score
+  let confidence: 'high' | 'medium' | 'low';
+  if (bestMatch.score >= 10) {
+    confidence = 'high';
+  } else if (bestMatch.score >= 5) {
+    confidence = 'medium';
+  } else {
+    confidence = 'low';
+  }
+  
+  return { category: bestMatch.category, confidence };
+}
+
 export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [documentName, setDocumentName] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("other");
+  const [detectedCategory, setDetectedCategory] = useState<{ category: string; confidence: 'high' | 'medium' | 'low' } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Auto-detect category when document name or file changes
+  useEffect(() => {
+    if (documentName || selectedFile) {
+      const fileName = selectedFile?.name || '';
+      const detected = detectDocumentCategory(fileName, documentName);
+      setDetectedCategory(detected);
+      
+      // Auto-set category if confidence is high or medium
+      if (detected.confidence !== 'low' && detected.category !== 'other') {
+        setSelectedCategory(detected.category);
+      }
+    } else {
+      setDetectedCategory(null);
+    }
+  }, [documentName, selectedFile]);
 
   // Fetch existing credential documents
   const { data: documents = [], isLoading } = useQuery({
@@ -61,7 +137,6 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
         .order("uploaded_at", { ascending: false });
       
       if (error) {
-        // Table might not exist yet, return empty array
         console.warn("Error fetching credential documents:", error);
         return [];
       }
@@ -70,7 +145,7 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
     enabled: !!facilityId,
   });
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -81,6 +156,7 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
         description: "Please upload a PDF, JPG, PNG, or WebP file.",
         variant: "destructive",
       });
+      event.target.value = '';
       return;
     }
 
@@ -91,13 +167,33 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
         description: "Please upload a file smaller than 10MB.",
         variant: "destructive",
       });
+      event.target.value = '';
+      return;
+    }
+
+    setSelectedFile(file);
+    
+    // Auto-fill document name from filename if empty
+    if (!documentName.trim()) {
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ');
+      setDocumentName(nameWithoutExt);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      toast({
+        title: "No file selected",
+        description: "Please select a file to upload.",
+        variant: "destructive",
+      });
       return;
     }
 
     if (!documentName.trim()) {
       toast({
         title: "Document name required",
-        description: "Please enter a name for this document (e.g., 'State License', 'CARF Certificate').",
+        description: "Please enter a name for this document.",
         variant: "destructive",
       });
       return;
@@ -107,13 +203,13 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
 
     try {
       // Generate a unique filename
-      const fileExt = file.name.split('.').pop();
+      const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${userId}/${facilityId}/credentials/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
       // Upload to storage
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("facility-images")
-        .upload(fileName, file, {
+        .upload(fileName, selectedFile, {
           cacheControl: "3600",
           upsert: false,
         });
@@ -127,29 +223,40 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
         .from("facility-images")
         .getPublicUrl(fileName);
 
+      // Get category label for display
+      const categoryLabel = DOCUMENT_CATEGORIES.find(c => c.value === selectedCategory)?.label || 'Other';
+
       // Save document record to database
       const { error: dbError } = await supabase
         .from("facility_credential_documents")
         .insert({
           facility_id: facilityId,
-          document_name: documentName.trim(),
+          document_name: `${documentName.trim()} (${categoryLabel})`,
           document_url: urlData.publicUrl,
-          document_type: file.type,
+          document_type: selectedFile.type,
           status: 'pending',
         });
 
       if (dbError) {
-        // If DB insert fails, try to clean up the uploaded file
         await supabase.storage.from("facility-images").remove([fileName]);
         throw dbError;
       }
 
       toast({
         title: "Document uploaded",
-        description: "Your credential document has been submitted for verification.",
+        description: `Your ${categoryLabel.toLowerCase()} has been submitted for verification.`,
       });
 
+      // Reset form
       setDocumentName("");
+      setSelectedFile(null);
+      setSelectedCategory("other");
+      setDetectedCategory(null);
+      
+      // Reset file input
+      const fileInput = document.getElementById('credential-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      
       queryClient.invalidateQueries({ queryKey: ["facility-credentials-docs", facilityId] });
     } catch (error: any) {
       console.error("Error uploading document:", error);
@@ -160,8 +267,6 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
       });
     } finally {
       setIsUploading(false);
-      // Reset the file input
-      event.target.value = '';
     }
   };
 
@@ -223,6 +328,20 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
     }
   };
 
+  const getCategoryBadge = (docName: string) => {
+    const lowerName = docName.toLowerCase();
+    for (const cat of DOCUMENT_CATEGORIES) {
+      if (lowerName.includes(cat.label.toLowerCase())) {
+        return (
+          <Badge variant="outline" className="text-xs ml-1">
+            {cat.label}
+          </Badge>
+        );
+      }
+    }
+    return null;
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -234,6 +353,32 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
 
       {/* Upload Form */}
       <div className="space-y-3 p-4 rounded-lg border border-dashed border-border bg-muted/30">
+        {/* File Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="credential-upload" className="text-xs">Select File</Label>
+          <div className="flex items-center gap-2">
+            <Label
+              htmlFor="credential-upload"
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer hover:bg-muted transition-colors",
+                isUploading && "opacity-50 pointer-events-none"
+              )}
+            >
+              <Upload className="h-4 w-4" />
+              {selectedFile ? selectedFile.name : "Choose File (PDF, JPG, PNG)"}
+            </Label>
+            <input
+              id="credential-upload"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={isUploading}
+            />
+          </div>
+        </div>
+
+        {/* Document Name */}
         <div className="space-y-2">
           <Label htmlFor="document-name" className="text-xs">Document Name</Label>
           <Input
@@ -244,36 +389,60 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
             className="h-9 text-sm"
           />
         </div>
-        
-        <div className="flex items-center gap-2">
-          <Label
-            htmlFor="credential-upload"
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer hover:bg-muted transition-colors",
-              isUploading && "opacity-50 pointer-events-none"
+
+        {/* Document Category with Auto-Detection */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="document-category" className="text-xs">Document Type</Label>
+            {detectedCategory && detectedCategory.category !== 'other' && (
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "text-xs gap-1",
+                  detectedCategory.confidence === 'high' && "bg-green-500/10 text-green-700 border-green-200",
+                  detectedCategory.confidence === 'medium' && "bg-yellow-500/10 text-yellow-700 border-yellow-200",
+                  detectedCategory.confidence === 'low' && "bg-muted text-muted-foreground"
+                )}
+              >
+                <Sparkles className="h-3 w-3" />
+                Auto-detected
+              </Badge>
             )}
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4" />
-                Choose File (PDF, JPG, PNG)
-              </>
-            )}
-          </Label>
-          <input
-            id="credential-upload"
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png,.webp"
-            onChange={handleFileUpload}
-            className="hidden"
-            disabled={isUploading}
-          />
+          </div>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Select document type" />
+            </SelectTrigger>
+            <SelectContent>
+              {DOCUMENT_CATEGORIES.map((cat) => (
+                <SelectItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
+        {/* Upload Button */}
+        <Button 
+          onClick={handleUpload} 
+          disabled={isUploading || !selectedFile}
+          className="w-full"
+          size="sm"
+        >
+          {isUploading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Document
+            </>
+          )}
+        </Button>
+        
         <p className="text-xs text-muted-foreground text-center">
           Max file size: 10MB
         </p>
