@@ -9,12 +9,28 @@ import { BackToTop } from "@/components/ui/back-to-top";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Mail,
   MessageSquare,
   Clock,
   HelpCircle,
   Send,
 } from "lucide-react";
+
+const supportTopics = [
+  { value: "listing", label: "Listing & Profile" },
+  { value: "leads", label: "Leads & Inquiries" },
+  { value: "billing", label: "Billing & Payments" },
+  { value: "technical", label: "Technical Issue" },
+  { value: "account", label: "Account Settings" },
+  { value: "other", label: "Other" },
+];
 
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
@@ -45,6 +61,7 @@ const faqs = [
 export default function ProviderSupport() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -60,6 +77,7 @@ export default function ProviderSupport() {
       });
       setName("");
       setEmail("");
+      setTopic("");
       setMessage("");
       setIsSubmitting(false);
     }, 1000);
@@ -126,6 +144,21 @@ export default function ProviderSupport() {
                           required
                         />
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="topic">Topic</Label>
+                      <Select value={topic} onValueChange={setTopic} required>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Select a topic" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          {supportTopics.map((t) => (
+                            <SelectItem key={t.value} value={t.value}>
+                              {t.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="message">Message</Label>
