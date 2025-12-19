@@ -150,17 +150,6 @@
     text-wrap: balance;
   }
 
-  /* Public website narrower container - slightly reduced width for balanced UI */
-  .public-layout .container {
-    max-width: 1140px;
-  }
-  
-  @media (min-width: 1400px) {
-    .public-layout .container {
-      max-width: 1200px;
-    }
-  }
-
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
