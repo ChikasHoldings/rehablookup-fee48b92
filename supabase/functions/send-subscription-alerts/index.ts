@@ -8,10 +8,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PLAN_CONFIG: Record<string, { lead_limit: number; name: string }> = {
-  basic: { lead_limit: 0, name: "Basic" },
-  professional: { lead_limit: 25, name: "Professional" },
-  featured: { lead_limit: 75, name: "Featured" },
+const PLAN_CONFIG: Record<string, { lead_limit: number; name: string; exclusivity: string }> = {
+  basic: { lead_limit: 0, name: "Basic", exclusivity: "none" },
+  professional: { lead_limit: 100, name: "Professional", exclusivity: "shared" },
+  featured: { lead_limit: 100, name: "Featured", exclusivity: "exclusive" },
 };
 
 // Support both old and new product IDs for existing subscriptions

@@ -473,31 +473,49 @@ function getLeadEmailTemplate(
   return { subject, html };
 }
 
-// Send lead limit warning email
+// Send lead limit warning email with de-duplication
 async function sendLeadLimitWarningEmail(
+  supabase: any,
+  userId: string,
   providerEmail: string,
   facilityName: string,
   usedLeads: number,
   leadLimit: number,
-  planName: string
-): Promise<void> {
+  planName: string,
+  threshold: '80' | '100'
+): Promise<boolean> {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  if (!resendApiKey) return;
+  if (!resendApiKey) return false;
+
+  // De-duplication: Check if we've already sent this alert this month
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const alertKey = `lead_limit_${threshold}percent_${currentMonth}`;
+
+  const { data: existingAlert } = await supabase
+    .from("subscription_alerts")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("alert_key", alertKey)
+    .maybeSingle();
+
+  if (existingAlert) {
+    console.log(`Alert already sent: ${alertKey} for user ${userId}`);
+    return false; // Already sent this alert
+  }
 
   const resend = new Resend(resendApiKey);
   const percentage = Math.round((usedLeads / leadLimit) * 100);
-  const remainingLeads = leadLimit - usedLeads;
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const remainingLeads = Math.max(0, leadLimit - usedLeads);
   
-  // Different warning styles based on plan
-  const isBasicPlan = planName === "basic";
-  const headerGradient = isBasicPlan 
+  const isLimitReached = threshold === '100';
+  const headerGradient = isLimitReached 
     ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"
     : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)";
-  const headerEmoji = isBasicPlan ? "🚨" : "⚠️";
-  const headerTitle = isBasicPlan ? "Urgent: Lead Limit Warning" : "Lead Limit Warning";
-  const urgencyMessage = isBasicPlan 
-    ? "Your free plan leads are almost exhausted. Upgrade now to keep receiving leads!"
+  const headerEmoji = isLimitReached ? "🚨" : "⚠️";
+  const headerTitle = isLimitReached ? "Lead Limit Reached" : "Lead Limit Warning";
+  const urgencyMessage = isLimitReached 
+    ? "You've reached your monthly lead cap. New leads are paused until next billing cycle."
     : "You're approaching your monthly lead limit";
 
   const emailHtml = `
@@ -514,9 +532,9 @@ async function sendLeadLimitWarningEmail(
   </div>
   
   <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
-    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
-      <p style="margin: 0 0 8px 0; font-size: 48px; font-weight: bold; color: #92400e;">${percentage}%</p>
-      <p style="margin: 0; color: #92400e; font-size: 16px;">of your monthly lead limit used</p>
+    <div style="background: ${isLimitReached ? '#fee2e2' : '#fef3c7'}; border: 1px solid ${isLimitReached ? '#fca5a5' : '#fcd34d'}; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="margin: 0 0 8px 0; font-size: 48px; font-weight: bold; color: ${isLimitReached ? '#dc2626' : '#92400e'};">${isLimitReached ? '100%' : `${percentage}%`}</p>
+      <p style="margin: 0; color: ${isLimitReached ? '#dc2626' : '#92400e'}; font-size: 16px;">of your monthly lead limit ${isLimitReached ? 'reached' : 'used'}</p>
     </div>
     
     <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
@@ -527,7 +545,7 @@ async function sendLeadLimitWarningEmail(
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #6b7280;">Leads Remaining:</td>
-          <td style="padding: 8px 0; font-weight: 600; text-align: right; color: ${remainingLeads <= 5 ? '#dc2626' : '#16a34a'};">${remainingLeads}</td>
+          <td style="padding: 8px 0; font-weight: 600; text-align: right; color: ${remainingLeads === 0 ? '#dc2626' : remainingLeads <= 10 ? '#f59e0b' : '#16a34a'};">${remainingLeads}</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #6b7280;">Current Plan:</td>
@@ -541,15 +559,15 @@ async function sendLeadLimitWarningEmail(
     </div>
     
     <p style="color: #4b5563; font-size: 15px; margin-bottom: 24px;">
-      ${isBasicPlan 
-        ? "You're on the Basic plan with limited leads. <strong>Upgrade to Professional</strong> to unlock more qualified leads per month!"
+      ${isLimitReached 
+        ? "Your profile has been <strong>temporarily removed</strong> from lead routing. To resume receiving qualified leads, upgrade to the Featured plan or wait until your billing cycle resets."
         : "Once you reach your limit, new leads will be paused until next month. <strong>Upgrade your plan now</strong> to continue receiving valuable patient leads without interruption."
       }
     </p>
     
     <div style="text-align: center; margin-top: 28px;">
       <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(27, 54, 93, 0.3);">
-        🚀 Upgrade Your Plan
+        ${isLimitReached ? '🔓 Upgrade Now' : '🚀 Upgrade Your Plan'}
       </a>
     </div>
     
@@ -564,15 +582,31 @@ async function sendLeadLimitWarningEmail(
   `;
 
   try {
-    await resend.emails.send({
+    const { data: emailResult, error: emailError } = await resend.emails.send({
       from: "RehabLookup <noreply@resend.dev>",
       to: [providerEmail],
-      subject: `${headerEmoji} Lead Limit Warning: ${percentage}% used (${remainingLeads} leads remaining)`,
+      subject: `${headerEmoji} ${headerTitle}: ${isLimitReached ? 'Leads Paused' : `${remainingLeads} leads remaining`}`,
       html: emailHtml,
     });
-    console.log(`Lead limit warning email sent to ${providerEmail} (${usedLeads}/${leadLimit})`);
+
+    if (emailError) {
+      console.error("Failed to send lead limit email:", emailError);
+      return false;
+    }
+
+    // Record that we've sent this alert (prevent duplicates)
+    await supabase.from("subscription_alerts").insert({
+      user_id: userId,
+      alert_type: isLimitReached ? "lead_limit_reached" : "lead_limit_warning",
+      alert_key: alertKey,
+      resend_id: emailResult?.id || null,
+    });
+
+    console.log(`Lead limit ${threshold}% email sent to ${providerEmail} (${usedLeads}/${leadLimit})`);
+    return true;
   } catch (error) {
     console.error("Failed to send lead limit warning email:", error);
+    return false;
   }
 }
 
@@ -928,43 +962,66 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // ============ LEAD LIMIT WARNING EMAIL & NOTIFICATION ============
-    // Send warning email if provider is at or above 80% of their lead limit (and has warnings enabled)
+    // ============ LEAD LIMIT WARNING/REACHED EMAIL & NOTIFICATION ============
+    // Send email alerts at 80% (warning) and 100% (reached) thresholds
     const shouldSendLimitWarning = notificationPrefs?.notify_lead_limit_warnings !== false;
     
-    if (capCheckResult && providerEmail && capCheckResult.leadLimit > 0 && shouldSendLimitWarning) {
+    if (capCheckResult && providerEmail && facility.user_id && capCheckResult.leadLimit > 0 && shouldSendLimitWarning) {
       const newUsedLeads = capCheckResult.usedLeads + 1; // Account for the lead we just created
       const usagePercentage = (newUsedLeads / capCheckResult.leadLimit) * 100;
       
-      if (usagePercentage >= 80) {
-        await sendLeadLimitWarningEmail(
+      // Determine which threshold was crossed
+      let threshold: '80' | '100' | null = null;
+      let notificationType = '';
+      let notificationTitle = '';
+      let notificationMessage = '';
+      
+      if (usagePercentage >= 100) {
+        threshold = '100';
+        notificationType = 'lead_limit_reached';
+        notificationTitle = '🚨 Monthly lead limit reached';
+        notificationMessage = `You've used all ${capCheckResult.leadLimit} leads this month. Your profile has been removed from lead routing until your billing cycle resets.`;
+      } else if (usagePercentage >= 80) {
+        threshold = '80';
+        notificationType = 'lead_limit_warning';
+        notificationTitle = `⚠️ ${Math.round(usagePercentage)}% of monthly leads used`;
+        notificationMessage = `You've used ${newUsedLeads} of ${capCheckResult.leadLimit} leads this month. Consider upgrading to receive more leads.`;
+      }
+      
+      if (threshold) {
+        // Send email with de-duplication
+        const emailSent = await sendLeadLimitWarningEmail(
+          supabase,
+          facility.user_id,
           providerEmail,
           body.facilityName,
           newUsedLeads,
           capCheckResult.leadLimit,
-          capCheckResult.planName
+          capCheckResult.planName,
+          threshold
         );
         
-        // Also create in-app notification for lead limit warning
-        if (facility.user_id) {
+        // Create in-app notification (only if email was sent = first time hitting this threshold)
+        if (emailSent) {
           try {
             await supabase
               .from("provider_notifications")
               .insert({
                 user_id: facility.user_id,
                 facility_id: body.facilityId,
-                type: "lead_limit_warning",
-                title: `${Math.round(usagePercentage)}% of monthly leads used`,
-                message: `You've used ${newUsedLeads} of ${capCheckResult.leadLimit} leads this month. Consider upgrading to receive more leads.`,
+                type: notificationType,
+                title: notificationTitle,
+                message: notificationMessage,
                 metadata: {
                   used_leads: newUsedLeads,
                   lead_limit: capCheckResult.leadLimit,
                   plan_name: capCheckResult.planName,
                   percentage: usagePercentage,
+                  threshold: threshold,
                 },
               });
           } catch (notifError) {
-            console.error("Failed to create lead limit warning notification:", notifError);
+            console.error("Failed to create lead limit notification:", notifError);
           }
         }
       }
