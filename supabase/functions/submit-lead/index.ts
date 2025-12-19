@@ -8,12 +8,34 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration matching check-subscription (supports both old and new product IDs)
-// Basic plan: 1 lifetime lead (direct submissions only, no routed leads)
-const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; lifetime_limit?: number }> = {
-  basic: { product_ids: [], lead_limit: 1, lifetime_limit: 1 }, // 1 lifetime lead
-  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 25 },
-  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 75 },
+// PLAN CONFIGURATION - STRICT ENFORCEMENT
+// Professional: 100 leads/month, ALL shared (max 2 providers per lead)
+// Featured: 100 leads/month, ALL exclusive (1 provider per lead)
+// Basic: 0 leads (direct submissions show upgrade prompt)
+const PLAN_CONFIG: Record<string, { 
+  product_ids: string[]; 
+  lead_limit: number; 
+  exclusivity: 'shared' | 'exclusive';
+  max_providers_per_lead: number;
+}> = {
+  basic: { 
+    product_ids: [], 
+    lead_limit: 0, 
+    exclusivity: 'exclusive',
+    max_providers_per_lead: 0
+  },
+  professional: { 
+    product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], 
+    lead_limit: 100,
+    exclusivity: 'shared',
+    max_providers_per_lead: 2
+  },
+  featured: { 
+    product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], 
+    lead_limit: 100,
+    exclusivity: 'exclusive',
+    max_providers_per_lead: 1
+  },
 };
 
 interface LeadRequest {
@@ -51,12 +73,13 @@ async function hashIP(ip: string): Promise<string> {
   return hashArray.slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-// Check provider's subscription and lead cap
+// Check provider's subscription and lead cap - STRICT ENFORCEMENT
+// Returns false if provider has reached their monthly cap
 async function checkProviderLeadCap(
   supabase: any,
   facilityUserId: string,
   providerEmail: string
-): Promise<{ canReceiveLeads: boolean; reason?: string; leadLimit: number; usedLeads: number; planName: string }> {
+): Promise<{ canReceiveLeads: boolean; reason?: string; leadLimit: number; usedLeads: number; planName: string; exclusivity: 'shared' | 'exclusive' }> {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   
   if (!stripeKey) {
@@ -64,9 +87,9 @@ async function checkProviderLeadCap(
   }
 
   try {
-    let leadLimit = PLAN_CONFIG.basic.lead_limit; // Default to 1 (lifetime)
+    let leadLimit = PLAN_CONFIG.basic.lead_limit; // Default to 0 (no leads for basic)
     let planName = "basic";
-    let isLifetimeLimit = true; // Basic plan uses lifetime limit
+    let exclusivity: 'shared' | 'exclusive' = PLAN_CONFIG.basic.exclusivity;
     
     if (stripeKey) {
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -88,18 +111,30 @@ async function checkProviderLeadCap(
           const subscription = subscriptions.data[0];
           const productId = subscription.items.data[0].price.product as string;
           
-          // Determine lead limit based on product (supports both old and new product IDs)
+          // Determine plan based on product (supports both old and new product IDs)
           if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-            leadLimit = PLAN_CONFIG.professional.lead_limit;
+            leadLimit = PLAN_CONFIG.professional.lead_limit; // 100
             planName = "professional";
-            isLifetimeLimit = false;
+            exclusivity = PLAN_CONFIG.professional.exclusivity; // shared
           } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-            leadLimit = PLAN_CONFIG.featured.lead_limit;
+            leadLimit = PLAN_CONFIG.featured.lead_limit; // 100
             planName = "featured";
-            isLifetimeLimit = false;
+            exclusivity = PLAN_CONFIG.featured.exclusivity; // exclusive
           }
         }
       }
+    }
+    
+    // Basic plan: no leads allowed (show upgrade prompt instead)
+    if (planName === "basic") {
+      return {
+        canReceiveLeads: false,
+        reason: "Basic plan does not include qualified leads",
+        leadLimit: 0,
+        usedLeads: 0,
+        planName,
+        exclusivity
+      };
     }
     
     // Get all facility IDs for this user
@@ -111,59 +146,47 @@ async function checkProviderLeadCap(
     const facilityIds = (userFacilities as { id: string }[] || []).map(f => f.id);
     
     if (facilityIds.length === 0) {
-      return { canReceiveLeads: true, leadLimit, usedLeads: 0, planName };
+      return { canReceiveLeads: true, leadLimit, usedLeads: 0, planName, exclusivity };
     }
     
-    let usedLeads = 0;
+    // STRICT MONTHLY CAP ENFORCEMENT
+    // Count leads this billing cycle (calendar month)
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
     
-    if (isLifetimeLimit) {
-      // Basic plan: count ALL leads ever (lifetime limit)
-      const { count: lifetimeLeadCount } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .in("facility_id", facilityIds);
-      
-      usedLeads = lifetimeLeadCount || 0;
-      
-      if (usedLeads >= leadLimit) {
-        return { 
-          canReceiveLeads: false, 
-          reason: `Provider has reached lifetime lead limit (${usedLeads}/${leadLimit})`,
-          leadLimit,
-          usedLeads,
-          planName
-        };
-      }
-    } else {
-      // Paid plans: count leads this month
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      
-      const { count: monthlyLeadCount } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
-        .in("facility_id", facilityIds)
-        .gte("created_at", startOfMonth.toISOString());
-      
-      usedLeads = monthlyLeadCount || 0;
-      
-      if (usedLeads >= leadLimit) {
-        return { 
-          canReceiveLeads: false, 
-          reason: `Provider has reached monthly lead limit (${usedLeads}/${leadLimit})`,
-          leadLimit,
-          usedLeads,
-          planName
-        };
-      }
+    const { count: monthlyLeadCount } = await supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .in("facility_id", facilityIds)
+      .gte("created_at", startOfMonth.toISOString());
+    
+    const usedLeads = monthlyLeadCount || 0;
+    
+    // STRICT: If at or over cap, exclude from routing
+    if (usedLeads >= leadLimit) {
+      return { 
+        canReceiveLeads: false, 
+        reason: `Provider has reached monthly lead cap (${usedLeads}/${leadLimit}). Excluded from routing until billing cycle resets.`,
+        leadLimit,
+        usedLeads,
+        planName,
+        exclusivity
+      };
     }
     
-    return { canReceiveLeads: true, leadLimit, usedLeads, planName };
+    return { canReceiveLeads: true, leadLimit, usedLeads, planName, exclusivity };
   } catch (error) {
     console.error("Error checking lead cap:", error);
-    // On error, allow the lead through but log it
-    return { canReceiveLeads: true, leadLimit: 999, usedLeads: 0, planName: "unknown" };
+    // On error, DO NOT allow leads through - be strict
+    return { 
+      canReceiveLeads: false, 
+      leadLimit: 0, 
+      usedLeads: 0, 
+      planName: "unknown",
+      exclusivity: 'exclusive',
+      reason: "Error checking subscription status"
+    };
   }
 }
 
@@ -218,7 +241,7 @@ function getBasicPlanUpgradeEmail(
       <ul style="margin: 0; padding-left: 20px; color: #166534;">
         <li style="margin-bottom: 8px;">View complete lead contact details</li>
         <li style="margin-bottom: 8px;">Call and email leads directly</li>
-        <li style="margin-bottom: 8px;">Receive up to 25 qualified leads per month</li>
+        <li style="margin-bottom: 8px;">Receive up to 100 qualified leads per month</li>
         <li>Get priority placement in search results</li>
       </ul>
     </div>

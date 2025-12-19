@@ -123,7 +123,7 @@ export function PlanSelectionStep({ selectedPlan, onPlanSelect }: PlanSelectionS
                   <span className="text-muted-foreground">Qualified Leads</span>
                   <span className="font-semibold text-foreground">
                     {plan.key === "basic" 
-                      ? `${plan.lead_limit} lifetime` 
+                      ? "None" 
                       : `${plan.lead_limit}/mo (${plan.exclusivity})`}
                   </span>
                 </div>
