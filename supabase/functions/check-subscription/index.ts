@@ -7,7 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// UNIFIED LEAD SYSTEM: Plan configuration
+// PLAN CONFIGURATION - STRICT ENFORCEMENT
+// Basic = 0 leads (no qualified leads, upgrade required)
 // Professional = 100 shared leads/month (max 2 providers per lead)
 // Featured = 100 exclusive leads/month (1 provider per lead)
 const PLAN_CONFIG: Record<string, { 
@@ -19,7 +20,7 @@ const PLAN_CONFIG: Record<string, {
 }> = {
   basic: {
     product_ids: [],
-    lead_limit: 1, // 1 lifetime lead only
+    lead_limit: 0, // No qualified leads for basic plan
     name: "Basic Listing",
     featured: false,
     exclusivity: 'exclusive',
@@ -30,7 +31,7 @@ const PLAN_CONFIG: Record<string, {
     lead_limit: 100, // 100 shared qualified leads/month
     name: "Professional",
     featured: false,
-    exclusivity: 'shared',
+    exclusivity: 'shared', // ALL leads are shared (no exclusive leads allowed)
   },
   featured: {
     // Support both old and new product IDs for existing subscriptions
@@ -38,7 +39,7 @@ const PLAN_CONFIG: Record<string, {
     lead_limit: 100, // 100 exclusive qualified leads/month
     name: "Featured",
     featured: true,
-    exclusivity: 'exclusive',
+    exclusivity: 'exclusive', // ALL leads are exclusive (no shared leads allowed)
   },
 };
 

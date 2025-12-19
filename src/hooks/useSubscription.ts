@@ -62,7 +62,7 @@ export const PLAN_DETAILS = {
     price: "Free",
     period: "",
     description: "Get listed and be discoverable",
-    lead_limit: 1, // 1 lifetime qualified lead
+    lead_limit: 0, // Basic plan: no qualified leads (direct only with upgrade prompt)
     location_limit: 1,
     featured: false,
     exclusivity: 'exclusive' as const,
@@ -70,7 +70,6 @@ export const PLAN_DETAILS = {
       "Public provider profile",
       "Listed in search results",
       "Facility name, location & services",
-      "1 qualified lead (lifetime)",
       "Basic dashboard (views & clicks)",
     ],
     notIncludedDetails: [
@@ -78,7 +77,7 @@ export const PLAN_DETAILS = {
       "Website link hidden on profile",
     ],
     notIncluded: [
-      "Monthly qualified leads",
+      "Qualified leads",
       "Lead routing",
       "Priority placement",
       "Homepage features",
@@ -96,7 +95,7 @@ export const PLAN_DETAILS = {
     featured: false,
     exclusivity: 'shared' as const,
     features: [
-      "100 qualified leads/month (shared with max 1 other provider)",
+      "100 qualified leads/month (shared)",
       "Unlimited calls from profile",
       "Unlimited website visits from profile",
       "Up to 3 facility locations",
@@ -133,6 +132,22 @@ export const PLAN_DETAILS = {
     microcopy: "Every lead is exclusively yours — never shared with other providers.",
     price_id: "price_1Sel1P9fxdThyiakj5MaAvOE",
     product_id: "prod_TbyzJVNOQL71NN",
+  },
+};
+
+// Plan enforcement rules
+export const PLAN_RULES = {
+  professional: {
+    monthly_cap: 100,
+    exclusivity: 'shared' as const,
+    max_providers_per_lead: 2,
+    allows_exclusive: false,
+  },
+  featured: {
+    monthly_cap: 100,
+    exclusivity: 'exclusive' as const,
+    max_providers_per_lead: 1,
+    allows_shared: false,
   },
 };
 

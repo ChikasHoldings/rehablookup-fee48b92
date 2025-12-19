@@ -10,10 +10,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ============ PLAN CONFIGURATION ============
-// UNIFIED LEAD SYSTEM: Both plans get 100 leads/month
-// Professional = shared leads (max 2 providers per lead)
-// Featured = exclusive leads (1 provider per lead)
+// ============ PLAN CONFIGURATION - STRICT ENFORCEMENT ============
+// Basic = 0 leads (excluded from routing)
+// Professional = 100 shared leads/month (max 2 providers per lead, NO exclusive leads)
+// Featured = 100 exclusive leads/month (1 provider per lead, NO shared leads)
 const PLAN_CONFIG: Record<string, { 
   product_ids: string[]; 
   lead_limit: number; 
@@ -23,23 +23,23 @@ const PLAN_CONFIG: Record<string, {
 }> = {
   basic: { 
     product_ids: [], 
-    lead_limit: 0, 
+    lead_limit: 0, // No qualified leads for basic
     priority_score: 0,
     exclusivity: 'exclusive',
     max_providers_per_lead: 0
   },
   professional: { 
     product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], 
-    lead_limit: 100, 
+    lead_limit: 100, // 100 shared leads/month
     priority_score: 15,
-    exclusivity: 'shared',
+    exclusivity: 'shared', // ALL leads must be shared
     max_providers_per_lead: 2
   },
   featured: { 
     product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], 
-    lead_limit: 100, 
+    lead_limit: 100, // 100 exclusive leads/month
     priority_score: 30,
-    exclusivity: 'exclusive',
+    exclusivity: 'exclusive', // ALL leads must be exclusive
     max_providers_per_lead: 1
   },
 };
