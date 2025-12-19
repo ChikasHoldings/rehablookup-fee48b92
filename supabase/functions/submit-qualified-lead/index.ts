@@ -1298,12 +1298,13 @@ const handler = async (req: Request): Promise<Response> => {
       assignmentReason = qualificationReason || "Lead did not pass qualification checks";
     }
 
-    // ============ FEATURED PROFILE SUBMISSION SAFEGUARD ============
-    // When a lead is submitted from a Featured provider profile page:
-    // Route ONLY to that Featured provider, no secondary routing
-    // ONLY route if the lead is qualified
+    // ============ DIRECT PROFILE SUBMISSION ROUTING ============
+    // When a lead is submitted from a provider profile page:
+    // - FEATURED profile: Route EXCLUSIVELY to that Featured provider only. No fallback, no secondary.
+    // - PROFESSIONAL profile: Route to that Professional provider AND share with next eligible Professional.
+    // ONLY route if the lead is qualified.
     if (isQualified && leadData.facilityId) {
-      log(requestId, "INFO", "Processing direct provider request", { facilityId: leadData.facilityId });
+      log(requestId, "INFO", "Processing direct provider profile submission", { facilityId: leadData.facilityId });
       
       const { data: facility } = await supabase
         .from("facilities")
@@ -1334,7 +1335,7 @@ const handler = async (req: Request): Promise<Response> => {
               planName: eligibilityResult.planName 
             });
             
-            // Basic plan providers cannot receive leads
+            // Basic plan providers cannot receive leads - block completely
             if (!PAID_PLANS.includes(eligibilityResult.planName)) {
               // Create unassigned lead record
               const { data: blockedLead } = await supabase
@@ -1403,15 +1404,18 @@ const handler = async (req: Request): Promise<Response> => {
                 { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
               );
             } else if (eligibilityResult.isSuspended) {
+              // FEATURED: Block completely. PROFESSIONAL: Block (no fallback for direct submissions)
               assignmentStatus = "unassigned_provider_suspended";
               assignmentReason = `Requested provider (${facility.name}) is currently suspended`;
+              log(requestId, "WARN", "Provider suspended - no fallback for direct submissions");
             } else {
+              // At capacity - FEATURED: Block. PROFESSIONAL: Block (no fallback for direct submissions)
               assignmentStatus = "unassigned_provider_at_capacity";
               assignmentReason = `Requested provider (${facility.name}) at capacity (${eligibilityResult.usedLeads}/${eligibilityResult.leadLimit})`;
+              log(requestId, "WARN", "Provider at capacity - no fallback for direct submissions");
             }
           } else {
-            // Provider is eligible - assign directly
-            // FEATURED PROFILE SAFEGUARD: No secondary routing for Featured profile submissions
+            // Provider is eligible - assign directly based on plan type
             primaryFacilityId = facility.id;
             primaryFacilityUserId = facility.user_id;
             primaryFacilityEmail = facility.email;
@@ -1420,10 +1424,62 @@ const handler = async (req: Request): Promise<Response> => {
             primaryPlanName = eligibilityResult.planName;
             assignmentStatus = "assigned";
             
-            // Featured profile = exclusive, Professional profile = could be shared but direct profile = exclusive
-            leadExclusivity = 'exclusive';
-            assignmentReason = `Profile submission: Exclusive to ${facility.name} (${eligibilityResult.planName} plan)`;
-            log(requestId, "INFO", "Assigned to requested provider - EXCLUSIVE", { facilityName: facility.name });
+            if (eligibilityResult.planName === "featured") {
+              // FEATURED PROFILE: Exclusive lead, no secondary provider, no fallback
+              leadExclusivity = 'exclusive';
+              assignmentReason = `Direct profile submission: Exclusive to ${facility.name} (Featured plan)`;
+              log(requestId, "INFO", "Featured profile submission - EXCLUSIVE, no secondary", { 
+                facilityName: facility.name 
+              });
+            } else if (eligibilityResult.planName === "professional") {
+              // PROFESSIONAL PROFILE: Shared lead, find next eligible Professional provider
+              leadExclusivity = 'shared';
+              assignmentReason = `Direct profile submission: Shared from ${facility.name} (Professional plan)`;
+              
+              log(requestId, "INFO", "Professional profile submission - finding secondary provider", { 
+                facilityName: facility.name 
+              });
+              
+              // Find next eligible Professional provider for sharing
+              const eligibleProviders = await getEligibleProviders(supabase, leadData, requestId);
+              
+              // Filter out the primary provider and only consider Professional providers
+              const otherProfessionalProviders = eligibleProviders.filter(p => 
+                p.facilityId !== facility.id && 
+                p.planName === "professional" && 
+                p.availableCapacity > 0
+              );
+              
+              if (otherProfessionalProviders.length > 0) {
+                // Score and sort other professionals
+                const scoredOthers = otherProfessionalProviders.map(p => 
+                  calculateProviderScore(p, leadData, otherProfessionalProviders)
+                );
+                scoredOthers.sort((a, b) => {
+                  if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+                  const aTime = a.provider.lastAssignedAt ? new Date(a.provider.lastAssignedAt).getTime() : 0;
+                  const bTime = b.provider.lastAssignedAt ? new Date(b.provider.lastAssignedAt).getTime() : 0;
+                  return aTime - bTime;
+                });
+                
+                const bestSecondary = scoredOthers[0];
+                if (bestSecondary) {
+                  secondaryFacilityId = bestSecondary.provider.facilityId;
+                  secondaryFacilityUserId = bestSecondary.provider.facilityUserId;
+                  secondaryFacilityEmail = bestSecondary.provider.facilityEmail;
+                  secondaryFacilityName = bestSecondary.provider.facilityName;
+                  secondaryProviderEmail = bestSecondary.provider.providerEmail;
+                  
+                  assignmentReason = `Direct profile submission: Shared between ${facility.name} and ${secondaryFacilityName} (Professional)`;
+                  log(requestId, "INFO", "Secondary Professional provider found for shared lead", { 
+                    secondary: secondaryFacilityName,
+                    score: bestSecondary.totalScore
+                  });
+                }
+              } else {
+                log(requestId, "INFO", "No secondary Professional provider available - lead goes to primary only");
+              }
+            }
           }
         }
       } else {
