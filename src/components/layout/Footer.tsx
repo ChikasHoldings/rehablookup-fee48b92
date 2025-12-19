@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, Phone, Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight } from "lucide-react";
+import { Heart, Phone, Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin } from "lucide-react";
 
 const footerLinks = {
   findHelp: [
@@ -25,6 +25,17 @@ const footerLinks = {
     { label: "Terms of Service", href: "/terms-of-service" },
   ],
 };
+
+const popularLocations = [
+  { label: "California", href: "/locations/california" },
+  { label: "Florida", href: "/locations/florida" },
+  { label: "Texas", href: "/locations/texas" },
+  { label: "Arizona", href: "/locations/arizona" },
+  { label: "New York", href: "/locations/new-york" },
+  { label: "Colorado", href: "/locations/colorado" },
+  { label: "Pennsylvania", href: "/locations/pennsylvania" },
+  { label: "Ohio", href: "/locations/ohio" },
+];
 
 const socialLinks = [
   { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
@@ -178,6 +189,35 @@ export function Footer() {
                 </ul>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Popular Locations - SEO Section */}
+      <div className="border-t border-white/10">
+        <div className="container py-6">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="h-4 w-4 text-accent" />
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50">
+              Popular Locations
+            </h4>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {popularLocations.map((location) => (
+              <Link
+                key={location.href}
+                to={location.href}
+                className="rounded-full bg-white/5 px-3 py-1.5 text-xs text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground transition-colors"
+              >
+                {location.label}
+              </Link>
+            ))}
+            <Link
+              to="/locations"
+              className="rounded-full bg-accent/20 px-3 py-1.5 text-xs text-accent hover:bg-accent/30 transition-colors"
+            >
+              View All States →
+            </Link>
           </div>
         </div>
       </div>
