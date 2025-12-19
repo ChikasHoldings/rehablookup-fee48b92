@@ -168,9 +168,9 @@ const ForProviders = () => {
                 <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
               </Button>
             </Link>
-            <Link to="/contact" className="w-full sm:w-auto">
-              <Button variant="hero-light" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
-                Contact Us
+            <Link to="/provider-login" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg border-white/30 text-white hover:bg-white/10 hover:text-white">
+                Sign In
                 <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
               </Button>
             </Link>
@@ -381,9 +381,9 @@ const ForProviders = () => {
                   <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
                 </Button>
               </Link>
-              <Link to="/contact" className="w-full sm:w-auto">
+              <Link to="/provider-login" className="w-full sm:w-auto">
                 <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
-                  Contact Us
+                  Sign In
                   <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
                 </Button>
               </Link>

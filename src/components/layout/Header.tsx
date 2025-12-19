@@ -159,9 +159,9 @@ export function Header({
                     </Button>
                   </div>
                 ) : (
-                  <div className="hidden sm:flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-3">
                     <Link to="/provider-login">
-                      <Button size="sm" variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
+                      <Button size="sm" className="bg-white text-primary hover:bg-white/90 font-semibold shadow-md hover:shadow-lg transition-all">
                         Sign In
                       </Button>
                     </Link>
