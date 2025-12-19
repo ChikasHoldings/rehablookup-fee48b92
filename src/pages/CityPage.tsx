@@ -114,58 +114,59 @@ const CityPage = () => {
       />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-12 md:py-16">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-10 md:py-14">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
         <div className="container relative">
           {/* Breadcrumb */}
-          <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-white/70">
+          <nav className="mb-5 flex flex-wrap items-center gap-2 text-sm text-white/70">
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="h-4 w-4" />
             <Link to="/rehab-centers" className="hover:text-white transition-colors">Find Rehab</Link>
             <ChevronRight className="h-4 w-4" />
             <Link to={`/rehab-centers/${stateData.slug}`} className="hover:text-white transition-colors">{stateData.name}</Link>
             <ChevronRight className="h-4 w-4" />
-            <span className="text-white">{cityData.name}</span>
+            <span className="text-white font-medium">{cityData.name}</span>
           </nav>
 
           <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
               <MapPin className="h-4 w-4" />
               {fullLocation}
             </div>
             
-            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-[2.5rem] lg:text-5xl">
               Drug & Alcohol Rehab Centers in {cityData.name}, {stateData.abbreviation}
             </h1>
             
-            <p className="mt-4 text-lg text-white/80 leading-relaxed max-w-2xl">
+            <p className="mt-4 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl">
               {cityData.description}
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2 text-white/90">
-                <Building2 className="h-5 w-5" />
-                <span className="font-semibold">{cityCenters.length}</span> Verified Facilities
+            <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">
+              <div className="flex items-center gap-2 text-white text-sm md:text-base">
+                <Building2 className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
+                <span className="font-semibold">{cityCenters.length}</span>
+                <span className="text-white/80">Verified Facilities</span>
               </div>
-              <div className="flex items-center gap-2 text-white/90">
-                <CheckCircle className="h-5 w-5" />
-                <span>Insurance Verification Available</span>
+              <div className="flex items-center gap-2 text-white text-sm md:text-base">
+                <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
+                <span className="text-white/80">Insurance Verified</span>
               </div>
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <Link to="/request-help">
-                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
+                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
                   <Phone className="h-4 w-4" />
-                  Get Help in {cityData.name}
+                  Get Help Now
                 </Button>
               </Link>
               <Link to={`/rehab-centers?location=${encodeURIComponent(fullLocation)}`}>
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
                   <Search className="h-4 w-4" />
-                  Search More Options
+                  Search {cityData.name}
                 </Button>
               </Link>
             </div>
