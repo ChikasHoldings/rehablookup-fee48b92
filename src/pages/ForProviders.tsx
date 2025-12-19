@@ -17,7 +17,10 @@ import {
   MessageSquare,
   BarChart3,
   Clock,
+  X,
+  Sparkles,
 } from "lucide-react";
+import { useState } from "react";
 
 const providerNavLinks = [
   { href: "/for-providers", label: "Why List With Us" },
@@ -70,6 +73,8 @@ const listingFeatures = [
 ];
 
 const ForProviders = () => {
+  const [showAnnouncement, setShowAnnouncement] = useState(true);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SEO
@@ -81,6 +86,34 @@ const ForProviders = () => {
           { name: "For Providers", url: "/for-providers" },
         ]}
       />
+      
+      {/* Sticky Announcement Bar */}
+      {showAnnouncement && (
+        <div className="sticky top-0 z-[60] bg-gradient-to-r from-accent via-accent/90 to-accent text-accent-foreground">
+          <div className="container px-5 md:px-6">
+            <div className="flex items-center justify-center gap-3 py-2.5 md:py-2 relative">
+              <Sparkles className="h-4 w-4 shrink-0 animate-pulse" />
+              <p className="text-sm md:text-xs font-medium text-center">
+                <span className="font-bold">Limited Time:</span> Get 50% off your first 3 months when you sign up today!
+                <Link 
+                  to="/provider-signup" 
+                  className="ml-2 underline underline-offset-2 hover:no-underline font-semibold"
+                >
+                  Claim Offer →
+                </Link>
+              </p>
+              <button
+                onClick={() => setShowAnnouncement(false)}
+                className="absolute right-0 p-1.5 rounded-full hover:bg-white/20 transition-colors"
+                aria-label="Dismiss announcement"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <Header
         navLinks={providerNavLinks}
         ctaLink="/provider-signup"
