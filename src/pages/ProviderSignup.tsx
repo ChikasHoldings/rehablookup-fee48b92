@@ -710,7 +710,7 @@ export default function ProviderSignup() {
 
             {/* Step 1: Account Info */}
             {currentStep === 1 && (
-              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div key="step-1" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
                 <div className="space-y-5">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
@@ -835,7 +835,7 @@ export default function ProviderSignup() {
 
             {/* Step 3: Facility Info */}
             {currentStep === 3 && (
-              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div key="step-3" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
                 <div className="space-y-5">
                   <div className="space-y-1.5">
                     <Label htmlFor="facilityName" className="text-sm font-medium">Facility Name *</Label>
@@ -987,7 +987,7 @@ export default function ProviderSignup() {
 
             {/* Step 4: Branding */}
             {currentStep === 4 && (
-              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div key="step-4" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
                 <div className="space-y-5">
                   {/* Logo Upload */}
                   <div className="space-y-2">
@@ -1063,7 +1063,7 @@ export default function ProviderSignup() {
 
             {/* Step 5: Services */}
             {currentStep === 5 && (
-              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div key="step-5" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
                 <div className="space-y-5">
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Treatment Types *</Label>
@@ -1146,7 +1146,7 @@ export default function ProviderSignup() {
 
             {/* Step 6: Insurance */}
             {currentStep === 6 && (
-              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div key="step-6" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
                 <div className="space-y-5">
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Accepted Insurance *</Label>
@@ -1196,7 +1196,7 @@ export default function ProviderSignup() {
 
             {/* Step 7: Plan Selection */}
             {currentStep === 7 && (
-              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div key="step-7" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
                 <PlanSelectionStep
                   selectedPlan={formData.selectedPlan}
                   onPlanSelect={(plan) => updateFormData("selectedPlan", plan)}
@@ -1206,7 +1206,7 @@ export default function ProviderSignup() {
 
             {/* Step 8: Review */}
             {currentStep === 8 && (
-              <div className="animate-fade-in rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div key="step-8" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
                 <div className="space-y-4">
                   {/* Account Summary */}
                   <div className="space-y-2">
