@@ -35,13 +35,14 @@ interface AdminProfile {
 
 export function useAdminAuth() {
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null); // null = checking, true/false = determined
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
   const [forcePasswordChange, setForcePasswordChange] = useState(false);
   const [requireMfaSetup, setRequireMfaSetup] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Start false - don't block initial render
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -202,8 +203,73 @@ export function useAdminAuth() {
   }, [isSuperAdmin, permissions]);
 
   useEffect(() => {
+    let mounted = true;
+    
+    const performAdminChecks = async (userId: string, userEmail?: string) => {
+      try {
+        const [adminStatus, superAdminStatus, userPermissions, profile, hasMfa] = await Promise.all([
+          checkAdminStatus(userId),
+          checkSuperAdminStatus(userId),
+          fetchPermissions(userId),
+          fetchAdminProfile(userId),
+          checkMfaStatus(),
+        ]);
+        
+        if (!mounted) return;
+        
+        setIsAdmin(adminStatus);
+        setIsSuperAdmin(superAdminStatus);
+        setPermissions(userPermissions);
+        setAdminProfile(profile);
+        setForcePasswordChange(profile?.force_password_change === true);
+        setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true);
+        
+        if (adminStatus) {
+          setSentryUser({ id: userId, email: userEmail, role: "admin" });
+        }
+        
+        if (!adminStatus) {
+          navigate("/", { replace: true });
+        }
+      } catch (err) {
+        console.error("Error in admin check:", err);
+        if (mounted) {
+          setIsAdmin(false);
+          setIsSuperAdmin(false);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
+      }
+    };
+
+    // Check session immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
+      if (!session?.user) {
+        setIsInitialized(true);
+        navigate("/admin-login", { replace: true });
+        return;
+      }
+
+      setUser(session.user);
+      // Perform admin checks without blocking
+      performAdminChecks(session.user.id, session.user.email);
+    }).catch((error) => {
+      console.error("Error getting auth session:", error);
+      if (mounted) {
+        setIsInitialized(true);
+      }
+    });
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        if (!mounted) return;
+        
         setUser(session?.user ?? null);
 
         if (!session?.user) {
@@ -213,106 +279,20 @@ export function useAdminAuth() {
           setAdminProfile(null);
           setForcePasswordChange(false);
           setRequireMfaSetup(false);
-          setIsLoading(false);
+          setIsInitialized(true);
           clearSentryUser();
           navigate("/admin-login", { replace: true });
           return;
         }
 
-        setTimeout(async () => {
-          try {
-            const [adminStatus, superAdminStatus, userPermissions, profile, hasMfa] = await Promise.all([
-              checkAdminStatus(session.user.id),
-              checkSuperAdminStatus(session.user.id),
-              fetchPermissions(session.user.id),
-              fetchAdminProfile(session.user.id),
-              checkMfaStatus(),
-            ]);
-            
-            setIsAdmin(adminStatus);
-            setIsSuperAdmin(superAdminStatus);
-            setPermissions(userPermissions);
-            setAdminProfile(profile);
-            setForcePasswordChange(profile?.force_password_change === true);
-            // Require MFA setup if admin but no verified TOTP factor and not skipped (super admins are exempt)
-            setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true);
-            
-            // Set Sentry user context for error tracking
-            if (adminStatus) {
-              setSentryUser({
-                id: session.user.id,
-                email: session.user.email,
-                role: "admin",
-              });
-            }
-            
-            if (!adminStatus) {
-              navigate("/", { replace: true });
-            }
-          } catch (err) {
-            console.error("Error in deferred admin check:", err);
-            setIsAdmin(false);
-            setIsSuperAdmin(false);
-          } finally {
-            setIsLoading(false);
-          }
-        }, 0);
+        performAdminChecks(session.user.id, session.user.email);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-
-      if (!session?.user) {
-        setIsLoading(false);
-        navigate("/admin-login", { replace: true });
-        return;
-      }
-
-      setTimeout(async () => {
-        try {
-          const [adminStatus, superAdminStatus, userPermissions, profile, hasMfa] = await Promise.all([
-            checkAdminStatus(session.user.id),
-            checkSuperAdminStatus(session.user.id),
-            fetchPermissions(session.user.id),
-            fetchAdminProfile(session.user.id),
-            checkMfaStatus(),
-          ]);
-          
-          setIsAdmin(adminStatus);
-          setIsSuperAdmin(superAdminStatus);
-          setPermissions(userPermissions);
-          setAdminProfile(profile);
-          setForcePasswordChange(profile?.force_password_change === true);
-          // Require MFA setup if admin but no verified TOTP factor and not skipped (super admins are exempt)
-          setRequireMfaSetup(adminStatus && !superAdminStatus && !hasMfa && profile?.mfa_skip !== true);
-          
-          // Set Sentry user context for error tracking
-          if (adminStatus) {
-            setSentryUser({
-              id: session.user.id,
-              email: session.user.email,
-              role: "admin",
-            });
-          }
-          
-          if (!adminStatus) {
-            navigate("/", { replace: true });
-          }
-        } catch (err) {
-          console.error("Error in initial admin check:", err);
-          setIsAdmin(false);
-          setIsSuperAdmin(false);
-        } finally {
-          setIsLoading(false);
-        }
-      }, 0);
-    }).catch((error) => {
-      console.error("Error getting auth session:", error);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate, checkAdminStatus, checkSuperAdminStatus, fetchPermissions, fetchAdminProfile, checkMfaStatus]);
 
   const logout = useCallback(async () => {
@@ -366,7 +346,7 @@ export function useAdminAuth() {
 
   return { 
     user, 
-    isAdmin, 
+    isAdmin: isAdmin === true, // Convert null to false for backwards compat
     isSuperAdmin, 
     permissions, 
     adminProfile,
@@ -377,6 +357,7 @@ export function useAdminAuth() {
     hasPermission, 
     canAccessRoute, 
     isLoading,
+    isInitialized,
     isLoggingOut,
     logout 
   };
