@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin, Stethoscope, Phone, CreditCard } from "lucide-react";
+import { Mail, Shield, Clock, Facebook, Twitter, Instagram, Linkedin, ChevronRight, MapPin, Stethoscope, Phone, CreditCard } from "lucide-react";
 
 const crisisHotlines = [
   { name: "SAMHSA Helpline", phone: "1-800-662-4357", description: "24/7, free, confidential" },
@@ -102,21 +102,36 @@ export function Footer() {
       <div className="container py-12 md:py-16">
         <div className="grid gap-10 lg:grid-cols-12">
           {/* Brand Column */}
-          <div className="lg:col-span-4 space-y-5">
+          <div className="lg:col-span-4 space-y-6">
             <Link to="/" className="inline-block">
               <img 
                 src="/logo-dark.svg" 
                 alt="Rehab-Lookup" 
-                className="h-10 w-auto"
+                className="h-14 w-auto"
                 loading="lazy"
               />
             </Link>
-            <p className="text-sm text-primary-foreground/70 leading-relaxed max-w-xs">
-              Connecting families with trusted treatment centers nationwide. Free, confidential support available 24/7.
-            </p>
             
+            {/* CTA and Contact */}
+            <div className="flex flex-col gap-3">
+              <Link
+                to="/request-help?source=footer_cta"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground hover:bg-accent/90 transition-colors w-fit"
+              >
+                Get Help Now
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+              <a 
+                href="mailto:help@rehablookup.com" 
+                className="flex items-center gap-2 text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+              >
+                <Mail className="h-4 w-4 text-accent" />
+                <span>help@rehablookup.com</span>
+              </a>
+            </div>
+
             {/* Trust Indicators */}
-            <div className="flex flex-wrap gap-4 pt-2">
+            <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2 text-xs text-primary-foreground/60">
                 <Shield className="h-4 w-4 text-accent" />
                 <span>Verified Centers</span>
@@ -128,7 +143,7 @@ export function Footer() {
             </div>
 
             {/* Social Links */}
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-2">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
@@ -146,7 +161,7 @@ export function Footer() {
 
           {/* Links Columns */}
           <div className="lg:col-span-8">
-            <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
               {/* Find Help */}
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50 mb-4">
@@ -201,42 +216,6 @@ export function Footer() {
                       </Link>
                     </li>
                   ))}
-                </ul>
-              </div>
-
-              {/* Contact */}
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/50 mb-4">
-                  Contact
-                </h4>
-                <ul className="space-y-3">
-                  <li>
-                    <a 
-                      href="mailto:help@rehablookup.com" 
-                      className="flex items-center gap-2 text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
-                    >
-                      <Mail className="h-4 w-4 text-accent" />
-                      <span>help@rehablookup.com</span>
-                    </a>
-                  </li>
-                  <li>
-                    <Link 
-                      to="/request-help?source=footer" 
-                      className="flex items-center gap-2 text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors"
-                    >
-                      <Heart className="h-4 w-4 text-accent" />
-                      <span>Request Help</span>
-                    </Link>
-                  </li>
-                  <li className="pt-2">
-                    <Link
-                      to="/request-help?source=footer_cta"
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 transition-colors"
-                    >
-                      Get Help Now
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </li>
                 </ul>
               </div>
             </div>
