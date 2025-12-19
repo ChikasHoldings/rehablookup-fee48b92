@@ -6,19 +6,17 @@ export interface SubscriptionData {
   plan: "basic" | "professional" | "featured";
   plan_name: string;
   lead_limit: number;
-  qualified_lead_limit?: number;
-  direct_lead_limit?: number; // -1 means unlimited
   subscription_end: string | null;
   product_id?: string;
+  is_featured?: boolean;
+  exclusivity?: 'shared' | 'exclusive';
 }
 
 const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   subscribed: false,
   plan: "basic",
   plan_name: "Basic Listing",
-  lead_limit: 1, // Basic plan gets 1 lifetime lead (direct inquiry only)
-  qualified_lead_limit: 0, // No routed/qualified leads
-  direct_lead_limit: 1, // 1 lifetime direct inquiry
+  lead_limit: 1, // Basic plan gets 1 lifetime lead
   subscription_end: null,
 };
 
@@ -40,7 +38,6 @@ export function useSubscription() {
           return DEFAULT_SUBSCRIPTION;
         }
         
-        // Return the result as-is - Basic plan should have lead_limit = 0
         return data as SubscriptionData;
       } catch (err) {
         console.error("Network error checking subscription:", err);
@@ -50,27 +47,30 @@ export function useSubscription() {
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes
     refetchOnWindowFocus: true,
-    retry: 2, // Retry failed requests up to 2 times
+    retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 }
 
+// UNIFIED LEAD SYSTEM: Plan definitions
+// - All leads are now "qualified leads" (no more "inquiry" distinction)
+// - Professional: 100 shared leads/month (max 2 providers per lead)
+// - Featured: 100 exclusive leads/month (1 provider per lead)
 export const PLAN_DETAILS = {
   basic: {
     name: "Basic Listing",
     price: "Free",
     period: "",
     description: "Get listed and be discoverable",
-    lead_limit: 1, // 1 lifetime lead (direct inquiry only)
-    qualified_lead_limit: 0, // No routed leads
-    direct_lead_limit: 1, // 1 lifetime direct inquiry
+    lead_limit: 1, // 1 lifetime qualified lead
     location_limit: 1,
     featured: false,
+    exclusivity: 'exclusive' as const,
     features: [
       "Public provider profile",
       "Listed in search results",
       "Facility name, location & services",
-      "1 direct inquiry (lifetime)",
+      "1 qualified lead (lifetime)",
       "Basic dashboard (views & clicks)",
     ],
     notIncludedDetails: [
@@ -78,27 +78,25 @@ export const PLAN_DETAILS = {
       "Website link hidden on profile",
     ],
     notIncluded: [
-      "Exclusive qualified leads",
+      "Monthly qualified leads",
       "Lead routing",
       "Priority placement",
       "Homepage features",
       "Email lead notifications",
     ],
-    upgradeMicrocopy: "Upgrade to receive exclusive qualified leads delivered directly to you.",
+    upgradeMicrocopy: "Upgrade to receive qualified leads delivered directly to you.",
   },
   professional: {
     name: "Professional",
     price: "$399",
     period: "/month",
-    description: "Exclusive leads + steady visibility",
-    lead_limit: 25, // 25 exclusive qualified leads/month
-    qualified_lead_limit: 25,
-    direct_lead_limit: -1, // Unlimited direct leads from profile
+    description: "Shared leads + steady visibility",
+    lead_limit: 100, // 100 shared qualified leads/month
     location_limit: 3,
     featured: false,
+    exclusivity: 'shared' as const,
     features: [
-      "25 exclusive qualified leads/month",
-      "Unlimited direct profile inquiries",
+      "100 qualified leads/month (shared with max 1 other provider)",
       "Unlimited calls from profile",
       "Unlimited website visits from profile",
       "Up to 3 facility locations",
@@ -107,7 +105,7 @@ export const PLAN_DETAILS = {
       "Lead management dashboard",
       "Performance analytics & insights",
     ],
-    microcopy: "Each lead is delivered exclusively to one provider — never shared.",
+    microcopy: "Each lead may be shared with up to one other Professional provider.",
     price_id: "price_1Sel1C9fxdThyiakWLfgbl9K",
     product_id: "prod_Tbyz1bf6iYyzYd",
   },
@@ -115,15 +113,13 @@ export const PLAN_DETAILS = {
     name: "Featured",
     price: "$1,099",
     period: "/month",
-    description: "Maximum visibility & priority access",
-    lead_limit: 75, // 75 exclusive qualified leads/month
-    qualified_lead_limit: 75,
-    direct_lead_limit: -1, // Unlimited direct leads
+    description: "Exclusive leads & maximum visibility",
+    lead_limit: 100, // 100 exclusive qualified leads/month
     location_limit: 5,
     featured: true,
+    exclusivity: 'exclusive' as const,
     features: [
-      "75 exclusive qualified leads/month",
-      "Unlimited direct profile inquiries",
+      "100 exclusive qualified leads/month",
       "Unlimited calls from profile",
       "Unlimited website visits from profile",
       "Up to 5 facility locations",
@@ -134,14 +130,11 @@ export const PLAN_DETAILS = {
       "Advanced analytics",
       "All Professional features included",
     ],
-    microcopy: "Priority access to exclusive leads with enhanced visibility across the platform.",
+    microcopy: "Every lead is exclusively yours — never shared with other providers.",
     price_id: "price_1Sel1P9fxdThyiakj5MaAvOE",
     product_id: "prod_TbyzJVNOQL71NN",
   },
 };
 
-// Direct inquiry clarification text for UI usage
-export const DIRECT_INQUIRY_CLARIFICATION = "Direct inquiries come from users who contact your profile directly. Basic plan includes 1 lifetime direct inquiry. Paid plans include unlimited direct inquiries.";
-
 // Marketing messaging
-export const EXCLUSIVITY_MESSAGE = "No shared leads. No bidding. No race to call.";
+export const EXCLUSIVITY_MESSAGE = "Professional leads are shared with max 1 other provider. Featured leads are 100% exclusive.";
