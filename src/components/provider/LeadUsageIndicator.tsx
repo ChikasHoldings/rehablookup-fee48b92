@@ -255,7 +255,7 @@ export function BasicPlanBanner() {
       <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <span className="text-foreground">
           <strong>Upgrade required to receive leads.</strong>{" "}
-          <span className="text-muted-foreground">Your Basic plan doesn't include lead delivery. Upgrade to Professional or Featured to start receiving patient inquiries.</span>
+          <span className="text-muted-foreground">Your Basic plan doesn't include lead delivery. Upgrade to Professional or Featured to start receiving patient leads.</span>
         </span>
         <Button size="sm" className="shrink-0 gap-1.5" asChild>
           <Link to="/provider/billing">

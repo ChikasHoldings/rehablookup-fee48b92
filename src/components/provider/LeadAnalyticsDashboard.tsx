@@ -561,7 +561,7 @@ function EmptyAnalytics() {
         <h3 className="text-xl font-semibold text-foreground">No analytics yet</h3>
         <p className="text-muted-foreground mt-2 max-w-md mx-auto">
           Analytics will appear here once you start receiving leads. 
-          Make sure your listing is complete and approved to attract inquiries.
+          Make sure your listing is complete and approved to attract leads.
         </p>
       </CardContent>
     </Card>

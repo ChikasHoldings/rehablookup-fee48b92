@@ -118,7 +118,7 @@ Your profile information is used for:
   {
     id: "optimize-listing",
     title: "Optimizing Your Facility Listing",
-    excerpt: "Tips and best practices to make your listing stand out and attract more inquiries.",
+    excerpt: "Tips and best practices to make your listing stand out and attract more leads.",
     content: `
 # Optimizing Your Facility Listing
 
@@ -238,7 +238,7 @@ Your Leads dashboard is your central hub for managing all incoming leads.
     content: `
 # Configuring Lead Notifications
 
-Stay on top of inquiries with customized notifications.
+Stay on top of leads with customized notifications.
 
 ## Notification Channels
 
@@ -378,7 +378,7 @@ Data-driven insights to improve your listing performance.
 - Indicates visibility and interest
 
 ### Lead Volume
-- New inquiries received
+- New leads received
 - Monthly vs. all-time counts
 - Lead source breakdown
 

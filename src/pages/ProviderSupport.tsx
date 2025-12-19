@@ -28,7 +28,7 @@ import { providerNavLinks } from "@/data/providerNavLinks";
 
 const supportTopics = [
   { value: "listing", label: "Listing & Profile" },
-  { value: "leads", label: "Leads & Inquiries" },
+  { value: "leads", label: "Leads & Contacts" },
   { value: "billing", label: "Billing & Payments" },
   { value: "technical", label: "Technical Issue" },
   { value: "account", label: "Account Settings" },
@@ -45,7 +45,7 @@ const faqs = [
     answer: "Typically 2-3 business days.",
   },
   {
-    question: "How do I respond to inquiries?",
+    question: "How do I respond to leads?",
     answer: "Via email or your dashboard.",
   },
 ];

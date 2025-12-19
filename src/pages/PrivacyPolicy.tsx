@@ -72,7 +72,7 @@ const PrivacyPolicy = () => {
                 </p>
                 <ul className="mt-4 list-disc space-y-2 pl-6 text-muted-foreground">
                   <li>Connect you with treatment centers based on your preferences</li>
-                  <li>Respond to your inquiries and provide customer support</li>
+                  <li>Respond to your questions and provide customer support</li>
                   <li>Improve our website and services</li>
                   <li>Send you information you have requested</li>
                   <li>Comply with legal obligations</li>

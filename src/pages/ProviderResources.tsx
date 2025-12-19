@@ -68,7 +68,7 @@ const resources = [
   {
     icon: TrendingUp,
     title: "Analytics & Insights",
-    description: "Understand your listing performance with detailed metrics on views, inquiries, and engagement patterns.",
+    description: "Understand your listing performance with detailed metrics on views, leads, and engagement patterns.",
     link: "#",
     badge: null,
     color: "from-indigo-500/20 to-violet-500/20",
@@ -87,7 +87,7 @@ const quickTips = [
   {
     icon: Star,
     title: "Complete Your Profile",
-    description: "Listings with 100% completion get 3x more inquiries",
+    description: "Listings with 100% completion get 3x more leads",
     stat: "3x",
   },
   {
@@ -120,8 +120,8 @@ const faqs = [
     answer: "The verification process typically takes 2-3 business days. We verify your licensing, accreditation, and credentials. You'll receive an email notification once your listing is verified and live.",
   },
   {
-    question: "Can I respond to patient inquiries?",
-    answer: "Yes, all inquiries are forwarded to your registered email immediately. You can also manage and track them through your provider dashboard, including setting follow-up reminders.",
+    question: "Can I respond to patient leads?",
+    answer: "Yes, all leads are forwarded to your registered email immediately. You can also manage and track them through your provider dashboard, including setting follow-up reminders.",
   },
   {
     question: "How do I upgrade to a featured listing?",
@@ -151,7 +151,7 @@ const optimizationTips = [
   "List all insurance providers and payment options accepted",
   "Include staff credentials and accreditations",
   "Keep your contact information current",
-  "Respond to inquiries within 1 hour for best results",
+  "Respond to leads within 1 hour for best results",
   "Add testimonials and success stories",
   "Update your listing regularly with new programs",
 ];
@@ -334,7 +334,7 @@ export default function ProviderResources() {
                       Boost Your Visibility
                     </h3>
                     <p className="text-muted-foreground mb-8">
-                      Upgrade to a featured listing and appear at the top of search results. Get up to <span className="font-bold text-accent">5x more inquiries</span>.
+                      Upgrade to a featured listing and appear at the top of search results. Get up to <span className="font-bold text-accent">5x more leads</span>.
                     </p>
                     
                     <div className="space-y-3">

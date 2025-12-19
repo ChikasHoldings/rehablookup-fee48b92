@@ -721,7 +721,7 @@ export default function ProviderDashboardPage() {
                 </div>
                 <p className="font-semibold text-foreground text-sm">Upgrade to View Leads</p>
                 <p className="text-xs text-muted-foreground mt-1 text-center max-w-xs">
-                  Contact details are hidden on the Basic plan. Upgrade to see and respond to inquiries.
+                  Contact details are hidden on the Basic plan. Upgrade to see and respond to leads.
                 </p>
                 <Button asChild size="sm" className="mt-4 gap-2">
                   <Link to="/provider/billing">
@@ -804,7 +804,7 @@ export default function ProviderDashboardPage() {
                 <div>
                   <h3 className="font-semibold text-foreground">Complete your listing</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Add your facility information to start receiving inquiries from families.
+                    Add your facility information to start receiving leads from families.
                   </p>
                 </div>
               </div>

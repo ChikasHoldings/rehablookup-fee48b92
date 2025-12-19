@@ -1023,7 +1023,7 @@ export default function ProviderListingPage() {
           </div>
           <h2 className="text-xl font-semibold text-foreground">No Listing Found</h2>
           <p className="mt-2 text-muted-foreground">
-            Create your facility listing to start receiving inquiries from families.
+            Create your facility listing to start receiving leads from families.
           </p>
           <Button asChild className="mt-6" size="lg">
             <Link to="/provider-signup">Create Your Listing</Link>
@@ -2048,7 +2048,7 @@ export default function ProviderListingPage() {
                     <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                       <CheckCircle className="h-3 w-3 text-primary" />
                     </div>
-                    <span className="text-xs text-muted-foreground">Respond to inquiries within 24 hours</span>
+                    <span className="text-xs text-muted-foreground">Respond to leads within 24 hours</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
