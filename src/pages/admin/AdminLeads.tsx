@@ -808,6 +808,41 @@ export default function AdminLeads() {
     },
   });
 
+  // Fetch exclusivity breakdown (assigned leads only)
+  const { data: exclusivityBreakdown } = useQuery({
+    queryKey: ["admin-leads-exclusivity-breakdown", dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryFn: async () => {
+      let query = supabase
+        .from("leads")
+        .select("exclusivity, facility_id")
+        .not("facility_id", "is", null); // Only count assigned leads
+
+      // Date range filter
+      if (dateRange.from) {
+        query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
+      }
+      if (dateRange.to) {
+        query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      let exclusive = 0;
+      let shared = 0;
+
+      (data || []).forEach((lead) => {
+        if (lead.exclusivity === "shared") {
+          shared++;
+        } else {
+          exclusive++;
+        }
+      });
+
+      return { exclusive, shared, total: exclusive + shared };
+    },
+  });
+
   const facilitiesMap = useMemo(() => {
     if (!facilities) return new Map<string, Facility>();
     return new Map(facilities.map(f => [f.id, f]));
@@ -918,6 +953,89 @@ export default function AdminLeads() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Exclusivity Distribution Card */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <Lock className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-lg">Lead Exclusivity Distribution</CardTitle>
+          </div>
+          <CardDescription>
+            Breakdown of assigned leads by exclusivity type {dateRange.from || dateRange.to ? "(filtered by date)" : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {exclusivityBreakdown && exclusivityBreakdown.total > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Exclusive Stats */}
+              <div className="flex items-center gap-4 p-4 rounded-lg bg-amber-50 border border-amber-200">
+                <div className="p-3 rounded-full bg-amber-100">
+                  <Lock className="h-6 w-6 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-amber-700">{exclusivityBreakdown.exclusive}</p>
+                  <p className="text-sm text-amber-600">Exclusive Leads</p>
+                  <p className="text-xs text-amber-500 mt-1">
+                    {exclusivityBreakdown.total > 0 
+                      ? `${((exclusivityBreakdown.exclusive / exclusivityBreakdown.total) * 100).toFixed(1)}% of assigned`
+                      : "0%"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Shared Stats */}
+              <div className="flex items-center gap-4 p-4 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="p-3 rounded-full bg-blue-100">
+                  <Share2 className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-blue-700">{exclusivityBreakdown.shared}</p>
+                  <p className="text-sm text-blue-600">Shared Leads</p>
+                  <p className="text-xs text-blue-500 mt-1">
+                    {exclusivityBreakdown.total > 0 
+                      ? `${((exclusivityBreakdown.shared / exclusivityBreakdown.total) * 100).toFixed(1)}% of assigned`
+                      : "0%"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Distribution Bar */}
+              <div className="flex flex-col justify-center">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Distribution</p>
+                <div className="w-full h-4 rounded-full overflow-hidden bg-muted flex">
+                  {exclusivityBreakdown.exclusive > 0 && (
+                    <div 
+                      className="h-full bg-amber-500 transition-all"
+                      style={{ width: `${(exclusivityBreakdown.exclusive / exclusivityBreakdown.total) * 100}%` }}
+                    />
+                  )}
+                  {exclusivityBreakdown.shared > 0 && (
+                    <div 
+                      className="h-full bg-blue-500 transition-all"
+                      style={{ width: `${(exclusivityBreakdown.shared / exclusivityBreakdown.total) * 100}%` }}
+                    />
+                  )}
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    Exclusive
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    Shared
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              No assigned leads to display exclusivity breakdown
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Lead Source Breakdown Chart */}
       <Card>
