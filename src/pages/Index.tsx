@@ -222,6 +222,68 @@ const Index = () => {
         title="Find Addiction Treatment Centers Near You | RehabLookup"
         description="Search 15,000+ verified drug and alcohol rehab centers. Compare treatment options, verify insurance coverage, and find the right recovery program. Confidential help available 24/7."
         canonical="/"
+        keywords={[
+          "drug rehab near me",
+          "alcohol treatment centers",
+          "addiction recovery programs",
+          "inpatient rehab",
+          "outpatient treatment",
+          "detox centers",
+          "substance abuse treatment",
+          "dual diagnosis treatment",
+          "rehab centers near me",
+          "addiction help"
+        ]}
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "@id": "https://rehablookup.com/#webpage",
+            name: "Find Addiction Treatment Centers Near You",
+            description: "Search 15,000+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
+            isPartOf: { "@id": "https://rehablookup.com/#website" },
+            primaryImageOfPage: {
+              "@type": "ImageObject",
+              url: "https://rehablookup.com/og-image.jpg"
+            },
+            specialty: "Addiction Medicine",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: "Treatment Options",
+            description: "Types of addiction treatment programs available",
+            numberOfItems: treatmentOptions.length,
+            itemListElement: treatmentOptions.map((option, index) => ({
+              "@type": "ListItem",
+              position: index + 1,
+              name: option.title,
+              description: option.description,
+              url: `https://rehablookup.com${option.link}`,
+            })),
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Service",
+            name: "Addiction Treatment Center Directory",
+            serviceType: "Treatment Center Matching",
+            provider: {
+              "@type": "Organization",
+              name: "RehabLookup",
+            },
+            areaServed: {
+              "@type": "Country",
+              name: "United States",
+            },
+            description: "Free service connecting individuals with verified addiction treatment centers",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "USD",
+              description: "Free treatment center matching service",
+            },
+          },
+        ]}
       />
       
       {/* Hero Section */}

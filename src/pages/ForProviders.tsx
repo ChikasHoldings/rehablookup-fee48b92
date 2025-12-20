@@ -507,6 +507,52 @@ const ForProviders = () => {
         title="List Your Treatment Center - For Providers"
         description="Partner with RehabLookup to increase your treatment center's visibility. Connect with families seeking quality addiction care. Free listing available."
         canonical="/for-providers"
+        keywords={[
+          "list rehab center",
+          "treatment center marketing",
+          "addiction treatment leads",
+          "rehab facility listing",
+          "treatment center directory",
+          "behavioral health marketing"
+        ]}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: "RehabLookup Provider Listing Service",
+          serviceType: "Treatment Center Marketing",
+          provider: {
+            "@type": "Organization",
+            name: "RehabLookup",
+          },
+          description: "Connect your treatment center with families actively seeking addiction recovery services",
+          areaServed: {
+            "@type": "Country",
+            name: "United States",
+          },
+          hasOfferCatalog: {
+            "@type": "OfferCatalog",
+            name: "Provider Plans",
+            itemListElement: [
+              {
+                "@type": "Offer",
+                name: "Basic Listing",
+                price: "0",
+                priceCurrency: "USD",
+                description: "Free directory listing for treatment centers",
+              },
+              {
+                "@type": "Offer",
+                name: "Professional Plan",
+                description: "Enhanced visibility with lead generation",
+              },
+              {
+                "@type": "Offer",
+                name: "Featured Plan",
+                description: "Premium placement with exclusive leads",
+              },
+            ],
+          },
+        }}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "For Providers", url: "/for-providers" },
