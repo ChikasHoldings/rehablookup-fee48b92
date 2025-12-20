@@ -381,7 +381,7 @@ const SearchResults = () => {
       
       {/* Sticky Filter Header */}
       <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
-        <div className="container">
+        <div className="container max-w-5xl mx-auto">
           {/* Top Row: Back + Results Count + Sort */}
           <div className="flex items-center justify-between gap-4 py-3 border-b border-border/50">
             <div className="flex items-center gap-4">
