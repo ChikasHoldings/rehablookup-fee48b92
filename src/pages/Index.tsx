@@ -226,7 +226,8 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="relative z-10">
-        {/* Background Image */}
+        {/* Background Image - preloaded for LCP */}
+        <link rel="preload" as="image" href={heroImage} />
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImage})` }}

@@ -93,7 +93,9 @@ export function FacilityQuickViewModal({
               <img 
                 src={images[currentImageIndex]} 
                 alt={center.name}
-                className="h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+                className="h-full w-full object-cover transition-opacity duration-300"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
               
@@ -191,6 +193,8 @@ export function FacilityQuickViewModal({
                   <img 
                     src={center.logo_url!} 
                     alt={`${center.name} logo`}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                     onError={() => setLogoError(true)}
                   />
