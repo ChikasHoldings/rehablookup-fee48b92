@@ -106,8 +106,13 @@ Disallow: /*?*gclid=
 # Allow search results with location parameter
 Allow: /search-results?location=
 
+# Explicitly allow facility profile pages
+Allow: /center/
+Allow: /center/*
+
 # Sitemap locations
 Sitemap: https://rehablookup.com/sitemap.xml
+Sitemap: https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities
 
 # Host directive
 Host: https://rehablookup.com

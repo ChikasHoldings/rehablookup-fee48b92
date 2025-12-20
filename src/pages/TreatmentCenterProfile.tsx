@@ -100,8 +100,15 @@ const TreatmentCenterProfile = () => {
     <Layout>
       <SEO
         title={`${center.name} - Addiction Treatment in ${center.city}, ${center.state}`}
-        description={center.description}
+        description={center.description.slice(0, 155) + (center.description.length > 155 ? '...' : '')}
         canonical={`/rehab-centers/${center.id}`}
+        keywords={[
+          center.name,
+          `addiction treatment ${center.city}`,
+          `rehab center ${center.state}`,
+          `drug rehab ${center.city} ${center.state}`,
+          ...center.treatmentTypes.slice(0, 5),
+        ]}
         structuredData={generateLocalBusinessSchema({
           name: center.name,
           address: center.address,
@@ -113,10 +120,14 @@ const TreatmentCenterProfile = () => {
           rating: center.rating,
           reviewCount: center.reviewCount,
           services: center.treatmentTypes,
+          insurance: center.insuranceAccepted,
+          verified: true,
+          featured: center.featured,
         })}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Find Rehab", url: "/rehab-centers" },
+          { name: center.state, url: `/locations/${center.state.toLowerCase().replace(/\s+/g, "-")}` },
           { name: center.name, url: `/rehab-centers/${center.id}` },
         ]}
       />

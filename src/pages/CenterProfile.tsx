@@ -63,6 +63,7 @@ interface FacilityData {
   gallery_urls: string[] | null;
   status: string;
   user_id: string;
+  updated_at: string;
   facility_services: { service_name: string }[];
   facility_insurance: { insurance_name: string }[];
   facility_age_groups: { age_group: string }[];
@@ -259,6 +260,7 @@ const CenterProfile = () => {
           gallery_urls,
           status,
           user_id,
+          updated_at,
           facility_services (service_name),
           facility_insurance (insurance_name),
           facility_age_groups (age_group),
@@ -296,6 +298,7 @@ const CenterProfile = () => {
             gallery_urls,
             status,
             user_id,
+            updated_at,
             facility_services (service_name),
             facility_insurance (insurance_name),
             facility_age_groups (age_group),
@@ -426,8 +429,20 @@ const CenterProfile = () => {
     <Layout>
       <SEO
         title={`${facility.name} - Addiction Treatment in ${facility.city}, ${facility.state}`}
-        description={facility.description || `${facility.name} offers addiction treatment services in ${facility.city}, ${facility.state}. Contact us to learn more about our programs and verify insurance coverage.`}
+        description={facility.description 
+          ? facility.description.slice(0, 155) + (facility.description.length > 155 ? '...' : '')
+          : `${facility.name} offers comprehensive addiction treatment services in ${facility.city}, ${facility.state}. Verify insurance coverage and start your recovery journey today.`
+        }
         canonical={`/center/${facility.slug}`}
+        keywords={[
+          `${facility.name}`,
+          `addiction treatment ${facility.city}`,
+          `rehab center ${facility.state}`,
+          `drug rehab ${facility.city} ${facility.state}`,
+          `alcohol treatment ${facility.city}`,
+          facility.facility_type,
+          ...services.slice(0, 5),
+        ].filter(Boolean) as string[]}
         structuredData={generateLocalBusinessSchema({
           name: facility.name,
           address: facility.address,
@@ -435,15 +450,26 @@ const CenterProfile = () => {
           state: facility.state,
           zipCode: facility.zip_code,
           phone: facility.phone,
-          description: facility.description || "",
+          description: facility.description || `${facility.name} provides quality addiction treatment in ${facility.city}, ${facility.state}.`,
           image: facility.logo_url || undefined,
           services: services,
+          insurance: insuranceList,
+          slug: facility.slug || undefined,
+          email: facility.email || undefined,
+          website: facility.website || undefined,
+          facilityType: facility.facility_type,
+          yearEstablished: facility.year_established || undefined,
+          verified: facility.verified || false,
+          featured: facility.featured,
+          accreditations: facility.facility_accreditations?.map(a => a.accreditation_type) || [],
         })}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Find Rehab", url: "/rehab-centers" },
+          { name: facility.state, url: `/locations/${facility.state.toLowerCase().replace(/\s+/g, "-")}` },
           { name: facility.name, url: `/center/${facility.slug}` },
         ]}
+        modifiedTime={facility.updated_at}
       />
 
       {/* Sticky Mobile CTA */}
