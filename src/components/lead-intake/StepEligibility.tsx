@@ -153,12 +153,15 @@ export function StepEligibility({ formData, updateFormData, onNext, onBack, isUr
       <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
         <CollapsibleTrigger asChild>
           <Button 
-            variant="ghost" 
+            variant="outline" 
             size="sm"
-            className="w-full justify-between text-xs text-muted-foreground hover:text-foreground h-8 px-2"
+            className="w-full justify-between text-sm font-medium text-foreground border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 h-10 px-4"
           >
-            <span>More options</span>
-            {showAdvanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            <span className="flex items-center gap-2">
+              <span className="text-primary">+</span>
+              More options (substance, budget, special needs)
+            </span>
+            {showAdvanced ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-4 pt-3">

@@ -88,9 +88,14 @@ export const SUBSTANCE_OPTIONS = [
 ];
 
 export const LEVEL_OF_CARE_OPTIONS = [
-  { value: "detox", label: "Detox" },
+  { value: "detox", label: "Medical Detox" },
   { value: "inpatient", label: "Inpatient / Residential" },
-  { value: "outpatient", label: "Outpatient" },
+  { value: "php", label: "Partial Hospitalization (PHP)" },
+  { value: "iop", label: "Intensive Outpatient (IOP)" },
+  { value: "outpatient", label: "Standard Outpatient" },
+  { value: "sober-living", label: "Sober Living / Halfway House" },
+  { value: "mat", label: "Medication-Assisted Treatment (MAT)" },
+  { value: "dual-diagnosis", label: "Dual Diagnosis Treatment" },
   { value: "not-sure", label: "Not sure — I need guidance" },
 ];
 
