@@ -143,6 +143,22 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
   }
+
+  h1 {
+    @apply tracking-tight;
+  }
+
+  h2 {
+    @apply tracking-tight;
+  }
+
+  h3 {
+    @apply tracking-[-0.01em];
+  }
+
+  h4, h5, h6 {
+    @apply tracking-normal;
+  }
 }
 
 @layer utilities {
