@@ -69,22 +69,20 @@ export function Footer() {
         {/* Centered Brand Section */}
         <div className="flex flex-col items-center py-10 border-b border-border/50">
           {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <Link to="/">
-              <img 
-                src="/logo.svg" 
-                alt="RehabLookup" 
-                className="h-9 w-auto dark:hidden"
-                loading="lazy"
-              />
-              <img 
-                src="/logo-dark.svg" 
-                alt="RehabLookup" 
-                className="h-9 w-auto hidden dark:block"
-                loading="lazy"
-              />
-            </Link>
-          </div>
+          <Link to="/" className="block mx-auto mb-6">
+            <img 
+              src="/logo.svg" 
+              alt="RehabLookup" 
+              className="h-9 w-auto mx-auto dark:hidden"
+              loading="lazy"
+            />
+            <img 
+              src="/logo-dark.svg" 
+              alt="RehabLookup" 
+              className="h-9 w-auto mx-auto hidden dark:block"
+              loading="lazy"
+            />
+          </Link>
           
           {/* Tagline */}
           <p className="text-sm text-muted-foreground text-center mb-6 max-w-[280px]">
