@@ -89,7 +89,7 @@ function QuickFactCard({
   label, 
   value, 
   iconColor = "text-primary",
-  bgColor = "bg-primary/5"
+  bgColor = "bg-primary/10"
 }: { 
   icon: React.ElementType; 
   label: string; 
@@ -98,12 +98,12 @@ function QuickFactCard({
   bgColor?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/60 hover:border-border hover:shadow-sm transition-all">
-      <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg shrink-0", bgColor)}>
-        <Icon className={cn("h-5 w-5", iconColor)} />
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/40 hover:border-border/60 transition-all">
+      <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg shrink-0", bgColor)}>
+        <Icon className={cn("h-4 w-4", iconColor)} />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
         <p className="text-sm font-semibold text-foreground truncate">{value}</p>
       </div>
     </div>
@@ -127,19 +127,17 @@ function ProfileSection({
   action?: React.ReactNode;
 }) {
   return (
-    <div className={cn("rounded-2xl border border-border/60 bg-card shadow-sm hover:shadow-md transition-all duration-300", className)}>
-      <div className="p-6 pb-0 md:p-8 md:pb-0">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl", iconColor.split(' ')[0])}>
-              <Icon className={cn("h-5 w-5", iconColor.split(' ')[1] || 'text-primary')} />
-            </div>
-            <h2 className="font-display text-xl font-bold text-foreground">{title}</h2>
+    <div className={cn("rounded-xl border border-border/50 bg-card shadow-sm", className)}>
+      <div className="flex items-center justify-between p-4 md:p-5 border-b border-border/40">
+        <div className="flex items-center gap-3">
+          <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", iconColor.split(' ')[0])}>
+            <Icon className={cn("h-4 w-4", iconColor.split(' ')[1] || 'text-primary')} />
           </div>
-          {action}
+          <h2 className="font-display text-lg font-bold text-foreground">{title}</h2>
         </div>
+        {action}
       </div>
-      <div className="p-6 pt-0 md:p-8 md:pt-0">
+      <div className="p-4 md:p-5">
         {children}
       </div>
     </div>
@@ -508,212 +506,165 @@ const CenterProfile = () => {
           )}
 
           {/* Hero Header Card */}
-          <div className="mb-8 rounded-3xl border border-border/60 bg-card shadow-xl overflow-hidden">
-            {/* Header Background Gradient */}
-            <div className="relative bg-gradient-to-br from-primary/5 via-primary/3 to-accent/5 p-6 md:p-10">
-              <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-                {/* Logo and Info */}
-                <div className="flex items-start gap-5 md:gap-6">
+          <div className="mb-8 rounded-2xl border border-border/50 bg-card shadow-lg overflow-hidden">
+            {/* Hero Image / Gradient Background */}
+            <div className="relative h-48 md:h-64 overflow-hidden">
+              {galleryImages.length > 0 ? (
+                <>
+                  <img 
+                    src={galleryImages[0]} 
+                    alt={facility.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+                </>
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10" />
+              )}
+              
+              {/* Badges on hero */}
+              <div className="absolute top-4 left-4 flex items-center gap-2">
+                {hasFeaturedSubscription && (
+                  <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1.5 px-3 py-1.5 shadow-lg text-xs font-bold uppercase tracking-wide">
+                    <Crown className="h-3.5 w-3.5" />
+                    Featured
+                  </Badge>
+                )}
+                {facility.verified && (
+                  <Badge className="bg-emerald-500 text-white border-0 gap-1.5 px-3 py-1.5 shadow-lg text-xs font-bold uppercase tracking-wide">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Verified
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Facility info overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
+                <div className="flex items-end gap-4">
                   {/* Logo */}
-                  <div className="relative">
-                    <div className="h-24 w-24 md:h-28 md:w-28 shrink-0 overflow-hidden rounded-full border-2 border-background bg-card shadow-xl ring-4 ring-primary/10">
-                      {hasValidLogo ? (
-                        <img 
-                          src={facility.logo_url!} 
-                          alt={facility.name} 
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                          onError={() => setLogoError(true)}
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                          <span className="font-display text-3xl md:text-4xl font-bold text-primary">
-                            {initials}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {/* Verified Trust Badge */}
-                    {facility.verified && (
-                      <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg ring-2 ring-background z-10">
-                        <ShieldCheck className="h-4.5 w-4.5 text-white" />
-                      </div>
-                    )}
-                    {/* Featured Crown Badge */}
-                    {hasFeaturedSubscription && (
-                      <div className="absolute -top-1 -right-1 h-8 w-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg ring-2 ring-background z-10">
-                        <Crown className="h-4 w-4 text-white" />
+                  <div className="h-20 w-20 md:h-24 md:w-24 shrink-0 overflow-hidden rounded-xl border-4 border-card bg-card shadow-xl">
+                    {hasValidLogo ? (
+                      <img 
+                        src={facility.logo_url!} 
+                        alt={facility.name} 
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        onError={() => setLogoError(true)}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
+                        <span className="font-display text-2xl md:text-3xl font-bold text-primary">
+                          {initials}
+                        </span>
                       </div>
                     )}
                   </div>
                   
-                  {/* Facility Info */}
-                  <div className="flex-1 min-w-0">
-                    {/* Badges */}
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      {hasFeaturedSubscription && (
-                        <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 gap-1.5 px-3 py-1.5 shadow-md">
-                          <Crown className="h-3.5 w-3.5" />
-                          Featured Center
-                        </Badge>
-                      )}
-                      <TrustBadgesInline 
-                        verified={facility.verified || false}
-                        yearEstablished={facility.year_established}
-                        accreditations={facility.facility_accreditations || []}
-                        size="md"
-                      />
-                    </div>
-                    
-                    <h1 className="font-display text-2xl md:text-4xl font-bold text-foreground leading-tight mb-3">
+                  {/* Name and Location */}
+                  <div className="flex-1 min-w-0 pb-1">
+                    <h1 className="font-display text-xl md:text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
                       {facility.name}
                     </h1>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{facility.city}, {facility.state}</span>
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-primary" />
-                        <span>{facility.facility_type}</span>
-                      </span>
-                      {yearsInBusiness && (
-                        <span className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-primary" />
-                          <span>{yearsInBusiness}+ years</span>
-                        </span>
-                      )}
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <MapPin className="h-4 w-4 text-white/80 shrink-0" />
+                      <span className="text-sm md:text-base text-white/90 font-medium">{facility.city}, {facility.state}</span>
                     </div>
-                  </div>
-                </div>
-
-                {/* Desktop Actions */}
-                <div className="hidden md:flex flex-col gap-3 shrink-0">
-                  {showContactDetails ? (
-                    <a 
-                      href={`tel:${facility.phone}`}
-                      onClick={() => trackInteraction("call")}
-                    >
-                      <Button size="lg" className="w-full gap-2 shadow-lg hover:shadow-xl transition-all text-base px-8">
-                        <Phone className="h-5 w-5" />
-                        Call Now
-                      </Button>
-                    </a>
-                  ) : (
-                    <Button 
-                      size="lg" 
-                      className="w-full gap-2 shadow-lg hover:shadow-xl transition-all text-base px-8"
-                      onClick={() => setRequestModalOpen(true)}
-                    >
-                      <Phone className="h-5 w-5" />
-                      Request Call
-                    </Button>
-                  )}
-                  <div className="flex gap-2">
-                    {showContactDetails && facility.website && (
-                      <a 
-                        href={facility.website} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        onClick={() => trackInteraction("website")}
-                        className="flex-1"
-                      >
-                        <Button variant="outline" size="lg" className="w-full gap-2 border-2">
-                          <Globe className="h-4 w-4" />
-                          Website
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
-                      </a>
-                    )}
-                    <Button 
-                      variant="outline" 
-                      size="lg"
-                      className="flex-1 gap-2 border-2"
-                      onClick={() => setRequestModalOpen(true)}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      Contact
-                    </Button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick Facts Strip */}
-            <div className="border-t border-border/60 bg-muted/30 px-6 py-4 md:px-10 md:py-5">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                {facility.facility_type && (
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Stethoscope className="h-4 w-4 text-primary" />
+            {/* Quick Stats Bar */}
+            <div className="bg-muted/40 border-t border-border/50 px-4 py-3 md:px-6 md:py-4">
+              <div className="flex items-center gap-3 md:gap-6 overflow-x-auto pb-1 -mb-1">
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Stethoscope className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{facility.facility_type}</span>
+                </div>
+                {yearsInBusiness && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <Clock className="h-4 w-4 text-blue-600" />
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Type</p>
-                      <p className="text-sm font-semibold text-foreground">{facility.facility_type}</p>
-                    </div>
+                    <span className="text-sm font-medium text-foreground">{yearsInBusiness}+ years</span>
                   </div>
                 )}
                 {genderLabel && (
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
                       <Users className="h-4 w-4 text-violet-600" />
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Gender</p>
-                      <p className="text-sm font-semibold text-foreground">{genderLabel}</p>
-                    </div>
+                    <span className="text-sm font-medium text-foreground">{genderLabel}</span>
                   </div>
                 )}
                 {facility.bed_count && (
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                       <Bed className="h-4 w-4 text-emerald-600" />
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Capacity</p>
-                      <p className="text-sm font-semibold text-foreground">{facility.bed_count} beds</p>
-                    </div>
+                    <span className="text-sm font-medium text-foreground">{facility.bed_count} beds</span>
                   </div>
                 )}
-                {yearsInBusiness && (
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                      <Award className="h-4 w-4 text-amber-600" />
+                {insuranceList.length > 0 && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                      <Shield className="h-4 w-4 text-amber-600" />
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Experience</p>
-                      <p className="text-sm font-semibold text-foreground">{yearsInBusiness}+ years</p>
-                    </div>
+                    <span className="text-sm font-medium text-foreground">Accepts Insurance</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Services Preview */}
-            {services.length > 0 && (
-              <div className="border-t border-border/60 px-6 py-4 md:px-10 md:py-5">
-                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 md:flex-wrap md:overflow-visible md:pb-0 md:mx-0 md:px-0">
-                  {services.slice(0, 6).map((service) => (
-                    <Badge 
-                      key={service} 
-                      variant="secondary" 
-                      className="px-3 py-1.5 text-xs whitespace-nowrap bg-secondary/60 hover:bg-secondary transition-colors font-medium"
-                    >
-                      {service}
-                    </Badge>
-                  ))}
-                  {services.length > 6 && (
-                    <Badge 
-                      variant="outline" 
-                      className="px-3 py-1.5 text-xs text-muted-foreground whitespace-nowrap"
-                    >
-                      +{services.length - 6} more
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center gap-3 border-t border-border/50 px-6 py-4 bg-card">
+              {showContactDetails ? (
+                <a 
+                  href={`tel:${facility.phone}`}
+                  onClick={() => trackInteraction("call")}
+                  className="flex-1"
+                >
+                  <Button size="lg" className="w-full gap-2 h-12 text-base font-semibold shadow-md">
+                    <Phone className="h-5 w-5" />
+                    Call Now
+                  </Button>
+                </a>
+              ) : (
+                <Button 
+                  size="lg" 
+                  className="flex-1 gap-2 h-12 text-base font-semibold shadow-md"
+                  onClick={() => setRequestModalOpen(true)}
+                >
+                  <Phone className="h-5 w-5" />
+                  Request Call
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="flex-1 gap-2 h-12 text-base font-semibold border-2"
+                onClick={() => setRequestModalOpen(true)}
+              >
+                <MessageSquare className="h-5 w-5" />
+                Request Info
+              </Button>
+              {showContactDetails && facility.website && (
+                <a 
+                  href={facility.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={() => trackInteraction("website")}
+                >
+                  <Button variant="outline" size="lg" className="gap-2 h-12 border-2">
+                    <Globe className="h-4 w-4" />
+                    Website
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Main Content Grid */}
@@ -993,109 +944,101 @@ const CenterProfile = () => {
 
             {/* Right Column - Sticky Sidebar */}
             <div className="hidden lg:block">
-              <div className="sticky top-24 space-y-6">
-              {/* Contact CTA Card */}
-              <div 
-                ref={contactFormRef}
-                className="rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-6 shadow-xl"
-              >
-                <div className="text-center mb-6">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-4">
-                    <MessageSquare className="h-5 w-5 text-primary-foreground" />
+              <div className="sticky top-24 space-y-4">
+                {/* Contact CTA Card */}
+                <div 
+                  ref={contactFormRef}
+                  className="rounded-xl border border-border/50 bg-card p-5 shadow-lg"
+                >
+                  <div className="text-center mb-5">
+                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary shadow-md mb-3">
+                      <MessageSquare className="h-5 w-5 text-primary-foreground" />
+                    </div>
+                    <h3 className="font-display text-lg font-bold text-foreground mb-1">
+                      Get Help Today
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Take the first step towards recovery
+                    </p>
                   </div>
-                  <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                    Request Information
+
+                  <div className="space-y-3">
+                    <Button 
+                      size="lg" 
+                      className="w-full gap-2 h-12 text-base font-semibold shadow-md"
+                      onClick={() => setRequestModalOpen(true)}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Request Info
+                    </Button>
+
+                    {showContactDetails && (
+                      <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")} className="block">
+                        <Button variant="outline" size="lg" className="w-full gap-2 h-11 text-sm font-semibold border-2">
+                          <Phone className="h-4 w-4" />
+                          {facility.phone}
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Trust indicators */}
+                  <div className="mt-5 pt-4 border-t border-border/50 space-y-3">
+                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 shrink-0">
+                        <Clock className="h-3.5 w-3.5 text-emerald-600" />
+                      </div>
+                      <span><strong className="text-foreground">Quick Response</strong> - Within 24 hours</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                        <Shield className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <span><strong className="text-foreground">100% Confidential</strong></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Facility Overview Card */}
+                <div className="rounded-xl border border-border/50 bg-card p-5 shadow-sm">
+                  <h3 className="font-display text-base font-bold text-foreground mb-4 flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    Quick Facts
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Take the first step towards recovery. Our team is here to help.
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-center space-y-3">
-                  <Button 
-                    size="lg" 
-                    className="px-8 gap-2 h-14 text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-                    onClick={() => setRequestModalOpen(true)}
-                  >
-                    <Sparkles className="h-4 w-4 animate-pulse" />
-                    Get Started
-                  </Button>
-
-                  {showContactDetails && (
-                    <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")}>
-                      <Button variant="outline" size="lg" className="w-full gap-2 h-13 text-base font-semibold border-2">
-                        <Phone className="h-5 w-5" />
-                        {facility.phone}
-                      </Button>
-                    </a>
-                  )}
-                </div>
-
-                {/* Quick Response Note */}
-                <div className="mt-6 pt-6 border-t border-border/60">
-                  <div className="flex items-start gap-3 text-xs text-muted-foreground">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 shrink-0">
-                      <Clock className="h-4 w-4 text-emerald-600" />
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between py-1.5 text-sm">
+                      <span className="text-muted-foreground">Type</span>
+                      <span className="font-medium text-foreground">{facility.facility_type}</span>
                     </div>
-                    <div>
-                      <p className="font-semibold text-foreground mb-0.5">Quick Response</p>
-                      <p>Most requests receive a response within 24 hours.</p>
+                    {genderLabel && (
+                      <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                        <span className="text-muted-foreground">Gender</span>
+                        <span className="font-medium text-foreground">{genderLabel}</span>
+                      </div>
+                    )}
+                    {facility.bed_count && (
+                      <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                        <span className="text-muted-foreground">Capacity</span>
+                        <span className="font-medium text-foreground">{facility.bed_count} beds</span>
+                      </div>
+                    )}
+                    {facility.year_established && (
+                      <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                        <span className="text-muted-foreground">Established</span>
+                        <span className="font-medium text-foreground">{facility.year_established}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                      <span className="text-muted-foreground">Programs</span>
+                      <span className="font-medium text-foreground">{services.length}</span>
                     </div>
-                  </div>
-                </div>
-
-                {/* Confidentiality Note */}
-                <div className="mt-4 flex items-start gap-3 text-xs text-muted-foreground">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                    <Shield className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground mb-0.5">100% Confidential</p>
-                    <p>Your information is protected and never shared.</p>
+                    <div className="flex items-center justify-between py-1.5 text-sm border-t border-border/30">
+                      <span className="text-muted-foreground">Insurance</span>
+                      <span className="font-medium text-foreground">{insuranceList.length} accepted</span>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Facility Overview Card */}
-              <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-                <h3 className="font-display text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-primary" />
-                  Facility Overview
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-border/50">
-                    <span className="text-sm text-muted-foreground">Type</span>
-                    <span className="text-sm font-semibold text-foreground">{facility.facility_type}</span>
-                  </div>
-                  {genderLabel && (
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
-                      <span className="text-sm text-muted-foreground">Gender</span>
-                      <span className="text-sm font-semibold text-foreground">{genderLabel}</span>
-                    </div>
-                  )}
-                  {facility.bed_count && (
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
-                      <span className="text-sm text-muted-foreground">Capacity</span>
-                      <span className="text-sm font-semibold text-foreground">{facility.bed_count} beds</span>
-                    </div>
-                  )}
-                  {facility.year_established && (
-                    <div className="flex items-center justify-between py-2 border-b border-border/50">
-                      <span className="text-sm text-muted-foreground">Established</span>
-                      <span className="text-sm font-semibold text-foreground">{facility.year_established}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between py-2 border-b border-border/50">
-                    <span className="text-sm text-muted-foreground">Services</span>
-                    <span className="text-sm font-semibold text-foreground">{services.length} programs</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm text-muted-foreground">Insurance</span>
-                    <span className="text-sm font-semibold text-foreground">{insuranceList.length} accepted</span>
-              </div>
-              </div>
-            </div>
-          </div>
 
           {/* Mobile Sidebar Content - Shows below main content on mobile */}
           <div className="lg:hidden mt-8 space-y-6">
