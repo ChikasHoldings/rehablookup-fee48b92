@@ -340,12 +340,9 @@ const ROICalculator = () => {
             </div>
             <div className="flex items-center justify-between py-3 pt-4">
               <span className="text-foreground font-medium">Estimated ROI</span>
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-accent" />
-                <span className="text-2xl font-bold text-accent">
-                  {roi === Infinity ? "∞" : roi > 0 ? `${roi}%` : "N/A"}
-                </span>
-              </div>
+              <span className="text-2xl font-bold text-accent">
+                {roi === Infinity ? "∞" : roi > 0 ? `${roi}%` : "N/A"}
+              </span>
             </div>
             <p className="text-xs text-muted-foreground text-center pt-2">
               Based on {planName} plan{planCost > 0 ? ` at $${planCost}/mo` : ""}
@@ -857,18 +854,18 @@ const ForProviders = () => {
                 {/* Floating badge */}
                 <div className="absolute -bottom-4 -left-4 md:-left-6 rounded-xl bg-primary px-4 py-3 shadow-lg">
                   <div className="flex items-center gap-3 text-primary-foreground">
-                    <BarChart3 className="h-5 w-5 text-accent" />
+                    <Shield className="h-5 w-5 text-accent" />
                     <div>
-                      <div className="text-sm font-bold">Real-Time Analytics</div>
-                      <div className="text-xs opacity-80">Track every metric</div>
+                      <div className="text-sm font-bold">Verified Leads</div>
+                      <div className="text-xs opacity-80">Quality guaranteed</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="absolute -top-4 -right-4 rounded-xl bg-accent px-4 py-2 shadow-md animate-float">
                   <div className="flex items-center gap-2 text-accent-foreground">
-                    <Zap className="h-4 w-4" />
-                    <span className="text-sm font-bold">Live Dashboard</span>
+                    <TrendingUp className="h-4 w-4" />
+                    <span className="text-sm font-bold">Grow Your Reach</span>
                   </div>
                 </div>
               </div>
