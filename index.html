@@ -53,14 +53,60 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <!-- Preconnect to important origins -->
+    <!-- Preconnect to important origins (fonts, API, CDN) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="dns-prefetch" href="https://plckxokpyiubuekvodtc.supabase.co" />
-    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://plckxokpyiubuekvodtc.supabase.co" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     
-    <!-- Preload critical hero image for LCP optimization -->
-    <link rel="preload" as="image" href="/src/assets/hero-recovery.jpg" fetchpriority="high" />
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="https://plckxokpyiubuekvodtc.supabase.co" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    
+    <!-- Preload critical resources for LCP optimization -->
+    <link rel="preload" as="image" href="/src/assets/hero-recovery.jpg" fetchpriority="high" type="image/jpeg" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" />
+    
+    <!-- Modulepreload for faster JS parsing -->
+    <link rel="modulepreload" href="/src/main.tsx" />
+    
+    <!-- Critical CSS for above-the-fold content (prevents FOUC) -->
+    <style>
+      /* Critical CSS - inlined for instant render */
+      :root {
+        --background: 220 30% 97%;
+        --foreground: 222 47% 11%;
+        --primary: 216 55% 24%;
+        --muted: 220 20% 96%;
+      }
+      html { scroll-behavior: smooth; }
+      body { 
+        margin: 0; 
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background-color: hsl(220 30% 97%);
+        color: hsl(222 47% 11%);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      #root { min-height: 100vh; }
+      /* Skeleton loading state */
+      .loading-skeleton {
+        background: linear-gradient(90deg, hsl(220 20% 96%) 25%, hsl(220 20% 92%) 50%, hsl(220 20% 96%) 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+      }
+      @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      /* Prevent layout shift for images */
+      img { content-visibility: auto; }
+      /* Hide content until React hydrates */
+      .js-loading { opacity: 0; }
+      .js-loaded { opacity: 1; transition: opacity 0.2s ease-out; }
+    </style>
 
     <!-- Structured Data - Organization -->
     <script type="application/ld+json">
@@ -130,7 +176,15 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root" class="js-loading"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Mark as loaded once React hydrates
+      document.getElementById('root').classList.add('js-loaded');
+      document.getElementById('root').classList.remove('js-loading');
+    </script>
+    <!-- Prefetch likely next pages for instant navigation -->
+    <link rel="prefetch" href="/rehab-centers" as="document" />
+    <link rel="prefetch" href="/request-help" as="document" />
   </body>
 </html>

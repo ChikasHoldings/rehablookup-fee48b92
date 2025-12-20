@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { initPerformanceOptimizations } from "./lib/performanceUtils";
 
 // Suppress benign React Router ref warnings
 const originalWarn = console.warn;
@@ -26,5 +27,15 @@ Sentry.init({
   // Only enable in production
   enabled: import.meta.env.PROD,
 });
+
+// Initialize performance optimizations
+initPerformanceOptimizations();
+
+// Mark root as loaded to trigger CSS transition
+const root = document.getElementById("root");
+if (root) {
+  root.classList.remove("js-loading");
+  root.classList.add("js-loaded");
+}
 
 createRoot(document.getElementById("root")!).render(<App />);
