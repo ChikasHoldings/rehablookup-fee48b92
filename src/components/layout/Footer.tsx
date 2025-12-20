@@ -64,192 +64,400 @@ const LinkedInIcon = () => (
 export function Footer() {
   return (
     <footer className="border-t border-border bg-footer">
-      {/* Main Links */}
-      <div className="container py-10 md:py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-4 lg:col-span-1 flex flex-col gap-5">
-            <Link to="/" className="inline-block">
-              <img 
-                src="/logo.svg" 
-                alt="RehabLookup" 
-                className="h-10 w-auto dark:hidden"
-                loading="lazy"
-              />
-              <img 
-                src="/logo-dark.svg" 
-                alt="RehabLookup" 
-                className="h-10 w-auto hidden dark:block"
-                loading="lazy"
-              />
-            </Link>
-            
-            {/* Social Icons */}
-            <div className="flex items-center gap-2">
+      {/* Mobile: Luxury Stacked Layout */}
+      <div className="md:hidden">
+        {/* Centered Brand Section */}
+        <div className="flex flex-col items-center py-10 px-6 border-b border-border/50">
+          {/* Logo */}
+          <Link to="/" className="inline-block mb-6">
+            <img 
+              src="/logo.svg" 
+              alt="RehabLookup" 
+              className="h-12 w-auto dark:hidden"
+              loading="lazy"
+            />
+            <img 
+              src="/logo-dark.svg" 
+              alt="RehabLookup" 
+              className="h-12 w-auto hidden dark:block"
+              loading="lazy"
+            />
+          </Link>
+          
+          {/* Tagline */}
+          <p className="text-sm text-muted-foreground text-center mb-6 max-w-[280px]">
+            Connecting people with verified addiction treatment centers nationwide.
+          </p>
+          
+          {/* Social Icons - Centered with luxury styling */}
+          <div className="flex items-center justify-center gap-3 mb-6">
+            {[
+              { Icon: XIcon, href: "https://x.com", label: "X" },
+              { Icon: FacebookIcon, href: "https://facebook.com", label: "Facebook" },
+              { Icon: InstagramIcon, href: "https://instagram.com", label: "Instagram" },
+              { Icon: LinkedInIcon, href: "https://linkedin.com", label: "LinkedIn" },
+            ].map(({ Icon, href, label }) => (
               <a 
-                href="https://x.com"
+                key={label}
+                href={href}
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                aria-label="Follow us on X"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-primary/10 hover:text-primary transition-all duration-200 hover:scale-105"
+                aria-label={`Follow us on ${label}`}
               >
-                <XIcon />
+                <Icon />
               </a>
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                aria-label="Follow us on Facebook"
-              >
-                <FacebookIcon />
-              </a>
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                aria-label="Follow us on Instagram"
-              >
-                <InstagramIcon />
-              </a>
-              <a 
-                href="https://linkedin.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                aria-label="Follow us on LinkedIn"
-              >
-                <LinkedInIcon />
-              </a>
-            </div>
-            
-            {/* Email */}
-            <a 
-              href="mailto:help@rehablookup.com" 
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Mail className="h-4 w-4" />
-              help@rehablookup.com
-            </a>
+            ))}
           </div>
-
+          
+          {/* Email with elegant styling */}
+          <a 
+            href="mailto:help@rehablookup.com" 
+            className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-muted/30 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+          >
+            <Mail className="h-4 w-4" />
+            help@rehablookup.com
+          </a>
+        </div>
+        
+        {/* Stacked Link Sections */}
+        <div className="divide-y divide-border/50">
           {/* Locations */}
-          <div>
-            <h4 className="text-base font-semibold text-foreground mb-3">
-              Locations
-            </h4>
-            <ul className="space-y-2">
-              {popularLocations.map((item) => (
-                <li key={item.path}>
+          <details className="group">
+            <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
+              <h4 className="text-sm font-semibold text-foreground">Locations</h4>
+              <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div className="px-6 pb-4 pt-1">
+              <ul className="space-y-2.5">
+                {popularLocations.map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      to={item.path} 
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+                <li>
                   <Link 
-                    to={item.path} 
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    to="/locations" 
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
                   >
-                    {item.name}
+                    View All States
+                    <ArrowUpRight className="h-3.5 w-3.5" />
                   </Link>
                 </li>
-              ))}
-              <li>
-                <Link 
-                  to="/locations" 
-                  className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
-                >
-                  View All
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-              </li>
-            </ul>
-          </div>
-
+              </ul>
+            </div>
+          </details>
+          
           {/* Treatment */}
-          <div>
-            <h4 className="text-base font-semibold text-foreground mb-3">
-              Treatment
-            </h4>
-            <ul className="space-y-2">
-              {treatmentTypes.map((item) => (
-                <li key={item.path}>
+          <details className="group">
+            <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
+              <h4 className="text-sm font-semibold text-foreground">Treatment Types</h4>
+              <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div className="px-6 pb-4 pt-1">
+              <ul className="space-y-2.5">
+                {treatmentTypes.map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      to={item.path} 
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+                <li>
                   <Link 
-                    to={item.path} 
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    to="/treatment-types" 
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
                   >
-                    {item.name}
+                    View All
+                    <ArrowUpRight className="h-3.5 w-3.5" />
                   </Link>
                 </li>
-              ))}
-              <li>
-                <Link 
-                  to="/treatment-types" 
-                  className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
-                >
-                  View All
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-              </li>
-            </ul>
-          </div>
-
+              </ul>
+            </div>
+          </details>
+          
           {/* Resources */}
-          <div>
-            <h4 className="text-base font-semibold text-foreground mb-3">
-              Resources
-            </h4>
-            <ul className="space-y-2">
-              {resources.map((item) => (
-                <li key={item.path}>
-                  <Link 
-                    to={item.path} 
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
+          <details className="group">
+            <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
+              <h4 className="text-sm font-semibold text-foreground">Resources</h4>
+              <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div className="px-6 pb-4 pt-1">
+              <ul className="space-y-2.5">
+                {resources.map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      to={item.path} 
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+          
           {/* For Providers */}
-          <div>
-            <h4 className="text-base font-semibold text-foreground mb-3">
-              For Providers
-            </h4>
-            <ul className="space-y-2">
-              {providerLinks.map((item) => (
-                <li key={item.path}>
-                  <Link 
-                    to={item.path} 
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <details className="group">
+            <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none">
+              <h4 className="text-sm font-semibold text-foreground">For Providers</h4>
+              <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div className="px-6 pb-4 pt-1">
+              <ul className="space-y-2.5">
+                {providerLinks.map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      to={item.path} 
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+        </div>
+        
+        {/* Mobile Bottom Bar */}
+        <div className="bg-muted/30 px-6 py-6">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-6">
+              <Link 
+                to="/privacy-policy" 
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <span className="text-border">•</span>
+              <Link 
+                to="/terms-of-service" 
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Terms of Service
+              </Link>
+            </div>
+            <p className="text-xs text-muted-foreground/70 text-center">
+              © {new Date().getFullYear()} RehabLookup. All rights reserved.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-border">
-        <div className="container py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} RehabLookup. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6">
-              <Link 
-                to="/privacy-policy" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Privacy
+      {/* Desktop: Original Grid Layout */}
+      <div className="hidden md:block">
+        <div className="container py-10 md:py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
+            {/* Brand */}
+            <div className="col-span-2 md:col-span-4 lg:col-span-1 flex flex-col gap-5">
+              <Link to="/" className="inline-block">
+                <img 
+                  src="/logo.svg" 
+                  alt="RehabLookup" 
+                  className="h-10 w-auto dark:hidden"
+                  loading="lazy"
+                />
+                <img 
+                  src="/logo-dark.svg" 
+                  alt="RehabLookup" 
+                  className="h-10 w-auto hidden dark:block"
+                  loading="lazy"
+                />
               </Link>
-              <Link 
-                to="/terms-of-service" 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              
+              {/* Social Icons */}
+              <div className="flex items-center gap-2">
+                <a 
+                  href="https://x.com"
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  aria-label="Follow us on X"
+                >
+                  <XIcon />
+                </a>
+                <a 
+                  href="https://facebook.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  aria-label="Follow us on Facebook"
+                >
+                  <FacebookIcon />
+                </a>
+                <a 
+                  href="https://instagram.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  aria-label="Follow us on Instagram"
+                >
+                  <InstagramIcon />
+                </a>
+                <a 
+                  href="https://linkedin.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  aria-label="Follow us on LinkedIn"
+                >
+                  <LinkedInIcon />
+                </a>
+              </div>
+              
+              {/* Email */}
+              <a 
+                href="mailto:help@rehablookup.com" 
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                Terms
-              </Link>
+                <Mail className="h-4 w-4" />
+                help@rehablookup.com
+              </a>
+            </div>
+
+            {/* Locations */}
+            <div>
+              <h4 className="text-base font-semibold text-foreground mb-3">
+                Locations
+              </h4>
+              <ul className="space-y-2">
+                {popularLocations.map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      to={item.path} 
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+                <li>
+                  <Link 
+                    to="/locations" 
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                  >
+                    View All
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Treatment */}
+            <div>
+              <h4 className="text-base font-semibold text-foreground mb-3">
+                Treatment
+              </h4>
+              <ul className="space-y-2">
+                {treatmentTypes.map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      to={item.path} 
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+                <li>
+                  <Link 
+                    to="/treatment-types" 
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                  >
+                    View All
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h4 className="text-base font-semibold text-foreground mb-3">
+                Resources
+              </h4>
+              <ul className="space-y-2">
+                {resources.map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      to={item.path} 
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* For Providers */}
+            <div>
+              <h4 className="text-base font-semibold text-foreground mb-3">
+                For Providers
+              </h4>
+              <ul className="space-y-2">
+                {providerLinks.map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      to={item.path} 
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="border-t border-border">
+          <div className="container py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <p className="text-sm text-muted-foreground">
+                © {new Date().getFullYear()} RehabLookup. All rights reserved.
+              </p>
+              <div className="flex items-center gap-6">
+                <Link 
+                  to="/privacy-policy" 
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Privacy
+                </Link>
+                <Link 
+                  to="/terms-of-service" 
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Terms
+                </Link>
+              </div>
             </div>
           </div>
         </div>
