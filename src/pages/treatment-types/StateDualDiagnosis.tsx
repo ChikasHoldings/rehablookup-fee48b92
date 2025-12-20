@@ -221,20 +221,22 @@ const StateDualDiagnosis = () => {
             </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {treatmentComponents.map((step) => (
               <div
                 key={step.step}
-                className="rounded-xl border bg-card p-6 text-center hover:shadow-md transition-shadow relative"
+                className="rounded-xl border bg-card p-5 hover:shadow-md transition-shadow relative"
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                <div className="absolute -top-3 left-4 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   {step.step}
                 </div>
-                <div className="mx-auto mb-4 mt-2 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                  <step.icon className="h-7 w-7 text-primary" />
+                <div className="flex items-center gap-3 mb-2 mt-1">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                    <step.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-foreground">{step.title}</h3>
                 </div>
-                <h3 className="font-semibold text-foreground">{step.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
+                <p className="text-sm text-muted-foreground pl-12">{step.description}</p>
               </div>
             ))}
           </div>

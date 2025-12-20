@@ -372,30 +372,36 @@ export default function ProviderFAQ() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 md:py-20">
+        <section className="py-12 md:py-16">
           <div className="container px-5 md:px-6">
-            <div className="mx-auto max-w-3xl rounded-2xl md:rounded-xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-8 lg:p-12 text-center">
-              <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 border border-accent/20">
-                <MessageSquare className="h-7 w-7 text-accent" />
-              </div>
-              <h2 className="mb-4 md:mb-3 font-display text-2xl md:text-xl lg:text-2xl font-bold text-foreground">
-                Still Have Questions?
-              </h2>
-              <p className="mb-8 md:mb-6 text-lg md:text-base text-muted-foreground max-w-xl mx-auto">
-                Our dedicated provider support team is here to help. Reach out and we'll get back to you within 24 hours.
-              </p>
-              <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
-                <Link to="/provider-support" className="w-full sm:w-auto">
-                  <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
-                    Contact Support
-                    <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
-                  </Button>
-                </Link>
-                <Link to="/provider-resources" className="w-full sm:w-auto">
-                  <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
-                    View Resources
-                  </Button>
-                </Link>
+            <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-6 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 border border-accent/20">
+                    <MessageSquare className="h-5 w-5 text-accent" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-lg font-bold text-foreground">
+                      Still Have Questions?
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Our provider support team is here to help.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Link to="/provider-support">
+                    <Button size="default" className="gap-2 font-semibold">
+                      Contact Support
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link to="/provider-resources">
+                    <Button variant="outline" size="default">
+                      View Resources
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
