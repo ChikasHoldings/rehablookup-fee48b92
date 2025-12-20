@@ -47,6 +47,10 @@ import AdLanding from "./pages/AdLanding";
 import SocialLanding from "./pages/SocialLanding";
 import Resources from "./pages/Resources";
 import Insurance from "./pages/Insurance";
+import AetnaRehab from "./pages/insurance/AetnaRehab";
+import BCBSTreatment from "./pages/insurance/BCBSTreatment";
+import CignaRehab from "./pages/insurance/CignaRehab";
+import UnitedHealthcareRehab from "./pages/insurance/UnitedHealthcareRehab";
 import CostEstimator from "./pages/CostEstimator";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
@@ -210,6 +214,10 @@ const App = () => (
             
             <Route path="/resources" element={<Resources />} />
             <Route path="/insurance" element={<Insurance />} />
+            <Route path="/insurance/aetna-rehab" element={<AetnaRehab />} />
+            <Route path="/insurance/bcbs-treatment" element={<BCBSTreatment />} />
+            <Route path="/insurance/cigna-rehab" element={<CignaRehab />} />
+            <Route path="/insurance/united-healthcare-rehab" element={<UnitedHealthcareRehab />} />
             <Route path="/cost-estimator" element={<CostEstimator />} />
             <Route path="/resources/:id" element={<ArticleDetail />} />
             <Route path="/faq" element={<FAQ />} />
