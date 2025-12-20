@@ -274,20 +274,22 @@ const HowItWorks = () => {
             </p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4 md:gap-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 md:gap-5">
             {benefits.map((benefit, index) => (
               <div
                 key={benefit.title}
-                className="group rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm animate-fade-in hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
+                className="group rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm animate-fade-in hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
                 style={{ animationDelay: `${index * 75}ms` }}
               >
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent/80 shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
-                  <benefit.icon className="h-7 w-7 text-white" />
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/80 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300">
+                    <benefit.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <h3 className="font-display text-lg font-semibold text-primary-foreground">
+                    {benefit.title}
+                  </h3>
                 </div>
-                <h3 className="mb-3 font-display text-xl font-semibold text-primary-foreground">
-                  {benefit.title}
-                </h3>
-                <p className="text-base text-primary-foreground/70 leading-relaxed">
+                <p className="text-sm text-primary-foreground/70 leading-relaxed pl-[52px]">
                   {benefit.description}
                 </p>
               </div>
@@ -297,33 +299,31 @@ const HowItWorks = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="py-16 px-4 md:py-24 md:px-6">
+      <section className="py-12 px-4 md:py-16 md:px-6">
         <div className="container">
-          <div className="mx-auto max-w-3xl rounded-3xl border border-accent/20 bg-gradient-to-br from-accent/5 via-accent/10 to-accent/5 p-10 md:p-14 text-center relative overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-accent/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl" />
+          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 via-accent/10 to-accent/5 p-8 md:p-10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl" />
             
-            <div className="relative">
-              <div className="mb-6 inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-accent to-accent/80 shadow-xl mx-auto">
-                <Heart className="h-8 w-8 text-white" />
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="text-center md:text-left">
+                <h2 className="font-display text-xl font-bold text-foreground md:text-2xl mb-2">
+                  Ready to Get Started?
+                </h2>
+                <p className="text-muted-foreground text-sm md:text-base max-w-md">
+                  Take the first step toward recovery. Search our directory or speak with a specialist.
+                </p>
               </div>
-              <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
-                Ready to Get Started?
-              </h2>
-              <p className="mb-8 text-base text-muted-foreground max-w-xl mx-auto leading-relaxed md:text-lg">
-                Take the first step toward recovery today. Search our directory or speak with a specialist who can help guide you.
-              </p>
-              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
-                <Link to="/rehab-centers" className="w-full sm:w-auto">
-                  <Button size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:px-8 hover:scale-105 hover:shadow-xl transition-all duration-200">
-                    Find Treatment Centers
-                    <ArrowRight className="h-5 w-5" />
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <Link to="/rehab-centers">
+                  <Button size="default" className="gap-2 font-semibold hover:scale-105 transition-all duration-200">
+                    Find Treatment
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/request-help?source=howitworks_cta" className="w-full sm:w-auto">
-                  <Button variant="outline" size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:px-8 hover:scale-105 transition-all duration-200">
-                    <MessageSquare className="h-5 w-5" />
+                <Link to="/request-help?source=howitworks_cta">
+                  <Button variant="outline" size="default" className="gap-2 font-semibold">
+                    <MessageSquare className="h-4 w-4" />
                     Request Help
                   </Button>
                 </Link>

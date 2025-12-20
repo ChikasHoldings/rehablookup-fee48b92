@@ -216,17 +216,19 @@ export default function ProviderResources() {
         {/* Quick Stats Bar */}
         <section className="border-b border-border bg-card py-10">
           <div className="container px-5 md:px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {quickTips.map((tip, index) => (
                 <AnimatedCard key={tip.title} delay={index * 75}>
                   <div className="text-center md:text-left">
-                    <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20">
-                        <tip.icon className="h-6 w-6 text-accent" />
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20">
+                        <tip.icon className="h-5 w-5 text-accent" />
                       </div>
                       <div>
-                        <div className="font-display text-2xl font-bold text-accent">{tip.stat}</div>
-                        <h3 className="font-semibold text-foreground text-sm mt-1">{tip.title}</h3>
+                        <div className="flex items-center gap-2 md:block">
+                          <div className="font-display text-xl font-bold text-accent">{tip.stat}</div>
+                          <h3 className="font-semibold text-foreground text-sm">{tip.title}</h3>
+                        </div>
                         <p className="text-xs text-muted-foreground mt-0.5 hidden md:block">{tip.description}</p>
                       </div>
                     </div>
@@ -253,30 +255,32 @@ export default function ProviderResources() {
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {resources.map((resource, index) => (
                 <AnimatedCard key={resource.title} delay={index * 75}>
                   <a 
                     href={resource.link}
-                    className="group block h-full rounded-2xl border border-border bg-card p-8 transition-all duration-300 hover:border-accent/30 hover:shadow-elevated hover:-translate-y-1"
+                    className="group block h-full rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-accent/30 hover:shadow-elevated hover:-translate-y-1"
                   >
-                    <div className="flex items-start justify-between mb-6">
-                      <div className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${resource.color} border border-white/50 transition-transform group-hover:scale-110`}>
-                        <resource.icon className="h-8 w-8 text-accent" />
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${resource.color} border border-white/50 transition-transform group-hover:scale-110`}>
+                        <resource.icon className="h-5 w-5 text-accent" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-display text-lg font-bold text-foreground group-hover:text-accent transition-colors">
+                          {resource.title}
+                        </h3>
                       </div>
                       {resource.badge && (
-                        <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-bold text-accent uppercase tracking-wide">
+                        <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-bold text-accent uppercase tracking-wide">
                           {resource.badge}
                         </span>
                       )}
                     </div>
-                    <h3 className="font-display text-xl font-bold text-foreground group-hover:text-accent transition-colors">
-                      {resource.title}
-                    </h3>
-                    <p className="mt-3 text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed pl-14">
                       {resource.description}
                     </p>
-                    <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-accent group-hover:gap-3 transition-all">
+                    <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent group-hover:gap-3 transition-all pl-14">
                       Learn more
                       <ArrowRight className="h-4 w-4" />
                     </div>
@@ -321,19 +325,20 @@ export default function ProviderResources() {
               </AnimatedCard>
               
               <AnimatedCard delay={200}>
-                <div className="relative rounded-3xl border border-accent/30 bg-gradient-to-br from-accent/5 via-accent/10 to-muted/30 p-10 text-center overflow-hidden">
-                  {/* Decorative Background */}
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-accent/10 rounded-full blur-3xl" />
-                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+                <div className="relative rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/5 via-accent/10 to-muted/30 p-8 text-center overflow-hidden">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-accent/10 rounded-full blur-3xl" />
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
                   
                   <div className="relative z-10">
-                    <div className="mb-6 inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-accent/10 border border-accent/20">
-                      <TrendingUp className="h-8 w-8 text-accent" />
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 border border-accent/20">
+                        <TrendingUp className="h-5 w-5 text-accent" />
+                      </div>
+                      <h3 className="font-display text-xl font-bold text-foreground">
+                        Boost Your Visibility
+                      </h3>
                     </div>
-                    <h3 className="font-display text-2xl font-bold text-foreground mb-3">
-                      Boost Your Visibility
-                    </h3>
-                    <p className="text-muted-foreground mb-8">
+                    <p className="text-muted-foreground mb-6">
                       Upgrade to a featured listing and appear at the top of search results. Get up to <span className="font-bold text-accent">5x more leads</span>.
                     </p>
                     
@@ -400,31 +405,37 @@ export default function ProviderResources() {
           </div>
         </section>
 
-        {/* Support CTA - Clean centered design */}
-        <section className="py-16 md:py-20">
+        {/* Support CTA - Compact horizontal layout */}
+        <section className="py-12 md:py-16">
           <div className="container px-5 md:px-6">
-            <div className="mx-auto max-w-3xl rounded-2xl md:rounded-xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-8 lg:p-12 text-center">
-              <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 border border-accent/20">
-                <Users className="h-7 w-7 text-accent" />
-              </div>
-              <h2 className="mb-4 md:mb-3 font-display text-2xl md:text-xl lg:text-2xl font-bold text-foreground">
-                Need Personalized Help?
-              </h2>
-              <p className="mb-8 md:mb-6 text-lg md:text-base text-muted-foreground max-w-xl mx-auto">
-                Our dedicated provider support team is here to help you succeed. Get personalized assistance with your listing and strategy.
-              </p>
-              <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
-                <Link to="/provider-support" className="w-full sm:w-auto">
-                  <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
-                    Contact Support
-                    <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
-                  </Button>
-                </Link>
-                <Link to="/provider-login" className="w-full sm:w-auto">
-                  <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
-                    Sign In
-                  </Button>
-                </Link>
+            <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-6 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 border border-accent/20">
+                    <Users className="h-5 w-5 text-accent" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-lg font-bold text-foreground">
+                      Need Personalized Help?
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Get assistance with your listing and strategy.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Link to="/provider-support">
+                    <Button size="default" className="gap-2 font-semibold">
+                      Contact Support
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link to="/provider-login">
+                    <Button variant="outline" size="default">
+                      Sign In
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

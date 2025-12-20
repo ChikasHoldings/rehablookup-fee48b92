@@ -731,23 +731,25 @@ const ForProviders = () => {
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {benefits.map((benefit, index) => (
                 <AnimatedCard key={benefit.title} delay={index * 75}>
-                  <div className="group h-full rounded-xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-accent/30">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 transition-colors group-hover:bg-accent/20">
-                        <benefit.icon className="h-6 w-6 text-accent" />
+                  <div className="group h-full rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-accent/30">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 transition-colors group-hover:bg-accent/20">
+                        <benefit.icon className="h-5 w-5 text-accent" />
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-primary">{benefit.stat}</div>
-                        <div className="text-xs text-muted-foreground">{benefit.statLabel}</div>
+                      <div>
+                        <h3 className="font-display text-base font-semibold text-foreground">
+                          {benefit.title}
+                        </h3>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-lg font-bold text-primary">{benefit.stat}</span>
+                          <span className="text-xs text-muted-foreground">{benefit.statLabel}</span>
+                        </div>
                       </div>
                     </div>
-                    <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
-                      {benefit.title}
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed pl-[52px]">
                       {benefit.description}
                     </p>
                   </div>
@@ -796,23 +798,25 @@ const ForProviders = () => {
               ].map((item, index) => (
                 <div
                   key={item.step}
-                  className="relative rounded-xl border border-border bg-card p-8 shadow-sm text-center animate-fade-in"
+                  className="relative rounded-xl border border-border bg-card p-6 shadow-sm text-center animate-fade-in"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {index < 2 && (
                     <div className="hidden md:block absolute top-1/2 -right-4 w-8 border-t-2 border-dashed border-accent/30" />
                   )}
                   
-                  <div className="mb-4 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-xl font-bold text-accent-foreground shadow-md">
-                    {item.step}
-                  </div>
-                  <div className="mb-4 mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                    <item.icon className="h-5 w-5 text-primary" />
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-base font-bold text-accent-foreground shadow-md">
+                      {item.step}
+                    </div>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                      <item.icon className="h-4 w-4 text-primary" />
+                    </div>
                   </div>
                   <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
                     {item.title}
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {item.description}
                   </p>
                 </div>
