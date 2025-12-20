@@ -47,6 +47,7 @@ import AdLanding from "./pages/AdLanding";
 import SocialLanding from "./pages/SocialLanding";
 import Resources from "./pages/Resources";
 import Insurance from "./pages/Insurance";
+import CostEstimator from "./pages/CostEstimator";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
 import About from "./pages/About";
@@ -185,6 +186,7 @@ const App = () => (
             
             <Route path="/resources" element={<Resources />} />
             <Route path="/insurance" element={<Insurance />} />
+            <Route path="/cost-estimator" element={<CostEstimator />} />
             <Route path="/resources/:id" element={<ArticleDetail />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/about" element={<About />} />

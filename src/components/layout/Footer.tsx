@@ -22,10 +22,11 @@ const treatmentTypes = [
 // Resources
 const resources = [
   { name: "Guides & Articles", path: "/resources" },
+  { name: "Insurance Guide", path: "/insurance" },
+  { name: "Cost Estimator", path: "/cost-estimator" },
   { name: "How It Works", path: "/how-it-works" },
   { name: "FAQ", path: "/faq" },
   { name: "About Us", path: "/about" },
-  { name: "Contact", path: "/contact" },
 ];
 
 // Company/Provider links
