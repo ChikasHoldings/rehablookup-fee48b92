@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -373,7 +374,7 @@ export function FacilityQuickViewModal({
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Phone</p>
-                  <p className="text-sm font-semibold">{center.phone}</p>
+                  <p className="text-sm font-semibold">{formatPhoneNumber(center.phone)}</p>
                 </div>
               </a>
               
