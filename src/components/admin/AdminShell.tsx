@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
-import { prefetchAdminPage } from "@/lib/adminPrefetch";
+import { prefetchAdminPage, prefetchAdjacentPages } from "@/lib/adminPrefetch";
 
 // Both AdminHeader and AdminSidebar are already memoized in their exports
 
@@ -69,10 +69,13 @@ export function AdminShell() {
   // Track navigation for Sentry breadcrumbs
   useSentryBreadcrumbs();
 
+  // Scroll to top and prefetch adjacent pages on route change
   useEffect(() => {
     if (mainContentRef.current) {
       mainContentRef.current.scrollTo({ top: 0, behavior: "instant" });
     }
+    // Prefetch adjacent pages after the current page has loaded
+    prefetchAdjacentPages(location.pathname);
   }, [location.pathname]);
 
   // Don't render anything until we know auth status (prevents flash)
