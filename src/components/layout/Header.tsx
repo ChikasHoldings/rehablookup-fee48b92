@@ -96,7 +96,7 @@ export function Header({
             <img 
               src={variant === "provider" ? "/logo-dark.svg" : "/logo.svg"}
               alt="RehabLookup" 
-              className="h-8 w-auto"
+              className="h-7 w-auto"
               loading="eager"
               decoding="async"
             />
