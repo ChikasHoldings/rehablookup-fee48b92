@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Phone, Shield } from "lucide-react";
+import { analytics } from "@/lib/analytics";
 
 interface ContactRequestFormProps {
   centerName?: string;
@@ -16,6 +17,7 @@ export function ContactRequestForm({ centerName }: ContactRequestFormProps) {
   const navigate = useNavigate();
 
   const handleGetHelp = () => {
+    analytics.ctaClick("Request Help Now", "contact_form");
     const params = new URLSearchParams({
       source: "contact_form",
     });
