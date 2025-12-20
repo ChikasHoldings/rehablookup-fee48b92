@@ -288,31 +288,40 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
-    // Apply sorting
+    // Helper to get priority score (featured/paid plans first)
+    const getPriorityScore = (center: any): number => {
+      if (center.hasFeaturedSubscription) return 3; // Featured subscription = highest priority
+      if (center.hasPaidPlan) return 2; // Paid plan = second priority
+      if (center.featured) return 1; // Legacy featured = third priority
+      return 0; // Free/basic plan = lowest priority
+    };
+
+    // Apply sorting with paid/featured priority
+    const sortWithPriority = (a: any, b: any, secondarySort: () => number) => {
+      const aPriority = getPriorityScore(a);
+      const bPriority = getPriorityScore(b);
+      if (bPriority !== aPriority) return bPriority - aPriority;
+      return secondarySort();
+    };
+
     switch (sortParam) {
       case "featured":
-        results.sort((a, b) => {
-          const aHasFeaturedSub = (a as any).hasFeaturedSubscription ? 1 : 0;
-          const bHasFeaturedSub = (b as any).hasFeaturedSubscription ? 1 : 0;
-          if (bHasFeaturedSub !== aHasFeaturedSub) return bHasFeaturedSub - aHasFeaturedSub;
-          if (b.featured !== a.featured) return b.featured ? 1 : -1;
-          return b.rating - a.rating;
-        });
+        results.sort((a, b) => sortWithPriority(a, b, () => b.rating - a.rating));
         break;
       case "rating-high":
-        results.sort((a, b) => b.rating - a.rating);
+        results.sort((a, b) => sortWithPriority(a, b, () => b.rating - a.rating));
         break;
       case "rating-low":
-        results.sort((a, b) => a.rating - b.rating);
+        results.sort((a, b) => sortWithPriority(a, b, () => a.rating - b.rating));
         break;
       case "reviews":
-        results.sort((a, b) => b.reviewCount - a.reviewCount);
+        results.sort((a, b) => sortWithPriority(a, b, () => b.reviewCount - a.reviewCount));
         break;
       case "name-asc":
-        results.sort((a, b) => a.name.localeCompare(b.name));
+        results.sort((a, b) => sortWithPriority(a, b, () => a.name.localeCompare(b.name)));
         break;
       case "name-desc":
-        results.sort((a, b) => b.name.localeCompare(a.name));
+        results.sort((a, b) => sortWithPriority(a, b, () => b.name.localeCompare(a.name)));
         break;
     }
 
