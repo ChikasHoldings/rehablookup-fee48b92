@@ -365,26 +365,26 @@ const Index = () => {
       </section>
 
       {/* Insurance Coverage Section */}
-      <section className="py-10 md:py-14 lg:py-16 bg-gradient-to-b from-background to-muted/30">
+      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-background to-muted/30">
         <div className="container">
-          <div className="rounded-2xl border border-border bg-card p-6 md:p-8 lg:p-10 shadow-sm">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-12">
+          <div className="rounded-2xl border border-border bg-card p-5 md:p-6 lg:p-10 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-8 lg:gap-12">
               {/* Left Content */}
-              <div className="lg:max-w-sm text-center lg:text-left">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+              <div className="md:max-w-xs lg:max-w-sm text-center md:text-left shrink-0">
+                <div className="mb-2 md:mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs font-semibold uppercase tracking-wider text-primary">
                     Insurance Verification
                   </span>
                 </div>
-                <h2 className="mb-2 font-display text-xl font-bold text-foreground md:text-2xl lg:text-[1.75rem]">
+                <h2 className="mb-2 font-display text-lg md:text-xl font-bold text-foreground lg:text-[1.75rem]">
                   Are You Covered?
                 </h2>
-                <p className="mb-5 text-sm text-muted-foreground leading-relaxed">
+                <p className="mb-4 md:mb-5 text-sm text-muted-foreground leading-relaxed">
                   Most insurance plans cover addiction treatment. Check your benefits in minutes.
                 </p>
                 <Link to="/insurance">
-                  <Button size="lg" className="gap-2 font-semibold shadow-md hover:shadow-lg transition-shadow">
+                  <Button size="default" className="gap-2 font-semibold shadow-md hover:shadow-lg transition-shadow md:size-lg">
                     Check Your Coverage
                     <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -392,53 +392,53 @@ const Index = () => {
               </div>
 
               {/* Insurance Logos */}
-              <div className="flex-1 lg:max-w-xl">
-                {/* Mobile: Horizontal scroll carousel */}
-                <div className="relative -mx-2 px-2 sm:mx-0 sm:px-0">
-                  <div className="flex gap-6 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0 md:gap-6">
+              <div className="flex-1">
+                {/* Mobile: Horizontal scroll carousel, Tablet+: Grid */}
+                <div className="relative -mx-2 px-2 md:mx-0 md:px-0">
+                  <div className="flex gap-4 md:gap-3 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory md:grid md:grid-cols-5 md:overflow-visible md:pb-0 lg:gap-6">
                     {/* Aetna */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/aetna.svg" alt="Aetna" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <img src="/insurance-logos/aetna.svg" alt="Aetna" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Anthem */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/anthem.svg" alt="Anthem" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <img src="/insurance-logos/anthem.svg" alt="Anthem" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* BCBS */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Cigna */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/cigna.svg" alt="Cigna" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <img src="/insurance-logos/cigna.svg" alt="Cigna" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Humana */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/humana.svg" alt="Humana" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <img src="/insurance-logos/humana.svg" alt="Humana" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Kaiser */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Medicare */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/medicare.svg" alt="Medicare" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <img src="/insurance-logos/medicare.svg" alt="Medicare" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Medicaid */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/medicaid.svg" alt="Medicaid" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <img src="/insurance-logos/medicaid.svg" alt="Medicaid" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                     {/* Optum */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <span className="text-base md:text-lg font-bold text-[#FF6200] opacity-80 hover:opacity-100 transition-opacity">Optum</span>
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <span className="text-sm md:text-base lg:text-lg font-bold text-[#FF6200] opacity-80 hover:opacity-100 transition-opacity">Optum</span>
                     </div>
                     {/* Tricare */}
-                    <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/tricare.svg" alt="TRICARE" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
+                      <img src="/insurance-logos/tricare.svg" alt="TRICARE" className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
                   {/* Scroll hint for mobile */}
-                  <div className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground sm:hidden">
+                  <div className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground md:hidden">
                     <span>Swipe to see more</span>
                     <ArrowRight className="h-3 w-3" />
                   </div>
@@ -450,16 +450,16 @@ const Index = () => {
       </section>
 
       {/* Featured Centers */}
-      <section className="py-12 md:py-16 lg:py-20">
+      <section className="py-10 md:py-12 lg:py-20">
         <div className="container">
           {/* Section Header - Clean directory style */}
-          <div className="mb-8 md:mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="mb-6 md:mb-8 lg:mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 md:gap-4">
             <div>
-              <div className="mb-2 flex items-center gap-2">
+              <div className="mb-1.5 md:mb-2 flex items-center gap-2">
                 <Star className="h-4 w-4 text-accent fill-accent" />
                 <span className="text-xs font-semibold uppercase tracking-wider text-accent">Featured</span>
               </div>
-              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+              <h2 className="font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
                 Top-Rated Treatment Centers
               </h2>
             </div>
@@ -471,11 +471,11 @@ const Index = () => {
             </Link>
           </div>
 
-          {/* Cards Grid */}
+          {/* Cards Grid - Optimized for tablet */}
           {isFacilitiesLoading ? (
             <FeaturedCentersLoading />
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {featuredCenters.map((center, index) => (
                 <div 
                   key={center.id} 
@@ -491,18 +491,18 @@ const Index = () => {
       </section>
 
       {/* Treatment Options */}
-      <section className="py-12 md:py-16 lg:py-20 bg-muted/40 border-y border-border/50">
+      <section className="py-10 md:py-12 lg:py-20 bg-muted/40 border-y border-border/50">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-8 md:mb-10 text-center">
+          <div className="mb-6 md:mb-8 lg:mb-10 text-center">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browse by Category</span>
-            <h2 className="mt-2 font-display text-xl font-bold text-foreground md:text-2xl">
+            <h2 className="mt-1.5 md:mt-2 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
               Treatment Programs
             </h2>
           </div>
 
-          {/* Options Grid - Clean card style with micro-interactions */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Options Grid - Optimized for tablet with 2 columns */}
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {treatmentOptions.map((option, index) => (
               <Link
                 key={option.title}
@@ -543,36 +543,37 @@ const Index = () => {
       </section>
 
       {/* Find Treatment Near You - SEO Section */}
-      <section className="py-12 md:py-16 lg:py-20 border-t border-border/50">
+      <section className="py-10 md:py-12 lg:py-20 border-t border-border/50">
         <div className="container">
-          <div className="mb-8 md:mb-10 text-center">
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+          <div className="mb-6 md:mb-8 lg:mb-10 text-center">
+            <div className="mb-1.5 md:mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
               <Navigation className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs font-semibold uppercase tracking-wider text-primary">
                 Near You
               </span>
             </div>
-            <h2 className="mt-2 font-display text-xl font-bold text-foreground md:text-2xl">
+            <h2 className="mt-1.5 md:mt-2 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
               Find Treatment Near You
             </h2>
-            <p className="mt-2 text-muted-foreground max-w-lg mx-auto">
+            <p className="mt-1.5 md:mt-2 text-sm md:text-base text-muted-foreground max-w-lg mx-auto">
               Get location-based treatment options with real-time availability
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+          {/* Near me grid - 2 columns on mobile, 3 on tablet, 3 on desktop */}
+          <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 max-w-4xl mx-auto">
             <Link
               to="/drug-rehab-near-me"
-              className="group relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Pill className="h-5 w-5" />
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Pill className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
                   Drug Rehab Near Me
                 </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
                   Addiction treatment centers
                 </p>
               </div>
@@ -580,16 +581,16 @@ const Index = () => {
 
             <Link
               to="/alcohol-rehab-near-me"
-              className="group relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Activity className="h-5 w-5" />
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Activity className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
                   Alcohol Rehab Near Me
                 </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
                   Alcohol treatment programs
                 </p>
               </div>
@@ -597,16 +598,16 @@ const Index = () => {
 
             <Link
               to="/detox-near-me"
-              className="group relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Sparkles className="h-5 w-5" />
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
                   Detox Centers Near Me
                 </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
                   Medical detox facilities
                 </p>
               </div>
@@ -614,16 +615,16 @@ const Index = () => {
 
             <Link
               to="/dual-diagnosis-near-me"
-              className="group relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Brain className="h-5 w-5" />
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Brain className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
                   Dual Diagnosis Near Me
                 </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
                   Mental health + addiction
                 </p>
               </div>
@@ -631,16 +632,16 @@ const Index = () => {
 
             <Link
               to="/inpatient-rehab-near-me"
-              className="group relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Home className="h-5 w-5" />
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Home className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
                   Inpatient Rehab Near Me
                 </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
                   Residential treatment
                 </p>
               </div>
@@ -648,16 +649,16 @@ const Index = () => {
 
             <Link
               to="/outpatient-near-me"
-              className="group relative flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
-                <Stethoscope className="h-5 w-5" />
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Stethoscope className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-xs md:text-sm">
                   Outpatient Near Me
                 </h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-[10px] md:text-xs text-muted-foreground">
                   IOP & PHP programs
                 </p>
               </div>
@@ -667,21 +668,21 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-12 md:py-16 lg:py-20">
+      <section className="py-10 md:py-12 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-3xl">
             {/* Section Header */}
-            <div className="mb-8 text-center">
-              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+            <div className="mb-6 md:mb-8 text-center">
+              <h2 className="font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
                 How It Works
               </h2>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-1.5 md:mt-2 text-sm md:text-base text-muted-foreground">
                 Finding help is simple and confidential
               </p>
             </div>
 
             {/* Steps - Clean numbered list */}
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {[
                 {
                   step: 1,
@@ -704,31 +705,31 @@ const Index = () => {
               ].map((item) => (
                 <div
                   key={item.step}
-                  className="group flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-sm"
+                  className="group flex items-start gap-3 md:gap-4 rounded-xl border border-border bg-card p-3 md:p-4 transition-all hover:border-primary/30 hover:shadow-sm"
                 >
                   {/* Step number */}
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                  <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                     {item.step}
                   </div>
                   
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground text-sm md:text-base">
                       {item.title}
                     </h3>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
+                    <p className="mt-0.5 text-xs md:text-sm text-muted-foreground">
                       {item.description}
                     </p>
                   </div>
                   
-                  <item.icon className="h-5 w-5 shrink-0 text-muted-foreground/50 mt-0.5" />
+                  <item.icon className="h-4 w-4 md:h-5 md:w-5 shrink-0 text-muted-foreground/50 mt-0.5" />
                 </div>
               ))}
             </div>
 
             {/* CTA */}
-            <div className="mt-8 text-center">
+            <div className="mt-6 md:mt-8 text-center">
               <Link to="/rehab-centers">
-                <Button size="lg" className="gap-2">
+                <Button size="default" className="gap-2 md:size-lg">
                   Start Your Search
                   <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -739,20 +740,20 @@ const Index = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-12 md:py-16 lg:py-20 bg-primary">
+      <section className="py-10 md:py-12 lg:py-20 bg-primary">
         <div className="container">
-          <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+          <div className="grid items-center gap-6 md:gap-8 md:grid-cols-2 lg:gap-12">
             {/* Content */}
-            <div className="order-2 lg:order-1">
+            <div className="order-2 md:order-1">
               <span className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Why RehabLookup</span>
-              <h2 className="mt-2 font-display text-xl font-bold text-primary-foreground md:text-2xl">
+              <h2 className="mt-1.5 md:mt-2 font-display text-lg md:text-xl font-bold text-primary-foreground lg:text-2xl">
                 Trusted by Families Across America
               </h2>
-              <p className="mt-3 text-primary-foreground/70 leading-relaxed max-w-md">
+              <p className="mt-2 md:mt-3 text-sm md:text-base text-primary-foreground/70 leading-relaxed max-w-md">
                 We're committed to helping you find the right treatment with transparency and compassion.
               </p>
 
-              <ul className="mt-6 space-y-2.5">
+              <ul className="mt-4 md:mt-6 space-y-2 md:space-y-2.5">
                 {[
                   "Every facility verified for licensing",
                   "Transparent program information",
@@ -760,14 +761,14 @@ const Index = () => {
                   "Confidential communication",
                   "24/7 support available",
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-2.5">
-                    <CheckCircle className="h-4 w-4 shrink-0 text-accent" />
-                    <span className="text-primary-foreground text-sm">{item}</span>
+                  <li key={item} className="flex items-center gap-2 md:gap-2.5">
+                    <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-accent" />
+                    <span className="text-primary-foreground text-xs md:text-sm">{item}</span>
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-6">
+              <div className="mt-5 md:mt-6">
                 <Link to="/about">
                   <Button variant="hero-light" size="sm" className="gap-2">
                     Learn More
@@ -778,7 +779,7 @@ const Index = () => {
             </div>
 
             {/* Image with Stats Overlay */}
-            <div ref={parallaxRef} className="order-1 lg:order-2">
+            <div ref={parallaxRef} className="order-1 md:order-2">
               <div className="relative overflow-hidden rounded-xl">
                 <img 
                   src={whyChooseUsImage} 
@@ -789,8 +790,8 @@ const Index = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent" />
                 
                 {/* Stats Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <div className="grid grid-cols-4 gap-2">
+                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
+                  <div className="grid grid-cols-4 gap-1.5 md:gap-2">
                     {[
                       { value: "15K+", label: "Centers" },
                       { value: "50", label: "States" },
@@ -798,10 +799,10 @@ const Index = () => {
                       { value: "24/7", label: "Support" },
                     ].map((stat) => (
                       <div key={stat.label} className="text-center">
-                        <div className="font-display text-lg font-bold text-accent sm:text-xl">
+                        <div className="font-display text-base md:text-lg font-bold text-accent lg:text-xl">
                           {stat.value}
                         </div>
-                        <p className="text-[10px] text-primary-foreground/80 sm:text-xs">{stat.label}</p>
+                        <p className="text-[9px] md:text-[10px] text-primary-foreground/80 lg:text-xs">{stat.label}</p>
                       </div>
                     ))}
                   </div>
@@ -813,47 +814,47 @@ const Index = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-12 md:py-16 lg:py-20 bg-muted/30 border-y border-border/50">
+      <section className="py-10 md:py-12 lg:py-20 bg-muted/30 border-y border-border/50">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-8 text-center">
-            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+          <div className="mb-6 md:mb-8 text-center">
+            <h2 className="font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
               What Families Say
             </h2>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-1.5 md:mt-2 text-sm md:text-base text-muted-foreground">
               Real experiences from people we've helped
             </p>
           </div>
 
-          {/* Testimonials Grid - Clean card style */}
-          <div className="grid gap-4 md:grid-cols-3">
+          {/* Testimonials Grid - 1 col mobile, 2 col tablet, 3 col desktop */}
+          <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {testimonials.map((testimonial) => (
               <div
                 key={testimonial.name}
-                className="rounded-xl border border-border bg-card p-5"
+                className="rounded-xl border border-border bg-card p-4 md:p-5"
               >
                 {/* Rating */}
-                <div className="mb-3 flex gap-0.5">
+                <div className="mb-2 md:mb-3 flex gap-0.5">
                   {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-accent text-accent" />
+                    <Star key={i} className="h-3.5 w-3.5 md:h-4 md:w-4 fill-accent text-accent" />
                   ))}
                 </div>
                 
                 {/* Quote */}
-                <blockquote className="mb-4">
-                  <p className="text-sm text-foreground leading-relaxed">
+                <blockquote className="mb-3 md:mb-4">
+                  <p className="text-xs md:text-sm text-foreground leading-relaxed">
                     "{testimonial.quote}"
                   </p>
                 </blockquote>
                 
                 {/* Author */}
-                <div className="flex items-center gap-3 pt-3 border-t border-border">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                <div className="flex items-center gap-2.5 md:gap-3 pt-3 border-t border-border">
+                  <div className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-full bg-primary/10 text-xs md:text-sm font-semibold text-primary">
                     {testimonial.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{testimonial.name}</p>
-                    <p className="text-xs text-muted-foreground">{testimonial.location}</p>
+                    <p className="text-xs md:text-sm font-medium text-foreground">{testimonial.name}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground">{testimonial.location}</p>
                   </div>
                 </div>
               </div>
@@ -863,13 +864,13 @@ const Index = () => {
       </section>
 
       {/* Resources / Blog Section */}
-      <section className="py-12 md:py-16 lg:py-20">
+      <section className="py-10 md:py-12 lg:py-20">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 md:gap-4">
             <div>
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Resources</span>
-              <h2 className="mt-2 font-display text-xl font-bold text-foreground md:text-2xl">
+              <h2 className="mt-1.5 md:mt-2 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
                 Helpful Guides
               </h2>
             </div>
@@ -881,8 +882,8 @@ const Index = () => {
             </Link>
           </div>
 
-          {/* Articles Grid - Clean card style */}
-          <div className="grid gap-4 md:grid-cols-3">
+          {/* Articles Grid - 1 col mobile, 2 col tablet, 3 col desktop */}
+          <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {blogArticles.map((article) => (
               <Link
                 key={article.id}
@@ -891,7 +892,7 @@ const Index = () => {
               >
                 <article className="h-full rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/30 hover:shadow-md">
                   {/* Image */}
-                  <div className="relative h-40 overflow-hidden">
+                  <div className="relative h-32 md:h-40 overflow-hidden">
                     <img 
                       src={article.image} 
                       alt={article.title}
@@ -901,21 +902,21 @@ const Index = () => {
                   </div>
                   
                   {/* Content */}
-                  <div className="p-4">
+                  <div className="p-3 md:p-4">
                     {/* Category & Read Time */}
-                    <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="mb-1.5 md:mb-2 flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
                       <span className="font-medium text-primary">{article.category}</span>
                       <span>•</span>
                       <span>{article.readTime}</span>
                     </div>
                     
                     {/* Title */}
-                    <h3 className="font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                    <h3 className="font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2 text-sm md:text-base">
                       {article.title}
                     </h3>
                     
                     {/* Excerpt */}
-                    <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
+                    <p className="mt-1 md:mt-1.5 text-xs md:text-sm text-muted-foreground line-clamp-2">
                       {article.excerpt}
                     </p>
                   </div>
@@ -927,8 +928,8 @@ const Index = () => {
       </section>
 
       {/* SEO Internal Links Section */}
-      <section className="py-12 md:py-16 bg-muted/30 border-t">
-        <div className="container space-y-10">
+      <section className="py-10 md:py-12 lg:py-16 bg-muted/30 border-t">
+        <div className="container space-y-8 md:space-y-10">
           <InternalLinkBlock 
             title="Find Treatment by State" 
             variant="states" 
@@ -950,26 +951,26 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-14 md:py-20">
+      <section className="py-10 md:py-14 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-3xl">
             {/* Main CTA Card */}
-            <div className="rounded-xl border border-border bg-card p-8 md:p-10 text-center">
-              <h2 className="font-display text-xl font-semibold text-foreground md:text-2xl">
+            <div className="rounded-xl border border-border bg-card p-6 md:p-8 lg:p-10 text-center">
+              <h2 className="font-display text-lg md:text-xl font-semibold text-foreground lg:text-2xl">
                 Start Your Recovery Journey
               </h2>
-              <p className="mt-2 text-muted-foreground text-sm md:text-base max-w-md mx-auto">
+              <p className="mt-1.5 md:mt-2 text-muted-foreground text-xs md:text-sm lg:text-base max-w-md mx-auto">
                 Connect with verified treatment centers or list your facility in our directory.
               </p>
-              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 md:gap-3">
                 <Link to="/request-help?source=cta_bottom">
-                  <Button size="lg" className="gap-2 min-w-[180px]">
+                  <Button size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
                     <Heart className="h-4 w-4" />
                     Get Help Now
                   </Button>
                 </Link>
                 <Link to="/for-providers">
-                  <Button variant="outline" size="lg" className="gap-2 min-w-[180px]">
+                  <Button variant="outline" size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
                     List Your Facility
                     <ArrowRight className="h-4 w-4" />
                   </Button>
