@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import logoImage from "@/assets/logo.png";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
+import { EmailInput } from "@/components/ui/email-input";
+import { formatEmailInput, normalizeEmail } from "@/lib/emailUtils";
 
 // Configure your vertical video here (9:16 aspect ratio recommended)
 const VIDEO_CONFIG = {
@@ -212,7 +214,8 @@ export default function SocialLanding() {
   
   const handleEmailChange = (value: string) => {
     trackFormStart();
-    setFormData(prev => ({ ...prev, email: value }));
+    const formatted = formatEmailInput(value);
+    setFormData(prev => ({ ...prev, email: formatted }));
     // Reset verification state if email changes
     if (isEmailVerified || codeSent) {
       setIsEmailVerified(false);

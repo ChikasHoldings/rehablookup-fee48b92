@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
+import { EmailInput } from "@/components/ui/email-input";
 
 const insuranceLeadSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
@@ -219,12 +220,11 @@ Member ID: ${formData.memberId || 'Not provided'}`;
 
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input
+                      <EmailInput
                         id="email"
-                        type="email"
                         placeholder="your@email.com"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(value) => setFormData({ ...formData, email: value })}
                       />
                     </div>
 

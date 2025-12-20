@@ -9,6 +9,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { LeadIntakeFormData } from "./types";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
+import { EmailInput } from "@/components/ui/email-input";
 
 interface StepContactVerifyProps {
   formData: LeadIntakeFormData;
@@ -98,14 +99,6 @@ export function StepContactVerify({
 
   // Phone validation using shared utility
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateFormData({ email: e.target.value });
-    setErrors(prev => ({ ...prev, email: "" }));
-    // Reset verification state when email changes
-    if (codeSent || isEmailVerified) {
-      resetEmailVerification();
-    }
-  };
 
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-in">
@@ -195,15 +188,19 @@ export function StepContactVerify({
           Email Address <span className="text-destructive">*</span>
         </Label>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Input
+          <EmailInput
             id="email"
-            type="email"
             placeholder="you@example.com"
             value={formData.email}
-            onChange={handleEmailChange}
+            onChange={(value) => {
+              updateFormData({ email: value });
+              setErrors(prev => ({ ...prev, email: "" }));
+              if (codeSent || isEmailVerified) {
+                resetEmailVerification();
+              }
+            }}
             className={`flex-1 h-12 md:h-10 text-base ${errors.email ? "border-destructive" : ""}`}
             disabled={isEmailVerified}
-            autoComplete="email"
           />
           {!isEmailVerified && (
             <Button

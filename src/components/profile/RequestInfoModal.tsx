@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
+import { EmailInput } from "@/components/ui/email-input";
 
 // Validation schema
 const requestSchema = z.object({
@@ -367,12 +368,11 @@ export function RequestInfoModal({
 
               <div>
                 <Label htmlFor="email">Email *</Label>
-                <Input
+                <EmailInput
                   id="email"
-                  type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                  onChange={(value) =>
+                    setFormData({ ...formData, email: value })
                   }
                   placeholder="john@example.com"
                   className={cn(errors.email && "border-destructive")}
