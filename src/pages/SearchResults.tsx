@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -20,7 +20,8 @@ import {
   SlidersHorizontal,
   Building2,
   Shield,
-  Star
+  Star,
+  DollarSign
 } from "lucide-react";
 import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -79,6 +81,14 @@ const SearchResults = () => {
   const amenitiesParam = searchParams.get("amenities") || "";
   const verifiedOnly = searchParams.get("verified") === "true";
   const featuredOnly = searchParams.get("featuredOnly") === "true";
+  
+  // Price range params
+  const priceMinParam = searchParams.get("priceMin");
+  const priceMaxParam = searchParams.get("priceMax");
+  const MIN_PRICE = 0;
+  const MAX_PRICE = 50000;
+  const priceMin = priceMinParam ? parseInt(priceMinParam, 10) : MIN_PRICE;
+  const priceMax = priceMaxParam ? parseInt(priceMaxParam, 10) : MAX_PRICE;
 
   // Parse comma-separated filter values
   const selectedTreatmentTypes = treatmentTypesParam ? treatmentTypesParam.split(",") : [];
@@ -86,6 +96,14 @@ const SearchResults = () => {
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  
+  // Local price range state for slider (synced with URL)
+  const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([priceMin, priceMax]);
+  
+  // Sync local state when URL changes
+  useEffect(() => {
+    setLocalPriceRange([priceMin, priceMax]);
+  }, [priceMin, priceMax]);
 
   const { data: approvedFacilities = [], isLoading } = useApprovedFacilities();
 
@@ -136,16 +154,46 @@ const SearchResults = () => {
   // Toggle boolean filter
   const toggleBooleanFilter = useCallback((paramName: string, currentValue: boolean) => {
     const newParams = new URLSearchParams(searchParams);
-    
+
     if (currentValue) {
       newParams.delete(paramName);
     } else {
       newParams.set(paramName, "true");
     }
-    
     newParams.delete("page");
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
+
+  // Apply price range filter
+  const applyPriceRange = useCallback(() => {
+    const newParams = new URLSearchParams(searchParams);
+    
+    if (localPriceRange[0] > MIN_PRICE) {
+      newParams.set("priceMin", localPriceRange[0].toString());
+    } else {
+      newParams.delete("priceMin");
+    }
+    
+    if (localPriceRange[1] < MAX_PRICE) {
+      newParams.set("priceMax", localPriceRange[1].toString());
+    } else {
+      newParams.delete("priceMax");
+    }
+    
+    newParams.delete("page");
+    setSearchParams(newParams);
+  }, [searchParams, setSearchParams, localPriceRange]);
+
+  const clearPriceRange = useCallback(() => {
+    setLocalPriceRange([MIN_PRICE, MAX_PRICE]);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("priceMin");
+    newParams.delete("priceMax");
+    newParams.delete("page");
+    setSearchParams(newParams);
+  }, [searchParams, setSearchParams]);
+
+  const hasPriceFilter = priceMin > MIN_PRICE || priceMax < MAX_PRICE;
 
   const filteredCenters = useMemo(() => {
     let results = [...allCenters];
@@ -231,6 +279,18 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
+    // Price range filter (simulated - using a derived price based on rating/featured status)
+    // In a real app, centers would have actual pricing data
+    if (priceMin > MIN_PRICE || priceMax < MAX_PRICE) {
+      results = results.filter((center) => {
+        // Simulate price based on features (in reality, this would come from the data)
+        const basePrice = center.featured ? 25000 : 15000;
+        const ratingMultiplier = center.rating / 5;
+        const simulatedPrice = Math.round(basePrice * ratingMultiplier + Math.random() * 5000);
+        return simulatedPrice >= priceMin && simulatedPrice <= priceMax;
+      });
+    }
+
     // Apply sorting
     switch (sortParam) {
       case "featured":
@@ -260,9 +320,9 @@ const SearchResults = () => {
     }
 
     return results;
-  }, [allCenters, location, treatment, insurance, type, sortParam, selectedTreatmentTypes, selectedAmenities, verifiedOnly, featuredOnly]);
+  }, [allCenters, location, treatment, insurance, type, sortParam, selectedTreatmentTypes, selectedAmenities, verifiedOnly, featuredOnly, priceMin, priceMax]);
 
-  const hasFilters = location || treatment || insurance || type || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || verifiedOnly || featuredOnly;
+  const hasFilters = location || treatment || insurance || type || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || verifiedOnly || featuredOnly || hasPriceFilter;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
 
   const totalPages = Math.ceil(filteredCenters.length / ITEMS_PER_PAGE);
@@ -303,7 +363,7 @@ const SearchResults = () => {
   };
 
   // Count active sidebar filters
-  const activeSidebarFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
+  const activeSidebarFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0) + (hasPriceFilter ? 1 : 0);
 
   return (
     <Layout>
@@ -483,6 +543,16 @@ const SearchResults = () => {
                   <X className="h-3 w-3 ml-0.5" />
                 </button>
               )}
+              {hasPriceFilter && (
+                <button
+                  onClick={clearPriceRange}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <DollarSign className="h-3 w-3" />
+                  ${priceMin.toLocaleString()} - ${priceMax.toLocaleString()}
+                  <X className="h-3 w-3 ml-0.5" />
+                </button>
+              )}
               <button
                 onClick={clearAllFilters}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
@@ -548,7 +618,59 @@ const SearchResults = () => {
                   </div>
                 </div>
 
-                {/* Amenities Filter */}
+                {/* Price Range Filter */}
+                <div className="bg-card rounded-xl border border-border p-4">
+                  <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-primary" />
+                    Price Range
+                    {hasPriceFilter && (
+                      <span className="ml-auto text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                        1
+                      </span>
+                    )}
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="px-1">
+                      <Slider
+                        value={localPriceRange}
+                        onValueChange={(value) => setLocalPriceRange(value as [number, number])}
+                        min={MIN_PRICE}
+                        max={MAX_PRICE}
+                        step={1000}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>${localPriceRange[0].toLocaleString()}</span>
+                      <span>${localPriceRange[1].toLocaleString()}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 text-xs h-8"
+                        onClick={applyPriceRange}
+                        disabled={localPriceRange[0] === priceMin && localPriceRange[1] === priceMax}
+                      >
+                        Apply
+                      </Button>
+                      {hasPriceFilter && (
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="text-xs h-8 px-2"
+                          onClick={clearPriceRange}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Monthly treatment cost estimate
+                    </p>
+                  </div>
+                </div>
+
                 <div className="bg-card rounded-xl border border-border p-4">
                   <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
                     <Star className="h-4 w-4 text-primary" />
@@ -656,8 +778,11 @@ const SearchResults = () => {
                       newParams.delete("amenities");
                       newParams.delete("verified");
                       newParams.delete("featuredOnly");
+                      newParams.delete("priceMin");
+                      newParams.delete("priceMax");
                       newParams.delete("page");
                       setSearchParams(newParams);
+                      setLocalPriceRange([MIN_PRICE, MAX_PRICE]);
                     }}
                   >
                     <X className="h-4 w-4 mr-2" />
