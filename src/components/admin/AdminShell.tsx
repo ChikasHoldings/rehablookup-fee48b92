@@ -143,7 +143,7 @@ export function AdminShell() {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0">
+          <SheetContent side="left" className="w-72 p-0 bg-white border-r border-slate-200">
             <div className="p-4 border-b bg-slate-900 text-white">
               <span className="text-lg font-bold">Admin Menu</span>
             </div>
