@@ -96,6 +96,104 @@ interface RequestInfoModalProps {
   };
 }
 
+// Track capacity warning analytics
+async function trackCapacityEvent(eventType: string, facilityId: string, metadata?: Record<string, unknown>) {
+  try {
+    await supabase.functions.invoke("track-request-help", {
+      body: {
+        eventType,
+        source: "capacity_warning",
+        facilityId,
+        metadata,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to track capacity event:", error);
+  }
+}
+
+// Capacity Warning Component with analytics
+function CapacityWarning({ 
+  facility, 
+  onOpenChange, 
+  navigate 
+}: { 
+  facility: { id: string; name: string; city: string; state: string };
+  onOpenChange: (open: boolean) => void;
+  navigate: (path: string) => void;
+}) {
+  // Track when capacity warning is viewed
+  useEffect(() => {
+    trackCapacityEvent("capacity_warning_viewed", facility.id, {
+      facilityName: facility.name,
+      city: facility.city,
+      state: facility.state,
+    });
+  }, [facility.id, facility.name, facility.city, facility.state]);
+
+  const handleFindAvailable = () => {
+    trackCapacityEvent("capacity_find_available_clicked", facility.id, {
+      facilityName: facility.name,
+      destination: "/request-help",
+    });
+    onOpenChange(false);
+    navigate("/request-help");
+  };
+
+  const handleBrowseOther = () => {
+    const destination = `/search?state=${facility.state}&city=${encodeURIComponent(facility.city)}`;
+    trackCapacityEvent("capacity_browse_other_clicked", facility.id, {
+      facilityName: facility.name,
+      city: facility.city,
+      state: facility.state,
+      destination,
+    });
+    onOpenChange(false);
+    navigate(destination);
+  };
+
+  return (
+    <div className="p-6 space-y-5">
+      <div className="text-center py-6">
+        <div className="h-16 w-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
+          <Users className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          This Provider is at Capacity
+        </h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+          {facility.name} has reached their monthly limit for new inquiries. 
+          They may not be able to respond promptly to new requests.
+        </p>
+        
+        <div className="space-y-3">
+          <Button
+            type="button"
+            className="w-full"
+            onClick={handleFindAvailable}
+          >
+            <Heart className="h-4 w-4 mr-2" />
+            Find Available Providers
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleBrowseOther}
+          >
+            <MapPin className="h-4 w-4 mr-2" />
+            Browse Other Centers in {facility.city}
+          </Button>
+        </div>
+        
+        <p className="text-xs text-muted-foreground mt-4">
+          Or call them directly for immediate assistance
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/);
   if (words.length >= 2) {
@@ -485,55 +583,17 @@ export function RequestInfoModal({
                     {leadUsage.remaining} leads left
                   </Badge>
                 )}
-              </div>
+            </div>
             </div>
 
             {/* Capacity Warning - Show when provider is at capacity */}
             {isPaidPlan && leadUsage && leadUsage.remaining <= 0 ? (
-              <div className="p-6 space-y-5">
-                <div className="text-center py-6">
-                  <div className="h-16 w-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
-                    <Users className="h-8 w-8 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
-                    This Provider is at Capacity
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                    {facility.name} has reached their monthly limit for new inquiries. 
-                    They may not be able to respond promptly to new requests.
-                  </p>
-                  
-                  <div className="space-y-3">
-                    <Button
-                      type="button"
-                      className="w-full"
-                      onClick={() => {
-                        onOpenChange(false);
-                        navigate("/request-help");
-                      }}
-                    >
-                      <Heart className="h-4 w-4 mr-2" />
-                      Find Available Providers
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        onOpenChange(false);
-                        navigate(`/search?state=${facility.state}&city=${encodeURIComponent(facility.city)}`);
-                      }}
-                    >
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Browse Other Centers in {facility.city}
-                    </Button>
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground mt-4">
-                    Or call them directly for immediate assistance
-                  </p>
-                </div>
-              </div>
+              <CapacityWarning 
+                facility={facility} 
+                onOpenChange={onOpenChange} 
+                navigate={navigate} 
+              />
+            
             ) : (
               /* Form Content */
               <form onSubmit={handleSubmit} className="p-6 space-y-5">
