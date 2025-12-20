@@ -21,8 +21,9 @@ import {
   Star,
   DollarSign,
   Sparkles,
-  TrendingUp,
-  CheckCircle2
+  ChevronDown,
+  Navigation,
+  CreditCard
 } from "lucide-react";
 import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
@@ -33,10 +34,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 10;
 
 type SortOption = "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc" | "reviews";
 
@@ -58,7 +66,28 @@ const treatmentTypeFilters = [
   { value: "holistic", label: "Holistic", matches: ["Holistic", "Holistic Therapy"] },
 ];
 
-// Amenity filters - these would normally map to facility amenities data
+// Distance filters
+const distanceFilters = [
+  { value: "10", label: "Within 10 miles" },
+  { value: "25", label: "Within 25 miles" },
+  { value: "50", label: "Within 50 miles" },
+  { value: "100", label: "Within 100 miles" },
+  { value: "any", label: "Any distance" },
+];
+
+// Insurance filters
+const insuranceFilters = [
+  { value: "aetna", label: "Aetna" },
+  { value: "bcbs", label: "Blue Cross Blue Shield" },
+  { value: "cigna", label: "Cigna" },
+  { value: "united", label: "United Healthcare" },
+  { value: "kaiser", label: "Kaiser Permanente" },
+  { value: "medicare", label: "Medicare" },
+  { value: "medicaid", label: "Medicaid" },
+  { value: "private-pay", label: "Private Pay" },
+];
+
+// Amenity filters
 const amenityFilters = [
   { value: "private-rooms", label: "Private Rooms" },
   { value: "gym", label: "Fitness Center" },
@@ -80,30 +109,16 @@ const SearchResults = () => {
   // Filter params (comma-separated values)
   const treatmentTypesParam = searchParams.get("treatmentTypes") || "";
   const amenitiesParam = searchParams.get("amenities") || "";
+  const insuranceTypesParam = searchParams.get("insuranceTypes") || "";
+  const distanceParam = searchParams.get("distance") || "";
   const verifiedOnly = searchParams.get("verified") === "true";
   const featuredOnly = searchParams.get("featuredOnly") === "true";
-  
-  // Price range params
-  const priceMinParam = searchParams.get("priceMin");
-  const priceMaxParam = searchParams.get("priceMax");
-  const MIN_PRICE = 0;
-  const MAX_PRICE = 50000;
-  const priceMin = priceMinParam ? parseInt(priceMinParam, 10) : MIN_PRICE;
-  const priceMax = priceMaxParam ? parseInt(priceMaxParam, 10) : MAX_PRICE;
 
   // Parse comma-separated filter values
   const selectedTreatmentTypes = treatmentTypesParam ? treatmentTypesParam.split(",") : [];
   const selectedAmenities = amenitiesParam ? amenitiesParam.split(",") : [];
-
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  
-  // Local price range state for slider (synced with URL)
-  const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([priceMin, priceMax]);
-  
-  // Sync local state when URL changes
-  useEffect(() => {
-    setLocalPriceRange([priceMin, priceMax]);
-  }, [priceMin, priceMax]);
+  const selectedInsuranceTypes = insuranceTypesParam ? insuranceTypesParam.split(",") : [];
+  const selectedDistance = distanceParam || "";
 
   const { data: approvedFacilities = [], isLoading } = useApprovedFacilities();
 
@@ -151,6 +166,18 @@ const SearchResults = () => {
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
 
+  // Set single value filter
+  const setSingleFilter = useCallback((paramName: string, value: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value && value !== "any") {
+      newParams.set(paramName, value);
+    } else {
+      newParams.delete(paramName);
+    }
+    newParams.delete("page");
+    setSearchParams(newParams);
+  }, [searchParams, setSearchParams]);
+
   // Toggle boolean filter
   const toggleBooleanFilter = useCallback((paramName: string, currentValue: boolean) => {
     const newParams = new URLSearchParams(searchParams);
@@ -163,37 +190,6 @@ const SearchResults = () => {
     newParams.delete("page");
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
-
-  // Apply price range filter
-  const applyPriceRange = useCallback(() => {
-    const newParams = new URLSearchParams(searchParams);
-    
-    if (localPriceRange[0] > MIN_PRICE) {
-      newParams.set("priceMin", localPriceRange[0].toString());
-    } else {
-      newParams.delete("priceMin");
-    }
-    
-    if (localPriceRange[1] < MAX_PRICE) {
-      newParams.set("priceMax", localPriceRange[1].toString());
-    } else {
-      newParams.delete("priceMax");
-    }
-    
-    newParams.delete("page");
-    setSearchParams(newParams);
-  }, [searchParams, setSearchParams, localPriceRange]);
-
-  const clearPriceRange = useCallback(() => {
-    setLocalPriceRange([MIN_PRICE, MAX_PRICE]);
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete("priceMin");
-    newParams.delete("priceMax");
-    newParams.delete("page");
-    setSearchParams(newParams);
-  }, [searchParams, setSearchParams]);
-
-  const hasPriceFilter = priceMin > MIN_PRICE || priceMax < MAX_PRICE;
 
   const filteredCenters = useMemo(() => {
     let results = [...allCenters];
@@ -223,7 +219,7 @@ const SearchResults = () => {
       );
     }
 
-    // Insurance filter
+    // Insurance filter from search form
     if (insurance) {
       results = results.filter((c) =>
         c.insuranceAccepted.some((i) =>
@@ -232,7 +228,21 @@ const SearchResults = () => {
       );
     }
 
-    // Treatment Type sidebar filters (checkbox filters)
+    // Insurance Types dropdown filters
+    if (selectedInsuranceTypes.length > 0) {
+      results = results.filter((center) => {
+        return selectedInsuranceTypes.some(filterValue => {
+          const filterConfig = insuranceFilters.find(f => f.value === filterValue);
+          if (!filterConfig) return false;
+          return center.insuranceAccepted.some(ins => 
+            ins.toLowerCase().includes(filterConfig.label.toLowerCase()) ||
+            ins.toLowerCase().includes(filterValue.toLowerCase())
+          );
+        });
+      });
+    }
+
+    // Treatment Type dropdown filters
     if (selectedTreatmentTypes.length > 0) {
       results = results.filter((center) => {
         return selectedTreatmentTypes.some(filterValue => {
@@ -247,9 +257,8 @@ const SearchResults = () => {
       });
     }
 
-    // Amenity filters (simulated - in real app these would check facility amenities)
+    // Amenity filters
     if (selectedAmenities.length > 0) {
-      // For demo purposes, we'll filter based on description containing amenity keywords
       results = results.filter((center) => {
         const description = (center.description || "").toLowerCase();
         return selectedAmenities.some(amenity => {
@@ -277,18 +286,6 @@ const SearchResults = () => {
     // Featured only filter
     if (featuredOnly) {
       results = results.filter((center) => center.featured === true);
-    }
-
-    // Price range filter (simulated - using a derived price based on rating/featured status)
-    // In a real app, centers would have actual pricing data
-    if (priceMin > MIN_PRICE || priceMax < MAX_PRICE) {
-      results = results.filter((center) => {
-        // Simulate price based on features (in reality, this would come from the data)
-        const basePrice = center.featured ? 25000 : 15000;
-        const ratingMultiplier = center.rating / 5;
-        const simulatedPrice = Math.round(basePrice * ratingMultiplier + Math.random() * 5000);
-        return simulatedPrice >= priceMin && simulatedPrice <= priceMax;
-      });
     }
 
     // Apply sorting
@@ -320,10 +317,13 @@ const SearchResults = () => {
     }
 
     return results;
-  }, [allCenters, location, treatment, insurance, type, sortParam, selectedTreatmentTypes, selectedAmenities, verifiedOnly, featuredOnly, priceMin, priceMax]);
+  }, [allCenters, location, treatment, insurance, type, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly]);
 
-  const hasFilters = location || treatment || insurance || type || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || verifiedOnly || featuredOnly || hasPriceFilter;
+  const hasFilters = location || treatment || insurance || type || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
+
+  // Count active filters
+  const activeFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + selectedInsuranceTypes.length + (selectedDistance ? 1 : 0) + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
 
   const totalPages = Math.ceil(filteredCenters.length / ITEMS_PER_PAGE);
   const paginatedCenters = useMemo(() => {
@@ -362,9 +362,6 @@ const SearchResults = () => {
     setSearchParams(newParams);
   };
 
-  // Count active sidebar filters
-  const activeSidebarFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0) + (hasPriceFilter ? 1 : 0);
-
   return (
     <Layout>
       <SEO
@@ -373,11 +370,11 @@ const SearchResults = () => {
         canonical="/search-results"
       />
       
-      {/* Results Header Bar */}
+      {/* Sticky Filter Header */}
       <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
         <div className="container">
-          <div className="flex items-center justify-between gap-4 py-4">
-            {/* Left: Back + Search Summary */}
+          {/* Top Row: Back + Results Count + Sort */}
+          <div className="flex items-center justify-between gap-4 py-3 border-b border-border/50">
             <div className="flex items-center gap-4">
               <Link 
                 to="/rehab-centers" 
@@ -405,45 +402,198 @@ const SearchResults = () => {
               </div>
             </div>
 
-            {/* Right: Sort + View + Filter */}
-            <div className="flex items-center gap-3">
-              {/* Mobile Filter Toggle */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="lg:hidden gap-2 border-primary/20 hover:bg-primary/5 hover:border-primary/40"
-                onClick={() => setShowMobileFilters(!showMobileFilters)}
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                Filters
-                {activeSidebarFiltersCount > 0 && (
-                  <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground animate-scale-in">
-                    {activeSidebarFiltersCount}
-                  </span>
-                )}
-              </Button>
-
-              {/* Sort Dropdown */}
-              <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
-                <SelectTrigger className="h-10 w-[140px] md:w-[170px] gap-2 text-sm border-border bg-card hover:bg-secondary/50 transition-colors">
-                  <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
-                  <SelectValue placeholder="Sort" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border shadow-lg">
-                  {sortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value} className="text-sm cursor-pointer">
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-            </div>
+            {/* Sort Dropdown */}
+            <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
+              <SelectTrigger className="h-9 w-[140px] md:w-[170px] gap-2 text-sm border-border bg-card hover:bg-secondary/50 transition-colors">
+                <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border shadow-lg">
+                {sortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="text-sm cursor-pointer">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Active Filters Bar */}
+          {/* Filter Row */}
+          <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
+            {/* Treatment Type Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={`gap-2 shrink-0 ${selectedTreatmentTypes.length > 0 ? 'border-primary bg-primary/5 text-primary' : ''}`}
+                >
+                  <Building2 className="h-4 w-4" />
+                  Treatment Type
+                  {selectedTreatmentTypes.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
+                      {selectedTreatmentTypes.length}
+                    </Badge>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 bg-card border-border shadow-lg">
+                <DropdownMenuLabel>Treatment Type</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {treatmentTypeFilters.map((filter) => (
+                  <DropdownMenuCheckboxItem
+                    key={filter.value}
+                    checked={selectedTreatmentTypes.includes(filter.value)}
+                    onCheckedChange={() => toggleFilter("treatmentTypes", filter.value, selectedTreatmentTypes)}
+                  >
+                    {filter.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Distance Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={`gap-2 shrink-0 ${selectedDistance ? 'border-primary bg-primary/5 text-primary' : ''}`}
+                >
+                  <Navigation className="h-4 w-4" />
+                  Distance
+                  {selectedDistance && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
+                      1
+                    </Badge>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-card border-border shadow-lg">
+                <DropdownMenuLabel>Distance</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {distanceFilters.map((filter) => (
+                  <DropdownMenuCheckboxItem
+                    key={filter.value}
+                    checked={selectedDistance === filter.value}
+                    onCheckedChange={() => setSingleFilter("distance", selectedDistance === filter.value ? "" : filter.value)}
+                  >
+                    {filter.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Insurance Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={`gap-2 shrink-0 ${selectedInsuranceTypes.length > 0 ? 'border-primary bg-primary/5 text-primary' : ''}`}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Insurance
+                  {selectedInsuranceTypes.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
+                      {selectedInsuranceTypes.length}
+                    </Badge>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 bg-card border-border shadow-lg">
+                <DropdownMenuLabel>Insurance Accepted</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {insuranceFilters.map((filter) => (
+                  <DropdownMenuCheckboxItem
+                    key={filter.value}
+                    checked={selectedInsuranceTypes.includes(filter.value)}
+                    onCheckedChange={() => toggleFilter("insuranceTypes", filter.value, selectedInsuranceTypes)}
+                  >
+                    {filter.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Amenities Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={`gap-2 shrink-0 ${selectedAmenities.length > 0 ? 'border-primary bg-primary/5 text-primary' : ''}`}
+                >
+                  <Star className="h-4 w-4" />
+                  Amenities
+                  {selectedAmenities.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
+                      {selectedAmenities.length}
+                    </Badge>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-card border-border shadow-lg">
+                <DropdownMenuLabel>Amenities</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {amenityFilters.map((filter) => (
+                  <DropdownMenuCheckboxItem
+                    key={filter.value}
+                    checked={selectedAmenities.includes(filter.value)}
+                    onCheckedChange={() => toggleFilter("amenities", filter.value, selectedAmenities)}
+                  >
+                    {filter.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Verified Toggle */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => toggleBooleanFilter("verified", verifiedOnly)}
+              className={`gap-2 shrink-0 ${verifiedOnly ? 'border-primary bg-primary/5 text-primary' : ''}`}
+            >
+              <Shield className="h-4 w-4" />
+              Verified
+            </Button>
+
+            {/* Featured Toggle */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => toggleBooleanFilter("featuredOnly", featuredOnly)}
+              className={`gap-2 shrink-0 ${featuredOnly ? 'border-amber-500 bg-amber-50 text-amber-700' : ''}`}
+            >
+              <Sparkles className="h-4 w-4" />
+              Featured
+            </Button>
+
+            {/* Separator */}
+            {activeFiltersCount > 0 && (
+              <>
+                <div className="h-6 w-px bg-border shrink-0 mx-1" />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearAllFilters}
+                  className="text-muted-foreground hover:text-destructive shrink-0"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear All
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Active Filters Pills */}
           {hasFilters && (
-            <div className="flex items-center gap-2 flex-wrap pb-4 animate-fade-in">
+            <div className="flex items-center gap-2 flex-wrap pb-3 animate-fade-in">
               <span className="text-xs font-medium text-muted-foreground mr-1">Active:</span>
               {location && (
                 <button
@@ -496,6 +646,30 @@ const SearchResults = () => {
                   </button>
                 );
               })}
+              {selectedInsuranceTypes.map(ins => {
+                const filter = insuranceFilters.find(f => f.value === ins);
+                return (
+                  <button
+                    key={ins}
+                    onClick={() => toggleFilter("insuranceTypes", ins, selectedInsuranceTypes)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    <CreditCard className="h-3 w-3" />
+                    {filter?.label || ins}
+                    <X className="h-3 w-3 ml-0.5" />
+                  </button>
+                );
+              })}
+              {selectedDistance && (
+                <button
+                  onClick={() => clearFilter("distance")}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <Navigation className="h-3 w-3" />
+                  {distanceFilters.find(f => f.value === selectedDistance)?.label || selectedDistance}
+                  <X className="h-3 w-3 ml-0.5" />
+                </button>
+              )}
               {selectedAmenities.map(am => {
                 const filter = amenityFilters.find(f => f.value === am);
                 return (
@@ -523,477 +697,178 @@ const SearchResults = () => {
               {featuredOnly && (
                 <button
                   onClick={() => toggleBooleanFilter("featuredOnly", true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-200 transition-colors"
                 >
-                  <Star className="h-3 w-3" />
+                  <Sparkles className="h-3 w-3" />
                   Featured Only
                   <X className="h-3 w-3 ml-0.5" />
                 </button>
               )}
-              {hasPriceFilter && (
-                <button
-                  onClick={clearPriceRange}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
-                >
-                  <DollarSign className="h-3 w-3" />
-                  ${priceMin.toLocaleString()} - ${priceMax.toLocaleString()}
-                  <X className="h-3 w-3 ml-0.5" />
-                </button>
-              )}
-              <button
-                onClick={clearAllFilters}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-              >
-                Clear all
-              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content Area - Centered Cards */}
       <section className="bg-gradient-to-b from-secondary/30 to-background py-8 min-h-screen">
-        <div className="container">
-          <div className="flex gap-8">
-            {/* Left Sidebar - Filters */}
-            <aside className={`
-              ${showMobileFilters ? 'fixed inset-0 z-50 bg-background p-6 overflow-auto animate-slide-in-right' : 'hidden'} 
-              lg:block lg:relative lg:inset-auto lg:z-auto lg:bg-transparent lg:p-0 lg:overflow-visible
-              w-full lg:w-72 shrink-0
-            `}>
-              {/* Mobile Close Button */}
-              <div className="lg:hidden flex items-center justify-between mb-6 pb-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="h-5 w-5 text-primary" />
-                  <h2 className="font-semibold text-lg">Filters</h2>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setShowMobileFilters(false)}>
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
-
-              <div className="space-y-4 lg:sticky lg:top-24">
-                {/* Treatment Type Filter */}
-                <div className="bg-card rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                    <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10">
-                      <Building2 className="h-4 w-4 text-primary" />
-                    </div>
-                    Treatment Type
-                    {selectedTreatmentTypes.length > 0 && (
-                      <span className="ml-auto text-xs text-primary-foreground bg-primary px-2 py-0.5 rounded-full font-bold">
-                        {selectedTreatmentTypes.length}
-                      </span>
-                    )}
-                  </h3>
-                  <div className="space-y-3">
-                    {treatmentTypeFilters.map((filter) => (
-                      <label 
-                        key={filter.value} 
-                        className="flex items-center gap-3 cursor-pointer group p-2 -mx-2 rounded-lg hover:bg-secondary/50 transition-colors"
-                      >
-                        <Checkbox 
-                          id={`treatment-${filter.value}`}
-                          checked={selectedTreatmentTypes.includes(filter.value)}
-                          onCheckedChange={() => toggleFilter("treatmentTypes", filter.value, selectedTreatmentTypes)}
-                          className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all" 
-                        />
-                        <span className={`text-sm transition-colors ${
-                          selectedTreatmentTypes.includes(filter.value) 
-                            ? "text-foreground font-medium" 
-                            : "text-muted-foreground group-hover:text-foreground"
-                        }`}>
-                          {filter.label}
-                        </span>
-                        {selectedTreatmentTypes.includes(filter.value) && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-primary ml-auto" />
-                        )}
-                      </label>
-                    ))}
+        <div className="container max-w-4xl mx-auto">
+          {isLoading ? (
+            <SearchResultsLoading count={6} />
+          ) : paginatedCenters.length > 0 ? (
+            <>
+              {/* Results Summary */}
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-sm text-muted-foreground">
+                  Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)}</span> of{" "}
+                  <span className="font-medium text-foreground">{filteredCenters.length}</span> results
+                </p>
+                {paginatedCenters.some(c => c.featured || (c as any).hasFeaturedSubscription) && (
+                  <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>Featured centers highlighted</span>
                   </div>
-                </div>
-
-                {/* Price Range Filter */}
-                <div className="bg-card rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                    <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500/10">
-                      <DollarSign className="h-4 w-4 text-emerald-600" />
-                    </div>
-                    Price Range
-                    {hasPriceFilter && (
-                      <span className="ml-auto text-xs text-primary-foreground bg-primary px-2 py-0.5 rounded-full font-bold">
-                        1
-                      </span>
-                    )}
-                  </h3>
-                  <div className="space-y-5">
-                    <div className="px-1 pt-2">
-                      <Slider
-                        value={localPriceRange}
-                        onValueChange={(value) => setLocalPriceRange(value as [number, number])}
-                        min={MIN_PRICE}
-                        max={MAX_PRICE}
-                        step={1000}
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-center">
-                        <p className="text-xs text-muted-foreground mb-0.5">Min</p>
-                        <p className="text-sm font-semibold text-foreground">${localPriceRange[0].toLocaleString()}</p>
-                      </div>
-                      <div className="flex-1 mx-4 h-px bg-border" />
-                      <div className="text-center">
-                        <p className="text-xs text-muted-foreground mb-0.5">Max</p>
-                        <p className="text-sm font-semibold text-foreground">${localPriceRange[1].toLocaleString()}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        className="flex-1 text-xs h-9"
-                        onClick={applyPriceRange}
-                        disabled={localPriceRange[0] === priceMin && localPriceRange[1] === priceMax}
-                      >
-                        Apply Range
-                      </Button>
-                      {hasPriceFilter && (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-xs h-9 px-3"
-                          onClick={clearPriceRange}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground text-center">
-                      Monthly treatment cost estimate
-                    </p>
-                  </div>
-                </div>
-
-                {/* Amenities Filter */}
-                <div className="bg-card rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                    <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/10">
-                      <Star className="h-4 w-4 text-amber-600" />
-                    </div>
-                    Amenities
-                    {selectedAmenities.length > 0 && (
-                      <span className="ml-auto text-xs text-primary-foreground bg-primary px-2 py-0.5 rounded-full font-bold">
-                        {selectedAmenities.length}
-                      </span>
-                    )}
-                  </h3>
-                  <div className="space-y-3">
-                    {amenityFilters.map((filter) => (
-                      <label 
-                        key={filter.value} 
-                        className="flex items-center gap-3 cursor-pointer group p-2 -mx-2 rounded-lg hover:bg-secondary/50 transition-colors"
-                      >
-                        <Checkbox 
-                          id={`amenity-${filter.value}`}
-                          checked={selectedAmenities.includes(filter.value)}
-                          onCheckedChange={() => toggleFilter("amenities", filter.value, selectedAmenities)}
-                          className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all" 
-                        />
-                        <span className={`text-sm transition-colors ${
-                          selectedAmenities.includes(filter.value) 
-                            ? "text-foreground font-medium" 
-                            : "text-muted-foreground group-hover:text-foreground"
-                        }`}>
-                          {filter.label}
-                        </span>
-                        {selectedAmenities.includes(filter.value) && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-primary ml-auto" />
-                        )}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Verification Filter */}
-                <div className="bg-card rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                    <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-500/10">
-                      <Shield className="h-4 w-4 text-blue-600" />
-                    </div>
-                    Verification
-                    {(verifiedOnly || featuredOnly) && (
-                      <span className="ml-auto text-xs text-primary-foreground bg-primary px-2 py-0.5 rounded-full font-bold">
-                        {(verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0)}
-                      </span>
-                    )}
-                  </h3>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer group p-2 -mx-2 rounded-lg hover:bg-secondary/50 transition-colors">
-                      <Checkbox 
-                        id="verified-filter"
-                        checked={verifiedOnly}
-                        onCheckedChange={() => toggleBooleanFilter("verified", verifiedOnly)}
-                        className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all" 
-                      />
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm transition-colors ${
-                          verifiedOnly 
-                            ? "text-foreground font-medium" 
-                            : "text-muted-foreground group-hover:text-foreground"
-                        }`}>
-                          Verified Only
-                        </span>
-                        <Shield className="h-3 w-3 text-blue-500" />
-                      </div>
-                      {verifiedOnly && (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-primary ml-auto" />
-                      )}
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer group p-2 -mx-2 rounded-lg hover:bg-secondary/50 transition-colors">
-                      <Checkbox 
-                        id="featured-filter"
-                        checked={featuredOnly}
-                        onCheckedChange={() => toggleBooleanFilter("featuredOnly", featuredOnly)}
-                        className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all" 
-                      />
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm transition-colors ${
-                          featuredOnly 
-                            ? "text-foreground font-medium" 
-                            : "text-muted-foreground group-hover:text-foreground"
-                        }`}>
-                          Featured Centers
-                        </span>
-                        <Sparkles className="h-3 w-3 text-amber-500" />
-                      </div>
-                      {featuredOnly && (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-primary ml-auto" />
-                      )}
-                    </label>
-                  </div>
-                </div>
-
-                {/* Need Help CTA */}
-                <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-xl border border-primary/20 p-5 shadow-sm">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-2 ring-primary/20">
-                      <Phone className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm">Need Help Deciding?</p>
-                      <p className="text-xs text-muted-foreground">Free expert consultation</p>
-                    </div>
-                  </div>
-                  <Link to="/request-help?source=search_sidebar">
-                    <Button size="sm" className="w-full gap-2 shadow-md hover:shadow-lg transition-shadow">
-                      <Heart className="h-4 w-4" />
-                      Get Personalized Help
-                    </Button>
-                  </Link>
-                </div>
-
-                {/* Clear All Filters Button */}
-                {activeSidebarFiltersCount > 0 && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50"
-                    onClick={() => {
-                      const newParams = new URLSearchParams(searchParams);
-                      newParams.delete("treatmentTypes");
-                      newParams.delete("amenities");
-                      newParams.delete("verified");
-                      newParams.delete("featuredOnly");
-                      newParams.delete("priceMin");
-                      newParams.delete("priceMax");
-                      newParams.delete("page");
-                      setSearchParams(newParams);
-                      setLocalPriceRange([MIN_PRICE, MAX_PRICE]);
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                    Clear All Filters ({activeSidebarFiltersCount})
-                  </Button>
                 )}
               </div>
 
-              {/* Mobile Apply Button */}
-              <div className="lg:hidden mt-6 pt-4 border-t border-border">
-                <Button className="w-full gap-2 shadow-lg" onClick={() => setShowMobileFilters(false)}>
-                  <Search className="h-4 w-4" />
-                  Show {filteredCenters.length} Results
-                </Button>
+              {/* Results List */}
+              <div className="space-y-6">
+                {paginatedCenters.map((center, index) => (
+                  <div 
+                    key={center.id}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <SearchResultCard 
+                      center={center} 
+                      featured={center.featured}
+                    />
+                  </div>
+                ))}
               </div>
-            </aside>
 
-            {/* Results Grid */}
-            <div className="flex-1 min-w-0">
-              {/* Results Summary Bar */}
-              {!isLoading && paginatedCenters.length > 0 && (
-                <div className="flex items-center justify-between mb-6 p-4 bg-card rounded-xl border border-border shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10">
-                      <TrendingUp className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)} of {filteredCenters.length}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {sortOptions.find(s => s.value === sortParam)?.label || 'Featured First'}
-                      </p>
-                    </div>
-                  </div>
-                  {filteredCenters.some(c => c.featured) && (
-                    <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground bg-amber-500/10 px-3 py-1.5 rounded-full">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                      <span className="font-medium text-amber-700 dark:text-amber-400">Featured centers available</span>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {isLoading ? (
-                <SearchResultsLoading count={6} />
-              ) : paginatedCenters.length > 0 ? (
-                <>
-                  <div className="flex flex-col gap-5">
-                    {paginatedCenters.map((center, index) => (
-                      <div 
-                        key={center.id} 
-                        className="animate-fade-in"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <SearchResultCard
-                          center={center}
-                          featured={center.featured}
-                        />
-                      </div>
-                    ))}
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center gap-2 mt-10">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-10 px-4 rounded-xl border-border bg-card shadow-sm hover:shadow-md transition-all"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`h-10 w-10 rounded-xl transition-all ${
+                            currentPage === pageNum 
+                              ? "bg-primary text-primary-foreground shadow-md" 
+                              : "border-border bg-card shadow-sm hover:shadow-md"
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
                   </div>
 
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="mt-10 flex flex-col items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-5 text-sm font-medium disabled:opacity-50 disabled:pointer-events-none hover:bg-secondary hover:border-primary/30 transition-all shadow-sm"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                          <span className="hidden sm:inline">Previous</span>
-                        </button>
-                        
-                        <div className="flex items-center gap-1.5">
-                          {[...Array(totalPages)].map((_, i) => {
-                            const page = i + 1;
-                            if (
-                              page === 1 ||
-                              page === totalPages ||
-                              (page >= currentPage - 1 && page <= currentPage + 1)
-                            ) {
-                              return (
-                                <button
-                                  key={page}
-                                  onClick={() => handlePageChange(page)}
-                                  className={`h-11 min-w-11 rounded-xl text-sm font-medium transition-all ${
-                                    currentPage === page
-                                      ? "bg-primary text-primary-foreground shadow-md"
-                                      : "bg-card border border-border hover:bg-secondary hover:border-primary/30"
-                                  }`}
-                                >
-                                  {page}
-                                </button>
-                              );
-                            }
-                            if (page === 2 || page === totalPages - 1) {
-                              return (
-                                <span key={page} className="px-2 text-muted-foreground">•••</span>
-                              );
-                            }
-                            return null;
-                          })}
-                        </div>
-                        
-                        <button
-                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-5 text-sm font-medium disabled:opacity-50 disabled:pointer-events-none hover:bg-secondary hover:border-primary/30 transition-all shadow-sm"
-                        >
-                          <span className="hidden sm:inline">Next</span>
-                          <ChevronRight className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Page {currentPage} of {totalPages}
-                      </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="bg-card rounded-2xl border border-border p-12 text-center shadow-sm animate-fade-in">
-                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-secondary to-secondary/50">
-                    <Search className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <h2 className="mb-3 font-display text-2xl font-semibold text-foreground">
-                    No Results Found
-                  </h2>
-                  <p className="mb-8 text-muted-foreground max-w-md mx-auto">
-                    We couldn't find treatment centers matching your criteria. Try adjusting your filters or let us help you find the right match.
-                  </p>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-                    <Button variant="outline" size="lg" onClick={clearAllFilters} className="gap-2">
-                      <X className="h-4 w-4" />
-                      Clear All Filters
-                    </Button>
-                    <Link to="/request-help?source=search_empty">
-                      <Button size="lg" className="w-full gap-2 sm:w-auto shadow-lg">
-                        <Heart className="h-4 w-4" />
-                        Get Personalized Help
-                      </Button>
-                    </Link>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="h-10 px-4 rounded-xl border-border bg-card shadow-sm hover:shadow-md transition-all"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
                 </div>
               )}
+            </>
+          ) : (
+            /* Empty State */
+            <div className="flex flex-col items-center justify-center py-20 px-4 animate-fade-in">
+              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
+                <Search className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-3">No Results Found</h2>
+              <p className="text-muted-foreground text-center max-w-md mb-6">
+                We couldn't find any treatment centers matching your criteria. Try adjusting your filters or search in a different location.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button onClick={clearAllFilters} variant="outline" className="gap-2">
+                  <X className="h-4 w-4" />
+                  Clear All Filters
+                </Button>
+                <Link to="/rehab-centers">
+                  <Button className="gap-2">
+                    Browse All Centers
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
       {/* Bottom CTA */}
-      <section className="border-t border-border bg-gradient-to-b from-card to-background py-12">
-        <div className="container">
-          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 p-8 border border-primary/20 shadow-lg">
-            <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/10 ring-4 ring-primary/10 shadow-lg">
-                <img 
-                  src={supportSpecialistImg} 
-                  alt="Support specialist" 
-                  className="w-full h-full object-cover object-top scale-110"
-                />
+      <section className="border-t border-border bg-gradient-to-r from-primary/5 via-background to-primary/5 py-12">
+        <div className="container max-w-4xl mx-auto">
+          <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 p-8 border border-primary/20 shadow-lg">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="shrink-0">
+                <div className="relative">
+                  <img 
+                    src={supportSpecialistImg} 
+                    alt="Recovery specialist ready to help" 
+                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-2 border-white">
+                    <Phone className="h-4 w-4 text-white" />
+                  </div>
+                </div>
               </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-background flex items-center justify-center">
-                <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  Need Help Finding the Right Center?
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Our recovery specialists are available 24/7 to help you find the perfect treatment program for your needs.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+                  <Link to="/request-help?source=search_bottom">
+                    <Button size="lg" className="gap-2 shadow-md hover:shadow-lg transition-shadow">
+                      <Heart className="h-5 w-5" />
+                      Get Free Consultation
+                    </Button>
+                  </Link>
+                  <Link to="/contact">
+                    <Button size="lg" variant="outline" className="gap-2">
+                      <Phone className="h-5 w-5" />
+                      Call Now
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex-1 text-center md:text-left">
-              <h2 className="font-display text-xl font-semibold text-foreground mb-1">
-                Can't find what you're looking for?
-              </h2>
-              <p className="text-muted-foreground">
-                Our specialists are available 24/7 to help match you with the right treatment center tailored to your needs.
-              </p>
-            </div>
-            
-            <div className="flex shrink-0 gap-3">
-              <Link to="/request-help?source=search_cta">
-                <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
-                  <Heart className="h-4 w-4" />
-                  Get Free Help
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
