@@ -6,6 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Coupon IDs that are restricted to Featured plan only
+const FEATURED_ONLY_COUPON_IDS = ["RvvEQtFW"];
+
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[VALIDATE-PROMO] ${step}${detailsStr}`);
@@ -19,7 +22,7 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { promoCode } = await req.json();
+    const { promoCode, plan } = await req.json();
     
     if (!promoCode || typeof promoCode !== "string") {
       return new Response(
@@ -29,7 +32,7 @@ serve(async (req) => {
     }
 
     const code = promoCode.trim().toUpperCase();
-    logStep("Validating promo code", { code });
+    logStep("Validating promo code", { code, plan });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -54,6 +57,19 @@ serve(async (req) => {
     const promoCodeObj = promoCodes.data[0];
     const coupon = promoCodeObj.coupon;
     logStep("Promo code found", { promoCodeId: promoCodeObj.id, couponId: coupon.id });
+
+    // Check if this coupon is restricted to Featured plan only
+    if (FEATURED_ONLY_COUPON_IDS.includes(coupon.id) && plan && plan !== "featured") {
+      logStep("Coupon restricted to Featured plan", { couponId: coupon.id, requestedPlan: plan });
+      return new Response(
+        JSON.stringify({ 
+          valid: false, 
+          message: "This promo code is only valid for the Featured plan",
+          restrictedToPlan: "featured"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
 
     // Check if coupon has redemption limits
     if (promoCodeObj.max_redemptions && promoCodeObj.times_redeemed >= promoCodeObj.max_redemptions) {
@@ -92,14 +108,18 @@ serve(async (req) => {
       discountDescription += " (forever)";
     }
 
-    logStep("Promo code valid", { discount: discountDescription });
+    // Add plan restriction note if applicable
+    const isFeaturedOnly = FEATURED_ONLY_COUPON_IDS.includes(coupon.id);
+
+    logStep("Promo code valid", { discount: discountDescription, isFeaturedOnly });
 
     return new Response(
       JSON.stringify({
         valid: true,
-        message: "Promo code applied!",
+        message: isFeaturedOnly ? "Promo code applied! (Featured plan only)" : "Promo code applied!",
         discount: discountDescription,
         couponName: coupon.name || code,
+        restrictedToPlan: isFeaturedOnly ? "featured" : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );

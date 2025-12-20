@@ -18,6 +18,9 @@ const PLAN_NAMES = {
   featured: "Featured",
 };
 
+// Coupon IDs that are restricted to Featured plan only
+const FEATURED_ONLY_COUPON_IDS = ["RvvEQtFW"];
+
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
@@ -146,8 +149,17 @@ serve(async (req) => {
           limit: 1,
         });
         if (promoCodes.data.length > 0) {
-          discounts = [{ promotion_code: promoCodes.data[0].id }];
-          logStep("Promo code applied", { promoCodeId: promoCodes.data[0].id });
+          const promoCodeObj = promoCodes.data[0];
+          const couponId = promoCodeObj.coupon.id;
+          
+          // Check if this coupon is restricted to Featured plan only
+          if (FEATURED_ONLY_COUPON_IDS.includes(couponId) && plan !== "featured") {
+            logStep("Promo code rejected - Featured only", { couponId, requestedPlan: plan });
+            // Don't apply the discount, but continue with checkout
+          } else {
+            discounts = [{ promotion_code: promoCodeObj.id }];
+            logStep("Promo code applied", { promoCodeId: promoCodeObj.id, couponId });
+          }
         } else {
           logStep("Promo code not found or inactive", { promoCode });
         }
