@@ -225,7 +225,7 @@ const Index = () => {
       />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section className="relative z-10">
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
