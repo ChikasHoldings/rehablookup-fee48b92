@@ -12,10 +12,6 @@ import {
   Target,
   Lightbulb,
   Clock,
-  Award,
-  TrendingUp,
-  Globe,
-  Sparkles,
 } from "lucide-react";
 import aboutTeamImage from "@/assets/about-team.jpg";
 import aboutMissionImage from "@/assets/about-mission.jpg";
@@ -55,39 +51,6 @@ const values = [
   },
 ];
 
-const timeline = [
-  {
-    year: "2020",
-    title: "Founded with Purpose",
-    description: "RehabLookup was founded with a simple mission: make finding addiction treatment easier and more transparent for families in need.",
-    icon: Sparkles,
-  },
-  {
-    year: "2021",
-    title: "Nationwide Expansion",
-    description: "Expanded our directory to cover treatment centers across all 50 states, making help accessible to families everywhere.",
-    icon: Globe,
-  },
-  {
-    year: "2022",
-    title: "Verification Program",
-    description: "Launched our comprehensive facility verification program to ensure every listed center meets quality standards.",
-    icon: Shield,
-  },
-  {
-    year: "2023",
-    title: "10,000+ Families Helped",
-    description: "Reached a milestone of helping over 10,000 families connect with verified treatment centers.",
-    icon: TrendingUp,
-  },
-  {
-    year: "2024",
-    title: "Industry Recognition",
-    description: "Recognized as a trusted resource in the addiction treatment space, partnering with leading healthcare organizations.",
-    icon: Award,
-  },
-];
-
 const missionCards = [
   {
     icon: Eye,
@@ -119,26 +82,24 @@ const About = () => {
         ]}
       />
       
-      {/* Hero - Navy background with decorative elements */}
-      <section className="bg-primary py-16 px-4 md:py-24 md:px-6 relative overflow-hidden">
-        {/* Decorative elements */}
+      {/* Hero - Compact navy header */}
+      <section className="bg-primary py-10 px-4 md:py-14 md:px-6 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
         </div>
         
         <div className="container relative">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 backdrop-blur-sm border border-white/10">
-              <Heart className="h-5 w-5 text-accent" />
-              <span className="text-base font-medium text-primary-foreground">Our Story</span>
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
+              <Heart className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-primary-foreground">Our Story</span>
             </div>
-            <h1 className="mb-6 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
+            <h1 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
               About RehabLookup
             </h1>
-            <p className="text-lg text-primary-foreground/80 leading-relaxed md:text-xl max-w-2xl mx-auto">
-              We're on a mission to connect families with trusted addiction treatment 
-              centers through transparency, compassion, and verified information.
+            <p className="text-base text-primary-foreground/80 leading-relaxed md:text-lg max-w-xl mx-auto">
+              Connecting families with trusted addiction treatment centers through transparency and compassion.
             </p>
           </div>
         </div>
@@ -269,72 +230,6 @@ const About = () => {
               {/* Decorative element */}
               <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-accent/20 rounded-full blur-2xl -z-10" />
               <div className="absolute -top-4 -left-4 w-32 h-32 bg-primary/20 rounded-full blur-2xl -z-10" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Timeline Section */}
-      <section className="section-padding-lg bg-primary relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-2xl translate-y-1/2" />
-        </div>
-        
-        <div className="container relative">
-          <div className="text-center mb-14">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 backdrop-blur-sm border border-white/10">
-              <Clock className="h-5 w-5 text-accent" />
-              <span className="text-base font-medium text-primary-foreground">Our Journey</span>
-            </div>
-            <h2 className="font-display text-2xl font-bold text-primary-foreground md:text-3xl mb-4">
-              Building Trust Over Time
-            </h2>
-            <p className="text-primary-foreground/80 max-w-xl mx-auto">
-              From our founding to today, we've been committed to helping families find the right treatment.
-            </p>
-          </div>
-
-          <div className="max-w-4xl mx-auto relative">
-            {/* Vertical line */}
-            <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-accent/50 via-accent to-accent/50 md:-translate-x-1/2" />
-            
-            <div className="space-y-8">
-              {timeline.map((item, index) => (
-                <div
-                  key={item.year}
-                  className={`relative flex items-start gap-6 md:gap-0 animate-fade-in ${
-                    index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
-                  }`}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  {/* Content */}
-                  <div className={`flex-1 md:w-[calc(50%-2rem)] ${index % 2 === 0 ? "md:pr-12 md:text-right" : "md:pl-12"}`}>
-                    <div className={`bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:bg-white/15 transition-colors duration-300 ${index % 2 === 0 ? "ml-14 md:ml-0" : "ml-14 md:ml-0"}`}>
-                      <div className={`flex items-center gap-3 mb-3 ${index % 2 === 0 ? "md:justify-end" : ""}`}>
-                        <span className="text-accent font-display font-bold text-lg">{item.year}</span>
-                      </div>
-                      <h3 className="font-display text-lg font-semibold text-primary-foreground mb-2">
-                        {item.title}
-                      </h3>
-                      <p className="text-primary-foreground/70 text-sm leading-relaxed">
-                        {item.description}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Center dot with icon */}
-                  <div className="absolute left-8 md:left-1/2 -translate-x-1/2 flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent/80 shadow-lg flex items-center justify-center ring-4 ring-primary">
-                      <item.icon className="h-5 w-5 text-white" />
-                    </div>
-                  </div>
-                  
-                  {/* Spacer for alternating layout */}
-                  <div className="hidden md:block flex-1 md:w-[calc(50%-2rem)]" />
-                </div>
-              ))}
             </div>
           </div>
         </div>
