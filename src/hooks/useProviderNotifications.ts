@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface ProviderNotification {
   id: string;
@@ -15,7 +16,7 @@ export interface ProviderNotification {
 }
 
 // Simple notification sound (base64 encoded short beep)
-const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleA0AFQN/kI6sxr2UXQAAxuzXooRCBgmQx+/FeSQNTfj3vE8PFq3s7qF1IkJ1wdbhoF4XLpG/xaCJTitdoNm6qXlPVYCgzcDBm2s5RnKUwdDFvJFfRFZ9l7bRzcKqeE1Laz5LWnSUqbXCzL+pgV1AMDlXboSZq7q+xb6uhFk6LkNedI6iu8XDu65/VDAsOlV5lq3Cx7+0qIhfQC8yTGJ+mbO/wruzqopiQy4sRV12j6S2wcS7t6+JYEQsKUBYcoabrrzAuba1qotgRCsmP1RvgoySnaWtsLe4ubaxqp+ThntuZV5bXmNqc4CQnq20uLy6tq+ij3xrX1NLSkpOVl9sdIiXpay0trStpJqOgnZqYFhTUldaX2hxgI2Zoa2ys7Cvqp2PhHpvZ2JfX2FlaXJ5g4+Yoqqvs7OvrKaclIqBd3FtaWpsb3R5gImRmqGnq66vraqknpaNhH15dnV1dnh7foSKkJebnqOlp6elo5+blo+JhIB9fHt7fH6Bh4yRlpmcnqCgo6OioJ2ZlpKOioeDgYGBgoWIjJCTlpmbnZ+goaKioaCemZaRjYqIhoWEhYaHioyPkpWYmpydn5+goKCfnpyZl5SSj4yLioqKi4yNj5KUlpmanJ2en5+fnp2cm5mWk5GQjo2NjY2OjpCSlJaYmZudnZ6enp2cm5qYlpSTkZCPj4+Pj5CRkpSVl5mam5ycnZ2dnJuamJeVk5KRkJCQkJCRkpOUlZaXmJmanJycnJybmpmYl5WUk5KRkZGRkZGSkpOUlZaXmJmampubm5uamZiXlpWUk5OSkpKSkpOTk5SVlpaXmJmZmpqampqZmZiXlpWVlJSUk5OTk5SUlJWVlpaXl5iYmZmZmZmYmJeWlpWVlJSUlJSUlJSVlZWWlpeXl5iYmJiYmJeXlpaWlZWVlZWVlZWVlZaWlpaWl5eXl5eXl5eXlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eXl5aWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eX";
+const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleA0AFQN/kI6sxr2UXQAAxuzXooRCBgmQx+/FeSQNTfj3vE8PFq3s7qF1IkJ1wdbhoF4XLpG/xaCJTitdoNm6qXlPVYCgzcDBm2s5RnKUwdDFvJFfRFZ9l7bRzcKqeE1Laz5LWnSUqbXCzL+pgV1AMDlXboSZq7q+xb6uhFk6LkNedI6iu8XDu65/VDAsOlV5lq3Cx7+0qIhfQC8yTGJ+mbO/wruzqopiQy4sRV12j6S2wcS7t6+JYEQsKUBYcoabrrzAuba1qotgRCsmP1RvgoySnaWtsLe4ubaxqp+ThntuZV5bXmNqc4CQnq20uLy6tq+ij3xrX1NLSkpOVl9sdIiXpay0trStpJqOgnZqYFhTUldaX2hxgI2Zoa2ys7Cvqp2PhHpvZ2JfX2FlaXJ5g4+Yoqqvs7OvrKaclIqBd3FtaWpsb3R5gImRmqGnq66vraqknpaNhH15dnV1dnh7foSKkJebnqOlp6elo5+blo+JhIB9fHt7fH6Bh4yRlpmcnqCgo6OioJ2ZlpKOioeDgYGBgoWIjJCTlpmbnZ+goaKioaCemZaRjYqIhoWEhYaHioyPkpWYmpydn5+goKCfnpyZl5SSj4yLioqKi4yNj5KUlpianJ2en5+fnp2cm5mWk5GQjo2NjY2OjpCSlJaYmZudnZ6enp2cm5qYlpSTkZCPj4+Pj5CRkpSVl5mam5ycnZ2dnJuamJeVk5KRkJCQkJCRkpOUlZaXmJmanJycnJybmpmYl5WUk5KRkZGRkZGSkpOUlZaXmJmampubm5uamZiXlpWUk5OSkpKSkpOTk5SVlpaXmJmZmpqampqZmZiXlpWVlJSUk5OTk5SUlJWVlpaXl5iYmZmZmZmYmJeWlpWVlJSUlJSUlJSVlZWWlpeXl5iYmJiYmJeXlpaWlZWVlZWVlZWVlZaWlpaWl5eXl5eXl5eXlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eXl5aWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eX";
 
 export function useProviderNotifications() {
   const queryClient = useQueryClient();
@@ -123,6 +124,21 @@ export function useProviderNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  // Optimistic update helpers
+  const optimisticallyMarkAsRead = useCallback((notificationId: string) => {
+    queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+      if (!old) return old;
+      return old.map((n) => (n.id === notificationId ? { ...n, read: true } : n));
+    });
+  }, [queryClient]);
+
+  const optimisticallyMarkAllAsRead = useCallback(() => {
+    queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+      if (!old) return old;
+      return old.map((n) => ({ ...n, read: true }));
+    });
+  }, [queryClient]);
+
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
@@ -130,8 +146,21 @@ export function useProviderNotifications() {
         .update({ read: true })
         .eq("id", notificationId);
       if (error) throw error;
+      return notificationId;
     },
-    onSuccess: () => {
+    onMutate: async (notificationId) => {
+      await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
+      const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
+      optimisticallyMarkAsRead(notificationId);
+      return { previousNotifications };
+    },
+    onError: (error: Error, _, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["provider-notifications"], context.previousNotifications);
+      }
+      toast.error("Failed to mark as read");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
     },
   });
@@ -148,7 +177,22 @@ export function useProviderNotifications() {
         .eq("read", false);
       if (error) throw error;
     },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
+      const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
+      optimisticallyMarkAllAsRead();
+      return { previousNotifications };
+    },
+    onError: (error: Error, _, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["provider-notifications"], context.previousNotifications);
+      }
+      toast.error("Failed to mark all as read");
+    },
     onSuccess: () => {
+      toast.success("All notifications marked as read");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
     },
   });
@@ -160,8 +204,27 @@ export function useProviderNotifications() {
         .delete()
         .eq("id", notificationId);
       if (error) throw error;
+      return notificationId;
+    },
+    onMutate: async (notificationId) => {
+      await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
+      const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
+      queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+        if (!old) return old;
+        return old.filter((n) => n.id !== notificationId);
+      });
+      return { previousNotifications };
+    },
+    onError: (error: Error, _, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["provider-notifications"], context.previousNotifications);
+      }
+      toast.error("Failed to delete notification");
     },
     onSuccess: () => {
+      toast.success("Notification deleted");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
     },
   });
@@ -177,7 +240,22 @@ export function useProviderNotifications() {
         .eq("user_id", user.id);
       if (error) throw error;
     },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
+      const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
+      queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], []);
+      return { previousNotifications };
+    },
+    onError: (error: Error, _, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["provider-notifications"], context.previousNotifications);
+      }
+      toast.error("Failed to clear notifications");
+    },
     onSuccess: () => {
+      toast.success("All notifications cleared");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
     },
   });

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -81,6 +81,21 @@ export function useAdminUserNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  // Optimistic update helpers
+  const optimisticallyMarkAsRead = useCallback((notificationId: string) => {
+    queryClient.setQueryData<AdminUserNotification[]>(["admin-user-notifications"], (old) => {
+      if (!old) return old;
+      return old.map((n) => (n.id === notificationId ? { ...n, read: true } : n));
+    });
+  }, [queryClient]);
+
+  const optimisticallyMarkAllAsRead = useCallback(() => {
+    queryClient.setQueryData<AdminUserNotification[]>(["admin-user-notifications"], (old) => {
+      if (!old) return old;
+      return old.map((n) => ({ ...n, read: true }));
+    });
+  }, [queryClient]);
+
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
@@ -88,13 +103,23 @@ export function useAdminUserNotifications() {
         .update({ read: true })
         .eq("id", notificationId);
       if (error) throw error;
+      return notificationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
+    onMutate: async (notificationId) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-user-notifications"] });
+      const previousNotifications = queryClient.getQueryData<AdminUserNotification[]>(["admin-user-notifications"]);
+      optimisticallyMarkAsRead(notificationId);
+      return { previousNotifications };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["admin-user-notifications"], context.previousNotifications);
+      }
       logAdminError("useAdminUserNotifications", "mark_as_read", error, { mutation: "markAsRead" });
       toast.error("Failed to mark as read", { description: error.message });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
     },
   });
 
@@ -110,13 +135,24 @@ export function useAdminUserNotifications() {
         .eq("read", false);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
-      toast.success("All notifications marked as read");
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["admin-user-notifications"] });
+      const previousNotifications = queryClient.getQueryData<AdminUserNotification[]>(["admin-user-notifications"]);
+      optimisticallyMarkAllAsRead();
+      return { previousNotifications };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["admin-user-notifications"], context.previousNotifications);
+      }
       logAdminError("useAdminUserNotifications", "mark_all_as_read", error, { mutation: "markAllAsRead" });
       toast.error("Failed to mark all as read", { description: error.message });
+    },
+    onSuccess: () => {
+      toast.success("All notifications marked as read");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
     },
   });
 
@@ -127,14 +163,29 @@ export function useAdminUserNotifications() {
         .delete()
         .eq("id", notificationId);
       if (error) throw error;
+      return notificationId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
-      toast.success("Notification deleted");
+    onMutate: async (notificationId) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-user-notifications"] });
+      const previousNotifications = queryClient.getQueryData<AdminUserNotification[]>(["admin-user-notifications"]);
+      queryClient.setQueryData<AdminUserNotification[]>(["admin-user-notifications"], (old) => {
+        if (!old) return old;
+        return old.filter((n) => n.id !== notificationId);
+      });
+      return { previousNotifications };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["admin-user-notifications"], context.previousNotifications);
+      }
       logAdminError("useAdminUserNotifications", "delete_notification", error, { mutation: "deleteNotification" });
       toast.error("Failed to delete notification", { description: error.message });
+    },
+    onSuccess: () => {
+      toast.success("Notification deleted");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
     },
   });
 
@@ -149,13 +200,24 @@ export function useAdminUserNotifications() {
         .eq("user_id", user.id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
-      toast.success("All notifications cleared");
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["admin-user-notifications"] });
+      const previousNotifications = queryClient.getQueryData<AdminUserNotification[]>(["admin-user-notifications"]);
+      queryClient.setQueryData<AdminUserNotification[]>(["admin-user-notifications"], []);
+      return { previousNotifications };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["admin-user-notifications"], context.previousNotifications);
+      }
       logAdminError("useAdminUserNotifications", "delete_all", error, { mutation: "deleteAll" });
       toast.error("Failed to clear notifications", { description: error.message });
+    },
+    onSuccess: () => {
+      toast.success("All notifications cleared");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-user-notifications"] });
     },
   });
 
