@@ -73,7 +73,7 @@ export function SearchForm({
                 <select
                   value={treatmentType}
                   onChange={(e) => setTreatmentType(e.target.value)}
-                  className="w-full appearance-none bg-transparent text-base text-foreground focus:outline-none cursor-pointer pr-6"
+                  className="w-full appearance-none bg-card text-base text-foreground focus:outline-none cursor-pointer pr-6 [&>option]:bg-card [&>option]:text-foreground [&>option]:py-2"
                 >
                   <option value="">All treatment types</option>
                   {treatmentTypes.map((type) => (
@@ -98,7 +98,7 @@ export function SearchForm({
                 <select
                   value={insurance}
                   onChange={(e) => setInsurance(e.target.value)}
-                  className="w-full appearance-none bg-transparent text-base text-foreground focus:outline-none cursor-pointer pr-6"
+                  className="w-full appearance-none bg-card text-base text-foreground focus:outline-none cursor-pointer pr-6 [&>option]:bg-card [&>option]:text-foreground [&>option]:py-2"
                 >
                   <option value="">All insurance</option>
                   {insuranceProviders.map((provider) => (
@@ -114,8 +114,9 @@ export function SearchForm({
 
           {/* Submit */}
           <div className="flex items-center bg-primary/5 p-3 md:p-4">
-            <Button type="submit" size="lg" className="w-full h-12 px-10 text-base font-bold shadow-lg transition-transform hover:scale-[1.02] md:w-auto">
-              See Results
+            <Button type="submit" size="lg" className="w-full h-12 px-8 text-base font-bold shadow-lg transition-transform hover:scale-[1.02] md:w-auto gap-2">
+              <Search className="h-5 w-5" />
+              Find Rehab
             </Button>
           </div>
         </div>
