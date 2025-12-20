@@ -49,6 +49,12 @@ import {
 import { Slider } from "@/components/ui/slider";
 import providerDashboardMockup from "@/assets/provider-dashboard-mockup.jpg";
 import rehabFacilityHero from "@/assets/rehab-facility-hero.jpg";
+import providerAvatar1 from "@/assets/avatars/provider-avatar-1.jpg";
+import providerAvatar2 from "@/assets/avatars/provider-avatar-2.jpg";
+import providerAvatar3 from "@/assets/avatars/provider-avatar-3.jpg";
+import providerAvatar4 from "@/assets/avatars/provider-avatar-4.jpg";
+
+const providerAvatars = [providerAvatar1, providerAvatar2, providerAvatar3, providerAvatar4];
 
 const benefits = [
   {
@@ -647,10 +653,13 @@ const ForProviders = () => {
               <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <div className="flex -space-x-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 border-2 border-background flex items-center justify-center">
-                        <span className="text-xs font-bold text-primary-foreground">{String.fromCharCode(64 + i)}</span>
-                      </div>
+                    {providerAvatars.map((avatar, i) => (
+                      <img 
+                        key={i} 
+                        src={avatar} 
+                        alt={`Provider ${i + 1}`}
+                        className="w-8 h-8 rounded-full border-2 border-background object-cover"
+                      />
                     ))}
                   </div>
                   <span className="font-medium">500+ facilities trust us</span>
