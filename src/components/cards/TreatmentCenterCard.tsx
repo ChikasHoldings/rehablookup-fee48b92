@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, ArrowRight, Crown, Calendar, ShieldCheck, Eye, Building2 } from "lucide-react";
+import { MapPin, ArrowRight, Crown, Calendar, ShieldCheck, Eye, Building2 } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState, useCallback, memo, useRef, useEffect } from "react";
@@ -127,12 +127,6 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
       }
     }
   }, [showFeaturedBadge, center.isFromDatabase, center.id]);
-
-  const handleCallClick = useCallback(() => {
-    if (center.isFromDatabase && center.id) {
-      trackClickToCall(center.id, "search");
-    }
-  }, [center.isFromDatabase, center.id, trackClickToCall]);
 
   // Compact horizontal layout for mobile/list view
   if (variant === "compact") {
@@ -318,20 +312,6 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
                 <ArrowRight className="h-3 w-3" />
               </Button>
             </Link>
-            <a href={`tel:${center.phone}`} onClick={handleCallClick}>
-              <Button 
-                variant="outline" 
-                size="icon"
-                className={cn(
-                  "h-8 w-8 shrink-0",
-                  showFeaturedBadge 
-                    ? "border-amber-300 text-amber-600 hover:bg-amber-500 hover:text-white hover:border-amber-500"
-                    : "hover:bg-primary hover:text-primary-foreground hover:border-primary"
-                )}
-              >
-                <Phone className="h-3 w-3" />
-              </Button>
-            </a>
           </div>
         </div>
         
@@ -616,20 +596,6 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
             </Button>
           </Link>
-          <a href={`tel:${center.phone}`} onClick={handleCallClick}>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className={cn(
-                "h-10 w-10 shrink-0 transition-all duration-300",
-                showFeaturedBadge 
-                  ? "border-amber-300 text-amber-600 hover:bg-amber-500 hover:text-white hover:border-amber-500 hover:shadow-lg"
-                  : "hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-md"
-              )}
-            >
-              <Phone className="h-4 w-4" />
-            </Button>
-          </a>
         </div>
         
         {/* Quick View Modal */}
