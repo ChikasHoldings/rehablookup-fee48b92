@@ -141,7 +141,7 @@ export default function MedicaidRehab() {
             </p>
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button asChild size="lg" variant="secondary">
-                <Link to="/search">
+                <Link to="/rehab-centers">
                   <MapPin className="mr-2 h-4 w-4" />
                   Find Medicaid-Accepting Centers
                 </Link>
@@ -328,7 +328,7 @@ export default function MedicaidRehab() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button asChild size="lg">
-                <Link to="/search">
+                <Link to="/rehab-centers">
                   Search Treatment Centers
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
