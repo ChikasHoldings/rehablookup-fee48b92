@@ -1,3 +1,4 @@
+import React from "react";
 import { 
   BarChart, 
   Bar, 
@@ -630,9 +631,9 @@ function StatCard({ title, value, icon: Icon, trend, subtitle, iconBg = "bg-prim
   );
 }
 
-function AnalyticsSkeleton() {
+const AnalyticsSkeleton = React.forwardRef<HTMLDivElement>((_, ref) => {
   return (
-    <div className="space-y-6">
+    <div ref={ref} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i}>
@@ -681,11 +682,12 @@ function AnalyticsSkeleton() {
       </div>
     </div>
   );
-}
+});
+AnalyticsSkeleton.displayName = "AnalyticsSkeleton";
 
-function EmptyAnalytics() {
+const EmptyAnalytics = React.forwardRef<HTMLDivElement>((_, ref) => {
   return (
-    <Card className="border-dashed border-2">
+    <Card ref={ref} className="border-dashed border-2">
       <CardContent className="py-20 text-center">
         <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-6">
           <BarChart3 className="h-10 w-10 text-primary/40" />
@@ -698,4 +700,5 @@ function EmptyAnalytics() {
       </CardContent>
     </Card>
   );
-}
+});
+EmptyAnalytics.displayName = "EmptyAnalytics";

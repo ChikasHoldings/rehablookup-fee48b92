@@ -49,7 +49,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
   );
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border safe-area-bottom">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 backdrop-blur-lg border-t border-slate-800 safe-area-bottom shadow-2xl">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
@@ -64,14 +64,14 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
                 isActive 
-                  ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-white" 
+                  : "text-slate-400 hover:text-slate-200"
               )}
             >
               <div className="relative">
                 <div className={cn(
                   "flex items-center justify-center h-7 w-7 rounded-lg transition-all",
-                  isActive && "bg-primary/10"
+                  isActive && "bg-primary/20"
                 )}>
                   <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
                 </div>
@@ -83,7 +83,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
               </div>
               <span className={cn(
                 "text-[10px] font-medium transition-colors",
-                isActive && "text-primary font-semibold"
+                isActive ? "text-white font-semibold" : "text-slate-400"
               )}>
                 {item.label}
               </span>
@@ -97,19 +97,19 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
           className={cn(
             "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
             isMoreActive 
-              ? "text-primary" 
-              : "text-muted-foreground hover:text-foreground"
+              ? "text-white" 
+              : "text-slate-400 hover:text-slate-200"
           )}
         >
           <div className={cn(
             "flex items-center justify-center h-7 w-7 rounded-lg transition-all",
-            isMoreActive && "bg-primary/10"
+            isMoreActive && "bg-primary/20"
           )}>
             <MoreHorizontal className={cn("h-5 w-5 transition-transform", isMoreActive && "scale-110")} />
           </div>
           <span className={cn(
             "text-[10px] font-medium transition-colors",
-            isMoreActive && "text-primary font-semibold"
+            isMoreActive ? "text-white font-semibold" : "text-slate-400"
           )}>
             More
           </span>
