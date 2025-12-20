@@ -7,7 +7,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { Heart, MapPin, Search, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone } from "lucide-react";
+import { Heart, MapPin, Search, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone } from "lucide-react";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
@@ -215,19 +215,15 @@ const RehabCenters = () => {
         ]}
       />
       
-      {/* Hero Header - Clean Directory Style */}
-      <section className="relative border-b border-primary/20 bg-gradient-to-b from-primary via-primary/90 to-primary/80 py-8 md:py-10">
+      {/* Hero Header - Sleek Directory Style */}
+      <section className="relative border-b border-primary/20 bg-gradient-to-b from-primary via-primary/95 to-primary/85 py-6 md:py-8">
         <MedicalPatternBackground />
         <div className="container relative z-10">
-          <div className="mb-6 max-w-2xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white border border-white/20">
-              <CheckCircle className="h-3.5 w-3.5" />
-              Verified Treatment Centers
-            </div>
-            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl">
+          <div className="mb-5 max-w-2xl">
+            <h1 className="font-display text-xl font-bold tracking-tight text-white md:text-2xl">
               Find Treatment Centers
             </h1>
-            <p className="mt-2 text-white/80 text-sm md:text-base">
+            <p className="mt-1.5 text-white/75 text-sm">
               {hasFilters ? (
                 <>
                   <span className="font-semibold text-white">{filteredCenters.length}</span> results
@@ -240,18 +236,16 @@ const RehabCenters = () => {
             </p>
           </div>
 
-          {/* Search Form Container */}
-          <div className="rounded-xl border border-white/10 bg-white/10 backdrop-blur-sm p-4 shadow-lg md:p-5">
-            <SearchForm
-              variant="compact"
-              initialLocation={location}
-              initialTreatmentType={treatment}
-              initialInsurance={insurance}
-              onSearchComplete={() => {
-                document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            />
-          </div>
+          {/* Search Form Container - Sleek Design */}
+          <SearchForm
+            variant="directory"
+            initialLocation={location}
+            initialTreatmentType={treatment}
+            initialInsurance={insurance}
+            onSearchComplete={() => {
+              document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          />
         </div>
       </section>
 
