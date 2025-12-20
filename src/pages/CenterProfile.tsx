@@ -39,6 +39,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 import { TrustBadgesInline, TrustBadgesSection } from "@/components/trust/TrustBadgesSection";
 import { cn } from "@/lib/utils";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 
 interface FacilityData {
@@ -817,7 +818,7 @@ const CenterProfile = () => {
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Phone</p>
                         <p className="text-sm text-primary font-semibold group-hover:underline">
-                          {facility.phone}
+                          {formatPhoneNumber(facility.phone)}
                         </p>
                         <p className="text-xs text-muted-foreground">Tap to call</p>
                       </div>
@@ -1002,7 +1003,7 @@ const CenterProfile = () => {
                       <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")} className="block">
                         <Button variant="outline" size="lg" className="w-full gap-2 h-11 text-sm font-semibold border-2">
                           <Phone className="h-4 w-4" />
-                          {facility.phone}
+                          {formatPhoneNumber(facility.phone)}
                         </Button>
                       </a>
                     )}
@@ -1096,7 +1097,7 @@ const CenterProfile = () => {
                   <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")}>
                     <Button variant="outline" size="lg" className="w-full gap-2 h-13 text-base font-semibold border-2">
                       <Phone className="h-5 w-5" />
-                      {facility.phone}
+                      {formatPhoneNumber(facility.phone)}
                     </Button>
                   </a>
                 )}

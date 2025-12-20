@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import {
   MapPin,
   Phone,
