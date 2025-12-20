@@ -1161,7 +1161,9 @@ const CenterProfile = () => {
           slug: facility.slug,
           email: facility.email,
           logo_url: facility.logo_url,
+          featured: facility.featured,
         }}
+        facilityPlan={facilityPlan as "basic" | "professional" | "featured"}
         prefillData={prefillDataFromNav}
       />
 
