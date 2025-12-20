@@ -60,6 +60,9 @@ import NotFound from "./pages/NotFound";
 import DrugRehabNearMe from "./pages/near-me/DrugRehabNearMe";
 import AlcoholRehabNearMe from "./pages/near-me/AlcoholRehabNearMe";
 import DetoxNearMe from "./pages/near-me/DetoxNearMe";
+import DualDiagnosisNearMe from "./pages/near-me/DualDiagnosisNearMe";
+import InpatientRehabNearMe from "./pages/near-me/InpatientRehabNearMe";
+import OutpatientNearMe from "./pages/near-me/OutpatientNearMe";
 
 // Provider Panel - eagerly load for instant navigation
 import { ProviderShell } from "./components/provider/ProviderShell";
@@ -147,6 +150,12 @@ const App = () => (
             <Route path="/alcohol-rehab-near-me/:stateSlug" element={<AlcoholRehabNearMe />} />
             <Route path="/detox-near-me" element={<DetoxNearMe />} />
             <Route path="/detox-near-me/:stateSlug" element={<DetoxNearMe />} />
+            <Route path="/dual-diagnosis-near-me" element={<DualDiagnosisNearMe />} />
+            <Route path="/dual-diagnosis-near-me/:stateSlug" element={<DualDiagnosisNearMe />} />
+            <Route path="/inpatient-rehab-near-me" element={<InpatientRehabNearMe />} />
+            <Route path="/inpatient-rehab-near-me/:stateSlug" element={<InpatientRehabNearMe />} />
+            <Route path="/outpatient-near-me" element={<OutpatientNearMe />} />
+            <Route path="/outpatient-near-me/:stateSlug" element={<OutpatientNearMe />} />
             
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/request-help" element={<RequestHelp />} />
