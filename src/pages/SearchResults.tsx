@@ -711,7 +711,7 @@ const SearchResults = () => {
 
       {/* Main Content Area - Centered Cards */}
       <section className="bg-gradient-to-b from-secondary/30 to-background py-8 min-h-screen">
-        <div className="container max-w-4xl mx-auto">
+        <div className="container max-w-5xl mx-auto">
           {isLoading ? (
             <SearchResultsLoading count={6} />
           ) : paginatedCenters.length > 0 ? (
@@ -731,7 +731,7 @@ const SearchResults = () => {
               </div>
 
               {/* Results List */}
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {paginatedCenters.map((center, index) => (
                   <div 
                     key={center.id}
@@ -832,7 +832,7 @@ const SearchResults = () => {
 
       {/* Bottom CTA */}
       <section className="border-t border-border bg-gradient-to-r from-primary/5 via-background to-primary/5 py-12">
-        <div className="container max-w-4xl mx-auto">
+        <div className="container max-w-5xl mx-auto">
           <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 p-8 border border-primary/20 shadow-lg">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="shrink-0">
