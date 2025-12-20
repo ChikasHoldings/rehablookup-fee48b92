@@ -96,7 +96,7 @@ const Contact = () => {
       />
       
       {/* Hero - Navy background with decorative elements */}
-      <section className="bg-primary py-16 px-4 md:py-20 md:px-6 relative overflow-hidden">
+      <section className="bg-primary py-10 px-4 md:py-12 md:px-6 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
@@ -104,14 +104,14 @@ const Contact = () => {
         </div>
         
         <div className="container text-center relative">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 backdrop-blur-sm border border-white/10">
-            <MessageSquare className="h-5 w-5 text-accent" />
-            <span className="text-base font-medium text-primary-foreground">Get In Touch</span>
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
+            <MessageSquare className="h-4 w-4 text-accent" />
+            <span className="text-sm font-medium text-primary-foreground">Get In Touch</span>
           </div>
-          <h1 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
+          <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
             Contact Us
           </h1>
-          <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-xl">
+          <p className="text-base text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-lg">
             Have questions about finding treatment? We're here to help.
           </p>
         </div>
