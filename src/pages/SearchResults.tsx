@@ -23,7 +23,8 @@ import {
   Sparkles,
   ChevronDown,
   Navigation,
-  CreditCard
+  CreditCard,
+  Compass
 } from "lucide-react";
 import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { 
+  parseLocationInput, 
+  sortByProximity, 
+  type ProximityTier, 
+  type ProximityResult,
+  type LocationMatch 
+} from "@/lib/proximitySearch";
+import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -197,15 +206,33 @@ const SearchResults = () => {
   const filteredCenters = useMemo(() => {
     let results = [...allCenters];
 
-    // Location filter
+    // Location filter with proximity-based matching
+    let locationMatch: LocationMatch | null = null;
     if (location) {
+      locationMatch = parseLocationInput(location);
       const locationLower = location.toLowerCase();
-      results = results.filter(
-        (c) =>
-          c.city.toLowerCase().includes(locationLower) ||
-          c.state.toLowerCase().includes(locationLower) ||
-          c.zipCode.includes(location)
-      );
+      
+      // First, filter to include all potentially relevant results
+      results = results.filter((c) => {
+        // Exact zipcode match
+        if (locationMatch?.zipcode && c.zipCode === locationMatch.zipcode) return true;
+        // City match
+        if (c.city.toLowerCase().includes(locationLower)) return true;
+        // State match
+        if (c.state.toLowerCase().includes(locationLower)) return true;
+        // State abbreviation match
+        if (locationMatch?.stateAbbr && 
+            (c.state.toLowerCase() === locationMatch.stateAbbr.toLowerCase() ||
+             c.state.toLowerCase() === (locationMatch.state?.toLowerCase() || ''))) return true;
+        // Nearby state match
+        if (locationMatch?.nearbyStates.length) {
+          const cStateAbbr = c.state.length === 2 ? c.state.toUpperCase() : null;
+          if (cStateAbbr && locationMatch.nearbyStates.includes(cStateAbbr)) return true;
+        }
+        // Zipcode partial match
+        if (c.zipCode.includes(location)) return true;
+        return false;
+      });
     }
 
     // Treatment filter from search form
@@ -307,9 +334,26 @@ const SearchResults = () => {
       return secondarySort();
     };
 
+    // Apply proximity-based sorting first if location is set
+    if (location && locationMatch) {
+      const proximityResults = sortByProximity(results, locationMatch);
+      results = proximityResults.map(pr => ({
+        ...pr.item,
+        _proximityTier: pr.tier,
+        _proximityReason: pr.matchReason
+      }));
+    }
+
+    // Then apply secondary sorting with paid/featured priority within each proximity tier
     switch (sortParam) {
       case "featured":
-        results.sort((a, b) => sortWithPriority(a, b, () => b.rating - a.rating));
+        results.sort((a, b) => {
+          if (location && (a as any)._proximityTier !== (b as any)._proximityTier) {
+            const tierOrder = { exact: 0, city: 1, state: 2, nearby: 3, nationwide: 4 };
+            return tierOrder[(a as any)._proximityTier as ProximityTier] - tierOrder[(b as any)._proximityTier as ProximityTier];
+          }
+          return sortWithPriority(a, b, () => b.rating - a.rating);
+        });
         break;
       case "rating-high":
         results.sort((a, b) => sortWithPriority(a, b, () => b.rating - a.rating));
