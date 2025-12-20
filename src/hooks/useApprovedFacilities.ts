@@ -131,8 +131,9 @@ export const useApprovedFacilities = () => {
   return useQuery({
     queryKey: ["approved-facilities", featuredIds, homepageFeaturedIds],
     queryFn: async (): Promise<ApprovedFacility[]> => {
-      const { data, error } = await supabase
-        .from("facilities")
+      // Use public_facilities view which excludes sensitive fields like admin_notes
+      const { data: facilitiesData, error: facilitiesError } = await supabase
+        .from("public_facilities")
         .select(`
           id,
           name,
@@ -145,16 +146,40 @@ export const useApprovedFacilities = () => {
           description,
           featured,
           verified,
-          year_established,
           facility_type,
           logo_url,
-          gallery_urls,
-          facility_services (service_name),
-          facility_insurance (insurance_name)
-        `)
-        .eq("status", "approved");
+          gallery_urls
+        `);
 
-      if (error) throw error;
+      if (facilitiesError) throw facilitiesError;
+
+      // Fetch services and insurance separately since views don't support joins
+      const facilityIds = (facilitiesData || []).map(f => f.id).filter(Boolean) as string[];
+      
+      const [servicesResult, insuranceResult] = await Promise.all([
+        supabase.from("facility_services").select("facility_id, service_name").in("facility_id", facilityIds),
+        supabase.from("facility_insurance").select("facility_id, insurance_name").in("facility_id", facilityIds),
+      ]);
+
+      // Create lookup maps
+      const servicesMap = new Map<string, string[]>();
+      (servicesResult.data || []).forEach(s => {
+        const existing = servicesMap.get(s.facility_id) || [];
+        servicesMap.set(s.facility_id, [...existing, s.service_name]);
+      });
+
+      const insuranceMap = new Map<string, string[]>();
+      (insuranceResult.data || []).forEach(i => {
+        const existing = insuranceMap.get(i.facility_id) || [];
+        insuranceMap.set(i.facility_id, [...existing, i.insurance_name]);
+      });
+
+      const data = (facilitiesData || []).map(f => ({
+        ...f,
+        year_established: null as number | null, // Not in public view
+        facility_services: (servicesMap.get(f.id!) || []).map(name => ({ service_name: name })),
+        facility_insurance: (insuranceMap.get(f.id!) || []).map(name => ({ insurance_name: name })),
+      }));
 
       // Transform database facilities to TreatmentCenter format
       return (data as FacilityWithRelations[]).map((facility) => {
