@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Stethoscope, Shield } from "lucide-react";
+import { Search, MapPin, Stethoscope, Shield, Building2 } from "lucide-react";
 import { treatmentTypes, insuranceProviders } from "@/data/treatmentCenters";
+import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
 
 interface SearchFormProps {
   variant?: "hero" | "compact" | "compact-hero" | "directory";
@@ -23,9 +24,55 @@ export function SearchForm({
   const [location, setLocation] = useState(initialLocation);
   const [treatmentType, setTreatmentType] = useState(initialTreatmentType);
   const [insurance, setInsurance] = useState(initialInsurance);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const suggestions = useMemo(() => getLocationSuggestions(location), [location]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        suggestionsRef.current && 
+        !suggestionsRef.current.contains(e.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectSuggestion = (suggestion: LocationSuggestion) => {
+    setLocation(formatLocationSuggestion(suggestion));
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+    } else if (e.key === "Enter" && highlightedIndex >= 0) {
+      e.preventDefault();
+      handleSelectSuggestion(suggestions[highlightedIndex]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowSuggestions(false);
     const params = new URLSearchParams();
     if (location) params.set("location", location);
     if (treatmentType) params.set("treatment", treatmentType);
@@ -46,20 +93,61 @@ export function SearchForm({
       <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
         <div className="flex flex-col overflow-hidden rounded-xl bg-card shadow-2xl ring-1 ring-white/10 md:flex-row">
           {/* Where */}
-          <div className="group flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
+          <div className="group relative flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
             <div className="p-4 md:p-5">
               <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
                 <MapPin className="h-3.5 w-3.5" />
                 Where
               </label>
               <input
+                ref={inputRef}
                 type="text"
                 placeholder="City, State, or ZIP code"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  setShowSuggestions(true);
+                  setHighlightedIndex(-1);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onKeyDown={handleKeyDown}
                 className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+                autoComplete="off"
               />
             </div>
+            
+            {/* Autocomplete Suggestions */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div
+                ref={suggestionsRef}
+                className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-xl"
+              >
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={suggestion.type === "state" ? suggestion.abbr : `${suggestion.name}-${suggestion.state}`}
+                    type="button"
+                    onClick={() => handleSelectSuggestion(suggestion)}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                      index === highlightedIndex
+                        ? "bg-primary/10 text-foreground"
+                        : "text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {suggestion.type === "state" ? (
+                      <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                    ) : (
+                      <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="flex-1 truncate">
+                      {formatLocationSuggestion(suggestion)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {suggestion.type === "state" ? "State" : "City"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Type of Care */}
