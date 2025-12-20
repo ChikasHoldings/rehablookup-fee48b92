@@ -394,7 +394,7 @@ const Index = () => {
               <div className="flex-1 lg:max-w-xl">
                 {/* Mobile: Horizontal scroll carousel */}
                 <div className="relative -mx-2 px-2 sm:mx-0 sm:px-0">
-                  <div className="flex gap-5 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0 md:gap-6">
+                  <div className="flex gap-6 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0 md:gap-6">
                     {/* Aetna */}
                     <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
                       <img src="/insurance-logos/aetna.svg" alt="Aetna" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
