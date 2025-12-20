@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, memo } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
 import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -12,8 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 
-// AdminHeader is already memoized in its export
-const MemoizedSidebar = memo(AdminSidebar);
+// Both AdminHeader and AdminSidebar are already memoized in their exports
 
 const mobileNavItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
@@ -113,7 +112,7 @@ export function AdminShell() {
       <AdminHeader userEmail={user?.email} userId={user?.id} onLogout={logout} />
       
       <div className="flex flex-1">
-        <MemoizedSidebar isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />
+        <AdminSidebar isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />
         
         <main
           ref={mainContentRef}
