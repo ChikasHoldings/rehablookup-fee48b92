@@ -427,9 +427,9 @@ const Index = () => {
                     <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
                       <img src="/insurance-logos/medicaid.svg" alt="Medicaid" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
-                    {/* United */}
+                    {/* Optum */}
                     <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
-                      <img src="/insurance-logos/united.svg" alt="UnitedHealthcare" className="h-10 md:h-12 max-w-[100px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                      <span className="text-base md:text-lg font-bold text-[#FF6200] opacity-80 hover:opacity-100 transition-opacity">Optum</span>
                     </div>
                     {/* Tricare */}
                     <div className="flex min-w-[90px] shrink-0 snap-start items-center justify-center sm:min-w-0 sm:shrink">
