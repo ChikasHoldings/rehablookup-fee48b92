@@ -508,3 +508,229 @@ export function generateVideoSchema(video: {
     },
   };
 }
+
+// GeoTargetArea schema for "near me" optimization
+export function generateGeoTargetSchema(location: {
+  city?: string;
+  state: string;
+  stateAbbr: string;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "GeoCircle",
+    geoMidpoint: {
+      "@type": "GeoCoordinates",
+      latitude: location.latitude || 0,
+      longitude: location.longitude || 0,
+      addressCountry: "US",
+      addressRegion: location.stateAbbr,
+      ...(location.city && { addressLocality: location.city }),
+    },
+    geoRadius: location.radius || "50 mi",
+  };
+}
+
+// LocalBusiness aggregate for area listings
+export function generateLocalBusinessAggregateSchema(area: {
+  name: string;
+  description: string;
+  url: string;
+  facilityCount: number;
+  city?: string;
+  state: string;
+  stateAbbr: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `Addiction Treatment Centers ${area.city ? `in ${area.city}, ` : "in "}${area.state}`,
+    description: area.description,
+    url: `https://rehablookup.com${area.url}`,
+    numberOfItems: area.facilityCount,
+    itemListOrder: "https://schema.org/ItemListOrderDescending",
+    itemListElement: {
+      "@type": "MedicalBusiness",
+      medicalSpecialty: "Addiction Medicine",
+      areaServed: {
+        "@type": area.city ? "City" : "State",
+        name: area.city || area.state,
+        containedInPlace: {
+          "@type": "Country",
+          name: "United States",
+        },
+      },
+    },
+  };
+}
+
+// Speakable specification for voice search
+export function generateSpeakableSchema(content: {
+  headline: string;
+  summary: string;
+  cssSelectors?: string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: content.cssSelectors || [".speakable-headline", ".speakable-summary"],
+    },
+    headline: content.headline,
+    description: content.summary,
+  };
+}
+
+// Near Me optimization schema
+export function generateNearMeSchema(params: {
+  serviceType: string;
+  location: {
+    city?: string;
+    state: string;
+    stateAbbr: string;
+  };
+  facilityCount: number;
+  avgRating?: number;
+  reviewCount?: number;
+}) {
+  const locationString = params.location.city 
+    ? `${params.location.city}, ${params.location.stateAbbr}`
+    : params.location.state;
+    
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: `${params.serviceType} Near Me - ${locationString}`,
+    serviceType: params.serviceType,
+    description: `Find ${params.serviceType.toLowerCase()} near you in ${locationString}. Compare ${params.facilityCount}+ verified treatment centers.`,
+    provider: {
+      "@type": "Organization",
+      name: "RehabLookup",
+      url: "https://rehablookup.com",
+    },
+    areaServed: {
+      "@type": params.location.city ? "City" : "State",
+      name: params.location.city || params.location.state,
+      containedInPlace: {
+        "@type": "AdministrativeArea",
+        name: params.location.state,
+        containedInPlace: {
+          "@type": "Country",
+          name: "United States",
+        },
+      },
+    },
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Treatment Options",
+      itemListElement: [
+        {
+          "@type": "OfferCatalog",
+          name: "Inpatient Rehab",
+          itemListElement: [{ "@type": "Offer", itemOffered: { "@type": "Service", name: "Residential Treatment" } }],
+        },
+        {
+          "@type": "OfferCatalog",
+          name: "Outpatient Programs",
+          itemListElement: [{ "@type": "Offer", itemOffered: { "@type": "Service", name: "IOP/PHP" } }],
+        },
+        {
+          "@type": "OfferCatalog",
+          name: "Detox Services",
+          itemListElement: [{ "@type": "Offer", itemOffered: { "@type": "Service", name: "Medical Detoxification" } }],
+        },
+      ],
+    },
+    ...(params.avgRating && params.reviewCount && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: params.avgRating,
+        reviewCount: params.reviewCount,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    }),
+  };
+}
+
+// Treatment-specific "near me" page schema
+export function generateTreatmentNearMeSchema(params: {
+  treatmentType: string;
+  treatmentSlug: string;
+  location?: {
+    city?: string;
+    state?: string;
+    stateAbbr?: string;
+  };
+  facilityCount: number;
+  faqs?: { question: string; answer: string }[];
+}) {
+  const locationSuffix = params.location?.city 
+    ? `in ${params.location.city}, ${params.location.stateAbbr}`
+    : params.location?.state 
+      ? `in ${params.location.state}`
+      : "Near You";
+
+  const schemas = [
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalWebPage",
+      name: `${params.treatmentType} ${locationSuffix}`,
+      description: `Find ${params.treatmentType.toLowerCase()} ${locationSuffix.toLowerCase()}. Compare ${params.facilityCount}+ verified treatment centers offering ${params.treatmentType.toLowerCase()}.`,
+      specialty: "Addiction Medicine",
+      about: {
+        "@type": "MedicalTherapy",
+        name: params.treatmentType,
+        medicineSystem: "WesternConventional",
+        relevantSpecialty: {
+          "@type": "MedicalSpecialty",
+          name: "Addiction Medicine",
+        },
+      },
+      mainContentOfPage: {
+        "@type": "WebPageElement",
+        cssSelector: ".treatment-listings",
+      },
+      speakable: {
+        "@type": "SpeakableSpecification",
+        cssSelector: [".page-headline", ".page-summary", ".treatment-intro"],
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://rehablookup.com" },
+        { "@type": "ListItem", position: 2, name: "Treatment Types", item: "https://rehablookup.com/treatment-types" },
+        { "@type": "ListItem", position: 3, name: params.treatmentType, item: `https://rehablookup.com/treatment/${params.treatmentSlug}` },
+        ...(params.location?.state ? [{ 
+          "@type": "ListItem", 
+          position: 4, 
+          name: `${params.treatmentType} in ${params.location.state}`,
+          item: `https://rehablookup.com/treatment/${params.treatmentSlug}/${params.location.state.toLowerCase().replace(/\s+/g, "-")}` 
+        }] : []),
+      ],
+    },
+  ];
+
+  // Add FAQ schema if FAQs provided
+  if (params.faqs && params.faqs.length > 0) {
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: params.faqs.map(faq => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.answer,
+        },
+      })),
+    } as any);
+  }
+
+  return schemas;
+}
