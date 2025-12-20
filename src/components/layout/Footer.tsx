@@ -68,7 +68,7 @@ export function Footer() {
       <div className="container py-10 md:py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-4 lg:col-span-1">
+          <div className="col-span-2 md:col-span-4 lg:col-span-1 flex flex-col gap-5">
             <Link to="/" className="inline-block">
               <img 
                 src="/logo.svg" 
@@ -83,13 +83,14 @@ export function Footer() {
                 loading="lazy"
               />
             </Link>
+            
             {/* Social Icons */}
-            <div className="flex items-center gap-3 mt-4">
+            <div className="flex items-center gap-2">
               <a 
                 href="https://x.com"
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Follow us on X"
               >
                 <XIcon />
@@ -98,7 +99,7 @@ export function Footer() {
                 href="https://facebook.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Follow us on Facebook"
               >
                 <FacebookIcon />
@@ -107,7 +108,7 @@ export function Footer() {
                 href="https://instagram.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Follow us on Instagram"
               >
                 <InstagramIcon />
@@ -116,13 +117,14 @@ export function Footer() {
                 href="https://linkedin.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Follow us on LinkedIn"
               >
                 <LinkedInIcon />
               </a>
             </div>
             
+            {/* Email */}
             <a 
               href="mailto:help@rehablookup.com" 
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
