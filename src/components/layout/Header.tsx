@@ -233,7 +233,7 @@ export function Header({
         )}
       >
         {/* Glass morphism background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-card via-card to-card/98 backdrop-blur-2xl border-l border-border/40 shadow-2xl shadow-foreground/10" />
+        <div className="absolute inset-0 bg-background border-l border-border/40 shadow-2xl shadow-foreground/10" />
         
         {/* Decorative accent line with glow */}
         <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-primary via-primary/30 to-transparent">
