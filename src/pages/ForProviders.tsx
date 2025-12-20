@@ -1019,7 +1019,7 @@ const ForProviders = () => {
                         </div>
                       )}
                       
-                      <Link to={plan.name === "Featured" ? "/contact" : "/provider-signup"}>
+                      <Link to={`/provider-signup?plan=${plan.name.toLowerCase()}`}>
                         <Button 
                           variant={plan.ctaVariant} 
                           size="lg"

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -140,6 +140,10 @@ export default function ProviderSignup() {
   const [emailVerified, setEmailVerified] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Get plan from URL query parameter
+  const planFromUrl = searchParams.get("plan") as "basic" | "professional" | "featured" | null;
 
   // Check if user is already logged in
   useEffect(() => {
@@ -196,6 +200,13 @@ export default function ProviderSignup() {
     // Terms
     agreeToTerms: false,
   });
+
+  // Set selected plan from URL parameter
+  useEffect(() => {
+    if (planFromUrl && ["basic", "professional", "featured"].includes(planFromUrl)) {
+      setFormData(prev => ({ ...prev, selectedPlan: planFromUrl }));
+    }
+  }, [planFromUrl]);
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
