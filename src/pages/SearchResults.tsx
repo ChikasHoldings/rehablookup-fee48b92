@@ -75,16 +75,19 @@ const distanceFilters = [
   { value: "any", label: "Any distance" },
 ];
 
-// Insurance filters
+// Insurance filters with logos
 const insuranceFilters = [
-  { value: "aetna", label: "Aetna" },
-  { value: "bcbs", label: "Blue Cross Blue Shield" },
-  { value: "cigna", label: "Cigna" },
-  { value: "united", label: "United Healthcare" },
-  { value: "kaiser", label: "Kaiser Permanente" },
-  { value: "medicare", label: "Medicare" },
-  { value: "medicaid", label: "Medicaid" },
-  { value: "private-pay", label: "Private Pay" },
+  { value: "aetna", label: "Aetna", logo: "/insurance-logos/aetna.svg" },
+  { value: "bcbs", label: "Blue Cross Blue Shield", logo: "/insurance-logos/bcbs.svg" },
+  { value: "cigna", label: "Cigna", logo: "/insurance-logos/cigna.svg" },
+  { value: "united", label: "United Healthcare", logo: "/insurance-logos/united.svg" },
+  { value: "kaiser", label: "Kaiser Permanente", logo: "/insurance-logos/kaiser.svg" },
+  { value: "humana", label: "Humana", logo: "/insurance-logos/humana.svg" },
+  { value: "anthem", label: "Anthem", logo: "/insurance-logos/anthem.svg" },
+  { value: "medicare", label: "Medicare", logo: "/insurance-logos/medicare.svg" },
+  { value: "medicaid", label: "Medicaid", logo: "/insurance-logos/medicaid.svg" },
+  { value: "tricare", label: "TRICARE", logo: "/insurance-logos/tricare.svg" },
+  { value: "private-pay", label: "Self-Pay / Private Pay" },
 ];
 
 // Amenity filters
@@ -503,7 +506,7 @@ const SearchResults = () => {
                   size="sm" 
                   className={`gap-2 shrink-0 ${selectedInsuranceTypes.length > 0 ? 'border-primary bg-primary/5 text-primary' : ''}`}
                 >
-                  <CreditCard className="h-4 w-4" />
+                  <Shield className="h-4 w-4" />
                   Insurance
                   {selectedInsuranceTypes.length > 0 && (
                     <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-primary text-primary-foreground">
@@ -513,16 +516,36 @@ const SearchResults = () => {
                   <ChevronDown className="h-3.5 w-3.5 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 bg-card border-border shadow-lg">
-                <DropdownMenuLabel>Insurance Accepted</DropdownMenuLabel>
+              <DropdownMenuContent align="start" className="w-64 bg-card border-border shadow-lg max-h-80 overflow-y-auto">
+                <DropdownMenuLabel className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-primary" />
+                  Filter by Insurance
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {insuranceFilters.map((filter) => (
                   <DropdownMenuCheckboxItem
                     key={filter.value}
                     checked={selectedInsuranceTypes.includes(filter.value)}
                     onCheckedChange={() => toggleFilter("insuranceTypes", filter.value, selectedInsuranceTypes)}
+                    className="flex items-center gap-3 py-2"
                   >
-                    {filter.label}
+                    {filter.logo ? (
+                      <div className="flex h-6 w-8 shrink-0 items-center justify-center">
+                        <img 
+                          src={filter.logo} 
+                          alt={filter.label} 
+                          className="h-5 w-auto max-w-full object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-6 w-8 shrink-0 items-center justify-center">
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+                    <span>{filter.label}</span>
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuContent>
