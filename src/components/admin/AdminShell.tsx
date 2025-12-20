@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 
-const MemoizedHeader = memo(AdminHeader);
+// AdminHeader is already memoized in its export
 const MemoizedSidebar = memo(AdminSidebar);
 
 const mobileNavItems = [
@@ -110,7 +110,7 @@ export function AdminShell() {
         onSuccess={completeMfaSetup}
       />
       
-      <MemoizedHeader userEmail={user?.email} userId={user?.id} onLogout={logout} />
+      <AdminHeader userEmail={user?.email} userId={user?.id} onLogout={logout} />
       
       <div className="flex flex-1">
         <MemoizedSidebar isSuperAdmin={isSuperAdmin} hasPermission={hasPermission} />
