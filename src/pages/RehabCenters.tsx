@@ -7,17 +7,9 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { Heart, MapPin, Search, ArrowRight, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone } from "lucide-react";
+import { Heart, MapPin, Search, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone } from "lucide-react";
 import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -262,221 +254,108 @@ const RehabCenters = () => {
       </section>
 
       {/* Results */}
-      <section id="results" className="scroll-mt-4 bg-gradient-to-b from-secondary/30 via-background to-background py-10 md:py-14 lg:py-16">
+      <section id="results" className="scroll-mt-4 bg-background py-6 md:py-8">
         <div className="container px-4 md:px-6">
-          {/* Section Header */}
-          <div className="mb-6 md:mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-8 w-1 rounded-full bg-gradient-to-b from-primary to-primary/50" />
-              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">Treatment Centers</h2>
-            </div>
-          </div>
+          {/* Clean Results Toolbar */}
+          <div className="flex flex-col gap-4 mb-6 md:mb-8">
+            {/* Top row: Count + Controls */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{filteredCenters.length}</span> centers
+              </p>
+              
+              <div className="flex items-center gap-2">
+                {/* Sort Dropdown */}
+                <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
+                  <SelectTrigger className="h-9 w-[140px] md:w-[160px] gap-2 text-sm border-border">
+                    <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+                    <SelectValue placeholder="Sort" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    {sortOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value} className="text-sm">
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-          {/* Mobile Results Header */}
-          <div className="mb-6 md:hidden">
-            {/* Results Count */}
-            <p className="text-base font-medium text-foreground mb-4">
-              <span className="text-primary font-bold">{filteredCenters.length}</span> centers found
-            </p>
-
-            {/* Mobile Active Filters - Horizontal scroll */}
-            {hasFilters && (
-              <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide">
-                <div className="flex items-center gap-2 pb-2">
-                  {location && (
-                    <button
-                      onClick={() => clearFilter("location")}
-                      className="group inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all active:bg-primary/20 active:scale-95 shrink-0 border border-primary/20"
-                    >
-                      <MapPin className="h-4 w-4" />
-                      {location}
-                      <X className="h-4 w-4 opacity-60 group-hover:opacity-100" />
-                    </button>
-                  )}
-                  {treatment && (
-                    <button
-                      onClick={() => clearFilter("treatment")}
-                      className="group inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all active:bg-primary/20 active:scale-95 shrink-0 border border-primary/20"
-                    >
-                      {treatment}
-                      <X className="h-4 w-4 opacity-60 group-hover:opacity-100" />
-                    </button>
-                  )}
-                  {insurance && (
-                    <button
-                      onClick={() => clearFilter("insurance")}
-                      className="group inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all active:bg-primary/20 active:scale-95 shrink-0 border border-primary/20"
-                    >
-                      {insurance}
-                      <X className="h-4 w-4 opacity-60 group-hover:opacity-100" />
-                    </button>
-                  )}
-                  {activeTypeFilter && (
-                    <button
-                      onClick={() => clearFilter("type")}
-                      className="group inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2.5 text-sm font-medium text-primary transition-all active:bg-primary/20 active:scale-95 shrink-0 border border-primary/20"
-                    >
-                      {activeTypeFilter}
-                      <X className="h-4 w-4 opacity-60 group-hover:opacity-100" />
-                    </button>
-                  )}
+                {/* View Toggle */}
+                <div className="hidden md:flex items-center gap-0.5 rounded-md border border-border p-0.5">
                   <button
-                    onClick={clearAllFilters}
-                    className="text-sm font-medium text-muted-foreground hover:text-primary shrink-0 px-2"
+                    onClick={() => setViewMode("grid")}
+                    className={`rounded p-1.5 transition-colors ${
+                      viewMode === "grid" 
+                        ? "bg-secondary text-foreground" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    aria-label="Grid view"
                   >
-                    Clear all
+                    <Grid3X3 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`rounded p-1.5 transition-colors ${
+                      viewMode === "list" 
+                        ? "bg-secondary text-foreground" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    aria-label="List view"
+                  >
+                    <List className="h-4 w-4" />
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Active Filters Row */}
+            {hasFilters && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {location && (
+                  <button
+                    onClick={() => clearFilter("location")}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    <MapPin className="h-3 w-3 text-muted-foreground" />
+                    {location}
+                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </button>
+                )}
+                {treatment && (
+                  <button
+                    onClick={() => clearFilter("treatment")}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    {treatment}
+                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </button>
+                )}
+                {insurance && (
+                  <button
+                    onClick={() => clearFilter("insurance")}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    {insurance}
+                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </button>
+                )}
+                {activeTypeFilter && (
+                  <button
+                    onClick={() => clearFilter("type")}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    {activeTypeFilter}
+                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </button>
+                )}
+                <button
+                  onClick={clearAllFilters}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Clear all
+                </button>
               </div>
             )}
-
-            {/* Mobile Sort & View Controls */}
-            <div className="flex items-center gap-3">
-              <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
-                <SelectTrigger className="h-12 flex-1 gap-2 bg-card rounded-xl text-base border-border shadow-sm">
-                  <ArrowUpDown className="h-5 w-5 text-muted-foreground" />
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {sortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value} className="text-base py-3">
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Mobile View Toggle */}
-              <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1.5 shadow-sm">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`rounded-lg p-3 transition-all ${
-                    viewMode === "grid" 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground active:text-foreground active:bg-secondary"
-                  }`}
-                  aria-label="Grid view"
-                >
-                  <Grid3X3 className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`rounded-lg p-3 transition-all ${
-                    viewMode === "list" 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground active:text-foreground active:bg-secondary"
-                  }`}
-                  aria-label="List view"
-                >
-                  <List className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Results Header */}
-          <div className="mb-8 hidden md:flex md:items-center md:justify-between md:gap-4 p-4 rounded-xl bg-card border border-border shadow-sm">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 pr-4 border-r border-border">
-                <Search className="h-4 w-4 text-primary" />
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-bold text-foreground">{filteredCenters.length}</span> centers found
-                </p>
-              </div>
-              
-              {/* Active Filters */}
-              {hasFilters && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-muted-foreground">•</span>
-                  {location && (
-                    <button
-                      onClick={() => clearFilter("location")}
-                      className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20 hover:shadow-sm border border-primary/20"
-                    >
-                      <MapPin className="h-3 w-3" />
-                      {location}
-                      <X className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  )}
-                  {treatment && (
-                    <button
-                      onClick={() => clearFilter("treatment")}
-                      className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20 hover:shadow-sm border border-primary/20"
-                    >
-                      {treatment}
-                      <X className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  )}
-                  {insurance && (
-                    <button
-                      onClick={() => clearFilter("insurance")}
-                      className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20 hover:shadow-sm border border-primary/20"
-                    >
-                      {insurance}
-                      <X className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  )}
-                  {activeTypeFilter && (
-                    <button
-                      onClick={() => clearFilter("type")}
-                      className="group inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-all hover:bg-primary/20 hover:shadow-sm border border-primary/20"
-                    >
-                      {activeTypeFilter}
-                      <X className="h-3 w-3 opacity-60 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  )}
-                  <button
-                    onClick={clearAllFilters}
-                    className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline transition-colors"
-                  >
-                    Clear all
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Sort and View Controls */}
-            <div className="flex items-center gap-3 pl-4 border-l border-border">
-              <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
-                <SelectTrigger className="h-9 w-[170px] gap-2 bg-secondary/50 border-0 hover:bg-secondary transition-colors">
-                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {sortOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* View Toggle */}
-              <div className="flex items-center gap-0.5 rounded-lg bg-secondary/50 p-1">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`rounded-md p-2 transition-all ${
-                    viewMode === "grid" 
-                      ? "bg-card text-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  aria-label="Grid view"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`rounded-md p-2 transition-all ${
-                    viewMode === "list" 
-                      ? "bg-card text-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  aria-label="List view"
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
           </div>
 
           {isLoading ? (
@@ -485,120 +364,91 @@ const RehabCenters = () => {
             <>
               <div className={
                 viewMode === "grid" 
-                  ? "grid gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3" 
-                  : "flex flex-col gap-5 md:gap-4"
+                  ? "grid gap-4 md:gap-5 md:grid-cols-2 lg:grid-cols-3" 
+                  : "flex flex-col gap-3"
               }>
-                {paginatedCenters.map((center, index) => (
-                  <div 
+                {paginatedCenters.map((center) => (
+                  <TreatmentCenterCard
                     key={center.id}
-                    className="animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <TreatmentCenterCard
-                      center={center}
-                      featured={center.featured}
-                    />
-                  </div>
+                    center={center}
+                    featured={center.featured}
+                  />
                 ))}
               </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="mt-10 md:mt-14">
-                  {/* Mobile Pagination */}
-                  <div className="flex items-center justify-center gap-4 md:hidden">
-                    <button
-                      onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="flex h-12 items-center gap-2 rounded-xl bg-card px-5 text-base font-medium shadow-sm border border-border disabled:opacity-50 disabled:pointer-events-none hover:shadow-md transition-shadow active:scale-95"
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                      Prev
-                    </button>
-                    <span className="text-base font-semibold text-foreground px-3 py-2 bg-secondary rounded-lg">
-                      {currentPage} / {totalPages}
-                    </span>
-                    <button
-                      onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="flex h-12 items-center gap-2 rounded-xl bg-card px-5 text-base font-medium shadow-sm border border-border disabled:opacity-50 disabled:pointer-events-none hover:shadow-md transition-shadow active:scale-95"
-                    >
-                      Next
-                      <ChevronRight className="h-5 w-5" />
-                    </button>
+                <div className="mt-8 md:mt-10 flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium disabled:opacity-50 disabled:pointer-events-none hover:bg-secondary transition-colors"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">Previous</span>
+                  </button>
+                  
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, i) => {
+                      const page = i + 1;
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`h-9 min-w-9 rounded-md text-sm font-medium transition-colors ${
+                              currentPage === page
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-secondary"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      }
+                      if (page === 2 || page === totalPages - 1) {
+                        return (
+                          <span key={page} className="px-1 text-muted-foreground">...</span>
+                        );
+                      }
+                      return null;
+                    })}
                   </div>
-
-                  {/* Desktop Pagination */}
-                  <div className="hidden md:block">
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious 
-                            onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-secondary"}
-                          />
-                        </PaginationItem>
-                        
-                        {[...Array(totalPages)].map((_, i) => {
-                          const page = i + 1;
-                          if (
-                            page === 1 ||
-                            page === totalPages ||
-                            (page >= currentPage - 1 && page <= currentPage + 1)
-                          ) {
-                            return (
-                              <PaginationItem key={page}>
-                                <PaginationLink
-                                  onClick={() => handlePageChange(page)}
-                                  isActive={currentPage === page}
-                                  className="cursor-pointer"
-                                >
-                                  {page}
-                                </PaginationLink>
-                              </PaginationItem>
-                            );
-                          }
-                          if (page === 2 || page === totalPages - 1) {
-                            return (
-                              <PaginationItem key={page}>
-                                <span className="px-2 text-muted-foreground">...</span>
-                              </PaginationItem>
-                            );
-                          }
-                          return null;
-                        })}
-                        
-                        <PaginationItem>
-                          <PaginationNext 
-                            onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-secondary"}
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
+                  
+                  <button
+                    onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium disabled:opacity-50 disabled:pointer-events-none hover:bg-secondary transition-colors"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
               )}
             </>
           ) : (
             <div className="mx-auto max-w-md py-16 text-center">
-              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10">
-                <Search className="h-12 w-12 text-primary" />
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-secondary">
+                <Search className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h2 className="mb-3 font-display text-2xl font-semibold text-foreground">
+              <h2 className="mb-3 font-display text-xl font-semibold text-foreground">
                 No Results Found
               </h2>
-              <p className="mb-8 text-muted-foreground leading-relaxed">
+              <p className="mb-6 text-muted-foreground text-sm">
                 We couldn't find treatment centers matching your criteria. 
-                Try adjusting your search or request personalized help from our team.
+                Try adjusting your search or request personalized help.
               </p>
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-                <Button variant="outline" onClick={clearAllFilters} className="gap-2 h-11">
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+                <Button variant="outline" size="sm" onClick={clearAllFilters} className="gap-2">
                   <X className="h-4 w-4" />
                   Clear Filters
                 </Button>
                 <Link to="/request-help?source=rehab_empty">
-                  <Button className="w-full gap-2 sm:w-auto h-11">
+                  <Button size="sm" className="w-full gap-2 sm:w-auto">
                     <Heart className="h-4 w-4" />
                     Request Help
                   </Button>
@@ -610,12 +460,12 @@ const RehabCenters = () => {
       </section>
 
       {/* CTA Banner - Light Professional Style */}
-      <section className="border-t border-border bg-gradient-to-b from-secondary/30 to-background py-12 md:py-16">
+      <section className="border-t border-border bg-secondary/30 py-10 md:py-12">
         <div className="container">
-          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:gap-8 md:flex-row rounded-xl border border-border bg-card p-6 md:p-8 shadow-sm">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-5 md:gap-6 md:flex-row rounded-xl border border-border bg-card p-5 md:p-6 shadow-sm">
             {/* Image */}
             <div className="relative shrink-0">
-              <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 p-1 ring-2 ring-primary/10">
+              <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 p-0.5 ring-1 ring-primary/10">
                 <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-b from-background to-secondary/50">
                   <img 
                     src={supportSpecialistImg} 
@@ -625,38 +475,33 @@ const RehabCenters = () => {
                 </div>
               </div>
               {/* Online indicator */}
-              <div className="absolute bottom-1 right-1 flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-md border border-border">
-                <span className="relative flex h-2 w-2">
+              <div className="absolute bottom-0 right-0 flex items-center gap-1 rounded-full bg-card px-2 py-0.5 shadow-sm border border-border">
+                <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                 </span>
-                <span className="text-xs font-medium text-foreground">Online</span>
+                <span className="text-[10px] font-medium text-foreground">Online</span>
               </div>
             </div>
             
             <div className="flex-1 text-center md:text-left">
-              <h2 className="mb-2 font-display text-lg font-bold text-foreground md:text-xl">
+              <h2 className="mb-1 font-display text-base font-bold text-foreground md:text-lg">
                 Need Help Finding the Right Center?
               </h2>
-              <p className="text-muted-foreground text-sm md:text-base max-w-md">
-                Our specialists provide free, confidential guidance on treatment options and insurance coverage.
+              <p className="text-muted-foreground text-sm max-w-md">
+                Our specialists provide free, confidential guidance on treatment options.
               </p>
             </div>
             
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
               <Link to="/request-help?source=rehab_cta">
-                <Button 
-                  className="w-full gap-2 sm:w-auto shadow-sm hover:shadow-md transition-all"
-                >
+                <Button size="sm" className="w-full gap-2 sm:w-auto">
                   <Heart className="h-4 w-4" />
                   Get Help Now
                 </Button>
               </Link>
               <Link to="/contact">
-                <Button 
-                  variant="outline" 
-                  className="w-full gap-2 sm:w-auto"
-                >
+                <Button size="sm" variant="outline" className="w-full gap-2 sm:w-auto">
                   <Phone className="h-4 w-4" />
                   Contact Us
                 </Button>
