@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Shield, Lock, Heart, CheckCircle2, Loader2, Phone } from "lucide-react";
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import logoImage from "@/assets/logo.png";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
-import { formatEmailInput } from "@/lib/emailUtils";
+import { formatEmailInput, isValidEmail } from "@/lib/emailUtils";
 
 // Configure your video here - replace with your actual video ID
 const VIDEO_CONFIG = {
@@ -289,7 +289,13 @@ export default function AdLanding() {
     }
   };
   
-  // Phone validation using shared utility
+  // Validation state for checkmarks
+  const validation = useMemo(() => ({
+    firstName: formData.firstName.trim().length >= 2,
+    lastName: formData.lastName.trim().length >= 2,
+    phone: isValidPhoneNumber(formData.phone),
+    email: isValidEmail(formData.email),
+  }), [formData.firstName, formData.lastName, formData.phone, formData.email]);
 
   const handleFieldChange = (field: keyof FormData, value: string | boolean) => {
     trackFormStart();
@@ -415,26 +421,40 @@ export default function AdLanding() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-foreground">First Name *</Label>
-                  <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => handleFieldChange("firstName", e.target.value)}
-                    placeholder="First name"
-                    className={cn("h-11", errors.firstName && "border-destructive focus-visible:ring-destructive")}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="firstName"
+                      value={formData.firstName}
+                      onChange={(e) => handleFieldChange("firstName", e.target.value)}
+                      placeholder="First name"
+                      className={cn("h-11", errors.firstName && "border-destructive focus-visible:ring-destructive", validation.firstName && !errors.firstName && "pr-10")}
+                    />
+                    {validation.firstName && !errors.firstName && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      </div>
+                    )}
+                  </div>
                   {errors.firstName && (
                     <p className="text-sm text-destructive">{errors.firstName}</p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-foreground">Last Name *</Label>
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => handleFieldChange("lastName", e.target.value)}
-                    placeholder="Last name"
-                    className={cn("h-11", errors.lastName && "border-destructive focus-visible:ring-destructive")}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="lastName"
+                      value={formData.lastName}
+                      onChange={(e) => handleFieldChange("lastName", e.target.value)}
+                      placeholder="Last name"
+                      className={cn("h-11", errors.lastName && "border-destructive focus-visible:ring-destructive", validation.lastName && !errors.lastName && "pr-10")}
+                    />
+                    {validation.lastName && !errors.lastName && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      </div>
+                    )}
+                  </div>
                   {errors.lastName && (
                     <p className="text-sm text-destructive">{errors.lastName}</p>
                   )}
@@ -519,15 +539,22 @@ export default function AdLanding() {
               {/* Phone */}
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-foreground">Phone Number *</Label>
-                <PhoneInput
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(value) => {
-                    trackFormStart();
-                    setFormData(prev => ({ ...prev, phone: value }));
-                  }}
-                  className={cn("h-11", errors.phone && "border-destructive focus-visible:ring-destructive")}
-                />
+                <div className="relative">
+                  <PhoneInput
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(value) => {
+                      trackFormStart();
+                      setFormData(prev => ({ ...prev, phone: value }));
+                    }}
+                    className={cn("h-11", errors.phone && "border-destructive focus-visible:ring-destructive", validation.phone && !errors.phone && "pr-10")}
+                  />
+                  {validation.phone && !errors.phone && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    </div>
+                  )}
+                </div>
                 {errors.phone && (
                   <p className="text-sm text-destructive">{errors.phone}</p>
                 )}

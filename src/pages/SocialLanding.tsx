@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { CheckCircle2, Loader2, ChevronDown, Check } from "lucide-react";
@@ -15,7 +15,7 @@ import logoImage from "@/assets/logo.png";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
 import { EmailInput } from "@/components/ui/email-input";
-import { formatEmailInput, normalizeEmail } from "@/lib/emailUtils";
+import { formatEmailInput, normalizeEmail, isValidEmail } from "@/lib/emailUtils";
 
 // Configure your vertical video here (9:16 aspect ratio recommended)
 const VIDEO_CONFIG = {
@@ -331,7 +331,13 @@ export default function SocialLanding() {
     }
   };
   
-  // Phone validation using shared utility
+  // Validation state for checkmarks
+  const validation = useMemo(() => ({
+    firstName: formData.firstName.trim().length >= 2,
+    lastName: formData.lastName.trim().length >= 2,
+    phone: isValidPhoneNumber(formData.phone),
+    email: isValidEmail(formData.email),
+  }), [formData.firstName, formData.lastName, formData.phone, formData.email]);
 
   const handleFieldChange = (field: keyof FormData, value: string | boolean) => {
     trackFormStart();
@@ -441,14 +447,21 @@ export default function SocialLanding() {
               {/* First Name */}
               <div className="space-y-1.5">
                 <Label htmlFor="firstName" className="text-sm text-foreground">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => handleFieldChange("firstName", e.target.value)}
-                  placeholder="First name"
-                  className={cn("h-12 text-base", errors.firstName && "border-destructive")}
-                  autoComplete="given-name"
-                />
+                <div className="relative">
+                  <Input
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => handleFieldChange("firstName", e.target.value)}
+                    placeholder="First name"
+                    className={cn("h-12 text-base", errors.firstName && "border-destructive", validation.firstName && !errors.firstName && "pr-10")}
+                    autoComplete="given-name"
+                  />
+                  {validation.firstName && !errors.firstName && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    </div>
+                  )}
+                </div>
                 {errors.firstName && (
                   <p className="text-xs text-destructive">{errors.firstName}</p>
                 )}
@@ -457,14 +470,21 @@ export default function SocialLanding() {
               {/* Last Name */}
               <div className="space-y-1.5">
                 <Label htmlFor="lastName" className="text-sm text-foreground">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => handleFieldChange("lastName", e.target.value)}
-                  placeholder="Last name"
-                  className={cn("h-12 text-base", errors.lastName && "border-destructive")}
-                  autoComplete="family-name"
-                />
+                <div className="relative">
+                  <Input
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => handleFieldChange("lastName", e.target.value)}
+                    placeholder="Last name"
+                    className={cn("h-12 text-base", errors.lastName && "border-destructive", validation.lastName && !errors.lastName && "pr-10")}
+                    autoComplete="family-name"
+                  />
+                  {validation.lastName && !errors.lastName && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    </div>
+                  )}
+                </div>
                 {errors.lastName && (
                   <p className="text-xs text-destructive">{errors.lastName}</p>
                 )}
@@ -544,12 +564,19 @@ export default function SocialLanding() {
               {/* Phone */}
               <div className="space-y-1.5">
                 <Label htmlFor="phone" className="text-sm text-foreground">Phone Number</Label>
-                <PhoneInput
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(value) => handleFieldChange("phone", value)}
-                  className={cn("h-12 text-base", errors.phone && "border-destructive")}
-                />
+                <div className="relative">
+                  <PhoneInput
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(value) => handleFieldChange("phone", value)}
+                    className={cn("h-12 text-base", errors.phone && "border-destructive", validation.phone && !errors.phone && "pr-10")}
+                  />
+                  {validation.phone && !errors.phone && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    </div>
+                  )}
+                </div>
                 {errors.phone && (
                   <p className="text-xs text-destructive">{errors.phone}</p>
                 )}
