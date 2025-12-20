@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Search, MapPin, Stethoscope, Shield, Building2 } from "lucide-react";
-import { treatmentTypes, insuranceProviders } from "@/data/treatmentCenters";
+import { treatmentTypes as treatmentTypeOptions, insuranceProviders as insuranceProviderOptions } from "@/data/treatmentCenters";
 import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
+import { MultiSelectDropdown } from "./MultiSelectDropdown";
 
 interface SearchFormProps {
   variant?: "hero" | "compact" | "compact-hero" | "directory";
@@ -22,8 +23,12 @@ export function SearchForm({
 }: SearchFormProps) {
   const navigate = useNavigate();
   const [location, setLocation] = useState(initialLocation);
-  const [treatmentType, setTreatmentType] = useState(initialTreatmentType);
-  const [insurance, setInsurance] = useState(initialInsurance);
+  const [selectedTreatmentTypes, setSelectedTreatmentTypes] = useState<string[]>(
+    initialTreatmentType ? [initialTreatmentType] : []
+  );
+  const [selectedInsurance, setSelectedInsurance] = useState<string[]>(
+    initialInsurance ? [initialInsurance] : []
+  );
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -75,8 +80,8 @@ export function SearchForm({
     setShowSuggestions(false);
     const params = new URLSearchParams();
     if (location) params.set("location", location);
-    if (treatmentType) params.set("treatment", treatmentType);
-    if (insurance) params.set("insurance", insurance);
+    if (selectedTreatmentTypes.length > 0) params.set("treatment", selectedTreatmentTypes.join(","));
+    if (selectedInsurance.length > 0) params.set("insurance", selectedInsurance.join(","));
     navigate(`/rehab-centers?${params.toString()}`);
     
     // Delay scroll to allow navigation/render
@@ -150,53 +155,31 @@ export function SearchForm({
             )}
           </div>
           
-          {/* Type of Care */}
+          {/* Type of Care - Multi-select */}
           <div className="group flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
             <div className="p-4 md:p-5">
-              <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
-                <Stethoscope className="h-3.5 w-3.5" />
-                Type of Care
-              </label>
-              <div className="relative">
-                <select
-                  value={treatmentType}
-                  onChange={(e) => setTreatmentType(e.target.value)}
-                  className="w-full appearance-none bg-card text-base text-foreground focus:outline-none cursor-pointer pr-6 [&>option]:bg-card [&>option]:text-foreground [&>option]:py-2"
-                >
-                  <option value="">All treatment types</option>
-                  {treatmentTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-                <svg className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+              <MultiSelectDropdown
+                options={treatmentTypeOptions}
+                selected={selectedTreatmentTypes}
+                onChange={setSelectedTreatmentTypes}
+                placeholder="All treatment types"
+                icon={<Stethoscope className="h-3.5 w-3.5" />}
+                label="Type of Care"
+              />
             </div>
           </div>
 
-          {/* Insurance */}
+          {/* Insurance - Multi-select */}
           <div className="group flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
             <div className="p-4 md:p-5">
-              <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
-                <Shield className="h-3.5 w-3.5" />
-                Insurance
-              </label>
-              <div className="relative">
-                <select
-                  value={insurance}
-                  onChange={(e) => setInsurance(e.target.value)}
-                  className="w-full appearance-none bg-card text-base text-foreground focus:outline-none cursor-pointer pr-6 [&>option]:bg-card [&>option]:text-foreground [&>option]:py-2"
-                >
-                  <option value="">All insurance</option>
-                  {insuranceProviders.map((provider) => (
-                    <option key={provider} value={provider}>{provider}</option>
-                  ))}
-                </select>
-                <svg className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+              <MultiSelectDropdown
+                options={insuranceProviderOptions}
+                selected={selectedInsurance}
+                onChange={setSelectedInsurance}
+                placeholder="All insurance"
+                icon={<Shield className="h-3.5 w-3.5" />}
+                label="Insurance"
+              />
             </div>
           </div>
 
@@ -233,12 +216,12 @@ export function SearchForm({
           <div className="relative flex-1 sm:max-w-[200px]">
             <Stethoscope className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <select
-              value={treatmentType}
-              onChange={(e) => setTreatmentType(e.target.value)}
+              value={selectedTreatmentTypes[0] || ""}
+              onChange={(e) => setSelectedTreatmentTypes(e.target.value ? [e.target.value] : [])}
               className="h-12 w-full appearance-none rounded-xl border border-input bg-background pl-11 pr-8 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Treatment Type</option>
-              {treatmentTypes.map((type) => (
+              {treatmentTypeOptions.map((type) => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
@@ -248,12 +231,12 @@ export function SearchForm({
           <div className="relative hidden flex-1 sm:block sm:max-w-[200px]">
             <Shield className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <select
-              value={insurance}
-              onChange={(e) => setInsurance(e.target.value)}
+              value={selectedInsurance[0] || ""}
+              onChange={(e) => setSelectedInsurance(e.target.value ? [e.target.value] : [])}
               className="h-12 w-full appearance-none rounded-xl border border-input bg-background pl-11 pr-8 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Insurance</option>
-              {insuranceProviders.map((provider) => (
+              {insuranceProviderOptions.map((provider) => (
                 <option key={provider} value={provider}>{provider}</option>
               ))}
             </select>
@@ -300,12 +283,12 @@ export function SearchForm({
             <div className="relative">
               <Stethoscope className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground md:left-3 md:h-4 md:w-4" />
               <select
-                value={treatmentType}
-                onChange={(e) => setTreatmentType(e.target.value)}
+                value={selectedTreatmentTypes[0] || ""}
+                onChange={(e) => setSelectedTreatmentTypes(e.target.value ? [e.target.value] : [])}
                 className="h-12 w-full appearance-none rounded-xl border border-input bg-card pl-12 pr-4 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:h-10 md:rounded-lg md:pl-9 md:pr-8 md:text-sm"
               >
                 <option value="">All Types</option>
-                {treatmentTypes.map((type) => (
+                {treatmentTypeOptions.map((type) => (
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
@@ -318,12 +301,12 @@ export function SearchForm({
             <div className="relative">
               <Shield className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground md:left-3 md:h-4 md:w-4" />
               <select
-                value={insurance}
-                onChange={(e) => setInsurance(e.target.value)}
+                value={selectedInsurance[0] || ""}
+                onChange={(e) => setSelectedInsurance(e.target.value ? [e.target.value] : [])}
                 className="h-12 w-full appearance-none rounded-xl border border-input bg-card pl-12 pr-4 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:h-10 md:rounded-lg md:pl-9 md:pr-8 md:text-sm"
               >
                 <option value="">Any</option>
-                {insuranceProviders.map((provider) => (
+                {insuranceProviderOptions.map((provider) => (
                   <option key={provider} value={provider}>{provider}</option>
                 ))}
               </select>
@@ -366,12 +349,12 @@ export function SearchForm({
               Treatment Type
             </label>
             <select
-              value={treatmentType}
-              onChange={(e) => setTreatmentType(e.target.value)}
+              value={selectedTreatmentTypes[0] || ""}
+              onChange={(e) => setSelectedTreatmentTypes(e.target.value ? [e.target.value] : [])}
               className="w-full appearance-none bg-transparent text-base font-medium text-foreground focus:outline-none"
             >
               <option value="">All Treatment Types</option>
-              {treatmentTypes.map((type) => (
+              {treatmentTypeOptions.map((type) => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
@@ -384,12 +367,12 @@ export function SearchForm({
               Insurance
             </label>
             <select
-              value={insurance}
-              onChange={(e) => setInsurance(e.target.value)}
+              value={selectedInsurance[0] || ""}
+              onChange={(e) => setSelectedInsurance(e.target.value ? [e.target.value] : [])}
               className="w-full appearance-none bg-transparent text-base font-medium text-foreground focus:outline-none"
             >
               <option value="">Any Insurance</option>
-              {insuranceProviders.map((provider) => (
+              {insuranceProviderOptions.map((provider) => (
                 <option key={provider} value={provider}>{provider}</option>
               ))}
             </select>
