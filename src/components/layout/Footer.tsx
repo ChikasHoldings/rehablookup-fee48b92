@@ -71,7 +71,7 @@ export function Footer() {
           {/* Brand Text */}
           <Link to="/" className="mb-5">
             <img 
-              src="/logo.png" 
+              src="/logo.svg" 
               alt="RehabLookup" 
               className="h-7 w-auto"
               loading="lazy"
@@ -267,7 +267,7 @@ export function Footer() {
             <div className="col-span-2 md:col-span-4 lg:col-span-1 flex flex-col gap-5">
               <Link to="/" className="inline-block">
                 <img 
-                  src="/logo.png" 
+                  src="/logo.svg" 
                   alt="RehabLookup" 
                   className="h-10 w-auto"
                   loading="lazy"
