@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import {
@@ -19,6 +19,7 @@ import {
   Phone,
   Send,
   CheckCircle,
+  CheckCircle2,
   MapPin,
   Loader2,
   ArrowRight,
@@ -30,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
 import { EmailInput } from "@/components/ui/email-input";
+import { isValidEmail } from "@/lib/emailUtils";
 
 // Validation schema
 const requestSchema = z.object({
@@ -128,6 +130,13 @@ export function RequestInfoModal({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Real-time validation
+  const validation = useMemo(() => ({
+    firstName: formData.firstName.trim().length >= 1,
+    lastName: formData.lastName.trim().length >= 1,
+    email: isValidEmail(formData.email),
+    phone: isValidPhoneNumber(formData.phone),
+  }), [formData]);
   // Track modal open
   useEffect(() => {
     if (open) {
@@ -336,30 +345,46 @@ export function RequestInfoModal({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="firstName">First Name *</Label>
-                  <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, firstName: e.target.value })
-                    }
-                    placeholder="John"
-                    className={cn(errors.firstName && "border-destructive")}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="firstName"
+                      value={formData.firstName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, firstName: e.target.value })
+                      }
+                      placeholder="John"
+                      className={cn(
+                        errors.firstName && "border-destructive",
+                        validation.firstName && formData.firstName && "pr-10"
+                      )}
+                    />
+                    {validation.firstName && formData.firstName && !errors.firstName && (
+                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                    )}
+                  </div>
                   {errors.firstName && (
                     <p className="text-xs text-destructive mt-1">{errors.firstName}</p>
                   )}
                 </div>
                 <div>
                   <Label htmlFor="lastName">Last Name *</Label>
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, lastName: e.target.value })
-                    }
-                    placeholder="Doe"
-                    className={cn(errors.lastName && "border-destructive")}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="lastName"
+                      value={formData.lastName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, lastName: e.target.value })
+                      }
+                      placeholder="Doe"
+                      className={cn(
+                        errors.lastName && "border-destructive",
+                        validation.lastName && formData.lastName && "pr-10"
+                      )}
+                    />
+                    {validation.lastName && formData.lastName && !errors.lastName && (
+                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                    )}
+                  </div>
                   {errors.lastName && (
                     <p className="text-xs text-destructive mt-1">{errors.lastName}</p>
                   )}
@@ -368,15 +393,23 @@ export function RequestInfoModal({
 
               <div>
                 <Label htmlFor="email">Email *</Label>
-                <EmailInput
-                  id="email"
-                  value={formData.email}
-                  onChange={(value) =>
-                    setFormData({ ...formData, email: value })
-                  }
-                  placeholder="john@example.com"
-                  className={cn(errors.email && "border-destructive")}
-                />
+                <div className="relative">
+                  <EmailInput
+                    id="email"
+                    value={formData.email}
+                    onChange={(value) =>
+                      setFormData({ ...formData, email: value })
+                    }
+                    placeholder="john@example.com"
+                    className={cn(
+                      errors.email && "border-destructive",
+                      validation.email && formData.email && "pr-10"
+                    )}
+                  />
+                  {validation.email && formData.email && !errors.email && (
+                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                  )}
+                </div>
                 {errors.email && (
                   <p className="text-xs text-destructive mt-1">{errors.email}</p>
                 )}
@@ -384,14 +417,22 @@ export function RequestInfoModal({
 
               <div>
                 <Label htmlFor="phone">Phone Number *</Label>
-                <PhoneInput
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(value) =>
-                    setFormData({ ...formData, phone: value })
-                  }
-                  className={cn(errors.phone && "border-destructive")}
-                />
+                <div className="relative">
+                  <PhoneInput
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(value) =>
+                      setFormData({ ...formData, phone: value })
+                    }
+                    className={cn(
+                      errors.phone && "border-destructive",
+                      validation.phone && "pr-10"
+                    )}
+                  />
+                  {validation.phone && !errors.phone && (
+                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                  )}
+                </div>
                 {errors.phone && (
                   <p className="text-xs text-destructive mt-1">{errors.phone}</p>
                 )}

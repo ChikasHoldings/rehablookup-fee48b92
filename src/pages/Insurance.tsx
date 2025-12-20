@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { 
   CheckCircle, 
+  CheckCircle2,
   Shield, 
   Clock, 
   Phone, 
@@ -28,6 +29,8 @@ import { z } from "zod";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
 import { EmailInput } from "@/components/ui/email-input";
+import { isValidEmail } from "@/lib/emailUtils";
+import { cn } from "@/lib/utils";
 
 const insuranceLeadSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
@@ -91,6 +94,13 @@ export default function Insurance() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Real-time validation states
+  const validation = useMemo(() => ({
+    name: formData.name.trim().length >= 2,
+    phone: isValidPhoneNumber(formData.phone),
+    email: formData.email === "" || isValidEmail(formData.email),
+    insuranceProvider: formData.insuranceProvider.length > 0,
+  }), [formData]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -200,51 +210,74 @@ Member ID: ${formData.memberId || 'Not provided'}`;
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name *</Label>
-                      <Input
-                        id="name"
-                        placeholder="Your name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
+                      <div className="relative">
+                        <Input
+                          id="name"
+                          placeholder="Your name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className={cn(validation.name && formData.name && "pr-10")}
+                          required
+                        />
+                        {validation.name && formData.name && (
+                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number *</Label>
-                      <PhoneInput
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(value) => setFormData({ ...formData, phone: value })}
-                      />
+                      <div className="relative">
+                        <PhoneInput
+                          id="phone"
+                          value={formData.phone}
+                          onChange={(value) => setFormData({ ...formData, phone: value })}
+                          className={cn(validation.phone && "pr-10")}
+                        />
+                        {validation.phone && (
+                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <EmailInput
-                        id="email"
-                        placeholder="your@email.com"
-                        value={formData.email}
-                        onChange={(value) => setFormData({ ...formData, email: value })}
-                      />
+                      <div className="relative">
+                        <EmailInput
+                          id="email"
+                          placeholder="your@email.com"
+                          value={formData.email}
+                          onChange={(value) => setFormData({ ...formData, email: value })}
+                          className={cn(validation.email && formData.email && "pr-10")}
+                        />
+                        {validation.email && formData.email && (
+                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="insurance">Insurance Provider *</Label>
-                      <Select
-                        value={formData.insuranceProvider}
-                        onValueChange={(value) => setFormData({ ...formData, insuranceProvider: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your insurance" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {insuranceProviders.map((provider) => (
-                            <SelectItem key={provider} value={provider}>
-                              {provider}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="relative">
+                        <Select
+                          value={formData.insuranceProvider}
+                          onValueChange={(value) => setFormData({ ...formData, insuranceProvider: value })}
+                        >
+                          <SelectTrigger className={cn(validation.insuranceProvider && "pr-10")}>
+                            <SelectValue placeholder="Select your insurance" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {insuranceProviders.map((provider) => (
+                              <SelectItem key={provider} value={provider}>
+                                {provider}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {validation.insuranceProvider && (
+                          <CheckCircle2 className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500 pointer-events-none" />
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
