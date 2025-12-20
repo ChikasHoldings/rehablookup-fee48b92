@@ -208,44 +208,52 @@ export function Header({
       {/* Luxury Mobile Menu Overlay */}
       <div 
         className={cn(
-          "fixed inset-0 z-[100] md:hidden transition-all duration-300",
+          "fixed inset-0 z-[100] md:hidden transition-all duration-500 ease-out",
           mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setMobileMenuOpen(false)}
       >
-        {/* Gradient backdrop */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/98 to-background backdrop-blur-xl" />
+        {/* Gradient backdrop with blur */}
+        <div className={cn(
+          "absolute inset-0 bg-gradient-to-br from-foreground/20 via-foreground/30 to-foreground/40 backdrop-blur-md transition-all duration-500",
+          mobileMenuOpen ? "opacity-100" : "opacity-0"
+        )} />
       </div>
 
       {/* Luxury Slide Menu Panel */}
       <div 
         className={cn(
-          "fixed top-0 right-0 z-[101] h-full w-[320px] max-w-[85vw] md:hidden transition-all duration-300 ease-out",
+          "fixed top-0 right-0 z-[101] h-full w-[320px] max-w-[85vw] md:hidden transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         {/* Glass morphism background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-card via-card to-card/95 backdrop-blur-2xl border-l border-border/50 shadow-2xl shadow-foreground/5" />
+        <div className="absolute inset-0 bg-gradient-to-b from-card via-card to-card/98 backdrop-blur-2xl border-l border-border/40 shadow-2xl shadow-foreground/10" />
         
-        {/* Decorative accent line */}
-        <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-primary/40 via-primary/20 to-transparent" />
+        {/* Decorative accent line with glow */}
+        <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-primary via-primary/30 to-transparent">
+          <div className="absolute top-0 left-0 w-4 h-32 bg-gradient-to-r from-primary/20 to-transparent blur-xl" />
+        </div>
         
         {/* Content container */}
         <div className="relative h-full flex flex-col">
           {/* Elegant Menu Header */}
-          <div className="flex items-center justify-between px-6 h-16 border-b border-border/30">
+          <div className={cn(
+            "flex items-center justify-between px-6 h-16 border-b border-border/30 transition-all duration-500 delay-100",
+            mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+          )}>
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <span className="text-primary font-display font-bold text-sm">R</span>
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25">
+                <span className="text-primary-foreground font-display font-bold text-sm">R</span>
               </div>
               <span className="font-display text-base font-semibold tracking-tight text-foreground">Menu</span>
             </div>
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 hover:scale-105"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted hover:scale-105 active:scale-95 transition-all duration-200"
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4.5 w-4.5" />
             </button>
           </div>
 
@@ -253,31 +261,36 @@ export function Header({
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {/* Primary Navigation */}
             <nav className="px-4 pt-6 pb-4">
-              <p className="px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
+              <p className={cn(
+                "px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60 transition-all duration-500 delay-150",
+                mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
+              )}>
                 Navigation
               </p>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {navLinks.map((link, index) => {
                   const isActive = location.pathname === link.href;
                   const isForProviders = link.href === "/for-providers" && variant === "default";
                   const Icon = navIcons[link.href] || ChevronRight;
+                  const delay = 200 + index * 50;
                   
                   const linkClasses = cn(
-                    "group flex items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-medium transition-all duration-200",
+                    "group flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-medium transition-all duration-300",
                     isActive
-                      ? "bg-primary/10 text-primary shadow-sm"
-                      : "text-foreground/80 hover:text-foreground hover:bg-muted/80"
+                      ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary shadow-sm"
+                      : "text-foreground/80 hover:text-foreground hover:bg-muted/70 active:scale-[0.98]",
+                    mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
                   );
 
                   const content = (
                     <>
                       <div className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200",
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
                         isActive 
-                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" 
-                          : "bg-muted/60 text-muted-foreground group-hover:bg-muted group-hover:text-foreground"
+                          ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30" 
+                          : "bg-muted/60 text-muted-foreground group-hover:bg-muted group-hover:text-foreground group-hover:scale-105"
                       )}>
-                        <Icon className="h-4.5 w-4.5" />
+                        <Icon className="h-[18px] w-[18px]" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <span className="block truncate">{link.label}</span>
@@ -286,8 +299,8 @@ export function Header({
                         )}
                       </div>
                       <ChevronRight className={cn(
-                        "h-4 w-4 text-muted-foreground/40 transition-all duration-200",
-                        "group-hover:text-muted-foreground group-hover:translate-x-0.5"
+                        "h-4 w-4 text-muted-foreground/40 transition-all duration-300",
+                        "group-hover:text-foreground/60 group-hover:translate-x-1"
                       )} />
                     </>
                   );
@@ -301,7 +314,7 @@ export function Header({
                         rel="noopener noreferrer"
                         onClick={() => setMobileMenuOpen(false)}
                         className={linkClasses}
-                        style={{ animationDelay: `${index * 50}ms` }}
+                        style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
                       >
                         {content}
                       </a>
@@ -314,7 +327,7 @@ export function Header({
                       to={link.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={linkClasses}
-                      style={{ animationDelay: `${index * 50}ms` }}
+                      style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
                     >
                       {content}
                     </PrefetchLink>
@@ -323,12 +336,18 @@ export function Header({
               </div>
             </nav>
 
-            {/* Elegant divider */}
-            <div className="mx-6 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
+            {/* Elegant divider with shimmer */}
+            <div className={cn(
+              "mx-6 h-px bg-gradient-to-r from-transparent via-border to-transparent transition-all duration-500 delay-400",
+              mobileMenuOpen ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
+            )} />
 
             {/* Secondary Links */}
             <nav className="px-4 py-4">
-              <p className="px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
+              <p className={cn(
+                "px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60 transition-all duration-500 delay-450",
+                mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
+              )}>
                 More
               </p>
               <div className="space-y-0.5">
@@ -336,18 +355,23 @@ export function Header({
                   { href: "/about", label: "About Us" },
                   { href: "/contact", label: "Contact" },
                   { href: "/faq", label: "FAQ" },
-                ].map((link) => {
+                ].map((link, index) => {
                   const Icon = navIcons[link.href] || ChevronRight;
+                  const delay = 500 + index * 40;
                   return (
                     <PrefetchLink
                       key={link.href}
                       to={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="group flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+                      className={cn(
+                        "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-[0.98] transition-all duration-300",
+                        mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-6"
+                      )}
+                      style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                       <span className="flex-1">{link.label}</span>
-                      <ChevronRight className="h-3.5 w-3.5 opacity-0 -translate-x-2 group-hover:opacity-50 group-hover:translate-x-0 transition-all duration-200" />
+                      <ChevronRight className="h-3.5 w-3.5 opacity-0 -translate-x-2 group-hover:opacity-60 group-hover:translate-x-0 transition-all duration-200" />
                     </PrefetchLink>
                   );
                 })}
@@ -356,19 +380,22 @@ export function Header({
           </div>
 
           {/* Premium CTA Footer */}
-          <div className="border-t border-border/30 p-5 bg-gradient-to-t from-muted/30 to-transparent">
+          <div className={cn(
+            "border-t border-border/30 p-5 bg-gradient-to-t from-muted/40 to-transparent transition-all duration-500 delay-600",
+            mobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          )}>
             {variant === "provider" ? (
               <>
                 {isLoggedIn ? (
                   <div className="space-y-2.5">
                     <Link to="/provider-dashboard" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button variant="outline" className="w-full h-12 text-sm font-medium rounded-xl border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200">
+                      <Button variant="outline" className="w-full h-12 text-sm font-medium rounded-xl border-border/60 hover:border-primary/50 hover:bg-primary/5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
                         Dashboard
                       </Button>
                     </Link>
                     <Button 
                       variant="ghost" 
-                      className="w-full h-11 text-sm gap-2 text-muted-foreground hover:text-foreground rounded-xl" 
+                      className="w-full h-11 text-sm gap-2 text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/50" 
                       onClick={() => {
                         handleLogout();
                         setMobileMenuOpen(false);
@@ -381,12 +408,12 @@ export function Header({
                 ) : (
                   <div className="space-y-2.5">
                     <Link to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20 transition-all duration-200 hover:shadow-xl hover:shadow-primary/25">
+                      <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30">
                         Get Started
                       </Button>
                     </Link>
                     <Link to="/provider-login" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button variant="ghost" className="w-full h-11 text-sm text-muted-foreground hover:text-foreground rounded-xl">
+                      <Button variant="ghost" className="w-full h-11 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/50">
                         Sign In
                       </Button>
                     </Link>
@@ -396,8 +423,8 @@ export function Header({
             ) : (
               <div className="space-y-3">
                 <PrefetchLink to={ctaLink} onClick={() => setMobileMenuOpen(false)} className="block">
-                  <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20 transition-all duration-200 hover:shadow-xl hover:shadow-primary/25 gap-2">
-                    <Heart className="h-4 w-4" />
+                  <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 gap-2">
+                    <Heart className="h-4 w-4 animate-pulse" />
                     {ctaLabel}
                   </Button>
                 </PrefetchLink>
