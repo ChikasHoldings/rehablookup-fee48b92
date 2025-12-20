@@ -222,41 +222,32 @@ const RehabCenters = () => {
         ]}
       />
       
-      {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-12 md:py-16 lg:py-20">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        
-        {/* Floating decorative shapes */}
-        <div className="absolute top-20 right-[10%] w-32 h-32 rounded-full bg-white/5 blur-3xl" />
-        <div className="absolute bottom-10 left-[5%] w-48 h-48 rounded-full bg-accent/10 blur-3xl" />
-        
-        <div className="container relative">
-          <div className="mb-10 max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium uppercase tracking-wider text-white/90 backdrop-blur-sm border border-white/10">
-              <CheckCircle className="h-4 w-4" />
+      {/* Hero Header - Clean Directory Style */}
+      <section className="relative border-b border-border bg-gradient-to-b from-secondary/50 to-background py-8 md:py-10">
+        <div className="container">
+          <div className="mb-6 max-w-2xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-primary border border-primary/20">
+              <CheckCircle className="h-3.5 w-3.5" />
               Verified Treatment Centers
             </div>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
-              Find Your Path to Recovery
+            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+              Find Treatment Centers
             </h1>
-            <p className="mt-4 text-lg text-white/80 md:text-xl max-w-2xl">
+            <p className="mt-2 text-muted-foreground text-sm md:text-base">
               {hasFilters ? (
                 <>
-                  <span className="font-semibold text-white">{filteredCenters.length}</span> results
+                  <span className="font-semibold text-foreground">{filteredCenters.length}</span> results
                   {activeTypeFilter && ` for ${activeTypeFilter}`}
                   {location && ` near "${location}"`}
                 </>
               ) : (
-                "Search verified treatment centers and find the right care for you or your loved one"
+                "Search verified treatment centers and find the right care for you"
               )}
             </p>
           </div>
 
           {/* Search Form Container */}
-          <div className="rounded-2xl border border-white/10 bg-card p-5 shadow-2xl shadow-primary/30 md:p-6 lg:p-8">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm md:p-5">
             <SearchForm
               variant="compact"
               initialLocation={location}
@@ -618,23 +609,14 @@ const RehabCenters = () => {
         </div>
       </section>
 
-      {/* CTA Banner */}
-      <section className="relative overflow-hidden border-t border-border bg-gradient-to-br from-primary via-primary/95 to-primary/90 py-14 md:py-20">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/15 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        
-        {/* Floating shapes */}
-        <div className="absolute top-10 right-[15%] w-40 h-40 rounded-full bg-white/5 blur-3xl" />
-        <div className="absolute bottom-10 left-[10%] w-56 h-56 rounded-full bg-accent/10 blur-3xl" />
-        
-        <div className="container relative">
-          <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 md:gap-10 md:flex-row">
+      {/* CTA Banner - Light Professional Style */}
+      <section className="border-t border-border bg-gradient-to-b from-secondary/30 to-background py-12 md:py-16">
+        <div className="container">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:gap-8 md:flex-row rounded-xl border border-border bg-card p-6 md:p-8 shadow-sm">
             {/* Image */}
             <div className="relative shrink-0">
-              <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-white/20 via-white/10 to-transparent p-1.5 ring-2 ring-white/20 shadow-2xl">
-                <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-b from-white to-secondary/50">
+              <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 p-1 ring-2 ring-primary/10">
+                <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-b from-background to-secondary/50">
                   <img 
                     src={supportSpecialistImg} 
                     alt="Support specialist ready to help" 
@@ -643,29 +625,28 @@ const RehabCenters = () => {
                 </div>
               </div>
               {/* Online indicator */}
-              <div className="absolute bottom-2 right-2 md:bottom-3 md:right-3 flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 shadow-lg border border-border">
-                <span className="relative flex h-2.5 w-2.5">
+              <div className="absolute bottom-1 right-1 flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-md border border-border">
+                <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                 </span>
-                <span className="text-xs font-semibold text-foreground">Online</span>
+                <span className="text-xs font-medium text-foreground">Online</span>
               </div>
             </div>
             
             <div className="flex-1 text-center md:text-left">
-              <h2 className="mb-3 font-display text-2xl font-bold text-white md:text-3xl lg:text-4xl">
+              <h2 className="mb-2 font-display text-lg font-bold text-foreground md:text-xl">
                 Need Help Finding the Right Center?
               </h2>
-              <p className="text-white/80 text-base md:text-lg max-w-xl">
-                Our specialists provide free, confidential guidance on treatment options and insurance coverage. We're here to help you navigate the path to recovery.
+              <p className="text-muted-foreground text-sm md:text-base max-w-md">
+                Our specialists provide free, confidential guidance on treatment options and insurance coverage.
               </p>
             </div>
             
-            <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
               <Link to="/request-help?source=rehab_cta">
                 <Button 
-                  size="lg" 
-                  className="w-full gap-2 sm:w-auto shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-white text-primary hover:bg-white/95 font-semibold"
+                  className="w-full gap-2 sm:w-auto shadow-sm hover:shadow-md transition-all"
                 >
                   <Heart className="h-4 w-4" />
                   Get Help Now
@@ -673,9 +654,8 @@ const RehabCenters = () => {
               </Link>
               <Link to="/contact">
                 <Button 
-                  size="lg" 
                   variant="outline" 
-                  className="w-full gap-2 sm:w-auto hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border-white/30 text-white hover:bg-white/10 hover:border-white/50"
+                  className="w-full gap-2 sm:w-auto"
                 >
                   <Phone className="h-4 w-4" />
                   Contact Us
