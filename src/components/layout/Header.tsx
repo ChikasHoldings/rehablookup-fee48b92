@@ -90,7 +90,7 @@ export function Header({
           ? "bg-primary border-primary/20" 
           : "bg-background/95 backdrop-blur-sm border-border"
       )}>
-        <div className="container flex h-14 md:h-16 items-center justify-between">
+        <div className="container flex h-14 md:h-[60px] items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <img 
