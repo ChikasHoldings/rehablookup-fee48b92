@@ -763,7 +763,7 @@ const CenterProfile = () => {
                               : "border-border/50 hover:border-primary/50 hover:shadow-sm"
                           )}
                         >
-                          <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                          <img src={img} alt={`${facility.name} facility photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
                         </button>
                       ))}
                     </div>
