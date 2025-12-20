@@ -216,21 +216,21 @@ const RehabCenters = () => {
       />
       
       {/* Hero Header - Clean Directory Style */}
-      <section className="relative border-b border-border bg-gradient-to-b from-secondary via-secondary/80 to-background py-8 md:py-10">
+      <section className="relative border-b border-primary/20 bg-gradient-to-b from-primary via-primary/90 to-primary/80 py-8 md:py-10">
         <MedicalPatternBackground />
         <div className="container relative z-10">
           <div className="mb-6 max-w-2xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-primary border border-primary/20">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white border border-white/20">
               <CheckCircle className="h-3.5 w-3.5" />
               Verified Treatment Centers
             </div>
-            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl">
               Find Treatment Centers
             </h1>
-            <p className="mt-2 text-muted-foreground text-sm md:text-base">
+            <p className="mt-2 text-white/80 text-sm md:text-base">
               {hasFilters ? (
                 <>
-                  <span className="font-semibold text-foreground">{filteredCenters.length}</span> results
+                  <span className="font-semibold text-white">{filteredCenters.length}</span> results
                   {activeTypeFilter && ` for ${activeTypeFilter}`}
                   {location && ` near "${location}"`}
                 </>
@@ -241,7 +241,7 @@ const RehabCenters = () => {
           </div>
 
           {/* Search Form Container */}
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm md:p-5">
+          <div className="rounded-xl border border-white/10 bg-white/10 backdrop-blur-sm p-4 shadow-lg md:p-5">
             <SearchForm
               variant="compact"
               initialLocation={location}

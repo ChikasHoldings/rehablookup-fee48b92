@@ -39,7 +39,7 @@ const MedicalPatternBackground = () => {
       {icons.map((item, index) => (
         <item.Icon
           key={index}
-          className="absolute text-primary/[0.08]"
+          className="absolute text-white/[0.08]"
           style={{
             left: `${item.x}%`,
             top: `${item.y}%`,
