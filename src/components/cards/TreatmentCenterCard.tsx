@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, ArrowRight, Crown, Calendar, ShieldCheck, Star, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { MapPin, Phone, ArrowRight, Crown, Calendar, ShieldCheck, Star, Image as ImageIcon, Eye } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState, useCallback, memo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
+import { FacilityQuickViewModal } from "./FacilityQuickViewModal";
 
 interface TreatmentCenterCardProps {
   center: TreatmentCenter & { 
@@ -59,6 +60,7 @@ function getInitials(name: string): string {
 export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, featured, variant = "default" }: TreatmentCenterCardProps) {
   const [logoError, setLogoError] = useState(false);
   const [heroImageError, setHeroImageError] = useState(false);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
   const cardRef = useRef<HTMLElement>(null);
   const hasTrackedImpression = useRef(false);
   const { trackImpression, trackClickToCall } = useProviderEventTracking();
@@ -240,6 +242,20 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
 
           {/* Actions */}
           <div className="flex items-center gap-2 mt-1">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setQuickViewOpen(true)}
+              className={cn(
+                "h-8 px-2 text-xs gap-1",
+                showFeaturedBadge 
+                  ? "text-amber-600 hover:bg-amber-100 hover:text-amber-700"
+                  : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+              )}
+            >
+              <Eye className="h-3 w-3" />
+              Quick View
+            </Button>
             <Link 
               to={detailsUrl} 
               state={{ fromSearch: true }}
@@ -256,27 +272,34 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
                     : "shadow-sm"
                 )}
               >
-                View Details
+                Details
                 <ArrowRight className="h-3 w-3" />
               </Button>
             </Link>
             <a href={`tel:${center.phone}`} onClick={handleCallClick}>
               <Button 
                 variant="outline" 
-                size="sm"
+                size="icon"
                 className={cn(
-                  "h-8 px-3 text-xs gap-1",
+                  "h-8 w-8 shrink-0",
                   showFeaturedBadge 
                     ? "border-amber-300 text-amber-600 hover:bg-amber-500 hover:text-white hover:border-amber-500"
                     : "hover:bg-primary hover:text-primary-foreground hover:border-primary"
                 )}
               >
                 <Phone className="h-3 w-3" />
-                Call
               </Button>
             </a>
           </div>
         </div>
+        
+        {/* Quick View Modal */}
+        <FacilityQuickViewModal
+          center={center}
+          open={quickViewOpen}
+          onOpenChange={setQuickViewOpen}
+          featured={featured}
+        />
       </article>
     );
   }
@@ -482,6 +505,20 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
 
         {/* Actions */}
         <div className="flex gap-2 mt-auto pt-2 border-t border-border/50">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setQuickViewOpen(true)}
+            className={cn(
+              "h-10 px-3 gap-1.5 text-sm",
+              showFeaturedBadge 
+                ? "text-amber-600 hover:bg-amber-100 hover:text-amber-700"
+                : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+            )}
+          >
+            <Eye className="h-4 w-4" />
+            Quick View
+          </Button>
           <Link 
             to={detailsUrl} 
             state={{ fromSearch: true }}
@@ -517,6 +554,14 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
             </Button>
           </a>
         </div>
+        
+        {/* Quick View Modal */}
+        <FacilityQuickViewModal
+          center={center}
+          open={quickViewOpen}
+          onOpenChange={setQuickViewOpen}
+          featured={featured}
+        />
       </div>
     </article>
   );
