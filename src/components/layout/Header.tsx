@@ -96,7 +96,7 @@ export function Header({
             <img 
               src="/logo.png"
               alt="RehabLookup" 
-              className="h-9 w-auto"
+              className="h-8 md:h-10 w-auto"
               loading="eager"
               decoding="async"
             />
