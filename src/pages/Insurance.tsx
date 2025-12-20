@@ -67,8 +67,16 @@ const majorInsurers: InsuranceProvider[] = [
   },
   {
     name: "Humana",
+    logo: "/insurance-logos/humana.svg",
     description: "Major health and wellness company",
     coverageNotes: "Mental health and substance abuse treatment included in most plans",
+    type: "private",
+  },
+  {
+    name: "Anthem",
+    logo: "/insurance-logos/anthem.svg",
+    description: "One of the largest health benefits companies",
+    coverageNotes: "Substance abuse treatment covered as essential health benefit",
     type: "private",
   },
 ];
@@ -76,26 +84,23 @@ const majorInsurers: InsuranceProvider[] = [
 const governmentPrograms: InsuranceProvider[] = [
   {
     name: "Medicare",
+    logo: "/insurance-logos/medicare.svg",
     description: "Federal health insurance for 65+ and certain disabilities",
     coverageNotes: "Part A covers inpatient treatment; Part B covers outpatient services",
     type: "government",
   },
   {
     name: "Medicaid",
+    logo: "/insurance-logos/medicaid.svg",
     description: "State-federal program for low-income individuals",
     coverageNotes: "Coverage varies by state but generally includes substance abuse treatment",
     type: "government",
   },
   {
     name: "TRICARE",
+    logo: "/insurance-logos/tricare.svg",
     description: "Health care program for military and families",
     coverageNotes: "Comprehensive addiction treatment benefits for service members",
-    type: "government",
-  },
-  {
-    name: "VA Benefits",
-    description: "Department of Veterans Affairs health care",
-    coverageNotes: "Full range of addiction services for eligible veterans",
     type: "government",
   },
 ];
@@ -176,15 +181,23 @@ const faqs = [
 ];
 
 const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => (
-  <div className="rounded-xl border border-border bg-card p-5 hover:shadow-md transition-shadow">
+  <div className="rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-primary/20 transition-all">
     <div className="flex items-start gap-4">
       {provider.logo ? (
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-background border border-border p-1">
-          <img src={provider.logo} alt={provider.name} className="h-8 w-8 object-contain" />
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-background border border-border p-2">
+          <img 
+            src={provider.logo} 
+            alt={provider.name} 
+            className="h-10 w-10 object-contain"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement?.classList.add('hidden');
+            }}
+          />
         </div>
       ) : (
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Shield className="h-6 w-6" />
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Shield className="h-7 w-7" />
         </div>
       )}
       <div className="min-w-0 flex-1">
