@@ -1,10 +1,11 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, Suspense } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
 import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminHeader } from "./AdminHeader";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminErrorBoundary } from "./AdminErrorBoundary";
+import { AdminPageLoading } from "./AdminPageLoading";
 import { ForcePasswordChangeDialog } from "./ForcePasswordChangeDialog";
 import { TwoFactorEnforcementDialog } from "./TwoFactorEnforcementDialog";
 import { Button } from "@/components/ui/button";
@@ -119,7 +120,13 @@ export function AdminShell() {
           className="flex-1 overflow-y-auto h-[calc(100vh-4rem)] p-4 lg:p-6"
         >
           <AdminErrorBoundary>
-            {hasRouteAccess ? <Outlet /> : <AccessDenied />}
+            {hasRouteAccess ? (
+              <Suspense fallback={<AdminPageLoading />}>
+                <Outlet />
+              </Suspense>
+            ) : (
+              <AccessDenied />
+            )}
           </AdminErrorBoundary>
         </main>
       </div>
