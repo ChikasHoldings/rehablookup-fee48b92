@@ -62,7 +62,7 @@ const LinkedInIcon = () => (
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-muted/60">
+    <footer className="border-t border-border bg-muted">
       {/* Main Links */}
       <div className="container py-10 md:py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
@@ -72,13 +72,13 @@ export function Footer() {
               <img 
                 src="/logo.svg" 
                 alt="RehabLookup" 
-                className="h-12 w-auto dark:hidden"
+                className="h-14 w-auto dark:hidden"
                 loading="lazy"
               />
               <img 
                 src="/logo-dark.svg" 
                 alt="RehabLookup" 
-                className="h-12 w-auto hidden dark:block"
+                className="h-14 w-auto hidden dark:block"
                 loading="lazy"
               />
             </Link>
