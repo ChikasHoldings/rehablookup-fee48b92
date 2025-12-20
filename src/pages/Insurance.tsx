@@ -25,10 +25,12 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { isValidPhoneNumber } from "@/lib/phoneUtils";
 
 const insuranceLeadSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
-  phone: z.string().trim().min(10, "Please enter a valid phone number").max(20, "Phone number is too long"),
+  phone: z.string().refine((val) => isValidPhoneNumber(val), "Please enter a complete 10-digit phone number"),
   email: z.string().trim().email("Please enter a valid email").max(255, "Email is too long").optional().or(z.literal("")),
   insuranceProvider: z.string().min(1, "Please select your insurance provider"),
   memberId: z.string().max(100, "Member ID is too long").optional(),
@@ -208,13 +210,10 @@ Member ID: ${formData.memberId || 'Not provided'}`;
 
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number *</Label>
-                      <Input
+                      <PhoneInput
                         id="phone"
-                        type="tel"
-                        placeholder="(555) 555-5555"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        required
+                        onChange={(value) => setFormData({ ...formData, phone: value })}
                       />
                     </div>
 

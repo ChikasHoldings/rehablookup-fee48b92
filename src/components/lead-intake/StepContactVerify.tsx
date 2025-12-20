@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Loader2, Mail, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { LeadIntakeFormData } from "./types";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { isValidPhoneNumber } from "@/lib/phoneUtils";
 
 interface StepContactVerifyProps {
   formData: LeadIntakeFormData;
@@ -94,12 +96,7 @@ export function StepContactVerify({
     await onSubmit();
   };
 
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, "");
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
-  };
+  // Phone validation using shared utility
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateFormData({ email: e.target.value });
@@ -179,18 +176,15 @@ export function StepContactVerify({
         <Label htmlFor="phone" className="text-base font-medium">
           Phone Number <span className="text-destructive">*</span>
         </Label>
-        <Input
+        <PhoneInput
           id="phone"
-          type="tel"
-          placeholder="(555) 123-4567"
           value={formData.phone}
-          onChange={(e) => {
-            updateFormData({ phone: formatPhone(e.target.value) });
+          onChange={(value) => {
+            updateFormData({ phone: value });
             setErrors(prev => ({ ...prev, phone: "" }));
           }}
           className={`h-12 md:h-10 text-base ${errors.phone ? "border-destructive" : ""}`}
           disabled={codeSent}
-          autoComplete="tel"
         />
         {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
       </div>

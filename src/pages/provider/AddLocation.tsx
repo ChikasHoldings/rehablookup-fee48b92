@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PhoneInput } from "@/components/ui/phone-input";
 import {
   Select,
   SelectContent,
@@ -385,13 +386,10 @@ export default function AddLocationPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
+                    <PhoneInput
                       id="phone"
-                      type="tel"
-                      placeholder="(555) 123-4567"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      required
+                      onChange={(value) => handleInputChange("phone", value)}
                     />
                   </div>
                   <div className="space-y-2">

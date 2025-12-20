@@ -27,6 +27,8 @@ import {
   Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { isValidPhoneNumber } from "@/lib/phoneUtils";
 
 // Validation schema
 const requestSchema = z.object({
@@ -382,14 +384,12 @@ export function RequestInfoModal({
 
               <div>
                 <Label htmlFor="phone">Phone Number *</Label>
-                <Input
+                <PhoneInput
                   id="phone"
-                  type="tel"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
+                  onChange={(value) =>
+                    setFormData({ ...formData, phone: value })
                   }
-                  placeholder="(555) 123-4567"
                   className={cn(errors.phone && "border-destructive")}
                 />
                 {errors.phone && (

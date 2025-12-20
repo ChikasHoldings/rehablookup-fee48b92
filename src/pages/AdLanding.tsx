@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import logoImage from "@/assets/logo.png";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { isValidPhoneNumber } from "@/lib/phoneUtils";
 
 // Configure your video here - replace with your actual video ID
 const VIDEO_CONFIG = {
@@ -285,12 +287,7 @@ export default function AdLanding() {
     }
   };
   
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, "");
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
-  };
+  // Phone validation using shared utility
 
   const handleFieldChange = (field: keyof FormData, value: string | boolean) => {
     trackFormStart();
@@ -520,15 +517,13 @@ export default function AdLanding() {
               {/* Phone */}
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-foreground">Phone Number *</Label>
-                <Input
+                <PhoneInput
                   id="phone"
-                  type="tel"
                   value={formData.phone}
-                  onChange={(e) => {
+                  onChange={(value) => {
                     trackFormStart();
-                    setFormData(prev => ({ ...prev, phone: formatPhone(e.target.value) }));
+                    setFormData(prev => ({ ...prev, phone: value }));
                   }}
-                  placeholder="(555) 123-4567"
                   className={cn("h-11", errors.phone && "border-destructive focus-visible:ring-destructive")}
                 />
                 {errors.phone && (
