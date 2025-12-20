@@ -44,6 +44,8 @@ export const statesData: StateData[] = [
       { name: "Anchorage", slug: "anchorage", population: 291247, description: "Anchorage is Alaska's largest city with the most treatment options.", metaDescription: "Drug and alcohol rehab in Anchorage, AK. Find verified addiction treatment centers." },
       { name: "Fairbanks", slug: "fairbanks", population: 32515, description: "Fairbanks offers addiction treatment services in interior Alaska.", metaDescription: "Addiction treatment in Fairbanks, AK. Find rehab centers and recovery programs." },
       { name: "Juneau", slug: "juneau", population: 32255, description: "Juneau provides treatment options as Alaska's capital city.", metaDescription: "Rehab centers in Juneau, AK. Find drug and alcohol treatment facilities." },
+      { name: "Sitka", slug: "sitka", population: 8458, description: "Sitka offers treatment in a beautiful island setting.", metaDescription: "Drug rehab in Sitka, AK. Find addiction treatment services." },
+      { name: "Ketchikan", slug: "ketchikan", population: 8192, description: "Ketchikan provides accessible treatment in Southeast Alaska.", metaDescription: "Addiction treatment in Ketchikan, AK. Browse rehab facilities." },
     ],
   },
   {
@@ -73,8 +75,11 @@ export const statesData: StateData[] = [
     metaDescription: "Find drug and alcohol rehab centers in Arkansas. Browse verified treatment facilities offering quality care.",
     cities: [
       { name: "Little Rock", slug: "little-rock", population: 202591, description: "Little Rock has the most treatment options as Arkansas's capital.", metaDescription: "Rehab centers in Little Rock, AR. Find addiction treatment facilities near you." },
-      { name: "Fort Smith", slug: "fort-smith", population: 89142, description: "Fort Smith offers treatment options in western Arkansas.", metaDescription: "Drug rehab in Fort Smith, AR. Find verified addiction treatment centers." },
       { name: "Fayetteville", slug: "fayetteville", population: 93949, description: "Fayetteville provides treatment services in northwest Arkansas.", metaDescription: "Addiction treatment in Fayetteville, AR. Browse rehab facilities." },
+      { name: "Fort Smith", slug: "fort-smith", population: 89142, description: "Fort Smith offers treatment options in western Arkansas.", metaDescription: "Drug rehab in Fort Smith, AR. Find verified addiction treatment centers." },
+      { name: "Springdale", slug: "springdale", population: 84693, description: "Springdale offers treatment in the growing NW Arkansas region.", metaDescription: "Addiction treatment in Springdale, AR. Find rehab centers." },
+      { name: "Jonesboro", slug: "jonesboro", population: 78576, description: "Jonesboro provides treatment in northeast Arkansas.", metaDescription: "Drug rehab in Jonesboro, AR. Find addiction treatment facilities." },
+      { name: "Rogers", slug: "rogers", population: 72358, description: "Rogers offers accessible treatment in Benton County.", metaDescription: "Rehab centers in Rogers, AR. Find drug treatment near you." },
     ],
   },
   {
@@ -115,8 +120,11 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Denver", slug: "denver", population: 715522, description: "Denver offers comprehensive treatment options as the Mile High City.", metaDescription: "Drug and alcohol rehab in Denver, CO. Find verified addiction treatment centers." },
       { name: "Colorado Springs", slug: "colorado-springs", population: 478961, description: "Colorado Springs provides treatment in a scenic mountain setting.", metaDescription: "Addiction treatment in Colorado Springs, CO. Browse rehab facilities." },
-      { name: "Boulder", slug: "boulder", population: 105485, description: "Boulder is known for holistic and wellness-focused treatment.", metaDescription: "Holistic rehab in Boulder, CO. Find addiction treatment centers with wellness focus." },
+      { name: "Aurora", slug: "aurora", population: 386261, description: "Aurora offers diverse treatment in the Denver metro area.", metaDescription: "Drug rehab in Aurora, CO. Find addiction treatment programs." },
       { name: "Fort Collins", slug: "fort-collins", population: 169810, description: "Fort Collins offers quality treatment in northern Colorado.", metaDescription: "Rehab centers in Fort Collins, CO. Find drug and alcohol treatment near you." },
+      { name: "Lakewood", slug: "lakewood", population: 155984, description: "Lakewood provides accessible Denver-area treatment.", metaDescription: "Addiction treatment in Lakewood, CO. Browse rehab facilities." },
+      { name: "Thornton", slug: "thornton", population: 141867, description: "Thornton offers treatment in the northern Denver metro.", metaDescription: "Drug rehab in Thornton, CO. Find addiction treatment centers." },
+      { name: "Boulder", slug: "boulder", population: 105485, description: "Boulder is known for holistic and wellness-focused treatment.", metaDescription: "Holistic rehab in Boulder, CO. Find addiction treatment centers with wellness focus." },
     ],
   },
   {
@@ -126,10 +134,12 @@ export const statesData: StateData[] = [
     description: "Connecticut provides high-quality addiction treatment with strong medical infrastructure.",
     metaDescription: "Find rehab centers in Connecticut. Browse addiction treatment facilities offering comprehensive care.",
     cities: [
-      { name: "Hartford", slug: "hartford", population: 121054, description: "Hartford offers diverse treatment options as the state capital.", metaDescription: "Drug rehab in Hartford, CT. Find addiction treatment centers near you." },
-      { name: "New Haven", slug: "new-haven", population: 134023, description: "New Haven provides research-backed treatment approaches.", metaDescription: "Addiction treatment in New Haven, CT. Browse verified rehab facilities." },
       { name: "Bridgeport", slug: "bridgeport", population: 148654, description: "Bridgeport offers accessible treatment in southwestern Connecticut.", metaDescription: "Rehab centers in Bridgeport, CT. Find drug and alcohol treatment programs." },
       { name: "Stamford", slug: "stamford", population: 135470, description: "Stamford provides upscale treatment options near New York.", metaDescription: "Addiction treatment in Stamford, CT. Find quality rehab facilities." },
+      { name: "New Haven", slug: "new-haven", population: 134023, description: "New Haven provides research-backed treatment approaches.", metaDescription: "Addiction treatment in New Haven, CT. Browse verified rehab facilities." },
+      { name: "Hartford", slug: "hartford", population: 121054, description: "Hartford offers diverse treatment options as the state capital.", metaDescription: "Drug rehab in Hartford, CT. Find addiction treatment centers near you." },
+      { name: "Waterbury", slug: "waterbury", population: 114403, description: "Waterbury offers affordable treatment in central Connecticut.", metaDescription: "Drug rehab in Waterbury, CT. Find addiction treatment centers." },
+      { name: "Norwalk", slug: "norwalk", population: 91184, description: "Norwalk provides treatment in coastal Fairfield County.", metaDescription: "Addiction treatment in Norwalk, CT. Browse rehab facilities." },
     ],
   },
   {
@@ -141,6 +151,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Wilmington", slug: "wilmington", population: 70898, description: "Wilmington has the most treatment options in Delaware.", metaDescription: "Rehab centers in Wilmington, DE. Find addiction treatment near you." },
       { name: "Dover", slug: "dover", population: 39403, description: "Dover offers treatment services as the state capital.", metaDescription: "Drug rehab in Dover, DE. Find verified treatment facilities." },
+      { name: "Newark", slug: "newark", population: 33673, description: "Newark provides treatment near the University of Delaware.", metaDescription: "Addiction treatment in Newark, DE. Browse rehab facilities." },
+      { name: "Middletown", slug: "middletown", population: 22350, description: "Middletown offers accessible treatment in New Castle County.", metaDescription: "Drug rehab in Middletown, DE. Find addiction treatment centers." },
+      { name: "Bear", slug: "bear", population: 21017, description: "Bear provides convenient treatment in northern Delaware.", metaDescription: "Rehab centers in Bear, DE. Find drug treatment near you." },
     ],
   },
   {
@@ -197,8 +210,10 @@ export const statesData: StateData[] = [
     metaDescription: "Find rehab centers in Hawaii. Browse tropical addiction treatment facilities offering healing in paradise.",
     cities: [
       { name: "Honolulu", slug: "honolulu", population: 350964, description: "Honolulu has the most treatment options on Oahu.", metaDescription: "Drug and alcohol rehab in Honolulu, HI. Find addiction treatment centers." },
+      { name: "Pearl City", slug: "pearl-city", population: 47698, description: "Pearl City provides accessible treatment on Oahu.", metaDescription: "Addiction treatment in Pearl City, HI. Browse rehab facilities." },
+      { name: "Hilo", slug: "hilo", population: 45703, description: "Hilo offers treatment on the Big Island's east side.", metaDescription: "Drug rehab in Hilo, HI. Find addiction treatment on Hawaii Island." },
+      { name: "Kailua", slug: "kailua", population: 40514, description: "Kailua provides serene windward Oahu treatment.", metaDescription: "Rehab centers in Kailua, HI. Find drug treatment near you." },
       { name: "Maui", slug: "maui", population: 164221, description: "Maui offers retreat-style treatment in stunning natural settings.", metaDescription: "Addiction treatment in Maui, HI. Find tropical rehab facilities." },
-      { name: "Kona", slug: "kona", population: 14903, description: "Kona provides treatment on Hawaii's Big Island.", metaDescription: "Rehab centers in Kona, HI. Find drug treatment on the Big Island." },
     ],
   },
   {
@@ -210,6 +225,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Boise", slug: "boise", population: 235684, description: "Boise offers the most treatment options in Idaho.", metaDescription: "Drug rehab in Boise, ID. Find addiction treatment centers." },
       { name: "Meridian", slug: "meridian", population: 117635, description: "Meridian provides treatment in the Boise metro area.", metaDescription: "Addiction treatment in Meridian, ID. Browse rehab facilities." },
+      { name: "Nampa", slug: "nampa", population: 100200, description: "Nampa offers accessible treatment in the Treasure Valley.", metaDescription: "Drug rehab in Nampa, ID. Find addiction treatment facilities." },
+      { name: "Idaho Falls", slug: "idaho-falls", population: 64602, description: "Idaho Falls provides treatment in eastern Idaho.", metaDescription: "Rehab centers in Idaho Falls, ID. Find drug treatment near you." },
+      { name: "Pocatello", slug: "pocatello", population: 56320, description: "Pocatello offers treatment in southeast Idaho.", metaDescription: "Addiction treatment in Pocatello, ID. Browse rehab facilities." },
     ],
   },
   {
@@ -248,6 +266,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Des Moines", slug: "des-moines", population: 214237, description: "Des Moines has the most treatment options in Iowa.", metaDescription: "Drug rehab in Des Moines, IA. Find addiction treatment centers." },
       { name: "Cedar Rapids", slug: "cedar-rapids", population: 137710, description: "Cedar Rapids offers treatment in eastern Iowa.", metaDescription: "Addiction treatment in Cedar Rapids, IA. Browse rehab facilities." },
+      { name: "Davenport", slug: "davenport", population: 101590, description: "Davenport provides treatment in the Quad Cities.", metaDescription: "Drug rehab in Davenport, IA. Find addiction treatment." },
+      { name: "Sioux City", slug: "sioux-city", population: 85797, description: "Sioux City offers treatment in western Iowa.", metaDescription: "Rehab centers in Sioux City, IA. Find drug treatment near you." },
+      { name: "Iowa City", slug: "iowa-city", population: 74828, description: "Iowa City provides research-backed treatment approaches.", metaDescription: "Addiction treatment in Iowa City, IA. Browse rehab facilities." },
     ],
   },
   {
@@ -258,7 +279,9 @@ export const statesData: StateData[] = [
     metaDescription: "Find drug and alcohol rehab centers in Kansas. Browse verified treatment facilities.",
     cities: [
       { name: "Wichita", slug: "wichita", population: 397532, description: "Wichita offers the most treatment options in Kansas.", metaDescription: "Drug and alcohol rehab in Wichita, KS. Find addiction treatment." },
+      { name: "Overland Park", slug: "overland-park", population: 197238, description: "Overland Park provides upscale treatment in the KC metro.", metaDescription: "Addiction treatment in Overland Park, KS. Browse rehab facilities." },
       { name: "Kansas City", slug: "kansas-city", population: 156607, description: "Kansas City, KS provides metro-area treatment options.", metaDescription: "Addiction treatment in Kansas City, KS. Browse rehab centers." },
+      { name: "Olathe", slug: "olathe", population: 141290, description: "Olathe offers accessible treatment in Johnson County.", metaDescription: "Drug rehab in Olathe, KS. Find addiction treatment centers." },
       { name: "Topeka", slug: "topeka", population: 126587, description: "Topeka offers treatment as the state capital.", metaDescription: "Rehab centers in Topeka, KS. Find drug treatment facilities." },
     ],
   },
@@ -271,6 +294,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Louisville", slug: "louisville", population: 633045, description: "Louisville offers comprehensive treatment as Kentucky's largest city.", metaDescription: "Drug and alcohol rehab in Louisville, KY. Find addiction treatment centers." },
       { name: "Lexington", slug: "lexington", population: 322570, description: "Lexington provides quality treatment in the Bluegrass region.", metaDescription: "Addiction treatment in Lexington, KY. Browse rehab facilities." },
+      { name: "Bowling Green", slug: "bowling-green", population: 74169, description: "Bowling Green offers treatment in south-central Kentucky.", metaDescription: "Drug rehab in Bowling Green, KY. Find addiction treatment." },
+      { name: "Owensboro", slug: "owensboro", population: 60183, description: "Owensboro provides treatment in western Kentucky.", metaDescription: "Rehab centers in Owensboro, KY. Find drug treatment near you." },
+      { name: "Covington", slug: "covington", population: 40366, description: "Covington offers treatment in the Cincinnati metro area.", metaDescription: "Addiction treatment in Covington, KY. Browse rehab facilities." },
     ],
   },
   {
@@ -282,6 +308,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "New Orleans", slug: "new-orleans", population: 383997, description: "New Orleans offers diverse treatment options in the Crescent City.", metaDescription: "Drug and alcohol rehab in New Orleans, LA. Find addiction treatment." },
       { name: "Baton Rouge", slug: "baton-rouge", population: 227470, description: "Baton Rouge provides treatment as the state capital.", metaDescription: "Addiction treatment in Baton Rouge, LA. Browse rehab centers." },
+      { name: "Shreveport", slug: "shreveport", population: 187593, description: "Shreveport offers treatment in northwest Louisiana.", metaDescription: "Drug rehab in Shreveport, LA. Find addiction treatment centers." },
+      { name: "Lafayette", slug: "lafayette", population: 121374, description: "Lafayette provides treatment in Acadiana.", metaDescription: "Rehab centers in Lafayette, LA. Find drug treatment near you." },
+      { name: "Lake Charles", slug: "lake-charles", population: 84872, description: "Lake Charles offers treatment in southwest Louisiana.", metaDescription: "Addiction treatment in Lake Charles, LA. Browse rehab facilities." },
     ],
   },
   {
@@ -292,7 +321,10 @@ export const statesData: StateData[] = [
     metaDescription: "Find rehab centers in Maine. Browse addiction treatment facilities in serene settings.",
     cities: [
       { name: "Portland", slug: "portland", population: 68408, description: "Portland has the most treatment options in Maine.", metaDescription: "Drug rehab in Portland, ME. Find addiction treatment centers." },
+      { name: "Lewiston", slug: "lewiston", population: 37104, description: "Lewiston provides treatment in central Maine.", metaDescription: "Addiction treatment in Lewiston, ME. Browse rehab facilities." },
       { name: "Bangor", slug: "bangor", population: 31903, description: "Bangor offers treatment in northern Maine.", metaDescription: "Addiction treatment in Bangor, ME. Browse rehab facilities." },
+      { name: "South Portland", slug: "south-portland", population: 26498, description: "South Portland offers accessible southern Maine treatment.", metaDescription: "Drug rehab in South Portland, ME. Find addiction treatment." },
+      { name: "Auburn", slug: "auburn", population: 24061, description: "Auburn provides treatment in the Lewiston-Auburn area.", metaDescription: "Rehab centers in Auburn, ME. Find drug treatment near you." },
     ],
   },
   {
@@ -303,8 +335,10 @@ export const statesData: StateData[] = [
     metaDescription: "Find drug and alcohol rehab centers in Maryland. Browse verified treatment facilities.",
     cities: [
       { name: "Baltimore", slug: "baltimore", population: 585708, description: "Baltimore offers comprehensive treatment as Maryland's largest city.", metaDescription: "Drug and alcohol rehab in Baltimore, MD. Find addiction treatment centers." },
+      { name: "Columbia", slug: "columbia", population: 104681, description: "Columbia provides treatment in central Maryland.", metaDescription: "Drug rehab in Columbia, MD. Find addiction treatment programs." },
+      { name: "Germantown", slug: "germantown", population: 90494, description: "Germantown offers treatment in Montgomery County.", metaDescription: "Addiction treatment in Germantown, MD. Browse rehab facilities." },
+      { name: "Silver Spring", slug: "silver-spring", population: 81015, description: "Silver Spring provides treatment near Washington DC.", metaDescription: "Rehab centers in Silver Spring, MD. Find drug treatment." },
       { name: "Rockville", slug: "rockville", population: 68155, description: "Rockville provides upscale treatment near Washington DC.", metaDescription: "Addiction treatment in Rockville, MD. Browse rehab facilities." },
-      { name: "Annapolis", slug: "annapolis", population: 40812, description: "Annapolis offers treatment as the state capital.", metaDescription: "Rehab centers in Annapolis, MD. Find drug treatment near you." },
     ],
   },
   {
@@ -318,6 +352,7 @@ export const statesData: StateData[] = [
       { name: "Worcester", slug: "worcester", population: 206518, description: "Worcester offers accessible treatment in central Massachusetts.", metaDescription: "Addiction treatment in Worcester, MA. Browse rehab facilities." },
       { name: "Springfield", slug: "springfield", population: 155929, description: "Springfield provides treatment in western Massachusetts.", metaDescription: "Rehab centers in Springfield, MA. Find drug treatment near you." },
       { name: "Cambridge", slug: "cambridge", population: 118403, description: "Cambridge offers research-backed treatment approaches.", metaDescription: "Drug rehab in Cambridge, MA. Find innovative treatment programs." },
+      { name: "Lowell", slug: "lowell", population: 115554, description: "Lowell provides accessible treatment in the Merrimack Valley.", metaDescription: "Addiction treatment in Lowell, MA. Browse rehab facilities." },
     ],
   },
   {
@@ -345,6 +380,8 @@ export const statesData: StateData[] = [
       { name: "Minneapolis", slug: "minneapolis", population: 429954, description: "Minneapolis offers diverse treatment in the Twin Cities.", metaDescription: "Drug and alcohol rehab in Minneapolis, MN. Find addiction treatment." },
       { name: "St. Paul", slug: "st-paul", population: 311527, description: "St. Paul provides comprehensive treatment as the state capital.", metaDescription: "Addiction treatment in St. Paul, MN. Browse rehab facilities." },
       { name: "Rochester", slug: "rochester", population: 121395, description: "Rochester offers treatment near Mayo Clinic.", metaDescription: "Rehab centers in Rochester, MN. Find drug treatment near you." },
+      { name: "Duluth", slug: "duluth", population: 90936, description: "Duluth provides treatment on Lake Superior.", metaDescription: "Drug rehab in Duluth, MN. Find addiction treatment centers." },
+      { name: "Bloomington", slug: "bloomington", population: 89987, description: "Bloomington offers accessible Twin Cities treatment.", metaDescription: "Addiction treatment in Bloomington, MN. Browse rehab facilities." },
     ],
   },
   {
@@ -356,6 +393,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Jackson", slug: "jackson", population: 153701, description: "Jackson has the most treatment options as the state capital.", metaDescription: "Drug rehab in Jackson, MS. Find addiction treatment centers." },
       { name: "Gulfport", slug: "gulfport", population: 72076, description: "Gulfport offers treatment on the Gulf Coast.", metaDescription: "Addiction treatment in Gulfport, MS. Browse rehab facilities." },
+      { name: "Southaven", slug: "southaven", population: 55026, description: "Southaven provides treatment in the Memphis metro area.", metaDescription: "Drug rehab in Southaven, MS. Find addiction treatment." },
+      { name: "Hattiesburg", slug: "hattiesburg", population: 48147, description: "Hattiesburg offers treatment in south-central Mississippi.", metaDescription: "Rehab centers in Hattiesburg, MS. Find drug treatment near you." },
+      { name: "Biloxi", slug: "biloxi", population: 46212, description: "Biloxi provides coastal treatment options.", metaDescription: "Addiction treatment in Biloxi, MS. Browse rehab facilities." },
     ],
   },
   {
@@ -368,6 +408,8 @@ export const statesData: StateData[] = [
       { name: "Kansas City", slug: "kansas-city", population: 508090, description: "Kansas City offers comprehensive treatment options.", metaDescription: "Drug and alcohol rehab in Kansas City, MO. Find addiction treatment." },
       { name: "St. Louis", slug: "st-louis", population: 301578, description: "St. Louis provides diverse treatment in the Gateway City.", metaDescription: "Addiction treatment in St. Louis, MO. Browse rehab facilities." },
       { name: "Springfield", slug: "springfield", population: 169176, description: "Springfield offers treatment in southwest Missouri.", metaDescription: "Rehab centers in Springfield, MO. Find drug treatment near you." },
+      { name: "Columbia", slug: "columbia", population: 126254, description: "Columbia provides treatment in central Missouri.", metaDescription: "Drug rehab in Columbia, MO. Find addiction treatment centers." },
+      { name: "Independence", slug: "independence", population: 123011, description: "Independence offers treatment in the KC metro.", metaDescription: "Addiction treatment in Independence, MO. Browse rehab facilities." },
     ],
   },
   {
@@ -379,6 +421,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Billings", slug: "billings", population: 119116, description: "Billings has the most treatment options in Montana.", metaDescription: "Drug rehab in Billings, MT. Find addiction treatment centers." },
       { name: "Missoula", slug: "missoula", population: 75516, description: "Missoula offers treatment in western Montana.", metaDescription: "Addiction treatment in Missoula, MT. Browse rehab facilities." },
+      { name: "Great Falls", slug: "great-falls", population: 60506, description: "Great Falls provides treatment in north-central Montana.", metaDescription: "Drug rehab in Great Falls, MT. Find addiction treatment." },
+      { name: "Bozeman", slug: "bozeman", population: 53293, description: "Bozeman offers treatment in the Gallatin Valley.", metaDescription: "Rehab centers in Bozeman, MT. Find drug treatment near you." },
+      { name: "Helena", slug: "helena", population: 32091, description: "Helena provides treatment as Montana's state capital.", metaDescription: "Addiction treatment in Helena, MT. Browse rehab facilities." },
     ],
   },
   {
@@ -390,6 +435,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Omaha", slug: "omaha", population: 486051, description: "Omaha offers comprehensive treatment as Nebraska's largest city.", metaDescription: "Drug and alcohol rehab in Omaha, NE. Find addiction treatment." },
       { name: "Lincoln", slug: "lincoln", population: 291082, description: "Lincoln provides treatment as the state capital.", metaDescription: "Addiction treatment in Lincoln, NE. Browse rehab facilities." },
+      { name: "Bellevue", slug: "bellevue", population: 64176, description: "Bellevue offers treatment in the Omaha metro.", metaDescription: "Drug rehab in Bellevue, NE. Find addiction treatment centers." },
+      { name: "Grand Island", slug: "grand-island", population: 53131, description: "Grand Island provides treatment in central Nebraska.", metaDescription: "Rehab centers in Grand Island, NE. Find drug treatment." },
+      { name: "Kearney", slug: "kearney", population: 34182, description: "Kearney offers accessible treatment in south-central Nebraska.", metaDescription: "Addiction treatment in Kearney, NE. Browse rehab facilities." },
     ],
   },
   {
@@ -400,8 +448,10 @@ export const statesData: StateData[] = [
     metaDescription: "Find drug and alcohol rehab centers in Nevada. Browse verified treatment facilities.",
     cities: [
       { name: "Las Vegas", slug: "las-vegas", population: 641903, description: "Las Vegas provides diverse treatment options in Southern Nevada.", metaDescription: "Drug and alcohol rehab in Las Vegas, NV. Find addiction treatment centers." },
-      { name: "Reno", slug: "reno", population: 264165, description: "Reno offers treatment in Northern Nevada.", metaDescription: "Addiction treatment in Reno, NV. Browse rehab facilities." },
       { name: "Henderson", slug: "henderson", population: 317610, description: "Henderson provides quality treatment near Las Vegas.", metaDescription: "Rehab centers in Henderson, NV. Find drug treatment near you." },
+      { name: "Reno", slug: "reno", population: 264165, description: "Reno offers treatment in Northern Nevada.", metaDescription: "Addiction treatment in Reno, NV. Browse rehab facilities." },
+      { name: "North Las Vegas", slug: "north-las-vegas", population: 262527, description: "North Las Vegas offers accessible treatment in the Vegas metro.", metaDescription: "Drug rehab in North Las Vegas, NV. Find addiction treatment." },
+      { name: "Sparks", slug: "sparks", population: 108445, description: "Sparks provides treatment in the Reno metro area.", metaDescription: "Addiction treatment in Sparks, NV. Browse rehab facilities." },
     ],
   },
   {
@@ -413,6 +463,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Manchester", slug: "manchester", population: 115644, description: "Manchester has the most treatment options in New Hampshire.", metaDescription: "Drug rehab in Manchester, NH. Find addiction treatment centers." },
       { name: "Nashua", slug: "nashua", population: 91322, description: "Nashua offers treatment in southern New Hampshire.", metaDescription: "Addiction treatment in Nashua, NH. Browse rehab facilities." },
+      { name: "Concord", slug: "concord", population: 43976, description: "Concord provides treatment as the state capital.", metaDescription: "Drug rehab in Concord, NH. Find addiction treatment." },
+      { name: "Derry", slug: "derry", population: 34317, description: "Derry offers accessible treatment in Rockingham County.", metaDescription: "Rehab centers in Derry, NH. Find drug treatment near you." },
+      { name: "Dover", slug: "dover", population: 32741, description: "Dover provides treatment on the Seacoast.", metaDescription: "Addiction treatment in Dover, NH. Browse rehab facilities." },
     ],
   },
   {
@@ -424,8 +477,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Newark", slug: "newark", population: 311549, description: "Newark offers diverse treatment options near New York.", metaDescription: "Drug and alcohol rehab in Newark, NJ. Find addiction treatment." },
       { name: "Jersey City", slug: "jersey-city", population: 292449, description: "Jersey City provides accessible treatment across from Manhattan.", metaDescription: "Addiction treatment in Jersey City, NJ. Browse rehab facilities." },
-      { name: "Princeton", slug: "princeton", population: 31822, description: "Princeton offers upscale treatment in central New Jersey.", metaDescription: "Rehab centers in Princeton, NJ. Find quality drug treatment." },
-      { name: "Atlantic City", slug: "atlantic-city", population: 38574, description: "Atlantic City provides treatment on the Jersey Shore.", metaDescription: "Drug rehab in Atlantic City, NJ. Find addiction treatment centers." },
+      { name: "Paterson", slug: "paterson", population: 159732, description: "Paterson provides treatment in Passaic County.", metaDescription: "Drug rehab in Paterson, NJ. Find addiction treatment centers." },
+      { name: "Elizabeth", slug: "elizabeth", population: 137298, description: "Elizabeth offers treatment near Newark.", metaDescription: "Rehab centers in Elizabeth, NJ. Find drug treatment programs." },
+      { name: "Edison", slug: "edison", population: 107588, description: "Edison provides accessible central NJ treatment.", metaDescription: "Addiction treatment in Edison, NJ. Browse rehab facilities." },
     ],
   },
   {
@@ -436,7 +490,10 @@ export const statesData: StateData[] = [
     metaDescription: "Find rehab centers in New Mexico. Browse addiction treatment facilities in the Land of Enchantment.",
     cities: [
       { name: "Albuquerque", slug: "albuquerque", population: 564559, description: "Albuquerque has the most treatment options in New Mexico.", metaDescription: "Drug and alcohol rehab in Albuquerque, NM. Find addiction treatment." },
+      { name: "Las Cruces", slug: "las-cruces", population: 111385, description: "Las Cruces provides treatment in southern New Mexico.", metaDescription: "Addiction treatment in Las Cruces, NM. Browse rehab facilities." },
+      { name: "Rio Rancho", slug: "rio-rancho", population: 104046, description: "Rio Rancho offers treatment in the Albuquerque metro.", metaDescription: "Drug rehab in Rio Rancho, NM. Find addiction treatment centers." },
       { name: "Santa Fe", slug: "santa-fe", population: 87505, description: "Santa Fe offers holistic treatment as the state capital.", metaDescription: "Addiction treatment in Santa Fe, NM. Browse rehab facilities." },
+      { name: "Roswell", slug: "roswell", population: 48422, description: "Roswell provides treatment in southeastern New Mexico.", metaDescription: "Rehab centers in Roswell, NM. Find drug treatment near you." },
     ],
   },
   {
@@ -488,6 +545,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Fargo", slug: "fargo", population: 125990, description: "Fargo has the most treatment options in North Dakota.", metaDescription: "Drug rehab in Fargo, ND. Find addiction treatment centers." },
       { name: "Bismarck", slug: "bismarck", population: 74712, description: "Bismarck offers treatment as the state capital.", metaDescription: "Addiction treatment in Bismarck, ND. Browse rehab facilities." },
+      { name: "Grand Forks", slug: "grand-forks", population: 59166, description: "Grand Forks provides treatment in eastern North Dakota.", metaDescription: "Drug rehab in Grand Forks, ND. Find addiction treatment." },
+      { name: "Minot", slug: "minot", population: 48377, description: "Minot offers treatment in north-central North Dakota.", metaDescription: "Rehab centers in Minot, ND. Find drug treatment near you." },
+      { name: "West Fargo", slug: "west-fargo", population: 38626, description: "West Fargo provides accessible Fargo-area treatment.", metaDescription: "Addiction treatment in West Fargo, ND. Browse rehab facilities." },
     ],
   },
   {
@@ -518,6 +578,7 @@ export const statesData: StateData[] = [
       { name: "Tulsa", slug: "tulsa", population: 413066, description: "Tulsa offers comprehensive treatment in northeastern Oklahoma.", metaDescription: "Addiction treatment in Tulsa, OK. Browse rehab facilities." },
       { name: "Norman", slug: "norman", population: 128026, description: "Norman provides treatment near Oklahoma City.", metaDescription: "Drug rehab in Norman, OK. Find addiction treatment centers." },
       { name: "Broken Arrow", slug: "broken-arrow", population: 113540, description: "Broken Arrow offers treatment in the Tulsa metro.", metaDescription: "Addiction treatment in Broken Arrow, OK. Browse rehab facilities." },
+      { name: "Edmond", slug: "edmond", population: 99950, description: "Edmond provides upscale treatment in the OKC metro.", metaDescription: "Rehab centers in Edmond, OK. Find drug treatment near you." },
     ],
   },
   {
@@ -528,7 +589,9 @@ export const statesData: StateData[] = [
     metaDescription: "Find drug and alcohol rehab centers in Oregon. Browse innovative treatment facilities.",
     cities: [
       { name: "Portland", slug: "portland", population: 652503, description: "Portland offers diverse and progressive treatment options.", metaDescription: "Drug and alcohol rehab in Portland, OR. Find addiction treatment." },
+      { name: "Salem", slug: "salem", population: 175535, description: "Salem provides treatment as Oregon's state capital.", metaDescription: "Addiction treatment in Salem, OR. Browse rehab facilities." },
       { name: "Eugene", slug: "eugene", population: 176654, description: "Eugene provides holistic treatment in the Willamette Valley.", metaDescription: "Addiction treatment in Eugene, OR. Browse rehab facilities." },
+      { name: "Gresham", slug: "gresham", population: 114247, description: "Gresham offers accessible Portland-area treatment.", metaDescription: "Drug rehab in Gresham, OR. Find addiction treatment centers." },
       { name: "Bend", slug: "bend", population: 102059, description: "Bend offers outdoor-focused recovery programs.", metaDescription: "Rehab centers in Bend, OR. Find nature-based treatment." },
     ],
   },
@@ -557,7 +620,10 @@ export const statesData: StateData[] = [
     metaDescription: "Find drug and alcohol rehab centers in Rhode Island. Browse verified treatment facilities.",
     cities: [
       { name: "Providence", slug: "providence", population: 190934, description: "Providence has the most treatment options in Rhode Island.", metaDescription: "Drug and alcohol rehab in Providence, RI. Find addiction treatment." },
-      { name: "Newport", slug: "newport", population: 24697, description: "Newport offers upscale treatment in a coastal setting.", metaDescription: "Addiction treatment in Newport, RI. Browse rehab facilities." },
+      { name: "Warwick", slug: "warwick", population: 82823, description: "Warwick provides accessible treatment in Kent County.", metaDescription: "Addiction treatment in Warwick, RI. Browse rehab facilities." },
+      { name: "Cranston", slug: "cranston", population: 82934, description: "Cranston offers treatment in the Providence metro.", metaDescription: "Drug rehab in Cranston, RI. Find addiction treatment centers." },
+      { name: "Pawtucket", slug: "pawtucket", population: 75604, description: "Pawtucket provides treatment near Providence.", metaDescription: "Rehab centers in Pawtucket, RI. Find drug treatment." },
+      { name: "East Providence", slug: "east-providence", population: 47139, description: "East Providence offers accessible treatment options.", metaDescription: "Addiction treatment in East Providence, RI. Browse rehab facilities." },
     ],
   },
   {
@@ -569,8 +635,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Charleston", slug: "charleston", population: 150227, description: "Charleston offers treatment in a historic coastal setting.", metaDescription: "Drug and alcohol rehab in Charleston, SC. Find addiction treatment." },
       { name: "Columbia", slug: "columbia", population: 131674, description: "Columbia provides treatment as the state capital.", metaDescription: "Addiction treatment in Columbia, SC. Browse rehab facilities." },
+      { name: "North Charleston", slug: "north-charleston", population: 114852, description: "North Charleston offers accessible Lowcountry treatment.", metaDescription: "Drug rehab in North Charleston, SC. Find addiction treatment." },
+      { name: "Mount Pleasant", slug: "mount-pleasant", population: 92530, description: "Mount Pleasant provides upscale Charleston-area treatment.", metaDescription: "Rehab centers in Mount Pleasant, SC. Find drug treatment." },
       { name: "Greenville", slug: "greenville", population: 72095, description: "Greenville offers treatment in the upstate region.", metaDescription: "Rehab centers in Greenville, SC. Find drug treatment near you." },
-      { name: "Myrtle Beach", slug: "myrtle-beach", population: 35682, description: "Myrtle Beach provides beach-adjacent recovery programs.", metaDescription: "Drug rehab in Myrtle Beach, SC. Find coastal treatment centers." },
     ],
   },
   {
@@ -582,6 +649,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Sioux Falls", slug: "sioux-falls", population: 192517, description: "Sioux Falls has the most treatment options in South Dakota.", metaDescription: "Drug rehab in Sioux Falls, SD. Find addiction treatment centers." },
       { name: "Rapid City", slug: "rapid-city", population: 74703, description: "Rapid City offers treatment near the Black Hills.", metaDescription: "Addiction treatment in Rapid City, SD. Browse rehab facilities." },
+      { name: "Aberdeen", slug: "aberdeen", population: 28324, description: "Aberdeen provides treatment in northeastern South Dakota.", metaDescription: "Drug rehab in Aberdeen, SD. Find addiction treatment." },
+      { name: "Brookings", slug: "brookings", population: 24194, description: "Brookings offers treatment in eastern South Dakota.", metaDescription: "Rehab centers in Brookings, SD. Find drug treatment." },
+      { name: "Watertown", slug: "watertown", population: 22655, description: "Watertown provides accessible treatment options.", metaDescription: "Addiction treatment in Watertown, SD. Browse rehab facilities." },
     ],
   },
   {
@@ -631,8 +701,10 @@ export const statesData: StateData[] = [
     metaDescription: "Find drug and alcohol rehab centers in Utah. Browse wilderness therapy and evidence-based programs.",
     cities: [
       { name: "Salt Lake City", slug: "salt-lake-city", population: 199723, description: "Salt Lake City offers diverse treatment as Utah's capital.", metaDescription: "Drug and alcohol rehab in Salt Lake City, UT. Find addiction treatment." },
+      { name: "West Valley City", slug: "west-valley-city", population: 140230, description: "West Valley City provides accessible Salt Lake area treatment.", metaDescription: "Addiction treatment in West Valley City, UT. Browse rehab facilities." },
       { name: "Provo", slug: "provo", population: 115162, description: "Provo provides quality treatment in Utah Valley.", metaDescription: "Addiction treatment in Provo, UT. Browse rehab facilities." },
-      { name: "Park City", slug: "park-city", population: 8485, description: "Park City offers luxury mountain retreat treatment.", metaDescription: "Luxury rehab in Park City, UT. Find premier treatment centers." },
+      { name: "West Jordan", slug: "west-jordan", population: 116961, description: "West Jordan offers treatment in Salt Lake County.", metaDescription: "Drug rehab in West Jordan, UT. Find addiction treatment centers." },
+      { name: "Orem", slug: "orem", population: 97499, description: "Orem provides treatment in Utah Valley.", metaDescription: "Rehab centers in Orem, UT. Find drug treatment near you." },
     ],
   },
   {
@@ -643,6 +715,9 @@ export const statesData: StateData[] = [
     metaDescription: "Find rehab centers in Vermont. Browse serene addiction treatment facilities.",
     cities: [
       { name: "Burlington", slug: "burlington", population: 45445, description: "Burlington has the most treatment options in Vermont.", metaDescription: "Drug rehab in Burlington, VT. Find addiction treatment centers." },
+      { name: "South Burlington", slug: "south-burlington", population: 20292, description: "South Burlington provides accessible treatment.", metaDescription: "Addiction treatment in South Burlington, VT. Browse rehab facilities." },
+      { name: "Rutland", slug: "rutland", population: 15807, description: "Rutland offers treatment in central Vermont.", metaDescription: "Drug rehab in Rutland, VT. Find addiction treatment." },
+      { name: "Barre", slug: "barre", population: 8491, description: "Barre provides treatment in central Vermont.", metaDescription: "Rehab centers in Barre, VT. Find drug treatment." },
       { name: "Montpelier", slug: "montpelier", population: 8074, description: "Montpelier offers treatment as the state capital.", metaDescription: "Addiction treatment in Montpelier, VT. Browse rehab facilities." },
     ],
   },
@@ -685,6 +760,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Charleston", slug: "charleston", population: 48864, description: "Charleston has the most treatment options as the state capital.", metaDescription: "Drug and alcohol rehab in Charleston, WV. Find addiction treatment." },
       { name: "Huntington", slug: "huntington", population: 46842, description: "Huntington provides treatment in the Tri-State area.", metaDescription: "Addiction treatment in Huntington, WV. Browse rehab facilities." },
+      { name: "Morgantown", slug: "morgantown", population: 30955, description: "Morgantown offers treatment near WVU.", metaDescription: "Drug rehab in Morgantown, WV. Find addiction treatment." },
+      { name: "Parkersburg", slug: "parkersburg", population: 29018, description: "Parkersburg provides treatment in the Mid-Ohio Valley.", metaDescription: "Rehab centers in Parkersburg, WV. Find drug treatment." },
+      { name: "Wheeling", slug: "wheeling", population: 27062, description: "Wheeling offers treatment in the Northern Panhandle.", metaDescription: "Addiction treatment in Wheeling, WV. Browse rehab facilities." },
     ],
   },
   {
@@ -697,6 +775,8 @@ export const statesData: StateData[] = [
       { name: "Milwaukee", slug: "milwaukee", population: 577222, description: "Milwaukee offers comprehensive treatment as Wisconsin's largest city.", metaDescription: "Drug and alcohol rehab in Milwaukee, WI. Find addiction treatment." },
       { name: "Madison", slug: "madison", population: 269840, description: "Madison provides research-backed treatment as the state capital.", metaDescription: "Addiction treatment in Madison, WI. Browse rehab facilities." },
       { name: "Green Bay", slug: "green-bay", population: 107395, description: "Green Bay offers accessible treatment in northeastern Wisconsin.", metaDescription: "Rehab centers in Green Bay, WI. Find drug treatment near you." },
+      { name: "Kenosha", slug: "kenosha", population: 99877, description: "Kenosha provides treatment in southeastern Wisconsin.", metaDescription: "Drug rehab in Kenosha, WI. Find addiction treatment centers." },
+      { name: "Racine", slug: "racine", population: 77816, description: "Racine offers accessible treatment south of Milwaukee.", metaDescription: "Addiction treatment in Racine, WI. Browse rehab facilities." },
     ],
   },
   {
@@ -708,6 +788,9 @@ export const statesData: StateData[] = [
     cities: [
       { name: "Cheyenne", slug: "cheyenne", population: 65132, description: "Cheyenne has the most treatment options as the state capital.", metaDescription: "Drug rehab in Cheyenne, WY. Find addiction treatment centers." },
       { name: "Casper", slug: "casper", population: 58610, description: "Casper offers treatment in central Wyoming.", metaDescription: "Addiction treatment in Casper, WY. Browse rehab facilities." },
+      { name: "Laramie", slug: "laramie", population: 32158, description: "Laramie provides treatment near the University of Wyoming.", metaDescription: "Drug rehab in Laramie, WY. Find addiction treatment." },
+      { name: "Gillette", slug: "gillette", population: 33403, description: "Gillette offers treatment in northeastern Wyoming.", metaDescription: "Rehab centers in Gillette, WY. Find drug treatment." },
+      { name: "Rock Springs", slug: "rock-springs", population: 23319, description: "Rock Springs provides treatment in southwestern Wyoming.", metaDescription: "Addiction treatment in Rock Springs, WY. Browse rehab facilities." },
     ],
   },
 ];
