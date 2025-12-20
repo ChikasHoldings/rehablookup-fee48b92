@@ -215,6 +215,49 @@ const TreatmentTypes = () => {
         title="Types of Addiction Treatment Programs | Find the Right Care"
         description="Explore addiction treatment options: detox, inpatient rehab, outpatient programs, dual diagnosis, MAT, holistic therapy, and specialized programs. Find verified treatment centers."
         canonical="/treatment-types"
+        keywords={[
+          "types of addiction treatment",
+          "inpatient vs outpatient rehab",
+          "detox programs",
+          "dual diagnosis treatment",
+          "alcohol rehabilitation",
+          "drug treatment programs",
+          "holistic addiction therapy",
+          "medication assisted treatment"
+        ]}
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: "Types of Addiction Treatment Programs",
+            description: "Comprehensive guide to addiction treatment options including detox, inpatient, outpatient, and specialized programs",
+            url: "https://rehablookup.com/treatment-types",
+            mainEntity: {
+              "@type": "ItemList",
+              name: "Treatment Program Types",
+              numberOfItems: primaryTreatments.length + substanceTreatments.length,
+              itemListElement: [...primaryTreatments, ...substanceTreatments].map((t, i) => ({
+                "@type": "ListItem",
+                position: i + 1,
+                name: t.title,
+                description: t.description,
+                url: `https://rehablookup.com${t.link}`,
+              })),
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "MedicalWebPage",
+            name: "Addiction Treatment Types Guide",
+            specialty: "Addiction Medicine",
+            about: [
+              { "@type": "MedicalTherapy", name: "Detoxification" },
+              { "@type": "MedicalTherapy", name: "Inpatient Rehabilitation" },
+              { "@type": "MedicalTherapy", name: "Outpatient Treatment" },
+              { "@type": "MedicalTherapy", name: "Dual Diagnosis Treatment" },
+            ],
+          },
+        ]}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Treatment Types", url: "/treatment-types" },

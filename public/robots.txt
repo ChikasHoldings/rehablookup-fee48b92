@@ -1,21 +1,34 @@
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2025-12-20
 
+# Google Search
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 1
 
+# Google Images
+User-agent: Googlebot-Image
+Allow: /
+Allow: /og-image.jpg
+Allow: /logo.svg
+Allow: /insurance-logos/
+
+# Bing
 User-agent: Bingbot
 Allow: /
 Crawl-delay: 1
 
+# Yahoo
 User-agent: Slurp
 Allow: /
 Crawl-delay: 2
 
+# DuckDuckGo
 User-agent: DuckDuckBot
 Allow: /
 
+# Social Media Crawlers - Allow for rich previews
 User-agent: Twitterbot
 Allow: /
 
@@ -25,24 +38,79 @@ Allow: /
 User-agent: LinkedInBot
 Allow: /
 
+User-agent: Pinterest
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+# Apple
 User-agent: Applebot
 Allow: /
 
+# Yandex
+User-agent: Yandex
+Allow: /
+Crawl-delay: 2
+
+# Baidu
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 2
+
+# SEO Tools - Allow for monitoring
+User-agent: SemrushBot
+Allow: /
+
+User-agent: AhrefsBot
+Allow: /
+Crawl-delay: 5
+
+User-agent: MJ12bot
+Allow: /
+Crawl-delay: 5
+
+# Default for all other bots
 User-agent: *
 Allow: /
 Crawl-delay: 2
 
-# Disallow admin and provider panel from indexing
+# Disallow admin panel from all crawlers
 Disallow: /admin
+Disallow: /admin/
 Disallow: /admin/*
+
+# Disallow provider dashboard from all crawlers
+Disallow: /provider/
 Disallow: /provider/*
+
+# Disallow authentication pages
 Disallow: /provider-login
 Disallow: /provider-signup
 Disallow: /provider-forgot-password
 Disallow: /provider-reset-password
+Disallow: /admin-login
 
-# Sitemap location
+# Disallow internal API endpoints and edge functions
+Disallow: /api/
+Disallow: /.netlify/
+Disallow: /_next/
+
+# Disallow query parameters that create duplicate content
+Disallow: /*?*source=
+Disallow: /*?*utm_
+Disallow: /*?*ref=
+Disallow: /*?*fbclid=
+Disallow: /*?*gclid=
+
+# Allow search results with location parameter
+Allow: /search-results?location=
+
+# Sitemap locations
 Sitemap: https://rehablookup.com/sitemap.xml
 
-# Host
+# Host directive
 Host: https://rehablookup.com
+
+# Clean URLs directive for Google
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&fbclid&gclid&ref

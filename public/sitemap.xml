@@ -1,101 +1,435 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   
-  <!-- Homepage -->
+  <!-- Homepage - Highest Priority -->
   <url>
     <loc>https://rehablookup.com/</loc>
-    <lastmod>2025-12-16</lastmod>
+    <lastmod>2025-12-20</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://rehablookup.com/og-image.jpg</image:loc>
+      <image:title>RehabLookup - Find Addiction Treatment Centers</image:title>
+    </image:image>
   </url>
   
-  <!-- Find Rehab Centers - Main Search Page -->
+  <!-- Primary Navigation Pages -->
   <url>
     <loc>https://rehablookup.com/rehab-centers</loc>
-    <lastmod>2025-12-16</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/search-results</loc>
+    <lastmod>2025-12-20</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
-  <!-- Request Help Form -->
   <url>
     <loc>https://rehablookup.com/request-help</loc>
-    <lastmod>2025-12-16</lastmod>
+    <lastmod>2025-12-20</lastmod>
     <changefreq>monthly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/locations</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
-  <!-- About Page -->
-  <url>
-    <loc>https://rehablookup.com/about</loc>
-    <lastmod>2025-12-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <!-- How It Works -->
-  <url>
-    <loc>https://rehablookup.com/how-it-works</loc>
-    <lastmod>2025-12-16</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <!-- Treatment Types -->
+  <!-- Treatment Types - High Priority Content -->
   <url>
     <loc>https://rehablookup.com/treatment-types</loc>
-    <lastmod>2025-12-16</lastmod>
-    <changefreq>monthly</changefreq>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/detox-programs</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/residential-inpatient</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/outpatient-programs</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/drug-addiction</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/alcohol-rehabilitation</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/dual-diagnosis-treatment</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/holistic-therapy</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   
-  <!-- FAQ -->
+  <!-- Insurance & Cost Tools -->
+  <url>
+    <loc>https://rehablookup.com/insurance</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/cost-estimator</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Resources & Educational Content -->
+  <url>
+    <loc>https://rehablookup.com/resources</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/how-it-works</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  
   <url>
     <loc>https://rehablookup.com/faq</loc>
-    <lastmod>2025-12-16</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  
+  <!-- Company Pages -->
+  <url>
+    <loc>https://rehablookup.com/about</loc>
+    <lastmod>2025-12-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
-  <!-- Resources -->
   <url>
-    <loc>https://rehablookup.com/resources</loc>
-    <lastmod>2025-12-16</lastmod>
+    <loc>https://rehablookup.com/contact</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Provider Pages -->
+  <url>
+    <loc>https://rehablookup.com/for-providers</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/provider-resources</loc>
+    <lastmod>2025-12-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- Contact -->
   <url>
-    <loc>https://rehablookup.com/contact</loc>
-    <lastmod>2025-12-16</lastmod>
+    <loc>https://rehablookup.com/provider-faq</loc>
+    <lastmod>2025-12-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
-  <!-- For Providers -->
+  <!-- Top State Pages - High Priority Location Content -->
   <url>
-    <loc>https://rehablookup.com/for-providers</loc>
-    <lastmod>2025-12-16</lastmod>
+    <loc>https://rehablookup.com/rehab-centers/california</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/florida</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/texas</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/new-york</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/arizona</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/colorado</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/illinois</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/pennsylvania</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/ohio</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/georgia</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/new-jersey</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/massachusetts</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/washington</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/michigan</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/virginia</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Top City Pages -->
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/california/los-angeles</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/california/san-diego</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/florida/miami</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/texas/houston</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/texas/dallas</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/arizona/phoenix</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/arizona/scottsdale</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/colorado/denver</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/rehab-centers/new-york/new-york-city</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- State-specific Treatment Type Pages -->
+  <url>
+    <loc>https://rehablookup.com/treatment-types/detox-programs/california</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/detox-programs/florida</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/residential-inpatient/california</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/residential-inpatient/florida</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/outpatient-programs/california</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/outpatient-programs/florida</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/dual-diagnosis-treatment/california</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://rehablookup.com/treatment-types/dual-diagnosis-treatment/florida</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Landing Pages -->
+  <url>
+    <loc>https://rehablookup.com/lp/treatment</loc>
+    <lastmod>2025-12-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- Privacy Policy -->
+  <url>
+    <loc>https://rehablookup.com/lp/social</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Legal Pages - Lower Priority -->
   <url>
     <loc>https://rehablookup.com/privacy-policy</loc>
-    <lastmod>2025-12-16</lastmod>
+    <lastmod>2025-12-20</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   
-  <!-- Terms of Service -->
   <url>
     <loc>https://rehablookup.com/terms-of-service</loc>
-    <lastmod>2025-12-16</lastmod>
+    <lastmod>2025-12-20</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
