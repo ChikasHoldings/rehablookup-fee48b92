@@ -219,8 +219,8 @@ const RehabCenters = () => {
       <section className="relative border-b border-primary/20 bg-gradient-to-b from-primary via-primary/95 to-primary/85 py-6 md:py-8">
         <MedicalPatternBackground />
         <div className="container relative z-10">
-          <div className="mb-5 max-w-2xl">
-            <h1 className="font-display text-xl font-bold tracking-tight text-white md:text-2xl">
+          <div className="mb-5 text-center">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl">
               Find Treatment Centers
             </h1>
             <p className="mt-1.5 text-white/75 text-sm">
