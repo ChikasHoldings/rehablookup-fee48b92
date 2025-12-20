@@ -22,7 +22,7 @@ export function SearchForm({
   initialTreatmentType = "",
   initialInsurance = "",
   onSearchComplete,
-  targetPath = "/rehab-centers"
+  targetPath = "/search-results"
 }: SearchFormProps) {
   const navigate = useNavigate();
   const [location, setLocation] = useState(initialLocation);

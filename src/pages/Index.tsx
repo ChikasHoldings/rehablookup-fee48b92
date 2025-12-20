@@ -87,37 +87,37 @@ const treatmentOptions = [
     icon: Pill,
     title: "Drug Addiction",
     description: "Evidence-based programs for substance abuse including opioids, stimulants, and more.",
-    link: "/rehab-centers?type=drug",
+    link: "/search-results?type=drug",
   },
   {
     icon: Activity,
     title: "Alcohol Treatment",
     description: "Medically supervised detox and long-term recovery programs for alcohol dependence.",
-    link: "/rehab-centers?type=alcohol",
+    link: "/search-results?type=alcohol",
   },
   {
     icon: Brain,
     title: "Mental Health",
     description: "Dual diagnosis treatment addressing addiction alongside anxiety, depression, and PTSD.",
-    link: "/rehab-centers?type=mental-health",
+    link: "/search-results?type=mental-health",
   },
   {
     icon: Home,
     title: "Residential Rehab",
     description: "24/7 inpatient care in a structured, supportive environment for focused recovery.",
-    link: "/rehab-centers?type=residential",
+    link: "/search-results?type=residential",
   },
   {
     icon: Stethoscope,
     title: "Outpatient Programs",
     description: "Flexible treatment options that allow you to maintain work and family commitments.",
-    link: "/rehab-centers?type=outpatient",
+    link: "/search-results?type=outpatient",
   },
   {
     icon: Sparkles,
     title: "Holistic Therapy",
     description: "Complementary approaches including yoga, meditation, art therapy, and nutrition.",
-    link: "/rehab-centers?type=holistic",
+    link: "/search-results?type=holistic",
   },
 ];
 
