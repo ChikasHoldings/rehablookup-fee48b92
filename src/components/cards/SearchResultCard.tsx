@@ -141,6 +141,7 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
                   decoding="async"
+                  fetchPriority="auto"
                   onError={() => setHeroImageError(true)}
                 />
                 {/* Subtle overlay for text readability */}

@@ -147,6 +147,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
               decoding="async"
+              fetchPriority="auto"
               onError={() => setHeroImageError(true)}
             />
           ) : (
@@ -299,6 +300,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
               decoding="async"
+              fetchPriority="auto"
               onError={() => setHeroImageError(true)}
             />
             {/* Gradient overlay */}
