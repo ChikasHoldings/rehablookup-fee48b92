@@ -19,6 +19,27 @@ const prefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/profile": () => import("@/pages/admin/AdminProfile"),
 };
 
+// Adjacent pages to prefetch based on current page (ordered by priority)
+const adjacentPagesMap: Record<string, string[]> = {
+  "/admin": ["/admin/analytics", "/admin/providers", "/admin/leads"],
+  "/admin/dashboard": ["/admin/analytics", "/admin/providers", "/admin/leads"],
+  "/admin/analytics": ["/admin", "/admin/providers", "/admin/leads"],
+  "/admin/providers": ["/admin", "/admin/leads", "/admin/subscriptions"],
+  "/admin/leads": ["/admin/providers", "/admin/lead-routing", "/admin"],
+  "/admin/lead-routing": ["/admin/leads", "/admin/providers"],
+  "/admin/subscriptions": ["/admin/providers", "/admin/featured", "/admin"],
+  "/admin/featured": ["/admin/subscriptions", "/admin/providers"],
+  "/admin/credentials": ["/admin/providers", "/admin/flagged-images"],
+  "/admin/flagged-images": ["/admin/credentials", "/admin/providers"],
+  "/admin/users": ["/admin/audit-log", "/admin/security-logs", "/admin"],
+  "/admin/audit-log": ["/admin/users", "/admin/security-logs"],
+  "/admin/security-logs": ["/admin/users", "/admin/audit-log"],
+  "/admin/location-changes": ["/admin/providers", "/admin/credentials"],
+  "/admin/settings": ["/admin/profile", "/admin"],
+  "/admin/notifications": ["/admin", "/admin/settings"],
+  "/admin/profile": ["/admin/settings", "/admin"],
+};
+
 // Track already prefetched routes to avoid duplicate fetches
 const prefetchedRoutes = new Set<string>();
 
@@ -37,4 +58,17 @@ export function prefetchAdminPage(path: string): void {
       });
     });
   }
+}
+
+// Prefetch adjacent pages when landing on a page
+export function prefetchAdjacentPages(currentPath: string): void {
+  const adjacentPages = adjacentPagesMap[currentPath];
+  if (!adjacentPages) return;
+
+  // Stagger prefetching to avoid blocking the main thread
+  adjacentPages.forEach((path, index) => {
+    setTimeout(() => {
+      prefetchAdminPage(path);
+    }, 100 + index * 150); // Start after 100ms, then stagger by 150ms
+  });
 }
