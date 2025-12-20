@@ -94,7 +94,7 @@ export function Header({
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <img 
-              src={variant === "provider" ? "/logo-dark.svg" : "/logo.svg"}
+              src={variant === "provider" ? "/logo-dark.svg?v=2" : "/logo.svg?v=2"}
               alt="RehabLookup" 
               className="h-8 md:h-10 w-auto"
               loading="eager"
