@@ -744,29 +744,32 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Banner */}
-      <section className="py-12 md:py-16 bg-muted/40 border-t border-border/50">
+      {/* CTA Section */}
+      <section className="py-14 md:py-20">
         <div className="container">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
-              Ready to Find Help?
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Take the first step toward recovery today.
-            </p>
-            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/rehab-centers">
-                <Button size="lg" className="gap-2 min-w-[180px]">
-                  Find Treatment
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/request-help?source=cta_bottom">
-                <Button variant="outline" size="lg" className="gap-2 min-w-[180px]">
-                  <Phone className="h-4 w-4" />
-                  Get a Callback
-                </Button>
-              </Link>
+          <div className="mx-auto max-w-3xl">
+            {/* Main CTA Card */}
+            <div className="rounded-xl border border-border bg-card p-8 md:p-10 text-center">
+              <h2 className="font-display text-xl font-semibold text-foreground md:text-2xl">
+                Start Your Recovery Journey
+              </h2>
+              <p className="mt-2 text-muted-foreground text-sm md:text-base max-w-md mx-auto">
+                Connect with verified treatment centers or list your facility in our directory.
+              </p>
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link to="/request-help?source=cta_bottom">
+                  <Button size="lg" className="gap-2 min-w-[180px]">
+                    <Heart className="h-4 w-4" />
+                    Get Help Now
+                  </Button>
+                </Link>
+                <Link to="/for-providers">
+                  <Button variant="outline" size="lg" className="gap-2 min-w-[180px]">
+                    List Your Facility
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
