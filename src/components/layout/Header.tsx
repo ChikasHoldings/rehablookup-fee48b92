@@ -90,7 +90,7 @@ export function Header({
           ? "bg-primary border-primary/20" 
           : "bg-background/95 backdrop-blur-sm border-border"
       )}>
-        <div className="container flex h-14 items-center justify-between">
+        <div className="container flex h-14 md:h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <img 
@@ -116,7 +116,7 @@ export function Header({
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    className="px-3.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
                   </a>
@@ -128,7 +128,7 @@ export function Header({
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    "px-3 py-1.5 text-sm font-medium transition-colors",
+                    "px-3.5 py-2 text-sm font-medium transition-colors",
                     variant === "provider" ? (
                       isActive
                         ? "text-white"
