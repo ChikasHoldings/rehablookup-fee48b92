@@ -756,16 +756,15 @@ export default function Insurance() {
               Search our directory for verified treatment facilities and filter by insurance accepted.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/rehab-centers">
+              <Link to="/cost-estimator">
                 <Button size="lg" variant="secondary" className="gap-2 font-semibold">
-                  Browse Treatment Centers
+                  Estimate Your Costs
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/request-help?source=insurance">
+              <Link to="/rehab-centers">
                 <Button size="lg" variant="outline" className="gap-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
-                  <Heart className="h-4 w-4" />
-                  Get Free Help
+                  Browse Treatment Centers
                 </Button>
               </Link>
             </div>
