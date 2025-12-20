@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LeadIntakeFormData, initialLeadIntakeFormData, TOTAL_STEPS } from "./types";
+import { analytics } from "@/lib/analytics";
 
 const STORAGE_KEY = "lead_intake_form_data";
 const STORAGE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
@@ -78,6 +79,7 @@ export function useLeadIntakeForm() {
     if (!hasTrackedPageView.current) {
       hasTrackedPageView.current = true;
       trackAnalytics("page_view", { facilityId, source });
+      analytics.leadFormStart();
     }
   }, [facilityId, source]);
   
@@ -119,8 +121,10 @@ export function useLeadIntakeForm() {
   
   const nextStep = useCallback(() => {
     if (currentStep < TOTAL_STEPS) {
-      setCurrentStep(prev => prev + 1);
+      const nextStepNum = currentStep + 1;
+      setCurrentStep(nextStepNum);
       trackAnalytics("step_complete", { step: currentStep });
+      analytics.leadFormStep(nextStepNum, `Step ${nextStepNum}`);
     }
   }, [currentStep]);
   
@@ -279,6 +283,8 @@ export function useLeadIntakeForm() {
       localStorage.removeItem(STORAGE_KEY);
       
       trackAnalytics("form_submit_success");
+      analytics.leadFormComplete(source);
+      analytics.formSubmit("lead_intake", true);
       setIsSubmitted(true);
       
     } catch (error: any) {

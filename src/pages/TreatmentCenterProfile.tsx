@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { analytics } from "@/lib/analytics";
 import {
   MapPin,
   Phone,
@@ -51,6 +52,11 @@ const TreatmentCenterProfile = () => {
           body: { facility_id: id }
         });
         setHasTrackedView(true);
+        
+        // Track in GA
+        if (staticCenter?.name) {
+          analytics.facilityView(id, staticCenter.name);
+        }
       } catch (error) {
         console.error('Failed to track view:', error);
       }

@@ -7,6 +7,7 @@ import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggesti
 import { MultiSelectDropdown } from "./MultiSelectDropdown";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
+import { analytics } from "@/lib/analytics";
 interface SearchFormProps {
   variant?: "hero" | "compact" | "compact-hero" | "directory";
   initialLocation?: string;
@@ -134,6 +135,10 @@ export function SearchForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
+    
+    // Track search in GA
+    analytics.search(location || "all locations");
+    
     const params = new URLSearchParams();
     if (location) params.set("location", location);
     if (selectedTreatmentTypes.length > 0) params.set("treatment", selectedTreatmentTypes.join(","));

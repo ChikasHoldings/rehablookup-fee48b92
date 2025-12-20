@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { analytics } from "@/lib/analytics";
 
 export interface NavLink {
   href: string;
@@ -182,7 +183,11 @@ export function Header({
                 )}
               </>
             ) : (
-              <PrefetchLink to={ctaLink} className="hidden sm:block">
+              <PrefetchLink 
+                to={ctaLink} 
+                className="hidden sm:block"
+                onClick={() => analytics.ctaClick(ctaLabel, "header")}
+              >
                 <Button size="sm" className="h-8 text-sm gap-1.5">
                   <Heart className="h-3.5 w-3.5" />
                   {ctaLabel}
