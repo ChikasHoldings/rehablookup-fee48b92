@@ -337,13 +337,13 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
           </div>
         )}
         
-        {/* Bottom overlay with logo and location */}
+        {/* Bottom overlay with logo, name, and location stacked */}
         <div className="absolute bottom-0 left-0 right-0 p-3">
-          <div className="flex items-end justify-between gap-3">
+          <div className="flex items-center gap-3">
             {/* Logo */}
             <div 
               className={cn(
-                "h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 border-card bg-card shadow-lg",
+                "h-12 w-12 shrink-0 overflow-hidden rounded-lg border-2 border-white/90 bg-card shadow-lg",
                 showFeaturedBadge && "ring-2 ring-amber-400/50"
               )}
             >
@@ -373,13 +373,15 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               )}
             </div>
             
-            {/* Location pill */}
-            <div className="flex items-center gap-1.5 rounded-full bg-card/95 backdrop-blur-sm px-3 py-1.5 shadow-lg">
-              <MapPin className={cn(
-                "h-3.5 w-3.5",
-                showFeaturedBadge ? "text-amber-500" : "text-primary"
-              )} />
-              <span className="text-xs font-semibold text-foreground">{center.city}, {center.state}</span>
+            {/* Name and Location stacked */}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display text-sm font-bold text-white leading-tight line-clamp-1 drop-shadow-md">
+                {center.name}
+              </h3>
+              <div className="flex items-center gap-1 mt-0.5">
+                <MapPin className="h-3 w-3 text-white/80 shrink-0" />
+                <span className="text-xs text-white/90 font-medium truncate">{center.city}, {center.state}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -387,15 +389,6 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
 
       {/* Card Content */}
       <div className="flex flex-1 flex-col p-4">
-        {/* Name */}
-        <h3 className={cn(
-          "font-display text-base font-bold leading-snug line-clamp-2 mb-3 transition-colors duration-200",
-          showFeaturedBadge 
-            ? "group-hover:text-amber-700" 
-            : "group-hover:text-primary"
-        )}>
-          {center.name}
-        </h3>
 
         {/* Badge row - perfectly aligned */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
