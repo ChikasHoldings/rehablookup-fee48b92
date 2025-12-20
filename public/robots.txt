@@ -1,25 +1,58 @@
 # robots.txt for RehabLookup
 # https://rehablookup.com
 # Last updated: 2025-12-20
+# 
+# This file controls how search engines crawl and index our website.
+# For more info: https://developers.google.com/search/docs/crawling-indexing/robots/intro
 
-# Google Search
+# =============================================================================
+# MAJOR SEARCH ENGINES
+# =============================================================================
+
+# Google Search (primary crawler)
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 1
 
-# Google Images
+# Google Images - Allow all public images
 User-agent: Googlebot-Image
 Allow: /
 Allow: /og-image.jpg
 Allow: /logo.svg
+Allow: /logo-dark.svg
+Allow: /favicon.svg
 Allow: /insurance-logos/
+Allow: /src/assets/
+
+# Google Video
+User-agent: Googlebot-Video
+Allow: /
+
+# Google News
+User-agent: Googlebot-News
+Allow: /resources
+Allow: /resources/*
+
+# Google AdSense
+User-agent: Mediapartners-Google
+Allow: /
+
+# Google AdsBot (for landing page quality)
+User-agent: AdsBot-Google
+Allow: /
+Disallow: /admin
+Disallow: /provider
 
 # Bing
 User-agent: Bingbot
 Allow: /
 Crawl-delay: 1
 
-# Yahoo
+# Bing Preview
+User-agent: BingPreview
+Allow: /
+
+# Yahoo / Verizon Media
 User-agent: Slurp
 Allow: /
 Crawl-delay: 2
@@ -28,7 +61,34 @@ Crawl-delay: 2
 User-agent: DuckDuckBot
 Allow: /
 
-# Social Media Crawlers - Allow for rich previews
+# Apple Search
+User-agent: Applebot
+Allow: /
+
+# Yandex (Russia)
+User-agent: Yandex
+Allow: /
+Crawl-delay: 2
+
+# Baidu (China)
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 2
+
+# Sogou (China)
+User-agent: Sogou
+Allow: /
+Crawl-delay: 3
+
+# Naver (Korea)
+User-agent: Yeti
+Allow: /
+Crawl-delay: 2
+
+# =============================================================================
+# SOCIAL MEDIA CRAWLERS - Allow for rich previews and sharing
+# =============================================================================
+
 User-agent: Twitterbot
 Allow: /
 
@@ -41,26 +101,31 @@ Allow: /
 User-agent: Pinterest
 Allow: /
 
+User-agent: Pinterestbot
+Allow: /
+
 User-agent: WhatsApp
 Allow: /
 
-# Apple
-User-agent: Applebot
+User-agent: Slackbot
 Allow: /
 
-# Yandex
-User-agent: Yandex
+User-agent: Discordbot
 Allow: /
-Crawl-delay: 2
 
-# Baidu
-User-agent: Baiduspider
+User-agent: TelegramBot
 Allow: /
-Crawl-delay: 2
 
-# SEO Tools - Allow for monitoring
+User-agent: Snapchat
+Allow: /
+
+# =============================================================================
+# SEO & ANALYTICS TOOLS - Allow for monitoring
+# =============================================================================
+
 User-agent: SemrushBot
 Allow: /
+Crawl-delay: 5
 
 User-agent: AhrefsBot
 Allow: /
@@ -70,52 +135,166 @@ User-agent: MJ12bot
 Allow: /
 Crawl-delay: 5
 
-# Default for all other bots
+User-agent: DotBot
+Allow: /
+Crawl-delay: 5
+
+User-agent: rogerbot
+Allow: /
+Crawl-delay: 5
+
+User-agent: Screaming Frog SEO Spider
+Allow: /
+
+# =============================================================================
+# AI & RESEARCH CRAWLERS
+# =============================================================================
+
+# OpenAI GPTBot - Allow for potential AI features
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+Disallow: /provider
+
+# Anthropic Claude
+User-agent: anthropic-ai
+Allow: /
+Disallow: /admin
+Disallow: /provider
+
+# Google Bard / Gemini
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin
+Disallow: /provider
+
+# Common Crawl (for research)
+User-agent: CCBot
+Allow: /
+Crawl-delay: 10
+
+# =============================================================================
+# DEFAULT RULES FOR ALL OTHER BOTS
+# =============================================================================
+
 User-agent: *
 Allow: /
 Crawl-delay: 2
 
-# Disallow admin panel from all crawlers
+# -----------------------------------------------------------------------------
+# BLOCKED PATHS (Applied to all user-agents above)
+# -----------------------------------------------------------------------------
+
+# Admin panel - strictly private
 Disallow: /admin
 Disallow: /admin/
 Disallow: /admin/*
 
-# Disallow provider dashboard from all crawlers
+# Provider dashboard - requires authentication
 Disallow: /provider/
 Disallow: /provider/*
 
-# Disallow authentication pages
+# Authentication pages - no value to index
 Disallow: /provider-login
 Disallow: /provider-signup
 Disallow: /provider-forgot-password
 Disallow: /provider-reset-password
 Disallow: /admin-login
 
-# Disallow internal API endpoints and edge functions
+# Internal API endpoints
 Disallow: /api/
 Disallow: /.netlify/
 Disallow: /_next/
+Disallow: /functions/
 
-# Disallow query parameters that create duplicate content
+# Temporary and development files
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /vite.config.*
+Disallow: /tsconfig.*
+Disallow: /node_modules/
+
+# Query parameters that create duplicate content
 Disallow: /*?*source=
-Disallow: /*?*utm_
+Disallow: /*?*utm_source=
+Disallow: /*?*utm_medium=
+Disallow: /*?*utm_campaign=
+Disallow: /*?*utm_term=
+Disallow: /*?*utm_content=
 Disallow: /*?*ref=
 Disallow: /*?*fbclid=
 Disallow: /*?*gclid=
+Disallow: /*?*msclkid=
+Disallow: /*?*_ga=
+Disallow: /*?*mc_cid=
+Disallow: /*?*mc_eid=
 
-# Allow search results with location parameter
+# -----------------------------------------------------------------------------
+# EXPLICITLY ALLOWED PATHS
+# -----------------------------------------------------------------------------
+
+# Search results with valid location queries
 Allow: /search-results?location=
+Allow: /rehab-centers?location=
 
-# Explicitly allow facility profile pages
+# Facility profile pages (dynamic content)
 Allow: /center/
 Allow: /center/*
 
-# Sitemap locations
+# Treatment center profiles
+Allow: /treatment-center/
+Allow: /treatment-center/*
+
+# All location pages
+Allow: /rehab-centers/
+Allow: /rehab-centers/*
+
+# Treatment types
+Allow: /treatment-types/
+Allow: /treatment-types/*
+
+# Near me landing pages
+Allow: /*-near-me
+Allow: /*-near-me/
+
+# Insurance pages
+Allow: /insurance/
+Allow: /insurance/*
+
+# Resources and articles
+Allow: /resources
+Allow: /resources/
+Allow: /resources/*
+
+# Static assets for rich results
+Allow: /og-image.jpg
+Allow: /logo.svg
+Allow: /logo-dark.svg
+Allow: /favicon.svg
+Allow: /favicon.ico
+Allow: /apple-touch-icon.png
+Allow: /sitemap.xml
+Allow: /sitemap-index.xml
+
+# =============================================================================
+# SITEMAPS
+# =============================================================================
+
+# Primary sitemap index
+Sitemap: https://rehablookup.com/sitemap-index.xml
+
+# Static pages sitemap
 Sitemap: https://rehablookup.com/sitemap.xml
+
+# Dynamic facility pages (generated by edge function)
 Sitemap: https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities
 
-# Host directive
+# =============================================================================
+# ADDITIONAL DIRECTIVES
+# =============================================================================
+
+# Canonical host
 Host: https://rehablookup.com
 
-# Clean URLs directive for Google
-Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&fbclid&gclid&ref
+# Clean URL parameters (Google-specific)
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&fbclid&gclid&msclkid&ref&_ga&mc_cid&mc_eid
