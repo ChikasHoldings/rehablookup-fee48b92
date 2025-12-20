@@ -361,7 +361,7 @@ const CityPage = () => {
                   Get Help Now
                 </Button>
               </Link>
-              <Link to={`/rehab-centers?location=${encodeURIComponent(fullLocation)}`}>
+              <Link to={`/search-results?location=${encodeURIComponent(fullLocation)}`}>
                 <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
                   <Search className="h-4 w-4" />
                   Search {cityData.name}

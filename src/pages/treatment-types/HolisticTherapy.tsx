@@ -189,7 +189,7 @@ const HolisticTherapy = () => {
                   Get Treatment Help
                 </Button>
               </Link>
-              <Link to="/rehab-centers?type=holistic">
+              <Link to="/search-results?type=holistic">
                 <Button size="lg" variant="outline" className="gap-2 border-white/30 text-primary-foreground hover:bg-white/10">
                   <Phone className="h-5 w-5" />
                   Find Holistic Centers
@@ -375,7 +375,7 @@ const HolisticTherapy = () => {
             ))}
           </div>
           <div className="mt-8 text-center">
-            <Link to="/rehab-centers?type=holistic">
+            <Link to="/search-results?type=holistic">
               <Button variant="outline" className="gap-2">
                 View All Holistic Centers
                 <ArrowRight className="h-4 w-4" />
