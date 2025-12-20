@@ -8,6 +8,8 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
+import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
+import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { 
   MapPin, 
   Building2, 
@@ -698,6 +700,22 @@ const StatePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Related Links for SEO */}
+      <RelatedLinksSection
+        title={`Related Resources for ${stateData.name}`}
+        treatmentLinks={[
+          { title: `Detox in ${stateData.name}`, href: `/treatment-types/detox-programs/${stateData.slug}` },
+          { title: `Inpatient Rehab in ${stateData.name}`, href: `/treatment-types/residential-inpatient/${stateData.slug}` },
+          { title: `Outpatient Programs in ${stateData.name}`, href: `/treatment-types/outpatient-programs/${stateData.slug}` },
+          { title: `Dual Diagnosis in ${stateData.name}`, href: `/treatment-types/dual-diagnosis-treatment/${stateData.slug}` },
+        ]}
+        locationLinks={nearbyStates.map(state => ({
+          title: `Rehab in ${state.name}`,
+          href: `/rehab-centers/${state.slug}`,
+        }))}
+        insuranceLinks={defaultInsuranceLinks.slice(0, 5)}
+      />
 
       {/* CTA Section */}
       <section className="py-16 md:py-20">
