@@ -566,7 +566,7 @@ const ForProviders = () => {
             <div className="flex items-center justify-center gap-2.5 py-2.5 relative">
               <Sparkles className="h-4 w-4 shrink-0 animate-pulse" />
               <p className="text-sm font-medium text-center">
-                <span className="font-bold">Limited Time:</span> Get 50% off your first 3 months
+                <span className="font-bold">Limited Time:</span> Get 20% off your first 3 months
                 <Link 
                   to="/provider-signup" 
                   className="ml-2 underline underline-offset-2 hover:no-underline font-semibold"
