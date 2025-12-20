@@ -8,9 +8,11 @@ import { useLeadIntakeForm } from "./useLeadIntakeForm";
 
 interface LeadIntakeFormProps {
   className?: string;
+  /** Custom success component to render after form submission */
+  renderSuccess?: (props: { firstName: string; facilityName?: string | null }) => React.ReactNode;
 }
 
-export function LeadIntakeForm({ className }: LeadIntakeFormProps) {
+export function LeadIntakeForm({ className, renderSuccess }: LeadIntakeFormProps) {
   const formSectionRef = useRef<HTMLDivElement>(null);
   
   const {
@@ -48,6 +50,9 @@ export function LeadIntakeForm({ className }: LeadIntakeFormProps) {
   }, [currentStep]);
 
   if (isSubmitted) {
+    if (renderSuccess) {
+      return <>{renderSuccess({ firstName: formData.firstName, facilityName })}</>;
+    }
     return <LeadIntakeSuccess facilityName={facilityName} firstName={formData.firstName} />;
   }
 

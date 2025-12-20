@@ -1,7 +1,19 @@
 import { useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Shield, Clock, Heart, CheckCircle } from "lucide-react";
+import { 
+  Shield, 
+  Clock, 
+  Heart, 
+  CheckCircle, 
+  MapPin, 
+  BookOpen, 
+  Phone, 
+  Building2, 
+  ArrowRight,
+  Sparkles
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { LazyVideoEmbed } from "@/components/ui/lazy-video-embed";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/logo.png";
@@ -19,6 +31,177 @@ interface UTMParams {
   utm_campaign: string | null;
   utm_term: string | null;
   utm_content: string | null;
+}
+
+// Recommended content cards for success page
+const RECOMMENDED_CONTENT = [
+  {
+    icon: Building2,
+    title: "Browse Treatment Centers",
+    description: "Explore verified rehab facilities near you with detailed profiles and amenities.",
+    href: "/rehab-centers",
+    color: "bg-blue-500/10 text-blue-600",
+  },
+  {
+    icon: MapPin,
+    title: "Find by Location",
+    description: "Search treatment options in your state or city for convenient access.",
+    href: "/locations",
+    color: "bg-emerald-500/10 text-emerald-600",
+  },
+  {
+    icon: BookOpen,
+    title: "Recovery Resources",
+    description: "Educational articles on treatment types, recovery stages, and what to expect.",
+    href: "/resources",
+    color: "bg-purple-500/10 text-purple-600",
+  },
+  {
+    icon: Shield,
+    title: "Insurance Information",
+    description: "Learn which insurance plans cover treatment and how to verify your benefits.",
+    href: "/insurance",
+    color: "bg-amber-500/10 text-amber-600",
+  },
+];
+
+// Custom success component for landing page
+function LandingSuccessView({ firstName }: { firstName: string }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 flex flex-col">
+      <Helmet>
+        <title>Thank You | RehabLookup</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      
+      {/* Minimal header */}
+      <header className="py-6 px-4">
+        <div className="max-w-3xl mx-auto">
+          <Link to="/">
+            <img src={logoImage} alt="RehabLookup" className="h-10" />
+          </Link>
+        </div>
+      </header>
+      
+      <main className="flex-1 px-4 py-8 md:py-12">
+        <div className="max-w-3xl mx-auto">
+          {/* Success Header */}
+          <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle className="w-10 h-10 text-green-600" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+              Thank You{firstName ? `, ${firstName}` : ""}!
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-md mx-auto">
+              Your request has been received. A treatment specialist will reach out within 24 hours using your preferred contact method.
+            </p>
+          </div>
+          
+          {/* What Happens Next */}
+          <div className="bg-card border border-border rounded-2xl p-6 md:p-8 mb-10 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-100">
+            <div className="flex items-center gap-2 mb-5">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <h2 className="font-semibold text-lg text-foreground">What happens next?</h2>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-primary">1</span>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground text-sm">Review</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">A verified specialist reviews your information</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-primary">2</span>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground text-sm">Contact</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">They reach out using your preferred method</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-primary">3</span>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground text-sm">Connect</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Discuss options and next steps together</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Emergency Notice */}
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-150">
+            <div className="flex items-center justify-center gap-2 text-amber-800">
+              <Phone className="w-4 h-4 shrink-0" />
+              <span className="text-sm font-medium">
+                If this is an emergency, please call 911 or SAMHSA: 1-800-662-4357
+              </span>
+            </div>
+          </div>
+          
+          {/* Recommended Content */}
+          <div className="animate-in fade-in slide-in-from-bottom-5 duration-500 delay-200">
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                Explore While You Wait
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Learn more about treatment options and recovery resources
+              </p>
+            </div>
+            
+            <div className="grid gap-4 sm:grid-cols-2">
+              {RECOMMENDED_CONTENT.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className="group flex items-start gap-4 p-5 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200"
+                >
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${item.color}`}>
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors">
+                        {item.title}
+                      </h3>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {item.description}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+          
+          {/* Return Home CTA */}
+          <div className="text-center mt-10 animate-in fade-in slide-in-from-bottom-6 duration-500 delay-300">
+            <Link to="/">
+              <Button variant="outline" size="lg" className="gap-2">
+                Return to Home
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </main>
+      
+      {/* Minimal footer */}
+      <footer className="py-6 px-4 border-t border-border/50 mt-auto">
+        <div className="max-w-3xl mx-auto text-center text-xs text-muted-foreground">
+          <p>© {new Date().getFullYear()} RehabLookup. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  );
 }
 
 export default function AdLanding() {
@@ -63,6 +246,13 @@ export default function AdLanding() {
     }
   };
   
+  // Custom success renderer that scrolls to top and shows landing-specific success
+  const renderSuccess = ({ firstName }: { firstName: string }) => {
+    // Scroll to top when showing success
+    window.scrollTo({ top: 0, behavior: "instant" });
+    return <LandingSuccessView firstName={firstName} />;
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 flex flex-col">
       <Helmet>
@@ -104,9 +294,9 @@ export default function AdLanding() {
             </p>
           </section>
           
-          {/* Lead Intake Form - Same as Get Help page */}
+          {/* Lead Intake Form with custom success */}
           <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
-            <LeadIntakeForm />
+            <LeadIntakeForm renderSuccess={renderSuccess} />
           </section>
           
           {/* Trust & Info Section */}
