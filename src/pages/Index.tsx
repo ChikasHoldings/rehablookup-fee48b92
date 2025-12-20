@@ -444,30 +444,40 @@ const Index = () => {
             </h2>
           </div>
 
-          {/* Options Grid - Clean card style */}
+          {/* Options Grid - Clean card style with micro-interactions */}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {treatmentOptions.map((option, index) => (
               <Link
                 key={option.title}
                 to={option.link}
                 className="group"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:bg-card/80">
-                  {/* Icon */}
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                    <option.icon className="h-5 w-5" />
+                <div className="relative flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 overflow-hidden">
+                  {/* Subtle background gradient on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  
+                  {/* Icon with scale and rotate */}
+                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-md">
+                    <option.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                  <div className="relative flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground transition-colors duration-200 group-hover:text-primary">
                       {option.title}
                     </h3>
-                    <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
+                    <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2 transition-colors duration-200 group-hover:text-muted-foreground/80">
                       {option.description}
                     </p>
                   </div>
                   
-                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-all group-hover:text-primary group-hover:translate-x-0.5 mt-1" />
+                  {/* Arrow with enhanced animation */}
+                  <div className="relative mt-1 flex items-center">
+                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
+                  </div>
+                  
+                  {/* Bottom accent line */}
+                  <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full" />
                 </div>
               </Link>
             ))}
