@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { 
@@ -11,7 +11,8 @@ import {
   ArrowLeft,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
+import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
+import { cn } from "@/lib/utils";
 
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
@@ -89,6 +92,11 @@ export default function AddLocationPage() {
   const [formData, setFormData] = useState<FacilityFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  
+  // Zipcode auto-detection
+  const { data: zipcodeData, isLoading: isLookingUp, error: lookupError, lookup } = useZipcodeLookup();
+  const [hasAutoFilled, setHasAutoFilled] = useState(false);
+  const [lookupTimeout, setLookupTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Get location limit based on plan
   const planKey = subscription?.plan || "basic";
@@ -99,6 +107,47 @@ export default function AddLocationPage() {
   const handleInputChange = (field: keyof FacilityFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  // Handle zipcode change with auto-detection
+  const handleZipcodeChange = useCallback((value: string) => {
+    const cleanValue = value.replace(/\D/g, "").slice(0, 5);
+    setFormData(prev => ({ ...prev, zip_code: cleanValue }));
+    setHasAutoFilled(false);
+
+    // Clear previous timeout
+    if (lookupTimeout) {
+      clearTimeout(lookupTimeout);
+    }
+
+    // Trigger lookup when 5 digits entered
+    if (cleanValue.length === 5) {
+      const timeout = setTimeout(() => {
+        lookup(cleanValue);
+      }, 300);
+      setLookupTimeout(timeout);
+    }
+  }, [lookup, lookupTimeout]);
+
+  // Auto-fill city and state when zipcode data is available
+  useEffect(() => {
+    if (zipcodeData && !hasAutoFilled) {
+      setFormData(prev => ({
+        ...prev,
+        city: zipcodeData.city,
+        state: zipcodeData.state,
+      }));
+      setHasAutoFilled(true);
+    }
+  }, [zipcodeData, hasAutoFilled]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (lookupTimeout) {
+        clearTimeout(lookupTimeout);
+      }
+    };
+  }, [lookupTimeout]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -334,25 +383,78 @@ export default function AddLocationPage() {
                   />
                 </div>
 
+                {/* Enhanced ZIP Code with Auto-Detection */}
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="city">City *</Label>
+                    <Label htmlFor="zip_code" className="flex items-center gap-2">
+                      ZIP Code *
+                      {isLookingUp && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="zip_code"
+                        placeholder="Enter ZIP"
+                        value={formData.zip_code}
+                        onChange={(e) => handleZipcodeChange(e.target.value)}
+                        className={cn(
+                          "pr-10",
+                          hasAutoFilled && "border-green-300"
+                        )}
+                        inputMode="numeric"
+                        maxLength={5}
+                        required
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {isLookingUp ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        ) : hasAutoFilled ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <MapPin className="h-4 w-4 text-muted-foreground/50" />
+                        )}
+                      </div>
+                    </div>
+                    {lookupError && (
+                      <p className="text-xs text-amber-600">Enter city/state manually</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city" className="flex items-center gap-2">
+                      City *
+                      {hasAutoFilled && <span className="text-[10px] text-green-600 font-normal">(auto-detected)</span>}
+                    </Label>
                     <Input
                       id="city"
-                      placeholder="Los Angeles"
+                      placeholder={isLookingUp ? "Detecting..." : "City"}
                       value={formData.city}
-                      onChange={(e) => handleInputChange("city", e.target.value)}
+                      onChange={(e) => {
+                        handleInputChange("city", e.target.value);
+                        setHasAutoFilled(false);
+                      }}
+                      className={cn(
+                        hasAutoFilled && "bg-green-50/50 border-green-200 dark:bg-green-950/20"
+                      )}
+                      disabled={isLookingUp}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="state">State *</Label>
+                    <Label htmlFor="state" className="flex items-center gap-2">
+                      State *
+                      {hasAutoFilled && <span className="text-[10px] text-green-600 font-normal">(auto-detected)</span>}
+                    </Label>
                     <Select
                       value={formData.state}
-                      onValueChange={(value) => handleInputChange("state", value)}
+                      onValueChange={(value) => {
+                        handleInputChange("state", value);
+                        setHasAutoFilled(false);
+                      }}
+                      disabled={isLookingUp}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select state" />
+                      <SelectTrigger className={cn(
+                        hasAutoFilled && "bg-green-50/50 border-green-200 dark:bg-green-950/20"
+                      )}>
+                        <SelectValue placeholder={isLookingUp ? "Detecting..." : "Select state"} />
                       </SelectTrigger>
                       <SelectContent>
                         {US_STATES.map((state) => (
@@ -363,17 +465,14 @@ export default function AddLocationPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zip_code">ZIP Code *</Label>
-                    <Input
-                      id="zip_code"
-                      placeholder="90001"
-                      value={formData.zip_code}
-                      onChange={(e) => handleInputChange("zip_code", e.target.value)}
-                      required
-                    />
-                  </div>
                 </div>
+                
+                {hasAutoFilled && (
+                  <p className="text-xs text-green-600 flex items-center gap-1 animate-fade-in">
+                    <CheckCircle2 className="h-3 w-3" />
+                    City and state auto-detected from ZIP code
+                  </p>
+                )}
               </div>
 
               {/* Contact Info */}
