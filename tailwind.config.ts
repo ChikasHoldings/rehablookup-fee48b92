@@ -27,6 +27,19 @@ export default {
         sans: ["Inter", "system-ui", "sans-serif"],
         display: ["Plus Jakarta Sans", "Inter", "sans-serif"],
       },
+      fontSize: {
+        // Standardized typography scale - minimum readable sizes
+        "xs": ["0.8125rem", { lineHeight: "1.25rem" }],      // 13px - smallest readable
+        "sm": ["0.875rem", { lineHeight: "1.375rem" }],      // 14px - small text
+        "base": ["1rem", { lineHeight: "1.625rem" }],        // 16px - body text
+        "lg": ["1.125rem", { lineHeight: "1.75rem" }],       // 18px - large body
+        "xl": ["1.25rem", { lineHeight: "1.875rem" }],       // 20px - lead text
+        "2xl": ["1.5rem", { lineHeight: "2rem" }],           // 24px - h4
+        "3xl": ["1.875rem", { lineHeight: "2.375rem" }],     // 30px - h3
+        "4xl": ["2.25rem", { lineHeight: "2.75rem" }],       // 36px - h2
+        "5xl": ["3rem", { lineHeight: "3.5rem" }],           // 48px - h1
+        "6xl": ["3.75rem", { lineHeight: "4.25rem" }],       // 60px - display
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
