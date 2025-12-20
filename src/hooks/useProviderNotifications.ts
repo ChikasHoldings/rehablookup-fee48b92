@@ -124,21 +124,6 @@ export function useProviderNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Optimistic update helpers
-  const optimisticallyMarkAsRead = useCallback((notificationId: string) => {
-    queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
-      if (!old) return old;
-      return old.map((n) => (n.id === notificationId ? { ...n, read: true } : n));
-    });
-  }, [queryClient]);
-
-  const optimisticallyMarkAllAsRead = useCallback(() => {
-    queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
-      if (!old) return old;
-      return old.map((n) => ({ ...n, read: true }));
-    });
-  }, [queryClient]);
-
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
@@ -151,7 +136,13 @@ export function useProviderNotifications() {
     onMutate: async (notificationId) => {
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
-      optimisticallyMarkAsRead(notificationId);
+      
+      // Optimistically update
+      queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+        if (!old) return old;
+        return old.map((n) => (n.id === notificationId ? { ...n, read: true } : n));
+      });
+      
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
@@ -180,7 +171,13 @@ export function useProviderNotifications() {
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
-      optimisticallyMarkAllAsRead();
+      
+      // Optimistically update all as read
+      queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+        if (!old) return old;
+        return old.map((n) => ({ ...n, read: true }));
+      });
+      
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
@@ -209,10 +206,13 @@ export function useProviderNotifications() {
     onMutate: async (notificationId) => {
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
+      
+      // Optimistically remove
       queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
         if (!old) return old;
         return old.filter((n) => n.id !== notificationId);
       });
+      
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
@@ -243,7 +243,10 @@ export function useProviderNotifications() {
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
+      
+      // Optimistically clear all
       queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], []);
+      
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
