@@ -68,6 +68,11 @@ export function Footer() {
       <div className="md:hidden">
         {/* Centered Brand Section */}
         <div className="flex flex-col items-center justify-center py-8 border-b border-border/50">
+          {/* Brand Text */}
+          <Link to="/" className="mb-5">
+            <span className="text-lg font-display font-semibold text-foreground">Rehab-Lookup</span>
+          </Link>
+          
           {/* Social Icons - Centered with luxury styling */}
           <div className="flex items-center justify-center gap-3 mb-6">
             {[
