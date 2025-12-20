@@ -5,9 +5,7 @@ import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
-import { InteractiveUSMap } from "@/components/InteractiveUSMap";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { usStates } from "@/data/usStates";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSkeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +28,6 @@ import {
   Users,
   Phone,
   Heart,
-  MapPin,
   Clock,
 } from "lucide-react";
 
@@ -483,36 +480,6 @@ const Index = () => {
                 </div>
               </Link>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Browse by State */}
-      <section className="py-12 md:py-16 lg:py-20">
-        <div className="container">
-          {/* Section Header */}
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nationwide Coverage</span>
-              </div>
-              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
-                Browse by State
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground">Click on any state to find treatment centers near you</p>
-            </div>
-            <Link to="/locations" className="group">
-              <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                View all locations
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </span>
-            </Link>
-          </div>
-
-          {/* Interactive US Map */}
-          <div className="rounded-xl border border-border bg-card p-4 md:p-6">
-            <InteractiveUSMap />
           </div>
         </div>
       </section>
