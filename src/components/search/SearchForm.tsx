@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Stethoscope, Shield, Building2 } from "lucide-react";
+import { Search, MapPin, Stethoscope, Shield, Building2, Loader2, CheckCircle2, Navigation } from "lucide-react";
 import { treatmentTypes as treatmentTypeOptions, insuranceProviders as insuranceProviderOptions } from "@/data/treatmentCenters";
 import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
 import { MultiSelectDropdown } from "./MultiSelectDropdown";
-
+import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
+import { cn } from "@/lib/utils";
 interface SearchFormProps {
   variant?: "hero" | "compact" | "compact-hero" | "directory";
   initialLocation?: string;
@@ -34,10 +35,62 @@ export function SearchForm({
   );
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [lookupTimeout, setLookupTimeout] = useState<NodeJS.Timeout | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  const { data: zipcodeData, isLoading: isZipLookupLoading, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
 
-  const suggestions = useMemo(() => getLocationSuggestions(location), [location]);
+  // Check if input is a zipcode
+  const isZipcode = useMemo(() => /^\d{1,5}$/.test(location.trim()), [location]);
+  const isCompleteZipcode = useMemo(() => /^\d{5}$/.test(location.trim()), [location]);
+  
+  const suggestions = useMemo(() => {
+    if (isZipcode) return []; // Don't show suggestions for zipcode input
+    return getLocationSuggestions(location);
+  }, [location, isZipcode]);
+  
+  // Handle location change with zipcode detection
+  const handleLocationChange = useCallback((value: string) => {
+    setLocation(value);
+    setShowSuggestions(true);
+    setHighlightedIndex(-1);
+    
+    // Clear previous timeout
+    if (lookupTimeout) {
+      clearTimeout(lookupTimeout);
+    }
+    
+    // Check if it's a complete zipcode
+    const cleanZip = value.replace(/\D/g, "");
+    if (cleanZip.length === 5) {
+      // Debounce zipcode lookup
+      const timeout = setTimeout(() => {
+        lookupZipcode(cleanZip);
+      }, 300);
+      setLookupTimeout(timeout);
+    } else {
+      resetZipLookup();
+    }
+  }, [lookupZipcode, resetZipLookup, lookupTimeout]);
+  
+  // Auto-fill location when zipcode data is received
+  useEffect(() => {
+    if (zipcodeData && isCompleteZipcode) {
+      const formattedLocation = `${zipcodeData.city}, ${zipcodeData.stateAbbr}`;
+      setLocation(formattedLocation);
+      setShowSuggestions(false);
+    }
+  }, [zipcodeData, isCompleteZipcode]);
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (lookupTimeout) {
+        clearTimeout(lookupTimeout);
+      }
+    };
+  }, [lookupTimeout]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -104,7 +157,13 @@ export function SearchForm({
           <div className="group relative flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
             <div className="p-4 md:p-5">
               <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
-                <MapPin className="h-3.5 w-3.5" />
+                {isZipLookupLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : zipcodeData && !isZipcode ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                ) : (
+                  <MapPin className="h-3.5 w-3.5" />
+                )}
                 Where
               </label>
               <input
@@ -112,16 +171,18 @@ export function SearchForm({
                 type="text"
                 placeholder="City, State, or ZIP code"
                 value={location}
-                onChange={(e) => {
-                  setLocation(e.target.value);
-                  setShowSuggestions(true);
-                  setHighlightedIndex(-1);
-                }}
+                onChange={(e) => handleLocationChange(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
                 onKeyDown={handleKeyDown}
-                className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+                className={cn(
+                  "w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/70 focus:outline-none",
+                  zipcodeData && !isZipcode && "text-green-700 dark:text-green-400"
+                )}
                 autoComplete="off"
               />
+              {isZipLookupLoading && (
+                <p className="mt-1 text-xs text-muted-foreground animate-pulse">Looking up ZIP code...</p>
+              )}
             </div>
             
             {/* Autocomplete Suggestions */}
@@ -142,7 +203,7 @@ export function SearchForm({
                     }`}
                   >
                     {suggestion.type === "state" ? (
-                      <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                      <Navigation className="h-4 w-4 shrink-0 text-primary" />
                     ) : (
                       <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
                     )}
@@ -205,13 +266,22 @@ export function SearchForm({
         <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xl sm:flex-row sm:items-center sm:gap-3 sm:p-3">
           {/* Location */}
           <div className="relative flex-1">
-            <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            {isZipLookupLoading ? (
+              <Loader2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary animate-spin" />
+            ) : zipcodeData && !isZipcode ? (
+              <CheckCircle2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-green-500" />
+            ) : (
+              <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            )}
             <input
               type="text"
               placeholder="City, State, or ZIP"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              onChange={(e) => handleLocationChange(e.target.value)}
+              className={cn(
+                "h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                zipcodeData && !isZipcode && "border-green-200 bg-green-50/50 dark:bg-green-950/20"
+              )}
             />
           </div>
           
@@ -266,13 +336,22 @@ export function SearchForm({
             Location
           </label>
           <div className="relative">
-            <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground md:left-3 md:h-4 md:w-4" />
+            {isZipLookupLoading ? (
+              <Loader2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary animate-spin md:left-3 md:h-4 md:w-4" />
+            ) : zipcodeData && !isZipcode ? (
+              <CheckCircle2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-green-500 md:left-3 md:h-4 md:w-4" />
+            ) : (
+              <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground md:left-3 md:h-4 md:w-4" />
+            )}
             <input
               type="text"
               placeholder="City, State, or ZIP"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="h-12 w-full rounded-xl border border-input bg-card pl-12 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:h-10 md:rounded-lg md:pl-9 md:pr-3 md:text-sm"
+              onChange={(e) => handleLocationChange(e.target.value)}
+              className={cn(
+                "h-12 w-full rounded-xl border border-input bg-card pl-12 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:h-10 md:rounded-lg md:pl-9 md:pr-3 md:text-sm",
+                zipcodeData && !isZipcode && "border-green-200 bg-green-50/50 dark:bg-green-950/20"
+              )}
             />
           </div>
         </div>
@@ -333,16 +412,28 @@ export function SearchForm({
           {/* Location */}
           <div className="border-b border-border p-4 md:border-b-0 md:border-r">
             <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <MapPin className="h-4 w-4 text-primary" />
+              {isZipLookupLoading ? (
+                <Loader2 className="h-4 w-4 text-primary animate-spin" />
+              ) : zipcodeData && !isZipcode ? (
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              ) : (
+                <MapPin className="h-4 w-4 text-primary" />
+              )}
               Location
             </label>
             <input
               type="text"
               placeholder="ZIP, City, or State"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full bg-transparent text-base font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
+              onChange={(e) => handleLocationChange(e.target.value)}
+              className={cn(
+                "w-full bg-transparent text-base font-medium text-foreground placeholder:text-muted-foreground focus:outline-none",
+                zipcodeData && !isZipcode && "text-green-700 dark:text-green-400"
+              )}
             />
+            {isZipLookupLoading && (
+              <p className="mt-1 text-xs text-muted-foreground animate-pulse">Looking up ZIP...</p>
+            )}
           </div>
 
           {/* Treatment Type */}
