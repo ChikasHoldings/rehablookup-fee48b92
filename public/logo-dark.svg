@@ -1,7 +1,7 @@
-<svg width="700" height="110" viewBox="0 0 700 110" xmlns="http://www.w3.org/2000/svg">
+<svg width="700" height="80" viewBox="0 0 700 80" xmlns="http://www.w3.org/2000/svg">
   <!-- Rehab-Lookup Flat Logo - Dark Mode (White on transparent) -->
   <!-- Icon -->
-  <g transform="translate(0,12) scale(0.82)">
+  <g transform="translate(0,2) scale(0.75)">
     <path
       d="M54 2
          C34 2 18 19 18 38
@@ -16,10 +16,10 @@
   </g>
   <!-- Text -->
   <text
-    x="88"
-    y="72"
+    x="80"
+    y="55"
     fill="#FFFFFF"
-    font-size="58"
+    font-size="52"
     font-family="Inter, Arial, Helvetica, sans-serif"
     font-weight="600"
   >
