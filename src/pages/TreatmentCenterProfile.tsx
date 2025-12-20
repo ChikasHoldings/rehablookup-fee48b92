@@ -281,7 +281,7 @@ const TreatmentCenterProfile = () => {
                         idx === activeGalleryIndex ? 'border-primary' : 'border-transparent hover:border-border'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      <img src={img} alt={`${center.name} facility photo ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>

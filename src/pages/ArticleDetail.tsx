@@ -1220,7 +1220,7 @@ const ArticleDetail = () => {
         <div className="absolute inset-0">
           <img
             src={article.image}
-            alt=""
+            alt={article.title}
             className="h-full w-full object-cover"
           />
           {/* Light overlay */}

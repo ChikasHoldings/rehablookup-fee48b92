@@ -309,9 +309,9 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               >
                 <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/30 border border-white/30 flex items-center justify-center text-xs sm:text-sm font-semibold text-white overflow-hidden">
                   {selectedFacility?.logo_url ? (
-                    <img src={selectedFacility.logo_url} alt="" className="h-full w-full object-cover" />
+                    <img src={selectedFacility.logo_url} alt={`${selectedFacility.name} logo`} className="h-full w-full object-cover" />
                   ) : facilityLogo ? (
-                    <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
+                    <img src={facilityLogo} alt={`${facilityName || 'Facility'} logo`} className="h-full w-full object-cover" />
                   ) : (
                     initials
                   )}
@@ -330,7 +330,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                 <div className="flex items-center gap-3">
                   <div className="h-11 w-11 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-sm font-semibold text-primary overflow-hidden shadow-sm">
                     {facilityLogo ? (
-                      <img src={facilityLogo} alt="" className="h-full w-full object-cover" />
+                      <img src={facilityLogo} alt={`${facilityName || 'Facility'} logo`} className="h-full w-full object-cover" />
                     ) : (
                       initials
                     )}
@@ -427,7 +427,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                           facility.id === selectedFacility?.id ? "bg-primary/15" : "bg-muted"
                         )}>
                           {facility.logo_url ? (
-                            <img src={facility.logo_url} alt="" className="h-full w-full object-cover" />
+                            <img src={facility.logo_url} alt={`${facility.name} logo`} className="h-full w-full object-cover" />
                           ) : (
                             <Building2 className={cn(
                               "h-4 w-4",
@@ -469,7 +469,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                       >
                         <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 overflow-hidden">
                           {facility.logo_url ? (
-                            <img src={facility.logo_url} alt="" className="h-full w-full object-cover" />
+                            <img src={facility.logo_url} alt={`${facility.name} logo`} className="h-full w-full object-cover" />
                           ) : (
                             <AlertCircle className="h-4 w-4 text-amber-600" />
                           )}
