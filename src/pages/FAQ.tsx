@@ -520,17 +520,15 @@ const FAQ = () => {
                   className="animate-fade-in scroll-mt-32"
                   style={{ animationDelay: `${catIndex * 80}ms` }}
                 >
-                  {/* Category Header - matches site section headers */}
-                  <div className="mb-6 flex items-center gap-3 pb-3 border-b border-border">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <category.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
+                  {/* Category Header - inline icon with heading */}
+                  <div className="mb-6 pb-3 border-b border-border">
+                    <div className="flex items-center gap-2 mb-1">
+                      <category.icon className="h-5 w-5 text-primary shrink-0" />
                       <h2 className="text-lg font-semibold text-foreground md:text-xl">
                         {category.name}
                       </h2>
-                      <p className="text-sm text-muted-foreground">{category.description}</p>
                     </div>
+                    <p className="text-sm text-muted-foreground ml-7">{category.description}</p>
                   </div>
 
                   {/* FAQ Accordion - standardized typography */}
@@ -561,33 +559,35 @@ const FAQ = () => {
         </div>
       </section>
 
-      {/* Help CTA */}
-      <section className="py-12 px-4 bg-muted/30 md:py-16 md:px-6">
+      {/* Help CTA - Compact horizontal layout */}
+      <section className="py-8 px-4 bg-muted/30 md:py-10 md:px-6">
         <div className="container">
-          <div className="mx-auto max-w-2xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 via-card to-accent/10 p-8 md:p-10 text-center relative overflow-hidden">
+          <div className="mx-auto max-w-3xl rounded-xl border border-accent/20 bg-gradient-to-r from-accent/5 via-card to-accent/10 p-6 md:p-8 relative overflow-hidden">
             {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-20 h-20 bg-primary/5 rounded-full blur-xl" />
+            <div className="absolute top-0 right-0 w-20 h-20 bg-accent/10 rounded-full blur-2xl" />
+            <div className="absolute bottom-0 left-0 w-16 h-16 bg-primary/5 rounded-full blur-xl" />
             
-            <div className="relative">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/80 shadow-lg">
-                <HelpCircle className="h-6 w-6 text-white" />
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <HelpCircle className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground mb-1">
+                    Still Have Questions?
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
+                    Our compassionate support team is here to help you find the right treatment center.
+                  </p>
+                </div>
               </div>
-              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
-                Still Have Questions?
-              </h2>
-              <p className="mb-6 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                Our compassionate support team is here to answer your questions and help you find the right treatment center for your needs.
-              </p>
-              <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <div className="flex items-center gap-3 ml-8 md:ml-0">
                 <Link to="/request-help?source=faq_cta">
-                  <Button size="default" className="h-10 gap-2 text-sm font-semibold px-6 hover:scale-105 transition-transform">
+                  <Button size="sm" className="h-9 gap-2 text-sm font-semibold px-4">
                     <Heart className="h-4 w-4" />
                     Request Help
                   </Button>
                 </Link>
                 <Link to="/contact">
-                  <Button variant="outline" size="default" className="h-10 gap-2 text-sm font-semibold px-6 hover:scale-105 transition-transform">
+                  <Button variant="outline" size="sm" className="h-9 gap-2 text-sm font-semibold px-4">
                     Contact Us
                     <ArrowRight className="h-4 w-4" />
                   </Button>
