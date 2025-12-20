@@ -284,7 +284,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
       )}
     >
       {/* Hero Image Section */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+      <div className="relative aspect-[16/9] overflow-hidden bg-muted">
         {hasValidHeroImage ? (
           <>
             <img 
@@ -388,75 +388,75 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
       </div>
 
       {/* Card Content */}
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col p-3">
 
-        {/* Badge row - perfectly aligned */}
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
+        {/* Badge row */}
+        <div className="flex items-center gap-1.5 mb-2 flex-wrap">
           {center.verified && (
-            <Badge variant="secondary" className="gap-1 px-2.5 py-1 text-[11px] font-semibold bg-emerald-100 text-emerald-700 border-0 rounded-full">
-              <ShieldCheck className="h-3.5 w-3.5" />
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0 rounded-full">
+              <ShieldCheck className="h-3 w-3" />
               Verified
             </Badge>
           )}
           {yearsInBusiness && yearsInBusiness > 0 && (
-            <Badge variant="secondary" className="gap-1 px-2.5 py-1 text-[11px] font-semibold bg-blue-100 text-blue-700 border-0 rounded-full">
-              <Clock className="h-3.5 w-3.5" />
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 border-0 rounded-full">
+              <Clock className="h-3 w-3" />
               {yearsInBusiness}+ Years
             </Badge>
           )}
           {hasInsurance && (
-            <Badge variant="secondary" className="gap-1 px-2.5 py-1 text-[11px] font-semibold bg-purple-100 text-purple-700 border-0 rounded-full">
-              <CreditCard className="h-3.5 w-3.5" />
-              Accepts Insurance
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 border-0 rounded-full">
+              <CreditCard className="h-3 w-3" />
+              Insurance
             </Badge>
           )}
         </div>
 
-        {/* Treatment Tags */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {center.treatmentTypes.slice(0, 3).map((type) => (
+        {/* Treatment Tags - max 2 lines */}
+        <div className="flex flex-wrap gap-1 mb-2 max-h-[44px] overflow-hidden">
+          {center.treatmentTypes.slice(0, 4).map((type) => (
             <Badge 
               key={type} 
               variant="outline" 
               className={cn(
-                "text-[11px] font-medium px-2.5 py-0.5 rounded-full transition-colors duration-200",
+                "text-[10px] font-medium px-2 py-0.5 rounded-full",
                 showFeaturedBadge 
-                  ? "border-amber-200 text-amber-700 hover:bg-amber-50"
-                  : "border-border text-muted-foreground hover:border-primary/50 hover:text-primary"
+                  ? "border-amber-200 text-amber-700"
+                  : "border-border text-muted-foreground"
               )}
             >
               {type}
             </Badge>
           ))}
-          {center.treatmentTypes.length > 3 && (
+          {center.treatmentTypes.length > 4 && (
             <Badge 
               variant="outline" 
-              className="text-[11px] px-2.5 py-0.5 text-muted-foreground/70 border-dashed rounded-full"
+              className="text-[10px] px-2 py-0.5 text-muted-foreground/70 border-dashed rounded-full"
             >
-              +{center.treatmentTypes.length - 3} more
+              +{center.treatmentTypes.length - 4}
             </Badge>
           )}
         </div>
 
-        {/* Description */}
-        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4 flex-1">
+        {/* Description - 2 lines */}
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 flex-1">
           {center.description}
         </p>
 
-        {/* Actions - clean separator */}
-        <div className="flex items-center gap-2 pt-3 border-t border-border/40">
+        {/* Actions */}
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/40">
           <Button 
             variant="ghost" 
             size="sm"
             onClick={() => setQuickViewOpen(true)}
             className={cn(
-              "h-10 px-3 gap-1.5 text-sm font-medium",
+              "h-8 px-2 gap-1 text-xs font-medium",
               showFeaturedBadge 
                 ? "text-amber-600 hover:bg-amber-100 hover:text-amber-700"
                 : "text-muted-foreground hover:text-primary hover:bg-primary/5"
             )}
           >
-            <Eye className="h-4 w-4" />
+            <Eye className="h-3.5 w-3.5" />
             Quick View
           </Button>
           <Link 
@@ -469,14 +469,14 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               variant="default" 
               size="sm"
               className={cn(
-                "w-full gap-2 h-10 text-sm font-semibold transition-all duration-200",
+                "w-full gap-1.5 h-8 text-xs font-semibold",
                 showFeaturedBadge 
-                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-200/40"
-                  : "shadow-md hover:shadow-lg"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
+                  : "shadow-sm"
               )}
             >
               View Profile
-              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
         </div>
