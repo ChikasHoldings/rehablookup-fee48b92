@@ -71,7 +71,7 @@ export const WHO_SEEKING_OPTIONS = [
 ];
 
 export const URGENCY_OPTIONS = [
-  { value: "immediate", label: "Immediate — I need help today" },
+  { value: "immediate", label: "ASAP or urgently" },
   { value: "within-week", label: "Within a week" },
   { value: "flexible", label: "Flexible — just exploring options" },
 ];
