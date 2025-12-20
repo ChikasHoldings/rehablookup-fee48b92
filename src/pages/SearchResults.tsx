@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { SearchResultCard } from "@/components/cards/SearchResultCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
@@ -10,8 +10,6 @@ import {
   Heart, 
   MapPin, 
   Search, 
-  Grid3X3, 
-  List, 
   X, 
   ArrowUpDown, 
   ChevronLeft, 
@@ -97,7 +95,6 @@ const SearchResults = () => {
   const selectedTreatmentTypes = treatmentTypesParam ? treatmentTypesParam.split(",") : [];
   const selectedAmenities = amenitiesParam ? amenitiesParam.split(",") : [];
 
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   
   // Local price range state for slider (synced with URL)
@@ -441,31 +438,6 @@ const SearchResults = () => {
                 </SelectContent>
               </Select>
 
-              {/* View Toggle */}
-              <div className="hidden md:flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-sm">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`rounded-md p-2 transition-all duration-200 ${
-                    viewMode === "grid" 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                  aria-label="Grid view"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`rounded-md p-2 transition-all duration-200 ${
-                    viewMode === "list" 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                  aria-label="List view"
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
             </div>
           </div>
 
@@ -882,21 +854,17 @@ const SearchResults = () => {
               )}
               
               {isLoading ? (
-                <SearchResultsLoading count={12} />
+                <SearchResultsLoading count={6} />
               ) : paginatedCenters.length > 0 ? (
                 <>
-                  <div className={
-                    viewMode === "grid" 
-                      ? "grid gap-5 md:grid-cols-2 xl:grid-cols-3" 
-                      : "flex flex-col gap-4"
-                  }>
+                  <div className="flex flex-col gap-5">
                     {paginatedCenters.map((center, index) => (
                       <div 
                         key={center.id} 
                         className="animate-fade-in"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <TreatmentCenterCard
+                        <SearchResultCard
                           center={center}
                           featured={center.featured}
                         />
