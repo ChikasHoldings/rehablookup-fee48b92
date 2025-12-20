@@ -45,6 +45,7 @@ import RequestHelp from "./pages/RequestHelp";
 import AdLanding from "./pages/AdLanding";
 import SocialLanding from "./pages/SocialLanding";
 import Resources from "./pages/Resources";
+import Insurance from "./pages/Insurance";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
 import About from "./pages/About";
@@ -181,6 +182,7 @@ const App = () => (
             </Route>
             
             <Route path="/resources" element={<Resources />} />
+            <Route path="/insurance" element={<Insurance />} />
             <Route path="/resources/:id" element={<ArticleDetail />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/about" element={<About />} />
