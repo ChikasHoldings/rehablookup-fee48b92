@@ -5,6 +5,7 @@ import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
+import { InteractiveUSMap } from "@/components/InteractiveUSMap";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { usStates } from "@/data/usStates";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
@@ -499,6 +500,7 @@ const Index = () => {
               <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
                 Browse by State
               </h2>
+              <p className="mt-2 text-sm text-muted-foreground">Click on any state to find treatment centers near you</p>
             </div>
             <Link to="/locations" className="group">
               <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
@@ -508,21 +510,9 @@ const Index = () => {
             </Link>
           </div>
 
-          {/* States Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-            {usStates.map((state) => (
-              <Link
-                key={state.slug}
-                to={`/locations/${state.slug}`}
-                className="group"
-              >
-                <div className="rounded-lg border border-border bg-card px-3 py-2.5 text-center transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 hover:shadow-sm">
-                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                    {state.name}
-                  </span>
-                </div>
-              </Link>
-            ))}
+          {/* Interactive US Map */}
+          <div className="rounded-xl border border-border bg-card p-4 md:p-6">
+            <InteractiveUSMap />
           </div>
         </div>
       </section>
