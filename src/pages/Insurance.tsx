@@ -96,6 +96,7 @@ const majorInsurers: InsuranceProvider[] = [
     description: "One of the largest health benefits companies",
     coverageNotes: "Substance abuse treatment covered as essential health benefit",
     type: "private",
+    detailsUrl: "/insurance/anthem-rehab",
   },
 ];
 
