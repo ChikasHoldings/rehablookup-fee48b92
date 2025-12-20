@@ -488,26 +488,73 @@ export function RequestInfoModal({
               </div>
             </div>
 
-            {/* Form Content */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              {/* Step Indicator */}
-              <div className="flex items-center gap-2 mb-2">
-                <div className={cn(
-                  "flex items-center justify-center h-7 w-7 rounded-full text-sm font-semibold transition-colors",
-                  currentStep >= 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                )}>
-                  1
+            {/* Capacity Warning - Show when provider is at capacity */}
+            {isPaidPlan && leadUsage && leadUsage.remaining <= 0 ? (
+              <div className="p-6 space-y-5">
+                <div className="text-center py-6">
+                  <div className="h-16 w-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    This Provider is at Capacity
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+                    {facility.name} has reached their monthly limit for new inquiries. 
+                    They may not be able to respond promptly to new requests.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <Button
+                      type="button"
+                      className="w-full"
+                      onClick={() => {
+                        onOpenChange(false);
+                        navigate("/request-help");
+                      }}
+                    >
+                      <Heart className="h-4 w-4 mr-2" />
+                      Find Available Providers
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        onOpenChange(false);
+                        navigate(`/search?state=${facility.state}&city=${encodeURIComponent(facility.city)}`);
+                      }}
+                    >
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Browse Other Centers in {facility.city}
+                    </Button>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Or call them directly for immediate assistance
+                  </p>
                 </div>
-                <div className={cn(
-                  "flex-1 h-1 rounded-full transition-colors",
-                  currentStep >= 2 ? "bg-primary" : "bg-muted"
-                )} />
-                <div className={cn(
-                  "flex items-center justify-center h-7 w-7 rounded-full text-sm font-semibold transition-colors",
-                  currentStep >= 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                )}>
-                  2
-                </div>
+              </div>
+            ) : (
+              /* Form Content */
+              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                {/* Step Indicator */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={cn(
+                    "flex items-center justify-center h-7 w-7 rounded-full text-sm font-semibold transition-colors",
+                    currentStep >= 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  )}>
+                    1
+                  </div>
+                  <div className={cn(
+                    "flex-1 h-1 rounded-full transition-colors",
+                    currentStep >= 2 ? "bg-primary" : "bg-muted"
+                  )} />
+                  <div className={cn(
+                    "flex items-center justify-center h-7 w-7 rounded-full text-sm font-semibold transition-colors",
+                    currentStep >= 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  )}>
+                    2
+                  </div>
               </div>
 
               {currentStep === 1 ? (
@@ -725,7 +772,8 @@ export function RequestInfoModal({
                   </div>
                 </>
               )}
-            </form>
+              </form>
+            )}
           </>
         ) : (
           <div className="p-6">
