@@ -118,6 +118,7 @@ const App = () => (
             <Route path="/center/:slug" element={<CenterProfile />} />
             <Route path="/treatment-types" element={<TreatmentTypes />} />
             <Route path="/treatment-types/drug-addiction" element={<DrugAddictionTreatment />} />
+            <Route path="/treatment-types/drug-addiction-treatment" element={<DrugAddictionTreatment />} />
             <Route path="/treatment-types/alcohol-rehabilitation" element={<AlcoholRehabilitation />} />
             <Route path="/treatment-types/dual-diagnosis" element={<DualDiagnosisTreatment />} />
             <Route path="/treatment-types/dual-diagnosis-treatment" element={<DualDiagnosisTreatment />} />

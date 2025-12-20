@@ -465,7 +465,7 @@ const DetoxPrograms = () => {
                 Outpatient Programs
               </Button>
             </Link>
-            <Link to="/treatment-types/drug-addiction-treatment">
+            <Link to="/treatment-types/drug-addiction">
               <Button variant="outline" className="gap-2">
                 <Pill className="h-4 w-4" />
                 Drug Treatment
