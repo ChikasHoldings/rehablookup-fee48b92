@@ -299,5 +299,47 @@
   /* Optimize image rendering */
   img {
     content-visibility: auto;
+    contain-intrinsic-size: 300px 200px;
+  }
+
+  /* Reduce layout shift for common elements */
+  .aspect-video {
+    aspect-ratio: 16 / 9;
+  }
+
+  .aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Font display optimization */
+  @font-face {
+    font-display: swap;
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Content visibility for off-screen content */
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+
+  /* GPU acceleration for animations */
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
   }
 }
