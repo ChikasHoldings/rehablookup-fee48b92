@@ -37,6 +37,7 @@ import {
   Heart,
   Sparkles,
   Users,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -137,6 +138,7 @@ export function RequestInfoModal({
   const [loadingNearby, setLoadingNearby] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormData | null>(null);
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  const [leadUsage, setLeadUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
   
   const [formData, setFormData] = useState<FormData>({
     firstName: prefillData?.firstName || "",
@@ -163,6 +165,36 @@ export function RequestInfoModal({
   // Determine lead type based on plan
   const leadType = facilityPlan === "featured" ? "exclusive" : "shared";
   const isPaidPlan = facilityPlan === "featured" || facilityPlan === "professional";
+
+  // Fetch lead usage when modal opens for paid plans
+  useEffect(() => {
+    if (open && isPaidPlan) {
+      const fetchLeadUsage = async () => {
+        try {
+          // Fetch lead count for this facility this month
+          const startOfMonth = new Date();
+          startOfMonth.setDate(1);
+          startOfMonth.setHours(0, 0, 0, 0);
+
+          const { count, error } = await supabase
+            .from("leads")
+            .select("*", { count: "exact", head: true })
+            .eq("facility_id", facility.id)
+            .gte("created_at", startOfMonth.toISOString());
+
+          if (error) throw error;
+
+          // Get plan limit (100 for both professional and featured)
+          const limit = 100;
+          const used = count || 0;
+          setLeadUsage({ used, limit, remaining: Math.max(0, limit - used) });
+        } catch (err) {
+          console.error("Error fetching lead usage:", err);
+        }
+      };
+      fetchLeadUsage();
+    }
+  }, [open, facility.id, isPaidPlan]);
 
   // Track modal open
   useEffect(() => {
@@ -417,21 +449,41 @@ export function RequestInfoModal({
                 </div>
               </DialogHeader>
 
-              {/* Trust indicators */}
-              <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Shield className="h-3.5 w-3.5 text-green-600" />
-                  <span>Confidential</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5 text-primary" />
-                  <span>Response within 24h</span>
-                </div>
-                {facilityPlan === "featured" && (
+              {/* Trust indicators and Lead Counter */}
+              <div className="flex items-center justify-between gap-4 mt-4">
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                    <span>Priority response</span>
+                    <Shield className="h-3.5 w-3.5 text-green-600" />
+                    <span>Confidential</span>
                   </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5 text-primary" />
+                    <span>Response within 24h</span>
+                  </div>
+                  {facilityPlan === "featured" && (
+                    <div className="flex items-center gap-1">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Priority response</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Lead Counter Badge */}
+                {isPaidPlan && leadUsage && (
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "shrink-0 gap-1.5 text-xs font-medium",
+                      leadUsage.remaining <= 10 
+                        ? "border-red-300 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-950/50 dark:text-red-300"
+                        : leadUsage.remaining <= 25
+                          ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                          : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    )}
+                  >
+                    <Zap className="h-3 w-3" />
+                    {leadUsage.remaining} leads left
+                  </Badge>
                 )}
               </div>
             </div>
