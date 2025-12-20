@@ -560,31 +560,38 @@ const ForProviders = () => {
       />
       
       {/* Sticky Announcement Bar */}
-      {showAnnouncement && (
-        <div className="sticky top-0 z-[60] bg-gradient-to-r from-accent via-accent/95 to-accent text-accent-foreground">
-          <div className="container px-4">
-            <div className="flex items-center justify-center gap-2.5 py-2.5 relative">
-              <Sparkles className="h-4 w-4 shrink-0 animate-pulse" />
-              <p className="text-sm font-medium text-center">
-                <span className="font-bold">Limited Time:</span> Get 20% off your first 3 months
-                <Link 
-                  to="/provider-signup" 
-                  className="ml-2 underline underline-offset-2 hover:no-underline font-semibold"
-                >
-                  Claim Offer →
-                </Link>
-              </p>
-              <button
-                onClick={() => setShowAnnouncement(false)}
-                className="absolute right-0 p-1.5 rounded-full hover:bg-white/20 transition-colors"
-                aria-label="Dismiss announcement"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      <div 
+        className={`sticky top-0 z-[60] bg-gradient-to-r from-accent via-accent/90 to-accent text-accent-foreground transition-all duration-300 ease-in-out overflow-hidden ${
+          showAnnouncement ? 'max-h-16 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="container px-4 md:px-6">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 py-2.5 sm:py-3 relative pr-8 sm:pr-10">
+            <div className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full bg-white/20 shrink-0">
+              <Sparkles className="h-3.5 w-3.5 animate-pulse" />
             </div>
+            <Sparkles className="h-4 w-4 shrink-0 animate-pulse sm:hidden" />
+            <p className="text-xs sm:text-sm font-medium text-center leading-tight">
+              <span className="font-bold">Limited Time:</span>{" "}
+              <span className="hidden xs:inline">Get </span>20% off your first 3 months
+              <Link 
+                to="/provider-signup?plan=professional" 
+                className="ml-1.5 sm:ml-2 inline-flex items-center gap-1 underline underline-offset-2 hover:no-underline font-semibold whitespace-nowrap"
+              >
+                Claim Offer
+                <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              </Link>
+            </p>
+            <button
+              onClick={() => setShowAnnouncement(false)}
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-1 sm:p-1.5 rounded-full hover:bg-white/20 transition-colors"
+              aria-label="Dismiss announcement"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>
-      )}
+      </div>
       
       <Header
         navLinks={providerNavLinks}
