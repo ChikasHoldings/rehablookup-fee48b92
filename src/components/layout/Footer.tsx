@@ -62,29 +62,29 @@ const LinkedInIcon = () => (
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-muted/30">
+    <footer className="border-t border-border bg-muted/60">
       {/* Main Links */}
       <div className="container py-10 md:py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-4 lg:col-span-1 lg:pr-8">
-            <Link to="/" className="inline-block mb-5">
+          <div className="col-span-2 md:col-span-4 lg:col-span-1 lg:pr-6">
+            <Link to="/" className="inline-block mb-6">
               <img 
                 src="/logo.svg" 
                 alt="RehabLookup" 
-                className="h-10 w-auto dark:hidden"
+                className="h-12 w-auto dark:hidden"
                 loading="lazy"
               />
               <img 
                 src="/logo-dark.svg" 
                 alt="RehabLookup" 
-                className="h-10 w-auto hidden dark:block"
+                className="h-12 w-auto hidden dark:block"
                 loading="lazy"
               />
             </Link>
             
             {/* Social Icons */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-5">
               <a 
                 href="https://x.com" 
                 target="_blank" 
@@ -127,22 +127,22 @@ export function Footer() {
               href="mailto:help@rehablookup.com" 
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Mail className="h-3.5 w-3.5" />
+              <Mail className="h-4 w-4" />
               help@rehablookup.com
             </a>
           </div>
 
           {/* Locations */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
               Locations
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               {popularLocations.map((item) => (
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -151,7 +151,7 @@ export function Footer() {
               <li>
                 <Link 
                   to="/locations" 
-                  className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                  className="inline-flex items-center gap-1 text-[13px] text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   View All
                   <ArrowUpRight className="h-3 w-3" />
@@ -162,15 +162,15 @@ export function Footer() {
 
           {/* Treatment */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
               Treatment
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               {treatmentTypes.map((item) => (
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -179,7 +179,7 @@ export function Footer() {
               <li>
                 <Link 
                   to="/treatment-types" 
-                  className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                  className="inline-flex items-center gap-1 text-[13px] text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   View All
                   <ArrowUpRight className="h-3 w-3" />
@@ -190,15 +190,15 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
               Resources
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               {resources.map((item) => (
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -209,15 +209,15 @@ export function Footer() {
 
           {/* For Providers */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
               For Providers
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-2">
               {providerLinks.map((item) => (
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.name}
                   </Link>
