@@ -68,23 +68,25 @@ export function Footer() {
       <div className="container py-10 md:py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <Link to="/" className="block">
+          <div className="col-span-2 md:col-span-4 lg:col-span-1 flex flex-col">
+            <Link to="/" className="block leading-none">
               <img 
                 src="/logo.svg" 
                 alt="RehabLookup" 
                 className="h-56 w-auto block dark:hidden"
+                style={{ margin: 0, padding: 0 }}
                 loading="lazy"
               />
               <img 
                 src="/logo-dark.svg" 
                 alt="RehabLookup" 
                 className="h-56 w-auto hidden dark:block"
+                style={{ margin: 0, padding: 0 }}
                 loading="lazy"
               />
             </Link>
             {/* Social Icons */}
-            <div className="flex items-center gap-4 mt-2 mb-3">
+            <div className="flex items-center gap-4 mb-3">
               <a 
                 href="https://x.com" 
                 target="_blank" 
