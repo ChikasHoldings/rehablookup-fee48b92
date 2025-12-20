@@ -16,7 +16,6 @@ import {
   FileCheck,
   GitCompare,
   ChevronDown,
-  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
@@ -100,7 +99,6 @@ interface AdminSidebarProps {
 function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProps) {
   const location = useLocation();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    // Initialize with groups that contain the current route open
     const initial: Record<string, boolean> = {};
     navEntries.forEach((entry) => {
       if (isNavGroup(entry)) {
@@ -134,8 +132,16 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
   };
 
   return (
-    <aside className="hidden lg:flex w-64 flex-col border-r bg-slate-50 sticky top-16 h-[calc(100vh-4rem)]">
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+    <aside className="hidden lg:flex w-64 flex-col border-r border-slate-200/80 bg-gradient-to-b from-slate-50 to-white sticky top-16 h-[calc(100vh-4rem)]">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-slate-100">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Admin Panel
+        </p>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
         {navEntries.filter(canViewEntry).map((entry) => {
           if (isNavGroup(entry)) {
             const Icon = entry.icon;
@@ -157,46 +163,57 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
               >
                 <CollapsibleTrigger
                   className={cn(
-                    "flex items-center justify-between w-full px-3 py-3 rounded-lg transition-colors",
+                    "group flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-all duration-200",
                     hasActiveChild
-                      ? "bg-slate-200 text-slate-900"
-                      : "text-slate-700 hover:bg-slate-200"
+                      ? "bg-primary/10 text-primary"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className="h-5 w-5" />
-                    <span className="text-base font-medium">{entry.label}</span>
+                    <div className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
+                      hasActiveChild 
+                        ? "bg-primary/15" 
+                        : "bg-slate-100 group-hover:bg-slate-200"
+                    )}>
+                      <Icon className={cn(
+                        "h-4 w-4",
+                        hasActiveChild ? "text-primary" : "text-slate-500 group-hover:text-slate-700"
+                      )} />
+                    </div>
+                    <span className="text-sm font-medium">{entry.label}</span>
                   </div>
-                  {isOpen ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
+                  <ChevronDown className={cn(
+                    "h-4 w-4 text-slate-400 transition-transform duration-200",
+                    isOpen && "rotate-180"
+                  )} />
                 </CollapsibleTrigger>
-                <CollapsibleContent className="pl-4 mt-1 space-y-1">
-                  {visibleItems.map((item) => {
-                    const ItemIcon = item.icon;
-                    const isActive = item.to === "/admin/leads"
-                      ? location.pathname === item.to
-                      : location.pathname.startsWith(item.to);
+                <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                  <div className="ml-5 mt-1 pl-4 border-l-2 border-slate-200 space-y-0.5">
+                    {visibleItems.map((item) => {
+                      const ItemIcon = item.icon;
+                      const isActive = item.to === "/admin/leads"
+                        ? location.pathname === item.to
+                        : location.pathname.startsWith(item.to);
 
-                    return (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        onMouseEnter={() => handleMouseEnter(item.to)}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                          isActive
-                            ? "bg-slate-900 text-white"
-                            : "text-slate-600 hover:bg-slate-200"
-                        )}
-                      >
-                        <ItemIcon className="h-4 w-4" />
-                        <span className="text-sm font-medium">{item.label}</span>
-                      </NavLink>
-                    );
-                  })}
+                      return (
+                        <NavLink
+                          key={item.to}
+                          to={item.to}
+                          onMouseEnter={() => handleMouseEnter(item.to)}
+                          className={cn(
+                            "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150",
+                            isActive
+                              ? "bg-primary text-primary-foreground font-medium shadow-sm"
+                              : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                          )}
+                        >
+                          <ItemIcon className="h-3.5 w-3.5" />
+                          <span>{item.label}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
             );
@@ -214,18 +231,35 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
               end={entry.end}
               onMouseEnter={() => handleMouseEnter(entry.to)}
               className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
+                "group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
                 isActive
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-700 hover:bg-slate-200"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               )}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-base font-medium">{entry.label}</span>
+              <div className={cn(
+                "flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
+                isActive 
+                  ? "bg-white/20" 
+                  : "bg-slate-100 group-hover:bg-slate-200"
+              )}>
+                <Icon className={cn(
+                  "h-4 w-4",
+                  isActive ? "text-primary-foreground" : "text-slate-500 group-hover:text-slate-700"
+                )} />
+              </div>
+              <span className="text-sm font-medium">{entry.label}</span>
             </NavLink>
           );
         })}
       </nav>
+
+      {/* Footer */}
+      <div className="px-4 py-3 border-t border-slate-100">
+        <p className="text-[10px] text-slate-400 text-center">
+          v2.0 • Admin Console
+        </p>
+      </div>
     </aside>
   );
 }
