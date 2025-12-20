@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, ArrowRight, Crown, ShieldCheck, Eye, Clock, CreditCard } from "lucide-react";
+import { MapPin, ArrowRight, Crown, ShieldCheck, Eye, Clock, CreditCard, Phone } from "lucide-react";
+import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState, useCallback, memo, useRef, useEffect } from "react";
@@ -83,6 +84,11 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
     : null;
 
   const hasInsurance = center.insuranceAccepted && center.insuranceAccepted.length > 0;
+
+  // Format phone number for display and tel link
+  const formattedPhone = center.phone ? formatPhoneNumber(center.phone) : null;
+  const phoneDigits = center.phone ? getPhoneDigits(center.phone) : null;
+  const telLink = phoneDigits ? `tel:+1${phoneDigits}` : null;
 
   useEffect(() => {
     if (!center.isFromDatabase || !center.id || hasTrackedImpression.current) return;
