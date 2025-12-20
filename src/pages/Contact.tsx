@@ -138,9 +138,9 @@ const Contact = () => {
       </section>
 
       {/* Contact Methods Cards */}
-      <section className="section-padding-sm bg-gradient-to-b from-background to-muted/30">
+      <section className="py-6 md:py-8 bg-gradient-to-b from-background to-muted/30">
         <div className="container">
-          <div className="grid gap-5 md:grid-cols-3 max-w-4xl mx-auto">
+          <div className="grid gap-4 md:grid-cols-3 max-w-4xl mx-auto">
             {contactMethods.map((method, index) => (
               <div
                 key={method.title}
@@ -150,27 +150,27 @@ const Contact = () => {
                 {method.href ? (
                   <a 
                     href={method.href}
-                    className="block h-full rounded-2xl bg-gradient-to-br from-accent/5 to-accent/10 p-1 hover:scale-[1.02] transition-transform duration-300"
+                    className="block h-full rounded-xl bg-card border border-border/50 p-4 hover:border-accent/30 hover:shadow-md transition-all duration-300"
                   >
-                    <div className="h-full rounded-[14px] bg-card p-6 border border-border/50 text-center">
-                      <div className={`mb-4 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${method.gradient} shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
-                        <method.icon className="h-7 w-7 text-white" />
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${method.gradient} shadow-sm`}>
+                        <method.icon className="h-4 w-4 text-white" />
                       </div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">{method.title}</h3>
-                      <p className="font-display text-lg font-bold text-foreground mb-1">{method.value}</p>
-                      <p className="text-xs text-muted-foreground">{method.description}</p>
+                      <h3 className="text-sm font-medium text-muted-foreground">{method.title}</h3>
                     </div>
+                    <p className="font-display text-base font-bold text-foreground mb-0.5">{method.value}</p>
+                    <p className="text-xs text-muted-foreground">{method.description}</p>
                   </a>
                 ) : (
-                  <div className="h-full rounded-2xl bg-gradient-to-br from-accent/5 to-accent/10 p-1">
-                    <div className="h-full rounded-[14px] bg-card p-6 border border-border/50 text-center">
-                      <div className={`mb-4 mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${method.gradient} shadow-lg`}>
-                        <method.icon className="h-7 w-7 text-white" />
+                  <div className="h-full rounded-xl bg-card border border-border/50 p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${method.gradient} shadow-sm`}>
+                        <method.icon className="h-4 w-4 text-white" />
                       </div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">{method.title}</h3>
-                      <p className="font-display text-lg font-bold text-foreground mb-1">{method.value}</p>
-                      <p className="text-xs text-muted-foreground">{method.description}</p>
+                      <h3 className="text-sm font-medium text-muted-foreground">{method.title}</h3>
                     </div>
+                    <p className="font-display text-base font-bold text-foreground mb-0.5">{method.value}</p>
+                    <p className="text-xs text-muted-foreground">{method.description}</p>
                   </div>
                 )}
               </div>
