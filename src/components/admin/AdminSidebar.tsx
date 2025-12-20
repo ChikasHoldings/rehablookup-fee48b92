@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -15,25 +15,67 @@ import {
   ShieldAlert,
   FileCheck,
   GitCompare,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
-const navItems = [
+interface NavItem {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+  end?: boolean;
+  permission: string;
+}
+
+interface NavGroup {
+  icon: React.ElementType;
+  label: string;
+  permission: string;
+  items: NavItem[];
+}
+
+type NavEntry = NavItem | NavGroup;
+
+const isNavGroup = (entry: NavEntry): entry is NavGroup => {
+  return 'items' in entry;
+};
+
+const navEntries: NavEntry[] = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
-  { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
-  { to: "/admin/lead-routing", icon: RotateCcw, label: "Lead Routing", permission: "lead_routing" },
+  {
+    icon: Users,
+    label: "Leads",
+    permission: "leads",
+    items: [
+      { to: "/admin/leads", icon: Users, label: "All Leads", permission: "leads" },
+      { to: "/admin/lead-routing", icon: RotateCcw, label: "Lead Routing", permission: "lead_routing" },
+    ],
+  },
   { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/featured", icon: Star, label: "Featured Placement", permission: "featured" },
   { to: "/admin/credentials", icon: FileCheck, label: "Credentials", permission: "credentials" },
   { to: "/admin/location-changes", icon: GitCompare, label: "Location Changes", permission: "location_changes" },
   { to: "/admin/flagged-images", icon: Image, label: "Flagged Images", permission: "flagged_images" },
-  { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
-  { to: "/admin/users", icon: ShieldCheck, label: "User Management", permission: "users" },
-  { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
-  { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
+  {
+    icon: Settings,
+    label: "Settings",
+    permission: "settings",
+    items: [
+      { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
+      { to: "/admin/users", icon: ShieldCheck, label: "User Management", permission: "users" },
+      { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
+      { to: "/admin/settings", icon: Settings, label: "General Settings", permission: "settings" },
+    ],
+  },
 ];
 
 interface AdminSidebarProps {
@@ -43,32 +85,120 @@ interface AdminSidebarProps {
 
 function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProps) {
   const location = useLocation();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    // Initialize with groups that contain the current route open
+    const initial: Record<string, boolean> = {};
+    navEntries.forEach((entry) => {
+      if (isNavGroup(entry)) {
+        const hasActiveChild = entry.items.some((item) => location.pathname.startsWith(item.to));
+        if (hasActiveChild) {
+          initial[entry.label] = true;
+        }
+      }
+    });
+    return initial;
+  });
 
-  // Prefetch page on hover
   const handleMouseEnter = useCallback((path: string) => {
     prefetchAdminPage(path);
   }, []);
 
-  // Filter nav items based on permissions
-  const visibleNavItems = navItems.filter(
-    (item) => isSuperAdmin || item.permission === "dashboard" || hasPermission(item.permission)
-  );
+  const toggleGroup = (label: string) => {
+    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const canViewEntry = (entry: NavEntry): boolean => {
+    if (isSuperAdmin) return true;
+    if (isNavGroup(entry)) {
+      return entry.items.some((item) => hasPermission(item.permission));
+    }
+    return entry.permission === "dashboard" || hasPermission(entry.permission);
+  };
+
+  const canViewItem = (item: NavItem): boolean => {
+    return isSuperAdmin || item.permission === "dashboard" || hasPermission(item.permission);
+  };
 
   return (
     <aside className="hidden lg:flex w-64 flex-col border-r bg-slate-50 sticky top-16 h-[calc(100vh-4rem)]">
-      <nav className="flex-1 p-4 space-y-1">
-        {visibleNavItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = item.end 
-            ? location.pathname === item.to 
-            : location.pathname.startsWith(item.to);
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {navEntries.filter(canViewEntry).map((entry) => {
+          if (isNavGroup(entry)) {
+            const Icon = entry.icon;
+            const isOpen = openGroups[entry.label] ?? false;
+            const hasActiveChild = entry.items.some((item) =>
+              item.to === "/admin/leads" 
+                ? location.pathname === item.to 
+                : location.pathname.startsWith(item.to)
+            );
+            const visibleItems = entry.items.filter(canViewItem);
+
+            if (visibleItems.length === 0) return null;
+
+            return (
+              <Collapsible
+                key={entry.label}
+                open={isOpen}
+                onOpenChange={() => toggleGroup(entry.label)}
+              >
+                <CollapsibleTrigger
+                  className={cn(
+                    "flex items-center justify-between w-full px-3 py-3 rounded-lg transition-colors",
+                    hasActiveChild
+                      ? "bg-slate-200 text-slate-900"
+                      : "text-slate-700 hover:bg-slate-200"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-5 w-5" />
+                    <span className="text-base font-medium">{entry.label}</span>
+                  </div>
+                  {isOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pl-4 mt-1 space-y-1">
+                  {visibleItems.map((item) => {
+                    const ItemIcon = item.icon;
+                    const isActive = item.to === "/admin/leads"
+                      ? location.pathname === item.to
+                      : location.pathname.startsWith(item.to);
+
+                    return (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        onMouseEnter={() => handleMouseEnter(item.to)}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                          isActive
+                            ? "bg-slate-900 text-white"
+                            : "text-slate-600 hover:bg-slate-200"
+                        )}
+                      >
+                        <ItemIcon className="h-4 w-4" />
+                        <span className="text-sm font-medium">{item.label}</span>
+                      </NavLink>
+                    );
+                  })}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          }
+
+          const Icon = entry.icon;
+          const isActive = entry.end
+            ? location.pathname === entry.to
+            : location.pathname.startsWith(entry.to);
 
           return (
             <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onMouseEnter={() => handleMouseEnter(item.to)}
+              key={entry.to}
+              to={entry.to}
+              end={entry.end}
+              onMouseEnter={() => handleMouseEnter(entry.to)}
               className={cn(
                 "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
                 isActive
@@ -77,7 +207,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
               )}
             >
               <Icon className="h-5 w-5" />
-              <span className="text-base font-medium">{item.label}</span>
+              <span className="text-base font-medium">{entry.label}</span>
             </NavLink>
           );
         })}
