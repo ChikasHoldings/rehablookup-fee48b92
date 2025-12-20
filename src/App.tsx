@@ -51,6 +51,10 @@ import AetnaRehab from "./pages/insurance/AetnaRehab";
 import BCBSTreatment from "./pages/insurance/BCBSTreatment";
 import CignaRehab from "./pages/insurance/CignaRehab";
 import UnitedHealthcareRehab from "./pages/insurance/UnitedHealthcareRehab";
+import HumanaRehab from "./pages/insurance/HumanaRehab";
+import KaiserRehab from "./pages/insurance/KaiserRehab";
+import MedicareRehab from "./pages/insurance/MedicareRehab";
+import MedicaidRehab from "./pages/insurance/MedicaidRehab";
 import CostEstimator from "./pages/CostEstimator";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
@@ -218,6 +222,10 @@ const App = () => (
             <Route path="/insurance/bcbs-treatment" element={<BCBSTreatment />} />
             <Route path="/insurance/cigna-rehab" element={<CignaRehab />} />
             <Route path="/insurance/united-healthcare-rehab" element={<UnitedHealthcareRehab />} />
+            <Route path="/insurance/humana-rehab" element={<HumanaRehab />} />
+            <Route path="/insurance/kaiser-rehab" element={<KaiserRehab />} />
+            <Route path="/insurance/medicare-rehab" element={<MedicareRehab />} />
+            <Route path="/insurance/medicaid-rehab" element={<MedicaidRehab />} />
             <Route path="/cost-estimator" element={<CostEstimator />} />
             <Route path="/resources/:id" element={<ArticleDetail />} />
             <Route path="/faq" element={<FAQ />} />
