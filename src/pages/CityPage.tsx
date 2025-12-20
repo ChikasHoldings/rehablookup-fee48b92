@@ -20,9 +20,6 @@ import {
   Clock,
   Star,
   Heart,
-  TrendingUp,
-  Users,
-  AlertTriangle,
   ChevronDown,
   HelpCircle,
   Home,
@@ -152,22 +149,6 @@ const cityImages: Record<string, Record<string, string>> = {
 
 const defaultCityImage = 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1920&q=80';
 
-// City-specific statistics generator
-const getCityStatistics = (cityName: string, stateName: string) => {
-  const hash = (cityName + stateName).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const baseRate = 6 + (hash % 6);
-  const treatmentGap = 82 + (hash % 12);
-  const avgStay = 28 + (hash % 35);
-  const successRate = 45 + (hash % 20);
-  
-  return {
-    substanceUseRate: baseRate.toFixed(1),
-    treatmentGap: treatmentGap,
-    avgTreatmentStay: avgStay,
-    successRate: successRate,
-  };
-};
-
 // City FAQ generator
 const getCityFAQs = (cityName: string, stateName: string, stateAbbrev: string, facilityCount: number) => [
   {
@@ -242,7 +223,6 @@ const CityPage = () => {
   }
 
   const fullLocation = `${cityData.name}, ${stateData.abbreviation}`;
-  const cityStats = getCityStatistics(cityData.name, stateData.name);
   const cityFAQs = getCityFAQs(cityData.name, stateData.name, stateData.abbreviation, cityCenters.length);
 
   // FAQ Schema
@@ -369,65 +349,6 @@ const CityPage = () => {
               </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* City Statistics Section */}
-      <section className="border-b bg-gradient-to-b from-secondary/50 to-background py-8">
-        <div className="container">
-          <h2 className="mb-6 text-lg font-semibold text-foreground flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Treatment Statistics in {cityData.name}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{cityStats.substanceUseRate}%</p>
-                  <p className="text-sm text-muted-foreground">Substance Use Rate</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                  <Users className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{cityStats.treatmentGap}%</p>
-                  <p className="text-sm text-muted-foreground">Need Treatment Gap</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
-                  <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{cityStats.avgTreatmentStay}</p>
-                  <p className="text-sm text-muted-foreground">Avg. Treatment Days</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-                  <Star className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{cityStats.successRate}%</p>
-                  <p className="text-sm text-muted-foreground">Treatment Success Rate</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            *Statistics based on regional treatment data patterns. Individual outcomes may vary.
-          </p>
         </div>
       </section>
 

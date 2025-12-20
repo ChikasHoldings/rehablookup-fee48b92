@@ -20,9 +20,6 @@ import {
   Clock,
   Star,
   Heart,
-  TrendingUp,
-  Users,
-  AlertTriangle,
   ChevronDown,
   HelpCircle,
   Pill,
@@ -98,22 +95,6 @@ const stateCapitalImages: Record<string, string> = {
   'wyoming': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
 };
 
-// State-specific addiction statistics (based on SAMHSA data patterns)
-const getStateStatistics = (stateName: string) => {
-  const hash = stateName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const baseRate = 7 + (hash % 5);
-  const treatmentGap = 85 + (hash % 10);
-  const opioidRate = 12 + (hash % 15);
-  const alcoholRate = 5 + (hash % 4);
-  
-  return {
-    substanceUseRate: baseRate.toFixed(1),
-    treatmentGap: treatmentGap,
-    opioidDeathRate: opioidRate.toFixed(1),
-    alcoholUseDisorder: alcoholRate.toFixed(1),
-  };
-};
-
 // FAQ data generator for each state
 const getStateFAQs = (stateName: string, abbreviation: string, cityCount: number, facilityCount: number) => [
   {
@@ -172,7 +153,6 @@ const StatePage = () => {
 
   const nearbyStates = stateData ? getNearbyStates(stateData.slug, 4) : [];
   const capitalImage = stateSlug ? stateCapitalImages[stateSlug] : undefined;
-  const stateStats = stateData ? getStateStatistics(stateData.name) : null;
   const stateFAQs = stateData ? getStateFAQs(stateData.name, stateData.abbreviation, stateData.cities.length, stateCenters.length) : [];
   const displayedCities = showAllCities ? stateData?.cities : stateData?.cities.slice(0, 12);
 
@@ -305,67 +285,6 @@ const StatePage = () => {
           </div>
         </div>
       </section>
-
-      {/* State Statistics Section */}
-      {stateStats && (
-        <section className="border-b bg-gradient-to-b from-secondary/50 to-background py-8">
-          <div className="container">
-            <h2 className="mb-6 text-lg font-semibold text-foreground flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Addiction Statistics in {stateData.name}
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                    <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{stateStats.substanceUseRate}%</p>
-                    <p className="text-sm text-muted-foreground">Substance Use Disorder Rate</p>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                    <Users className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{stateStats.treatmentGap}%</p>
-                    <p className="text-sm text-muted-foreground">Need Treatment, Don't Receive</p>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
-                    <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{stateStats.opioidDeathRate}</p>
-                    <p className="text-sm text-muted-foreground">Opioid Deaths per 100k</p>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                    <Heart className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{stateStats.alcoholUseDisorder}%</p>
-                    <p className="text-sm text-muted-foreground">Alcohol Use Disorder Rate</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              *Statistics based on SAMHSA National Survey data patterns. Actual figures may vary.
-            </p>
-          </div>
-        </section>
-      )}
 
       {/* Expanded Cities Section */}
       <section className="border-b bg-card py-10">
