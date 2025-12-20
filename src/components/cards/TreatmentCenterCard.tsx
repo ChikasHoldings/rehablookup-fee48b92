@@ -173,7 +173,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
           
           {/* Featured badge overlay */}
           {showFeaturedBadge && (
-            <div className="absolute left-2 top-2">
+            <div className="absolute right-2 top-2">
               <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">
                 <Crown className="h-2.5 w-2.5" />
                 Featured
@@ -337,7 +337,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
         
         {/* Top badge */}
         {showFeaturedBadge && (
-          <div className="absolute left-3 top-3">
+          <div className="absolute right-3 top-3">
             <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
               <Crown className="h-3 w-3" />
               Featured
