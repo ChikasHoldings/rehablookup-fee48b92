@@ -842,7 +842,7 @@ const ForProviders = () => {
                 </ul>
               </div>
 
-              <div className="relative">
+              <div className="relative lg:py-6 lg:px-6">
                 <div className="rounded-2xl overflow-hidden border border-border shadow-xl bg-card">
                   <img 
                     src={rehabFacilityHero} 
@@ -851,8 +851,8 @@ const ForProviders = () => {
                   />
                 </div>
                 
-                {/* Floating badge */}
-                <div className="absolute -bottom-4 -left-4 md:-left-6 rounded-xl bg-primary px-4 py-3 shadow-lg">
+                {/* Floating badges - contained within section */}
+                <div className="absolute bottom-2 left-0 md:left-0 rounded-xl bg-primary px-4 py-3 shadow-lg z-10">
                   <div className="flex items-center gap-3 text-primary-foreground">
                     <Shield className="h-5 w-5 text-accent" />
                     <div>
@@ -862,7 +862,7 @@ const ForProviders = () => {
                   </div>
                 </div>
                 
-                <div className="absolute -top-4 -right-4 rounded-xl bg-accent px-4 py-2 shadow-md animate-float">
+                <div className="absolute top-2 right-0 md:right-0 rounded-xl bg-accent px-4 py-2 shadow-md animate-float z-10">
                   <div className="flex items-center gap-2 text-accent-foreground">
                     <TrendingUp className="h-4 w-4" />
                     <span className="text-sm font-bold">Grow Your Reach</span>
