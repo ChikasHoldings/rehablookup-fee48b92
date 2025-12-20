@@ -96,7 +96,7 @@ export function SearchForm({
   if (variant === "directory") {
     return (
       <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
-        <div className="flex flex-col overflow-hidden rounded-xl bg-card shadow-2xl ring-1 ring-white/10 md:flex-row">
+        <div className="flex flex-col rounded-xl bg-card shadow-2xl ring-1 ring-white/10 md:flex-row">
           {/* Where */}
           <div className="group relative flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
             <div className="p-4 md:p-5">
