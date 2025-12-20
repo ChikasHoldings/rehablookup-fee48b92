@@ -37,6 +37,9 @@
     --muted: 220 20% 96%;
     --muted-foreground: 220 15% 45%;
 
+    /* Footer background - darker for contrast */
+    --footer: 220 25% 90%;
+
     /* Success green */
     --success: 160 60% 40%;
     --success-foreground: 0 0% 100%;
@@ -96,6 +99,8 @@
 
     --muted: 220 15% 20%;
     --muted-foreground: 216 10% 60%;
+
+    --footer: 220 18% 15%;
 
     --success: 152 55% 45%;
     --success-foreground: 0 0% 100%;

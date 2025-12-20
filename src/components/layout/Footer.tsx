@@ -62,7 +62,7 @@ const LinkedInIcon = () => (
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-muted">
+    <footer className="border-t border-border bg-footer">
       {/* Main Links */}
       <div className="container py-10 md:py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
