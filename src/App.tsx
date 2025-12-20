@@ -55,6 +55,7 @@ import HumanaRehab from "./pages/insurance/HumanaRehab";
 import KaiserRehab from "./pages/insurance/KaiserRehab";
 import MedicareRehab from "./pages/insurance/MedicareRehab";
 import MedicaidRehab from "./pages/insurance/MedicaidRehab";
+import AnthemRehab from "./pages/insurance/AnthemRehab";
 import CostEstimator from "./pages/CostEstimator";
 import ArticleDetail from "./pages/ArticleDetail";
 import FAQ from "./pages/FAQ";
@@ -226,6 +227,7 @@ const App = () => (
             <Route path="/insurance/kaiser-rehab" element={<KaiserRehab />} />
             <Route path="/insurance/medicare-rehab" element={<MedicareRehab />} />
             <Route path="/insurance/medicaid-rehab" element={<MedicaidRehab />} />
+            <Route path="/insurance/anthem-rehab" element={<AnthemRehab />} />
             <Route path="/cost-estimator" element={<CostEstimator />} />
             <Route path="/resources/:id" element={<ArticleDetail />} />
             <Route path="/faq" element={<FAQ />} />
