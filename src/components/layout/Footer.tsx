@@ -69,11 +69,13 @@ export function Footer() {
         {/* Centered Brand Section */}
         <div className="flex flex-col items-center justify-center py-8 border-b border-border/50">
           {/* Brand Text */}
-          <Link to="/" className="flex items-center gap-2 mb-5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
-              <MapPin className="h-4 w-4 text-primary-foreground" fill="currentColor" />
-            </div>
-            <span className="text-lg font-display font-semibold text-foreground">RehabLookup</span>
+          <Link to="/" className="mb-5">
+            <img 
+              src="/logo.png" 
+              alt="RehabLookup" 
+              className="h-7 w-auto"
+              loading="lazy"
+            />
           </Link>
           
           {/* Social Icons - Centered with luxury styling */}
@@ -265,15 +267,9 @@ export function Footer() {
             <div className="col-span-2 md:col-span-4 lg:col-span-1 flex flex-col gap-5">
               <Link to="/" className="inline-block">
                 <img 
-                  src="/logo.svg" 
+                  src="/logo.png" 
                   alt="RehabLookup" 
-                  className="h-10 w-auto dark:hidden"
-                  loading="lazy"
-                />
-                <img 
-                  src="/logo-dark.svg" 
-                  alt="RehabLookup" 
-                  className="h-10 w-auto hidden dark:block"
+                  className="h-10 w-auto"
                   loading="lazy"
                 />
               </Link>
