@@ -185,7 +185,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           <img 
             src="/logo-dark.svg" 
             alt="Rehab-Lookup" 
-            className="h-7 sm:h-8 md:h-9 w-auto"
+            className="h-6 sm:h-7 md:h-8 w-auto"
           />
         </div>
 
