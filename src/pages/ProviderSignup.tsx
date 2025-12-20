@@ -35,6 +35,8 @@ import {
   ShieldCheck,
   Crown,
 } from "lucide-react";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
 import { PlanSelectionStep } from "@/components/provider/PlanSelectionStep";
@@ -773,13 +775,11 @@ export default function ProviderSignup() {
                   <div className="space-y-1.5">
                     <Label htmlFor="phone" className="text-sm font-medium">Phone Number *</Label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
+                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                      <PhoneInput
                         id="phone"
-                        type="tel"
                         value={formData.phone}
-                        onChange={(e) => updateFormData("phone", e.target.value)}
-                        placeholder="(555) 123-4567"
+                        onChange={(value) => updateFormData("phone", value)}
                         className="pl-10 h-10"
                       />
                     </div>
@@ -873,13 +873,11 @@ export default function ProviderSignup() {
                     <div className="space-y-1.5">
                       <Label htmlFor="facilityPhone" className="text-sm font-medium">Facility Phone *</Label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
+                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                        <PhoneInput
                           id="facilityPhone"
-                          type="tel"
                           value={formData.facilityPhone}
-                          onChange={(e) => updateFormData("facilityPhone", e.target.value)}
-                          placeholder="(555) 123-4567"
+                          onChange={(value) => updateFormData("facilityPhone", value)}
                           className="pl-10 h-10"
                         />
                       </div>

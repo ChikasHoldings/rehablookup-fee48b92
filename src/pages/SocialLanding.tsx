@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import logoImage from "@/assets/logo.png";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { isValidPhoneNumber } from "@/lib/phoneUtils";
 
 // Configure your vertical video here (9:16 aspect ratio recommended)
 const VIDEO_CONFIG = {
@@ -326,12 +328,7 @@ export default function SocialLanding() {
     }
   };
   
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, "");
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
-  };
+  // Phone validation using shared utility
 
   const handleFieldChange = (field: keyof FormData, value: string | boolean) => {
     trackFormStart();
@@ -544,14 +541,11 @@ export default function SocialLanding() {
               {/* Phone */}
               <div className="space-y-1.5">
                 <Label htmlFor="phone" className="text-sm text-foreground">Phone Number</Label>
-                <Input
+                <PhoneInput
                   id="phone"
-                  type="tel"
                   value={formData.phone}
-                  onChange={(e) => handleFieldChange("phone", formatPhone(e.target.value))}
-                  placeholder="(555) 555-5555"
+                  onChange={(value) => handleFieldChange("phone", value)}
                   className={cn("h-12 text-base", errors.phone && "border-destructive")}
-                  autoComplete="tel"
                 />
                 {errors.phone && (
                   <p className="text-xs text-destructive">{errors.phone}</p>

@@ -26,6 +26,8 @@ import {
   HelpCircle,
   RotateCcw
 } from "lucide-react";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { formatPhoneNumber, isValidPhoneNumber } from "@/lib/phoneUtils";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
 import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
 import { useLogActivity } from "@/hooks/useActivityLog";
@@ -873,12 +875,10 @@ export default function ProviderSettingsPage() {
                     <Smartphone className="h-4 w-4 text-muted-foreground" />
                     Phone Number
                   </Label>
-                  <Input
+                  <PhoneInput
                     id="phone"
-                    type="tel"
                     value={profile?.phone || ""}
-                    onChange={(e) => updateField("phone", e.target.value)}
-                    placeholder="(555) 123-4567"
+                    onChange={(value) => updateField("phone", value)}
                     className={`h-10 ${profileErrors.phone ? "border-destructive" : ""}`}
                   />
                   {profileErrors.phone && (
