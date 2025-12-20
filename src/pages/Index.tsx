@@ -586,22 +586,35 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Stats Grid */}
+            {/* Image with Stats Overlay */}
             <div ref={parallaxRef} className="order-1 lg:order-2">
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { value: "15K+", label: "Treatment Centers" },
-                  { value: "50", label: "States Covered" },
-                  { value: "10K+", label: "Families Helped" },
-                  { value: "24/7", label: "Support Available" },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-primary-foreground/10 bg-primary-foreground/5 p-4 text-center backdrop-blur-sm">
-                    <div className="font-display text-2xl font-bold text-accent md:text-3xl">
-                      {stat.value}
-                    </div>
-                    <p className="mt-0.5 text-xs text-primary-foreground/70">{stat.label}</p>
+              <div className="relative overflow-hidden rounded-xl">
+                <img 
+                  src={whyChooseUsImage} 
+                  alt="Healthcare professional consulting with a family"
+                  className="w-full aspect-[4/3] object-cover"
+                />
+                {/* Overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent" />
+                
+                {/* Stats Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { value: "15K+", label: "Centers" },
+                      { value: "50", label: "States" },
+                      { value: "10K+", label: "Families" },
+                      { value: "24/7", label: "Support" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="text-center">
+                        <div className="font-display text-lg font-bold text-accent sm:text-xl">
+                          {stat.value}
+                        </div>
+                        <p className="text-[10px] text-primary-foreground/80 sm:text-xs">{stat.label}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
             </div>
           </div>
