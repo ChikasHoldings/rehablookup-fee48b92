@@ -14,6 +14,17 @@ type GAEventParams = {
   [key: string]: unknown;
 };
 
+// GA4 Ecommerce item type
+interface EcommerceItem {
+  item_id: string;
+  item_name: string;
+  item_category?: string;
+  item_variant?: string;
+  price?: number;
+  quantity?: number;
+  currency?: string;
+}
+
 export const trackEvent = (
   eventName: string,
   params?: GAEventParams
@@ -131,6 +142,125 @@ export const analytics = {
       event_category: 'Error',
       event_label: errorType,
       error_message: errorMessage,
+    });
+  },
+
+  // ========== ENHANCED ECOMMERCE TRACKING ==========
+  
+  // View subscription plan (view_item)
+  viewSubscriptionPlan: (planId: string, planName: string, price: number) => {
+    trackEvent('view_item', {
+      currency: 'USD',
+      value: price,
+      items: [{
+        item_id: planId,
+        item_name: planName,
+        item_category: 'Subscription',
+        price: price,
+        quantity: 1,
+      }] as EcommerceItem[],
+    });
+  },
+
+  // Select subscription plan (add_to_cart equivalent)
+  selectSubscriptionPlan: (planId: string, planName: string, price: number) => {
+    trackEvent('add_to_cart', {
+      currency: 'USD',
+      value: price,
+      items: [{
+        item_id: planId,
+        item_name: planName,
+        item_category: 'Subscription',
+        price: price,
+        quantity: 1,
+      }] as EcommerceItem[],
+    });
+  },
+
+  // Begin checkout for subscription
+  beginSubscriptionCheckout: (planId: string, planName: string, price: number, promoCode?: string) => {
+    trackEvent('begin_checkout', {
+      currency: 'USD',
+      value: price,
+      coupon: promoCode || undefined,
+      items: [{
+        item_id: planId,
+        item_name: planName,
+        item_category: 'Subscription',
+        price: price,
+        quantity: 1,
+      }] as EcommerceItem[],
+    });
+  },
+
+  // Subscription purchase complete
+  subscriptionPurchase: (
+    planId: string, 
+    planName: string, 
+    price: number, 
+    transactionId?: string,
+    promoCode?: string
+  ) => {
+    trackEvent('purchase', {
+      transaction_id: transactionId || `sub_${Date.now()}`,
+      currency: 'USD',
+      value: price,
+      coupon: promoCode || undefined,
+      items: [{
+        item_id: planId,
+        item_name: planName,
+        item_category: 'Subscription',
+        price: price,
+        quantity: 1,
+      }] as EcommerceItem[],
+    });
+  },
+
+  // Subscription upgrade
+  subscriptionUpgrade: (fromPlan: string, toPlan: string, newPrice: number) => {
+    trackEvent('subscription_upgrade', {
+      event_category: 'Subscription',
+      event_label: `${fromPlan} to ${toPlan}`,
+      value: newPrice,
+      from_plan: fromPlan,
+      to_plan: toPlan,
+    });
+  },
+
+  // Subscription cancellation
+  subscriptionCancel: (planId: string, planName: string) => {
+    trackEvent('subscription_cancel', {
+      event_category: 'Subscription',
+      event_label: planName,
+      item_id: planId,
+    });
+  },
+
+  // View billing page
+  viewBillingPage: () => {
+    trackEvent('view_billing', {
+      event_category: 'Subscription',
+      event_label: 'Billing Page View',
+    });
+  },
+
+  // Promo code applied
+  promoCodeApplied: (promoCode: string, discount: string, planId: string) => {
+    trackEvent('promo_code_applied', {
+      event_category: 'Subscription',
+      event_label: promoCode,
+      discount: discount,
+      plan_id: planId,
+    });
+  },
+
+  // Checkout abandoned (user starts checkout but doesn't complete)
+  checkoutAbandoned: (planId: string, planName: string, price: number) => {
+    trackEvent('checkout_abandoned', {
+      event_category: 'Subscription',
+      event_label: planName,
+      value: price,
+      item_id: planId,
     });
   },
 };

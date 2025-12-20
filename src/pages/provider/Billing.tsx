@@ -38,6 +38,13 @@ import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { SubscriptionHistoryWidget } from "@/components/provider/SubscriptionHistoryWidget";
 import { PaymentMethodCard } from "@/components/provider/PaymentMethodCard";
+import { analytics } from "@/lib/analytics";
+
+// Price values for ecommerce tracking
+const PLAN_PRICES = {
+  professional: 399,
+  featured: 1099,
+} as const;
 
 export default function ProviderBillingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -57,15 +64,32 @@ export default function ProviderBillingPage() {
     restrictedToPlan?: string | null;
   }>({ isValid: null, message: "" });
 
+  // Track billing page view
+  useEffect(() => {
+    analytics.viewBillingPage();
+  }, []);
+
   // Handle success/cancel from Stripe
   useEffect(() => {
     const success = searchParams.get("success");
     const canceled = searchParams.get("canceled");
     const sessionId = searchParams.get("session_id");
+    const planParam = searchParams.get("plan") as "professional" | "featured" | null;
     
     if (success === "true") {
       // Clean up URL params immediately
       setSearchParams({});
+      
+      // Track successful purchase in GA
+      if (planParam && PLAN_PRICES[planParam]) {
+        const planDetails = PLAN_DETAILS[planParam];
+        analytics.subscriptionPurchase(
+          planDetails.product_id || planParam,
+          planDetails.name,
+          PLAN_PRICES[planParam],
+          sessionId || undefined
+        );
+      }
       
       toast({
         title: "🎉 Welcome to Your New Plan!",
@@ -82,6 +106,17 @@ export default function ProviderBillingPage() {
       queryClient.invalidateQueries({ queryKey: ["facility-plan"] });
     } else if (canceled === "true") {
       setSearchParams({});
+      
+      // Track abandoned checkout
+      if (planParam && PLAN_PRICES[planParam]) {
+        const planDetails = PLAN_DETAILS[planParam];
+        analytics.checkoutAbandoned(
+          planDetails.product_id || planParam,
+          planDetails.name,
+          PLAN_PRICES[planParam]
+        );
+      }
+      
       toast({
         variant: "destructive",
         title: "Checkout Canceled",
@@ -127,6 +162,18 @@ export default function ProviderBillingPage() {
 
   const handleCheckout = async (plan: "professional" | "featured") => {
     setCheckoutLoading(plan);
+    
+    const planDetails = PLAN_DETAILS[plan];
+    const price = PLAN_PRICES[plan];
+    
+    // Track begin checkout in GA
+    analytics.beginSubscriptionCheckout(
+      planDetails.product_id || plan,
+      planDetails.name,
+      price,
+      promoValidation.isValid ? promoCode.trim().toUpperCase() : undefined
+    );
+    
     try {
       // Determine if this is an upgrade for existing subscribers
       const isUpgradeAction = isSubscribed && !cancelAtPeriodEnd;
@@ -143,6 +190,18 @@ export default function ProviderBillingPage() {
       
       // Handle direct upgrade (no checkout needed)
       if (data?.upgraded) {
+        // Track upgrade in GA
+        analytics.subscriptionUpgrade(
+          subscription?.plan || 'basic',
+          plan,
+          price
+        );
+        analytics.subscriptionPurchase(
+          planDetails.product_id || plan,
+          planDetails.name,
+          price
+        );
+        
         toast({
           title: "🚀 Plan Upgraded!",
           description: data.message || `You're now on the ${plan === 'featured' ? 'Featured' : 'Professional'} plan.`,
@@ -170,6 +229,7 @@ export default function ProviderBillingPage() {
       }
     } catch (err) {
       console.error("Checkout error:", err);
+      analytics.error("checkout_error", err instanceof Error ? err.message : "Unknown error");
       toast({
         variant: "destructive",
         title: "Checkout Failed",
@@ -207,6 +267,15 @@ export default function ProviderBillingPage() {
         discount: data?.discount,
         restrictedToPlan: data?.restrictedToPlan || null,
       });
+      
+      // Track promo code applied in GA
+      if (data?.valid && data?.discount) {
+        analytics.promoCodeApplied(
+          promoCode.trim().toUpperCase(),
+          data.discount,
+          targetPlan || "featured"
+        );
+      }
     } catch (err) {
       console.error("Promo validation error:", err);
       setPromoValidation({
