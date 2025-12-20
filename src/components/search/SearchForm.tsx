@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Stethoscope, Shield, Building2, ChevronDown, Check } from "lucide-react";
+import { Search, MapPin, Stethoscope, Shield, Building2 } from "lucide-react";
 import { treatmentTypes, insuranceProviders } from "@/data/treatmentCenters";
 import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
 
@@ -25,42 +25,22 @@ export function SearchForm({
   const [treatmentType, setTreatmentType] = useState(initialTreatmentType);
   const [insurance, setInsurance] = useState(initialInsurance);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showTreatmentDropdown, setShowTreatmentDropdown] = useState(false);
-  const [showInsuranceDropdown, setShowInsuranceDropdown] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const treatmentDropdownRef = useRef<HTMLDivElement>(null);
-  const insuranceDropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = useMemo(() => getLocationSuggestions(location), [location]);
 
-  // Close dropdowns when clicking outside
+  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      
       if (
         suggestionsRef.current && 
-        !suggestionsRef.current.contains(target) &&
+        !suggestionsRef.current.contains(e.target as Node) &&
         inputRef.current &&
-        !inputRef.current.contains(target)
+        !inputRef.current.contains(e.target as Node)
       ) {
         setShowSuggestions(false);
-      }
-      
-      if (
-        treatmentDropdownRef.current &&
-        !treatmentDropdownRef.current.contains(target)
-      ) {
-        setShowTreatmentDropdown(false);
-      }
-      
-      if (
-        insuranceDropdownRef.current &&
-        !insuranceDropdownRef.current.contains(target)
-      ) {
-        setShowInsuranceDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -170,122 +150,54 @@ export function SearchForm({
             )}
           </div>
           
-          {/* Type of Care - Custom Dropdown */}
-          <div ref={treatmentDropdownRef} className="group relative flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
-            <button
-              type="button"
-              onClick={() => {
-                setShowTreatmentDropdown(!showTreatmentDropdown);
-                setShowInsuranceDropdown(false);
-                setShowSuggestions(false);
-              }}
-              className="w-full p-4 text-left md:p-5"
-            >
-              <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+          {/* Type of Care */}
+          <div className="group flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
+            <div className="p-4 md:p-5">
+              <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
                 <Stethoscope className="h-3.5 w-3.5" />
                 Type of Care
-              </span>
-              <div className="flex items-center justify-between">
-                <span className={`text-base ${treatmentType ? "text-foreground" : "text-muted-foreground/70"}`}>
-                  {treatmentType || "All treatment types"}
-                </span>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showTreatmentDropdown ? "rotate-180" : ""}`} />
-              </div>
-            </button>
-            
-            {/* Treatment Dropdown Menu */}
-            {showTreatmentDropdown && (
-              <div className="absolute left-0 right-0 top-full z-50 max-h-64 overflow-y-auto rounded-lg border border-border bg-card shadow-xl">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTreatmentType("");
-                    setShowTreatmentDropdown(false);
-                  }}
-                  className={`flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-muted ${
-                    !treatmentType ? "bg-primary/10" : ""
-                  }`}
+              </label>
+              <div className="relative">
+                <select
+                  value={treatmentType}
+                  onChange={(e) => setTreatmentType(e.target.value)}
+                  className="w-full appearance-none bg-card text-base text-foreground focus:outline-none cursor-pointer pr-6 [&>option]:bg-card [&>option]:text-foreground [&>option]:py-2"
                 >
-                  <span className="text-foreground">All treatment types</span>
-                  {!treatmentType && <Check className="h-4 w-4 text-primary" />}
-                </button>
-                {treatmentTypes.map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => {
-                      setTreatmentType(type);
-                      setShowTreatmentDropdown(false);
-                    }}
-                    className={`flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-muted ${
-                      treatmentType === type ? "bg-primary/10" : ""
-                    }`}
-                  >
-                    <span className="text-foreground">{type}</span>
-                    {treatmentType === type && <Check className="h-4 w-4 text-primary" />}
-                  </button>
-                ))}
+                  <option value="">All treatment types</option>
+                  {treatmentTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+                <svg className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Insurance - Custom Dropdown */}
-          <div ref={insuranceDropdownRef} className="group relative flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
-            <button
-              type="button"
-              onClick={() => {
-                setShowInsuranceDropdown(!showInsuranceDropdown);
-                setShowTreatmentDropdown(false);
-                setShowSuggestions(false);
-              }}
-              className="w-full p-4 text-left md:p-5"
-            >
-              <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+          {/* Insurance */}
+          <div className="group flex-1 border-b border-border/50 transition-colors hover:bg-muted/30 md:border-b-0 md:border-r">
+            <div className="p-4 md:p-5">
+              <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
                 <Shield className="h-3.5 w-3.5" />
                 Insurance
-              </span>
-              <div className="flex items-center justify-between">
-                <span className={`text-base ${insurance ? "text-foreground" : "text-muted-foreground/70"}`}>
-                  {insurance || "All insurance"}
-                </span>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showInsuranceDropdown ? "rotate-180" : ""}`} />
-              </div>
-            </button>
-            
-            {/* Insurance Dropdown Menu */}
-            {showInsuranceDropdown && (
-              <div className="absolute left-0 right-0 top-full z-50 max-h-64 overflow-y-auto rounded-lg border border-border bg-card shadow-xl">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInsurance("");
-                    setShowInsuranceDropdown(false);
-                  }}
-                  className={`flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-muted ${
-                    !insurance ? "bg-primary/10" : ""
-                  }`}
+              </label>
+              <div className="relative">
+                <select
+                  value={insurance}
+                  onChange={(e) => setInsurance(e.target.value)}
+                  className="w-full appearance-none bg-card text-base text-foreground focus:outline-none cursor-pointer pr-6 [&>option]:bg-card [&>option]:text-foreground [&>option]:py-2"
                 >
-                  <span className="text-foreground">All insurance</span>
-                  {!insurance && <Check className="h-4 w-4 text-primary" />}
-                </button>
-                {insuranceProviders.map((provider) => (
-                  <button
-                    key={provider}
-                    type="button"
-                    onClick={() => {
-                      setInsurance(provider);
-                      setShowInsuranceDropdown(false);
-                    }}
-                    className={`flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-muted ${
-                      insurance === provider ? "bg-primary/10" : ""
-                    }`}
-                  >
-                    <span className="text-foreground">{provider}</span>
-                    {insurance === provider && <Check className="h-4 w-4 text-primary" />}
-                  </button>
-                ))}
+                  <option value="">All insurance</option>
+                  {insuranceProviders.map((provider) => (
+                    <option key={provider} value={provider}>{provider}</option>
+                  ))}
+                </select>
+                <svg className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Submit */}
