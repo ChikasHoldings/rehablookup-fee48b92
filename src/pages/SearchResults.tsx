@@ -794,16 +794,42 @@ const SearchResults = () => {
             <>
               {/* Results Summary */}
               <div className="flex items-center justify-between mb-6">
-                <p className="text-sm text-muted-foreground">
-                  Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)}</span> of{" "}
-                  <span className="font-medium text-foreground">{filteredCenters.length}</span> results
-                </p>
-                {paginatedCenters.some(c => c.featured || (c as any).hasFeaturedSubscription) && (
-                  <div className="flex items-center gap-1.5 text-xs text-amber-600">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span>Featured centers highlighted</span>
-                  </div>
-                )}
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm text-muted-foreground">
+                    Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)}</span> of{" "}
+                    <span className="font-medium text-foreground">{filteredCenters.length}</span> results
+                  </p>
+                  {location && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Compass className="h-3 w-3 text-primary" />
+                      Results sorted by proximity to <span className="font-medium text-foreground">{location}</span>
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  {location && (
+                    <div className="hidden md:flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                        <MapPin className="h-2.5 w-2.5" /> Exact
+                      </span>
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                        <Building2 className="h-2.5 w-2.5" /> City
+                      </span>
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                        <Navigation className="h-2.5 w-2.5" /> State
+                      </span>
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-700">
+                        <Compass className="h-2.5 w-2.5" /> Nearby
+                      </span>
+                    </div>
+                  )}
+                  {paginatedCenters.some(c => c.featured || (c as any).hasFeaturedSubscription) && (
+                    <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Featured centers highlighted</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Results List */}

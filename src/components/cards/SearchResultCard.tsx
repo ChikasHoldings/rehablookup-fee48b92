@@ -13,7 +13,10 @@ import {
   Building2,
   CheckCircle,
   Heart,
-  ExternalLink
+  ExternalLink,
+  Navigation,
+  Compass,
+  Globe2
 } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
@@ -23,6 +26,7 @@ import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityQuickViewModal } from "./FacilityQuickViewModal";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useFavorites } from "@/hooks/useFavorites";
+import type { ProximityTier } from "@/lib/proximitySearch";
 
 interface SearchResultCardProps {
   center: TreatmentCenter & { 
@@ -36,9 +40,49 @@ interface SearchResultCardProps {
     year_established?: number | null;
     facilityType?: string | null;
     insuranceAccepted?: string[];
+    _proximityTier?: ProximityTier;
+    _proximityReason?: string;
   };
   featured?: boolean;
 }
+
+const proximityBadgeConfig: Record<ProximityTier, { 
+  label: string; 
+  icon: React.ElementType; 
+  className: string;
+  bgClassName: string;
+}> = {
+  exact: { 
+    label: "Exact Match", 
+    icon: MapPin, 
+    className: "text-emerald-700",
+    bgClassName: "bg-emerald-100 border-emerald-200"
+  },
+  city: { 
+    label: "In Your City", 
+    icon: Building2, 
+    className: "text-blue-700",
+    bgClassName: "bg-blue-100 border-blue-200"
+  },
+  state: { 
+    label: "In Your State", 
+    icon: Navigation, 
+    className: "text-purple-700",
+    bgClassName: "bg-purple-100 border-purple-200"
+  },
+  nearby: { 
+    label: "Nearby State", 
+    icon: Compass, 
+    className: "text-amber-700",
+    bgClassName: "bg-amber-100 border-amber-200"
+  },
+  nationwide: { 
+    label: "Nationwide", 
+    icon: Globe2, 
+    className: "text-slate-600",
+    bgClassName: "bg-slate-100 border-slate-200"
+  },
+};
 
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/);
@@ -74,6 +118,11 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
 
   const hasInsurance = center.insuranceAccepted && center.insuranceAccepted.length > 0;
   const insuranceCount = center.insuranceAccepted?.length || 0;
+  
+  // Proximity badge configuration
+  const proximityTier = center._proximityTier;
+  const proximityConfig = proximityTier ? proximityBadgeConfig[proximityTier] : null;
+  const ProximityIcon = proximityConfig?.icon;
   
   // Check if provider has paid plan - show phone only for paid providers
   const hasPaidPlan = center.hasPaidPlan || center.hasFeaturedSubscription || !center.isFromDatabase;
@@ -182,6 +231,26 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
                 <Badge className="gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
                   <Crown className="h-3 w-3" />
                   Featured
+                </Badge>
+              </div>
+            )}
+
+            {/* Proximity badge */}
+            {proximityConfig && ProximityIcon && proximityTier !== "nationwide" && (
+              <div className={cn(
+                "absolute z-10",
+                showFeaturedBadge ? "left-3 top-11" : "left-3 top-3"
+              )}>
+                <Badge 
+                  variant="outline"
+                  className={cn(
+                    "gap-1.5 px-2.5 py-1 text-[10px] font-bold shadow-md backdrop-blur-sm border",
+                    proximityConfig.bgClassName,
+                    proximityConfig.className
+                  )}
+                >
+                  <ProximityIcon className="h-3 w-3" />
+                  {proximityConfig.label}
                 </Badge>
               </div>
             )}
