@@ -91,8 +91,8 @@ import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
 import ProviderImageGuidelines from "./pages/provider/ImageGuidelines";
 import ProviderAddLocation from "./pages/provider/AddLocation";
 
-// Admin Panel - lazy load shell and pages
-const AdminShell = lazy(() => import("./components/admin/AdminShell").then(m => ({ default: m.AdminShell })));
+// Admin Panel - eagerly load shell, lazy load pages (shell handles its own Suspense)
+import { AdminShell } from "./components/admin/AdminShell";
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProviders = lazy(() => import("./pages/admin/AdminProviders"));
