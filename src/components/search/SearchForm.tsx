@@ -12,6 +12,8 @@ interface SearchFormProps {
   initialTreatmentType?: string;
   initialInsurance?: string;
   onSearchComplete?: () => void;
+  /** Custom target path for search results (defaults to /rehab-centers) */
+  targetPath?: string;
 }
 
 export function SearchForm({ 
@@ -19,7 +21,8 @@ export function SearchForm({
   initialLocation = "",
   initialTreatmentType = "",
   initialInsurance = "",
-  onSearchComplete
+  onSearchComplete,
+  targetPath = "/rehab-centers"
 }: SearchFormProps) {
   const navigate = useNavigate();
   const [location, setLocation] = useState(initialLocation);
@@ -82,7 +85,7 @@ export function SearchForm({
     if (location) params.set("location", location);
     if (selectedTreatmentTypes.length > 0) params.set("treatment", selectedTreatmentTypes.join(","));
     if (selectedInsurance.length > 0) params.set("insurance", selectedInsurance.join(","));
-    navigate(`/rehab-centers?${params.toString()}`);
+    navigate(`${targetPath}?${params.toString()}`);
     
     // Delay scroll to allow navigation/render
     if (onSearchComplete) {
