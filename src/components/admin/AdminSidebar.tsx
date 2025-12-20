@@ -50,7 +50,16 @@ const isNavGroup = (entry: NavEntry): entry is NavGroup => {
 const navEntries: NavEntry[] = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
   { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
-  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
+  {
+    icon: Building2,
+    label: "Providers",
+    permission: "providers",
+    items: [
+      { to: "/admin/providers", icon: Building2, label: "All Providers", permission: "providers" },
+      { to: "/admin/credentials", icon: FileCheck, label: "Credentials", permission: "credentials" },
+      { to: "/admin/location-changes", icon: GitCompare, label: "Location Changes", permission: "location_changes" },
+    ],
+  },
   {
     icon: Users,
     label: "Leads",
@@ -60,10 +69,15 @@ const navEntries: NavEntry[] = [
       { to: "/admin/lead-routing", icon: RotateCcw, label: "Lead Routing", permission: "lead_routing" },
     ],
   },
-  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
-  { to: "/admin/featured", icon: Star, label: "Featured Placement", permission: "featured" },
-  { to: "/admin/credentials", icon: FileCheck, label: "Credentials", permission: "credentials" },
-  { to: "/admin/location-changes", icon: GitCompare, label: "Location Changes", permission: "location_changes" },
+  {
+    icon: CreditCard,
+    label: "Subscriptions",
+    permission: "subscriptions",
+    items: [
+      { to: "/admin/subscriptions", icon: CreditCard, label: "All Subscriptions", permission: "subscriptions" },
+      { to: "/admin/featured", icon: Star, label: "Featured Placement", permission: "featured" },
+    ],
+  },
   { to: "/admin/flagged-images", icon: Image, label: "Flagged Images", permission: "flagged_images" },
   {
     icon: Settings,
