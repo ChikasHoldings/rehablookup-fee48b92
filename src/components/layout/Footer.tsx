@@ -134,7 +134,7 @@ export function Footer() {
 
           {/* Locations */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">
+            <h4 className="text-base font-semibold text-foreground mb-3">
               Locations
             </h4>
             <ul className="space-y-2">
@@ -142,7 +142,7 @@ export function Footer() {
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -151,10 +151,10 @@ export function Footer() {
               <li>
                 <Link 
                   to="/locations" 
-                  className="inline-flex items-center gap-1 text-[13px] text-primary hover:text-primary/80 transition-colors font-medium"
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   View All
-                  <ArrowUpRight className="h-3 w-3" />
+                  <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
               </li>
             </ul>
@@ -162,7 +162,7 @@ export function Footer() {
 
           {/* Treatment */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">
+            <h4 className="text-base font-semibold text-foreground mb-3">
               Treatment
             </h4>
             <ul className="space-y-2">
@@ -170,7 +170,7 @@ export function Footer() {
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -179,10 +179,10 @@ export function Footer() {
               <li>
                 <Link 
                   to="/treatment-types" 
-                  className="inline-flex items-center gap-1 text-[13px] text-primary hover:text-primary/80 transition-colors font-medium"
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
                 >
                   View All
-                  <ArrowUpRight className="h-3 w-3" />
+                  <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
               </li>
             </ul>
@@ -190,7 +190,7 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">
+            <h4 className="text-base font-semibold text-foreground mb-3">
               Resources
             </h4>
             <ul className="space-y-2">
@@ -198,7 +198,7 @@ export function Footer() {
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -209,7 +209,7 @@ export function Footer() {
 
           {/* For Providers */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">
+            <h4 className="text-base font-semibold text-foreground mb-3">
               For Providers
             </h4>
             <ul className="space-y-2">
@@ -217,7 +217,7 @@ export function Footer() {
                 <li key={item.path}>
                   <Link 
                     to={item.path} 
-                    className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -232,19 +232,19 @@ export function Footer() {
       <div className="border-t border-border">
         <div className="container py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} RehabLookup. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <Link 
                 to="/privacy-policy" 
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Privacy
               </Link>
               <Link 
                 to="/terms-of-service" 
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Terms
               </Link>
