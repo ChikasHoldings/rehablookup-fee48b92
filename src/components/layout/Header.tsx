@@ -21,7 +21,7 @@ export interface HeaderProps {
 const defaultNavLinks: NavLink[] = [
   { href: "/rehab-centers", label: "Find Rehab" },
   { href: "/treatment-types", label: "Treatment" },
-  { href: "/resources/insurance-coverage-guide", label: "Insurance" },
+  { href: "/insurance", label: "Insurance" },
   { href: "/resources", label: "Resources" },
   { href: "/for-providers", label: "For Providers" },
 ];
