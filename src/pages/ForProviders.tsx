@@ -56,6 +56,10 @@ import providerAvatar4 from "@/assets/avatars/provider-avatar-4.jpg";
 
 const providerAvatars = [providerAvatar1, providerAvatar2, providerAvatar3, providerAvatar4];
 
+import testimonialSarah from "@/assets/testimonials/testimonial-sarah.jpg";
+import testimonialMichael from "@/assets/testimonials/testimonial-michael.jpg";
+import testimonialJennifer from "@/assets/testimonials/testimonial-jennifer.jpg";
+
 const benefits = [
   {
     icon: Target,
@@ -121,6 +125,10 @@ const testimonials = [
     location: "California",
     metric: "+40%",
     metricLabel: "Admissions",
+    avatar: testimonialSarah,
+    rating: 5,
+    date: "2 weeks ago",
+    verified: true,
   },
   {
     quote: "The quality of referrals is exceptional. Families arrive informed and ready to begin treatment.",
@@ -130,6 +138,10 @@ const testimonials = [
     location: "Florida",
     metric: "95%",
     metricLabel: "Lead Quality",
+    avatar: testimonialMichael,
+    rating: 5,
+    date: "1 month ago",
+    verified: true,
   },
   {
     quote: "The analytics alone are worth the investment. We finally have visibility into what drives admissions.",
@@ -139,6 +151,10 @@ const testimonials = [
     location: "Texas",
     metric: "2x",
     metricLabel: "ROI",
+    avatar: testimonialJennifer,
+    rating: 5,
+    date: "3 weeks ago",
+    verified: true,
   },
 ];
 
@@ -893,35 +909,88 @@ const ForProviders = () => {
               <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
                 Trusted by Leading Treatment Centers
               </h2>
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-6">
                 See how our partners are transforming their admissions.
               </p>
+              
+              {/* Overall rating widget */}
+              <div className="inline-flex items-center gap-3 bg-card border border-border rounded-full px-5 py-2.5 shadow-sm">
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <span className="font-semibold text-foreground">4.9</span>
+                <span className="text-muted-foreground text-sm">from 500+ reviews</span>
+              </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {testimonials.map((testimonial, index) => (
                 <AnimatedCard key={testimonial.author} delay={index * 100}>
-                  <div className="h-full flex flex-col rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-4">
-                      <Quote className="h-8 w-8 text-accent/30" />
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-accent">{testimonial.metric}</div>
-                        <div className="text-xs text-muted-foreground">{testimonial.metricLabel}</div>
+                  <div className="h-full flex flex-col rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-lg transition-all group">
+                    {/* Header with platform styling */}
+                    <div className="px-5 py-4 border-b border-border/50 bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={testimonial.avatar} 
+                            alt={testimonial.author}
+                            className="w-11 h-11 rounded-full object-cover ring-2 ring-background shadow-sm"
+                          />
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-semibold text-foreground text-sm">{testimonial.author}</p>
+                              {testimonial.verified && (
+                                <BadgeCheck className="h-4 w-4 text-primary fill-primary/20" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center gap-0.5">
+                            {[...Array(testimonial.rating)].map((_, i) => (
+                              <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            ))}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground mt-0.5">{testimonial.date}</span>
+                        </div>
                       </div>
                     </div>
                     
-                    <blockquote className="flex-1 text-foreground/90 leading-relaxed mb-4">
-                      "{testimonial.quote}"
-                    </blockquote>
+                    {/* Quote content */}
+                    <div className="flex-1 px-5 py-4">
+                      <blockquote className="text-foreground/90 text-sm leading-relaxed">
+                        "{testimonial.quote}"
+                      </blockquote>
+                    </div>
                     
-                    <div className="border-t border-border pt-4">
-                      <p className="font-semibold text-foreground">{testimonial.author}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                      <p className="text-sm text-primary font-medium mt-0.5">{testimonial.facility}, {testimonial.location}</p>
+                    {/* Footer with metric and facility */}
+                    <div className="px-5 py-3 bg-gradient-to-r from-primary/5 to-accent/5 border-t border-border/50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">{testimonial.facility}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-accent/10 rounded-full px-2.5 py-1">
+                          <TrendingUp className="h-3 w-3 text-accent" />
+                          <span className="text-xs font-bold text-accent">{testimonial.metric}</span>
+                          <span className="text-[10px] text-accent/80">{testimonial.metricLabel}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </AnimatedCard>
               ))}
+            </div>
+            
+            {/* Trust footer */}
+            <div className="mt-8 text-center">
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">
+                <Shield className="h-3.5 w-3.5" />
+                All reviews are from verified RehabLookup partners
+              </p>
             </div>
           </div>
         </section>
