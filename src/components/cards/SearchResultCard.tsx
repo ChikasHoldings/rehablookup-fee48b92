@@ -10,7 +10,6 @@ import {
   Clock, 
   CreditCard,
   Phone,
-  Star,
   Building2,
   CheckCircle,
   Heart,
@@ -23,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityQuickViewModal } from "./FacilityQuickViewModal";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
+import { useFavorites } from "@/hooks/useFavorites";
 
 interface SearchResultCardProps {
   center: TreatmentCenter & { 
@@ -54,6 +54,7 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
   const cardRef = useRef<HTMLElement>(null);
   const hasTrackedImpression = useRef(false);
   const { trackImpression } = useProviderEventTracking();
+  const { toggleFavorite, isFavorite } = useFavorites();
   
   const detailsUrl = center.isFromDatabase && center.slug 
     ? `/center/${center.slug}` 
@@ -250,23 +251,34 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
               </div>
             </div>
 
-            {/* Rating with Years Badge */}
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
-              {center.rating && (
+            {/* Save Button & Years Badge */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(center.id);
+                }}
+                className={cn(
+                  "p-2 rounded-lg border transition-all duration-200",
+                  isFavorite(center.id)
+                    ? "bg-rose-50 border-rose-200 text-rose-500"
+                    : "bg-secondary/50 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50"
+                )}
+                aria-label={isFavorite(center.id) ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Heart className={cn("h-4 w-4", isFavorite(center.id) && "fill-current")} />
+              </button>
+              {yearsInBusiness && yearsInBusiness > 0 && (
                 <div className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-lg",
+                  "flex flex-col items-center px-2.5 py-1 rounded-lg",
                   showFeaturedBadge 
                     ? "bg-amber-100 text-amber-700" 
                     : "bg-primary/10 text-primary"
                 )}>
-                  <Star className="h-3.5 w-3.5 fill-current" />
-                  <span className="font-bold text-sm">{center.rating.toFixed(1)}</span>
+                  <span className="font-bold text-sm">{yearsInBusiness}+</span>
+                  <span className="text-[9px] font-medium uppercase tracking-wide">Years</span>
                 </div>
-              )}
-              {yearsInBusiness && yearsInBusiness > 0 && (
-                <span className="text-[10px] text-muted-foreground font-medium">
-                  Est. {center.year_established}
-                </span>
               )}
             </div>
           </div>
@@ -380,19 +392,18 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
               onClick={handleFeaturedClick}
               className="flex-1"
             >
-              <Button 
-                size="default"
-                className={cn(
-                  "w-full h-10 text-sm font-semibold gap-2 rounded-lg group/btn",
-                  showFeaturedBadge 
-                    ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/25"
-                    : "shadow-md hover:shadow-lg"
-                )}
-              >
-                <Heart className="h-4 w-4" />
-                Request Information
-                <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
-              </Button>
+                <Button 
+                  size="default"
+                  className={cn(
+                    "w-full h-10 text-sm font-semibold gap-2 rounded-lg group/btn",
+                    showFeaturedBadge 
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/25"
+                      : "shadow-md hover:shadow-lg"
+                  )}
+                >
+                  Request Information
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
+                </Button>
             </Link>
           </div>
         </div>
