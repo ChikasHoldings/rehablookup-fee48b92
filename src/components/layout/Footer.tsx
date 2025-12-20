@@ -69,8 +69,10 @@ export function Footer() {
         {/* Centered Brand Section */}
         <div className="flex flex-col items-center justify-center py-8 border-b border-border/50">
           {/* Brand Text */}
-          <Link to="/" className="flex items-center gap-1.5 mb-5">
-            <MapPin className="h-5 w-5 text-primary" />
+          <Link to="/" className="flex items-center gap-2 mb-5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
+              <MapPin className="h-4 w-4 text-primary-foreground" fill="currentColor" />
+            </div>
             <span className="text-lg font-display font-semibold text-foreground">RehabLookup</span>
           </Link>
           
