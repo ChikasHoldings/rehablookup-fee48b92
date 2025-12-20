@@ -1,13 +1,25 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, ArrowRight, Crown, Calendar, ShieldCheck, Star, Image as ImageIcon, Eye } from "lucide-react";
+import { MapPin, Phone, ArrowRight, Crown, Calendar, ShieldCheck, Eye, Building2 } from "lucide-react";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState, useCallback, memo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityQuickViewModal } from "./FacilityQuickViewModal";
+
+// Insurance logo mapping
+const INSURANCE_LOGOS: Record<string, string> = {
+  "Aetna": "/insurance-logos/aetna.svg",
+  "Blue Cross Blue Shield": "/insurance-logos/bcbs.svg",
+  "BCBS": "/insurance-logos/bcbs.svg",
+  "Cigna": "/insurance-logos/cigna.svg",
+  "United Healthcare": "/insurance-logos/united.svg",
+  "UnitedHealthcare": "/insurance-logos/united.svg",
+  "Kaiser": "/insurance-logos/kaiser.svg",
+  "Kaiser Permanente": "/insurance-logos/kaiser.svg",
+};
 
 interface TreatmentCenterCardProps {
   center: TreatmentCenter & { 
@@ -19,6 +31,7 @@ interface TreatmentCenterCardProps {
     verified?: boolean | null;
     year_established?: number | null;
     facilityType?: string | null;
+    insuranceAccepted?: string[];
   };
   featured?: boolean;
   variant?: "default" | "compact";
@@ -194,10 +207,10 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               )}>
                 {center.name}
               </h3>
-              {center.rating > 0 && (
-                <div className="flex items-center gap-0.5 shrink-0">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <span className="text-xs font-semibold text-foreground">{center.rating.toFixed(1)}</span>
+              {yearsInBusiness && yearsInBusiness > 0 && (
+                <div className="flex items-center gap-1 shrink-0 rounded-full bg-primary/10 px-2 py-0.5">
+                  <Building2 className="h-3 w-3 text-primary" />
+                  <span className="text-[10px] font-semibold text-primary">{yearsInBusiness}+ yrs</span>
                 </div>
               )}
             </div>
@@ -208,13 +221,42 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
                 showFeaturedBadge ? "text-amber-500" : "text-primary"
               )} />
               <span className="truncate">{center.city}, {center.state}</span>
-              {yearsInBusiness && yearsInBusiness > 0 && (
-                <>
-                  <span className="text-border">•</span>
-                  <span>{yearsInBusiness}+ years</span>
-                </>
-              )}
             </p>
+            
+            {/* Insurance badges */}
+            {center.insuranceAccepted && center.insuranceAccepted.length > 0 && (
+              <div className="flex items-center gap-1.5 mb-2">
+                {center.insuranceAccepted.slice(0, 3).map((insurance) => {
+                  const logoUrl = INSURANCE_LOGOS[insurance];
+                  return logoUrl ? (
+                    <div 
+                      key={insurance}
+                      className="h-5 w-8 rounded border border-border/50 bg-white p-0.5 shadow-sm"
+                      title={insurance}
+                    >
+                      <img 
+                        src={logoUrl} 
+                        alt={insurance} 
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div 
+                      key={insurance}
+                      className="flex h-5 items-center rounded border border-border/50 bg-muted/50 px-1.5 text-[8px] font-medium text-muted-foreground"
+                      title={insurance}
+                    >
+                      {insurance.slice(0, 4)}
+                    </div>
+                  );
+                })}
+                {center.insuranceAccepted.length > 3 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    +{center.insuranceAccepted.length - 3}
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Tags */}
             <div className="flex items-center gap-1 flex-wrap">
@@ -417,15 +459,12 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               )}
             </div>
             
-            {/* Location & Rating */}
+            {/* Location & Years */}
             <div className="flex items-center gap-2">
-              {center.rating > 0 && (
+              {yearsInBusiness && yearsInBusiness > 0 && (
                 <div className="flex items-center gap-1 rounded-full bg-card/90 backdrop-blur-sm px-2.5 py-1 shadow-md">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <span className="text-xs font-bold text-foreground">{center.rating.toFixed(1)}</span>
-                  {center.reviewCount > 0 && (
-                    <span className="text-[10px] text-muted-foreground">({center.reviewCount})</span>
-                  )}
+                  <Building2 className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-bold text-foreground">{yearsInBusiness}+ years</span>
                 </div>
               )}
               <div className="flex items-center gap-1 rounded-full bg-card/90 backdrop-blur-sm px-2.5 py-1 shadow-md">
@@ -471,6 +510,44 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
             </span>
           )}
         </div>
+
+        {/* Insurance Badges */}
+        {center.insuranceAccepted && center.insuranceAccepted.length > 0 && (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Insurance:</span>
+            <div className="flex items-center gap-1.5">
+              {center.insuranceAccepted.slice(0, 3).map((insurance) => {
+                const logoUrl = INSURANCE_LOGOS[insurance];
+                return logoUrl ? (
+                  <div 
+                    key={insurance}
+                    className="h-6 w-10 rounded border border-border/50 bg-white p-0.5 shadow-sm"
+                    title={insurance}
+                  >
+                    <img 
+                      src={logoUrl} 
+                      alt={insurance} 
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div 
+                    key={insurance}
+                    className="flex h-6 items-center rounded border border-border/50 bg-muted/50 px-2 text-[10px] font-medium text-muted-foreground"
+                    title={insurance}
+                  >
+                    {insurance.slice(0, 6)}
+                  </div>
+                );
+              })}
+              {center.insuranceAccepted.length > 3 && (
+                <span className="text-[10px] text-muted-foreground font-medium">
+                  +{center.insuranceAccepted.length - 3} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Treatment Tags */}
         <div className="flex flex-wrap gap-1.5 mb-3">
