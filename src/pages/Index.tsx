@@ -9,6 +9,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSkeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
 import heroImage from "@/assets/hero-recovery.jpg";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
@@ -922,6 +923,29 @@ const Index = () => {
               </Link>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* SEO Internal Links Section */}
+      <section className="py-12 md:py-16 bg-muted/30 border-t">
+        <div className="container space-y-10">
+          <InternalLinkBlock 
+            title="Find Treatment by State" 
+            variant="states" 
+            limit={20}
+          />
+          <InternalLinkBlock 
+            title="Treatment Programs" 
+            variant="treatments"
+          />
+          <InternalLinkBlock 
+            title="Insurance Coverage Guides" 
+            variant="insurance"
+          />
+          <InternalLinkBlock 
+            title="Find Treatment Near You" 
+            variant="nearme"
+          />
         </div>
       </section>
 
