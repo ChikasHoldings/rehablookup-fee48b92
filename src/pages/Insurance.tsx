@@ -23,6 +23,16 @@ import {
   Heart
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+const insuranceLeadSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
+  phone: z.string().trim().min(10, "Please enter a valid phone number").max(20, "Phone number is too long"),
+  email: z.string().trim().email("Please enter a valid email").max(255, "Email is too long").optional().or(z.literal("")),
+  insuranceProvider: z.string().min(1, "Please select your insurance provider"),
+  memberId: z.string().max(100, "Member ID is too long").optional(),
+});
 
 const insuranceProviders = [
   "Aetna",
@@ -80,26 +90,57 @@ export default function Insurance() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.name || !formData.phone || !formData.insuranceProvider) {
-      toast.error("Please fill in all required fields");
+    setIsSubmitting(true);
+
+    // Validate form data
+    const validation = insuranceLeadSchema.safeParse(formData);
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
+      setIsSubmitting(false);
       return;
     }
 
-    setIsSubmitting(true);
-    
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success("Verification request submitted! We'll contact you within 24 hours.");
-    setFormData({
-      name: "",
-      phone: "",
-      email: "",
-      insuranceProvider: "",
-      memberId: "",
-    });
-    setIsSubmitting(false);
+    try {
+      // Create a message that includes insurance details
+      const insuranceMessage = `Insurance Verification Request
+Insurance Provider: ${formData.insuranceProvider}
+Member ID: ${formData.memberId || 'Not provided'}`;
+
+      // Submit lead to database
+      const { error } = await supabase.from("leads").insert({
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email?.trim() || `insurance-${Date.now()}@placeholder.com`,
+        preferred_contact: "call",
+        status: "new",
+        source: "insurance_verification",
+        insurance_provider: formData.insuranceProvider,
+        message: insuranceMessage,
+        qualified: false,
+      });
+
+      if (error) {
+        console.error("Error submitting lead:", error);
+        toast.error("Unable to submit your request. Please try again or call us directly.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      toast.success("Verification request submitted! We'll contact you within 24 hours.");
+      setFormData({
+        name: "",
+        phone: "",
+        email: "",
+        insuranceProvider: "",
+        memberId: "",
+      });
+    } catch (err) {
+      console.error("Error:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
