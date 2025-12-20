@@ -89,37 +89,37 @@ const treatmentOptions = [
     icon: Pill,
     title: "Drug Addiction",
     description: "Evidence-based programs for substance abuse including opioids, stimulants, and more.",
-    link: "/search-results?type=drug",
+    link: "/treatment-types/drug-addiction",
   },
   {
     icon: Activity,
     title: "Alcohol Treatment",
     description: "Medically supervised detox and long-term recovery programs for alcohol dependence.",
-    link: "/search-results?type=alcohol",
+    link: "/treatment-types/alcohol-rehabilitation",
   },
   {
     icon: Brain,
     title: "Mental Health",
     description: "Dual diagnosis treatment addressing addiction alongside anxiety, depression, and PTSD.",
-    link: "/search-results?type=mental-health",
+    link: "/treatment-types/dual-diagnosis",
   },
   {
     icon: Home,
     title: "Residential Rehab",
     description: "24/7 inpatient care in a structured, supportive environment for focused recovery.",
-    link: "/search-results?type=residential",
+    link: "/treatment-types/residential-inpatient",
   },
   {
     icon: Stethoscope,
     title: "Outpatient Programs",
     description: "Flexible treatment options that allow you to maintain work and family commitments.",
-    link: "/search-results?type=outpatient",
+    link: "/treatment-types/outpatient-programs",
   },
   {
     icon: Sparkles,
     title: "Holistic Therapy",
     description: "Complementary approaches including yoga, meditation, art therapy, and nutrition.",
-    link: "/search-results?type=holistic",
+    link: "/treatment-types/holistic-therapy",
   },
 ];
 
@@ -382,7 +382,7 @@ const Index = () => {
                 <p className="mb-5 text-sm text-muted-foreground leading-relaxed">
                   Most insurance plans cover addiction treatment. Check your benefits in minutes.
                 </p>
-                <Link to="/request-help">
+                <Link to="/insurance">
                   <Button size="lg" className="gap-2 font-semibold shadow-md hover:shadow-lg transition-shadow">
                     Check Your Coverage
                     <ArrowRight className="h-4 w-4" />
