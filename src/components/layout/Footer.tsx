@@ -67,9 +67,9 @@ export function Footer() {
       {/* Mobile: Luxury Stacked Layout */}
       <div className="md:hidden">
         {/* Centered Brand Section */}
-        <div className="flex flex-col items-center py-10 border-b border-border/50">
+        <div className="flex flex-col items-center py-10 px-4 border-b border-border/50">
           {/* Logo */}
-          <div className="w-full text-center mb-6">
+          <div className="text-center mb-6">
             <Link to="/" className="inline-block">
               <img 
                 src="/logo.svg" 
