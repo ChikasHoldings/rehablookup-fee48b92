@@ -223,21 +223,26 @@ const RehabCenters = () => {
       />
       
       {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-10 md:py-12">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-12 md:py-16 lg:py-20">
         {/* Decorative elements */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         
+        {/* Floating decorative shapes */}
+        <div className="absolute top-20 right-[10%] w-32 h-32 rounded-full bg-white/5 blur-3xl" />
+        <div className="absolute bottom-10 left-[5%] w-48 h-48 rounded-full bg-accent/10 blur-3xl" />
+        
         <div className="container relative">
-          <div className="mb-8 max-w-2xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white/90 backdrop-blur-sm">
-              <CheckCircle className="h-3.5 w-3.5" />
+          <div className="mb-10 max-w-3xl">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium uppercase tracking-wider text-white/90 backdrop-blur-sm border border-white/10">
+              <CheckCircle className="h-4 w-4" />
               Verified Treatment Centers
             </div>
-            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
+            <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
               Find Your Path to Recovery
             </h1>
-            <p className="mt-3 text-base text-white/80 md:text-lg whitespace-nowrap">
+            <p className="mt-4 text-lg text-white/80 md:text-xl max-w-2xl">
               {hasFilters ? (
                 <>
                   <span className="font-semibold text-white">{filteredCenters.length}</span> results
@@ -251,7 +256,7 @@ const RehabCenters = () => {
           </div>
 
           {/* Search Form Container */}
-          <div className="rounded-2xl border border-white/10 bg-white p-4 shadow-2xl shadow-primary/20 md:p-5">
+          <div className="rounded-2xl border border-white/10 bg-card p-5 shadow-2xl shadow-primary/30 md:p-6 lg:p-8">
             <SearchForm
               variant="compact"
               initialLocation={location}
@@ -266,13 +271,21 @@ const RehabCenters = () => {
       </section>
 
       {/* Results */}
-      <section id="results" className="scroll-mt-4 bg-gradient-to-b from-secondary/50 to-background py-8 md:py-12">
+      <section id="results" className="scroll-mt-4 bg-gradient-to-b from-secondary/30 via-background to-background py-10 md:py-14 lg:py-16">
         <div className="container px-4 md:px-6">
+          {/* Section Header */}
+          <div className="mb-6 md:mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-8 w-1 rounded-full bg-gradient-to-b from-primary to-primary/50" />
+              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">Treatment Centers</h2>
+            </div>
+          </div>
+
           {/* Mobile Results Header */}
           <div className="mb-6 md:hidden">
             {/* Results Count */}
             <p className="text-base font-medium text-foreground mb-4">
-              <span className="text-primary font-semibold">{filteredCenters.length}</span> treatment centers found
+              <span className="text-primary font-bold">{filteredCenters.length}</span> centers found
             </p>
 
             {/* Mobile Active Filters - Horizontal scroll */}
@@ -371,11 +384,14 @@ const RehabCenters = () => {
           </div>
 
           {/* Desktop Results Header */}
-          <div className="mb-8 hidden md:flex md:flex-wrap md:items-center md:justify-between md:gap-4">
+          <div className="mb-8 hidden md:flex md:items-center md:justify-between md:gap-4 p-4 rounded-xl bg-card border border-border shadow-sm">
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{filteredCenters.length}</span> treatment centers found
-              </p>
+              <div className="flex items-center gap-2 pr-4 border-r border-border">
+                <Search className="h-4 w-4 text-primary" />
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-bold text-foreground">{filteredCenters.length}</span> centers found
+                </p>
+              </div>
               
               {/* Active Filters */}
               {hasFilters && (
@@ -429,9 +445,9 @@ const RehabCenters = () => {
             </div>
 
             {/* Sort and View Controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 pl-4 border-l border-border">
               <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
-                <SelectTrigger className="h-10 w-[180px] gap-2 bg-card border-border shadow-sm hover:shadow-md transition-shadow">
+                <SelectTrigger className="h-9 w-[170px] gap-2 bg-secondary/50 border-0 hover:bg-secondary transition-colors">
                   <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
@@ -445,13 +461,13 @@ const RehabCenters = () => {
               </Select>
 
               {/* View Toggle */}
-              <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-sm">
+              <div className="flex items-center gap-0.5 rounded-lg bg-secondary/50 p-1">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`rounded-md p-2 transition-all ${
                     viewMode === "grid" 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      ? "bg-card text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                   aria-label="Grid view"
                 >
@@ -461,8 +477,8 @@ const RehabCenters = () => {
                   onClick={() => setViewMode("list")}
                   className={`rounded-md p-2 transition-all ${
                     viewMode === "list" 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      ? "bg-card text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                   aria-label="List view"
                 >
@@ -603,17 +619,21 @@ const RehabCenters = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="relative overflow-hidden border-t border-border bg-gradient-to-br from-primary/5 via-card to-secondary/20 py-12 md:py-16">
+      <section className="relative overflow-hidden border-t border-border bg-gradient-to-br from-primary via-primary/95 to-primary/90 py-14 md:py-20">
         {/* Decorative elements */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-        <div className="absolute -bottom-32 -right-32 w-64 h-64 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -top-32 -left-32 w-64 h-64 rounded-full bg-secondary/30 blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-accent/15 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        
+        {/* Floating shapes */}
+        <div className="absolute top-10 right-[15%] w-40 h-40 rounded-full bg-white/5 blur-3xl" />
+        <div className="absolute bottom-10 left-[10%] w-56 h-56 rounded-full bg-accent/10 blur-3xl" />
         
         <div className="container relative">
-          <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 md:gap-8 md:flex-row">
+          <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 md:gap-10 md:flex-row">
             {/* Image */}
             <div className="relative shrink-0">
-              <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-1 ring-2 ring-primary/10 shadow-xl shadow-primary/10">
+              <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-white/20 via-white/10 to-transparent p-1.5 ring-2 ring-white/20 shadow-2xl">
                 <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-b from-white to-secondary/50">
                   <img 
                     src={supportSpecialistImg} 
@@ -623,20 +643,20 @@ const RehabCenters = () => {
                 </div>
               </div>
               {/* Online indicator */}
-              <div className="absolute bottom-1 right-1 md:bottom-2 md:right-2 flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 shadow-lg border border-border">
-                <span className="relative flex h-2 w-2">
+              <div className="absolute bottom-2 right-2 md:bottom-3 md:right-3 flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 shadow-lg border border-border">
+                <span className="relative flex h-2.5 w-2.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                 </span>
-                <span className="text-xs font-medium text-foreground">Online</span>
+                <span className="text-xs font-semibold text-foreground">Online</span>
               </div>
             </div>
             
             <div className="flex-1 text-center md:text-left">
-              <h2 className="mb-2 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+              <h2 className="mb-3 font-display text-2xl font-bold text-white md:text-3xl lg:text-4xl">
                 Need Help Finding the Right Center?
               </h2>
-              <p className="text-muted-foreground text-sm md:text-base max-w-xl">
+              <p className="text-white/80 text-base md:text-lg max-w-xl">
                 Our specialists provide free, confidential guidance on treatment options and insurance coverage. We're here to help you navigate the path to recovery.
               </p>
             </div>
@@ -645,7 +665,7 @@ const RehabCenters = () => {
               <Link to="/request-help?source=rehab_cta">
                 <Button 
                   size="lg" 
-                  className="w-full gap-2 sm:w-auto shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85"
+                  className="w-full gap-2 sm:w-auto shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-white text-primary hover:bg-white/95 font-semibold"
                 >
                   <Heart className="h-4 w-4" />
                   Get Help Now
@@ -655,7 +675,7 @@ const RehabCenters = () => {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="w-full gap-2 sm:w-auto hover:bg-secondary hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                  className="w-full gap-2 sm:w-auto hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border-white/30 text-white hover:bg-white/10 hover:border-white/50"
                 >
                   <Phone className="h-4 w-4" />
                   Contact Us
