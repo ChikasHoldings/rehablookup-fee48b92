@@ -1,6 +1,6 @@
-import { memo, useState, useEffect, useCallback, useRef } from "react";
+import { memo, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck, ShieldAlert } from "lucide-react";
+import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck, ShieldAlert, Mail, Phone, MapPin, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +48,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [bellAnimating, setBellAnimating] = useState(false);
   const lastPendingCountRef = useRef<number | null>(null);
   const lastLeadsCountRef = useRef<number | null>(null);
@@ -257,6 +258,53 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
     },
     refetchInterval: 60000,
   });
+
+  // Search providers when query changes
+  const { data: searchedProviders, isLoading: searchingProviders } = useQuery({
+    queryKey: ["admin-search-providers", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery || searchQuery.length < 2) return [];
+      const { data } = await supabase
+        .from("facilities")
+        .select("id, name, city, state, status, slug")
+        .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,state.ilike.%${searchQuery}%`)
+        .order("name")
+        .limit(5);
+      return data || [];
+    },
+    enabled: searchQuery.length >= 2,
+    staleTime: 10000,
+  });
+
+  // Search leads when query changes
+  const { data: searchedLeads, isLoading: searchingLeads } = useQuery({
+    queryKey: ["admin-search-leads", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery || searchQuery.length < 2) return [];
+      const normalizedQuery = searchQuery.replace(/\D/g, "");
+      const isPhoneSearch = normalizedQuery.length >= 3;
+      
+      let query = supabase
+        .from("leads")
+        .select("id, name, email, phone, status, location_city_state, facility_id")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      
+      if (isPhoneSearch && normalizedQuery.length >= 3) {
+        query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${normalizedQuery}%`);
+      } else {
+        query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+      }
+      
+      const { data } = await query;
+      return data || [];
+    },
+    enabled: searchQuery.length >= 2,
+    staleTime: 10000,
+  });
+
+  const isSearching = searchingProviders || searchingLeads;
+  const hasSearchResults = (searchedProviders?.length || 0) > 0 || (searchedLeads?.length || 0) > 0;
 
   // Build notifications from real data
   const notifications: Notification[] = [];
@@ -600,55 +648,140 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
       </header>
 
       {/* Command Search Dialog */}
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <CommandInput placeholder="Search providers, leads, or actions..." />
+      <CommandDialog open={searchOpen} onOpenChange={(open) => { setSearchOpen(open); if (!open) setSearchQuery(""); }}>
+        <CommandInput 
+          placeholder="Search providers, leads, or pages..." 
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+        />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Quick Actions">
-            <CommandItem onSelect={() => { navigate("/admin/providers?status=pending"); setSearchOpen(false); }}>
-              <Building2 className="h-4 w-4 mr-2" />
-              Review Pending Providers ({pendingProviders?.length || 0})
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/leads?unassigned=true"); setSearchOpen(false); }}>
-              <Users className="h-4 w-4 mr-2" />
-              View Unassigned Leads ({unassignedLeads?.length || 0})
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/featured"); setSearchOpen(false); }}>
-              <AlertCircle className="h-4 w-4 mr-2" />
-              Manage Featured Placement
-            </CommandItem>
-          </CommandGroup>
-          <CommandGroup heading="Navigation">
-            <CommandItem onSelect={() => { navigate("/admin"); setSearchOpen(false); }}>
-              Dashboard
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/profile"); setSearchOpen(false); }}>
-              <User className="h-4 w-4 mr-2" />
-              My Profile
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/providers"); setSearchOpen(false); }}>
-              Providers
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/leads"); setSearchOpen(false); }}>
-              Leads
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/subscriptions"); setSearchOpen(false); }}>
-              Subscriptions
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/notifications"); setSearchOpen(false); }}>
-              <Bell className="h-4 w-4 mr-2" />
-              Notifications
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/security-logs"); setSearchOpen(false); }}>
-              Security Logs
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/audit-log"); setSearchOpen(false); }}>
-              Audit Log
-            </CommandItem>
-            <CommandItem onSelect={() => { navigate("/admin/settings"); setSearchOpen(false); }}>
-              Settings
-            </CommandItem>
-          </CommandGroup>
+          {isSearching && (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          
+          {!isSearching && searchQuery.length >= 2 && !hasSearchResults && (
+            <CommandEmpty>No results found for "{searchQuery}"</CommandEmpty>
+          )}
+          
+          {!isSearching && searchQuery.length < 2 && (
+            <CommandEmpty>Type at least 2 characters to search...</CommandEmpty>
+          )}
+
+          {/* Provider Search Results */}
+          {searchedProviders && searchedProviders.length > 0 && (
+            <CommandGroup heading={`Providers (${searchedProviders.length})`}>
+              {searchedProviders.map((provider) => (
+                <CommandItem 
+                  key={provider.id} 
+                  onSelect={() => { navigate(`/admin/providers?search=${encodeURIComponent(provider.name)}`); setSearchOpen(false); setSearchQuery(""); }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
+                    <Building2 className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{provider.name}</p>
+                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {provider.city}, {provider.state}
+                    </p>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    provider.status === "approved" ? "bg-green-500/10 text-green-600" :
+                    provider.status === "pending" ? "bg-amber-500/10 text-amber-600" :
+                    "bg-muted text-muted-foreground"
+                  }`}>
+                    {provider.status}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {/* Lead Search Results */}
+          {searchedLeads && searchedLeads.length > 0 && (
+            <CommandGroup heading={`Leads (${searchedLeads.length})`}>
+              {searchedLeads.map((lead) => (
+                <CommandItem 
+                  key={lead.id} 
+                  onSelect={() => { navigate(`/admin/leads?highlight=${lead.id}`); setSearchOpen(false); setSearchQuery(""); }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+                    <User className="h-4 w-4 text-amber-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{lead.name}</p>
+                    <div className="text-xs text-muted-foreground truncate flex items-center gap-2">
+                      {lead.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{lead.email}</span>}
+                      {lead.location_city_state && <span>• {lead.location_city_state}</span>}
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    lead.status === "new" ? "bg-green-500/10 text-green-600" :
+                    lead.status === "contacted" ? "bg-blue-500/10 text-blue-600" :
+                    lead.status === "converted" ? "bg-purple-500/10 text-purple-600" :
+                    "bg-muted text-muted-foreground"
+                  }`}>
+                    {lead.status}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {/* Quick Actions - show when not searching or no results */}
+          {(!searchQuery || searchQuery.length < 2) && (
+            <>
+              <CommandGroup heading="Quick Actions">
+                <CommandItem onSelect={() => { navigate("/admin/providers?status=pending"); setSearchOpen(false); }}>
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Review Pending Providers ({pendingProviders?.length || 0})
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/leads?unassigned=true"); setSearchOpen(false); }}>
+                  <Users className="h-4 w-4 mr-2" />
+                  View Unassigned Leads ({unassignedLeads?.length || 0})
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/featured"); setSearchOpen(false); }}>
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  Manage Featured Placement
+                </CommandItem>
+              </CommandGroup>
+              <CommandGroup heading="Navigation">
+                <CommandItem onSelect={() => { navigate("/admin"); setSearchOpen(false); }}>
+                  Dashboard
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/profile"); setSearchOpen(false); }}>
+                  <User className="h-4 w-4 mr-2" />
+                  My Profile
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/providers"); setSearchOpen(false); }}>
+                  Providers
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/leads"); setSearchOpen(false); }}>
+                  Leads
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/subscriptions"); setSearchOpen(false); }}>
+                  Subscriptions
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/notifications"); setSearchOpen(false); }}>
+                  <Bell className="h-4 w-4 mr-2" />
+                  Notifications
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/security-logs"); setSearchOpen(false); }}>
+                  Security Logs
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/audit-log"); setSearchOpen(false); }}>
+                  Audit Log
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/settings"); setSearchOpen(false); }}>
+                  Settings
+                </CommandItem>
+              </CommandGroup>
+            </>
+          )}
         </CommandList>
       </CommandDialog>
     </>
