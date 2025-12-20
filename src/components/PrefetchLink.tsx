@@ -10,11 +10,17 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/provider/analytics": () => import("@/pages/provider/Analytics"),
   "/provider/billing": () => import("@/pages/provider/Billing"),
   "/provider/settings": () => import("@/pages/provider/Settings"),
+  "/provider/notifications": () => import("@/pages/provider/Notifications"),
+  "/provider/help": () => import("@/pages/provider/Help"),
   // Admin panel routes (lazy loaded)
   "/admin": () => import("@/pages/admin/AdminDashboard"),
   "/admin/dashboard": () => import("@/pages/admin/AdminDashboard"),
   "/admin/providers": () => import("@/pages/admin/AdminProviders"),
   "/admin/leads": () => import("@/pages/admin/AdminLeads"),
+  "/admin/subscriptions": () => import("@/pages/admin/AdminSubscriptions"),
+  "/admin/featured": () => import("@/pages/admin/AdminFeatured"),
+  "/admin/users": () => import("@/pages/admin/AdminUsers"),
+  "/admin/analytics": () => import("@/pages/admin/AdminAnalytics"),
 };
 
 // Track which routes have been prefetched to avoid duplicate fetches
