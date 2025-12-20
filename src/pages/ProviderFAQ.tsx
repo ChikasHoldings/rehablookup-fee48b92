@@ -116,7 +116,7 @@ const faqCategories = [
       },
       {
         question: "Can I get a refund if I'm not satisfied?",
-        answer: "We offer a 14-day money-back guarantee for new paid subscriptions. If you're not satisfied within the first 14 days, contact our support team for a full refund.",
+        answer: "We offer a money-back guarantee for new paid subscriptions. If you're not satisfied, contact our support team to discuss refund options.",
       },
     ],
   },

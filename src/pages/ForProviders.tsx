@@ -627,7 +627,7 @@ const ForProviders = () => {
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row mb-8">
                 <Link to="/provider-signup">
                   <Button size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all">
-                    Start Free Trial
+                    Get Started
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
@@ -1039,7 +1039,7 @@ const ForProviders = () => {
             </div>
 
             <p className="text-center text-sm text-muted-foreground mt-8">
-              All plans include 14-day free trial • No credit card required • Cancel anytime
+              No credit card required to start • Cancel anytime
             </p>
 
             {/* ROI Calculator */}
@@ -1082,7 +1082,7 @@ const ForProviders = () => {
                     How does pricing work? Are there any hidden fees?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground pb-5">
-                    Our pricing is straightforward with no hidden fees. The Basic plan is free forever with 1 lead (lifetime). Professional is $399/month for up to 100 leads (shared with max 2 providers), and Featured is $1,099/month for up to 100 exclusive leads plus premium placement. All paid plans include a 14-day free trial—no credit card required to start.
+                    Our pricing is straightforward with no hidden fees. The Basic plan is free forever with 1 lead (lifetime). Professional is $399/month for up to 100 leads (shared with max 2 providers), and Featured is $1,099/month for up to 100 exclusive leads plus premium placement. No credit card required to start.
                   </AccordionContent>
                 </AccordionItem>
 
@@ -1161,7 +1161,7 @@ const ForProviders = () => {
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link to="/provider-signup">
                   <Button variant="hero-light" size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl">
-                    Start Free Trial
+                    Get Started
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
