@@ -38,6 +38,7 @@ interface InsuranceProvider {
   description: string;
   coverageNotes: string;
   type: "private" | "government";
+  detailsUrl?: string;
 }
 
 const majorInsurers: InsuranceProvider[] = [
@@ -47,6 +48,7 @@ const majorInsurers: InsuranceProvider[] = [
     description: "Largest health insurance provider network in the US",
     coverageNotes: "Most BCBS plans cover inpatient and outpatient addiction treatment",
     type: "private",
+    detailsUrl: "/insurance/bcbs-treatment",
   },
   {
     name: "Aetna",
@@ -54,6 +56,7 @@ const majorInsurers: InsuranceProvider[] = [
     description: "Major national health insurance provider",
     coverageNotes: "Covers detox, residential, and outpatient substance abuse programs",
     type: "private",
+    detailsUrl: "/insurance/aetna-rehab",
   },
   {
     name: "Cigna",
@@ -61,6 +64,7 @@ const majorInsurers: InsuranceProvider[] = [
     description: "Global health services company",
     coverageNotes: "Behavioral health coverage includes substance use disorder treatment",
     type: "private",
+    detailsUrl: "/insurance/cigna-rehab",
   },
   {
     name: "United Healthcare",
@@ -68,6 +72,7 @@ const majorInsurers: InsuranceProvider[] = [
     description: "Largest single health carrier in the US",
     coverageNotes: "Comprehensive addiction treatment coverage under most plans",
     type: "private",
+    detailsUrl: "/insurance/united-healthcare-rehab",
   },
   {
     name: "Kaiser Permanente",
@@ -75,6 +80,7 @@ const majorInsurers: InsuranceProvider[] = [
     description: "Integrated managed care consortium",
     coverageNotes: "In-network treatment facilities and integrated behavioral health",
     type: "private",
+    detailsUrl: "/insurance/kaiser-rehab",
   },
   {
     name: "Humana",
@@ -82,6 +88,7 @@ const majorInsurers: InsuranceProvider[] = [
     description: "Major health and wellness company",
     coverageNotes: "Mental health and substance abuse treatment included in most plans",
     type: "private",
+    detailsUrl: "/insurance/humana-rehab",
   },
   {
     name: "Anthem",
@@ -99,6 +106,7 @@ const governmentPrograms: InsuranceProvider[] = [
     description: "Federal health insurance for 65+ and certain disabilities",
     coverageNotes: "Part A covers inpatient treatment; Part B covers outpatient services",
     type: "government",
+    detailsUrl: "/insurance/medicare-rehab",
   },
   {
     name: "Medicaid",
@@ -106,6 +114,7 @@ const governmentPrograms: InsuranceProvider[] = [
     description: "State-federal program for low-income individuals",
     coverageNotes: "Coverage varies by state but generally includes substance abuse treatment",
     type: "government",
+    detailsUrl: "/insurance/medicaid-rehab",
   },
   {
     name: "TRICARE",
@@ -329,37 +338,57 @@ const faqs = [
   },
 ];
 
-const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => (
-  <div className="rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-primary/20 transition-all">
-    <div className="flex items-start gap-4">
-      {provider.logo ? (
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-background border border-border p-2">
-          <img 
-            src={provider.logo} 
-            alt={provider.name} 
-            className="h-10 w-10 object-contain"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.parentElement?.classList.add('hidden');
-            }}
-          />
+const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => {
+  const CardContent = (
+    <div className={cn(
+      "rounded-xl border border-border bg-card p-5 transition-all",
+      provider.detailsUrl && "hover:shadow-md hover:border-primary/20 cursor-pointer"
+    )}>
+      <div className="flex items-start gap-4">
+        {provider.logo ? (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-background border border-border p-2">
+            <img 
+              src={provider.logo} 
+              alt={provider.name} 
+              className="h-10 w-10 object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement?.classList.add('hidden');
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Shield className="h-7 w-7" />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-foreground">{provider.name}</h3>
+            {provider.detailsUrl && (
+              <ArrowRight className="h-4 w-4 text-primary" />
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mt-0.5">{provider.description}</p>
+          <p className="text-sm text-primary mt-2 flex items-start gap-1.5">
+            <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{provider.coverageNotes}</span>
+          </p>
+          {provider.detailsUrl && (
+            <p className="text-xs text-primary font-medium mt-2">
+              View coverage details →
+            </p>
+          )}
         </div>
-      ) : (
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Shield className="h-7 w-7" />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <h3 className="font-semibold text-foreground">{provider.name}</h3>
-        <p className="text-sm text-muted-foreground mt-0.5">{provider.description}</p>
-        <p className="text-sm text-primary mt-2 flex items-start gap-1.5">
-          <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" />
-          <span>{provider.coverageNotes}</span>
-        </p>
       </div>
     </div>
-  </div>
-);
+  );
+
+  if (provider.detailsUrl) {
+    return <Link to={provider.detailsUrl}>{CardContent}</Link>;
+  }
+  return CardContent;
+};
 
 export default function Insurance() {
   return (
