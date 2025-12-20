@@ -67,28 +67,7 @@ export function Footer() {
       {/* Mobile: Luxury Stacked Layout */}
       <div className="md:hidden">
         {/* Centered Brand Section */}
-        <div className="flex flex-col items-center justify-center py-10 border-b border-border/50">
-          {/* Logo */}
-          <Link to="/" className="mb-6">
-            <img 
-              src="/logo.svg" 
-              alt="RehabLookup" 
-              className="h-7 dark:hidden"
-              loading="lazy"
-            />
-            <img 
-              src="/logo-dark.svg" 
-              alt="RehabLookup" 
-              className="h-7 hidden dark:block"
-              loading="lazy"
-            />
-          </Link>
-          
-          {/* Tagline */}
-          <p className="text-sm text-muted-foreground text-center mb-6 max-w-[280px]">
-            Connecting people with verified addiction treatment centers nationwide.
-          </p>
-          
+        <div className="flex flex-col items-center justify-center py-8 border-b border-border/50">
           {/* Social Icons - Centered with luxury styling */}
           <div className="flex items-center justify-center gap-3 mb-6">
             {[
