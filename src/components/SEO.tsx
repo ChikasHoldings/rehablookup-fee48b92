@@ -255,15 +255,26 @@ export function generateLocalBusinessSchema(facility: {
   services?: string[];
   insurance?: string[];
   slug?: string;
+  email?: string;
+  website?: string;
+  facilityType?: string;
+  yearEstablished?: number;
+  verified?: boolean;
+  featured?: boolean;
+  accreditations?: string[];
 }) {
+  const facilityUrl = `https://rehablookup.com/center/${facility.slug || facility.name.toLowerCase().replace(/\s+/g, "-")}`;
+  
   return {
     "@context": "https://schema.org",
-    "@type": "MedicalBusiness",
-    "@id": `https://rehablookup.com/center/${facility.slug || facility.name.toLowerCase().replace(/\s+/g, "-")}`,
+    "@type": ["MedicalBusiness", "LocalBusiness", "HealthAndBeautyBusiness"],
+    "@id": facilityUrl,
+    url: facilityUrl,
     name: facility.name,
     description: facility.description,
-    image: facility.image,
+    image: facility.image ? [facility.image] : undefined,
     telephone: facility.phone,
+    email: facility.email,
     address: {
       "@type": "PostalAddress",
       streetAddress: facility.address,
@@ -272,17 +283,47 @@ export function generateLocalBusinessSchema(facility: {
       postalCode: facility.zipCode,
       addressCountry: "US",
     },
+    areaServed: {
+      "@type": "State",
+      name: facility.state,
+    },
     geo: {
       "@type": "GeoCoordinates",
-      // Would be populated with actual coordinates
+      addressCountry: "US",
     },
-    medicalSpecialty: "Addiction Medicine",
+    // Open 24/7 for treatment facilities
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      opens: "00:00",
+      closes: "23:59",
+    },
+    isAccessibleForFree: false,
+    medicalSpecialty: ["Addiction Medicine", "Psychiatry", "Behavioral Health"],
     availableService: facility.services?.map((service) => ({
       "@type": "MedicalTherapy",
       name: service,
+      serviceType: "Addiction Treatment",
     })),
-    paymentAccepted: facility.insurance?.join(", "),
+    hasCredential: facility.accreditations?.map((accreditation) => ({
+      "@type": "EducationalOccupationalCredential",
+      credentialCategory: "Accreditation",
+      name: accreditation,
+    })),
+    paymentAccepted: ["Cash", "Credit Card", "Insurance", ...(facility.insurance || [])],
+    currenciesAccepted: "USD",
     priceRange: "$$-$$$$",
+    foundingDate: facility.yearEstablished?.toString(),
+    sameAs: facility.website ? [facility.website] : undefined,
+    slogan: "Your Path to Recovery Starts Here",
+    knowsAbout: [
+      "Drug Addiction Treatment",
+      "Alcohol Rehabilitation", 
+      "Mental Health Services",
+      "Detoxification Programs",
+      "Outpatient Treatment",
+      "Inpatient Rehabilitation",
+    ],
     ...(facility.rating && {
       aggregateRating: {
         "@type": "AggregateRating",
@@ -292,6 +333,33 @@ export function generateLocalBusinessSchema(facility: {
         worstRating: 1,
       },
     }),
+    // Additional trust signals
+    ...(facility.verified && {
+      award: "RehabLookup Verified Facility",
+    }),
+    potentialAction: [
+      {
+        "@type": "ReserveAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${facilityUrl}?action=contact`,
+          inLanguage: "en-US",
+          actionPlatform: ["http://schema.org/DesktopWebPlatform", "http://schema.org/MobileWebPlatform"],
+        },
+        result: {
+          "@type": "Reservation",
+          name: "Treatment Consultation",
+        },
+      },
+      {
+        "@type": "CommunicateAction",
+        target: {
+          "@type": "EntryPoint",
+          telephone: facility.phone,
+          actionPlatform: "http://schema.org/TelephonePlatform",
+        },
+      },
+    ],
   };
 }
 
