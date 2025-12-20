@@ -229,13 +229,94 @@ serve(async (req) => {
       }
     }
 
+    // Handle successful invoice payment (recurring payments)
+    if (event.type === "invoice.payment_succeeded") {
+      const invoice = event.data.object as Stripe.Invoice;
+      logStep("Invoice payment succeeded", { invoiceId: invoice.id, amountPaid: invoice.amount_paid });
+
+      // Only track subscription invoices (not one-time)
+      if (invoice.subscription) {
+        const customerId = invoice.customer as string;
+        const customer = await stripe.customers.retrieve(customerId);
+        
+        if (!customer.deleted) {
+          const customerEmail = (customer as Stripe.Customer).email;
+          const amountPaid = invoice.amount_paid;
+          const currency = invoice.currency.toUpperCase();
+
+          // Find user and facility
+          let userId = null;
+          let facilityId = null;
+          let planName = "Unknown";
+          let planTier = null;
+
+          const { data: profiles } = await supabaseAdmin
+            .from("profiles")
+            .select("user_id")
+            .eq("email", customerEmail)
+            .limit(1);
+
+          if (profiles?.[0]) {
+            userId = profiles[0].user_id;
+            const { data: facilities } = await supabaseAdmin
+              .from("facilities")
+              .select("id")
+              .eq("user_id", userId)
+              .limit(1);
+            facilityId = facilities?.[0]?.id || null;
+          }
+
+          // Get subscription details for plan info
+          if (invoice.subscription) {
+            try {
+              const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string, {
+                expand: ["items.data.price.product"],
+              });
+              const priceItem = subscription.items.data[0];
+              const product = priceItem?.price?.product as Stripe.Product;
+              planName = product?.name || "Subscription";
+              
+              // Determine tier from product
+              if (product?.id === "prod_Tbyz1bf6iYyzYd") planTier = "professional";
+              else if (product?.id === "prod_TbyzJVNOQL71NN") planTier = "featured";
+            } catch (e) {
+              logStep("Failed to get subscription details", { error: e });
+            }
+          }
+
+          // Record subscription payment event
+          await supabaseAdmin.from("subscription_events").insert({
+            event_type: "payment_succeeded",
+            stripe_event_id: event.id,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: invoice.subscription as string,
+            user_id: userId,
+            facility_id: facilityId,
+            plan_name: planName,
+            plan_tier: planTier,
+            amount_cents: amountPaid,
+            currency: currency,
+            status: "completed",
+            metadata: {
+              invoice_id: invoice.id,
+              customer_email: customerEmail,
+              billing_reason: invoice.billing_reason,
+            },
+          });
+          logStep("Subscription payment event recorded", { amount: amountPaid, planTier });
+        }
+      }
+    }
+
     // Handle new subscription created
     if (event.type === "customer.subscription.created" || event.type === "checkout.session.completed") {
       let customerId: string;
       let subscriptionId: string | null = null;
       let planName = "Unknown Plan";
+      let planTier: string | null = null;
       let amount = 0;
       let currency = "USD";
+      let productId: string | null = null;
 
       if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -250,9 +331,15 @@ serve(async (req) => {
               expand: ["items.data.price.product"],
             });
             const priceItem = subscription.items.data[0];
-            planName = (priceItem?.price?.product as Stripe.Product)?.name || "Subscription";
+            const product = priceItem?.price?.product as Stripe.Product;
+            planName = product?.name || "Subscription";
+            productId = product?.id || null;
             amount = priceItem?.price?.unit_amount || 0;
             currency = (priceItem?.price?.currency || "usd").toUpperCase();
+            
+            // Determine tier
+            if (productId === "prod_Tbyz1bf6iYyzYd") planTier = "professional";
+            else if (productId === "prod_TbyzJVNOQL71NN") planTier = "featured";
           }
         }
       } else {
@@ -265,6 +352,11 @@ serve(async (req) => {
         if (priceItem?.price?.product) {
           const product = await stripe.products.retrieve(priceItem.price.product as string);
           planName = product.name;
+          productId = product.id;
+          
+          // Determine tier
+          if (productId === "prod_Tbyz1bf6iYyzYd") planTier = "professional";
+          else if (productId === "prod_TbyzJVNOQL71NN") planTier = "featured";
         }
         amount = priceItem?.price?.unit_amount || 0;
         currency = (priceItem?.price?.currency || "usd").toUpperCase();
@@ -304,6 +396,28 @@ serve(async (req) => {
               facilityId = facilities[0].id;
             }
           }
+
+          // Record subscription created event
+          await supabaseAdmin.from("subscription_events").insert({
+            event_type: "subscription_created",
+            stripe_event_id: event.id,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+            user_id: profile?.user_id || null,
+            facility_id: facilityId,
+            plan_name: planName,
+            plan_tier: planTier,
+            amount_cents: amount,
+            currency: currency,
+            status: "active",
+            metadata: {
+              customer_email: customerEmail,
+              provider_name: providerName,
+              facility_name: facilityName,
+              product_id: productId,
+            },
+          });
+          logStep("Subscription created event recorded");
 
           // Create admin notification
           await supabaseAdmin.from("admin_notifications").insert({
@@ -392,6 +506,24 @@ serve(async (req) => {
             .limit(1);
 
           if (facilities?.[0]) {
+            // Record subscription cancelled event
+            await supabaseAdmin.from("subscription_events").insert({
+              event_type: "subscription_cancelled",
+              stripe_event_id: event.id,
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscription.id,
+              user_id: profiles[0].user_id,
+              facility_id: facilities[0].id,
+              status: "cancelled",
+              metadata: {
+                customer_email: customerEmail,
+                provider_name: `${profiles[0].first_name} ${profiles[0].last_name}`,
+                facility_name: facilities[0].name,
+                cancel_reason: subscription.cancellation_details?.reason || null,
+              },
+            });
+            logStep("Subscription cancelled event recorded");
+
             await supabaseAdmin.from("admin_notifications").insert({
               type: "subscription_cancelled",
               title: "Subscription Cancelled",
