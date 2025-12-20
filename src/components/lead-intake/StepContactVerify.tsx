@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,8 @@ import { LeadIntakeFormData } from "./types";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
 import { EmailInput } from "@/components/ui/email-input";
+import { isValidEmail } from "@/lib/emailUtils";
+import { cn } from "@/lib/utils";
 
 interface StepContactVerifyProps {
   formData: LeadIntakeFormData;
@@ -50,6 +52,14 @@ export function StepContactVerify({
   isSubmitting,
 }: StepContactVerifyProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Real-time validation
+  const validation = useMemo(() => ({
+    firstName: formData.firstName.trim().length >= 1,
+    lastName: formData.lastName.trim().length >= 1,
+    phone: isValidPhoneNumber(formData.phone),
+    email: isValidEmail(formData.email),
+  }), [formData]);
 
   const validateContact = () => {
     const newErrors: Record<string, string> = {};
@@ -129,18 +139,27 @@ export function StepContactVerify({
           <Label htmlFor="firstName" className="text-base font-medium">
             First Name <span className="text-destructive">*</span>
           </Label>
-          <Input
-            id="firstName"
-            placeholder="John"
-            value={formData.firstName}
-            onChange={(e) => {
-              updateFormData({ firstName: e.target.value });
-              setErrors(prev => ({ ...prev, firstName: "" }));
-            }}
-            className={`h-12 md:h-10 text-base ${errors.firstName ? "border-destructive" : ""}`}
-            disabled={codeSent}
-            autoComplete="given-name"
-          />
+          <div className="relative">
+            <Input
+              id="firstName"
+              placeholder="John"
+              value={formData.firstName}
+              onChange={(e) => {
+                updateFormData({ firstName: e.target.value });
+                setErrors(prev => ({ ...prev, firstName: "" }));
+              }}
+              className={cn(
+                "h-12 md:h-10 text-base",
+                errors.firstName && "border-destructive",
+                validation.firstName && formData.firstName && "pr-10"
+              )}
+              disabled={codeSent}
+              autoComplete="given-name"
+            />
+            {validation.firstName && formData.firstName && !errors.firstName && (
+              <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+            )}
+          </div>
           {errors.firstName && <p className="text-sm text-destructive">{errors.firstName}</p>}
         </div>
 
@@ -148,18 +167,27 @@ export function StepContactVerify({
           <Label htmlFor="lastName" className="text-base font-medium">
             Last Name <span className="text-destructive">*</span>
           </Label>
-          <Input
-            id="lastName"
-            placeholder="Doe"
-            value={formData.lastName}
-            onChange={(e) => {
-              updateFormData({ lastName: e.target.value });
-              setErrors(prev => ({ ...prev, lastName: "" }));
-            }}
-            className={`h-12 md:h-10 text-base ${errors.lastName ? "border-destructive" : ""}`}
-            disabled={codeSent}
-            autoComplete="family-name"
-          />
+          <div className="relative">
+            <Input
+              id="lastName"
+              placeholder="Doe"
+              value={formData.lastName}
+              onChange={(e) => {
+                updateFormData({ lastName: e.target.value });
+                setErrors(prev => ({ ...prev, lastName: "" }));
+              }}
+              className={cn(
+                "h-12 md:h-10 text-base",
+                errors.lastName && "border-destructive",
+                validation.lastName && formData.lastName && "pr-10"
+              )}
+              disabled={codeSent}
+              autoComplete="family-name"
+            />
+            {validation.lastName && formData.lastName && !errors.lastName && (
+              <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+            )}
+          </div>
           {errors.lastName && <p className="text-sm text-destructive">{errors.lastName}</p>}
         </div>
       </div>
@@ -169,16 +197,25 @@ export function StepContactVerify({
         <Label htmlFor="phone" className="text-base font-medium">
           Phone Number <span className="text-destructive">*</span>
         </Label>
-        <PhoneInput
-          id="phone"
-          value={formData.phone}
-          onChange={(value) => {
-            updateFormData({ phone: value });
-            setErrors(prev => ({ ...prev, phone: "" }));
-          }}
-          className={`h-12 md:h-10 text-base ${errors.phone ? "border-destructive" : ""}`}
-          disabled={codeSent}
-        />
+        <div className="relative">
+          <PhoneInput
+            id="phone"
+            value={formData.phone}
+            onChange={(value) => {
+              updateFormData({ phone: value });
+              setErrors(prev => ({ ...prev, phone: "" }));
+            }}
+            className={cn(
+              "h-12 md:h-10 text-base",
+              errors.phone && "border-destructive",
+              validation.phone && "pr-10"
+            )}
+            disabled={codeSent}
+          />
+          {validation.phone && !errors.phone && (
+            <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+          )}
+        </div>
         {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
       </div>
 
@@ -188,20 +225,29 @@ export function StepContactVerify({
           Email Address <span className="text-destructive">*</span>
         </Label>
         <div className="flex flex-col sm:flex-row gap-3">
-          <EmailInput
-            id="email"
-            placeholder="you@example.com"
-            value={formData.email}
-            onChange={(value) => {
-              updateFormData({ email: value });
-              setErrors(prev => ({ ...prev, email: "" }));
-              if (codeSent || isEmailVerified) {
-                resetEmailVerification();
-              }
-            }}
-            className={`flex-1 h-12 md:h-10 text-base ${errors.email ? "border-destructive" : ""}`}
-            disabled={isEmailVerified}
-          />
+          <div className="relative flex-1">
+            <EmailInput
+              id="email"
+              placeholder="you@example.com"
+              value={formData.email}
+              onChange={(value) => {
+                updateFormData({ email: value });
+                setErrors(prev => ({ ...prev, email: "" }));
+                if (codeSent || isEmailVerified) {
+                  resetEmailVerification();
+                }
+              }}
+              className={cn(
+                "h-12 md:h-10 text-base w-full",
+                errors.email && "border-destructive",
+                validation.email && formData.email && !isEmailVerified && "pr-10"
+              )}
+              disabled={isEmailVerified}
+            />
+            {validation.email && formData.email && !isEmailVerified && !errors.email && (
+              <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+            )}
+          </div>
           {!isEmailVerified && (
             <Button
               type="button"
