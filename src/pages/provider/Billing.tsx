@@ -54,6 +54,7 @@ export default function ProviderBillingPage() {
     isValid: boolean | null;
     message: string;
     discount?: string;
+    restrictedToPlan?: string | null;
   }>({ isValid: null, message: "" });
 
   // Handle success/cancel from Stripe
@@ -186,13 +187,16 @@ export default function ProviderBillingPage() {
     }
   };
 
-  const validatePromoCode = async () => {
+  const validatePromoCode = async (targetPlan?: string) => {
     if (!promoCode.trim()) return;
     
     setPromoValidating(true);
     try {
       const { data, error } = await supabase.functions.invoke("validate-promo-code", {
-        body: { promoCode: promoCode.trim().toUpperCase() },
+        body: { 
+          promoCode: promoCode.trim().toUpperCase(),
+          plan: targetPlan || "featured" // Default to featured for validation
+        },
       });
 
       if (error) throw error;
@@ -201,6 +205,7 @@ export default function ProviderBillingPage() {
         isValid: data?.valid || false,
         message: data?.message || "Unable to validate",
         discount: data?.discount,
+        restrictedToPlan: data?.restrictedToPlan || null,
       });
     } catch (err) {
       console.error("Promo validation error:", err);
@@ -680,7 +685,7 @@ export default function ProviderBillingPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={validatePromoCode}
+                  onClick={() => validatePromoCode()}
                   disabled={!promoCode.trim() || promoValidating || promoValidation.isValid === true}
                   className="h-9"
                 >
