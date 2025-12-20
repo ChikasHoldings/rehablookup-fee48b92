@@ -70,7 +70,7 @@ export function Footer() {
         <div className="flex flex-col items-center justify-center py-8 border-b border-border/50">
           {/* Brand Text */}
           <Link to="/" className="mb-5">
-            <span className="text-lg font-display font-semibold text-foreground">Rehab-Lookup</span>
+            <span className="text-lg font-display font-semibold text-foreground">RehabLookup</span>
           </Link>
           
           {/* Social Icons - Centered with luxury styling */}
