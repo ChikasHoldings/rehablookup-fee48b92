@@ -1,28 +1,19 @@
-<svg width="520" height="58" viewBox="0 0 520 58" xmlns="http://www.w3.org/2000/svg">
-  <!-- Rehab-Lookup Flat Logo - Light Mode (Navy on transparent) -->
-  <!-- Icon -->
-  <g transform="translate(0,0) scale(0.58)">
-    <path
-      d="M54 2
-         C34 2 18 19 18 38
-         C18 57 40 78 50 92
-         C52.5 96 55.5 96 58 92
-         C68 78 90 57 90 38
-         C90 19 74 2 54 2Z"
-      fill="#0A2540"
-    />
-    <rect x="50" y="24" width="8" height="28" rx="2" fill="#FFFFFF"/>
-    <rect x="36" y="34" width="36" height="8" rx="2" fill="#FFFFFF"/>
+<svg width="280" height="48" viewBox="0 0 280 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- RehabLookup Logo - Light Mode (Navy Blue on transparent) -->
+  <!-- Cross/Plus Icon -->
+  <g transform="translate(0,4)">
+    <!-- Vertical bar of cross -->
+    <rect x="14" y="0" width="16" height="40" rx="3" fill="#1e3a5f"/>
+    <!-- Horizontal bar of cross -->
+    <rect x="0" y="12" width="44" height="16" rx="3" fill="#1e3a5f"/>
   </g>
   <!-- Text -->
   <text
-    x="62"
-    y="44"
-    fill="#0A2540"
-    font-size="48"
+    x="52"
+    y="35"
+    fill="#1e3a5f"
+    font-size="32"
     font-family="Inter, Arial, Helvetica, sans-serif"
-    font-weight="600"
-  >
-    Rehab-Lookup
-  </text>
+    font-weight="700"
+  >RehabLookup</text>
 </svg>
