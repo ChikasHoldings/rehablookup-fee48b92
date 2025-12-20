@@ -1866,6 +1866,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_lead: {
+        Args: { p_lead_id: string; p_user_id: string }
+        Returns: boolean
+      }
       check_rate_limit: {
         Args: {
           p_action_type?: string
@@ -1874,6 +1878,45 @@ export type Database = {
           p_window_minutes?: number
         }
         Returns: Json
+      }
+      get_owner_facility_data: {
+        Args: { p_user_id: string }
+        Returns: {
+          address: string
+          bed_count: string
+          bonus_leads: number
+          city: string
+          created_at: string
+          description: string
+          email: string
+          facility_type: string
+          featured: boolean
+          featured_pinned: boolean
+          gallery_urls: string[]
+          gender_served: string
+          id: string
+          last_featured_shown_at: string
+          lead_limit_override: number
+          leads_reset_at: string
+          logo_url: string
+          name: string
+          phone: string
+          profile_completion_celebrated: boolean
+          profile_reminder_count: number
+          profile_reminder_sent_at: string
+          reply_email: string
+          reply_email_verified: boolean
+          reply_email_verified_at: string
+          slug: string
+          state: string
+          status: string
+          suspended: boolean
+          updated_at: string
+          verified: boolean
+          website: string
+          year_established: number
+          zip_code: string
+        }[]
       }
       get_public_facility_data: {
         Args: { facility_id: string }
@@ -1904,6 +1947,20 @@ export type Database = {
           verified: boolean
           website: string
           zip_code: string
+        }[]
+      }
+      get_user_sessions_safe: {
+        Args: { p_user_id: string }
+        Returns: {
+          browser: string
+          created_at: string
+          device_name: string
+          id: string
+          ip_address: string
+          is_current: boolean
+          last_active_at: string
+          location: string
+          os: string
         }[]
       }
       has_admin_permission: {
