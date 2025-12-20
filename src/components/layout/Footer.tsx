@@ -73,13 +73,13 @@ export function Footer() {
               <img 
                 src="/logo.svg" 
                 alt="RehabLookup" 
-                className="h-16 w-auto dark:hidden"
+                className="h-10 w-auto dark:hidden"
                 loading="lazy"
               />
               <img 
                 src="/logo-dark.svg" 
                 alt="RehabLookup" 
-                className="h-16 w-auto hidden dark:block"
+                className="h-10 w-auto hidden dark:block"
                 loading="lazy"
               />
             </Link>
