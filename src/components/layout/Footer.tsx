@@ -8,7 +8,6 @@ const popularLocations = [
   { name: "Texas", path: "/rehab-centers/texas" },
   { name: "New York", path: "/rehab-centers/new-york" },
   { name: "Arizona", path: "/rehab-centers/arizona" },
-  { name: "Colorado", path: "/rehab-centers/colorado" },
 ];
 
 // Treatment types for SEO
@@ -17,7 +16,6 @@ const treatmentTypes = [
   { name: "Inpatient Rehab", path: "/treatment-types/residential-inpatient" },
   { name: "Outpatient Programs", path: "/treatment-types/outpatient-programs" },
   { name: "Alcohol Rehab", path: "/treatment-types/alcohol-rehabilitation" },
-  { name: "Drug Addiction", path: "/treatment-types/drug-addiction-treatment" },
   { name: "Dual Diagnosis", path: "/treatment-types/dual-diagnosis-treatment" },
 ];
 
@@ -178,6 +176,15 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link 
+                  to="/treatment-types" 
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                >
+                  View All
+                  <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              </li>
             </ul>
           </div>
 
