@@ -69,7 +69,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <Link to="/" className="inline-block mb-6">
+            <Link to="/" className="inline-block mb-3">
               <img 
                 src="/logo.svg" 
                 alt="RehabLookup" 
@@ -85,7 +85,7 @@ export function Footer() {
             </Link>
             
             {/* Social Icons */}
-            <div className="flex items-center gap-4 mb-5">
+            <div className="flex items-center gap-4 mb-3">
               <a 
                 href="https://x.com" 
                 target="_blank" 
