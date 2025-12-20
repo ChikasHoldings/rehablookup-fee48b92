@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -17,6 +17,7 @@ import {
   GitCompare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { prefetchAdminPage } from "@/lib/adminPrefetch";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
@@ -43,6 +44,11 @@ interface AdminSidebarProps {
 function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProps) {
   const location = useLocation();
 
+  // Prefetch page on hover
+  const handleMouseEnter = useCallback((path: string) => {
+    prefetchAdminPage(path);
+  }, []);
+
   // Filter nav items based on permissions
   const visibleNavItems = navItems.filter(
     (item) => isSuperAdmin || item.permission === "dashboard" || hasPermission(item.permission)
@@ -62,6 +68,7 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission }: AdminSidebarProp
               key={item.to}
               to={item.to}
               end={item.end}
+              onMouseEnter={() => handleMouseEnter(item.to)}
               className={cn(
                 "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
                 isActive

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, Suspense } from "react";
+import { useRef, useEffect, useState, Suspense, useCallback } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
 import { Menu, ShieldX, LayoutDashboard, Building2, Users, CreditCard, Star, ClipboardList, Settings, BarChart3, Bell } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
+import { prefetchAdminPage } from "@/lib/adminPrefetch";
 
 // Both AdminHeader and AdminSidebar are already memoized in their exports
 
@@ -155,6 +156,7 @@ export function AdminShell() {
                     key={item.to}
                     to={item.to}
                     onClick={() => setMobileMenuOpen(false)}
+                    onMouseEnter={() => prefetchAdminPage(item.to)}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
                       isActive
