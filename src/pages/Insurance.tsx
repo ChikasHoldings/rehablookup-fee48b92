@@ -18,7 +18,18 @@ import {
   Users,
   Stethoscope,
   LucideIcon,
+  Check,
+  X,
+  Minus,
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 interface InsuranceProvider {
@@ -138,6 +149,144 @@ const coverageTypes: CoverageType[] = [
     typically: "Covered under mental health/substance abuse benefits",
   },
 ];
+
+// Coverage comparison data
+interface CoverageComparisonItem {
+  insurer: string;
+  logo?: string;
+  detox: "full" | "partial" | "varies" | "limited";
+  inpatient: "full" | "partial" | "varies" | "limited";
+  outpatient: "full" | "partial" | "varies" | "limited";
+  mat: "full" | "partial" | "varies" | "limited";
+  mentalHealth: "full" | "partial" | "varies" | "limited";
+  notes: string;
+}
+
+const coverageComparison: CoverageComparisonItem[] = [
+  {
+    insurer: "Blue Cross Blue Shield",
+    logo: "/insurance-logos/bcbs.svg",
+    detox: "full",
+    inpatient: "full",
+    outpatient: "full",
+    mat: "full",
+    mentalHealth: "full",
+    notes: "Coverage varies by state plan; most require prior auth for residential",
+  },
+  {
+    insurer: "Aetna",
+    logo: "/insurance-logos/aetna.svg",
+    detox: "full",
+    inpatient: "full",
+    outpatient: "full",
+    mat: "full",
+    mentalHealth: "full",
+    notes: "Strong network of behavioral health providers nationwide",
+  },
+  {
+    insurer: "Cigna",
+    logo: "/insurance-logos/cigna.svg",
+    detox: "full",
+    inpatient: "partial",
+    outpatient: "full",
+    mat: "full",
+    mentalHealth: "full",
+    notes: "May require step-down from detox to outpatient before residential",
+  },
+  {
+    insurer: "United Healthcare",
+    logo: "/insurance-logos/united.svg",
+    detox: "full",
+    inpatient: "full",
+    outpatient: "full",
+    mat: "full",
+    mentalHealth: "full",
+    notes: "Optum behavioral health network; day limits may apply",
+  },
+  {
+    insurer: "Kaiser Permanente",
+    logo: "/insurance-logos/kaiser.svg",
+    detox: "full",
+    inpatient: "partial",
+    outpatient: "full",
+    mat: "full",
+    mentalHealth: "full",
+    notes: "Primarily in-network only; limited out-of-network coverage",
+  },
+  {
+    insurer: "Humana",
+    logo: "/insurance-logos/humana.svg",
+    detox: "full",
+    inpatient: "partial",
+    outpatient: "full",
+    mat: "full",
+    mentalHealth: "full",
+    notes: "Prior authorization required for most inpatient services",
+  },
+  {
+    insurer: "Anthem",
+    logo: "/insurance-logos/anthem.svg",
+    detox: "full",
+    inpatient: "full",
+    outpatient: "full",
+    mat: "full",
+    mentalHealth: "full",
+    notes: "Part of BCBS network; strong parity compliance",
+  },
+  {
+    insurer: "Medicare",
+    logo: "/insurance-logos/medicare.svg",
+    detox: "full",
+    inpatient: "partial",
+    outpatient: "full",
+    mat: "full",
+    mentalHealth: "full",
+    notes: "Part A: inpatient (190-day lifetime limit); Part B: outpatient",
+  },
+  {
+    insurer: "Medicaid",
+    logo: "/insurance-logos/medicaid.svg",
+    detox: "varies",
+    inpatient: "varies",
+    outpatient: "varies",
+    mat: "full",
+    mentalHealth: "varies",
+    notes: "Coverage varies significantly by state; check state-specific benefits",
+  },
+  {
+    insurer: "TRICARE",
+    logo: "/insurance-logos/tricare.svg",
+    detox: "full",
+    inpatient: "full",
+    outpatient: "full",
+    mat: "full",
+    mentalHealth: "full",
+    notes: "Comprehensive coverage for active duty, veterans, and families",
+  },
+];
+
+const CoverageIcon = ({ level }: { level: "full" | "partial" | "varies" | "limited" }) => {
+  switch (level) {
+    case "full":
+      return <Check className="h-5 w-5 text-green-600" />;
+    case "partial":
+      return <Minus className="h-5 w-5 text-amber-500" />;
+    case "varies":
+      return <HelpCircle className="h-4 w-4 text-blue-500" />;
+    case "limited":
+      return <X className="h-5 w-5 text-destructive" />;
+  }
+};
+
+const CoverageLabel = ({ level }: { level: "full" | "partial" | "varies" | "limited" }) => {
+  const labels = {
+    full: "Full",
+    partial: "Partial",
+    varies: "Varies",
+    limited: "Limited",
+  };
+  return <span className="text-xs text-muted-foreground">{labels[level]}</span>;
+};
 
 const keyLaws = [
   {
@@ -325,7 +474,114 @@ export default function Insurance() {
         </div>
       </section>
 
-      {/* Key Laws */}
+      {/* Coverage Comparison Table */}
+      <section className="border-t border-border bg-muted/30 py-10 md:py-14">
+        <div className="container">
+          <div className="mb-6 text-center">
+            <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+              Coverage Comparison by Insurer
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground max-w-2xl mx-auto">
+              Compare what each major insurer typically covers for addiction treatment services
+            </p>
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mb-6">
+            <div className="flex items-center gap-1.5">
+              <Check className="h-4 w-4 text-green-600" />
+              <span className="text-xs text-muted-foreground">Full Coverage</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Minus className="h-4 w-4 text-amber-500" />
+              <span className="text-xs text-muted-foreground">Partial/Limited Days</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <HelpCircle className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-xs text-muted-foreground">Varies by Plan/State</span>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[200px] font-semibold">Insurance Provider</TableHead>
+                    <TableHead className="text-center font-semibold">Detox</TableHead>
+                    <TableHead className="text-center font-semibold">Inpatient</TableHead>
+                    <TableHead className="text-center font-semibold">Outpatient</TableHead>
+                    <TableHead className="text-center font-semibold">MAT</TableHead>
+                    <TableHead className="text-center font-semibold">Mental Health</TableHead>
+                    <TableHead className="min-w-[200px] font-semibold">Notes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {coverageComparison.map((item, index) => (
+                    <TableRow key={item.insurer} className={index % 2 === 0 ? "bg-background" : "bg-muted/20"}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          {item.logo && (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background border border-border p-1">
+                              <img 
+                                src={item.logo} 
+                                alt={item.insurer} 
+                                className="h-6 w-6 object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          <span className="text-sm">{item.insurer}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <CoverageIcon level={item.detox} />
+                          <CoverageLabel level={item.detox} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <CoverageIcon level={item.inpatient} />
+                          <CoverageLabel level={item.inpatient} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <CoverageIcon level={item.outpatient} />
+                          <CoverageLabel level={item.outpatient} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <CoverageIcon level={item.mat} />
+                          <CoverageLabel level={item.mat} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <CoverageIcon level={item.mentalHealth} />
+                          <CoverageLabel level={item.mentalHealth} />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground">{item.notes}</span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground text-center mt-4">
+            * Coverage details are general guidelines. Actual coverage depends on your specific plan. Always verify with your insurer or treatment facility.
+          </p>
+        </div>
+      </section>
+
       <section className="border-t border-border bg-muted/30 py-10 md:py-14">
         <div className="container">
           <div className="mb-6">
