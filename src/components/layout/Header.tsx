@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, ChevronRight, Heart } from "lucide-react";
+import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,6 +25,18 @@ const defaultNavLinks: NavLink[] = [
   { href: "/resources", label: "Resources" },
   { href: "/for-providers", label: "For Providers" },
 ];
+
+// Icon mapping for nav links
+const navIcons: Record<string, React.ElementType> = {
+  "/rehab-centers": MapPin,
+  "/treatment-types": Building2,
+  "/insurance": Shield,
+  "/resources": BookOpen,
+  "/for-providers": Building2,
+  "/about": Info,
+  "/contact": Phone,
+  "/faq": HelpCircle,
+};
 
 export function Header({ 
   navLinks = defaultNavLinks, 
@@ -193,123 +205,170 @@ export function Header({
         </div>
       </header>
 
-      {/* Mobile Menu Overlay */}
+      {/* Luxury Mobile Menu Overlay */}
       <div 
         className={cn(
-          "fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm md:hidden transition-opacity duration-200",
+          "fixed inset-0 z-[100] md:hidden transition-all duration-300",
           mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setMobileMenuOpen(false)}
-      />
+      >
+        {/* Gradient backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/98 to-background backdrop-blur-xl" />
+      </div>
 
-      {/* Mobile Slide Menu */}
+      {/* Luxury Slide Menu Panel */}
       <div 
         className={cn(
-          "fixed top-0 right-0 z-[101] h-full w-[280px] bg-background border-l border-border md:hidden transition-transform duration-200 ease-out",
+          "fixed top-0 right-0 z-[101] h-full w-[320px] max-w-[85vw] md:hidden transition-all duration-300 ease-out",
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
-        {/* Menu Header */}
-        <div className="flex items-center justify-between border-b border-border px-4 h-14">
-          <span className="text-sm font-medium text-foreground">Menu</span>
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-label="Close menu"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        {/* Glass morphism background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-card via-card to-card/95 backdrop-blur-2xl border-l border-border/50 shadow-2xl shadow-foreground/5" />
+        
+        {/* Decorative accent line */}
+        <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-primary/40 via-primary/20 to-transparent" />
+        
+        {/* Content container */}
+        <div className="relative h-full flex flex-col">
+          {/* Elegant Menu Header */}
+          <div className="flex items-center justify-between px-6 h-16 border-b border-border/30">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                <span className="text-primary font-display font-bold text-sm">R</span>
+              </div>
+              <span className="font-display text-base font-semibold tracking-tight text-foreground">Menu</span>
+            </div>
+            <button
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 hover:scale-105"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
 
-        {/* Menu Content */}
-        <div className="flex flex-col h-[calc(100%-56px)] overflow-y-auto">
-          {/* Navigation Links */}
-          <nav className="flex-1 p-3">
-            <div className="space-y-0.5">
-              {navLinks.map((link) => {
-                const isActive = location.pathname === link.href;
-                const isForProviders = link.href === "/for-providers" && variant === "default";
-                
-                if (isForProviders) {
-                  return (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                    >
-                      <span>{link.label}</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </a>
+          {/* Menu Content with refined spacing */}
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            {/* Primary Navigation */}
+            <nav className="px-4 pt-6 pb-4">
+              <p className="px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
+                Navigation
+              </p>
+              <div className="space-y-1">
+                {navLinks.map((link, index) => {
+                  const isActive = location.pathname === link.href;
+                  const isForProviders = link.href === "/for-providers" && variant === "default";
+                  const Icon = navIcons[link.href] || ChevronRight;
+                  
+                  const linkClasses = cn(
+                    "group flex items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-medium transition-all duration-200",
+                    isActive
+                      ? "bg-primary/10 text-primary shadow-sm"
+                      : "text-foreground/80 hover:text-foreground hover:bg-muted/80"
                   );
-                }
-                
-                return (
-                  <PrefetchLink
-                    key={link.href}
-                    to={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    )}
-                  >
-                    <span>{link.label}</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </PrefetchLink>
-                );
-              })}
-            </div>
 
-            <div className="my-3 border-t border-border" />
+                  const content = (
+                    <>
+                      <div className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-200",
+                        isActive 
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" 
+                          : "bg-muted/60 text-muted-foreground group-hover:bg-muted group-hover:text-foreground"
+                      )}>
+                        <Icon className="h-4.5 w-4.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="block truncate">{link.label}</span>
+                        {isActive && (
+                          <span className="text-[10px] text-primary/70 font-normal">Current page</span>
+                        )}
+                      </div>
+                      <ChevronRight className={cn(
+                        "h-4 w-4 text-muted-foreground/40 transition-all duration-200",
+                        "group-hover:text-muted-foreground group-hover:translate-x-0.5"
+                      )} />
+                    </>
+                  );
+                  
+                  if (isForProviders) {
+                    return (
+                      <a
+                        key={link.href}
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={linkClasses}
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        {content}
+                      </a>
+                    );
+                  }
+                  
+                  return (
+                    <PrefetchLink
+                      key={link.href}
+                      to={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={linkClasses}
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {content}
+                    </PrefetchLink>
+                  );
+                })}
+              </div>
+            </nav>
 
-            {/* Quick Links */}
-            <div className="space-y-0.5">
-              <PrefetchLink
-                to="/about"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <span>About</span>
-                <ChevronRight className="h-4 w-4" />
-              </PrefetchLink>
-              <PrefetchLink
-                to="/contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <span>Contact</span>
-                <ChevronRight className="h-4 w-4" />
-              </PrefetchLink>
-              <PrefetchLink
-                to="/faq"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <span>FAQ</span>
-                <ChevronRight className="h-4 w-4" />
-              </PrefetchLink>
-            </div>
-          </nav>
+            {/* Elegant divider */}
+            <div className="mx-6 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
 
-          {/* Bottom CTA */}
-          <div className="border-t border-border p-4 space-y-2">
+            {/* Secondary Links */}
+            <nav className="px-4 py-4">
+              <p className="px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
+                More
+              </p>
+              <div className="space-y-0.5">
+                {[
+                  { href: "/about", label: "About Us" },
+                  { href: "/contact", label: "Contact" },
+                  { href: "/faq", label: "FAQ" },
+                ].map((link) => {
+                  const Icon = navIcons[link.href] || ChevronRight;
+                  return (
+                    <PrefetchLink
+                      key={link.href}
+                      to={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="group flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="flex-1">{link.label}</span>
+                      <ChevronRight className="h-3.5 w-3.5 opacity-0 -translate-x-2 group-hover:opacity-50 group-hover:translate-x-0 transition-all duration-200" />
+                    </PrefetchLink>
+                  );
+                })}
+              </div>
+            </nav>
+          </div>
+
+          {/* Premium CTA Footer */}
+          <div className="border-t border-border/30 p-5 bg-gradient-to-t from-muted/30 to-transparent">
             {variant === "provider" ? (
               <>
                 {isLoggedIn ? (
-                  <>
+                  <div className="space-y-2.5">
                     <Link to="/provider-dashboard" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button variant="outline" className="w-full h-10 text-sm">
+                      <Button variant="outline" className="w-full h-12 text-sm font-medium rounded-xl border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200">
                         Dashboard
                       </Button>
                     </Link>
                     <Button 
                       variant="ghost" 
-                      className="w-full h-10 text-sm gap-2 text-muted-foreground" 
+                      className="w-full h-11 text-sm gap-2 text-muted-foreground hover:text-foreground rounded-xl" 
                       onClick={() => {
                         handleLogout();
                         setMobileMenuOpen(false);
@@ -318,29 +377,34 @@ export function Header({
                       <LogOut className="h-4 w-4" />
                       Sign Out
                     </Button>
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    <Link to="/provider-login" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button variant="outline" className="w-full h-10 text-sm">
-                        Sign In
-                      </Button>
-                    </Link>
+                  <div className="space-y-2.5">
                     <Link to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button className="w-full h-10 text-sm">
+                      <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20 transition-all duration-200 hover:shadow-xl hover:shadow-primary/25">
                         Get Started
                       </Button>
                     </Link>
-                  </>
+                    <Link to="/provider-login" onClick={() => setMobileMenuOpen(false)} className="block">
+                      <Button variant="ghost" className="w-full h-11 text-sm text-muted-foreground hover:text-foreground rounded-xl">
+                        Sign In
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </>
             ) : (
-              <PrefetchLink to={ctaLink} onClick={() => setMobileMenuOpen(false)} className="block">
-                <Button className="w-full h-10 text-sm gap-1.5">
-                  <Heart className="h-4 w-4" />
-                  {ctaLabel}
-                </Button>
-              </PrefetchLink>
+              <div className="space-y-3">
+                <PrefetchLink to={ctaLink} onClick={() => setMobileMenuOpen(false)} className="block">
+                  <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20 transition-all duration-200 hover:shadow-xl hover:shadow-primary/25 gap-2">
+                    <Heart className="h-4 w-4" />
+                    {ctaLabel}
+                  </Button>
+                </PrefetchLink>
+                <p className="text-center text-[11px] text-muted-foreground/60">
+                  Free & confidential support available 24/7
+                </p>
+              </div>
             )}
           </div>
         </div>
