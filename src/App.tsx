@@ -56,6 +56,11 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
+// Near Me SEO Pages
+import DrugRehabNearMe from "./pages/near-me/DrugRehabNearMe";
+import AlcoholRehabNearMe from "./pages/near-me/AlcoholRehabNearMe";
+import DetoxNearMe from "./pages/near-me/DetoxNearMe";
+
 // Provider Panel - eagerly load for instant navigation
 import { ProviderShell } from "./components/provider/ProviderShell";
 import ProviderDashboardPage from "./pages/provider/Dashboard";
@@ -134,6 +139,15 @@ const App = () => (
             <Route path="/treatment-types/detox-programs" element={<DetoxPrograms />} />
             <Route path="/treatment-types/detox-programs/:stateSlug" element={<StateDetoxPrograms />} />
             <Route path="/treatment-types/detox-programs/:stateSlug/:citySlug" element={<CityDetoxPrograms />} />
+            
+            {/* Near Me SEO Routes */}
+            <Route path="/drug-rehab-near-me" element={<DrugRehabNearMe />} />
+            <Route path="/drug-rehab-near-me/:stateSlug" element={<DrugRehabNearMe />} />
+            <Route path="/alcohol-rehab-near-me" element={<AlcoholRehabNearMe />} />
+            <Route path="/alcohol-rehab-near-me/:stateSlug" element={<AlcoholRehabNearMe />} />
+            <Route path="/detox-near-me" element={<DetoxNearMe />} />
+            <Route path="/detox-near-me/:stateSlug" element={<DetoxNearMe />} />
+            
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/request-help" element={<RequestHelp />} />
             <Route path="/lp/treatment" element={<AdLanding />} />
