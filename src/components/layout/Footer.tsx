@@ -94,10 +94,10 @@ export function Footer() {
           {/* Social Icons - Centered with luxury styling */}
           <div className="flex items-center justify-center gap-3 mb-6">
             {[
-              { Icon: XIcon, href: "https://x.com", label: "X" },
-              { Icon: FacebookIcon, href: "https://facebook.com", label: "Facebook" },
-              { Icon: InstagramIcon, href: "https://instagram.com", label: "Instagram" },
-              { Icon: LinkedInIcon, href: "https://linkedin.com", label: "LinkedIn" },
+              { Icon: XIcon, href: "https://x.com/rehablookup", label: "X" },
+              { Icon: FacebookIcon, href: "https://facebook.com/rehablookup", label: "Facebook" },
+              { Icon: InstagramIcon, href: "https://instagram.com/rehablookup", label: "Instagram" },
+              { Icon: LinkedInIcon, href: "https://linkedin.com/company/rehablookup", label: "LinkedIn" },
             ].map(({ Icon, href, label }) => (
               <a 
                 key={label}
@@ -296,7 +296,7 @@ export function Footer() {
               {/* Social Icons */}
               <div className="flex items-center gap-2">
                 <a 
-                  href="https://x.com"
+                  href="https://x.com/rehablookup"
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -305,7 +305,7 @@ export function Footer() {
                   <XIcon />
                 </a>
                 <a 
-                  href="https://facebook.com" 
+                  href="https://facebook.com/rehablookup" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -314,7 +314,7 @@ export function Footer() {
                   <FacebookIcon />
                 </a>
                 <a 
-                  href="https://instagram.com" 
+                  href="https://instagram.com/rehablookup" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -323,7 +323,7 @@ export function Footer() {
                   <InstagramIcon />
                 </a>
                 <a 
-                  href="https://linkedin.com" 
+                  href="https://linkedin.com/company/rehablookup" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

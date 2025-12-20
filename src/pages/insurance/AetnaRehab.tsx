@@ -24,48 +24,60 @@ const coverageDetails = [
     icon: Stethoscope,
     title: "Medical Detox",
     coverage: "Fully Covered",
-    details: "Medically supervised withdrawal with 24/7 care",
+    details: "Medically supervised withdrawal with 24/7 care. Aetna typically covers 3-7 days depending on substance.",
   },
   {
     icon: Building2,
     title: "Inpatient Rehab",
     coverage: "Covered with Authorization",
-    details: "Residential treatment programs typically 30-90 days",
+    details: "Residential treatment programs typically 30-90 days. Prior authorization required; expect 14-28 day initial approval.",
   },
   {
     icon: Users,
     title: "Outpatient Programs",
     coverage: "Fully Covered",
-    details: "IOP and PHP programs for flexible treatment",
+    details: "IOP (9+ hours/week) and PHP (20+ hours/week) programs for flexible treatment. No authorization for in-network.",
   },
   {
     icon: Heart,
     title: "Medication-Assisted Treatment",
     coverage: "Covered",
-    details: "FDA-approved medications for opioid and alcohol addiction",
+    details: "Suboxone, Vivitrol, and naltrexone covered. Some MAT requires step therapy or prior authorization.",
   },
 ];
+
+// Aetna-specific statistics and info
+const aetnaStats = {
+  networkSize: "Over 50,000 behavioral health providers nationwide",
+  avgDeductible: "$500-$2,000 individual / $1,000-$4,000 family (varies by plan)",
+  avgCoinsurance: "20-30% after deductible for in-network services",
+  authTimeline: "24-72 hours for urgent care; 3-5 business days for routine",
+};
 
 const faqs = [
   {
     question: "Does Aetna cover rehab treatment?",
-    answer: "Yes, Aetna provides comprehensive coverage for addiction treatment including detox, inpatient rehab, outpatient programs, and medication-assisted treatment. Coverage specifics depend on your plan type and network status of the facility.",
+    answer: "Yes, Aetna provides comprehensive coverage for addiction treatment including detox, inpatient rehab, outpatient programs, and medication-assisted treatment. Under the Mental Health Parity Act, Aetna must cover substance use disorder treatment at the same level as physical health conditions.",
   },
   {
     question: "How do I verify my Aetna benefits for rehab?",
-    answer: "Call the number on the back of your Aetna insurance card or contact a treatment center directly. Most facilities have dedicated admissions staff who can verify your benefits at no cost.",
+    answer: "Call Aetna's behavioral health line at 1-800-279-4572, available 24/7. Have your member ID ready. Alternatively, most treatment centers offer free, confidential benefit verification within 24 hours.",
   },
   {
     question: "Does Aetna require pre-authorization for rehab?",
-    answer: "Most Aetna plans require prior authorization for inpatient or residential treatment. The treatment facility typically handles this process during admission.",
+    answer: "Most Aetna plans require prior authorization for inpatient/residential treatment (typically takes 24-72 hours for urgent cases). Outpatient services at in-network facilities often don't require prior auth. The treatment facility typically handles this process during admission.",
   },
   {
     question: "What is my out-of-pocket cost with Aetna?",
-    answer: "Costs depend on your specific plan's deductible, copays, and coinsurance. In-network facilities generally have lower out-of-pocket costs than out-of-network providers.",
+    answer: "For in-network facilities, expect to pay your annual deductible ($500-$2,000 typical) plus 20-30% coinsurance. Out-of-network costs are significantly higher—often 40-50% coinsurance with a higher deductible. Many plans have an out-of-pocket maximum ($3,000-$8,000) after which Aetna covers 100%.",
   },
   {
     question: "How long will Aetna cover treatment?",
-    answer: "Length of covered treatment is determined by medical necessity. Aetna typically covers treatment for as long as it's clinically appropriate, reviewed periodically by their utilization management team.",
+    answer: "Length of covered treatment is determined by medical necessity, not arbitrary limits. Aetna uses the ASAM (American Society of Addiction Medicine) criteria to assess continued need. Initial inpatient approvals are typically 14-28 days, with extensions based on clinical progress.",
+  },
+  {
+    question: "Does Aetna cover out-of-state rehab?",
+    answer: "Yes, Aetna's national PPO plans cover treatment at out-of-state facilities. However, in-network benefits only apply if the facility is in Aetna's network. Some HMO plans may require referrals or have geographic restrictions—check your specific plan.",
   },
 ];
 
@@ -217,21 +229,47 @@ export default function AetnaRehab() {
         </div>
       </section>
 
-      {/* Key Benefits */}
+      {/* Aetna-Specific Stats */}
       <section className="py-10 md:py-14">
+        <div className="container">
+          <div className="mb-8 text-center">
+            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+              Aetna Behavioral Health Coverage at a Glance
+            </h2>
+          </div>
+          
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: "Network Size", value: aetnaStats.networkSize },
+              { label: "Typical Deductible", value: aetnaStats.avgDeductible },
+              { label: "In-Network Coinsurance", value: aetnaStats.avgCoinsurance },
+              { label: "Authorization Timeline", value: aetnaStats.authTimeline },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-xl border border-border bg-card p-5 text-center">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{stat.label}</p>
+                <p className="text-sm font-medium text-foreground">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Key Benefits */}
+      <section className="border-t border-border bg-muted/30 py-10 md:py-14">
         <div className="container">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
               <h2 className="font-display text-xl font-bold text-foreground md:text-2xl mb-4">
-                Why Choose an Aetna-Accepting Facility?
+                Why Choose an Aetna In-Network Facility?
               </h2>
               <ul className="space-y-3">
                 {[
-                  "Lower out-of-pocket costs with in-network rates",
-                  "Streamlined authorization and billing process",
-                  "Access to Aetna's behavioral health network",
-                  "Coordination with Aetna care managers",
-                  "Continuity of care for aftercare services",
+                  "Save 30-50% compared to out-of-network costs",
+                  "No balance billing—you only pay your copay/coinsurance",
+                  "Faster authorization—facilities have direct lines to Aetna",
+                  "Care coordination with Aetna case managers",
+                  "Seamless claims—no paperwork for you to file",
+                  "Access to Aetna's Recovery Support Program post-treatment",
                 ].map((benefit, index) => (
                   <li key={index} className="flex items-start gap-3">
                     <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -240,22 +278,25 @@ export default function AetnaRehab() {
                 ))}
               </ul>
             </div>
-            <div className="bg-muted/50 rounded-xl p-6 border border-border">
+            <div className="bg-card rounded-xl p-6 border border-border">
               <div className="flex items-center gap-3 mb-4">
                 <Phone className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-foreground">Aetna Behavioral Health</h3>
+                <h3 className="font-semibold text-foreground">Aetna Behavioral Health Line</h3>
               </div>
               <p className="text-muted-foreground text-sm mb-4">
-                Call Aetna's behavioral health line for questions about coverage, finding providers, or understanding your benefits.
+                Call Aetna's dedicated behavioral health line for coverage questions, finding providers, or getting a case manager assigned.
               </p>
               <div className="space-y-2 text-sm">
+                <p className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">1-800-279-4572</span>
+                </p>
                 <p className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span>Available 24/7 for crisis support</span>
                 </p>
                 <p className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span>Member ID on your insurance card</span>
+                  <span>Have your Member ID ready</span>
                 </p>
               </div>
             </div>

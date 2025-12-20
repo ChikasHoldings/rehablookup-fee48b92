@@ -5,6 +5,7 @@ import { StepEligibility } from "./StepEligibility";
 import { StepContactVerify } from "./StepContactVerify";
 import { LeadIntakeSuccess } from "./LeadIntakeSuccess";
 import { useLeadIntakeForm } from "./useLeadIntakeForm";
+import { LeadFormErrorBoundary } from "./LeadFormErrorBoundary";
 
 interface LeadIntakeFormProps {
   className?: string;
@@ -59,65 +60,67 @@ export function LeadIntakeForm({ className, renderSuccess }: LeadIntakeFormProps
   const isUrgent = formData.urgency === "immediate";
 
   return (
-    <div className={className}>
-      {/* Compact Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
-          </span>
-          Free & Confidential
+    <LeadFormErrorBoundary>
+      <div className={className}>
+        {/* Compact Header */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+            </span>
+            Free & Confidential
+          </div>
+          {facilityName && (
+            <p className="text-sm text-muted-foreground">
+              Requesting info from <span className="font-medium text-foreground">{facilityName}</span>
+            </p>
+          )}
         </div>
-        {facilityName && (
-          <p className="text-sm text-muted-foreground">
-            Requesting info from <span className="font-medium text-foreground">{facilityName}</span>
-          </p>
-        )}
-      </div>
 
-      {/* Stepper */}
-      <LeadIntakeStepper currentStep={currentStep} />
+        {/* Stepper */}
+        <LeadIntakeStepper currentStep={currentStep} />
 
-      {/* Form Steps */}
-      <div ref={formSectionRef} className="bg-card rounded-xl border border-border p-5 md:p-6 shadow-sm scroll-mt-4">
-        {currentStep === 1 && (
-          <StepImmediateNeed
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={nextStep}
-          />
-        )}
-        {currentStep === 2 && (
-          <StepEligibility
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={nextStep}
-            onBack={prevStep}
-            isUrgent={isUrgent}
-          />
-        )}
-        {currentStep === 3 && (
-          <StepContactVerify
-            formData={formData}
-            updateFormData={updateFormData}
-            onBack={prevStep}
-            onSubmit={handleSubmit}
-            codeSent={codeSent}
-            isSendingCode={isSendingCode}
-            verificationCode={verificationCode}
-            setVerificationCode={setVerificationCode}
-            isVerifying={isVerifying}
-            isEmailVerified={isEmailVerified}
-            resendCount={resendCount}
-            resendCooldown={resendCooldown}
-            sendVerificationCode={sendVerificationCode}
-            verifyCode={verifyCode}
-            resetEmailVerification={resetEmailVerification}
-            isSubmitting={isSubmitting}
-          />
-        )}
+        {/* Form Steps */}
+        <div ref={formSectionRef} className="bg-card rounded-xl border border-border p-5 md:p-6 shadow-sm scroll-mt-4">
+          {currentStep === 1 && (
+            <StepImmediateNeed
+              formData={formData}
+              updateFormData={updateFormData}
+              onNext={nextStep}
+            />
+          )}
+          {currentStep === 2 && (
+            <StepEligibility
+              formData={formData}
+              updateFormData={updateFormData}
+              onNext={nextStep}
+              onBack={prevStep}
+              isUrgent={isUrgent}
+            />
+          )}
+          {currentStep === 3 && (
+            <StepContactVerify
+              formData={formData}
+              updateFormData={updateFormData}
+              onBack={prevStep}
+              onSubmit={handleSubmit}
+              codeSent={codeSent}
+              isSendingCode={isSendingCode}
+              verificationCode={verificationCode}
+              setVerificationCode={setVerificationCode}
+              isVerifying={isVerifying}
+              isEmailVerified={isEmailVerified}
+              resendCount={resendCount}
+              resendCooldown={resendCooldown}
+              sendVerificationCode={sendVerificationCode}
+              verifyCode={verifyCode}
+              resetEmailVerification={resetEmailVerification}
+              isSubmitting={isSubmitting}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </LeadFormErrorBoundary>
   );
 }
