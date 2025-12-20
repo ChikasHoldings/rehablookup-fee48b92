@@ -11,6 +11,7 @@ import { PageLoading } from "@/components/ui/page-loading";
 // Eagerly load all public pages for instant navigation
 import Index from "./pages/Index";
 import RehabCenters from "./pages/RehabCenters";
+import SearchResults from "./pages/SearchResults";
 import StatePage from "./pages/StatePage";
 import CityPage from "./pages/CityPage";
 import Locations from "./pages/Locations";
@@ -110,6 +111,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/locations" element={<Locations />} />
             <Route path="/rehab-centers" element={<RehabCenters />} />
+            <Route path="/search-results" element={<SearchResults />} />
             <Route path="/rehab-centers/:stateSlug/:citySlug" element={<CityPage />} />
             <Route path="/rehab-centers/:stateSlug" element={<StatePage />} />
             <Route path="/center/:slug" element={<CenterProfile />} />
