@@ -142,46 +142,27 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased text-base;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 
-  /* Standardized heading hierarchy */
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
   }
 
   h1 {
-    @apply text-4xl md:text-5xl tracking-tight font-bold;
+    @apply tracking-tight;
   }
 
   h2 {
-    @apply text-3xl md:text-4xl tracking-tight font-bold;
+    @apply tracking-tight;
   }
 
   h3 {
-    @apply text-2xl md:text-3xl tracking-[-0.01em] font-semibold;
+    @apply tracking-[-0.01em];
   }
 
-  h4 {
-    @apply text-xl md:text-2xl tracking-normal font-semibold;
-  }
-
-  h5 {
-    @apply text-lg md:text-xl tracking-normal font-medium;
-  }
-
-  h6 {
-    @apply text-base md:text-lg tracking-normal font-medium;
-  }
-
-  /* Ensure paragraph text is readable */
-  p {
-    @apply text-base leading-relaxed;
-  }
-
-  /* Description/muted text minimum size */
-  .text-muted-foreground {
-    @apply text-sm;
+  h4, h5, h6 {
+    @apply tracking-normal;
   }
 }
 
