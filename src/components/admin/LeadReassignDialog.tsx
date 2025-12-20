@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, forwardRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,8 @@ interface LeadReassignDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function LeadReassignDialog({ lead, currentFacility, open, onOpenChange }: LeadReassignDialogProps) {
+export const LeadReassignDialog = forwardRef<HTMLDivElement, LeadReassignDialogProps>(
+  function LeadReassignDialog({ lead, currentFacility, open, onOpenChange }, ref) {
   const queryClient = useQueryClient();
   const [selectedFacilityId, setSelectedFacilityId] = useState<string>("");
   const [reassignReason, setReassignReason] = useState("");
@@ -300,4 +301,6 @@ export function LeadReassignDialog({ lead, currentFacility, open, onOpenChange }
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+LeadReassignDialog.displayName = "LeadReassignDialog";

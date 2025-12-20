@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, forwardRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,8 @@ interface LeadOverrideDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function LeadOverrideDialog({ lead, open, onOpenChange }: LeadOverrideDialogProps) {
+export const LeadOverrideDialog = forwardRef<HTMLDivElement, LeadOverrideDialogProps>(
+  function LeadOverrideDialog({ lead, open, onOpenChange }, ref) {
   const queryClient = useQueryClient();
   const [action, setAction] = useState<"qualify" | "route" | null>(null);
   const [selectedFacilityId, setSelectedFacilityId] = useState<string>("");
@@ -411,4 +412,6 @@ export function LeadOverrideDialog({ lead, open, onOpenChange }: LeadOverrideDia
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+LeadOverrideDialog.displayName = "LeadOverrideDialog";
