@@ -48,12 +48,11 @@ function getClosestState(lat: number, lng: number): { name: string; abbr: string
 export default function DrugRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
   const [userLocation, setUserLocation] = useState<{
-    state: string;
-    stateAbbr: string;
-    stateSlug: string;
+    name: string;
+    abbr: string;
+    slug: string;
   } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
 
   const { data: approvedFacilities = [], isLoading } = useApprovedFacilities();
 
@@ -87,31 +86,19 @@ export default function DrugRehabNearMe() {
 
   // Geolocation handler
   const handleGetLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser");
-      return;
-    }
+    if (!navigator.geolocation) return;
 
     setIsLoadingLocation(true);
-    setLocationError(null);
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const closest = getClosestState(position.coords.latitude, position.coords.longitude);
         if (closest) {
-          setUserLocation({
-            state: closest.name,
-            stateAbbr: closest.abbr,
-            stateSlug: closest.slug,
-          });
+          setUserLocation(closest);
         }
         setIsLoadingLocation(false);
       },
-      (error) => {
-        setLocationError("Unable to determine your location. Please search manually.");
-        setIsLoadingLocation(false);
-      },
-      { timeout: 10000, enableHighAccuracy: false }
+      () => setIsLoadingLocation(false),
+      { timeout: 10000 }
     );
   }, []);
 
