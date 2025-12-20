@@ -15,11 +15,15 @@ import {
   MessageSquare,
   ChevronDown,
 } from "lucide-react";
+import step1Image from "@/assets/how-it-works/step-1-search.png";
+import step2Image from "@/assets/how-it-works/step-2-compare.png";
+import step3Image from "@/assets/how-it-works/step-3-connect.png";
 
 const steps = [
   {
     step: 1,
     icon: Search,
+    image: step1Image,
     title: "Search Treatment Centers",
     description: "Enter your location and preferences to browse verified treatment facilities in your area. Filter by treatment type, insurance, amenities, and more.",
     details: [
@@ -34,6 +38,7 @@ const steps = [
   {
     step: 2,
     icon: FileCheck,
+    image: step2Image,
     title: "Review & Compare",
     description: "Explore detailed facility profiles with information about programs, costs, insurance acceptance, and success rates to make an informed decision.",
     details: [
@@ -48,6 +53,7 @@ const steps = [
   {
     step: 3,
     icon: MessageSquare,
+    image: step3Image,
     title: "Connect Directly",
     description: "Contact treatment centers directly through our platform or speak with our specialists who can help guide you to the right program.",
     details: [
@@ -96,29 +102,25 @@ const HowItWorks = () => {
           { name: "How It Works", url: "/how-it-works" },
         ]}
       />
-      {/* Hero - Navy background */}
-      <section className="bg-primary py-16 px-4 md:py-20 md:px-6 relative overflow-hidden">
-        {/* Decorative elements */}
+      {/* Hero - Compact navy header matching About page */}
+      <section className="bg-primary py-10 px-4 md:py-14 md:px-6 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
         </div>
         
-        <div className="container text-center relative">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 backdrop-blur-sm border border-white/10">
-            <CheckCircle className="h-5 w-5 text-accent" />
-            <span className="text-base font-medium text-primary-foreground">Simple 3-Step Process</span>
-          </div>
-          <h1 className="mb-5 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-            How It Works
-          </h1>
-          <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto leading-relaxed md:text-xl">
-            Finding the right addiction treatment center is simple, confidential, and free. Here's how we help.
-          </p>
-          
-          {/* Scroll indicator */}
-          <div className="mt-10 animate-bounce">
-            <ChevronDown className="h-6 w-6 text-primary-foreground/50 mx-auto" />
+        <div className="container relative">
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
+              <CheckCircle className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-primary-foreground">Simple 3-Step Process</span>
+            </div>
+            <h1 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
+              How It Works
+            </h1>
+            <p className="text-base text-primary-foreground/80 leading-relaxed md:text-lg max-w-xl mx-auto">
+              Finding the right addiction treatment center is simple, confidential, and free.
+            </p>
           </div>
         </div>
       </section>
@@ -143,24 +145,28 @@ const HowItWorks = () => {
         </div>
       </section>
 
-      {/* Steps Section */}
-      <section className="py-16 px-4 md:py-24 md:px-6 bg-gradient-to-b from-background to-muted/30">
+      {/* Steps Section - Polished */}
+      <section className="py-12 px-4 md:py-16 md:px-6 bg-gradient-to-b from-background to-muted/30">
         <div className="container">
           {/* Section header */}
-          <div className="text-center mb-16">
-            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl mb-4">
+          <div className="text-center mb-10">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2">
+              <Star className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-accent">Your Path Forward</span>
+            </div>
+            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl mb-3">
               Your Journey to Recovery
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="text-muted-foreground max-w-lg mx-auto text-sm md:text-base">
               Follow these three simple steps to find the treatment center that's right for you.
             </p>
           </div>
 
-          <div className="relative max-w-5xl mx-auto">
+          <div className="relative max-w-4xl mx-auto">
             {/* Vertical connector line - hidden on mobile */}
             <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-accent/50 via-accent to-accent/50 -translate-x-1/2" />
             
-            <div className="space-y-12 lg:space-y-0">
+            <div className="space-y-8 lg:space-y-0">
               {steps.map((step, index) => (
                 <div
                   key={step.step}
@@ -169,48 +175,48 @@ const HowItWorks = () => {
                 >
                   {/* Flow arrow between steps - mobile only */}
                   {index < steps.length - 1 && (
-                    <div className="lg:hidden flex justify-center py-6">
+                    <div className="lg:hidden flex justify-center py-4">
                       <div className="flex flex-col items-center">
-                        <div className="w-0.5 h-8 bg-gradient-to-b from-accent to-accent/50" />
-                        <ChevronDown className="h-5 w-5 text-accent -mt-1" />
+                        <div className="w-0.5 h-6 bg-gradient-to-b from-accent to-accent/50" />
+                        <ChevronDown className="h-4 w-4 text-accent -mt-1" />
                       </div>
                     </div>
                   )}
                   
                   <div
-                    className={`lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center ${
+                    className={`lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center ${
                       index % 2 === 1 ? "lg:grid-flow-col-dense" : ""
-                    } ${index > 0 ? "lg:pt-24" : ""}`}
+                    } ${index > 0 ? "lg:pt-16" : ""}`}
                   >
                     {/* Content side */}
-                    <div className={`${index % 2 === 1 ? "lg:col-start-2" : ""} mb-8 lg:mb-0`}>
+                    <div className={`${index % 2 === 1 ? "lg:col-start-2" : ""} mb-6 lg:mb-0`}>
                       {/* Step indicator */}
-                      <div className="mb-6 flex items-center gap-4">
-                        <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${step.iconBg} text-xl font-bold text-white shadow-lg shadow-accent/20`}>
+                      <div className="mb-4 flex items-center gap-3">
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${step.iconBg} text-lg font-bold text-white shadow-lg shadow-accent/20`}>
                           {step.step}
                         </div>
                         <div>
                           <span className="text-xs font-semibold text-accent uppercase tracking-widest">Step {step.step} of 3</span>
-                          <h3 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+                          <h3 className="font-display text-xl font-bold text-foreground md:text-2xl">
                             {step.title}
                           </h3>
                         </div>
                       </div>
                       
-                      <p className="mb-6 text-base text-muted-foreground leading-relaxed md:text-lg">
+                      <p className="mb-4 text-sm text-muted-foreground leading-relaxed md:text-base">
                         {step.description}
                       </p>
                       
                       {/* Details list */}
-                      <ul className="space-y-3">
+                      <ul className="space-y-2">
                         {step.details.map((detail, detailIndex) => (
                           <li 
                             key={detail} 
-                            className="flex items-center gap-3 animate-fade-in"
+                            className="flex items-center gap-2 animate-fade-in text-sm"
                             style={{ animationDelay: `${(index * 150) + (detailIndex * 50)}ms` }}
                           >
-                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/15">
-                              <CheckCircle className="h-4 w-4 text-accent" />
+                            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15">
+                              <CheckCircle className="h-3 w-3 text-accent" />
                             </div>
                             <span className="text-foreground">{detail}</span>
                           </li>
@@ -218,24 +224,26 @@ const HowItWorks = () => {
                       </ul>
                     </div>
                     
-                    {/* Card side */}
+                    {/* Image side */}
                     <div className={`${index % 2 === 1 ? "lg:col-start-1 lg:row-start-1" : ""} relative`}>
                       {/* Connection dot on the line - desktop only */}
                       <div className="hidden lg:block absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 z-10">
-                        <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${step.iconBg} shadow-lg ring-4 ring-background`} />
+                        <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${step.iconBg} shadow-lg ring-4 ring-background`} />
                       </div>
                       
-                      <div className={`relative rounded-3xl bg-gradient-to-br ${step.gradient} p-1 group hover:scale-[1.02] transition-transform duration-300`}>
-                        <div className="rounded-[22px] bg-card/80 backdrop-blur-sm p-8 md:p-10 border border-border/50">
+                      <div className={`relative rounded-2xl bg-gradient-to-br ${step.gradient} p-1 group hover:scale-[1.02] transition-transform duration-300`}>
+                        <div className="rounded-[14px] bg-card/80 backdrop-blur-sm p-6 md:p-8 border border-border/50">
                           {/* Decorative circles */}
-                          <div className="absolute top-4 right-4 w-20 h-20 rounded-full bg-accent/5 blur-xl" />
-                          <div className="absolute bottom-4 left-4 w-16 h-16 rounded-full bg-accent/5 blur-xl" />
+                          <div className="absolute top-4 right-4 w-16 h-16 rounded-full bg-accent/5 blur-xl" />
+                          <div className="absolute bottom-4 left-4 w-12 h-12 rounded-full bg-accent/5 blur-xl" />
                           
                           <div className="relative flex flex-col items-center text-center">
-                            <div className={`mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br ${step.iconBg} shadow-xl shadow-accent/20 group-hover:shadow-2xl group-hover:shadow-accent/30 transition-shadow duration-300`}>
-                              <step.icon className="h-12 w-12 text-white" />
-                            </div>
-                            <span className="text-sm font-medium text-muted-foreground">
+                            <img 
+                              src={step.image} 
+                              alt={step.title}
+                              className="w-32 h-32 md:w-40 md:h-40 object-contain mb-4"
+                            />
+                            <span className="text-xs font-medium text-muted-foreground">
                               {step.step === 1 && "Find your options"}
                               {step.step === 2 && "Make informed choices"}
                               {step.step === 3 && "Start your journey"}
