@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
@@ -17,11 +17,9 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Phone,
-  Filter,
   SlidersHorizontal,
   Building2,
   Shield,
-  Clock,
   Star
 } from "lucide-react";
 import supportSpecialistImg from "@/assets/support-specialist.png";
@@ -48,14 +46,16 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "name-desc", label: "Name (Z-A)" },
 ];
 
+// Treatment type filters with mappings to actual treatment types in data
 const treatmentTypeFilters = [
-  { value: "detox", label: "Detox" },
-  { value: "inpatient", label: "Inpatient" },
-  { value: "outpatient", label: "Outpatient" },
-  { value: "dual-diagnosis", label: "Dual Diagnosis" },
-  { value: "holistic", label: "Holistic" },
+  { value: "detox", label: "Detox", matches: ["Detox", "Detoxification"] },
+  { value: "inpatient", label: "Inpatient", matches: ["Inpatient", "Inpatient/Residential", "Residential"] },
+  { value: "outpatient", label: "Outpatient", matches: ["Outpatient", "Intensive Outpatient (IOP)", "Partial Hospitalization (PHP)"] },
+  { value: "dual-diagnosis", label: "Dual Diagnosis", matches: ["Dual Diagnosis"] },
+  { value: "holistic", label: "Holistic", matches: ["Holistic", "Holistic Therapy"] },
 ];
 
+// Amenity filters - these would normally map to facility amenities data
 const amenityFilters = [
   { value: "private-rooms", label: "Private Rooms" },
   { value: "gym", label: "Fitness Center" },
@@ -65,12 +65,24 @@ const amenityFilters = [
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Basic search params
   const location = searchParams.get("location") || "";
   const treatment = searchParams.get("treatment") || "";
   const insurance = searchParams.get("insurance") || "";
   const type = searchParams.get("type") || "";
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const sortParam = (searchParams.get("sort") as SortOption) || "featured";
+  
+  // Filter params (comma-separated values)
+  const treatmentTypesParam = searchParams.get("treatmentTypes") || "";
+  const amenitiesParam = searchParams.get("amenities") || "";
+  const verifiedOnly = searchParams.get("verified") === "true";
+  const featuredOnly = searchParams.get("featuredOnly") === "true";
+
+  // Parse comma-separated filter values
+  const selectedTreatmentTypes = treatmentTypesParam ? treatmentTypesParam.split(",") : [];
+  const selectedAmenities = amenitiesParam ? amenitiesParam.split(",") : [];
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -99,9 +111,46 @@ const SearchResults = () => {
     holistic: "Holistic Therapy",
   };
 
+  // Toggle filter helper
+  const toggleFilter = useCallback((paramName: string, value: string, currentValues: string[]) => {
+    const newParams = new URLSearchParams(searchParams);
+    const isCurrentlySelected = currentValues.includes(value);
+    
+    let newValues: string[];
+    if (isCurrentlySelected) {
+      newValues = currentValues.filter(v => v !== value);
+    } else {
+      newValues = [...currentValues, value];
+    }
+    
+    if (newValues.length > 0) {
+      newParams.set(paramName, newValues.join(","));
+    } else {
+      newParams.delete(paramName);
+    }
+    
+    newParams.delete("page"); // Reset to page 1 when filtering
+    setSearchParams(newParams);
+  }, [searchParams, setSearchParams]);
+
+  // Toggle boolean filter
+  const toggleBooleanFilter = useCallback((paramName: string, currentValue: boolean) => {
+    const newParams = new URLSearchParams(searchParams);
+    
+    if (currentValue) {
+      newParams.delete(paramName);
+    } else {
+      newParams.set(paramName, "true");
+    }
+    
+    newParams.delete("page");
+    setSearchParams(newParams);
+  }, [searchParams, setSearchParams]);
+
   const filteredCenters = useMemo(() => {
     let results = [...allCenters];
 
+    // Location filter
     if (location) {
       const locationLower = location.toLowerCase();
       results = results.filter(
@@ -112,24 +161,74 @@ const SearchResults = () => {
       );
     }
 
+    // Treatment filter from search form
     if (treatment) {
       results = results.filter((c) =>
         c.treatmentTypes.some((t) => t.toLowerCase() === treatment.toLowerCase())
       );
     }
 
+    // Type filter from homepage cards
     if (type && typeFilterMap[type]) {
       results = results.filter((c) =>
         c.treatmentTypes.some((t) => typeFilterMap[type].includes(t))
       );
     }
 
+    // Insurance filter
     if (insurance) {
       results = results.filter((c) =>
         c.insuranceAccepted.some((i) =>
           i.toLowerCase().includes(insurance.toLowerCase())
         )
       );
+    }
+
+    // Treatment Type sidebar filters (checkbox filters)
+    if (selectedTreatmentTypes.length > 0) {
+      results = results.filter((center) => {
+        return selectedTreatmentTypes.some(filterValue => {
+          const filterConfig = treatmentTypeFilters.find(f => f.value === filterValue);
+          if (!filterConfig) return false;
+          return center.treatmentTypes.some(tt => 
+            filterConfig.matches.some(match => 
+              tt.toLowerCase().includes(match.toLowerCase())
+            )
+          );
+        });
+      });
+    }
+
+    // Amenity filters (simulated - in real app these would check facility amenities)
+    if (selectedAmenities.length > 0) {
+      // For demo purposes, we'll filter based on description containing amenity keywords
+      results = results.filter((center) => {
+        const description = (center.description || "").toLowerCase();
+        return selectedAmenities.some(amenity => {
+          switch (amenity) {
+            case "private-rooms":
+              return description.includes("private") || description.includes("room");
+            case "gym":
+              return description.includes("gym") || description.includes("fitness");
+            case "pool":
+              return description.includes("pool") || description.includes("swim");
+            case "meditation":
+              return description.includes("meditation") || description.includes("yoga") || description.includes("holistic");
+            default:
+              return false;
+          }
+        });
+      });
+    }
+
+    // Verified only filter
+    if (verifiedOnly) {
+      results = results.filter((center) => (center as any).verified === true);
+    }
+
+    // Featured only filter
+    if (featuredOnly) {
+      results = results.filter((center) => center.featured === true);
     }
 
     // Apply sorting
@@ -161,9 +260,9 @@ const SearchResults = () => {
     }
 
     return results;
-  }, [allCenters, location, treatment, insurance, type, sortParam]);
+  }, [allCenters, location, treatment, insurance, type, sortParam, selectedTreatmentTypes, selectedAmenities, verifiedOnly, featuredOnly]);
 
-  const hasFilters = location || treatment || insurance || type;
+  const hasFilters = location || treatment || insurance || type || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
 
   const totalPages = Math.ceil(filteredCenters.length / ITEMS_PER_PAGE);
@@ -202,6 +301,9 @@ const SearchResults = () => {
     newParams.delete("page");
     setSearchParams(newParams);
   };
+
+  // Count active sidebar filters
+  const activeSidebarFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
 
   return (
     <Layout>
@@ -243,6 +345,11 @@ const SearchResults = () => {
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 Filters
+                {activeSidebarFiltersCount > 0 && (
+                  <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                    {activeSidebarFiltersCount}
+                  </span>
+                )}
               </Button>
 
               {/* Sort Dropdown */}
@@ -328,6 +435,54 @@ const SearchResults = () => {
                   <X className="h-3 w-3 ml-0.5" />
                 </button>
               )}
+              {selectedTreatmentTypes.map(tt => {
+                const filter = treatmentTypeFilters.find(f => f.value === tt);
+                return (
+                  <button
+                    key={tt}
+                    onClick={() => toggleFilter("treatmentTypes", tt, selectedTreatmentTypes)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    <Building2 className="h-3 w-3" />
+                    {filter?.label || tt}
+                    <X className="h-3 w-3 ml-0.5" />
+                  </button>
+                );
+              })}
+              {selectedAmenities.map(am => {
+                const filter = amenityFilters.find(f => f.value === am);
+                return (
+                  <button
+                    key={am}
+                    onClick={() => toggleFilter("amenities", am, selectedAmenities)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    <Star className="h-3 w-3" />
+                    {filter?.label || am}
+                    <X className="h-3 w-3 ml-0.5" />
+                  </button>
+                );
+              })}
+              {verifiedOnly && (
+                <button
+                  onClick={() => toggleBooleanFilter("verified", true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <Shield className="h-3 w-3" />
+                  Verified Only
+                  <X className="h-3 w-3 ml-0.5" />
+                </button>
+              )}
+              {featuredOnly && (
+                <button
+                  onClick={() => toggleBooleanFilter("featuredOnly", true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <Star className="h-3 w-3" />
+                  Featured Only
+                  <X className="h-3 w-3 ml-0.5" />
+                </button>
+              )}
               <button
                 onClick={clearAllFilters}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
@@ -363,12 +518,29 @@ const SearchResults = () => {
                   <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-primary" />
                     Treatment Type
+                    {selectedTreatmentTypes.length > 0 && (
+                      <span className="ml-auto text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                        {selectedTreatmentTypes.length}
+                      </span>
+                    )}
                   </h3>
                   <div className="space-y-2.5">
                     {treatmentTypeFilters.map((filter) => (
-                      <label key={filter.value} className="flex items-center gap-2.5 cursor-pointer group">
-                        <Checkbox id={filter.value} className="border-border" />
-                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                      <label 
+                        key={filter.value} 
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                      >
+                        <Checkbox 
+                          id={`treatment-${filter.value}`}
+                          checked={selectedTreatmentTypes.includes(filter.value)}
+                          onCheckedChange={() => toggleFilter("treatmentTypes", filter.value, selectedTreatmentTypes)}
+                          className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary" 
+                        />
+                        <span className={`text-sm transition-colors ${
+                          selectedTreatmentTypes.includes(filter.value) 
+                            ? "text-foreground font-medium" 
+                            : "text-muted-foreground group-hover:text-foreground"
+                        }`}>
                           {filter.label}
                         </span>
                       </label>
@@ -381,12 +553,29 @@ const SearchResults = () => {
                   <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
                     <Star className="h-4 w-4 text-primary" />
                     Amenities
+                    {selectedAmenities.length > 0 && (
+                      <span className="ml-auto text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                        {selectedAmenities.length}
+                      </span>
+                    )}
                   </h3>
                   <div className="space-y-2.5">
                     {amenityFilters.map((filter) => (
-                      <label key={filter.value} className="flex items-center gap-2.5 cursor-pointer group">
-                        <Checkbox id={filter.value} className="border-border" />
-                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                      <label 
+                        key={filter.value} 
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                      >
+                        <Checkbox 
+                          id={`amenity-${filter.value}`}
+                          checked={selectedAmenities.includes(filter.value)}
+                          onCheckedChange={() => toggleFilter("amenities", filter.value, selectedAmenities)}
+                          className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary" 
+                        />
+                        <span className={`text-sm transition-colors ${
+                          selectedAmenities.includes(filter.value) 
+                            ? "text-foreground font-medium" 
+                            : "text-muted-foreground group-hover:text-foreground"
+                        }`}>
                           {filter.label}
                         </span>
                       </label>
@@ -394,22 +583,45 @@ const SearchResults = () => {
                   </div>
                 </div>
 
-                {/* Quick Stats */}
+                {/* Verification Filter */}
                 <div className="bg-card rounded-xl border border-border p-4">
                   <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
                     <Shield className="h-4 w-4 text-primary" />
                     Verification
+                    {(verifiedOnly || featuredOnly) && (
+                      <span className="ml-auto text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                        {(verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0)}
+                      </span>
+                    )}
                   </h3>
                   <div className="space-y-2.5">
                     <label className="flex items-center gap-2.5 cursor-pointer group">
-                      <Checkbox id="verified" className="border-border" />
-                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                      <Checkbox 
+                        id="verified-filter"
+                        checked={verifiedOnly}
+                        onCheckedChange={() => toggleBooleanFilter("verified", verifiedOnly)}
+                        className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary" 
+                      />
+                      <span className={`text-sm transition-colors ${
+                        verifiedOnly 
+                          ? "text-foreground font-medium" 
+                          : "text-muted-foreground group-hover:text-foreground"
+                      }`}>
                         Verified Only
                       </span>
                     </label>
                     <label className="flex items-center gap-2.5 cursor-pointer group">
-                      <Checkbox id="featured" className="border-border" />
-                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                      <Checkbox 
+                        id="featured-filter"
+                        checked={featuredOnly}
+                        onCheckedChange={() => toggleBooleanFilter("featuredOnly", featuredOnly)}
+                        className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary" 
+                      />
+                      <span className={`text-sm transition-colors ${
+                        featuredOnly 
+                          ? "text-foreground font-medium" 
+                          : "text-muted-foreground group-hover:text-foreground"
+                      }`}>
                         Featured Centers
                       </span>
                     </label>
@@ -431,6 +643,27 @@ const SearchResults = () => {
                     <Button size="sm" className="w-full">Get Help Now</Button>
                   </Link>
                 </div>
+
+                {/* Clear All Filters Button */}
+                {activeSidebarFiltersCount > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => {
+                      const newParams = new URLSearchParams(searchParams);
+                      newParams.delete("treatmentTypes");
+                      newParams.delete("amenities");
+                      newParams.delete("verified");
+                      newParams.delete("featuredOnly");
+                      newParams.delete("page");
+                      setSearchParams(newParams);
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Sidebar Filters
+                  </Button>
+                )}
               </div>
 
               {/* Mobile Apply Button */}
