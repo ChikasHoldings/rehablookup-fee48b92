@@ -220,10 +220,10 @@ const RehabCenters = () => {
         <MedicalPatternBackground />
         <div className="container relative z-10">
           <div className="mb-5 text-center">
-            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl">
+            <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem]">
               Find Treatment Centers
             </h1>
-            <p className="mt-1.5 text-white/75 text-sm">
+            <p className="mt-2 text-sm md:text-base text-white/90 max-w-lg mx-auto leading-relaxed">
               {hasFilters ? (
                 <>
                   <span className="font-semibold text-white">{filteredCenters.length}</span> results
