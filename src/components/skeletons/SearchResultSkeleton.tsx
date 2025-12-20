@@ -1,58 +1,69 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
 
 const SearchResultCardSkeleton: React.FC = () => {
   return (
-    <Card className="overflow-hidden h-full">
+    <div className="flex flex-col md:flex-row overflow-hidden rounded-2xl border border-border bg-card shadow-md">
       {/* Image skeleton */}
-      <div className="relative h-44 md:h-48 overflow-hidden">
-        <Skeleton className="absolute inset-0" />
-        {/* Featured badge skeleton */}
-        <div className="absolute top-3 left-3">
-          <Skeleton className="h-6 w-20 rounded-full" />
+      <div className="relative w-full md:w-80 lg:w-96 shrink-0 overflow-hidden">
+        <div className="aspect-[16/10] md:aspect-auto md:h-full md:min-h-[220px]">
+          <Skeleton className="h-full w-full" />
+        </div>
+        {/* Logo skeleton */}
+        <div className="absolute bottom-3 left-3">
+          <Skeleton className="h-14 w-14 rounded-xl" />
         </div>
       </div>
       
-      <CardContent className="p-4 md:p-5 space-y-3">
-        {/* Title */}
-        <Skeleton className="h-6 w-4/5" />
-        
-        {/* Location */}
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-4 rounded-full" />
-          <Skeleton className="h-4 w-28" />
+      {/* Content skeleton */}
+      <div className="flex flex-1 flex-col p-5 md:p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div className="flex-1">
+            <Skeleton className="h-6 w-3/4 mb-2" />
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+          </div>
+          {/* Rating skeleton */}
+          <Skeleton className="h-16 w-16 rounded-xl shrink-0" />
         </div>
-        
-        {/* Rating */}
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-4 w-4 rounded-full" />
-          <Skeleton className="h-4 w-20" />
+
+        {/* Badges Row */}
+        <div className="flex items-center gap-2 flex-wrap mb-4">
+          <Skeleton className="h-6 w-28 rounded-full" />
+          <Skeleton className="h-6 w-32 rounded-full" />
+          <Skeleton className="h-6 w-28 rounded-full" />
         </div>
-        
+
         {/* Description */}
-        <div className="space-y-2 pt-1">
-          <Skeleton className="h-3.5 w-full" />
-          <Skeleton className="h-3.5 w-11/12" />
+        <div className="space-y-2 mb-4 flex-1">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
         </div>
-        
-        {/* Treatment types */}
-        <div className="flex flex-wrap gap-1.5 pt-2">
-          <Skeleton className="h-5 w-14 rounded-full" />
-          <Skeleton className="h-5 w-18 rounded-full" />
-          <Skeleton className="h-5 w-16 rounded-full" />
+
+        {/* Treatment Types */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          <Skeleton className="h-6 w-16 rounded-full" />
+          <Skeleton className="h-6 w-20 rounded-full" />
+          <Skeleton className="h-6 w-24 rounded-full" />
+          <Skeleton className="h-6 w-18 rounded-full" />
         </div>
-        
-        {/* Button */}
-        <Skeleton className="h-9 w-full mt-3 rounded-lg" />
-      </CardContent>
-    </Card>
+
+        {/* Actions Footer */}
+        <div className="flex items-center gap-3 pt-4 border-t border-border/50">
+          <Skeleton className="h-10 w-28 rounded-xl" />
+          <Skeleton className="h-10 flex-1 rounded-xl" />
+        </div>
+      </div>
+    </div>
   );
 };
 
-const SearchResultsLoading: React.FC<{ count?: number }> = ({ count = 9 }) => {
+const SearchResultsLoading: React.FC<{ count?: number }> = ({ count = 6 }) => {
   return (
-    <div className="grid gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="flex flex-col gap-5">
       {Array.from({ length: count }).map((_, i) => (
         <SearchResultCardSkeleton key={i} />
       ))}
