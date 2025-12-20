@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -75,21 +75,6 @@ export function useAdminNotifications() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Optimistic update helper for marking notifications as read
-  const optimisticallyMarkAsRead = useCallback((notificationId: string) => {
-    queryClient.setQueryData<AdminNotification[]>(["admin-notifications"], (old) => {
-      if (!old) return old;
-      return old.map((n) => (n.id === notificationId ? { ...n, read: true } : n));
-    });
-  }, [queryClient]);
-
-  const optimisticallyMarkAllAsRead = useCallback(() => {
-    queryClient.setQueryData<AdminNotification[]>(["admin-notifications"], (old) => {
-      if (!old) return old;
-      return old.map((n) => ({ ...n, read: true }));
-    });
-  }, [queryClient]);
-
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
@@ -100,19 +85,18 @@ export function useAdminNotifications() {
       return notificationId;
     },
     onMutate: async (notificationId) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["admin-notifications"] });
-      
-      // Snapshot the previous value
       const previousNotifications = queryClient.getQueryData<AdminNotification[]>(["admin-notifications"]);
       
       // Optimistically update
-      optimisticallyMarkAsRead(notificationId);
+      queryClient.setQueryData<AdminNotification[]>(["admin-notifications"], (old) => {
+        if (!old) return old;
+        return old.map((n) => (n.id === notificationId ? { ...n, read: true } : n));
+      });
       
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
-      // Rollback on error
       if (context?.previousNotifications) {
         queryClient.setQueryData(["admin-notifications"], context.previousNotifications);
       }
@@ -135,7 +119,13 @@ export function useAdminNotifications() {
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["admin-notifications"] });
       const previousNotifications = queryClient.getQueryData<AdminNotification[]>(["admin-notifications"]);
-      optimisticallyMarkAllAsRead();
+      
+      // Optimistically update all as read
+      queryClient.setQueryData<AdminNotification[]>(["admin-notifications"], (old) => {
+        if (!old) return old;
+        return old.map((n) => ({ ...n, read: true }));
+      });
+      
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
@@ -197,7 +187,10 @@ export function useAdminNotifications() {
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["admin-notifications"] });
       const previousNotifications = queryClient.getQueryData<AdminNotification[]>(["admin-notifications"]);
+      
+      // Optimistically clear all
       queryClient.setQueryData<AdminNotification[]>(["admin-notifications"], []);
+      
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
