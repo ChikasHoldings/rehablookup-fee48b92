@@ -216,7 +216,7 @@ const RehabCenters = () => {
       />
       
       {/* Hero Header - Clean Directory Style */}
-      <section className="relative border-b border-border bg-gradient-to-b from-secondary/70 via-secondary/50 to-background py-8 md:py-10">
+      <section className="relative border-b border-border bg-gradient-to-b from-secondary via-secondary/80 to-background py-8 md:py-10">
         <MedicalPatternBackground />
         <div className="container relative z-10">
           <div className="mb-6 max-w-2xl">
