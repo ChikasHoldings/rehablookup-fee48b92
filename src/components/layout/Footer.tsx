@@ -69,7 +69,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 lg:gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <Link to="/" className="inline-block mb-3">
+            <Link to="/" className="inline-block">
               <img 
                 src="/logo.svg" 
                 alt="RehabLookup" 
