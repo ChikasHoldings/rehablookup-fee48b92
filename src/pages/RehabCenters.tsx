@@ -8,6 +8,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Heart, MapPin, Search, CheckCircle, Grid3X3, List, X, ArrowUpDown, ChevronLeft, ChevronRight, Phone } from "lucide-react";
+import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
 import {
@@ -215,8 +216,9 @@ const RehabCenters = () => {
       />
       
       {/* Hero Header - Clean Directory Style */}
-      <section className="relative border-b border-border bg-gradient-to-b from-secondary/50 to-background py-8 md:py-10">
-        <div className="container">
+      <section className="relative border-b border-border bg-gradient-to-b from-secondary/70 via-secondary/50 to-background py-8 md:py-10">
+        <MedicalPatternBackground />
+        <div className="container relative z-10">
           <div className="mb-6 max-w-2xl">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-primary border border-primary/20">
               <CheckCircle className="h-3.5 w-3.5" />
