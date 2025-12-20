@@ -94,7 +94,7 @@ export function MultiSelectDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-64 overflow-auto rounded-xl border border-border bg-card shadow-xl animate-in fade-in-0 zoom-in-95 duration-150">
+        <div className="absolute left-0 right-0 top-full z-[9999] mt-2 max-h-64 overflow-auto rounded-xl border border-border bg-card shadow-xl animate-in fade-in-0 zoom-in-95 duration-150">
           <div className="p-1.5">
             {options.map((option) => {
               const isSelected = selected.includes(option);
