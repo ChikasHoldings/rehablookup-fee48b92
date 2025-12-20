@@ -1,436 +1,504 @@
-import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  CheckCircle, 
-  CheckCircle2,
-  Shield, 
-  Clock, 
-  Phone, 
+  Shield,
+  CheckCircle,
   ArrowRight,
+  Heart,
   HelpCircle,
   FileText,
-  Heart
+  Scale,
+  Building2,
+  Phone,
+  ExternalLink,
+  AlertCircle,
+  Users,
+  Stethoscope,
+  LucideIcon,
 } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { z } from "zod";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { isValidPhoneNumber } from "@/lib/phoneUtils";
-import { EmailInput } from "@/components/ui/email-input";
-import { isValidEmail } from "@/lib/emailUtils";
 import { cn } from "@/lib/utils";
 
-const insuranceLeadSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
-  phone: z.string().refine((val) => isValidPhoneNumber(val), "Please enter a complete 10-digit phone number"),
-  email: z.string().trim().email("Please enter a valid email").max(255, "Email is too long").optional().or(z.literal("")),
-  insuranceProvider: z.string().min(1, "Please select your insurance provider"),
-  memberId: z.string().max(100, "Member ID is too long").optional(),
-});
+interface InsuranceProvider {
+  name: string;
+  logo?: string;
+  description: string;
+  coverageNotes: string;
+  type: "private" | "government";
+}
 
-const insuranceProviders = [
-  "Aetna",
-  "Anthem",
-  "Blue Cross Blue Shield",
-  "Cigna",
-  "Humana",
-  "Kaiser Permanente",
-  "Medicaid",
-  "Medicare",
-  "United Healthcare",
-  "TRICARE",
-  "Magellan Health",
-  "Beacon Health",
-  "Other",
+const majorInsurers: InsuranceProvider[] = [
+  {
+    name: "Blue Cross Blue Shield",
+    logo: "/insurance-logos/bcbs.svg",
+    description: "Largest health insurance provider network in the US",
+    coverageNotes: "Most BCBS plans cover inpatient and outpatient addiction treatment",
+    type: "private",
+  },
+  {
+    name: "Aetna",
+    logo: "/insurance-logos/aetna.svg",
+    description: "Major national health insurance provider",
+    coverageNotes: "Covers detox, residential, and outpatient substance abuse programs",
+    type: "private",
+  },
+  {
+    name: "Cigna",
+    logo: "/insurance-logos/cigna.svg",
+    description: "Global health services company",
+    coverageNotes: "Behavioral health coverage includes substance use disorder treatment",
+    type: "private",
+  },
+  {
+    name: "United Healthcare",
+    logo: "/insurance-logos/united.svg",
+    description: "Largest single health carrier in the US",
+    coverageNotes: "Comprehensive addiction treatment coverage under most plans",
+    type: "private",
+  },
+  {
+    name: "Kaiser Permanente",
+    logo: "/insurance-logos/kaiser.svg",
+    description: "Integrated managed care consortium",
+    coverageNotes: "In-network treatment facilities and integrated behavioral health",
+    type: "private",
+  },
+  {
+    name: "Humana",
+    description: "Major health and wellness company",
+    coverageNotes: "Mental health and substance abuse treatment included in most plans",
+    type: "private",
+  },
 ];
 
-const coverageTypes = [
-  { title: "Inpatient Treatment", description: "Residential programs with 24/7 care and supervision" },
-  { title: "Outpatient Programs", description: "Flexible treatment while maintaining daily responsibilities" },
-  { title: "Detoxification", description: "Medically supervised withdrawal management" },
-  { title: "Medication-Assisted Treatment", description: "FDA-approved medications combined with counseling" },
-  { title: "Mental Health Services", description: "Dual diagnosis and co-occurring disorder treatment" },
-  { title: "Aftercare Support", description: "Ongoing support and relapse prevention programs" },
+const governmentPrograms: InsuranceProvider[] = [
+  {
+    name: "Medicare",
+    description: "Federal health insurance for 65+ and certain disabilities",
+    coverageNotes: "Part A covers inpatient treatment; Part B covers outpatient services",
+    type: "government",
+  },
+  {
+    name: "Medicaid",
+    description: "State-federal program for low-income individuals",
+    coverageNotes: "Coverage varies by state but generally includes substance abuse treatment",
+    type: "government",
+  },
+  {
+    name: "TRICARE",
+    description: "Health care program for military and families",
+    coverageNotes: "Comprehensive addiction treatment benefits for service members",
+    type: "government",
+  },
+  {
+    name: "VA Benefits",
+    description: "Department of Veterans Affairs health care",
+    coverageNotes: "Full range of addiction services for eligible veterans",
+    type: "government",
+  },
+];
+
+interface CoverageType {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  typically: string;
+}
+
+const coverageTypes: CoverageType[] = [
+  {
+    icon: Stethoscope,
+    title: "Medical Detoxification",
+    description: "Medically supervised withdrawal management",
+    typically: "Covered under most plans as medically necessary",
+  },
+  {
+    icon: Building2,
+    title: "Inpatient/Residential Treatment",
+    description: "24/7 care in a treatment facility for 30-90 days",
+    typically: "Usually covered with prior authorization required",
+  },
+  {
+    icon: Users,
+    title: "Outpatient Programs (IOP/PHP)",
+    description: "Part-time treatment while living at home",
+    typically: "Commonly covered with varying session limits",
+  },
+  {
+    icon: Heart,
+    title: "Medication-Assisted Treatment",
+    description: "FDA-approved medications for opioid/alcohol addiction",
+    typically: "Covered under mental health/substance abuse benefits",
+  },
+];
+
+const keyLaws = [
+  {
+    title: "Mental Health Parity Act (MHPAEA)",
+    year: "2008",
+    description: "Requires insurers to provide equal coverage for mental health and substance use disorders as they do for physical health conditions.",
+  },
+  {
+    title: "Affordable Care Act (ACA)",
+    year: "2010",
+    description: "Made substance use disorder treatment one of the 10 essential health benefits that must be covered by marketplace plans.",
+  },
+  {
+    title: "SUPPORT Act",
+    year: "2018",
+    description: "Expanded access to substance abuse treatment and improved coverage requirements for Medicare and Medicaid.",
+  },
 ];
 
 const faqs = [
   {
     question: "Does my insurance cover addiction treatment?",
-    answer: "Most health insurance plans are required to cover substance abuse treatment under the Mental Health Parity and Addiction Equity Act. Coverage levels vary by plan, so verification is recommended."
+    answer: "Most health insurance plans are legally required to cover substance use disorder treatment under the Mental Health Parity Act and ACA. Coverage levels and specific benefits vary by plan, so it's important to verify with your provider or the treatment facility.",
   },
   {
     question: "What if I don't have insurance?",
-    answer: "Many treatment centers offer sliding scale fees, payment plans, or can help you apply for Medicaid. Some facilities also accept self-pay patients at reduced rates."
+    answer: "Many treatment centers offer sliding scale fees based on income, payment plans, or can help you apply for Medicaid. SAMHSA's National Helpline (1-800-662-4357) can connect you with local resources and state-funded programs.",
   },
   {
-    question: "How do I verify my benefits?",
-    answer: "You can call your insurance company directly, use our free verification form, or contact a treatment center's admissions team who can verify benefits on your behalf."
+    question: "What's the difference between in-network and out-of-network?",
+    answer: "In-network facilities have contracted rates with your insurer, meaning lower out-of-pocket costs. Out-of-network facilities may still be covered but typically at a lower reimbursement rate, resulting in higher personal costs.",
   },
   {
-    question: "What costs might I be responsible for?",
-    answer: "Depending on your plan, you may have copays, deductibles, or coinsurance. Out-of-network facilities may have higher out-of-pocket costs."
+    question: "Do I need pre-authorization for treatment?",
+    answer: "Many insurance plans require prior authorization before starting inpatient or residential treatment. The treatment facility's admissions team typically handles this process on your behalf.",
+  },
+  {
+    question: "What costs might I still be responsible for?",
+    answer: "Depending on your plan, you may have copays, deductibles, coinsurance, or limits on the number of covered days. Ask about these specifics when verifying your benefits.",
   },
 ];
 
+const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => (
+  <div className="rounded-xl border border-border bg-card p-5 hover:shadow-md transition-shadow">
+    <div className="flex items-start gap-4">
+      {provider.logo ? (
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-background border border-border p-1">
+          <img src={provider.logo} alt={provider.name} className="h-8 w-8 object-contain" />
+        </div>
+      ) : (
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Shield className="h-6 w-6" />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <h3 className="font-semibold text-foreground">{provider.name}</h3>
+        <p className="text-sm text-muted-foreground mt-0.5">{provider.description}</p>
+        <p className="text-sm text-primary mt-2 flex items-start gap-1.5">
+          <CheckCircle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>{provider.coverageNotes}</span>
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
 export default function Insurance() {
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    insuranceProvider: "",
-    memberId: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Real-time validation states
-  const validation = useMemo(() => ({
-    name: formData.name.trim().length >= 2,
-    phone: isValidPhoneNumber(formData.phone),
-    email: formData.email === "" || isValidEmail(formData.email),
-    insuranceProvider: formData.insuranceProvider.length > 0,
-  }), [formData]);
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    // Validate form data
-    const validation = insuranceLeadSchema.safeParse(formData);
-    if (!validation.success) {
-      const firstError = validation.error.errors[0];
-      toast.error(firstError.message);
-      setIsSubmitting(false);
-      return;
-    }
-
-    try {
-      // Create a message that includes insurance details
-      const insuranceMessage = `Insurance Verification Request
-Insurance Provider: ${formData.insuranceProvider}
-Member ID: ${formData.memberId || 'Not provided'}`;
-
-      // Submit lead to database
-      const { error } = await supabase.from("leads").insert({
-        name: formData.name.trim(),
-        phone: formData.phone.trim(),
-        email: formData.email?.trim() || `insurance-${Date.now()}@placeholder.com`,
-        preferred_contact: "call",
-        status: "new",
-        source: "insurance_verification",
-        insurance_provider: formData.insuranceProvider,
-        message: insuranceMessage,
-        qualified: false,
-      });
-
-      if (error) {
-        console.error("Error submitting lead:", error);
-        toast.error("Unable to submit your request. Please try again or call us directly.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      toast.success("Verification request submitted! We'll contact you within 24 hours.");
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        insuranceProvider: "",
-        memberId: "",
-      });
-    } catch (err) {
-      console.error("Error:", err);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <Layout>
       <SEO
         title="Insurance Coverage for Addiction Treatment | RehabLookup"
-        description="Verify your insurance coverage for addiction treatment. Learn what's covered, check your benefits, and find treatment centers that accept your insurance."
+        description="Learn which health insurance plans cover addiction treatment. Understand your coverage for detox, inpatient rehab, outpatient programs, and medication-assisted treatment."
         canonical="/insurance"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Insurance Coverage", url: "/insurance" },
+        ]}
       />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-b from-primary/5 to-background border-b border-border">
-        <div className="container py-12 md:py-16">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-4">
+      {/* Hero Section - Matches TreatmentTypes */}
+      <section className="bg-primary py-10 md:py-12">
+        <div className="container">
+          <div className="mx-auto max-w-2xl text-center">
+            <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               Insurance Coverage for Treatment
             </h1>
-            <p className="text-muted-foreground text-base md:text-lg mb-6 max-w-2xl mx-auto">
-              Most insurance plans cover addiction treatment. Verify your benefits and find covered treatment options.
+            <p className="text-primary-foreground/80 text-sm md:text-base">
+              Most health insurance plans cover addiction treatment. Learn what's typically covered and how to verify your benefits.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <span>Free Verification</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Important Notice */}
+      <section className="border-b border-border bg-muted/50 py-4">
+        <div className="container">
+          <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+            <AlertCircle className="h-4 w-4 text-primary shrink-0" />
+            <p>
+              <span className="font-medium text-foreground">RehabLookup is a directory service.</span>{" "}
+              We help you find treatment centers that accept your insurance — contact facilities directly to verify coverage.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Major Insurance Providers */}
+      <section className="py-10 md:py-14">
+        <div className="container">
+          <div className="mb-6">
+            <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+              Major Insurance Providers
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              These insurers typically cover substance abuse and addiction treatment
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {majorInsurers.map((provider) => (
+              <InsuranceCard key={provider.name} provider={provider} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Government Programs */}
+      <section className="border-t border-border bg-muted/30 py-10 md:py-14">
+        <div className="container">
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+                Government Programs
+              </h2>
+              <Badge variant="secondary" className="text-xs">Public Insurance</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Federal and state programs providing addiction treatment coverage
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {governmentPrograms.map((provider) => (
+              <InsuranceCard key={provider.name} provider={provider} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* What Insurance Covers */}
+      <section className="py-10 md:py-14">
+        <div className="container">
+          <div className="mb-6 text-center">
+            <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+              What Insurance Typically Covers
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground max-w-2xl mx-auto">
+              Under federal law, most insurance plans must cover substance use disorder treatment
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {coverageTypes.map((coverage) => {
+              const IconComponent = coverage.icon;
+              return (
+                <div key={coverage.title} className="rounded-xl border border-border bg-card p-5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary mb-4">
+                    <IconComponent className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-1">{coverage.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">{coverage.description}</p>
+                  <p className="text-xs text-primary font-medium">{coverage.typically}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Key Laws */}
+      <section className="border-t border-border bg-muted/30 py-10 md:py-14">
+        <div className="container">
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <Scale className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+                Your Legal Rights
+              </h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Federal laws that protect your access to addiction treatment coverage
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {keyLaws.map((law) => (
+              <div key={law.title} className="rounded-xl border border-border bg-card p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className="text-xs font-mono">{law.year}</Badge>
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">{law.title}</h3>
+                <p className="text-sm text-muted-foreground">{law.description}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" />
-                <span>100% Confidential</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <span>Results in 24 Hours</span>
-              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How to Verify Coverage */}
+      <section className="py-10 md:py-14">
+        <div className="container">
+          <div className="mb-6">
+            <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+              How to Verify Your Coverage
+            </h2>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-4">
+              {[
+                { step: "1", title: "Find your insurance card", description: "Locate your Member ID, Group Number, and customer service phone number" },
+                { step: "2", title: "Call your insurance company", description: "Ask specifically about substance use disorder and behavioral health benefits" },
+                { step: "3", title: "Contact the treatment facility", description: "Most rehab centers have admissions staff who verify insurance for you" },
+                { step: "4", title: "Get authorization if required", description: "Some plans require pre-approval before starting treatment" },
+              ].map((item) => (
+                <div key={item.step} className="flex items-start gap-4">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                    {item.step}
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Phone className="h-4 w-4 text-primary" />
+                Questions to Ask Your Insurance
+              </h3>
+              <ul className="space-y-3">
+                {[
+                  "Is substance abuse/addiction treatment covered under my plan?",
+                  "What types of treatment are covered (detox, inpatient, outpatient)?",
+                  "How many days of treatment are covered per year?",
+                  "Do I need pre-authorization before starting treatment?",
+                  "What is my deductible and out-of-pocket maximum?",
+                  "Are there in-network treatment facilities near me?",
+                ].map((question, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <span className="text-muted-foreground">{question}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="py-12 md:py-16">
+      {/* FAQs */}
+      <section className="border-t border-border bg-muted/30 py-10 md:py-14">
         <div className="container">
-          <div className="grid lg:grid-cols-5 gap-10 lg:gap-12">
-            {/* Verification Form */}
-            <div className="lg:col-span-2">
-              <div className="sticky top-24">
-                <div className="rounded-xl border border-border bg-card p-6">
-                  <h2 className="font-display text-lg font-semibold text-foreground mb-1">
-                    Verify Your Coverage
-                  </h2>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Get a free, confidential benefits check.
-                  </p>
+          <div className="mb-6 text-center">
+            <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+              Frequently Asked Questions
+            </h2>
+          </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name *</Label>
-                      <div className="relative">
-                        <Input
-                          id="name"
-                          placeholder="Your name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className={cn(validation.name && formData.name && "pr-10")}
-                          required
-                        />
-                        {validation.name && formData.name && (
-                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number *</Label>
-                      <div className="relative">
-                        <PhoneInput
-                          id="phone"
-                          value={formData.phone}
-                          onChange={(value) => setFormData({ ...formData, phone: value })}
-                          className={cn(validation.phone && "pr-10")}
-                        />
-                        {validation.phone && (
-                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <div className="relative">
-                        <EmailInput
-                          id="email"
-                          placeholder="your@email.com"
-                          value={formData.email}
-                          onChange={(value) => setFormData({ ...formData, email: value })}
-                          className={cn(validation.email && formData.email && "pr-10")}
-                        />
-                        {validation.email && formData.email && (
-                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="insurance">Insurance Provider *</Label>
-                      <div className="relative">
-                        <Select
-                          value={formData.insuranceProvider}
-                          onValueChange={(value) => setFormData({ ...formData, insuranceProvider: value })}
-                        >
-                          <SelectTrigger className={cn(validation.insuranceProvider && "pr-10")}>
-                            <SelectValue placeholder="Select your insurance" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {insuranceProviders.map((provider) => (
-                              <SelectItem key={provider} value={provider}>
-                                {provider}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {validation.insuranceProvider && (
-                          <CheckCircle2 className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500 pointer-events-none" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="memberId">Member ID (Optional)</Label>
-                      <Input
-                        id="memberId"
-                        placeholder="Found on your insurance card"
-                        value={formData.memberId}
-                        onChange={(e) => setFormData({ ...formData, memberId: e.target.value })}
-                      />
-                    </div>
-
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? "Submitting..." : "Check My Coverage"}
-                    </Button>
-
-                    <p className="text-xs text-muted-foreground text-center">
-                      By submitting, you agree to our{" "}
-                      <Link to="/privacy-policy" className="underline hover:text-foreground">
-                        Privacy Policy
-                      </Link>
-                    </p>
-                  </form>
-                </div>
-
-                {/* Phone CTA */}
-                <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border text-center">
-                  <p className="text-sm text-muted-foreground mb-2">Prefer to speak with someone?</p>
-                  <a 
-                    href="tel:1-800-555-0199" 
-                    className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80"
-                  >
-                    <Phone className="h-4 w-4" />
-                    1-800-555-0199
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="lg:col-span-3 space-y-10">
-              {/* Insurance Logos */}
-              <div>
-                <h2 className="font-display text-lg font-semibold text-foreground mb-4">
-                  We Work With Major Insurers
-                </h2>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                  {["Aetna", "BCBS", "Cigna", "United", "Kaiser", "Humana", "Anthem", "Medicare", "Medicaid", "TRICARE"].map((name) => (
-                    <div 
-                      key={name}
-                      className="flex h-12 items-center justify-center rounded-lg border border-border bg-background px-3 text-xs font-medium text-muted-foreground"
-                    >
-                      {name}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* What's Covered */}
-              <div>
-                <h2 className="font-display text-lg font-semibold text-foreground mb-4">
-                  What Insurance Typically Covers
-                </h2>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {coverageTypes.map((type) => (
-                    <div 
-                      key={type.title}
-                      className="p-4 rounded-lg border border-border bg-card"
-                    >
-                      <div className="flex items-start gap-3">
-                        <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="font-medium text-foreground text-sm">{type.title}</h3>
-                          <p className="text-xs text-muted-foreground mt-1">{type.description}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* How It Works */}
-              <div>
-                <h2 className="font-display text-lg font-semibold text-foreground mb-4">
-                  How Insurance Verification Works
-                </h2>
-                <div className="space-y-4">
-                  {[
-                    { step: "1", title: "Submit Your Information", description: "Fill out the form with your insurance details" },
-                    { step: "2", title: "We Verify Benefits", description: "Our team contacts your insurer to check coverage" },
-                    { step: "3", title: "Receive Your Results", description: "Get a detailed breakdown of your coverage within 24 hours" },
-                    { step: "4", title: "Find Covered Treatment", description: "We help match you with in-network facilities" },
-                  ].map((item) => (
-                    <div key={item.step} className="flex items-start gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                        {item.step}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-foreground text-sm">{item.title}</h3>
-                        <p className="text-sm text-muted-foreground">{item.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* FAQs */}
-              <div>
-                <h2 className="font-display text-lg font-semibold text-foreground mb-4">
-                  Frequently Asked Questions
-                </h2>
-                <div className="space-y-4">
-                  {faqs.map((faq) => (
-                    <div key={faq.question} className="p-4 rounded-lg border border-border bg-card">
-                      <div className="flex items-start gap-3">
-                        <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="font-medium text-foreground text-sm">{faq.question}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">{faq.answer}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Resources */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link to="/resources" className="flex-1">
-                  <div className="h-full p-4 rounded-lg border border-border bg-card hover:border-primary/30 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-primary" />
-                      <div>
-                        <h3 className="font-medium text-foreground text-sm">Insurance Guides</h3>
-                        <p className="text-xs text-muted-foreground">Learn more about coverage</p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
-                    </div>
+          <div className="mx-auto max-w-3xl space-y-4">
+            {faqs.map((faq) => (
+              <div key={faq.question} className="rounded-xl border border-border bg-card p-5">
+                <div className="flex items-start gap-3">
+                  <HelpCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium text-foreground">{faq.question}</h3>
+                    <p className="text-sm text-muted-foreground mt-2">{faq.answer}</p>
                   </div>
-                </Link>
-                <Link to="/request-help" className="flex-1">
-                  <div className="h-full p-4 rounded-lg border border-border bg-card hover:border-primary/30 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Heart className="h-5 w-5 text-primary" />
-                      <div>
-                        <h3 className="font-medium text-foreground text-sm">Get Help Now</h3>
-                        <p className="text-xs text-muted-foreground">Connect with treatment</p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto" />
-                    </div>
-                  </div>
-                </Link>
+                </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Resources */}
+      <section className="py-10 md:py-14">
+        <div className="container">
+          <div className="mb-6">
+            <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+              Helpful Resources
+            </h2>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <a
+              href="https://www.samhsa.gov/find-help/national-helpline"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group rounded-xl border border-border bg-card p-5 hover:border-primary/30 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-primary">SAMHSA</span>
+                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">National Helpline</h3>
+              <p className="text-sm text-muted-foreground">Free, confidential treatment referrals and information 24/7</p>
+              <p className="text-sm font-medium text-primary mt-2">1-800-662-4357</p>
+            </a>
+
+            <a
+              href="https://findtreatment.gov/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group rounded-xl border border-border bg-card p-5 hover:border-primary/30 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-primary">Federal Resource</span>
+                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">FindTreatment.gov</h3>
+              <p className="text-sm text-muted-foreground">Official government treatment locator tool</p>
+            </a>
+
+            <a
+              href="https://www.cms.gov/CCIIO/Programs-and-Initiatives/Other-Insurance-Protections/mhpaea_factsheet"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group rounded-xl border border-border bg-card p-5 hover:border-primary/30 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-primary">CMS.gov</span>
+                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">Parity Law Information</h3>
+              <p className="text-sm text-muted-foreground">Learn about your mental health parity rights</p>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="border-t border-border bg-primary py-10 md:py-12">
+        <div className="container">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl">
+              Find Treatment Centers That Accept Your Insurance
+            </h2>
+            <p className="mb-6 text-primary-foreground/80 text-sm">
+              Search our directory for verified treatment facilities and filter by insurance accepted.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link to="/rehab-centers">
+                <Button size="lg" variant="secondary" className="gap-2 font-semibold">
+                  Browse Treatment Centers
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/request-help?source=insurance">
+                <Button size="lg" variant="outline" className="gap-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                  <Heart className="h-4 w-4" />
+                  Get Free Help
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
