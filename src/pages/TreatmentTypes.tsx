@@ -24,6 +24,8 @@ import {
   Cross,
   Baby,
   Shield,
+  MapPin,
+  Navigation,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -334,6 +336,85 @@ const TreatmentTypes = () => {
             {specializedTreatments.map((treatment) => (
               <TreatmentCard key={treatment.title} treatment={treatment} variant="compact" />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Find Treatment Near You - SEO Section */}
+      <section className="border-t border-border py-10 md:py-14">
+        <div className="container">
+          <div className="mb-6 text-center">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+              <Navigation className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                Location-Based Search
+              </span>
+            </div>
+            <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+              Find Treatment Near You
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Use your location to find available treatment options nearby
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3 max-w-3xl mx-auto">
+            <Link
+              to="/drug-rehab-near-me"
+              className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md hover:bg-muted/30"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                <Pill className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+                  Drug Rehab Near Me
+                </h3>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <MapPin className="h-3 w-3" />
+                  Use location
+                </p>
+              </div>
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:text-primary group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              to="/alcohol-rehab-near-me"
+              className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md hover:bg-muted/30"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                <Activity className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+                  Alcohol Rehab Near Me
+                </h3>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <MapPin className="h-3 w-3" />
+                  Use location
+                </p>
+              </div>
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:text-primary group-hover:translate-x-0.5" />
+            </Link>
+
+            <Link
+              to="/detox-near-me"
+              className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md hover:bg-muted/30"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm">
+                  Detox Near Me
+                </h3>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <MapPin className="h-3 w-3" />
+                  Use location
+                </p>
+              </div>
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:text-primary group-hover:translate-x-0.5" />
+            </Link>
           </div>
         </div>
       </section>
