@@ -14,6 +14,9 @@ interface FacilityWithRelations {
   phone: string;
   description: string | null;
   featured: boolean;
+  verified: boolean | null;
+  year_established: number | null;
+  facility_type: string | null;
   logo_url: string | null;
   gallery_urls: string[] | null;
   facility_services: { service_name: string }[];
@@ -26,12 +29,17 @@ export interface ApprovedFacility extends TreatmentCenter {
   logo_url: string | null;
   gallery_urls: string[] | null;
   hasFeaturedSubscription?: boolean;
+  hasPaidPlan?: boolean; // true for professional or featured plans
+  verified?: boolean | null;
+  year_established?: number | null;
+  facilityType?: string | null;
 }
 
 interface FeaturedFacilitiesResponse {
   featuredFacilityIds: string[];
   homepageFeaturedIds: string[];
   allEligibleIds: string[];
+  paidFacilityIds?: string[]; // All facilities with any paid subscription
 }
 
 // Hook to get featured facility IDs from subscription data
@@ -136,6 +144,9 @@ export const useApprovedFacilities = () => {
           phone,
           description,
           featured,
+          verified,
+          year_established,
+          facility_type,
           logo_url,
           gallery_urls,
           facility_services (service_name),
@@ -149,6 +160,9 @@ export const useApprovedFacilities = () => {
       return (data as FacilityWithRelations[]).map((facility) => {
         const hasFeaturedSubscription = featuredIds.includes(facility.id);
         const isHomepageFeatured = homepageFeaturedIds.includes(facility.id);
+        // For now, assume featured subscription means paid plan
+        // In the future, this could be expanded to include professional plan checks
+        const hasPaidPlan = hasFeaturedSubscription;
         
         return {
           id: facility.id,
@@ -166,7 +180,11 @@ export const useApprovedFacilities = () => {
           // Featured if they have Featured subscription OR legacy featured flag
           featured: hasFeaturedSubscription || facility.featured,
           hasFeaturedSubscription,
-          isHomepageFeatured, // New property for homepage rotation
+          hasPaidPlan,
+          isHomepageFeatured,
+          verified: facility.verified,
+          year_established: facility.year_established,
+          facilityType: facility.facility_type,
           rating: 4.5,
           reviewCount: 0,
           amenities: [],

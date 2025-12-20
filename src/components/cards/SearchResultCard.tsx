@@ -31,6 +31,7 @@ interface SearchResultCardProps {
     logo_url?: string | null;
     gallery_urls?: string[] | null;
     hasFeaturedSubscription?: boolean;
+    hasPaidPlan?: boolean;
     verified?: boolean | null;
     year_established?: number | null;
     facilityType?: string | null;
@@ -73,10 +74,13 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
 
   const hasInsurance = center.insuranceAccepted && center.insuranceAccepted.length > 0;
   const insuranceCount = center.insuranceAccepted?.length || 0;
+  
+  // Check if provider has paid plan - show phone only for paid providers
+  const hasPaidPlan = center.hasPaidPlan || center.hasFeaturedSubscription || !center.isFromDatabase;
 
-  // Format phone number for display and tel link
-  const formattedPhone = center.phone ? formatPhoneNumber(center.phone) : null;
-  const phoneDigits = center.phone ? getPhoneDigits(center.phone) : null;
+  // Format phone number for display and tel link (only for paid plans)
+  const formattedPhone = hasPaidPlan && center.phone ? formatPhoneNumber(center.phone) : null;
+  const phoneDigits = hasPaidPlan && center.phone ? getPhoneDigits(center.phone) : null;
   const telLink = phoneDigits ? `tel:+1${phoneDigits}` : null;
 
   useEffect(() => {
@@ -302,9 +306,9 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
           {/* Stats Badges Row */}
           <div className="flex items-center gap-2 flex-wrap mb-3">
             {center.verified && (
-              <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0 rounded-md">
-                <ShieldCheck className="h-3 w-3" />
-                Verified
+              <Badge className="gap-1.5 px-2.5 py-1 text-[11px] font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0 rounded-md shadow-sm">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Verified Provider
               </Badge>
             )}
             {hasInsurance && (
