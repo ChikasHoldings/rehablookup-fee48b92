@@ -141,21 +141,23 @@ const About = () => {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+          <div className="grid gap-5 md:grid-cols-3 max-w-5xl mx-auto">
             {missionCards.map((card, index) => (
               <div
                 key={card.title}
-                className="group relative rounded-3xl bg-gradient-to-br from-accent/5 to-accent/10 p-1 animate-fade-in hover:scale-[1.02] transition-transform duration-300"
+                className="group relative rounded-2xl bg-gradient-to-br from-accent/5 to-accent/10 p-px animate-fade-in hover:scale-[1.02] transition-transform duration-300"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-full rounded-[22px] bg-card p-8 border border-border/50">
-                  <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent/80 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-                    <card.icon className="h-8 w-8 text-white" />
+                <div className="h-full rounded-[15px] bg-card p-6 border border-border/50">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/80 shadow-md group-hover:shadow-lg transition-shadow duration-300">
+                      <card.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <h3 className="font-display text-lg font-bold text-foreground">
+                      {card.title}
+                    </h3>
                   </div>
-                  <h3 className="mb-3 font-display text-xl font-bold text-foreground">
-                    {card.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     {card.description}
                   </p>
                 </div>
@@ -303,21 +305,23 @@ const About = () => {
             </p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 max-w-4xl mx-auto">
+          <div className="grid gap-4 md:grid-cols-2 max-w-4xl mx-auto">
             {values.map((value, index) => (
               <div
                 key={value.title}
-                className={`group relative rounded-3xl bg-gradient-to-br ${value.gradient} p-1 animate-fade-in hover:scale-[1.02] transition-transform duration-300`}
+                className={`group relative rounded-2xl bg-gradient-to-br ${value.gradient} p-px animate-fade-in hover:scale-[1.01] transition-transform duration-300`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="h-full rounded-[22px] bg-card p-6 border border-border/50">
-                  <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${value.iconBg} shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
-                    <value.icon className="h-7 w-7 text-white" />
+                <div className="h-full rounded-[15px] bg-card p-5 border border-border/50">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${value.iconBg} shadow-md group-hover:shadow-lg transition-shadow duration-300`}>
+                      <value.icon className="h-4.5 w-4.5 text-white" />
+                    </div>
+                    <h3 className="font-display text-lg font-semibold text-foreground">
+                      {value.title}
+                    </h3>
                   </div>
-                  <h3 className="mb-3 font-display text-xl font-semibold text-foreground">
-                    {value.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">{value.description}</p>
+                  <p className="text-muted-foreground text-sm leading-relaxed pl-12">{value.description}</p>
                 </div>
               </div>
             ))}
@@ -352,37 +356,37 @@ const About = () => {
         </div>
       </section>
 
-      {/* CTA - Navy background */}
-      <section className="bg-primary py-16 px-4 md:py-20 md:px-6 relative overflow-hidden">
-        {/* Decorative elements */}
+      {/* CTA - Compact navy section */}
+      <section className="bg-primary py-10 px-4 md:py-12 md:px-6 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
+          <div className="absolute top-1/2 left-1/4 w-48 h-48 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
+          <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
         </div>
         
-        <div className="container text-center relative">
-          <div className="mb-6 inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-accent to-accent/80 shadow-xl mx-auto">
-            <Heart className="h-8 w-8 text-white" />
-          </div>
-          <h2 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
-            Ready to Find Treatment?
-          </h2>
-          <p className="mb-8 text-lg text-primary-foreground/80 max-w-xl mx-auto">
-            Search our directory or speak with a specialist today. We're here to help.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
-            <Link to="/rehab-centers" className="w-full sm:w-auto">
-              <Button variant="hero-light" size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:px-8 hover:scale-105 hover:shadow-xl transition-all duration-200">
-                Find Treatment Centers
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/request-help?source=about_cta" className="w-full sm:w-auto">
-              <Button variant="hero-light" size="lg" className="w-full h-14 gap-2 text-base font-semibold sm:w-auto sm:px-8 hover:scale-105 transition-all duration-200">
-                <Heart className="h-5 w-5" />
-                Request Help
-              </Button>
-            </Link>
+        <div className="container relative">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 max-w-4xl mx-auto">
+            <div className="text-center md:text-left">
+              <h2 className="font-display text-xl font-bold text-primary-foreground md:text-2xl mb-2">
+                Ready to Find Treatment?
+              </h2>
+              <p className="text-primary-foreground/80 text-sm md:text-base">
+                Search our directory or speak with a specialist today.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <Link to="/rehab-centers">
+                <Button variant="hero-light" size="default" className="gap-2 font-semibold hover:scale-105 transition-all duration-200">
+                  Find Treatment
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/request-help?source=about_cta">
+                <Button variant="ghost" size="default" className="text-primary-foreground hover:bg-white/10 gap-2 font-semibold">
+                  <Heart className="h-4 w-4" />
+                  Request Help
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
