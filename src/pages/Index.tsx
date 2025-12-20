@@ -393,151 +393,104 @@ const Index = () => {
       </section>
 
       {/* Featured Centers */}
-      <section className="section-padding-lg">
+      <section className="py-12 md:py-16 lg:py-20">
         <div className="container">
-          {/* Section Header */}
-          <div className="mb-12 flex flex-col items-center text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-              <Star className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-accent">Featured Facilities</span>
+          {/* Section Header - Clean directory style */}
+          <div className="mb-8 md:mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <Star className="h-4 w-4 text-accent fill-accent" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-accent">Featured</span>
+              </div>
+              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                Top-Rated Treatment Centers
+              </h2>
             </div>
-            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
-              Top-Rated Treatment Centers
-            </h2>
-            <p className="max-w-xl text-muted-foreground">
-              Hand-selected facilities known for exceptional care, verified outcomes, and compassionate treatment.
-            </p>
+            <Link to="/rehab-centers" className="group">
+              <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
+                View all centers
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </Link>
           </div>
 
-          {/* Cards Grid - Up to 6 featured centers */}
+          {/* Cards Grid */}
           {isFacilitiesLoading ? (
             <FeaturedCentersLoading />
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {featuredCenters.map((center, index) => (
                 <div 
                   key={center.id} 
                   className="animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <TreatmentCenterCard center={center} featured />
                 </div>
               ))}
             </div>
           )}
-
-          {/* View All Link */}
-          <div className="mt-12 text-center">
-            <Link to="/rehab-centers">
-              <Button variant="outline" size="lg" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
-                View All Centers
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
       {/* Treatment Options */}
-      <section className="section-padding-lg bg-primary">
+      <section className="py-12 md:py-16 lg:py-20 bg-muted/40 border-y border-border/50">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-12 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Treatment Programs</span>
-            </div>
-            <h2 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
-              Comprehensive Care for Every Need
+          <div className="mb-8 md:mb-10 text-center">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browse by Category</span>
+            <h2 className="mt-2 font-display text-xl font-bold text-foreground md:text-2xl">
+              Treatment Programs
             </h2>
-            <p className="mx-auto max-w-xl text-primary-foreground/70">
-              Find specialized treatment programs tailored to your unique situation and recovery goals.
-            </p>
           </div>
 
-          {/* Options Grid */}
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Options Grid - Clean card style */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {treatmentOptions.map((option, index) => (
               <Link
                 key={option.title}
                 to={option.link}
-                className="group animate-fade-in opacity-0"
-                style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+                className="group"
               >
-                <div className="relative h-full rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all duration-500 hover:bg-white/15 hover:border-accent/50 hover:-translate-y-2 hover:shadow-2xl hover:shadow-accent/20">
-                  {/* Decorative glow - enhanced */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/10 via-transparent to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                  
-                  {/* Shimmer effect on hover */}
-                  <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+                <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:bg-card/80">
+                  {/* Icon */}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                    <option.icon className="h-5 w-5" />
                   </div>
                   
-                  {/* Icon - Enhanced with pulse and rotate on hover */}
-                  <div className="relative mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 ring-1 ring-accent/30 transition-all duration-500 group-hover:ring-accent/60 group-hover:shadow-lg group-hover:shadow-accent/30 group-hover:scale-110 group-hover:rotate-3">
-                    <option.icon className="h-8 w-8 text-accent transition-all duration-500 group-hover:scale-110" />
-                    {/* Icon glow */}
-                    <div className="absolute inset-0 rounded-2xl bg-accent/20 blur-xl opacity-0 transition-opacity duration-500 group-hover:opacity-60" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {option.title}
+                    </h3>
+                    <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
+                      {option.description}
+                    </p>
                   </div>
                   
-                  <h3 className="relative mb-2 font-display text-lg font-semibold text-primary-foreground transition-colors duration-300 group-hover:text-accent">
-                    {option.title}
-                  </h3>
-                  <p className="relative text-sm text-primary-foreground/70 leading-relaxed">
-                    {option.description}
-                  </p>
-                  
-                  {/* Hover arrow - Enhanced */}
-                  <div className="relative mt-5 flex items-center gap-2 text-sm font-medium text-accent translate-y-2 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                    <span>Explore options</span>
-                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
-                  
-                  {/* Corner accent */}
-                  <div className="absolute bottom-0 right-0 h-24 w-24 rounded-tl-full bg-gradient-to-tl from-accent/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-all group-hover:text-primary group-hover:translate-x-0.5 mt-1" />
                 </div>
               </Link>
             ))}
-          </div>
-
-          {/* CTA */}
-          <div className="mt-12 text-center">
-            <Link to="/rehab-centers">
-              <Button variant="hero-light" size="lg" className="gap-2 group shadow-lg hover:shadow-xl transition-shadow">
-                Explore All Treatment Options
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="section-padding-lg">
+      <section className="py-12 md:py-16 lg:py-20">
         <div className="container">
-          {/* Section Header */}
-          <div className="mb-14 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-              <CheckCircle className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-accent">Simple Process</span>
+          <div className="mx-auto max-w-3xl">
+            {/* Section Header */}
+            <div className="mb-8 text-center">
+              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                How It Works
+              </h2>
+              <p className="mt-2 text-muted-foreground">
+                Finding help is simple and confidential
+              </p>
             </div>
-            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
-              How It Works
-            </h2>
-            <p className="mx-auto max-w-xl text-muted-foreground">
-              Finding the right treatment is simple, confidential, and free.
-            </p>
-          </div>
 
-          {/* Steps - Enhanced Horizontal Timeline */}
-          <div className="relative max-w-4xl mx-auto">
-            {/* Animated connector line */}
-            <div className="absolute top-12 left-[16.67%] right-[16.67%] hidden md:block">
-              <div className="h-0.5 bg-border" />
-              <div className="absolute inset-0 h-0.5 bg-gradient-to-r from-accent via-primary to-accent animate-pulse" style={{ opacity: 0.5 }} />
-            </div>
-            
-            <div className="grid gap-10 md:grid-cols-3 md:gap-8">
+            {/* Steps - Clean numbered list */}
+            <div className="space-y-4">
               {[
                 {
                   step: 1,
@@ -557,57 +510,36 @@ const Index = () => {
                   description: "Contact centers directly or request a callback from our team.",
                   icon: Phone,
                 },
-              ].map((item, index) => (
+              ].map((item) => (
                 <div
                   key={item.step}
-                  className="group relative text-center animate-fade-in opacity-0"
-                  style={{ animationDelay: `${200 + index * 200}ms`, animationFillMode: 'forwards' }}
+                  className="group flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-sm"
                 >
-                  {/* Step circle - Enhanced */}
-                  <div className="relative mx-auto mb-6 h-24 w-24">
-                    {/* Outer ring with pulse */}
-                    <div className="absolute inset-0 rounded-full bg-accent/20 animate-ping" style={{ animationDuration: '3s', animationDelay: `${index * 0.5}s` }} />
-                    
-                    {/* Main circle */}
-                    <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-accent/30 bg-card shadow-lg transition-all duration-500 group-hover:border-accent group-hover:shadow-xl group-hover:shadow-accent/20 group-hover:scale-105">
-                      {/* Inner gradient circle */}
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent/15 to-primary/10 transition-all duration-500 group-hover:from-accent/25 group-hover:to-primary/20">
-                        <item.icon className="h-7 w-7 text-accent transition-transform duration-500 group-hover:scale-110" />
-                      </div>
-                    </div>
-                    
-                    {/* Step number badge - Enhanced */}
-                    <div className="absolute -top-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-primary text-sm font-bold text-accent-foreground shadow-lg ring-4 ring-background transition-transform duration-300 group-hover:scale-110">
-                      {item.step}
-                    </div>
+                  {/* Step number */}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                    {item.step}
                   </div>
                   
-                  {/* Arrow connector (visible on desktop between items) */}
-                  {index < 2 && (
-                    <div className="absolute top-10 -right-4 hidden md:flex items-center text-accent/40 group-hover:text-accent transition-colors duration-300">
-                      <ArrowRight className="h-6 w-6" />
-                    </div>
-                  )}
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground">
+                      {item.title}
+                    </h3>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {item.description}
+                    </p>
+                  </div>
                   
-                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-                    {item.description}
-                  </p>
-                  
-                  {/* Hover indicator line */}
-                  <div className="mt-4 mx-auto h-1 w-0 rounded-full bg-gradient-to-r from-accent to-primary transition-all duration-500 group-hover:w-16" />
+                  <item.icon className="h-5 w-5 shrink-0 text-muted-foreground/50 mt-0.5" />
                 </div>
               ))}
             </div>
 
             {/* CTA */}
-            <div className="mt-14 text-center">
+            <div className="mt-8 text-center">
               <Link to="/rehab-centers">
-                <Button size="lg" className="gap-2 group shadow-lg hover:shadow-xl transition-all duration-300">
+                <Button size="lg" className="gap-2">
                   Start Your Search
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -616,96 +548,60 @@ const Index = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="section-padding-lg bg-muted/30 overflow-hidden">
+      <section className="py-12 md:py-16 lg:py-20 bg-primary">
         <div className="container">
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-20">
+          <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
             {/* Content */}
-            <div className="animate-fade-in order-2 lg:order-1">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                <Heart className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">Why Choose Us</span>
-              </div>
-              <h2 className="mb-5 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+            <div className="order-2 lg:order-1">
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Why RehabLookup</span>
+              <h2 className="mt-2 font-display text-xl font-bold text-primary-foreground md:text-2xl">
                 Trusted by Families Across America
               </h2>
-              <p className="mb-8 text-muted-foreground leading-relaxed max-w-lg">
-                We understand that finding addiction treatment is one of the most important decisions 
-                your family will make. That's why we're committed to transparency, accuracy, and compassion.
+              <p className="mt-3 text-primary-foreground/70 leading-relaxed max-w-md">
+                We're committed to helping you find the right treatment with transparency and compassion.
               </p>
 
-              <ul className="space-y-3">
+              <ul className="mt-6 space-y-2.5">
                 {[
-                  "Every facility verified for licensing & accreditation",
-                  "Transparent program and cost information",
-                  "No hidden fees or surprise referrals",
-                  "Confidential, secure communication",
-                  "24/7 support for urgent situations",
-                ].map((item, index) => (
-                  <li key={item} className="flex items-start gap-3 group animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 ring-1 ring-accent/25 transition-all group-hover:ring-accent/40 group-hover:bg-accent/25">
-                      <CheckCircle className="h-3 w-3 text-accent" />
-                    </div>
-                    <span className="text-foreground text-sm md:text-base">{item}</span>
+                  "Every facility verified for licensing",
+                  "Transparent program information",
+                  "No hidden fees or referrals",
+                  "Confidential communication",
+                  "24/7 support available",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2.5">
+                    <CheckCircle className="h-4 w-4 shrink-0 text-accent" />
+                    <span className="text-primary-foreground text-sm">{item}</span>
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-8">
+              <div className="mt-6">
                 <Link to="/about">
-                  <Button variant="outline" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
-                    Learn More About Us
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <Button variant="hero-light" size="sm" className="gap-2">
+                    Learn More
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            {/* Image with Stats Overlay + Parallax */}
-            <div ref={parallaxRef} className="relative animate-fade-in order-1 lg:order-2" style={{ animationDelay: "0.1s" }}>
-              {/* Decorative background element */}
-              <div className="absolute -inset-4 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent rounded-3xl blur-2xl opacity-60" />
-              
-              <div className="relative">
-                {/* Main image container with parallax */}
-                <div className="relative overflow-hidden rounded-2xl shadow-elevated ring-1 ring-border/50">
-                  <div 
-                    className="w-full aspect-[4/3] overflow-hidden"
-                    style={{ transform: `translateY(${parallaxOffset}px)` }}
-                  >
-                    <img 
-                      src={whyChooseUsImage} 
-                      alt="Healthcare professional consulting with a family about treatment options"
-                      className="w-full h-[120%] object-cover transition-transform duration-100 ease-out"
-                      style={{ transform: `translateY(-10%)` }}
-                    />
-                  </div>
-                  
-                  {/* Subtle overlay for depth */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent" />
-                  
-                  {/* Stats Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-                    <div className="grid grid-cols-4 gap-2 sm:gap-4">
-                      {[
-                        { value: "10K+", label: "Families", accent: true },
-                        { value: "500+", label: "Centers", accent: true },
-                        { value: "50", label: "States", accent: true },
-                        { value: "24/7", label: "Support", accent: false },
-                      ].map((stat, index) => (
-                        <div key={stat.label} className="text-center group" style={{ animationDelay: `${index * 50}ms` }}>
-                          <div className={`font-display text-lg sm:text-xl md:text-2xl font-bold transition-transform group-hover:scale-110 ${stat.accent ? 'text-accent' : 'text-primary-foreground'}`}>
-                            {stat.value}
-                          </div>
-                          <p className="text-[10px] sm:text-xs text-primary-foreground/80 font-medium">{stat.label}</p>
-                        </div>
-                      ))}
+            {/* Stats Grid */}
+            <div ref={parallaxRef} className="order-1 lg:order-2">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: "15K+", label: "Treatment Centers" },
+                  { value: "50", label: "States Covered" },
+                  { value: "10K+", label: "Families Helped" },
+                  { value: "24/7", label: "Support Available" },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-xl border border-primary-foreground/10 bg-primary-foreground/5 p-4 text-center backdrop-blur-sm">
+                    <div className="font-display text-2xl font-bold text-accent md:text-3xl">
+                      {stat.value}
                     </div>
+                    <p className="mt-0.5 text-xs text-primary-foreground/70">{stat.label}</p>
                   </div>
-                </div>
-                
-                {/* Decorative accent corner */}
-                <div className="absolute -bottom-3 -right-3 h-24 w-24 rounded-2xl bg-accent/20 -z-10" />
-                <div className="absolute -top-3 -left-3 h-16 w-16 rounded-xl bg-primary/10 -z-10" />
+                ))}
               </div>
             </div>
           </div>
@@ -713,83 +609,48 @@ const Index = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="section-padding-lg bg-gradient-to-b from-background via-muted/30 to-background overflow-hidden">
+      <section className="py-12 md:py-16 lg:py-20 bg-muted/30 border-y border-border/50">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-14 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-              <Quote className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-accent">Testimonials</span>
-            </div>
-            <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
-              Stories of Hope and Recovery
+          <div className="mb-8 text-center">
+            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+              What Families Say
             </h2>
-            <p className="mx-auto max-w-xl text-muted-foreground">
-              Real families share their experiences finding treatment through RehabLookup.
+            <p className="mt-2 text-muted-foreground">
+              Real experiences from people we've helped
             </p>
           </div>
 
-          {/* Testimonials Grid - Enhanced */}
-          <div className="grid gap-8 md:grid-cols-3">
-            {testimonials.map((testimonial, index) => (
+          {/* Testimonials Grid - Clean card style */}
+          <div className="grid gap-4 md:grid-cols-3">
+            {testimonials.map((testimonial) => (
               <div
                 key={testimonial.name}
-                className="group animate-fade-in opacity-0"
-                style={{ animationDelay: `${200 + index * 150}ms`, animationFillMode: 'forwards' }}
+                className="rounded-xl border border-border bg-card p-5"
               >
-                <div className="relative h-full rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card to-muted/30 p-8 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-accent/40">
-                  {/* Background glow on hover */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/5 via-transparent to-primary/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                  
-                  {/* Large decorative quote - Enhanced */}
-                  <div className="absolute -top-5 left-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-primary shadow-xl shadow-accent/30 ring-4 ring-background transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                      <Quote className="h-6 w-6 text-accent-foreground" />
-                    </div>
+                {/* Rating */}
+                <div className="mb-3 flex gap-0.5">
+                  {Array.from({ length: testimonial.rating }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-accent text-accent" />
+                  ))}
+                </div>
+                
+                {/* Quote */}
+                <blockquote className="mb-4">
+                  <p className="text-sm text-foreground leading-relaxed">
+                    "{testimonial.quote}"
+                  </p>
+                </blockquote>
+                
+                {/* Author */}
+                <div className="flex items-center gap-3 pt-3 border-t border-border">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    {testimonial.name.charAt(0)}
                   </div>
-                  
-                  {/* Rating - Animated stars */}
-                  <div className="relative mt-5 mb-5 flex gap-1">
-                    {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <Star 
-                        key={i} 
-                        className="h-5 w-5 fill-accent text-accent transition-all duration-300 hover:scale-125"
-                        style={{ 
-                          animationDelay: `${400 + index * 150 + i * 100}ms`,
-                        }}
-                      />
-                    ))}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{testimonial.name}</p>
+                    <p className="text-xs text-muted-foreground">{testimonial.location}</p>
                   </div>
-                  
-                  {/* Quote - Enhanced typography */}
-                  <blockquote className="relative mb-6">
-                    <p className="text-foreground leading-relaxed text-[15px]">
-                      <span className="text-accent/60 text-xl leading-none">"</span>
-                      {testimonial.quote}
-                      <span className="text-accent/60 text-xl leading-none">"</span>
-                    </p>
-                  </blockquote>
-                  
-                  {/* Author - Enhanced */}
-                  <div className="relative flex items-center gap-4 pt-5 border-t border-border/50">
-                    <div className="relative">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20 text-base font-bold text-primary ring-2 ring-primary/20 transition-all duration-300 group-hover:ring-primary/40">
-                        {testimonial.name.charAt(0)}
-                      </div>
-                      {/* Online indicator */}
-                      <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-background" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {testimonial.location}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Decorative corner accent */}
-                  <div className="absolute bottom-0 right-0 h-20 w-20 rounded-tl-3xl bg-gradient-to-tl from-accent/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 </div>
               </div>
             ))}
@@ -798,83 +659,61 @@ const Index = () => {
       </section>
 
       {/* Resources / Blog Section */}
-      <section className="section-padding-lg bg-muted/30">
+      <section className="py-12 md:py-16 lg:py-20">
         <div className="container">
           {/* Section Header */}
-          <div className="mb-12 flex flex-col items-center text-center md:flex-row md:items-end md:justify-between md:text-left">
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                <BookOpen className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">Resources</span>
-              </div>
-              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
-                Resources & Guides
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Resources</span>
+              <h2 className="mt-2 font-display text-xl font-bold text-foreground md:text-2xl">
+                Helpful Guides
               </h2>
-              <p className="max-w-xl text-muted-foreground">
-                Expert articles to guide you through the recovery journey with practical advice and support.
-              </p>
             </div>
-            <Link to="/resources" className="mt-6 md:mt-0">
-              <Button variant="outline" className="gap-2 group border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground">
-                View All Articles
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
+            <Link to="/resources" className="group">
+              <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
+                View all articles
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </span>
             </Link>
           </div>
 
-          {/* Articles Grid */}
-          <div className="grid gap-6 md:gap-8 md:grid-cols-3">
-            {blogArticles.map((article, index) => (
+          {/* Articles Grid - Clean card style */}
+          <div className="grid gap-4 md:grid-cols-3">
+            {blogArticles.map((article) => (
               <Link
                 key={article.id}
                 to={`/resources/${article.id}`}
-                className="group animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group"
               >
-                <article className="h-full rounded-2xl border border-border bg-card shadow-card overflow-hidden transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 hover:border-accent/30">
+                <article className="h-full rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/30 hover:shadow-md">
                   {/* Image */}
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative h-40 overflow-hidden">
                     <img 
                       src={article.image} 
                       alt={article.title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-                    {/* Category Badge */}
-                    <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
-                      <BookOpen className="h-3 w-3 text-accent" />
-                      {article.category}
-                    </span>
                   </div>
                   
                   {/* Content */}
-                  <div className="p-5 md:p-6">
-                    {/* Meta */}
-                    <div className="mb-3 flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {article.readTime}
-                      </span>
-                      <span className="h-1 w-1 rounded-full bg-muted-foreground/50" />
-                      <span>{article.author}</span>
+                  <div className="p-4">
+                    {/* Category & Read Time */}
+                    <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-primary">{article.category}</span>
+                      <span>•</span>
+                      <span>{article.readTime}</span>
                     </div>
                     
                     {/* Title */}
-                    <h3 className="mb-3 font-display text-lg font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                    <h3 className="font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
                       {article.title}
                     </h3>
                     
                     {/* Excerpt */}
-                    <p className="mb-4 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                    <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
                       {article.excerpt}
                     </p>
-                    
-                    {/* Read More Link */}
-                    <div className="flex items-center gap-1.5 text-sm font-semibold text-primary">
-                      Read article
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </div>
                   </div>
                 </article>
               </Link>
@@ -884,26 +723,26 @@ const Index = () => {
       </section>
 
       {/* CTA Banner */}
-      <section className="section-padding-lg">
+      <section className="py-12 md:py-16 bg-muted/40 border-t border-border/50">
         <div className="container">
-          <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
-            <h2 className="mb-4 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
-              Ready to Take the First Step?
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+              Ready to Find Help?
             </h2>
-            <p className="mb-8 text-muted-foreground max-w-xl mx-auto">
-              Recovery is possible. Find the right treatment center for you or your loved one today.
+            <p className="mt-2 text-muted-foreground">
+              Take the first step toward recovery today.
             </p>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link to="/rehab-centers">
-                <Button size="lg" className="gap-2 min-w-[200px]">
-                  Find Rehab Now
+                <Button size="lg" className="gap-2 min-w-[180px]">
+                  Find Treatment
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link to="/request-help?source=cta_bottom">
-                <Button variant="outline" size="lg" className="gap-2 min-w-[200px]">
-                  <Heart className="h-4 w-4" />
-                  Request Help
+                <Button variant="outline" size="lg" className="gap-2 min-w-[180px]">
+                  <Phone className="h-4 w-4" />
+                  Get a Callback
                 </Button>
               </Link>
             </div>
