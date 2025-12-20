@@ -18,6 +18,7 @@ import {
   Check,
 } from "lucide-react";
 import { ReactNode, useState } from "react";
+import { MidArticleCTA } from "@/components/articles/MidArticleCTA";
 
 interface Article {
   id: string;
@@ -1277,24 +1278,28 @@ const ArticleDetail = () => {
               <div className="rounded-2xl border border-border/50 bg-card p-6 md:p-10 shadow-sm">
                 <div className="prose prose-lg max-w-none">
                   {article.content.map((paragraph, index) => {
+                    // Calculate midpoint for CTA insertion
+                    const midPoint = Math.floor(article.content.length / 2);
+                    const showMidCTA = index === midPoint;
+                    
                     if (paragraph.startsWith("## ")) {
                       return (
-                        <h2
-                          key={index}
-                          className="font-display text-xl font-bold text-foreground mt-10 mb-4 first:mt-0 flex items-center gap-3"
-                        >
-                          <span className="h-8 w-1 rounded-full bg-primary" />
-                          {paragraph.replace("## ", "")}
-                        </h2>
+                        <div key={index}>
+                          {showMidCTA && <MidArticleCTA source={`article_${article.id}`} />}
+                          <h2 className="font-display text-xl font-bold text-foreground mt-10 mb-4 first:mt-0 flex items-center gap-3">
+                            <span className="h-8 w-1 rounded-full bg-primary" />
+                            {paragraph.replace("## ", "")}
+                          </h2>
+                        </div>
                       );
                     }
                     return (
-                      <p
-                        key={index}
-                        className="text-foreground/80 leading-relaxed mb-5 text-base"
-                      >
-                        {parseContentWithLinks(paragraph)}
-                      </p>
+                      <div key={index}>
+                        {showMidCTA && <MidArticleCTA source={`article_${article.id}`} />}
+                        <p className="text-foreground/80 leading-relaxed mb-5 text-base">
+                          {parseContentWithLinks(paragraph)}
+                        </p>
+                      </div>
                     );
                   })}
                 </div>
