@@ -6,6 +6,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
+import { usStates } from "@/data/usStates";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
 import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSkeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -478,6 +479,47 @@ const Index = () => {
                   
                   {/* Bottom accent line */}
                   <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Browse by State */}
+      <section className="py-12 md:py-16 lg:py-20">
+        <div className="container">
+          {/* Section Header */}
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nationwide Coverage</span>
+              </div>
+              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                Browse by State
+              </h2>
+            </div>
+            <Link to="/locations" className="group">
+              <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
+                View all locations
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          </div>
+
+          {/* States Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+            {usStates.map((state) => (
+              <Link
+                key={state.slug}
+                to={`/locations/${state.slug}`}
+                className="group"
+              >
+                <div className="rounded-lg border border-border bg-card px-3 py-2.5 text-center transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 hover:shadow-sm">
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                    {state.name}
+                  </span>
                 </div>
               </Link>
             ))}
