@@ -19,7 +19,11 @@ import TreatmentCenterProfile from "./pages/TreatmentCenterProfile";
 import CenterProfile from "./pages/CenterProfile";
 import TreatmentTypes from "./pages/TreatmentTypes";
 import DrugAddictionTreatment from "./pages/treatment-types/DrugAddictionTreatment";
+import StateDrugAddiction from "./pages/treatment-types/StateDrugAddiction";
+import CityDrugAddiction from "./pages/treatment-types/CityDrugAddiction";
 import AlcoholRehabilitation from "./pages/treatment-types/AlcoholRehabilitation";
+import StateAlcoholRehab from "./pages/treatment-types/StateAlcoholRehab";
+import CityAlcoholRehab from "./pages/treatment-types/CityAlcoholRehab";
 import DualDiagnosisTreatment from "./pages/treatment-types/DualDiagnosisTreatment";
 import ResidentialInpatient from "./pages/treatment-types/ResidentialInpatient";
 import OutpatientPrograms from "./pages/treatment-types/OutpatientPrograms";
@@ -136,7 +140,11 @@ const App = () => (
             <Route path="/treatment-types" element={<TreatmentTypes />} />
             <Route path="/treatment-types/drug-addiction" element={<DrugAddictionTreatment />} />
             <Route path="/treatment-types/drug-addiction-treatment" element={<DrugAddictionTreatment />} />
+            <Route path="/treatment-types/drug-addiction/:stateSlug" element={<StateDrugAddiction />} />
+            <Route path="/treatment-types/drug-addiction/:stateSlug/:citySlug" element={<CityDrugAddiction />} />
             <Route path="/treatment-types/alcohol-rehabilitation" element={<AlcoholRehabilitation />} />
+            <Route path="/treatment-types/alcohol-rehabilitation/:stateSlug" element={<StateAlcoholRehab />} />
+            <Route path="/treatment-types/alcohol-rehabilitation/:stateSlug/:citySlug" element={<CityAlcoholRehab />} />
             <Route path="/treatment-types/dual-diagnosis" element={<DualDiagnosisTreatment />} />
             <Route path="/treatment-types/dual-diagnosis-treatment" element={<DualDiagnosisTreatment />} />
             <Route path="/treatment-types/dual-diagnosis-treatment/:stateSlug" element={<StateDualDiagnosis />} />
