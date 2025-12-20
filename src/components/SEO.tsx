@@ -41,27 +41,44 @@ export function SEO({
   const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
   const truncatedDescription = description.length > 160 ? description.slice(0, 157) + "..." : description;
 
-  // Base organization schema
+  // Base organization schema with enhanced details
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${SITE_URL}/#organization`,
     name: SITE_NAME,
+    legalName: "RehabLookup, Inc.",
     url: SITE_URL,
     logo: {
       "@type": "ImageObject",
-      url: `${SITE_URL}/logo.png`,
+      url: `${SITE_URL}/logo.svg`,
       width: 512,
       height: 512,
     },
+    image: `${SITE_URL}/og-image.jpg`,
     description: "RehabLookup helps individuals and families find verified drug and alcohol treatment centers across the United States.",
     foundingDate: "2024",
+    slogan: "Find the Right Path to Recovery",
+    knowsAbout: [
+      "Addiction Treatment",
+      "Drug Rehabilitation", 
+      "Alcohol Recovery",
+      "Mental Health Services",
+      "Detox Programs",
+      "Dual Diagnosis Treatment",
+    ],
     contactPoint: {
       "@type": "ContactPoint",
       email: "help@rehablookup.com",
       contactType: "customer service",
       availableLanguage: ["English", "Spanish"],
       areaServed: "US",
+      hoursAvailable: {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        opens: "00:00",
+        closes: "23:59",
+      },
     },
     sameAs: [
       "https://facebook.com/rehablookup",
@@ -107,7 +124,7 @@ export function SEO({
     inLanguage: "en-US",
   };
 
-  // Medical website schema for health authority
+  // Medical website schema for health authority with enhanced details
   const medicalWebsiteSchema = {
     "@context": "https://schema.org",
     "@type": "MedicalWebPage",
@@ -119,13 +136,26 @@ export function SEO({
     about: {
       "@type": "MedicalCondition",
       name: "Substance Use Disorder",
-      alternateName: ["Drug Addiction", "Alcohol Addiction", "Chemical Dependency"],
+      alternateName: ["Drug Addiction", "Alcohol Addiction", "Chemical Dependency", "Substance Abuse"],
     },
-    specialty: "Addiction Medicine",
+    audience: {
+      "@type": "PeopleAudience",
+      audienceType: "Patients and families seeking addiction treatment",
+    },
+    specialty: ["Addiction Medicine", "Psychiatry", "Behavioral Health"],
     lastReviewed: modifiedTime || new Date().toISOString().split("T")[0],
+    dateModified: modifiedTime || new Date().toISOString().split("T")[0],
     reviewedBy: {
       "@type": "Organization",
       name: "RehabLookup Medical Advisory Board",
+    },
+    mainContentOfPage: {
+      "@type": "WebPageElement",
+      cssSelector: "main",
+    },
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["h1", ".page-description", ".hero-text"],
     },
   };
 
@@ -733,4 +763,181 @@ export function generateTreatmentNearMeSchema(params: {
   }
 
   return schemas;
+}
+
+// Review/Testimonial schema for social proof
+export function generateReviewSchema(reviews: {
+  author: string;
+  reviewBody: string;
+  ratingValue: number;
+  datePublished?: string;
+  location?: string;
+}[]) {
+  return reviews.map((review) => ({
+    "@context": "https://schema.org",
+    "@type": "Review",
+    author: {
+      "@type": "Person",
+      name: review.author,
+      ...(review.location && { address: { "@type": "PostalAddress", addressRegion: review.location } }),
+    },
+    reviewBody: review.reviewBody,
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: review.ratingValue,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    datePublished: review.datePublished || new Date().toISOString().split("T")[0],
+    itemReviewed: {
+      "@type": "Organization",
+      name: "RehabLookup",
+      url: "https://rehablookup.com",
+    },
+  }));
+}
+
+// Health topic schema for educational content
+export function generateHealthTopicSchema(topic: {
+  name: string;
+  description: string;
+  url: string;
+  relatedConditions?: string[];
+  treatments?: string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HealthTopicContent",
+    name: topic.name,
+    description: topic.description,
+    url: `https://rehablookup.com${topic.url}`,
+    about: {
+      "@type": "MedicalCondition",
+      name: "Substance Use Disorder",
+      associatedAnatomy: {
+        "@type": "AnatomicalStructure",
+        name: "Brain",
+      },
+    },
+    ...(topic.relatedConditions && {
+      mainContentOfPage: {
+        "@type": "WebPageElement",
+        text: topic.relatedConditions.join(", "),
+      },
+    }),
+    ...(topic.treatments && {
+      significantLink: topic.treatments.map(t => ({
+        "@type": "MedicalTherapy",
+        name: t,
+      })),
+    }),
+    reviewedBy: {
+      "@type": "Organization",
+      name: "RehabLookup Medical Advisory Board",
+    },
+  };
+}
+
+// Product schema for provider listings/subscriptions
+export function generateProductSchema(product: {
+  name: string;
+  description: string;
+  price: number;
+  priceCurrency?: string;
+  features?: string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    brand: {
+      "@type": "Organization",
+      name: "RehabLookup",
+    },
+    offers: {
+      "@type": "Offer",
+      price: product.price,
+      priceCurrency: product.priceCurrency || "USD",
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "Organization",
+        name: "RehabLookup",
+      },
+    },
+    ...(product.features && {
+      additionalProperty: product.features.map(f => ({
+        "@type": "PropertyValue",
+        name: "Feature",
+        value: f,
+      })),
+    }),
+  };
+}
+
+// Event schema for webinars/support groups
+export function generateEventSchema(event: {
+  name: string;
+  description: string;
+  startDate: string;
+  endDate?: string;
+  location?: string;
+  isVirtual?: boolean;
+  url?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.name,
+    description: event.description,
+    startDate: event.startDate,
+    endDate: event.endDate || event.startDate,
+    eventAttendanceMode: event.isVirtual 
+      ? "https://schema.org/OnlineEventAttendanceMode" 
+      : "https://schema.org/OfflineEventAttendanceMode",
+    eventStatus: "https://schema.org/EventScheduled",
+    location: event.isVirtual 
+      ? {
+          "@type": "VirtualLocation",
+          url: event.url || "https://rehablookup.com",
+        }
+      : {
+          "@type": "Place",
+          name: event.location || "TBD",
+          address: {
+            "@type": "PostalAddress",
+            addressCountry: "US",
+          },
+        },
+    organizer: {
+      "@type": "Organization",
+      name: "RehabLookup",
+      url: "https://rehablookup.com",
+    },
+  };
+}
+
+// Aggregate offer schema for insurance coverage pages
+export function generateInsuranceSchema(insurance: {
+  name: string;
+  description: string;
+  url: string;
+  coverageTypes?: string[];
+  facilityCount?: number;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HealthInsurancePlan",
+    name: `${insurance.name} Addiction Treatment Coverage`,
+    description: insurance.description,
+    url: `https://rehablookup.com${insurance.url}`,
+    usesHealthPlanIdStandard: "HIOS",
+    healthPlanMarketingName: insurance.name,
+    ...(insurance.coverageTypes && {
+      benefitsSummaryUrl: `https://rehablookup.com${insurance.url}#benefits`,
+    }),
+    ...(insurance.facilityCount && {
+      healthPlanNetworkTier: "In-Network",
+    }),
+  };
 }
