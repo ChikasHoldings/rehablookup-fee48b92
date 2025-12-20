@@ -69,12 +69,12 @@ export function Footer() {
         {/* Centered Brand Section */}
         <div className="flex flex-col items-center py-10 px-4 border-b border-border/50">
           {/* Logo */}
-          <div className="text-center mb-6">
-            <Link to="/" className="inline-block">
+          <div className="mb-6">
+            <Link to="/">
               <img 
                 src="/logo.svg" 
                 alt="RehabLookup" 
-                className="h-9 w-auto dark:hidden"
+                className="h-9 w-auto dark:hidden block"
                 loading="lazy"
               />
               <img 
