@@ -152,23 +152,31 @@ export function FacilityQuickViewModal({
             </div>
           )}
           
-          {/* Top badges */}
+          {/* Top badges and close button */}
           <div className="absolute left-0 right-0 top-0 flex items-start justify-between p-4">
-            {showFeaturedBadge ? (
-              <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider">
-                <Crown className="h-3.5 w-3.5" />
-                Featured
-              </Badge>
-            ) : (
-              <div />
-            )}
+            <div className="flex items-center gap-2">
+              {showFeaturedBadge && (
+                <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider">
+                  <Crown className="h-3.5 w-3.5" />
+                  Featured
+                </Badge>
+              )}
+              {center.verified && (
+                <Badge className="gap-1 bg-emerald-500/90 text-white border-0 shadow-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  Verified
+                </Badge>
+              )}
+            </div>
             
-            {center.verified && (
-              <Badge className="gap-1 bg-emerald-500/90 text-white border-0 shadow-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Verified
-              </Badge>
-            )}
+            {/* Close button */}
+            <button
+              onClick={() => onOpenChange(false)}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-all hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-white/50"
+              aria-label="Close preview"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
           
           {/* Logo and basic info at bottom */}
