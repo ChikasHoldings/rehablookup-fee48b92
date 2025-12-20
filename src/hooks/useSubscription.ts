@@ -70,6 +70,7 @@ export const PLAN_DETAILS = {
     description: "Get listed and be discoverable",
     lead_limit: 0, // Basic plan: no qualified leads (direct only with upgrade prompt)
     location_limit: 1,
+    gallery_limit: 5, // Basic: up to 5 gallery images
     featured: false,
     exclusivity: 'exclusive' as const,
     features: [
@@ -98,6 +99,7 @@ export const PLAN_DETAILS = {
     description: "Shared leads + steady visibility",
     lead_limit: 100, // 100 shared qualified leads/month
     location_limit: 3,
+    gallery_limit: 10, // Professional: up to 10 gallery images
     featured: false,
     exclusivity: 'shared' as const,
     features: [
@@ -105,6 +107,7 @@ export const PLAN_DETAILS = {
       "Unlimited calls from profile",
       "Unlimited website visits from profile",
       "Up to 3 facility locations",
+      "Up to 10 gallery photos",
       "Standard search placement",
       "Email lead notifications",
       "Lead management dashboard",
@@ -121,6 +124,7 @@ export const PLAN_DETAILS = {
     description: "Exclusive leads & maximum visibility",
     lead_limit: 100, // 100 exclusive qualified leads/month
     location_limit: 5,
+    gallery_limit: 10, // Featured: up to 10 gallery images
     featured: true,
     exclusivity: 'exclusive' as const,
     features: [
@@ -128,6 +132,7 @@ export const PLAN_DETAILS = {
       "Unlimited calls from profile",
       "Unlimited website visits from profile",
       "Up to 5 facility locations",
+      "Up to 10 gallery photos",
       "Homepage featured placement",
       "Priority search placement",
       "Gold Featured badge",

@@ -65,6 +65,7 @@ import {
 import { FacilityImageUpload } from "@/components/provider/FacilityImageUpload";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
+import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
 
 interface Facility {
@@ -384,6 +385,12 @@ export default function ProviderListingPage() {
   const prevFacilityIdRef = useRef<string | null>(null);
   const { toast } = useToast();
   const { selectedFacility, setHasUnsavedChanges } = useSelectedFacility();
+  const { data: subscription } = useSubscription();
+  
+  // Get gallery limit based on plan
+  const galleryLimit = subscription?.plan 
+    ? PLAN_DETAILS[subscription.plan]?.gallery_limit || 5 
+    : 5;
 
   // Reset state when facility changes
   useEffect(() => {
@@ -1304,11 +1311,14 @@ export default function ProviderListingPage() {
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-medium">Facility Gallery</Label>
                         <Badge variant="outline" className="text-xs">
-                          {facility.gallery_urls?.length || 0} / 5 photos
+                          {facility.gallery_urls?.length || 0} / {galleryLimit} photos
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Upload up to 5 photos. The first image will be your primary gallery photo.
+                        Upload up to {galleryLimit} photos. The first image will be your primary gallery photo.
+                        {galleryLimit > 5 && (
+                          <span className="text-primary font-medium"> (Paid plan benefit)</span>
+                        )}
                       </p>
                       <FacilityImageUpload
                         type="gallery"
@@ -1316,6 +1326,7 @@ export default function ProviderListingPage() {
                         userId={facility.user_id}
                         facilityId={facility.id}
                         onImagesChange={handleGalleryChange}
+                        maxImages={galleryLimit}
                       />
                     </div>
                   </CardContent>
