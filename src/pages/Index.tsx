@@ -968,10 +968,40 @@ const Index = () => {
       {/* SEO Internal Links Section */}
       <section className="py-10 md:py-12 lg:py-16 bg-muted/30 border-t">
         <div className="container space-y-8 md:space-y-10">
+          {/* Quick Links to Key Pages */}
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-4">
+              Explore RehabLookup
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              {[
+                { name: "How It Works", href: "/how-it-works" },
+                { name: "About Us", href: "/about" },
+                { name: "Insurance Guide", href: "/insurance" },
+                { name: "FAQs", href: "/faq" },
+                { name: "Contact Us", href: "/contact" },
+                { name: "For Providers", href: "/for-providers" },
+                { name: "Treatment Types", href: "/treatment-types" },
+                { name: "All Locations", href: "/locations" },
+                { name: "Cost Estimator", href: "/cost-estimator" },
+                { name: "Provider Resources", href: "/provider-resources" },
+                { name: "Request Help", href: "/request-help" },
+                { name: "Search Centers", href: "/search-results" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors py-1"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+
           <InternalLinkBlock 
             title="Find Treatment by State" 
             variant="states" 
-            limit={20}
           />
           <InternalLinkBlock 
             title="Treatment Programs" 
