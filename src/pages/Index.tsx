@@ -4,6 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FeaturedCenterCard } from "@/components/cards/FeaturedCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
@@ -449,42 +450,67 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Centers */}
-      <section className="py-10 md:py-12 lg:py-20">
+      {/* Featured Centers - Horizontal Carousel */}
+      <section className="py-10 md:py-12 lg:py-16 overflow-hidden">
         <div className="container">
-          {/* Section Header - Clean directory style */}
-          <div className="mb-6 md:mb-8 lg:mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 md:gap-4">
+          {/* Section Header */}
+          <div className="mb-5 md:mb-6 flex items-end justify-between gap-4">
             <div>
-              <div className="mb-1.5 md:mb-2 flex items-center gap-2">
+              <div className="mb-1 flex items-center gap-2">
                 <Star className="h-4 w-4 text-accent fill-accent" />
                 <span className="text-xs font-semibold uppercase tracking-wider text-accent">Featured</span>
               </div>
-              <h2 className="font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
+              <h2 className="font-display text-lg md:text-xl font-bold text-foreground">
                 Top-Rated Treatment Centers
               </h2>
             </div>
-            <Link to="/rehab-centers" className="group">
+            <Link to="/rehab-centers" className="group shrink-0">
               <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                View all centers
+                View all
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </span>
             </Link>
           </div>
+        </div>
 
-          {/* Cards Grid - Optimized for tablet */}
+        {/* Carousel Container - Full width with fade edges */}
+        <div className="relative">
+          {/* Left fade */}
+          <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+          {/* Right fade */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+          
           {isFacilitiesLoading ? (
-            <FeaturedCentersLoading />
+            <div className="container">
+              <FeaturedCentersLoading />
+            </div>
           ) : (
-            <div className="grid gap-4 md:gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredCenters.map((center, index) => (
-                <div 
-                  key={center.id} 
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
+            <div className="overflow-x-auto scrollbar-hide pb-2">
+              <div className="flex gap-4 px-4 md:px-8 lg:px-16">
+                {featuredCenters.map((center, index) => (
+                  <div 
+                    key={center.id} 
+                    className="animate-fade-in shrink-0"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <FeaturedCenterCard center={center} />
+                  </div>
+                ))}
+                {/* View more card */}
+                <Link 
+                  to="/rehab-centers" 
+                  className="flex items-center justify-center min-w-[160px] rounded-xl border border-dashed border-border/60 bg-muted/30 p-4 transition-all duration-300 hover:border-primary/40 hover:bg-accent/10 group shrink-0"
                 >
-                  <TreatmentCenterCard center={center} featured />
-                </div>
-              ))}
+                  <div className="text-center">
+                    <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground">
+                      <ArrowRight className="h-5 w-5" />
+                    </div>
+                    <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                      View All
+                    </span>
+                  </div>
+                </Link>
+              </div>
             </div>
           )}
         </div>
