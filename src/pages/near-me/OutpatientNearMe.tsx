@@ -153,8 +153,6 @@ export default function OutpatientNearMe() {
         ? { state: stateData.name, stateAbbr: stateData.abbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
-      avgRating: 4.5,
-      reviewCount: facilities.length * 9,
     }),
   ];
 

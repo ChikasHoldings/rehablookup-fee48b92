@@ -615,6 +615,7 @@ export function generateSpeakableSchema(content: {
 }
 
 // Near Me optimization schema
+// Note: aggregateRating removed as it's not valid for Service type per Google guidelines
 export function generateNearMeSchema(params: {
   serviceType: string;
   location: {
@@ -623,8 +624,6 @@ export function generateNearMeSchema(params: {
     stateAbbr: string;
   };
   facilityCount: number;
-  avgRating?: number;
-  reviewCount?: number;
 }) {
   const locationString = params.location.city 
     ? `${params.location.city}, ${params.location.stateAbbr}`
@@ -674,15 +673,6 @@ export function generateNearMeSchema(params: {
         },
       ],
     },
-    ...(params.avgRating && params.reviewCount && {
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: params.avgRating,
-        reviewCount: params.reviewCount,
-        bestRating: 5,
-        worstRating: 1,
-      },
-    }),
   };
 }
 
@@ -763,38 +753,6 @@ export function generateTreatmentNearMeSchema(params: {
   }
 
   return schemas;
-}
-
-// Review/Testimonial schema for social proof
-export function generateReviewSchema(reviews: {
-  author: string;
-  reviewBody: string;
-  ratingValue: number;
-  datePublished?: string;
-  location?: string;
-}[]) {
-  return reviews.map((review) => ({
-    "@context": "https://schema.org",
-    "@type": "Review",
-    author: {
-      "@type": "Person",
-      name: review.author,
-      ...(review.location && { address: { "@type": "PostalAddress", addressRegion: review.location } }),
-    },
-    reviewBody: review.reviewBody,
-    reviewRating: {
-      "@type": "Rating",
-      ratingValue: review.ratingValue,
-      bestRating: 5,
-      worstRating: 1,
-    },
-    datePublished: review.datePublished || new Date().toISOString().split("T")[0],
-    itemReviewed: {
-      "@type": "Organization",
-      name: "RehabLookup",
-      url: "https://rehablookup.com",
-    },
-  }));
 }
 
 // Health topic schema for educational content
