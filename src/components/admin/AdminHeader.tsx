@@ -413,41 +413,45 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
 
   return (
     <>
-      <header className="sticky top-0 z-50 h-16 border-b border-slate-700 bg-slate-900 text-white flex items-center justify-between px-4 lg:px-6">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-50 h-16 border-b border-slate-700 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center px-4 lg:px-6">
+        {/* Left Section - Logo */}
+        <div className="flex items-center gap-3 flex-shrink-0">
           <div className="flex items-center gap-2">
             <img 
               src="/logo.png" 
               alt="RehabLookup" 
               className="h-7 sm:h-8 w-auto brightness-0 invert"
             />
-            <span className="text-xs bg-amber-400 text-slate-900 px-2 py-0.5 rounded font-semibold uppercase">
+            <span className="text-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 px-2.5 py-1 rounded-md font-semibold uppercase tracking-wide shadow-sm">
               Admin
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 lg:gap-4">
-          {/* Search Bar */}
-          <div className="hidden md:block">
+        {/* Center Section - Search Bar */}
+        <div className="flex-1 flex justify-center px-4">
+          <div className="hidden md:block w-full max-w-md">
             <Button
               variant="ghost"
-              className="relative h-9 w-64 justify-start text-sm text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-600 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+              className="relative h-10 w-full justify-start text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white bg-slate-800/50 border border-slate-600/50 rounded-xl transition-all duration-200 hover:border-slate-500 hover:shadow-lg hover:shadow-slate-900/20"
               onClick={() => setSearchOpen(true)}
             >
-              <Search className="h-4 w-4 mr-2 text-slate-300" />
-              <span>Search...</span>
-              <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border border-slate-600 bg-slate-800 px-1.5 font-mono text-[10px] font-medium text-slate-300 sm:flex">
+              <Search className="h-4 w-4 mr-3 text-slate-400" />
+              <span className="text-slate-400">Search providers, leads, pages...</span>
+              <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden h-6 select-none items-center gap-1 rounded-md border border-slate-600 bg-slate-700 px-2 font-mono text-[11px] font-medium text-slate-300 sm:flex">
                 ⌘K
               </kbd>
             </Button>
           </div>
+        </div>
 
+        {/* Right Section - Actions & Profile */}
+        <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
           {/* Mobile Search Button */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-white hover:bg-slate-800 hover:text-white transition-all duration-200 hover:scale-105 active:scale-95"
+            className="md:hidden text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 rounded-xl"
             onClick={() => setSearchOpen(true)}
           >
             <Search className="h-5 w-5" />
@@ -459,11 +463,11 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative text-white hover:bg-slate-700 hover:text-white transition-all duration-200 hover:scale-105 active:scale-95"
+                className="relative text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 rounded-xl"
               >
                 <Bell className={`h-5 w-5 transition-transform ${bellAnimating ? "animate-wiggle" : ""}`} />
                 {unreadCount > 0 && (
-                  <Badge className={`absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs border-2 border-slate-900 ${bellAnimating ? "animate-pulse" : ""}`}>
+                  <Badge className={`absolute -top-1 -right-1 h-5 min-w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs border-2 border-slate-800 rounded-full ${bellAnimating ? "animate-pulse" : ""}`}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}
@@ -564,32 +568,46 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Account Dropdown */}
+          {/* Divider */}
+          <div className="hidden lg:block h-8 w-px bg-slate-600/50" />
+
+          {/* Account Dropdown with Name visible */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-slate-700 p-0 transition-all duration-200 hover:scale-105 active:scale-95">
-                <Avatar className="h-9 w-9 ring-2 ring-white/20 hover:ring-white/40 transition-all">
+              <Button 
+                variant="ghost" 
+                className="relative flex items-center gap-3 h-10 px-2 lg:px-3 rounded-xl hover:bg-slate-700/50 transition-all duration-200"
+              >
+                <Avatar className="h-8 w-8 ring-2 ring-amber-400/30 hover:ring-amber-400/50 transition-all">
                   <AvatarImage 
                     src={adminProfile?.avatar_url || undefined} 
                     alt={adminProfile?.display_name || userEmail || "Admin"} 
                     className="object-cover"
                   />
-                  <AvatarFallback className="bg-amber-400 text-slate-900 font-semibold text-sm">
+                  <AvatarFallback className="bg-gradient-to-br from-amber-400 to-amber-500 text-slate-900 font-semibold text-sm">
                     {avatarInitials}
                   </AvatarFallback>
                 </Avatar>
+                <div className="hidden lg:flex flex-col items-start text-left">
+                  <span className="text-sm font-medium text-white leading-tight">
+                    {fullName}
+                  </span>
+                  <span className="text-[11px] text-slate-400 leading-tight">
+                    Administrator
+                  </span>
+                </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64 bg-background" align="end" sideOffset={8}>
               {/* Profile Header Section */}
-              <div className="flex items-center gap-3 px-3 py-3 border-b">
-                <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+              <div className="flex items-center gap-3 px-3 py-3 border-b bg-muted/30">
+                <Avatar className="h-11 w-11 ring-2 ring-primary/20">
                   <AvatarImage 
                     src={adminProfile?.avatar_url || undefined} 
                     alt={adminProfile?.display_name || userEmail || "Admin"}
                     className="object-cover" 
                   />
-                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
                     {avatarInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -598,7 +616,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
                     {fullName}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-                  <Badge variant="secondary" className="w-fit mt-1 text-[10px] h-5 px-1.5">
+                  <Badge variant="secondary" className="w-fit mt-1.5 text-[10px] h-5 px-2 bg-amber-500/10 text-amber-600 border-0">
                     Administrator
                   </Badge>
                 </div>
@@ -607,14 +625,14 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
               {/* Menu Items */}
               <div className="py-1">
                 <DropdownMenuItem asChild>
-                  <Link to="/admin/profile" className="flex items-center gap-2 cursor-pointer px-3 py-2">
-                    <User className="h-4 w-4" />
+                  <Link to="/admin/profile" className="flex items-center gap-2 cursor-pointer px-3 py-2.5">
+                    <User className="h-4 w-4 text-muted-foreground" />
                     My Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/admin/notifications" className="flex items-center gap-2 cursor-pointer px-3 py-2">
-                    <Bell className="h-4 w-4" />
+                  <Link to="/admin/notifications" className="flex items-center gap-2 cursor-pointer px-3 py-2.5">
+                    <Bell className="h-4 w-4 text-muted-foreground" />
                     Notifications
                     {userUnreadCount > 0 && (
                       <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-[10px]">
@@ -624,8 +642,8 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer px-3 py-2">
-                    <Settings className="h-4 w-4" />
+                  <Link to="/admin/settings" className="flex items-center gap-2 cursor-pointer px-3 py-2.5">
+                    <Settings className="h-4 w-4 text-muted-foreground" />
                     Settings
                   </Link>
                 </DropdownMenuItem>
@@ -636,7 +654,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
               <div className="py-1">
                 <DropdownMenuItem 
                   onClick={onLogout} 
-                  className="text-destructive cursor-pointer px-3 py-2 focus:text-destructive"
+                  className="text-destructive cursor-pointer px-3 py-2.5 focus:text-destructive"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
