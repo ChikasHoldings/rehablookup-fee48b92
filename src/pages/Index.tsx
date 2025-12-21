@@ -13,6 +13,13 @@ import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
 import heroImage from "@/assets/hero-recovery.jpg";
 import whyChooseUsImage from "@/assets/why-choose-us.jpg";
 import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
   ArrowRight,
   Star,
   Pill,
@@ -32,6 +39,8 @@ import {
   Clock,
   MapPin,
   Navigation,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const blogArticles = [
@@ -449,42 +458,87 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Centers */}
-      <section className="py-10 md:py-12 lg:py-20">
+      {/* Featured Centers - Horizontal Carousel */}
+      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-muted/20 to-background">
         <div className="container">
-          {/* Section Header - Clean directory style */}
-          <div className="mb-6 md:mb-8 lg:mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 md:gap-4">
-            <div>
-              <div className="mb-1.5 md:mb-2 flex items-center gap-2">
+          {/* Section Header */}
+          <div className="mb-5 md:mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
                 <Star className="h-4 w-4 text-accent fill-accent" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-accent">Featured</span>
               </div>
-              <h2 className="font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
-                Top-Rated Treatment Centers
-              </h2>
+              <div>
+                <h2 className="font-display text-lg md:text-xl font-bold text-foreground">
+                  Featured Centers
+                </h2>
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  Top-rated treatment facilities
+                </p>
+              </div>
             </div>
-            <Link to="/rehab-centers" className="group">
-              <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                View all centers
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </span>
+            <Link 
+              to="/rehab-centers" 
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors group"
+            >
+              View all
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
 
-          {/* Cards Grid - Optimized for tablet */}
+          {/* Carousel */}
           {isFacilitiesLoading ? (
             <FeaturedCentersLoading />
           ) : (
-            <div className="grid gap-4 md:gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredCenters.map((center, index) => (
-                <div 
-                  key={center.id} 
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <TreatmentCenterCard center={center} featured />
+            <div className="relative">
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                  skipSnaps: false,
+                  dragFree: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-3 md:-ml-4">
+                  {featuredCenters.map((center, index) => (
+                    <CarouselItem 
+                      key={center.id} 
+                      className="pl-3 md:pl-4 basis-[85%] sm:basis-[48%] lg:basis-[32%]"
+                    >
+                      <div 
+                        className="animate-fade-in h-full"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <TreatmentCenterCard center={center} featured />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                
+                {/* Navigation Arrows - Hidden on mobile, visible on larger screens */}
+                <div className="hidden md:block">
+                  <CarouselPrevious className="absolute -left-3 lg:-left-5 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full border-border bg-card shadow-lg hover:bg-accent hover:text-accent-foreground transition-all" />
+                  <CarouselNext className="absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full border-border bg-card shadow-lg hover:bg-accent hover:text-accent-foreground transition-all" />
                 </div>
-              ))}
+              </Carousel>
+              
+              {/* Mobile scroll hint */}
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground md:hidden">
+                <ChevronLeft className="h-3 w-3" />
+                <span>Swipe to explore</span>
+                <ChevronRight className="h-3 w-3" />
+              </div>
+              
+              {/* Mobile View All Link */}
+              <div className="mt-4 flex justify-center sm:hidden">
+                <Link 
+                  to="/rehab-centers" 
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                >
+                  View all centers
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
             </div>
           )}
         </div>
