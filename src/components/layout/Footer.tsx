@@ -251,6 +251,13 @@ export function Footer() {
               >
                 Terms of Service
               </Link>
+              <span className="text-border">•</span>
+              <Link 
+                to="/contact" 
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Contact
+              </Link>
             </div>
             <p className="text-xs text-muted-foreground/70 text-center">
               © {new Date().getFullYear()} RehabLookup. All rights reserved.
@@ -439,6 +446,12 @@ export function Footer() {
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Terms
+                </Link>
+                <Link 
+                  to="/contact" 
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Contact
                 </Link>
               </div>
             </div>
