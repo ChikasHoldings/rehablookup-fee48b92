@@ -88,7 +88,7 @@ export function Header({
         "sticky top-0 z-50 w-full border-b",
         variant === "provider" 
           ? "bg-primary border-primary/20" 
-          : "bg-background/95 backdrop-blur-sm border-border"
+          : "bg-background border-border"
       )}>
         <div className="container flex h-14 md:h-16 items-center justify-between">
           {/* Logo */}
