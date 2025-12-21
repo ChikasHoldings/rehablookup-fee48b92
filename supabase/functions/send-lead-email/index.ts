@@ -322,17 +322,71 @@ const handler = async (req: Request): Promise<Response> => {
 
     const senderName = `${profile.first_name} ${profile.last_name}`;
 
-    const { data: facility, error: facilityError } = await supabase
-      .from("facilities")
-      .select("id, name, email, reply_email")
+    // Check if user is an admin
+    const { data: adminRole } = await supabase
+      .from("user_roles")
+      .select("role")
       .eq("user_id", user.id)
+      .eq("role", "admin")
       .maybeSingle();
+    
+    const isAdmin = !!adminRole;
+    console.log("User role check:", { userId: user.id, isAdmin });
+
+    // First, get the lead to determine which facility it belongs to
+    const { data: leadCheck, error: leadCheckError } = await supabase
+      .from("leads")
+      .select("id, name, email, facility_id")
+      .eq("id", leadId)
+      .maybeSingle();
+
+    if (leadCheckError || !leadCheck) {
+      console.error("Lead not found:", leadCheckError);
+      return new Response(
+        JSON.stringify({ error: "Lead not found" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Get facility - either from lead's facility_id (for admins) or user's owned facility
+    let facility;
+    let facilityError;
+
+    if (isAdmin && leadCheck.facility_id) {
+      // Admin can send emails for any facility the lead is assigned to
+      const result = await supabase
+        .from("facilities")
+        .select("id, name, email, reply_email, user_id")
+        .eq("id", leadCheck.facility_id)
+        .maybeSingle();
+      facility = result.data;
+      facilityError = result.error;
+      console.log("Admin accessing facility:", { facilityId: leadCheck.facility_id, found: !!facility });
+    } else {
+      // Regular provider can only access their own facility
+      const result = await supabase
+        .from("facilities")
+        .select("id, name, email, reply_email, user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      facility = result.data;
+      facilityError = result.error;
+    }
 
     if (facilityError || !facility) {
       console.error("Facility not found:", facilityError);
       return new Response(
-        JSON.stringify({ error: "Facility not found" }),
+        JSON.stringify({ error: "Facility not found. The lead may not be assigned to a facility yet." }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // For non-admins, verify they own the facility the lead is assigned to
+    if (!isAdmin && leadCheck.facility_id !== facility.id) {
+      console.error("Access denied: Lead belongs to different facility");
+      return new Response(
+        JSON.stringify({ error: "Access denied: This lead is not assigned to your facility" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -340,25 +394,13 @@ const handler = async (req: Request): Promise<Response> => {
     if (!replyToEmail) {
       console.error("No reply email configured");
       return new Response(
-        JSON.stringify({ error: "Please set a reply email in your facility settings before sending emails." }),
+        JSON.stringify({ error: "Please set a reply email in the facility settings before sending emails." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    const { data: lead, error: leadError } = await supabase
-      .from("leads")
-      .select("id, name, email, facility_id")
-      .eq("id", leadId)
-      .eq("facility_id", facility.id)
-      .maybeSingle();
-
-    if (leadError || !lead) {
-      console.error("Lead not found or access denied:", leadError);
-      return new Response(
-        JSON.stringify({ error: "Lead not found or access denied" }),
-        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
+    // Use the already fetched lead data
+    const lead = leadCheck;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
