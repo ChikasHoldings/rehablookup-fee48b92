@@ -39,8 +39,6 @@ import {
   Clock,
   MapPin,
   Navigation,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 const blogArticles = [
@@ -459,29 +457,30 @@ const Index = () => {
       </section>
 
       {/* Featured Centers - Horizontal Carousel */}
-      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-muted/20 to-background">
+      <section className="py-8 md:py-10 lg:py-14 overflow-hidden">
         <div className="container">
-          {/* Section Header */}
-          <div className="mb-5 md:mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
-                <Star className="h-4 w-4 text-accent fill-accent" />
+          {/* Section Header - Sleek inline design */}
+          <div className="mb-4 md:mb-5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20">
+                <Star className="h-3.5 w-3.5 text-accent fill-accent" />
               </div>
               <div>
-                <h2 className="font-display text-lg md:text-xl font-bold text-foreground">
+                <h2 className="font-display text-base md:text-lg font-semibold text-foreground leading-tight">
                   Featured Centers
                 </h2>
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  Top-rated treatment facilities
+                <p className="text-[11px] md:text-xs text-muted-foreground leading-tight">
+                  Top-rated facilities
                 </p>
               </div>
             </div>
             <Link 
               to="/rehab-centers" 
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors group"
+              className="inline-flex items-center gap-1 text-xs md:text-sm font-medium text-primary hover:text-primary/80 transition-colors group"
             >
-              View all
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              <span className="hidden sm:inline">View all</span>
+              <span className="sm:hidden">All</span>
+              <ArrowRight className="h-3 w-3 md:h-3.5 md:w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
 
@@ -489,7 +488,7 @@ const Index = () => {
           {isFacilitiesLoading ? (
             <FeaturedCentersLoading />
           ) : (
-            <div className="relative">
+            <div className="relative -mx-4 px-4 md:mx-0 md:px-0">
               <Carousel
                 opts={{
                   align: "start",
@@ -503,11 +502,11 @@ const Index = () => {
                   {featuredCenters.map((center, index) => (
                     <CarouselItem 
                       key={center.id} 
-                      className="pl-3 md:pl-4 basis-[85%] sm:basis-[48%] lg:basis-[32%]"
+                      className="pl-3 md:pl-4 basis-[80%] sm:basis-[45%] lg:basis-[31%] xl:basis-[32%]"
                     >
                       <div 
                         className="animate-fade-in h-full"
-                        style={{ animationDelay: `${index * 50}ms` }}
+                        style={{ animationDelay: `${index * 40}ms` }}
                       >
                         <TreatmentCenterCard center={center} featured />
                       </div>
@@ -515,29 +514,14 @@ const Index = () => {
                   ))}
                 </CarouselContent>
                 
-                {/* Navigation Arrows - Hidden on mobile, visible on larger screens */}
-                <div className="hidden md:block">
-                  <CarouselPrevious className="absolute -left-3 lg:-left-5 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full border-border bg-card shadow-lg hover:bg-accent hover:text-accent-foreground transition-all" />
-                  <CarouselNext className="absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full border-border bg-card shadow-lg hover:bg-accent hover:text-accent-foreground transition-all" />
-                </div>
+                {/* Navigation Arrows - Sleek design */}
+                <CarouselPrevious className="hidden md:flex absolute -left-2 lg:-left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-border/50 bg-background/95 backdrop-blur-sm shadow-md hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200" />
+                <CarouselNext className="hidden md:flex absolute -right-2 lg:-right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full border border-border/50 bg-background/95 backdrop-blur-sm shadow-md hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200" />
               </Carousel>
               
-              {/* Mobile scroll hint */}
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground md:hidden">
-                <ChevronLeft className="h-3 w-3" />
-                <span>Swipe to explore</span>
-                <ChevronRight className="h-3 w-3" />
-              </div>
-              
-              {/* Mobile View All Link */}
-              <div className="mt-4 flex justify-center sm:hidden">
-                <Link 
-                  to="/rehab-centers" 
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                >
-                  View all centers
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+              {/* Progress dots for mobile - subtle indicator */}
+              <div className="mt-3 flex items-center justify-center gap-1 md:hidden">
+                <span className="text-[10px] text-muted-foreground/70">← Swipe →</span>
               </div>
             </div>
           )}
