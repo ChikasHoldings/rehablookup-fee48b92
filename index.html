@@ -274,7 +274,76 @@
   </head>
 
   <body>
-    <div id="root" class="js-loading"></div>
+    <div id="root" class="js-loading">
+      <!-- Noscript fallback for search engines and users without JavaScript -->
+      <noscript>
+        <div style="max-width: 1200px; margin: 0 auto; padding: 40px 20px; font-family: 'Inter', sans-serif;">
+          <header style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-size: 2.5rem; color: #1B365D; margin-bottom: 16px;">RehabLookup - Find Addiction Treatment Centers</h1>
+            <p style="font-size: 1.125rem; color: #555; max-width: 600px; margin: 0 auto;">Search and compare verified addiction treatment centers near you. Find detox, inpatient, outpatient, and dual diagnosis programs.</p>
+          </header>
+          
+          <nav style="margin-bottom: 40px; text-align: center;">
+            <h2 style="font-size: 1.25rem; color: #1B365D; margin-bottom: 16px;">Browse Treatment Options</h2>
+            <ul style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;">
+              <li><a href="/rehab-centers" style="color: #2563eb; text-decoration: underline;">Find Rehab Centers</a></li>
+              <li><a href="/treatment-types" style="color: #2563eb; text-decoration: underline;">Treatment Types</a></li>
+              <li><a href="/insurance" style="color: #2563eb; text-decoration: underline;">Insurance Coverage</a></li>
+              <li><a href="/locations" style="color: #2563eb; text-decoration: underline;">Browse by Location</a></li>
+              <li><a href="/request-help" style="color: #2563eb; text-decoration: underline;">Get Help Now</a></li>
+            </ul>
+          </nav>
+
+          <section style="margin-bottom: 40px;">
+            <h2 style="font-size: 1.5rem; color: #1B365D; margin-bottom: 20px;">Treatment Types</h2>
+            <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+              <li><a href="/treatment-types/detox-programs" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Medical Detox Programs</a></li>
+              <li><a href="/treatment-types/residential-inpatient" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Inpatient Rehabilitation</a></li>
+              <li><a href="/treatment-types/outpatient-programs" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Outpatient Programs</a></li>
+              <li><a href="/treatment-types/dual-diagnosis-treatment" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Dual Diagnosis Treatment</a></li>
+              <li><a href="/treatment-types/alcohol-rehabilitation" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Alcohol Rehabilitation</a></li>
+              <li><a href="/treatment-types/drug-addiction-treatment" style="display: block; padding: 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none;">Drug Addiction Treatment</a></li>
+            </ul>
+          </section>
+
+          <section style="margin-bottom: 40px;">
+            <h2 style="font-size: 1.5rem; color: #1B365D; margin-bottom: 20px;">Find Treatment Near You</h2>
+            <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+              <li><a href="/drug-rehab-near-me" style="color: #2563eb;">Drug Rehab Near Me</a></li>
+              <li><a href="/alcohol-rehab-near-me" style="color: #2563eb;">Alcohol Rehab Near Me</a></li>
+              <li><a href="/detox-near-me" style="color: #2563eb;">Detox Centers Near Me</a></li>
+              <li><a href="/inpatient-rehab-near-me" style="color: #2563eb;">Inpatient Rehab Near Me</a></li>
+              <li><a href="/outpatient-near-me" style="color: #2563eb;">Outpatient Programs Near Me</a></li>
+              <li><a href="/dual-diagnosis-near-me" style="color: #2563eb;">Dual Diagnosis Near Me</a></li>
+            </ul>
+          </section>
+
+          <section style="margin-bottom: 40px;">
+            <h2 style="font-size: 1.5rem; color: #1B365D; margin-bottom: 20px;">Insurance Coverage</h2>
+            <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+              <li><a href="/insurance/aetna" style="color: #2563eb;">Aetna Coverage</a></li>
+              <li><a href="/insurance/bcbs" style="color: #2563eb;">Blue Cross Blue Shield</a></li>
+              <li><a href="/insurance/cigna" style="color: #2563eb;">Cigna Coverage</a></li>
+              <li><a href="/insurance/united-healthcare" style="color: #2563eb;">United Healthcare</a></li>
+              <li><a href="/insurance/humana" style="color: #2563eb;">Humana Coverage</a></li>
+              <li><a href="/insurance/kaiser" style="color: #2563eb;">Kaiser Permanente</a></li>
+              <li><a href="/insurance/medicaid" style="color: #2563eb;">Medicaid</a></li>
+              <li><a href="/insurance/medicare" style="color: #2563eb;">Medicare</a></li>
+            </ul>
+          </section>
+
+          <footer style="border-top: 1px solid #e5e5e5; padding-top: 20px; text-align: center; color: #666;">
+            <p>© 2025 RehabLookup. All rights reserved.</p>
+            <nav style="margin-top: 12px;">
+              <a href="/about" style="color: #2563eb; margin: 0 8px;">About Us</a>
+              <a href="/contact" style="color: #2563eb; margin: 0 8px;">Contact</a>
+              <a href="/privacy-policy" style="color: #2563eb; margin: 0 8px;">Privacy Policy</a>
+              <a href="/terms-of-service" style="color: #2563eb; margin: 0 8px;">Terms of Service</a>
+            </nav>
+          </footer>
+        </div>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       // Mark as loaded once React hydrates
