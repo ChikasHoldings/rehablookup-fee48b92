@@ -164,6 +164,49 @@
   h4, h5, h6 {
     @apply tracking-normal;
   }
+
+  /* WCAG 2.1 AA Focus Styles - Visible focus indicators for keyboard navigation */
+  :focus {
+    outline: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Skip link for keyboard users */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    padding: 0.5rem 1rem;
+    z-index: 100;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .skip-link:focus {
+    top: 0;
+  }
+
+  /* Ensure minimum touch target sizes for WCAG */
+  button, 
+  [role="button"],
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Exception for inline links */
+  p a,
+  li a,
+  span a {
+    min-height: auto;
+    min-width: auto;
+  }
 }
 
 @layer utilities {
@@ -325,6 +368,17 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    * {
+      border-color: currentColor !important;
+    }
+    
+    .text-muted-foreground {
+      color: hsl(var(--foreground)) !important;
     }
   }
 

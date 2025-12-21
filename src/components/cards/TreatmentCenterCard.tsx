@@ -141,9 +141,19 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
       <article
         ref={cardRef}
         onClick={handleCardClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleCardClick();
+          }
+        }}
+        tabIndex={0}
+        role="button"
+        aria-label={`View details for ${center.name} treatment center in ${center.city}, ${center.state}${center.verified ? ', verified provider' : ''}${showFeaturedBadge ? ', featured' : ''}`}
         className={cn(
           "group relative flex overflow-hidden rounded-xl border bg-card transition-all duration-300 cursor-pointer",
           "hover:shadow-lg active:scale-[0.995]",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
           showFeaturedBadge 
             ? "border-amber-200/80 bg-gradient-to-r from-amber-50/30 to-card ring-1 ring-amber-100" 
             : "border-border/60 shadow-sm hover:border-primary/20"
@@ -154,7 +164,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
           {hasValidHeroImage ? (
             <img 
               src={heroImage!} 
-              alt={center.name}
+              alt={`${center.name} treatment facility in ${center.city}, ${center.state}`}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
               decoding="async"
@@ -185,8 +195,8 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
           {/* Featured badge overlay */}
           {showFeaturedBadge && (
             <div className="absolute right-2 top-2">
-              <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">
-                <Crown className="h-2.5 w-2.5" />
+              <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" aria-label="Featured treatment center">
+                <Crown className="h-2.5 w-2.5" aria-hidden="true" />
                 Featured
               </Badge>
             </div>
@@ -212,28 +222,28 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               <MapPin className={cn(
                 "h-3.5 w-3.5 shrink-0",
                 showFeaturedBadge ? "text-amber-500" : "text-primary"
-              )} />
-              <span className="truncate font-medium">{center.city}, {center.state}</span>
+              )} aria-hidden="true" />
+              <span className="truncate font-medium" aria-label={`Location: ${center.city}, ${center.state}`}>{center.city}, {center.state}</span>
             </div>
 
             {/* Badge row */}
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap" role="list" aria-label="Provider credentials">
               {center.verified && (
-                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0">
-                  <ShieldCheck className="h-3 w-3" />
-                  Verified
+                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0" role="listitem">
+                  <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+                  <span>Verified</span>
                 </Badge>
               )}
               {yearsInBusiness && yearsInBusiness > 0 && (
-                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 border-0">
-                  <Clock className="h-3 w-3" />
-                  {yearsInBusiness}+ Years
+                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 border-0" role="listitem">
+                  <Clock className="h-3 w-3" aria-hidden="true" />
+                  <span>{yearsInBusiness}+ Years in business</span>
                 </Badge>
               )}
               {hasInsurance && (
-                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 border-0">
-                  <CreditCard className="h-3 w-3" />
-                  Accepts Insurance
+                <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 border-0" role="listitem">
+                  <CreditCard className="h-3 w-3" aria-hidden="true" />
+                  <span>Accepts Insurance</span>
                 </Badge>
               )}
             </div>
@@ -245,14 +255,16 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               variant="default" 
               size="sm"
               onClick={handleGetHelpClick}
+              aria-label={`Check availability at ${center.name}`}
               className={cn(
                 "w-full h-8 text-xs font-semibold gap-1.5",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                 showFeaturedBadge 
                   ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
                   : "shadow-sm"
               )}
             >
-              <Heart className="h-3.5 w-3.5" />
+              <Heart className="h-3.5 w-3.5" aria-hidden="true" />
               Check Availability
             </Button>
           </div>
@@ -266,9 +278,19 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
     <article
       ref={cardRef}
       onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for ${center.name} treatment center in ${center.city}, ${center.state}${center.verified ? ', verified provider' : ''}${showFeaturedBadge ? ', featured' : ''}`}
       className={cn(
         "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300 cursor-pointer",
         "hover:shadow-xl hover:-translate-y-1",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         showFeaturedBadge 
           ? "border-amber-200/80 shadow-lg ring-1 ring-amber-200/50" 
           : "border-border/60 shadow-md hover:border-primary/20"
@@ -280,7 +302,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
           <>
             <img 
               src={heroImage!} 
-              alt={center.name}
+              alt={`${center.name} treatment facility exterior in ${center.city}, ${center.state}`}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
               decoding="async"
@@ -322,8 +344,8 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
         {/* Top badge */}
         {showFeaturedBadge && (
           <div className="absolute right-3 top-3">
-            <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider">
-              <Crown className="h-3 w-3" />
+            <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" aria-label="Featured treatment center">
+              <Crown className="h-3 w-3" aria-hidden="true" />
               Featured
             </Badge>
           </div>
@@ -371,7 +393,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
                 {center.name}
               </h3>
               <div className="flex items-center gap-1 mt-0.5">
-                <MapPin className="h-3 w-3 text-white/80 shrink-0" />
+                <MapPin className="h-3 w-3 text-white/80 shrink-0" aria-hidden="true" />
                 <span className="text-xs text-white/90 font-medium truncate">{center.city}, {center.state}</span>
               </div>
             </div>
@@ -383,23 +405,23 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
       <div className="flex flex-1 flex-col p-3">
 
         {/* Badge row */}
-        <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+        <div className="flex items-center gap-1.5 mb-2 flex-wrap" role="list" aria-label="Provider credentials">
           {center.verified && (
-            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0 rounded-full">
-              <ShieldCheck className="h-3 w-3" />
-              Verified
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0 rounded-full" role="listitem">
+              <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+              <span>Verified</span>
             </Badge>
           )}
           {yearsInBusiness && yearsInBusiness > 0 && (
-            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 border-0 rounded-full">
-              <Clock className="h-3 w-3" />
-              {yearsInBusiness}+ Years
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 border-0 rounded-full" role="listitem">
+              <Clock className="h-3 w-3" aria-hidden="true" />
+              <span>{yearsInBusiness}+ Years in business</span>
             </Badge>
           )}
           {hasInsurance && (
-            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 border-0 rounded-full">
-              <CreditCard className="h-3 w-3" />
-              Accepts Insurance
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 border-0 rounded-full" role="listitem">
+              <CreditCard className="h-3 w-3" aria-hidden="true" />
+              <span>Accepts Insurance</span>
             </Badge>
           )}
         </div>
@@ -441,14 +463,16 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
             variant="default" 
             size="sm"
             onClick={handleGetHelpClick}
+            aria-label={`Check availability at ${center.name}`}
             className={cn(
               "w-full gap-1.5 h-9 text-xs font-semibold",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
               showFeaturedBadge 
                 ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
                 : "shadow-sm"
             )}
           >
-            <Heart className="h-3.5 w-3.5" />
+            <Heart className="h-3.5 w-3.5" aria-hidden="true" />
             Check Availability
           </Button>
         </div>
