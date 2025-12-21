@@ -127,9 +127,9 @@ const App = () => (
       <TooltipProvider>
       <Toaster />
       <Sonner />
-      <CookieConsentBanner />
       <BrowserRouter>
         <ScrollToTop />
+        <CookieConsentBanner />
         <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/" element={<Index />} />
