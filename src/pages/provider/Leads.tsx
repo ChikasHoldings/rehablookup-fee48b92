@@ -22,6 +22,8 @@ import {
   Share2,
   Star,
   Download,
+  Lock,
+  Bell,
 } from "lucide-react";
 import {
   Select,
@@ -47,6 +49,8 @@ import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components
 import { LeadScoreBadge } from "@/components/provider/leads/LeadScoreBadge";
 import { LeadDetailPanel, type Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { MobileLeadCard } from "@/components/provider/leads/MobileLeadCard";
+import { LockedLeadCard } from "@/components/provider/leads/LockedLeadCard";
+import { LockedLeadDetailPanel } from "@/components/provider/leads/LockedLeadDetailPanel";
 import { calculateLeadScore } from "@/lib/leadScoring";
 import { useSubscription } from "@/hooks/useSubscription";
 import { 
@@ -478,8 +482,43 @@ export default function ProviderLeadsPage() {
         </div>
       )}
 
+      {/* Basic Plan Upgrade Banner */}
+      {(!isMobile || mobileView === 'list') && currentPlan === "basic" && leads.length > 0 && (
+        <div className="flex-shrink-0 px-4 md:px-6 pt-4">
+          <Card className="p-4 bg-gradient-to-r from-primary/10 via-primary/5 to-amber-500/10 border-primary/20">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Bell className="h-6 w-6 text-primary animate-pulse" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-foreground">
+                      {leads.length} Lead{leads.length > 1 ? 's' : ''} Waiting for You!
+                    </h3>
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-0">
+                      <Lock className="h-3 w-3 mr-1" />
+                      Locked
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    People are interested in your facility. Upgrade to view their contact details and reach out.
+                  </p>
+                </div>
+              </div>
+              <Button asChild size="lg" className="gap-2 shadow-lg w-full sm:w-auto flex-shrink-0">
+                <Link to="/provider/billing">
+                  <Zap className="h-4 w-4" />
+                  Unlock Leads - $399/mo
+                </Link>
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Lead Limit Banners - Consistent with Dashboard */}
-      {(!isMobile || mobileView === 'list') && (
+      {(!isMobile || mobileView === 'list') && currentPlan !== "basic" && (
         <div className="flex-shrink-0 px-4 md:px-6 pt-2 space-y-2">
           <LeadLimitReachedBanner 
             usedLeads={thisMonthQualified.length} 
@@ -735,35 +774,8 @@ export default function ProviderLeadsPage() {
               </div>
             ) : (
               <>
-                {/* Basic Plan Upgrade Overlay */}
-                {currentPlan === "basic" && leads.length > 0 && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
-                    <div className="text-center max-w-sm p-6">
-                      <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                        <Zap className="h-7 w-7 text-primary" />
-                      </div>
-                      <h3 className="font-semibold text-lg text-foreground mb-2">
-                        {leads.length} Lead{leads.length > 1 ? 's' : ''} Waiting
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Upgrade to Professional to view contact details and connect with people seeking help.
-                      </p>
-                      <div className="space-y-3">
-                        <Button asChild className="w-full" size="lg">
-                          <Link to="/provider/billing">
-                            <Zap className="h-4 w-4 mr-2" />
-                            Upgrade to View Leads
-                          </Link>
-                        </Button>
-                        <p className="text-xs text-muted-foreground">
-                          Up to 100 leads/month • Full contact info • Direct communication
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className={cn("space-y-3", currentPlan === "basic" && leads.length > 0 && "blur-sm pointer-events-none")}>
+                {/* Basic Plan - Show locked lead cards instead of blur overlay */}
+                <div className="space-y-3">
                   {filteredLeads.map((lead, idx) => {
                     const locked = isLeadLocked(lead, idx);
                     const selected = selectedLead?.id === lead.id;
@@ -774,6 +786,22 @@ export default function ProviderLeadsPage() {
                       : currentPlan === "featured" ? "exclusive" 
                       : currentPlan === "professional" ? "shared" 
                       : null;
+                    
+                    // Basic plan: show locked lead cards
+                    if (currentPlan === "basic") {
+                      return (
+                        <LockedLeadCard
+                          key={lead.id}
+                          leadId={lead.id}
+                          name={lead.name}
+                          createdAt={lead.created_at}
+                          urgency={lead.urgency}
+                          source={lead.source}
+                          isSelected={selected}
+                          onClick={() => handleSelectLead(lead)}
+                        />
+                      );
+                    }
                     
                     // Use MobileLeadCard on mobile for swipe actions
                     if (isMobile) {
@@ -934,24 +962,38 @@ export default function ProviderLeadsPage() {
           isMobile && mobileView === 'detail' && "flex w-full",
           isMobile && mobileView === 'list' && "hidden"
         )}>
-          <LeadDetailPanel 
-            lead={selectedLead} 
-            onClose={() => {
-              if (isMobile) {
-                handleBackToList();
-              } else {
-                setSelectedLead(null);
+          {/* Show locked detail panel for basic users */}
+          {currentPlan === "basic" ? (
+            <LockedLeadDetailPanel 
+              totalLeadsCount={totalLeadsCount}
+              onClose={() => {
+                if (isMobile) {
+                  handleBackToList();
+                } else {
+                  setSelectedLead(null);
+                }
+              }}
+            />
+          ) : (
+            <LeadDetailPanel 
+              lead={selectedLead} 
+              onClose={() => {
+                if (isMobile) {
+                  handleBackToList();
+                } else {
+                  setSelectedLead(null);
+                }
+              }}
+              facilityName={selectedLead?.facility_name}
+              exclusivity={
+                selectedLead?.exclusivity === 'exclusive' ? 'exclusive'
+                : selectedLead?.exclusivity === 'shared' ? 'shared'
+                : currentPlan === "featured" ? "exclusive" 
+                : currentPlan === "professional" ? "shared" 
+                : null
               }
-            }}
-            facilityName={selectedLead?.facility_name}
-            exclusivity={
-              selectedLead?.exclusivity === 'exclusive' ? 'exclusive'
-              : selectedLead?.exclusivity === 'shared' ? 'shared'
-              : currentPlan === "featured" ? "exclusive" 
-              : currentPlan === "professional" ? "shared" 
-              : null
-            }
-          />
+            />
+          )}
         </div>
       </div>
 
