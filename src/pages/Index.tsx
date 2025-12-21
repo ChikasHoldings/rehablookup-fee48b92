@@ -313,7 +313,7 @@ const Index = () => {
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
             <h1 className="mb-3 font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Find Drug &amp; Alcohol Rehab Centers Near You
+              Find the Right Path to Recovery
             </h1>
 
             {/* Subheadline */}
