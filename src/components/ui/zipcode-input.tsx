@@ -151,12 +151,7 @@ export function ZipcodeInput({
         {(zipcodeError || error) && (
           <p className="text-xs text-destructive">{zipcodeError || error}</p>
         )}
-        {hasAutoFilled && !error && (
-          <p className="text-xs text-green-600 flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            Location auto-detected
-          </p>
-        )}
+        {/* Auto-detection message hidden but functionality preserved */}
       </div>
     );
   }
@@ -241,12 +236,7 @@ export function ZipcodeInput({
           </div>
         </div>
         
-        {hasAutoFilled && !error && (
-          <p className="text-xs text-green-600 flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            City and state auto-detected from ZIP code
-          </p>
-        )}
+        {/* Auto-detection message hidden but functionality preserved */}
       </div>
     );
   }
@@ -331,12 +321,7 @@ export function ZipcodeInput({
         </div>
       </div>
       
-      {hasAutoFilled && !error && (
-        <p className="text-xs text-green-600 flex items-center gap-1">
-          <CheckCircle2 className="h-3 w-3" />
-          City and state auto-detected from ZIP code
-        </p>
-      )}
+      {/* Auto-detection message hidden but functionality preserved */}
     </div>
   );
 }
