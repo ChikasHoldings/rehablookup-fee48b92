@@ -73,8 +73,8 @@ const About = () => {
   return (
     <Layout>
       <SEO
-        title="About RehabLookup - Trusted Addiction Treatment Directory"
-        description="RehabLookup connects families with verified addiction treatment centers. Learn about our mission, values, and commitment to transparency in helping you find recovery."
+        title="About Us - Trusted Rehab Directory | RehabLookup"
+        description="RehabLookup connects families with verified addiction treatment centers. Learn our mission, values, and commitment to transparency in recovery."
         canonical="/about"
         breadcrumbs={[
           { name: "Home", url: "/" },
@@ -96,7 +96,7 @@ const About = () => {
               <span className="text-sm font-medium text-primary-foreground">Our Story</span>
             </div>
             <h1 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
-              About RehabLookup
+              About RehabLookup: Trusted Addiction Treatment Directory
             </h1>
             <p className="text-base text-primary-foreground/80 leading-relaxed md:text-lg max-w-xl mx-auto">
               Connecting families with trusted addiction treatment centers through transparency and compassion.

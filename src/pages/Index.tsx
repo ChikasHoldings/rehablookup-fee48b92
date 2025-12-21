@@ -229,8 +229,8 @@ const Index = () => {
   return (
     <Layout>
       <SEO
-        title="Find Addiction Treatment Centers Near You | RehabLookup"
-        description="Search 15,000+ verified drug and alcohol rehab centers. Compare treatment options, verify insurance coverage, and find the right recovery program. Confidential help available 24/7."
+        title="RehabLookup: Find 15,000+ Addiction Treatment Centers"
+        description="Search verified drug and alcohol rehab centers near you. Compare programs, check insurance coverage, and find recovery help. Free, confidential 24/7."
         canonical="/"
         keywords={[
           "drug rehab near me",
@@ -313,7 +313,7 @@ const Index = () => {
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline */}
             <h1 className="mb-3 font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Find the Right Path to Recovery
+              Find Drug &amp; Alcohol Rehab Centers Near You
             </h1>
 
             {/* Subheadline */}

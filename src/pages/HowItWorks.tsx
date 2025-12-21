@@ -94,8 +94,8 @@ const HowItWorks = () => {
   return (
     <Layout>
       <SEO
-        title="How It Works - Find Treatment in 3 Simple Steps"
-        description="Learn how RehabLookup helps you find the right addiction treatment center. Search, compare, and connect with verified facilities in three easy steps."
+        title="How It Works - Find Rehab in 3 Steps | RehabLookup"
+        description="Learn how RehabLookup helps you find addiction treatment. Search, compare, and connect with verified rehab centers in three easy steps."
         canonical="/how-it-works"
         breadcrumbs={[
           { name: "Home", url: "/" },
