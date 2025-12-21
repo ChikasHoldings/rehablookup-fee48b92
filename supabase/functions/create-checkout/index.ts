@@ -172,7 +172,6 @@ serve(async (req) => {
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      customer_creation: customerId ? undefined : "always",
       // Required for existing customers with tax_id_collection
       customer_update: customerId ? {
         name: "auto",
