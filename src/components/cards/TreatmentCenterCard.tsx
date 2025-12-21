@@ -1,14 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, ArrowRight, Crown, ShieldCheck, Eye, Clock, CreditCard, Phone } from "lucide-react";
+import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Heart } from "lucide-react";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
 import { useState, useCallback, memo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
-import { FacilityQuickViewModal } from "./FacilityQuickViewModal";
 
 interface TreatmentCenterCardProps {
   center: TreatmentCenter & { 
@@ -61,9 +60,9 @@ function getInitials(name: string): string {
 }
 
 export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, featured, variant = "default" }: TreatmentCenterCardProps) {
+  const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
   const [heroImageError, setHeroImageError] = useState(false);
-  const [quickViewOpen, setQuickViewOpen] = useState(false);
   const cardRef = useRef<HTMLElement>(null);
   const hasTrackedImpression = useRef(false);
   const { trackImpression } = useProviderEventTracking();
@@ -125,13 +124,25 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
     }
   }, [showFeaturedBadge, center.isFromDatabase, center.id]);
 
+  const handleCardClick = useCallback(() => {
+    handleFeaturedClick();
+    navigate(detailsUrl, { state: { fromSearch: true } });
+  }, [handleFeaturedClick, navigate, detailsUrl]);
+
+  const handleGetHelpClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleFeaturedClick();
+    navigate(detailsUrl, { state: { fromSearch: true, openContactForm: true } });
+  }, [handleFeaturedClick, navigate, detailsUrl]);
+
   // Compact horizontal layout for mobile/list view
   if (variant === "compact") {
     return (
       <article
         ref={cardRef}
+        onClick={handleCardClick}
         className={cn(
-          "group relative flex overflow-hidden rounded-xl border bg-card transition-all duration-300",
+          "group relative flex overflow-hidden rounded-xl border bg-card transition-all duration-300 cursor-pointer",
           "hover:shadow-lg active:scale-[0.995]",
           showFeaturedBadge 
             ? "border-amber-200/80 bg-gradient-to-r from-amber-50/30 to-card ring-1 ring-amber-100" 
@@ -229,51 +240,23 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 mt-3">
+          <div className="mt-3">
             <Button 
-              variant="ghost" 
+              variant="default" 
               size="sm"
-              onClick={() => setQuickViewOpen(true)}
+              onClick={handleGetHelpClick}
               className={cn(
-                "h-8 px-2.5 text-xs gap-1.5 font-medium",
+                "w-full h-8 text-xs font-semibold gap-1.5",
                 showFeaturedBadge 
-                  ? "text-amber-600 hover:bg-amber-100 hover:text-amber-700"
-                  : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
+                  : "shadow-sm"
               )}
             >
-              <Eye className="h-3.5 w-3.5" />
-              Quick View
+              <Heart className="h-3.5 w-3.5" />
+              Get Help Today
             </Button>
-            <Link 
-              to={detailsUrl} 
-              state={{ fromSearch: true }}
-              onClick={handleFeaturedClick}
-              className="flex-1"
-            >
-              <Button 
-                variant="default" 
-                size="sm"
-                className={cn(
-                  "w-full h-8 text-xs font-semibold gap-1.5",
-                  showFeaturedBadge 
-                    ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
-                    : "shadow-sm"
-                )}
-              >
-                View Details
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
           </div>
         </div>
-        
-        {/* Quick View Modal */}
-        <FacilityQuickViewModal
-          center={center}
-          open={quickViewOpen}
-          onOpenChange={setQuickViewOpen}
-          featured={featured}
-        />
       </article>
     );
   }
@@ -282,8 +265,9 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
   return (
     <article
       ref={cardRef}
+      onClick={handleCardClick}
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300",
+        "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-300 cursor-pointer",
         "hover:shadow-xl hover:-translate-y-1",
         showFeaturedBadge 
           ? "border-amber-200/80 shadow-lg ring-1 ring-amber-200/50" 
@@ -451,51 +435,23 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
           {center.description}
         </p>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/40">
+        {/* Single CTA Button */}
+        <div className="mt-3 pt-2 border-t border-border/40">
           <Button 
-            variant="ghost" 
+            variant="default" 
             size="sm"
-            onClick={() => setQuickViewOpen(true)}
+            onClick={handleGetHelpClick}
             className={cn(
-              "h-8 px-2 gap-1 text-xs font-medium",
+              "w-full gap-1.5 h-9 text-xs font-semibold",
               showFeaturedBadge 
-                ? "text-amber-600 hover:bg-amber-100 hover:text-amber-700"
-                : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+                ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
+                : "shadow-sm"
             )}
           >
-            <Eye className="h-3.5 w-3.5" />
-            Quick View
+            <Heart className="h-3.5 w-3.5" />
+            Get Help Today
           </Button>
-          <Link 
-            to={detailsUrl} 
-            state={{ fromSearch: true }}
-            className="flex-1"
-            onClick={handleFeaturedClick}
-          >
-            <Button 
-              variant="default" 
-              size="sm"
-              className={cn(
-                "w-full gap-1.5 h-8 text-xs font-semibold",
-                showFeaturedBadge 
-                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
-                  : "shadow-sm"
-              )}
-            >
-              View Profile
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          </Link>
         </div>
-        
-        {/* Quick View Modal */}
-        <FacilityQuickViewModal
-          center={center}
-          open={quickViewOpen}
-          onOpenChange={setQuickViewOpen}
-          featured={featured}
-        />
       </div>
     </article>
   );
