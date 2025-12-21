@@ -395,8 +395,8 @@ export default function Insurance() {
   return (
     <Layout>
       <SEO
-        title="Insurance Coverage for Addiction Treatment | RehabLookup"
-        description="Learn which health insurance plans cover addiction treatment. Understand your coverage for detox, inpatient rehab, outpatient programs, and medication-assisted treatment."
+        title="Rehab Insurance Coverage Guide | RehabLookup"
+        description="Learn which insurance plans cover addiction treatment. Understand coverage for detox, inpatient rehab, outpatient programs, and medication-assisted treatment."
         canonical="/insurance"
         breadcrumbs={[
           { name: "Home", url: "/" },
@@ -409,7 +409,7 @@ export default function Insurance() {
         <div className="container">
           <div className="mx-auto max-w-2xl text-center">
             <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Insurance Coverage for Treatment
+              Insurance Coverage for Addiction Treatment
             </h1>
             <p className="text-primary-foreground/80 text-sm md:text-base">
               Most health insurance plans cover addiction treatment. Learn what's typically covered and how to verify your benefits.

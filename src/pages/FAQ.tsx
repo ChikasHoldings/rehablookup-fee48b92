@@ -314,8 +314,8 @@ const FAQ = () => {
   return (
     <Layout>
       <SEO
-        title="Frequently Asked Questions About Addiction Treatment"
-        description="Get answers to common questions about addiction treatment, insurance coverage, family support, recovery, and using RehabLookup to find the right rehab center."
+        title="Addiction Treatment FAQ | RehabLookup"
+        description="Get answers about addiction treatment, insurance coverage, family support, and recovery. Learn how RehabLookup helps you find the right rehab center."
         canonical="/faq"
         structuredData={generateFAQSchema(allFaqsForSchema)}
         breadcrumbs={[
@@ -335,7 +335,7 @@ const FAQ = () => {
         <div className="container relative">
           <div className="mx-auto max-w-2xl text-center">
             <h1 className="mb-3 text-2xl font-bold text-primary-foreground md:text-3xl">
-              Frequently Asked Questions
+              Addiction Treatment FAQ
             </h1>
             <p className="mb-6 text-sm text-primary-foreground/80 leading-relaxed max-w-lg mx-auto md:text-base">
               Find answers to common questions about finding treatment, costs, privacy, and how RehabLookup works.

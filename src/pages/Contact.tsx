@@ -86,8 +86,8 @@ const Contact = () => {
   return (
     <Layout>
       <SEO
-        title="Contact Us - Get Help Finding Treatment"
-        description="Contact RehabLookup for assistance finding addiction treatment. Our specialists are available 24/7 to help you or your loved one find the right rehab center."
+        title="Contact RehabLookup - 24/7 Treatment Help"
+        description="Contact our specialists for help finding addiction treatment. Get confidential assistance locating the right rehab center for you or a loved one."
         canonical="/contact"
         breadcrumbs={[
           { name: "Home", url: "/" },
@@ -109,7 +109,7 @@ const Contact = () => {
             <span className="text-sm font-medium text-primary-foreground">Get In Touch</span>
           </div>
           <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl">
-            Contact Us
+            Contact Us for Addiction Treatment Help
           </h1>
           <p className="text-base text-primary-foreground/80 max-w-xl mx-auto leading-relaxed md:text-lg">
             Have questions about finding treatment? We're here to help.

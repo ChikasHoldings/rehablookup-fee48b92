@@ -523,8 +523,8 @@ const ForProviders = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SEO
-        title="List Your Treatment Center - For Providers"
-        description="Partner with RehabLookup to increase your treatment center's visibility. Connect with families seeking quality addiction care. Free listing available."
+        title="List Your Rehab Center - For Providers | RehabLookup"
+        description="Partner with RehabLookup to boost your treatment center visibility. Connect with families seeking addiction care. Free listing available."
         canonical="/for-providers"
         keywords={[
           "list rehab center",
