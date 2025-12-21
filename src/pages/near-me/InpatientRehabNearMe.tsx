@@ -153,8 +153,6 @@ export default function InpatientRehabNearMe() {
         ? { state: stateData.name, stateAbbr: stateData.abbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
-      avgRating: 4.6,
-      reviewCount: facilities.length * 14,
     }),
   ];
 

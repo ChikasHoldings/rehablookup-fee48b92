@@ -130,8 +130,6 @@ export default function DualDiagnosisNearMe() {
         ? { state: stateData.name, stateAbbr: stateData.abbr }
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
-      avgRating: 4.7,
-      reviewCount: facilities.length * 11,
     }),
   ];
 
