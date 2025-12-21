@@ -113,7 +113,7 @@ export function CookieConsentBanner() {
       aria-label="Cookie consent"
       aria-describedby="cookie-description"
     >
-      <div className="mx-auto max-w-4xl rounded-xl border border-border bg-background/95 shadow-2xl backdrop-blur-sm">
+      <div className="mx-auto max-w-4xl rounded-xl border border-border bg-background shadow-2xl">
         <div className="p-4 md:p-6">
           {/* Header */}
           <div className="flex items-start justify-between gap-4 mb-4">
