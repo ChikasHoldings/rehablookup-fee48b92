@@ -899,3 +899,64 @@ export function generateInsuranceSchema(insurance: {
     }),
   };
 }
+
+// Search results / directory listing schema
+export function generateSearchResultsSchema(params: {
+  query?: string;
+  location?: string;
+  resultCount: number;
+  facilities?: Array<{
+    name: string;
+    city: string;
+    state: string;
+    slug?: string;
+  }>;
+}) {
+  const locationText = params.location ? ` near ${params.location}` : "";
+  
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "SearchResultsPage",
+      name: `Addiction Treatment Centers${locationText}`,
+      description: `Browse ${params.resultCount} verified addiction treatment centers${locationText}. Compare programs, check insurance, and find the right rehab facility.`,
+      mainEntity: {
+        "@type": "ItemList",
+        name: `Treatment Centers${locationText}`,
+        numberOfItems: params.resultCount,
+        itemListOrder: "https://schema.org/ItemListOrderDescending",
+        itemListElement: params.facilities?.slice(0, 10).map((facility, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          item: {
+            "@type": ["MedicalBusiness", "LocalBusiness"],
+            name: facility.name,
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: facility.city,
+              addressRegion: facility.state,
+              addressCountry: "US",
+            },
+            url: facility.slug 
+              ? `https://rehablookup.com/center/${facility.slug}`
+              : undefined,
+            medicalSpecialty: "Addiction Medicine",
+          },
+        })) || [],
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      url: "https://rehablookup.com",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: "https://rehablookup.com/search-results?location={search_term_string}",
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+  ];
+}

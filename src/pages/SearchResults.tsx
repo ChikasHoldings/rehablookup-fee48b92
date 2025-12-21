@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { SEO } from "@/components/SEO";
+import { SEO, generateSearchResultsSchema } from "@/components/SEO";
 import { SearchResultCard } from "@/components/cards/SearchResultCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
@@ -421,9 +421,19 @@ const SearchResults = () => {
   return (
     <Layout>
       <SEO
-        title={`Treatment Centers ${location ? `near ${location}` : ""} | Search Results`}
-        description={`Browse ${filteredCenters.length} verified treatment centers. Compare programs, read reviews, and find the right rehab facility.`}
+        title={location ? `Rehab Centers Near ${location}` : "Find Treatment Centers"}
+        description={`Browse ${filteredCenters.length} verified addiction treatment centers${location ? ` near ${location}` : ""}. Compare rehab programs, check insurance, and start recovery.`}
         canonical="/search-results"
+        structuredData={generateSearchResultsSchema({
+          location: location || undefined,
+          resultCount: filteredCenters.length,
+          facilities: paginatedCenters.slice(0, 10).map(c => ({
+            name: c.name,
+            city: c.city,
+            state: c.state,
+            slug: 'slug' in c ? (c as any).slug : undefined,
+          })),
+        })}
       />
       
       {/* Sticky Filter Header */}
