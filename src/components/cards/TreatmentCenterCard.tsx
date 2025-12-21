@@ -415,7 +415,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
           {hasInsurance && (
             <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 border-0 rounded-full">
               <CreditCard className="h-3 w-3" />
-              Insurance
+              Accepts Insurance
             </Badge>
           )}
         </div>
