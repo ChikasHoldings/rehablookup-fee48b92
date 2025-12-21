@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { PageLoading } from "@/components/ui/page-loading";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 
 // Eagerly load all public pages for instant navigation
 import Index from "./pages/Index";
@@ -126,6 +127,7 @@ const App = () => (
       <TooltipProvider>
       <Toaster />
       <Sonner />
+      <CookieConsentBanner />
       <BrowserRouter>
         <ScrollToTop />
         <Suspense fallback={<PageLoading />}>

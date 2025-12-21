@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { initPerformanceOptimizations } from "./lib/performanceUtils";
+import { initSecurity } from "./lib/httpsRedirect";
 
 // Suppress benign React Router ref warnings
 const originalWarn = console.warn;
@@ -15,6 +16,9 @@ console.warn = (...args) => {
   }
   originalWarn.apply(console, args);
 };
+
+// Initialize security (HTTPS enforcement)
+initSecurity();
 
 // Initialize Sentry for error tracking (before React renders)
 Sentry.init({
