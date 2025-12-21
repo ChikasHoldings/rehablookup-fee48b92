@@ -253,7 +253,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               )}
             >
               <Heart className="h-3.5 w-3.5" />
-              Get Help Today
+              Check Availability
             </Button>
           </div>
         </div>
@@ -449,7 +449,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
             )}
           >
             <Heart className="h-3.5 w-3.5" />
-            Get Help Today
+            Check Availability
           </Button>
         </div>
       </div>
