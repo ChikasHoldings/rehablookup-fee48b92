@@ -22,6 +22,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { ActivityLog } from "@/components/seeker/ActivityLog";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export default function SeekerSettings() {
   const [displayName, setDisplayName] = useState("");
@@ -127,6 +129,10 @@ export default function SeekerSettings() {
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
+      await logActivity({
+        eventType: "avatar_update",
+        description: "Updated profile picture"
+      });
       toast({
         title: "Avatar updated",
         description: "Your profile picture has been updated."
@@ -161,6 +167,10 @@ export default function SeekerSettings() {
         variant: "destructive"
       });
     } else {
+      await logActivity({
+        eventType: "profile_update",
+        description: "Updated display name"
+      });
       toast({
         title: "Profile updated",
         description: "Your profile has been saved."
@@ -211,6 +221,10 @@ export default function SeekerSettings() {
         variant: "destructive"
       });
     } else {
+      await logActivity({
+        eventType: "password_change",
+        description: "Changed account password"
+      });
       toast({
         title: "Password updated",
         description: "Your password has been changed successfully."
@@ -246,6 +260,10 @@ export default function SeekerSettings() {
         variant: "destructive"
       });
     } else {
+      await logActivity({
+        eventType: "email_change",
+        description: "Requested email change"
+      });
       toast({
         title: "Verification email sent",
         description: "Please check your new email address to confirm the change."
@@ -713,6 +731,9 @@ export default function SeekerSettings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Activity Log */}
+        <ActivityLog />
       </div>
     </div>
   );
