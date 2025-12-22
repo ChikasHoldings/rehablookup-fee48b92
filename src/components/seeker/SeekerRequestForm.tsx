@@ -157,20 +157,48 @@ export function SeekerRequestForm({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
+      // Fetch seeker profile with all available fields
       const { data: profile } = await supabase
         .from('seeker_profiles')
-        .select('display_name')
+        .select('first_name, last_name, display_name, phone, zipcode, city, state')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
+      // Prefill email from session
       if (session.user.email && !prefillData?.email) {
         setValue('email', session.user.email);
       }
 
-      if (profile?.display_name && !prefillData?.firstName) {
-        const parts = profile.display_name.split(' ');
-        if (parts.length >= 1) setValue('firstName', parts[0]);
-        if (parts.length >= 2) setValue('lastName', parts.slice(1).join(' '));
+      // Prefill from profile data
+      if (profile) {
+        // Use first_name and last_name if available, otherwise parse display_name
+        if (profile.first_name && !prefillData?.firstName) {
+          setValue('firstName', profile.first_name);
+        } else if (profile.display_name && !prefillData?.firstName) {
+          const parts = profile.display_name.split(' ');
+          if (parts.length >= 1) setValue('firstName', parts[0]);
+        }
+
+        if (profile.last_name && !prefillData?.lastName) {
+          setValue('lastName', profile.last_name);
+        } else if (profile.display_name && !prefillData?.lastName) {
+          const parts = profile.display_name.split(' ');
+          if (parts.length >= 2) setValue('lastName', parts.slice(1).join(' '));
+        }
+
+        // Phone number
+        if (profile.phone && !prefillData?.phone) {
+          setValue('phone', profile.phone);
+        }
+
+        // Location data
+        if (profile.zipcode && !prefillData?.locationZip) {
+          setValue('locationZip', profile.zipcode);
+        }
+        
+        if (profile.city && profile.state && !prefillData?.locationCityState) {
+          setValue('locationCityState', `${profile.city}, ${profile.state}`);
+        }
       }
     };
 

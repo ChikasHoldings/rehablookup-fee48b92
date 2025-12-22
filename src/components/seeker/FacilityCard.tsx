@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   MapPin, 
@@ -241,18 +241,20 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
   );
 }
 
-export function FacilityCardSkeleton() {
-  return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="flex flex-col sm:flex-row sm:min-h-[160px]">
-        <div className="h-32 sm:h-full w-full sm:w-44 lg:w-52 bg-muted animate-pulse shrink-0" />
-        <div className="p-3 sm:p-4 flex-1 space-y-2.5 min-w-0">
-          <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
-          <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
-          <div className="h-3 w-full bg-muted rounded animate-pulse" />
-          <div className="h-7 w-20 bg-muted rounded animate-pulse mt-auto" />
+export const FacilityCardSkeleton = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  function FacilityCardSkeleton(props, ref) {
+    return (
+      <div ref={ref} {...props} className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:min-h-[160px]">
+          <div className="h-32 sm:h-full w-full sm:w-44 lg:w-52 bg-muted animate-pulse shrink-0" />
+          <div className="p-3 sm:p-4 flex-1 space-y-2.5 min-w-0">
+            <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+            <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
+            <div className="h-3 w-full bg-muted rounded animate-pulse" />
+            <div className="h-7 w-20 bg-muted rounded animate-pulse mt-auto" />
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+);

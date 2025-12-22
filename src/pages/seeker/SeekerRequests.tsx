@@ -197,46 +197,80 @@ export default function SeekerRequests() {
 
   const fetchRequests = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session?.user?.email) {
+      setIsLoading(false);
+      return;
+    }
 
-    const { data, error } = await supabase
-      .from('leads')
-      .select(`
-        id,
-        facility_id,
-        created_at,
-        status,
-        urgency,
-        preferred_contact,
-        facilities!inner(name, slug, city, state, logo_url)
-      `)
-      .eq('email', session.user.email)
-      .order('created_at', { ascending: false });
+    try {
+      // First get leads for this user's email
+      const { data: leadsData, error: leadsError } = await supabase
+        .from('leads')
+        .select('id, facility_id, created_at, status, urgency, preferred_contact')
+        .eq('email', session.user.email)
+        .order('created_at', { ascending: false });
 
-    if (error) {
+      if (leadsError) {
+        console.error('Error fetching leads:', leadsError);
+        throw leadsError;
+      }
+
+      if (!leadsData || leadsData.length === 0) {
+        setRequests([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get facility details for leads that have facility_id
+      const facilityIds = leadsData
+        .filter(l => l.facility_id)
+        .map(l => l.facility_id as string);
+      
+      let facilitiesMap: Record<string, any> = {};
+      
+      if (facilityIds.length > 0) {
+        const { data: facilitiesData } = await supabase
+          .from('facilities')
+          .select('id, name, slug, city, state, logo_url')
+          .in('id', facilityIds);
+        
+        if (facilitiesData) {
+          facilitiesMap = facilitiesData.reduce((acc, f) => {
+            acc[f.id] = f;
+            return acc;
+          }, {} as Record<string, any>);
+        }
+      }
+
+      // Map leads with facility data
+      const mappedRequests: SubmittedRequest[] = leadsData.map(req => {
+        const facility = req.facility_id ? facilitiesMap[req.facility_id] : null;
+        return {
+          id: req.id,
+          facility_id: req.facility_id || '',
+          facility_name: facility?.name || 'General Inquiry',
+          facility_slug: facility?.slug || null,
+          facility_city: facility?.city || '',
+          facility_state: facility?.state || '',
+          facility_logo_url: facility?.logo_url || null,
+          created_at: req.created_at,
+          status: req.status,
+          urgency: req.urgency,
+          preferred_contact: req.preferred_contact
+        };
+      });
+
+      setRequests(mappedRequests);
+    } catch (error: any) {
       console.error('Error fetching requests:', error);
       toast({
         title: "Error loading requests",
         description: "Could not load your requests. Please try again.",
         variant: "destructive"
       });
-    } else if (data) {
-      setRequests(data.map(req => ({
-        id: req.id,
-        facility_id: req.facility_id || '',
-        facility_name: (req.facilities as any)?.name || 'Unknown Facility',
-        facility_slug: (req.facilities as any)?.slug || null,
-        facility_city: (req.facilities as any)?.city || '',
-        facility_state: (req.facilities as any)?.state || '',
-        facility_logo_url: (req.facilities as any)?.logo_url || null,
-        created_at: req.created_at,
-        status: req.status,
-        urgency: req.urgency,
-        preferred_contact: req.preferred_contact
-      })));
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const loadSavedData = async () => {
