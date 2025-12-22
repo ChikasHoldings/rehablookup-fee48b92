@@ -12,7 +12,6 @@ import {
   Building2,
   Eye,
   FileEdit,
-  Calendar,
   Phone,
   Mail,
   AlertTriangle,
@@ -20,7 +19,11 @@ import {
   TrendingUp,
   Sparkles,
   ChevronRight,
-  X
+  X,
+  Newspaper,
+  Megaphone,
+  Star,
+  Zap
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,16 +40,14 @@ import {
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
-
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { BasicPlanUpgradeBanner } from "@/components/provider/BasicPlanUpgradeBanner";
-
 import { LeadUsageProgressCard } from "@/components/provider/LeadUsageProgressCard";
 import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 
-// Metric Card Component with polished design
+// Compact Metric Card
 function MetricCard({ 
   title, 
   value, 
@@ -55,8 +56,7 @@ function MetricCard({
   iconBg, 
   iconColor,
   action,
-  isLoading,
-  trend
+  isLoading
 }: { 
   title: string;
   value: string | number;
@@ -66,60 +66,67 @@ function MetricCard({
   iconColor: string;
   action?: { label: string; href: string };
   isLoading?: boolean;
-  trend?: { value: number; label: string };
 }) {
   return (
-    <Card className="group relative overflow-hidden border-border/40 bg-gradient-to-br from-card via-card to-muted/20 hover:shadow-lg hover:border-border/60 transition-all duration-300">
-      {/* Decorative gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/[0.02] pointer-events-none" />
-      
-      <CardContent className="p-4 sm:p-5 relative">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1.5 flex-1 min-w-0">
-            <p className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+    <Card className="border-border/40 hover:border-border/60 transition-colors">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center gap-3">
+          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", iconBg)}>
+            <Icon className={cn("h-4 w-4", iconColor)} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
             {isLoading ? (
-              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-5 w-12 mt-0.5" />
             ) : (
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{value}</p>
-                {trend && (
-                  <span className={cn(
-                    "text-xs font-medium px-1.5 py-0.5 rounded-md",
-                    trend.value >= 0 
-                      ? "text-emerald-600 bg-emerald-500/10" 
-                      : "text-red-600 bg-red-500/10"
-                  )}>
-                    {trend.value >= 0 ? "+" : ""}{trend.value}%
-                  </span>
-                )}
-              </div>
+              <p className="text-lg font-bold text-foreground leading-tight">{value}</p>
             )}
-            {subtitle && (
-              <p className="text-xs text-muted-foreground/80 flex items-center gap-1.5">
-                <Calendar className="h-3 w-3 opacity-70" />
-                {subtitle}
-              </p>
-            )}
-            {action && (
-              <Button variant="link" className="h-auto p-0 text-xs font-medium text-primary hover:text-primary/80 mt-1" asChild>
-                <Link to={action.href} className="flex items-center gap-1 group/link">
-                  {action.label}
-                  <ChevronRight className="h-3 w-3 transition-transform group-hover/link:translate-x-0.5" />
-                </Link>
-              </Button>
-            )}
+            {subtitle && <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>}
           </div>
-          <div className={cn(
-            "h-11 w-11 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105",
-            iconBg
-          )}>
-            <Icon className={cn("h-5 w-5 sm:h-6 sm:w-6", iconColor)} />
-          </div>
+          {action && (
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+              <Link to={action.href}>
+                {action.label}
+                <ChevronRight className="h-3 w-3 ml-0.5" />
+              </Link>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
+
+// Platform News Data
+const platformNews = [
+  {
+    id: 1,
+    type: "feature",
+    icon: Zap,
+    title: "New Lead Analytics Dashboard",
+    description: "Track your conversion rates and lead quality with enhanced analytics.",
+    date: "Dec 20",
+    isNew: true
+  },
+  {
+    id: 2,
+    type: "announcement",
+    icon: Megaphone,
+    title: "Holiday Support Hours",
+    description: "Support available Dec 24-25 with limited hours. Happy Holidays!",
+    date: "Dec 18",
+    isNew: true
+  },
+  {
+    id: 3,
+    type: "tip",
+    icon: Star,
+    title: "Complete Your Profile",
+    description: "Facilities with complete profiles receive 40% more inquiries.",
+    date: "Dec 15",
+    isNew: false
+  }
+];
 
 export default function ProviderDashboardPage() {
   const queryClient = useQueryClient();
@@ -137,7 +144,6 @@ export default function ProviderDashboardPage() {
   const userName = profile?.first_name || "";
   
   const leadLimit = subscription?.lead_limit ?? 0;
-  // Only use "basic" as default AFTER loading completes to prevent flash
   const planKey = subscriptionLoading ? undefined : (subscription?.plan || "basic");
   const locationLimit = planKey ? PLAN_DETAILS[planKey]?.location_limit ?? 1 : 1;
   const usedLocations = facilities?.length ?? 0;
@@ -150,37 +156,11 @@ export default function ProviderDashboardPage() {
     return localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
   });
 
-  // Reset dismissed state when facility changes
   useEffect(() => {
     if (facilityId) {
       setProfilePromptDismissedFields(localStorage.getItem(`profile-prompt-dismissed-${facilityId}`));
     }
   }, [facilityId]);
-
-  // Compute missing fields
-  const computeMissingFields = () => {
-    if (!providerData?.facility) return [];
-    const f = providerData.facility;
-    const missing: string[] = [];
-    if (!f.description) missing.push("description");
-    if (!f.phone) missing.push("phone");
-    if (!f.address || !f.city || !f.state || !f.zip_code) missing.push("address");
-    if (!f.logo_url) missing.push("logo");
-    if (!f.gallery_urls || f.gallery_urls.length === 0) missing.push("photos");
-    if (servicesCount === 0) missing.push("services");
-    if (insuranceCount === 0) missing.push("insurance");
-    return missing.sort();
-  };
-
-  const handleDismissProfilePrompt = (e: React.MouseEvent, missingFields: string[]) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (facilityId) {
-      const fieldsKey = missingFields.sort().join(",");
-      localStorage.setItem(`profile-prompt-dismissed-${facilityId}`, fieldsKey);
-      setProfilePromptDismissedFields(fieldsKey);
-    }
-  };
 
   // Fetch recent leads
   const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
@@ -192,12 +172,12 @@ export default function ProviderDashboardPage() {
         .select("*")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(4);
       if (error) throw error;
       return (data || []) as Lead[];
     },
     enabled: !!facilityId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
   });
 
@@ -252,6 +232,31 @@ export default function ProviderDashboardPage() {
     refetchOnMount: false,
   });
 
+  // Compute missing fields
+  const computeMissingFields = () => {
+    if (!providerData?.facility) return [];
+    const f = providerData.facility;
+    const missing: string[] = [];
+    if (!f.description) missing.push("description");
+    if (!f.phone) missing.push("phone");
+    if (!f.address || !f.city || !f.state || !f.zip_code) missing.push("address");
+    if (!f.logo_url) missing.push("logo");
+    if (!f.gallery_urls || f.gallery_urls.length === 0) missing.push("photos");
+    if (servicesCount === 0) missing.push("services");
+    if (insuranceCount === 0) missing.push("insurance");
+    return missing.sort();
+  };
+
+  const handleDismissProfilePrompt = (e: React.MouseEvent, missingFields: string[]) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (facilityId) {
+      const fieldsKey = missingFields.sort().join(",");
+      localStorage.setItem(`profile-prompt-dismissed-${facilityId}`, fieldsKey);
+      setProfilePromptDismissedFields(fieldsKey);
+    }
+  };
+
   // Real-time subscription
   useEffect(() => {
     if (!facilityId) return;
@@ -288,7 +293,6 @@ export default function ProviderDashboardPage() {
       case "approved":
         return { 
           label: "Live", 
-          description: "Your listing is visible to families",
           icon: CheckCircle, 
           bgClass: "bg-emerald-500/10",
           textClass: "text-emerald-600",
@@ -297,7 +301,6 @@ export default function ProviderDashboardPage() {
       case "pending":
         return { 
           label: "Under Review", 
-          description: "Our team is reviewing your listing",
           icon: Clock, 
           bgClass: "bg-amber-500/10",
           textClass: "text-amber-600",
@@ -306,7 +309,6 @@ export default function ProviderDashboardPage() {
       default:
         return { 
           label: "Not Listed", 
-          description: "Complete your profile to go live",
           icon: AlertCircle, 
           bgClass: "bg-muted",
           textClass: "text-muted-foreground",
@@ -318,8 +320,6 @@ export default function ProviderDashboardPage() {
   const statusConfig = facility ? getStatusConfig(facility.status) : getStatusConfig("inactive");
   const StatusIcon = statusConfig.icon;
   const profileUrl = facility?.slug ? `/center/${facility.slug}` : facility?.id ? `/rehab-centers/${facility.id}` : null;
-
-  // Remove blocking skeleton - render page immediately, show inline loading states
 
   // Calculate leads awaiting follow-up
   const now = new Date();
@@ -337,90 +337,75 @@ export default function ProviderDashboardPage() {
   );
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-muted/40 via-background to-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-6 lg:space-y-8">
+    <div className="min-h-full bg-background">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
         
-        {/* Header Section - Enhanced */}
-        <header className="relative">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-xs sm:text-sm text-muted-foreground font-medium tracking-wide uppercase">
-                  {format(new Date(), "EEEE, MMMM d, yyyy")}
-                </p>
-              </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
-                {userName ? `Welcome back, ${userName}` : "Welcome back"}
-              </h1>
-              {facility && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Building2 className="h-4 w-4 text-primary/70" />
-                  <span>Managing</span>
-                  <span className="font-semibold text-foreground">{facility.name}</span>
-                  {facility.status === "approved" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      Live
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {facility && profileUrl && (
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Button variant="outline" size="sm" className="h-10 gap-2 border-border/60 hover:bg-muted/80 shadow-sm" asChild>
-                  <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-                    <Eye className="h-4 w-4" />
-                    <span className="hidden sm:inline">Preview</span> Listing
-                    <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
-                  </a>
-                </Button>
-                <Button size="sm" className="h-10 gap-2 shadow-sm" asChild>
-                  <Link to="/provider/listing">
-                    <FileEdit className="h-4 w-4" />
-                    Edit Listing
-                  </Link>
-                </Button>
+        {/* Compact Header */}
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="space-y-0.5">
+            <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+              {format(new Date(), "EEEE, MMM d")}
+            </p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+              {userName ? `Welcome, ${userName}` : "Dashboard"}
+            </h1>
+            {facility && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <span>{facility.name}</span>
+                {facility.status === "approved" && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                    Live
+                  </span>
+                )}
               </div>
             )}
           </div>
+          
+          {facility && profileUrl && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" asChild>
+                <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+                  <Eye className="h-3.5 w-3.5" />
+                  Preview
+                  <ArrowUpRight className="h-3 w-3 opacity-50" />
+                </a>
+              </Button>
+              <Button size="sm" className="h-8 text-xs gap-1.5" asChild>
+                <Link to="/provider/listing">
+                  <FileEdit className="h-3.5 w-3.5" />
+                  Edit Listing
+                </Link>
+              </Button>
+            </div>
+          )}
         </header>
 
-        {/* Alert Banners - Only show after subscription data is loaded to prevent flash */}
+        {/* Alert Banners */}
         {!subscriptionLoading && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} plan={planKey as "basic" | "professional" | "featured"} />
             <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
-            
             {planKey === "basic" && totalLeadsCount === 0 && <BasicPlanUpgradeBanner />}
             
-            {/* Basic Plan - Leads Waiting Banner */}
             {planKey === "basic" && totalLeadsCount > 0 && (
-              <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 via-card to-primary/5 overflow-hidden shadow-sm">
-                <CardContent className="p-5 sm:p-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-emerald-500 rounded-xl animate-ping opacity-20" />
-                        <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                          <span className="text-xl font-bold text-white">{totalLeadsCount}</span>
-                        </div>
+              <Card className="border-emerald-500/30 bg-emerald-500/5">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center">
+                        <span className="text-sm font-bold text-white">{totalLeadsCount}</span>
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-foreground">
+                        <p className="text-sm font-semibold text-foreground">
                           {totalLeadsCount} Lead{totalLeadsCount !== 1 ? 's' : ''} Waiting
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Families are interested. Upgrade to view contact details.
                         </p>
+                        <p className="text-xs text-muted-foreground">Upgrade to view contact details</p>
                       </div>
                     </div>
-                    <Button asChild className="shrink-0 gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-600/20">
+                    <Button size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700" asChild>
                       <Link to="/provider/billing">
-                        Unlock Leads
-                        <ArrowRight className="h-4 w-4" />
+                        Unlock <ArrowRight className="h-3 w-3 ml-1" />
                       </Link>
                     </Button>
                   </div>
@@ -433,37 +418,30 @@ export default function ProviderDashboardPage() {
         {/* Profile Completion Prompt */}
         {providerData?.facility && (() => {
           const missingFields = computeMissingFields();
-          
           if (missingFields.length === 0) return null;
-          
-          // Check if dismissed for the same set of missing fields
           const currentFieldsKey = missingFields.join(",");
           if (profilePromptDismissedFields === currentFieldsKey) return null;
-          
           const missingText = missingFields.length === 1 
-            ? `Add your ${missingFields[0]}` 
-            : `Add ${missingFields.slice(0, 2).join(", ")}${missingFields.length > 2 ? ` +${missingFields.length - 2} more` : ""}`;
+            ? `Add ${missingFields[0]}` 
+            : `Add ${missingFields.slice(0, 2).join(", ")}${missingFields.length > 2 ? ` +${missingFields.length - 2}` : ""}`;
           
           return (
             <Link to="/provider/listing" className="block">
-              <Card className="border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <FileEdit className="h-4 w-4 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
+              <Card className="border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors">
+                <CardContent className="p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileEdit className="h-4 w-4 text-primary" />
+                    <p className="text-xs text-muted-foreground">
                       <span className="font-medium text-foreground">{missingText}</span> to attract more families
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     <button
                       onClick={(e) => handleDismissProfilePrompt(e, missingFields)}
-                      className="p-1 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
-                      aria-label="Dismiss"
+                      className="p-1 hover:bg-muted/50 rounded text-muted-foreground"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </CardContent>
@@ -474,35 +452,27 @@ export default function ProviderDashboardPage() {
 
         {/* Status Banner - Only for non-approved */}
         {facility?.status !== "approved" && (
-          <Card className={cn("border-l-4", statusConfig.dotClass === 'bg-amber-500' ? "border-l-amber-500" : "border-l-muted-foreground")}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-4">
-                <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", statusConfig.bgClass)}>
-                  <StatusIcon className={cn("h-5 w-5", statusConfig.textClass)} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className={cn("h-2 w-2 rounded-full", statusConfig.dotClass)} />
-                    <span className={cn("font-semibold", statusConfig.textClass)}>{statusConfig.label}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{statusConfig.description}</p>
-                </div>
+          <Card className={cn("border-l-2", statusConfig.dotClass === 'bg-amber-500' ? "border-l-amber-500" : "border-l-muted-foreground")}>
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", statusConfig.bgClass)}>
+                <StatusIcon className={cn("h-4 w-4", statusConfig.textClass)} />
+              </div>
+              <div className="flex-1">
+                <span className={cn("text-sm font-medium", statusConfig.textClass)}>{statusConfig.label}</span>
                 {facility?.status === "pending" && (
-                  <p className="text-xs text-muted-foreground hidden sm:block">
-                    Usually reviewed within 24-48 hours
-                  </p>
+                  <p className="text-xs text-muted-foreground">Usually reviewed within 24-48 hours</p>
                 )}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Featured Analytics Widget - Only show after subscription loads */}
+        {/* Featured Analytics Widget */}
         {!subscriptionLoading && planKey === "featured" && facility?.id && (
           <FeaturedAnalyticsWidget facilityId={facility.id} />
         )}
 
-        {/* Lead Usage Progress Card - Only show after subscription loads */}
+        {/* Lead Usage Progress Card */}
         {!subscriptionLoading && (planKey === "professional" || planKey === "featured") && (
           <LeadUsageProgressCard 
             usedLeads={monthlyLeadsCount} 
@@ -512,293 +482,310 @@ export default function ProviderDashboardPage() {
           />
         )}
 
-        {/* Metrics Grid - Enhanced */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Performance Overview</h2>
-            <div className="flex-1 h-px bg-border/50" />
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <MetricCard
-              title="Profile Views"
-              value={viewsCount}
-              subtitle="Last 30 days"
-              icon={Eye}
-              iconBg="bg-gradient-to-br from-blue-500/15 to-blue-600/10"
-              iconColor="text-blue-600"
-              isLoading={isLoading}
-            />
-            <MetricCard
-              title="Qualified Leads"
-              value={monthlyLeadsCount}
-              subtitle="This month"
-              icon={TrendingUp}
-              iconBg="bg-gradient-to-br from-emerald-500/15 to-emerald-600/10"
-              iconColor="text-emerald-600"
-              action={!subscriptionLoading && planKey !== "basic" ? { label: "View all", href: "/provider/leads" } : undefined}
-              isLoading={isLoading}
-            />
-            <MetricCard
-              title="Locations"
-              value={`${usedLocations}/${locationLimit}`}
-              subtitle={!subscriptionLoading && usedLocations >= locationLimit && planKey !== "featured" ? "Limit reached" : "Active"}
-              icon={Building2}
-              iconBg="bg-gradient-to-br from-violet-500/15 to-violet-600/10"
-              iconColor="text-violet-600"
-              action={!subscriptionLoading && usedLocations >= locationLimit && planKey !== "featured" ? { label: "Upgrade", href: "/provider/billing" } : undefined}
-              isLoading={subscriptionLoading}
-            />
-            <MetricCard
-              title="Current Plan"
-              value={subscriptionLoading ? "" : (subscription?.plan_name || "Basic")}
-              icon={CreditCard}
-              iconBg="bg-gradient-to-br from-primary/15 to-primary/10"
-              iconColor="text-primary"
-              action={{ label: subscription?.subscribed ? "Manage" : "Upgrade", href: "/provider/billing" }}
-              isLoading={subscriptionLoading}
-            />
-          </div>
-        </section>
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+          <MetricCard
+            title="Views"
+            value={viewsCount}
+            subtitle="Last 30 days"
+            icon={Eye}
+            iconBg="bg-blue-500/10"
+            iconColor="text-blue-600"
+            isLoading={isLoading}
+          />
+          <MetricCard
+            title="Leads"
+            value={monthlyLeadsCount}
+            subtitle="This month"
+            icon={TrendingUp}
+            iconBg="bg-emerald-500/10"
+            iconColor="text-emerald-600"
+            action={!subscriptionLoading && planKey !== "basic" ? { label: "View", href: "/provider/leads" } : undefined}
+            isLoading={isLoading}
+          />
+          <MetricCard
+            title="Locations"
+            value={`${usedLocations}/${locationLimit}`}
+            subtitle={!subscriptionLoading && usedLocations >= locationLimit && planKey !== "featured" ? "Limit reached" : "Active"}
+            icon={Building2}
+            iconBg="bg-violet-500/10"
+            iconColor="text-violet-600"
+            isLoading={subscriptionLoading}
+          />
+          <MetricCard
+            title="Plan"
+            value={subscriptionLoading ? "" : (subscription?.plan_name || "Basic")}
+            icon={CreditCard}
+            iconBg="bg-primary/10"
+            iconColor="text-primary"
+            action={{ label: "Manage", href: "/provider/billing" }}
+            isLoading={subscriptionLoading}
+          />
+        </div>
 
-        {/* Lead Conversion Analytics Widget - Only show after subscription loads */}
+        {/* Lead Conversion Widget */}
         {!subscriptionLoading && planKey !== "basic" && facilityIds.length > 0 && (
           <LeadConversionWidget facilityIds={facilityIds} />
         )}
 
-        {/* Leads Awaiting Follow-up - Enhanced */}
-        {!subscriptionLoading && planKey !== "basic" && urgentLeads.length > 0 && (
-          <Card className="border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50/50 via-card to-card dark:from-amber-950/20 shadow-sm overflow-hidden">
-            <CardHeader className="pb-4 pt-5 px-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center shadow-sm">
-                      <AlertTriangle className="h-6 w-6 text-amber-600" />
-                    </div>
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-amber-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm">
-                      {urgentLeads.length}
-                    </span>
-                  </div>
-                  <div>
-                    <CardTitle className="text-base sm:text-lg font-semibold">
-                      Leads Awaiting Follow-up
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Waiting over 24 hours
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-3 gap-4">
+          {/* Leads Section - Takes 2 columns */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Leads Awaiting Follow-up */}
+            {!subscriptionLoading && planKey !== "basic" && urgentLeads.length > 0 && (
+              <Card className="border-l-2 border-l-amber-500">
+                <CardHeader className="p-3 pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <CardTitle className="text-sm font-semibold">
+                        {urgentLeads.length} Awaiting Follow-up
+                      </CardTitle>
                       {snoozedLeads.length > 0 && (
-                        <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded-full">{snoozedLeads.length} snoozed</span>
+                        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">{snoozedLeads.length} snoozed</span>
                       )}
-                    </p>
+                    </div>
+                    <Button size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700" asChild>
+                      <Link to="/provider/leads?status=new">
+                        <Phone className="h-3 w-3 mr-1" />
+                        Contact
+                      </Link>
+                    </Button>
                   </div>
-                </div>
-                <Button size="sm" className="gap-2 bg-amber-600 hover:bg-amber-700 shadow-sm" asChild>
-                  <Link to="/provider/leads?status=new">
-                    <Phone className="h-4 w-4" />
-                    Contact Now
-                  </Link>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0 px-5 pb-5">
-              <div className="space-y-2">
-                {urgentLeads.slice(0, 3).map((lead) => {
-                  const hoursWaiting = differenceInHours(now, new Date(lead.created_at));
-                  const urgencyLevel = hoursWaiting >= 72 ? 'critical' : hoursWaiting >= 48 ? 'high' : 'moderate';
-                  
-                  return (
-                    <button
-                      key={lead.id}
-                      onClick={() => handleLeadClick(lead)}
-                      className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl border border-border/50 bg-card hover:bg-muted/50 hover:border-border transition-all group text-left shadow-sm"
-                    >
-                      <div className={cn(
-                        "h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center shrink-0 ring-2 ring-background",
-                        urgencyLevel === 'critical' ? 'bg-gradient-to-br from-red-100 to-red-200 dark:from-red-950 dark:to-red-900' : 
-                        urgencyLevel === 'high' ? 'bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-950 dark:to-orange-900' : 
-                        'bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-950 dark:to-amber-900'
-                      )}>
-                        <span className={cn(
-                          "text-sm font-bold",
-                          urgencyLevel === 'critical' ? 'text-red-700 dark:text-red-400' : 
-                          urgencyLevel === 'high' ? 'text-orange-700 dark:text-orange-400' : 'text-amber-700 dark:text-amber-400'
-                        )}>
-                          {lead.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-foreground text-sm truncate">{lead.name}</p>
-                          <span className={cn(
-                            "text-xs px-2 py-0.5 rounded-full font-semibold",
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <div className="space-y-1.5">
+                    {urgentLeads.slice(0, 2).map((lead) => {
+                      const hoursWaiting = differenceInHours(now, new Date(lead.created_at));
+                      const urgencyLevel = hoursWaiting >= 72 ? 'critical' : hoursWaiting >= 48 ? 'high' : 'moderate';
+                      
+                      return (
+                        <button
+                          key={lead.id}
+                          onClick={() => handleLeadClick(lead)}
+                          className="w-full flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-muted/50 transition-colors text-left"
+                        >
+                          <div className={cn(
+                            "h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold",
                             urgencyLevel === 'critical' ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400' : 
                             urgencyLevel === 'high' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400' : 
                             'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
                           )}>
-                            {hoursWaiting}h
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
-                          {lead.preferred_contact === "call" ? <Phone className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
-                          <span className="truncate">{lead.preferred_contact === "call" ? lead.phone : lead.email}</span>
-                        </p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all" />
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                            {lead.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{lead.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{hoursWaiting}h waiting</p>
+                          </div>
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-        {/* Recent Contact Requests - Enhanced */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Recent Activity</h2>
-            <div className="flex-1 h-px bg-border/50" />
-          </div>
-          
-          <Card className="overflow-hidden border-border/40 shadow-sm">
-            <CardHeader className="border-b bg-gradient-to-r from-muted/50 to-muted/30 py-4 px-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/15 to-primary/10 flex items-center justify-center shadow-sm">
-                    <Users className="h-5 w-5 text-primary" />
+            {/* Recent Contact Requests */}
+            <Card>
+              <CardHeader className="p-3 pb-2 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-sm font-semibold">Recent Leads</CardTitle>
                   </div>
-                  <div>
-                    <CardTitle className="text-base sm:text-lg font-semibold">Contact Requests</CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Families interested in your facility</p>
-                  </div>
+                  {!subscriptionLoading && planKey !== "basic" && recentLeads.length > 0 && (
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
+                      <Link to="/provider/leads">
+                        View All <ChevronRight className="h-3 w-3 ml-0.5" />
+                      </Link>
+                    </Button>
+                  )}
                 </div>
-                {!subscriptionLoading && planKey !== "basic" && recentLeads.length > 0 && (
-                  <Button variant="outline" size="sm" className="gap-1.5 border-border/60 shadow-sm" asChild>
-                    <Link to="/provider/leads">
-                      View All
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {subscriptionLoading || leadsLoading ? (
-                <div className="p-4 sm:p-5 space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 sm:p-4 rounded-xl border border-border/50 bg-muted/30">
-                      <Skeleton className="h-11 w-11 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-48" />
-                      </div>
-                      <Skeleton className="h-6 w-16 rounded-full" />
-                    </div>
-                  ))}
-                </div>
-              ) : planKey === "basic" ? (
-                <div className="relative p-6 sm:p-8">
-                  <div className="space-y-3 blur-sm pointer-events-none select-none" aria-hidden="true">
+              </CardHeader>
+              <CardContent className="p-0">
+                {subscriptionLoading || leadsLoading ? (
+                  <div className="p-3 space-y-2">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-center gap-3 p-4 rounded-xl border bg-card">
-                        <div className="h-11 w-11 rounded-full bg-primary/10" />
-                        <div className="flex-1">
-                          <div className="h-4 w-32 bg-muted rounded" />
-                          <div className="h-3 w-48 bg-muted rounded mt-2" />
+                      <div key={i} className="flex items-center gap-2 p-2 rounded-lg border">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <div className="flex-1 space-y-1">
+                          <Skeleton className="h-3.5 w-24" />
+                          <Skeleton className="h-2.5 w-32" />
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-card/95 via-card/90 to-card/95 backdrop-blur-sm">
-                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/10 flex items-center justify-center mb-5 shadow-lg shadow-primary/5">
-                      <Lock className="h-8 w-8 text-primary" />
+                ) : planKey === "basic" ? (
+                  <div className="relative p-6">
+                    <div className="space-y-2 blur-sm pointer-events-none select-none">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-2 p-2 rounded-lg border">
+                          <div className="h-8 w-8 rounded-full bg-muted" />
+                          <div className="flex-1">
+                            <div className="h-3.5 w-24 bg-muted rounded" />
+                            <div className="h-2.5 w-32 bg-muted rounded mt-1" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <h3 className="font-bold text-foreground text-xl">Upgrade to View Leads</h3>
-                    <p className="text-sm text-muted-foreground mt-2 text-center max-w-xs">
-                      Contact details are hidden on the Basic plan. Upgrade to connect with families.
-                    </p>
-                    <Button asChild size="lg" className="mt-6 gap-2 shadow-md">
-                      <Link to="/provider/billing">
-                        <Sparkles className="h-4 w-4" />
-                        Upgrade Now
-                      </Link>
-                    </Button>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/95">
+                      <Lock className="h-6 w-6 text-muted-foreground mb-2" />
+                      <p className="text-sm font-medium text-foreground">Upgrade to View Leads</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 text-center">Contact details hidden on Basic plan</p>
+                      <Button size="sm" className="mt-3 h-7 text-xs" asChild>
+                        <Link to="/provider/billing">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Upgrade
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ) : recentLeads.length === 0 ? (
-                <div className="text-center py-16 sm:py-20 px-6">
-                  <div className="h-16 w-16 rounded-2xl bg-muted/80 flex items-center justify-center mx-auto mb-5">
-                    <Users className="h-8 w-8 text-muted-foreground/40" />
+                ) : recentLeads.length === 0 ? (
+                  <div className="text-center py-8 px-4">
+                    <Users className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-foreground">No leads yet</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Leads will appear here when families reach out</p>
                   </div>
-                  <h3 className="font-semibold text-foreground text-lg">No contact requests yet</h3>
-                  <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
-                    When families reach out about your facility, their requests will appear here.
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {recentLeads.map((lead, index) => (
-                    <button
-                      key={lead.id}
-                      onClick={() => handleLeadClick(lead)}
-                      className={cn(
-                        "w-full flex items-center gap-4 p-4 sm:p-5 hover:bg-muted/50 transition-all duration-200 group text-left",
-                        index === 0 && "bg-primary/[0.02]"
-                      )}
-                    >
-                      <div className="relative">
-                        <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-primary/15 to-primary/10 flex items-center justify-center shrink-0 ring-2 ring-background shadow-sm">
-                          <span className="text-sm sm:text-base font-bold text-primary">
-                            {lead.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        {index === 0 && lead.status === 'new' && (
-                          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-emerald-500 rounded-full border-2 border-background" />
+                ) : (
+                  <div className="divide-y">
+                    {recentLeads.map((lead, index) => (
+                      <button
+                        key={lead.id}
+                        onClick={() => handleLeadClick(lead)}
+                        className={cn(
+                          "w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left",
+                          index === 0 && lead.status === 'new' && "bg-primary/[0.02]"
                         )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-foreground truncate">{lead.name}</p>
-                          <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                      >
+                        <div className="relative">
+                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-bold text-primary">
+                              {lead.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          {index === 0 && lead.status === 'new' && (
+                            <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background" />
+                          )}
                         </div>
-                        <div className="flex items-center gap-2 sm:gap-3 text-sm text-muted-foreground mt-1 flex-wrap">
-                          <span className="flex items-center gap-1.5">
-                            {lead.preferred_contact === "call" ? <Phone className="h-3.5 w-3.5 text-muted-foreground/70" /> : <Mail className="h-3.5 w-3.5 text-muted-foreground/70" />}
-                            <span className="truncate max-w-[140px] sm:max-w-none">{lead.preferred_contact === "call" ? lead.phone : lead.email}</span>
-                          </span>
-                          <span className="text-muted-foreground/30 hidden sm:inline">•</span>
-                          <span className="text-xs text-muted-foreground/70">{formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-foreground truncate">{lead.name}</p>
+                            <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                            {lead.preferred_contact === "call" ? <Phone className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
+                            <span className="truncate">{lead.preferred_contact === "call" ? lead.phone : lead.email}</span>
+                            <span className="text-muted-foreground/50">•</span>
+                            <span>{formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                    </button>
-                  ))}
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar - Platform News */}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="p-3 pb-2 border-b">
+                <div className="flex items-center gap-2">
+                  <Newspaper className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm font-semibold">Platform News</CardTitle>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </section>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y">
+                  {platformNews.map((news) => {
+                    const NewsIcon = news.icon;
+                    return (
+                      <div key={news.id} className="p-3 hover:bg-muted/30 transition-colors">
+                        <div className="flex items-start gap-2.5">
+                          <div className={cn(
+                            "h-7 w-7 rounded-md flex items-center justify-center shrink-0",
+                            news.type === 'feature' ? 'bg-blue-500/10 text-blue-600' :
+                            news.type === 'announcement' ? 'bg-amber-500/10 text-amber-600' :
+                            'bg-violet-500/10 text-violet-600'
+                          )}>
+                            <NewsIcon className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs font-semibold text-foreground leading-tight">{news.title}</p>
+                              {news.isNew && (
+                                <span className="px-1 py-0.5 text-[9px] font-medium bg-primary text-primary-foreground rounded">NEW</span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{news.description}</p>
+                            <p className="text-[10px] text-muted-foreground/70 mt-1">{news.date}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader className="p-3 pb-2 border-b">
+                <CardTitle className="text-sm font-semibold">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="p-2">
+                <div className="space-y-1">
+                  <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-xs" asChild>
+                    <Link to="/provider/listing">
+                      <FileEdit className="h-3.5 w-3.5 mr-2" />
+                      Edit Listing
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-xs" asChild>
+                    <Link to="/provider/leads">
+                      <Users className="h-3.5 w-3.5 mr-2" />
+                      View All Leads
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-xs" asChild>
+                    <Link to="/provider/analytics">
+                      <TrendingUp className="h-3.5 w-3.5 mr-2" />
+                      Analytics
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-xs" asChild>
+                    <Link to="/provider/billing">
+                      <CreditCard className="h-3.5 w-3.5 mr-2" />
+                      Billing & Plans
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Getting Started - No facility */}
         {!facility && (
-          <Card className="bg-gradient-to-br from-primary/5 via-card to-accent/5 border-primary/20">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <Building2 className="h-6 w-6 text-primary" />
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-foreground">Complete your listing</h3>
-                    <p className="text-muted-foreground mt-1">
-                      Add your facility information to start receiving leads from families.
-                    </p>
+                    <p className="text-sm font-semibold text-foreground">Complete your listing</p>
+                    <p className="text-xs text-muted-foreground">Add facility info to start receiving leads</p>
                   </div>
                 </div>
-                <Button size="lg" className="gap-2" asChild>
+                <Button size="sm" className="h-8 text-xs" asChild>
                   <Link to="/provider/listing">
-                    Get Started
-                    <ArrowRight className="h-4 w-4" />
+                    Get Started <ArrowRight className="h-3 w-3 ml-1" />
                   </Link>
                 </Button>
               </div>
