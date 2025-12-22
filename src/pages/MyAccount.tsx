@@ -178,7 +178,7 @@ export default function MyAccount() {
                       >
                         <div className="flex-1 min-w-0">
                           <Link 
-                            to={`/treatment-center/${facility.slug || facility.id}`}
+                            to={`/account/facility/${facility.slug || facility.id}`}
                             className="font-medium hover:text-primary transition-colors line-clamp-1"
                           >
                             {facility.name}
@@ -201,7 +201,7 @@ export default function MyAccount() {
                             asChild
                             className="text-muted-foreground hover:text-foreground"
                           >
-                            <Link to={`/treatment-center/${facility.slug || facility.id}`}>
+                            <Link to={`/account/facility/${facility.slug || facility.id}`}>
                               <ExternalLink className="h-4 w-4" />
                             </Link>
                           </Button>
