@@ -154,9 +154,27 @@ serve(async (req) => {
       );
     }
 
-    const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-    const subscriptionStart = new Date(subscription.current_period_start * 1000).toISOString();
-    const productId = subscription.items.data[0].price.product as string;
+    // Safely convert Unix timestamps to ISO strings
+    let subscriptionEnd: string | null = null;
+    let subscriptionStart: string | null = null;
+    
+    try {
+      if (subscription.current_period_end) {
+        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      }
+      if (subscription.current_period_start) {
+        subscriptionStart = new Date(subscription.current_period_start * 1000).toISOString();
+      }
+    } catch (dateError) {
+      logStep("Warning: Could not parse subscription dates", { 
+        current_period_end: subscription.current_period_end,
+        current_period_start: subscription.current_period_start,
+        error: dateError instanceof Error ? dateError.message : String(dateError)
+      });
+    }
+    
+    const productId = subscription.items.data[0]?.price?.product as string;
+    
     logStep("Subscription found", { 
       subscriptionId: subscription.id, 
       productId, 
@@ -166,6 +184,8 @@ serve(async (req) => {
     });
 
     // Determine plan based on product ID (supports both old and new product IDs)
+    // Also check price ID as fallback since sometimes product is returned as object
+    const priceId = subscription.items.data[0]?.price?.id as string;
     let plan = "basic";
     let planConfig = PLAN_CONFIG.basic;
 
@@ -175,10 +195,21 @@ serve(async (req) => {
     } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
       plan = "featured";
       planConfig = PLAN_CONFIG.featured;
+    } else {
+      // Fallback: check by price ID
+      if (priceId === "price_1Sel1C9fxdThyiakWLfgbl9K") {
+        plan = "professional";
+        planConfig = PLAN_CONFIG.professional;
+      } else if (priceId === "price_1Sel1P9fxdThyiakj5MaAvOE") {
+        plan = "featured";
+        planConfig = PLAN_CONFIG.featured;
+      }
     }
 
     logStep("Determined plan", { 
-      plan, 
+      plan,
+      priceId,
+      productId,
       leadLimit: planConfig.lead_limit, 
       featured: planConfig.featured, 
       exclusivity: planConfig.exclusivity,
@@ -195,6 +226,7 @@ serve(async (req) => {
         subscription_end: subscriptionEnd,
         current_period_start: subscriptionStart,
         product_id: productId,
+        price_id: priceId,
         is_featured: planConfig.featured,
         exclusivity: planConfig.exclusivity,
         status: subscription.status,
