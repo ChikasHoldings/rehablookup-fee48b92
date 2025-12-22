@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin } from "lucide-react";
+import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ import { ActivityLog } from "@/components/seeker/ActivityLog";
 import { logActivity } from "@/hooks/useActivityLog";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
+import { AuthPrompt } from "@/components/seeker/AuthPrompt";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SeekerProfile {
   display_name: string | null;
@@ -50,6 +52,8 @@ export default function SeekerSettings() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -64,6 +68,15 @@ export default function SeekerSettings() {
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  // Notification preferences (stored in localStorage for now)
+  const [emailNotifications, setEmailNotifications] = useState(() => {
+    const stored = localStorage.getItem('seeker-email-notifications');
+    return stored !== null ? stored === 'true' : true;
+  });
+  const [facilityResponses, setFacilityResponses] = useState(() => {
+    const stored = localStorage.getItem('seeker-facility-responses');
+    return stored !== null ? stored === 'true' : true;
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -73,8 +86,14 @@ export default function SeekerSettings() {
   useEffect(() => {
     const loadProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      
+      if (!session) {
+        setIsAuthenticated(false);
+        setIsLoading(false);
+        return;
+      }
 
+      setIsAuthenticated(true);
       setEmail(session.user.email || "");
       setUserId(session.user.id);
       setIsEmailVerified(!!session.user.email_confirmed_at);
@@ -95,9 +114,22 @@ export default function SeekerSettings() {
         setCity(profile.city || "");
         setState(profile.state || "");
       }
+      
+      setIsLoading(false);
     };
 
     loadProfile();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setIsAuthenticated(!!session);
+        if (!session) {
+          setIsLoading(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // Auto-fill city/state when zipcode changes
@@ -414,6 +446,64 @@ export default function SeekerSettings() {
     return 'U';
   };
 
+  const handleEmailNotificationsChange = (checked: boolean) => {
+    setEmailNotifications(checked);
+    localStorage.setItem('seeker-email-notifications', String(checked));
+    toast({
+      title: checked ? "Notifications enabled" : "Notifications disabled",
+      description: checked 
+        ? "You'll receive email updates about your inquiries."
+        : "Email notifications for inquiries are now off."
+    });
+  };
+
+  const handleFacilityResponsesChange = (checked: boolean) => {
+    setFacilityResponses(checked);
+    localStorage.setItem('seeker-facility-responses', String(checked));
+    toast({
+      title: checked ? "Notifications enabled" : "Notifications disabled",
+      description: checked 
+        ? "You'll be notified when facilities respond."
+        : "Facility response notifications are now off."
+    });
+  };
+
+  // Show auth prompt if not authenticated
+  if (!isAuthenticated && !isLoading) {
+    return (
+      <AuthPrompt 
+        title="Sign in to access settings"
+        description="Create a free account to manage your profile and preferences."
+        icon="lock"
+        returnTo="/account/settings"
+      />
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="h-8 w-8 rounded" />
+          <Skeleton className="h-8 w-32" />
+        </div>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-24" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-20 w-20 rounded-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-display font-bold mb-6">Settings</h1>
@@ -672,7 +762,10 @@ export default function SeekerSettings() {
                   Receive updates about your inquiries
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={emailNotifications} 
+                onCheckedChange={handleEmailNotificationsChange}
+              />
             </div>
             
             <Separator />
@@ -684,7 +777,10 @@ export default function SeekerSettings() {
                   Get notified when facilities respond
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={facilityResponses}
+                onCheckedChange={handleFacilityResponsesChange}
+              />
             </div>
           </CardContent>
         </Card>
