@@ -84,6 +84,12 @@ Deno.serve(async (req) => {
       .delete()
       .eq("user_id", user.id);
 
+    // Delete review helpful votes by this user
+    await adminClient
+      .from("review_helpful_votes")
+      .delete()
+      .eq("user_id", user.id);
+
     // Delete facility reviews by this user
     await adminClient
       .from("facility_reviews")
