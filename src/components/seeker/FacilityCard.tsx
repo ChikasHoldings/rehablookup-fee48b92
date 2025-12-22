@@ -21,8 +21,8 @@ export interface FacilityCardData {
   name: string;
   city: string;
   state: string;
-  facility_type: string;
-  slug: string;
+  facility_type: string | null;
+  slug: string | null;
   phone: string | null;
   description: string | null;
   logo_url: string | null;
@@ -147,7 +147,7 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
           {/* Header row */}
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex-1 min-w-0">
-              <Link to={`/center/${facility.slug}`}>
+              <Link to={facility.slug ? `/center/${facility.slug}` : `/center/${facility.id}`}>
                 <h3 className="font-display text-sm sm:text-base font-bold leading-tight truncate mb-1 group-hover:text-primary transition-colors">
                   {facility.name}
                 </h3>
@@ -195,10 +195,12 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
                 Verified
               </Badge>
             )}
-            <Badge variant="secondary" className="gap-1 px-1.5 py-0.5 text-[10px] font-semibold">
-              <Building2 className="h-2.5 w-2.5" />
-              <span className="truncate max-w-[100px]">{facility.facility_type}</span>
-            </Badge>
+            {facility.facility_type && (
+              <Badge variant="secondary" className="gap-1 px-1.5 py-0.5 text-[10px] font-semibold">
+                <Building2 className="h-2.5 w-2.5" />
+                <span className="truncate max-w-[100px]">{facility.facility_type}</span>
+              </Badge>
+            )}
           </div>
 
           {/* Description */}
@@ -210,7 +212,7 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
 
           {/* Action */}
           <div className="mt-auto pt-1">
-            <Link to={`/center/${facility.slug}`}>
+            <Link to={facility.slug ? `/center/${facility.slug}` : `/center/${facility.id}`}>
               <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1.5 text-xs group/btn">
                 View Details
                 <ArrowRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5" />
