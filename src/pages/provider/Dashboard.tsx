@@ -140,9 +140,10 @@ export default function ProviderDashboardPage() {
   const monthlyLeadsCount = providerData?.monthlyLeadsCount ?? 0;
   const userName = profile?.first_name || "";
   
-  const leadLimit = subscription?.lead_limit ?? 5;
-  const planKey = subscription?.plan || "basic";
-  const locationLimit = PLAN_DETAILS[planKey]?.location_limit ?? 1;
+  const leadLimit = subscription?.lead_limit ?? 0;
+  // Only use "basic" as default AFTER loading completes to prevent flash
+  const planKey = subscriptionLoading ? undefined : (subscription?.plan || "basic");
+  const locationLimit = planKey ? PLAN_DETAILS[planKey]?.location_limit ?? 1 : 1;
   const usedLocations = facilities?.length ?? 0;
   const facilityIds = facilities?.map(f => f.id) ?? [];
 
@@ -487,13 +488,13 @@ export default function ProviderDashboardPage() {
           </Card>
         )}
 
-        {/* Featured Analytics Widget */}
-        {planKey === "featured" && facility?.id && (
+        {/* Featured Analytics Widget - Only show after subscription loads */}
+        {!subscriptionLoading && planKey === "featured" && facility?.id && (
           <FeaturedAnalyticsWidget facilityId={facility.id} />
         )}
 
-        {/* Lead Usage Progress Card */}
-        {(planKey === "professional" || planKey === "featured") && (
+        {/* Lead Usage Progress Card - Only show after subscription loads */}
+        {!subscriptionLoading && (planKey === "professional" || planKey === "featured") && (
           <LeadUsageProgressCard 
             usedLeads={monthlyLeadsCount} 
             leadLimit={leadLimit}
@@ -520,35 +521,37 @@ export default function ProviderDashboardPage() {
             icon={TrendingUp}
             iconBg="bg-emerald-500/10"
             iconColor="text-emerald-600"
-            action={planKey !== "basic" ? { label: "View all", href: "/provider/leads" } : undefined}
+            action={!subscriptionLoading && planKey !== "basic" ? { label: "View all", href: "/provider/leads" } : undefined}
             isLoading={isLoading}
           />
           <MetricCard
             title="Locations"
             value={`${usedLocations}/${locationLimit}`}
-            subtitle={usedLocations >= locationLimit && planKey !== "featured" ? "Limit reached" : "Active"}
+            subtitle={!subscriptionLoading && usedLocations >= locationLimit && planKey !== "featured" ? "Limit reached" : "Active"}
             icon={Building2}
             iconBg="bg-violet-500/10"
             iconColor="text-violet-600"
-            action={usedLocations >= locationLimit && planKey !== "featured" ? { label: "Upgrade", href: "/provider/billing" } : undefined}
+            action={!subscriptionLoading && usedLocations >= locationLimit && planKey !== "featured" ? { label: "Upgrade", href: "/provider/billing" } : undefined}
+            isLoading={subscriptionLoading}
           />
           <MetricCard
             title="Current Plan"
-            value={subscription?.plan_name || "Basic"}
+            value={subscriptionLoading ? "" : (subscription?.plan_name || "Basic")}
             icon={CreditCard}
             iconBg="bg-primary/10"
             iconColor="text-primary"
             action={{ label: subscription?.subscribed ? "Manage" : "Upgrade", href: "/provider/billing" }}
+            isLoading={subscriptionLoading}
           />
         </div>
 
-        {/* Lead Conversion Analytics Widget */}
-        {planKey !== "basic" && facilityIds.length > 0 && (
+        {/* Lead Conversion Analytics Widget - Only show after subscription loads */}
+        {!subscriptionLoading && planKey !== "basic" && facilityIds.length > 0 && (
           <LeadConversionWidget facilityIds={facilityIds} />
         )}
 
-        {/* Leads Awaiting Follow-up */}
-        {planKey !== "basic" && urgentLeads.length > 0 && (
+        {/* Leads Awaiting Follow-up - Only show after subscription loads */}
+        {!subscriptionLoading && planKey !== "basic" && urgentLeads.length > 0 && (
           <Card className="border-l-4 border-l-amber-500 bg-gradient-to-r from-amber-50/50 via-card to-card dark:from-amber-950/20">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -638,7 +641,7 @@ export default function ProviderDashboardPage() {
                   <p className="text-sm text-muted-foreground">Families interested in your facility</p>
                 </div>
               </div>
-              {planKey !== "basic" && recentLeads.length > 0 && (
+              {!subscriptionLoading && planKey !== "basic" && recentLeads.length > 0 && (
                 <Button variant="ghost" size="sm" className="gap-1" asChild>
                   <Link to="/provider/leads">
                     View All
@@ -649,7 +652,19 @@ export default function ProviderDashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {planKey === "basic" ? (
+            {subscriptionLoading || leadsLoading ? (
+              <div className="p-4 space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-32 mb-1" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : planKey === "basic" ? (
               <div className="relative p-6">
                 <div className="space-y-3 blur-sm pointer-events-none select-none" aria-hidden="true">
                   {[1, 2, 3].map((i) => (
@@ -677,18 +692,6 @@ export default function ProviderDashboardPage() {
                     </Link>
                   </Button>
                 </div>
-              </div>
-            ) : leadsLoading ? (
-              <div className="p-4 space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex-1">
-                      <Skeleton className="h-4 w-32 mb-1" />
-                      <Skeleton className="h-3 w-24" />
-                    </div>
-                  </div>
-                ))}
               </div>
             ) : recentLeads.length === 0 ? (
               <div className="text-center py-16 px-6">
