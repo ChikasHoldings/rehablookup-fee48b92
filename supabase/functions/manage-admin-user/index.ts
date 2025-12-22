@@ -390,6 +390,18 @@ serve(async (req) => {
           .delete()
           .eq("user_id", targetUserId);
 
+        // Delete from profiles table
+        await supabase
+          .from("profiles")
+          .delete()
+          .eq("user_id", targetUserId);
+
+        // Delete account activity log entries
+        await supabase
+          .from("account_activity_log")
+          .delete()
+          .eq("user_id", targetUserId);
+
         // Delete roles
         await supabase
           .from("user_roles")

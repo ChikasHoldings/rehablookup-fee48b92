@@ -215,7 +215,7 @@ serve(async (req) => {
     `;
 
     const { error: emailError } = await resend.emails.send({
-      from: "RehabLookup Admin <onboarding@resend.dev>",
+      from: "RehabLookup Admin <no-reply@rehablookup.com>",
       to: adminEmails,
       subject: `⚠️ High Churn Alert: ${churnRate.toFixed(1)}% churn rate detected`,
       html: emailHtml,
