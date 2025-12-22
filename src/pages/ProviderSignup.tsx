@@ -42,7 +42,7 @@ import { compressImage, validateImageFile } from "@/lib/imageUtils";
 import { PlanSelectionStep } from "@/components/provider/PlanSelectionStep";
 import { PLAN_DETAILS } from "@/hooks/useSubscription";
 import { providerNavLinks } from "@/data/providerNavLinks";
-import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
+import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
 
 const getBrowserInfo = (): { browser: string; os: string; device: string } => {
   const ua = navigator.userAgent;
@@ -543,6 +543,9 @@ export default function ProviderSignup() {
     }
   };
 
+  const passwordStrength = calculatePasswordStrength(formData.password);
+  const isPasswordStrong = passwordStrength.score >= 3; // At least "Fair" strength
+
   const canProceed = () => {
     switch (currentStep) {
       case 1:
@@ -553,7 +556,7 @@ export default function ProviderSignup() {
           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
           formData.phone &&
           formData.password &&
-          formData.password.length >= 6 &&
+          isPasswordStrong &&
           formData.password === formData.confirmPassword
         );
       case 2:
@@ -807,10 +810,20 @@ export default function ProviderSignup() {
                           value={formData.password}
                           onChange={(e) => updateFormData("password", e.target.value)}
                           placeholder="••••••••"
-                          className="pl-10 h-10"
+                          className={cn(
+                            "pl-10 h-10",
+                            formData.password && !isPasswordStrong && "border-destructive focus-visible:ring-destructive"
+                          )}
                         />
                       </div>
                       <PasswordStrengthIndicator password={formData.password} />
+                      {formData.password && !isPasswordStrong && (
+                        <div className="rounded-md bg-destructive/10 border border-destructive/20 p-2.5 mt-2">
+                          <p className="text-xs text-destructive font-medium">
+                            Password is too weak. Please add more characters, uppercase, numbers, or special characters.
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password *</Label>
