@@ -38,6 +38,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 import { TrustBadgesInline, TrustBadgesSection } from "@/components/trust/TrustBadgesSection";
+import { GoogleReviewsCard } from "@/components/reviews/GoogleReviewsCard";
+import { usePublicGoogleReviews } from "@/hooks/useGoogleReviews";
 import { cn } from "@/lib/utils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
@@ -143,6 +145,24 @@ function ProfileSection({
         {children}
       </div>
     </div>
+  );
+}
+
+// Google Reviews Display Component
+function GoogleReviewsDisplay({ facilityId }: { facilityId: string }) {
+  const { data: reviewsConfig } = usePublicGoogleReviews(facilityId);
+  
+  if (!reviewsConfig?.google_rating || !reviewsConfig?.google_review_count) {
+    return null;
+  }
+
+  return (
+    <GoogleReviewsCard
+      rating={Number(reviewsConfig.google_rating)}
+      reviewCount={reviewsConfig.google_review_count}
+      googleUrl={reviewsConfig.google_place_url}
+      className="mt-8"
+    />
   );
 }
 
@@ -967,6 +987,9 @@ const CenterProfile = () => {
                 yearEstablished={facility.year_established}
                 accreditations={facility.facility_accreditations || []}
               />
+
+              {/* Google Reviews - shown below trust badges */}
+              <GoogleReviewsDisplay facilityId={facility.id} />
             </div>
 
             {/* Right Column - Sticky Sidebar */}

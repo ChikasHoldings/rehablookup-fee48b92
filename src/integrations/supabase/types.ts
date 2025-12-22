@@ -800,6 +800,42 @@ export type Database = {
           },
         ]
       }
+      facility_reviews_config: {
+        Row: {
+          created_at: string | null
+          facility_id: string
+          google_place_id: string | null
+          google_place_url: string | null
+          google_rating: number | null
+          google_review_count: number | null
+          id: string
+          last_updated_at: string | null
+          show_on_profile: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          facility_id: string
+          google_place_id?: string | null
+          google_place_url?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          id?: string
+          last_updated_at?: string | null
+          show_on_profile?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          facility_id?: string
+          google_place_id?: string | null
+          google_place_url?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
+          id?: string
+          last_updated_at?: string | null
+          show_on_profile?: boolean | null
+        }
+        Relationships: []
+      }
       facility_services: {
         Row: {
           created_at: string
