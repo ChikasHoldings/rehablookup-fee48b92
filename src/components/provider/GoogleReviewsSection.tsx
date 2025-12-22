@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Star, ExternalLink, Info, Loader2, Save, Lock } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Star, ExternalLink, Info, Loader2, Save, Lock, AlertCircle, CheckCircle2, HelpCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,12 +17,54 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface GoogleReviewsSectionProps {
   facilityId: string;
   expanded: boolean;
   onToggle: () => void;
 }
+
+// URL validation for Google Maps/Business URLs
+const isValidGoogleUrl = (url: string): boolean => {
+  if (!url) return true; // Empty is valid (optional field)
+  try {
+    const parsed = new URL(url);
+    const validHosts = [
+      'google.com', 'www.google.com', 
+      'maps.google.com', 'www.maps.google.com',
+      'g.page', 'www.g.page',
+      'goo.gl', 'maps.app.goo.gl'
+    ];
+    return validHosts.some(host => parsed.hostname.includes(host) || parsed.hostname === host);
+  } catch {
+    return false;
+  }
+};
+
+// Rating validation
+const isValidRating = (value: string): { valid: boolean; error?: string } => {
+  if (!value) return { valid: true };
+  const num = parseFloat(value);
+  if (isNaN(num)) return { valid: false, error: "Must be a number" };
+  if (num < 1 || num > 5) return { valid: false, error: "Must be between 1.0 and 5.0" };
+  return { valid: true };
+};
+
+// Review count validation
+const isValidReviewCount = (value: string): { valid: boolean; error?: string } => {
+  if (!value) return { valid: true };
+  const num = parseInt(value, 10);
+  if (isNaN(num)) return { valid: false, error: "Must be a whole number" };
+  if (num < 0) return { valid: false, error: "Cannot be negative" };
+  if (num > 100000) return { valid: false, error: "Seems too high, please verify" };
+  return { valid: true };
+};
 
 export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleReviewsSectionProps) {
   const { toast } = useToast();
@@ -36,6 +78,22 @@ export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleR
   const [reviewCount, setReviewCount] = useState("");
   const [showOnProfile, setShowOnProfile] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
+  const [touched, setTouched] = useState<{ url: boolean; rating: boolean; count: boolean }>({
+    url: false, rating: false, count: false
+  });
+
+  // Validation states
+  const urlValidation = useMemo(() => ({
+    valid: isValidGoogleUrl(googleUrl),
+    error: !isValidGoogleUrl(googleUrl) ? "Please enter a valid Google Maps or g.page URL" : undefined
+  }), [googleUrl]);
+
+  const ratingValidation = useMemo(() => isValidRating(rating), [rating]);
+  const countValidation = useMemo(() => isValidReviewCount(reviewCount), [reviewCount]);
+
+  const canSave = useMemo(() => {
+    return urlValidation.valid && ratingValidation.valid && countValidation.valid && hasChanges;
+  }, [urlValidation.valid, ratingValidation.valid, countValidation.valid, hasChanges]);
 
   // Load existing config
   useEffect(() => {
@@ -48,26 +106,10 @@ export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleR
   }, [reviewsConfig]);
 
   const handleSave = async () => {
+    if (!canSave) return;
+
     const ratingNum = parseFloat(rating);
     const countNum = parseInt(reviewCount, 10);
-
-    if (rating && (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5)) {
-      toast({
-        title: "Invalid rating",
-        description: "Rating must be between 1.0 and 5.0",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (reviewCount && (isNaN(countNum) || countNum < 0)) {
-      toast({
-        title: "Invalid review count",
-        description: "Review count must be a positive number",
-        variant: "destructive",
-      });
-      return;
-    }
 
     try {
       await saveReviews({
@@ -78,6 +120,7 @@ export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleR
       });
       
       setHasChanges(false);
+      setTouched({ url: false, rating: false, count: false });
       toast({
         title: "Reviews saved",
         description: "Your Google Reviews settings have been updated.",
@@ -187,61 +230,162 @@ export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleR
               </div>
             ) : (
               <>
-                {/* Info Box */}
-                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 flex gap-2">
-                  <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                  <div className="text-xs text-blue-700">
-                    <p className="font-medium mb-1">How to find your Google Business URL:</p>
-                    <ol className="list-decimal list-inside space-y-0.5">
-                      <li>Search for your business on Google Maps</li>
-                      <li>Click on your business listing</li>
-                      <li>Click "Share" and copy the link</li>
-                    </ol>
+                {/* Info Box with more details */}
+                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                  <div className="flex gap-2">
+                    <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                    <div className="text-xs text-blue-700">
+                      <p className="font-medium mb-1">How to find your Google Business URL:</p>
+                      <ol className="list-decimal list-inside space-y-0.5">
+                        <li>Search for your business on <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-800">Google Maps</a></li>
+                        <li>Click on your business listing</li>
+                        <li>Click "Share" and copy the link</li>
+                      </ol>
+                      <p className="mt-2 text-blue-600">
+                        Accepted URLs: maps.google.com, g.page, goo.gl links
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Google Place URL */}
+                {/* Google Place URL with validation */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">
-                    Google Business URL
-                  </Label>
-                  <Input
-                    placeholder="https://maps.google.com/?cid=123456..."
-                    value={googleUrl}
-                    onChange={(e) => { setGoogleUrl(e.target.value); handleChange(); }}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Paste your Google Maps share link or g.page URL
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium">
+                      Google Business URL
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>This is the link visitors will use to view your reviews on Google. Copy it from Google Maps share button.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      placeholder="https://maps.google.com/?cid=123456... or https://g.page/your-facility"
+                      value={googleUrl}
+                      onChange={(e) => { setGoogleUrl(e.target.value); handleChange(); }}
+                      onBlur={() => setTouched(t => ({ ...t, url: true }))}
+                      className={cn(
+                        touched.url && !urlValidation.valid && "border-destructive focus-visible:ring-destructive"
+                      )}
+                    />
+                    {touched.url && googleUrl && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {urlValidation.valid ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {touched.url && urlValidation.error && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {urlValidation.error}
+                    </p>
+                  )}
                 </div>
 
-                {/* Rating and Review Count */}
+                {/* Rating and Review Count with inline validation */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      Your Google Rating
-                    </Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="5"
-                      step="0.1"
-                      placeholder="4.8"
-                      value={rating}
-                      onChange={(e) => { setRating(e.target.value); handleChange(); }}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">
+                        Your Google Rating
+                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Enter your current Google rating (1.0 - 5.0)</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="5"
+                        step="0.1"
+                        placeholder="4.8"
+                        value={rating}
+                        onChange={(e) => { setRating(e.target.value); handleChange(); }}
+                        onBlur={() => setTouched(t => ({ ...t, rating: true }))}
+                        className={cn(
+                          touched.rating && !ratingValidation.valid && "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                      {touched.rating && rating && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {ratingValidation.valid ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4 text-destructive" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {touched.rating && ratingValidation.error && (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {ratingValidation.error}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      Number of Reviews
-                    </Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="127"
-                      value={reviewCount}
-                      onChange={(e) => { setReviewCount(e.target.value); handleChange(); }}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium">
+                        Number of Reviews
+                      </Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Enter the total number of Google reviews</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="127"
+                        value={reviewCount}
+                        onChange={(e) => { setReviewCount(e.target.value); handleChange(); }}
+                        onBlur={() => setTouched(t => ({ ...t, count: true }))}
+                        className={cn(
+                          touched.count && !countValidation.valid && "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                      {touched.count && reviewCount && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {countValidation.valid ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4 text-destructive" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {touched.count && countValidation.error && (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {countValidation.error}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -298,7 +442,7 @@ export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleR
                 {/* Save Button */}
                 <Button
                   onClick={handleSave}
-                  disabled={isSaving || !hasChanges}
+                  disabled={isSaving || !canSave}
                   className="w-full gap-2"
                 >
                   {isSaving ? (
@@ -313,6 +457,13 @@ export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleR
                     </>
                   )}
                 </Button>
+
+                {/* Validation summary if there are errors */}
+                {hasChanges && (!urlValidation.valid || !ratingValidation.valid || !countValidation.valid) && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Please fix the validation errors above before saving
+                  </p>
+                )}
               </>
             )}
           </CardContent>

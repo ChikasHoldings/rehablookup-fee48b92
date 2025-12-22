@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useState, useCallback, memo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
+import { GoogleReviewsCompactBadge } from "@/components/reviews/GoogleReviewsBadge";
 
 interface TreatmentCenterCardProps {
   center: TreatmentCenter & { 
@@ -20,6 +21,8 @@ interface TreatmentCenterCardProps {
     year_established?: number | null;
     facilityType?: string | null;
     insuranceAccepted?: string[];
+    googleRating?: number | null;
+    googleReviewCount?: number | null;
   };
   featured?: boolean;
   variant?: "default" | "compact";
@@ -47,7 +50,9 @@ function arePropsEqual(
     prevCenter.description === nextCenter.description &&
     prevCenter.treatmentTypes?.length === nextCenter.treatmentTypes?.length &&
     prevCenter.gallery_urls?.length === nextCenter.gallery_urls?.length &&
-    prevCenter.insuranceAccepted?.length === nextCenter.insuranceAccepted?.length
+    prevCenter.insuranceAccepted?.length === nextCenter.insuranceAccepted?.length &&
+    prevCenter.googleRating === nextCenter.googleRating &&
+    prevCenter.googleReviewCount === nextCenter.googleReviewCount
   );
 }
 
@@ -228,6 +233,12 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
 
             {/* Badge row */}
             <div className="flex items-center gap-1.5 flex-wrap" role="list" aria-label="Provider credentials">
+              {center.googleRating && center.googleReviewCount && (
+                <GoogleReviewsCompactBadge 
+                  rating={center.googleRating} 
+                  reviewCount={center.googleReviewCount} 
+                />
+              )}
               {center.verified && (
                 <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0" role="listitem">
                   <ShieldCheck className="h-3 w-3" aria-hidden="true" />
@@ -406,6 +417,12 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
 
         {/* Badge row */}
         <div className="flex items-center gap-1.5 mb-2 flex-wrap" role="list" aria-label="Provider credentials">
+          {center.googleRating && center.googleReviewCount && (
+            <GoogleReviewsCompactBadge 
+              rating={center.googleRating} 
+              reviewCount={center.googleReviewCount} 
+            />
+          )}
           {center.verified && (
             <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 border-0 rounded-full" role="listitem">
               <ShieldCheck className="h-3 w-3" aria-hidden="true" />
