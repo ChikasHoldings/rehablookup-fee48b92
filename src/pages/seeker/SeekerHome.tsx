@@ -8,9 +8,6 @@ import {
   Shield, 
   Phone,
   Building2,
-  Heart,
-  ArrowRight,
-  Clock,
   Star,
   TrendingUp,
   Bookmark,
@@ -19,233 +16,23 @@ import {
   Filter,
   X,
   SlidersHorizontal,
-  ArrowUpDown
+  ArrowUpDown,
+  ArrowRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
-import { cn } from "@/lib/utils";
-
-interface NearbyFacility {
-  id: string;
-  name: string;
-  city: string;
-  state: string;
-  facility_type: string;
-  slug: string;
-  phone: string | null;
-  description: string | null;
-  logo_url: string | null;
-  gallery_urls: string[] | null;
-  verified: boolean | null;
-  year_established: number | null;
-}
-
-const FACILITY_TYPES = [
-  "Residential Treatment",
-  "Outpatient",
-  "Detox Center",
-  "Sober Living",
-  "Dual Diagnosis",
-  "Luxury Rehab",
-  "Faith-Based",
-  "Adolescent Treatment"
-];
-
-const US_STATES = [
-  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
-  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
-  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
-  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
-  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
-  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
-  "Wisconsin", "Wyoming"
-];
+import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 
 type SortOption = "name-asc" | "name-desc" | "state-asc" | "state-desc" | "years-desc" | "years-asc";
 
-function getInitials(name: string): string {
-  const words = name.trim().split(/\s+/);
-  if (words.length >= 2) {
-    return (words[0][0] + words[1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
-
-// Polished Facility Card Component
-function FacilityCard({ facility }: { facility: NearbyFacility }) {
-  const { toggleFavorite, isFavorite } = useFavorites();
-  const [logoError, setLogoError] = useState(false);
-  const [heroError, setHeroError] = useState(false);
-
-  const initials = getInitials(facility.name);
-  const hasLogo = facility.logo_url && !logoError;
-  const heroImage = facility.gallery_urls?.[0];
-  const hasHeroImage = heroImage && !heroError;
-  const yearsInBusiness = facility.year_established 
-    ? new Date().getFullYear() - facility.year_established 
-    : null;
-
-  return (
-    <article className="group relative h-full overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300">
-      <div className="flex h-full flex-col sm:flex-row">
-        {/* Image Section - Fixed dimensions for consistent card sizes */}
-        <div className="relative sm:w-48 lg:w-56 shrink-0 overflow-hidden bg-muted">
-          <div className="h-[120px] sm:h-full w-full">
-            {hasHeroImage ? (
-              <>
-                <img 
-                  src={heroImage}
-                  alt={`${facility.name} facility`}
-                  className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                  onError={() => setHeroError(true)}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-              </>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-secondary via-background to-secondary">
-                <div className="text-center">
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-muted shadow-sm">
-                    <span className="font-display text-lg font-bold text-muted-foreground">
-                      {initials}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-medium text-muted-foreground">
-                    Photo coming soon
-                  </span>
-                </div>
-              </div>
-            )}
-            
-            {/* Logo overlay */}
-            <div className="absolute bottom-2 left-2 z-10">
-              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-card shadow-md">
-                {hasLogo ? (
-                  <img 
-                    src={facility.logo_url!}
-                    alt={`${facility.name} logo`}
-                    className="h-full w-full object-cover object-center"
-                    loading="lazy"
-                    onError={() => setLogoError(true)}
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                    <span className="font-display text-xs font-bold text-primary">
-                      {initials}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Years badge */}
-            {yearsInBusiness && yearsInBusiness > 0 && (
-              <div className="absolute bottom-2 right-2 z-10">
-                <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-md px-2 py-1 shadow-sm">
-                  <Clock className="h-3 w-3 text-blue-600" />
-                  <span className="text-[10px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Content Section */}
-        <div className="flex flex-1 flex-col p-3 sm:p-4">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="flex-1 min-w-0">
-              <Link to={`/center/${facility.slug}`}>
-                <h3 className="font-display text-base font-bold leading-tight line-clamp-1 mb-1 group-hover:text-primary transition-colors">
-                  {facility.name}
-                </h3>
-              </Link>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="font-medium">{facility.city}, {facility.state}</span>
-              </div>
-            </div>
-
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleFavorite(facility.id);
-              }}
-              className={cn(
-                "p-2 rounded-lg border transition-all duration-200",
-                isFavorite(facility.id)
-                  ? "bg-rose-50 border-rose-200 text-rose-500"
-                  : "bg-secondary/50 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50"
-              )}
-              aria-label={isFavorite(facility.id) ? "Remove from favorites" : "Add to favorites"}
-            >
-              <Heart className={cn("h-4 w-4", isFavorite(facility.id) && "fill-current")} />
-            </button>
-          </div>
-
-          {/* Badges */}
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            {facility.verified && (
-              <Badge className="gap-1 px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-0">
-                <Shield className="h-3 w-3" />
-                Verified
-              </Badge>
-            )}
-            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold">
-              <Building2 className="h-3 w-3" />
-              {facility.facility_type}
-            </Badge>
-          </div>
-
-          {/* Description */}
-          {facility.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">
-              {facility.description}
-            </p>
-          )}
-
-          {/* Action */}
-          <div className="mt-auto">
-            <Link to={`/center/${facility.slug}`}>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1.5 group/btn">
-                View Details
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-// Skeleton loader for facility cards
-function FacilityCardSkeleton() {
-  return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="flex flex-col sm:flex-row">
-        <Skeleton className="h-32 sm:h-40 sm:w-48 lg:w-56" />
-        <div className="p-4 flex-1 space-y-3">
-          <Skeleton className="h-5 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-8 w-24" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function SeekerHome() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [nearbyFacilities, setNearbyFacilities] = useState<NearbyFacility[]>([]);
+  const [nearbyFacilities, setNearbyFacilities] = useState<FacilityCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("all");
