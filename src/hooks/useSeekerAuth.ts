@@ -17,6 +17,9 @@ export function useSeekerAuth() {
   const [profile, setProfile] = useState<SeekerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSeeker, setIsSeeker] = useState(false);
+  
+  // Derive email verification from user's email_confirmed_at
+  const isEmailVerified = !!user?.email_confirmed_at;
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
@@ -118,6 +121,20 @@ export function useSeekerAuth() {
     return { data, error };
   };
 
+  const resendVerificationEmail = async () => {
+    if (!user?.email) return { error: new Error('No email found') };
+    
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: user.email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/account`,
+      },
+    });
+    
+    return { error };
+  };
+
   return {
     user,
     session,
@@ -125,9 +142,11 @@ export function useSeekerAuth() {
     isLoading,
     isSeeker,
     isAuthenticated: !!user,
+    isEmailVerified,
     signUp,
     signIn,
     signOut,
-    updateProfile
+    updateProfile,
+    resendVerificationEmail
   };
 }
