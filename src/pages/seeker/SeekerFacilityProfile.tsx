@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFacilityReviews } from "@/hooks/useFacilityReviews";
@@ -281,18 +281,18 @@ export default function SeekerFacilityProfile() {
   const displayedInsurance = showAllInsurance ? insuranceList : insuranceList.slice(0, 8);
 
   return (
-    <div className="flex-1 py-4 sm:py-6">
-      {/* Back button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back
-      </button>
+    <div className="flex-1 py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
 
-      <ScrollArea className="h-[calc(100vh-180px)]">
-        <div className="space-y-4 pr-2">
+        <div className="space-y-4">
           {/* Header Card */}
           <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div className="flex items-start gap-4">
@@ -580,7 +580,7 @@ export default function SeekerFacilityProfile() {
             </Link>
           </div>
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Request Info Modal */}
       <RequestInfoModal
