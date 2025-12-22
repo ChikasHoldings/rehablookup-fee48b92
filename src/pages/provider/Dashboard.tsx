@@ -131,7 +131,7 @@ export default function ProviderDashboardPage() {
   const facilityId = selectedFacility?.id;
   
   const { data: providerData, isLoading } = useProviderData(facilityId);
-  const { data: subscription } = useSubscription();
+  const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { facilities } = useProviderFacilities();
   
   const facility = selectedFacility || providerData?.facility;
@@ -378,45 +378,47 @@ export default function ProviderDashboardPage() {
           )}
         </header>
 
-        {/* Alert Banners */}
-        <div className="space-y-3">
-          <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} plan={planKey as "basic" | "professional" | "featured"} />
-          <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
-          
-          {planKey === "basic" && totalLeadsCount === 0 && <BasicPlanUpgradeBanner />}
-          
-          {/* Basic Plan - Leads Waiting Banner */}
-          {planKey === "basic" && totalLeadsCount > 0 && (
-            <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 via-card to-primary/5 overflow-hidden">
-              <CardContent className="p-5">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-emerald-500 rounded-xl animate-ping opacity-20" />
-                      <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                        <span className="text-xl font-bold text-white">{totalLeadsCount}</span>
+        {/* Alert Banners - Only show after subscription data is loaded to prevent flash */}
+        {!subscriptionLoading && (
+          <div className="space-y-3">
+            <LeadLimitReachedBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} plan={planKey as "basic" | "professional" | "featured"} />
+            <LeadLimitWarningBanner usedLeads={monthlyLeadsCount} leadLimit={leadLimit} />
+            
+            {planKey === "basic" && totalLeadsCount === 0 && <BasicPlanUpgradeBanner />}
+            
+            {/* Basic Plan - Leads Waiting Banner */}
+            {planKey === "basic" && totalLeadsCount > 0 && (
+              <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 via-card to-primary/5 overflow-hidden">
+                <CardContent className="p-5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-emerald-500 rounded-xl animate-ping opacity-20" />
+                        <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                          <span className="text-xl font-bold text-white">{totalLeadsCount}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {totalLeadsCount} Lead{totalLeadsCount !== 1 ? 's' : ''} Waiting
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Families are interested. Upgrade to view contact details.
+                        </p>
                       </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">
-                        {totalLeadsCount} Lead{totalLeadsCount !== 1 ? 's' : ''} Waiting
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Families are interested. Upgrade to view contact details.
-                      </p>
-                    </div>
+                    <Button asChild className="shrink-0 gap-2 bg-emerald-600 hover:bg-emerald-700">
+                      <Link to="/provider/billing">
+                        Unlock Leads
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
                   </div>
-                  <Button asChild className="shrink-0 gap-2 bg-emerald-600 hover:bg-emerald-700">
-                    <Link to="/provider/billing">
-                      Unlock Leads
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Profile Completion Prompt */}
         {providerData?.facility && (() => {
