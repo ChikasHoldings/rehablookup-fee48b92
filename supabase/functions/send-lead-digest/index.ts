@@ -8,10 +8,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number }> = {
-  basic: { product_id: null, lead_limit: 4 },
-  professional: { product_id: "prod_TbalLOPujTIoUe", lead_limit: 25 },
-  featured: { product_id: "prod_TbalOeJZA2ZoJl", lead_limit: 75 },
+// Updated lead limits: Professional and Featured both get 100 leads/month
+const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number }> = {
+  basic: { product_ids: [], lead_limit: 0 },
+  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 100 },
+  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 100 },
 };
 
 interface Lead {
@@ -53,9 +54,10 @@ async function getProviderPlan(providerEmail: string): Promise<{ planName: strin
 
     const productId = subscriptions.data[0].items.data[0].price.product as string;
     
-    if (productId === PLAN_CONFIG.professional.product_id) {
+    // Support both old and new product IDs
+    if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
       return { planName: "professional", leadLimit: PLAN_CONFIG.professional.lead_limit };
-    } else if (productId === PLAN_CONFIG.featured.product_id) {
+    } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
       return { planName: "featured", leadLimit: PLAN_CONFIG.featured.lead_limit };
     }
     

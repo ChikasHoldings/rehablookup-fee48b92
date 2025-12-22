@@ -8,11 +8,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration
-const PLAN_CONFIG: Record<string, { product_id: string | null; lead_limit: number; name: string }> = {
-  basic: { product_id: null, lead_limit: 0, name: "Basic" },
-  professional: { product_id: "prod_TbalLOPujTIoUe", lead_limit: 25, name: "Professional" },
-  featured: { product_id: "prod_TbalOeJZA2ZoJl", lead_limit: 75, name: "Featured" },
+// Plan configuration - Updated lead limits (100 for both Professional and Featured)
+const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; name: string }> = {
+  basic: { product_ids: [], lead_limit: 0, name: "Basic" },
+  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 100, name: "Professional" },
+  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 100, name: "Featured" },
 };
 
 interface ProviderDigest {
@@ -55,9 +55,9 @@ async function getProviderPlan(stripe: Stripe, email: string): Promise<{ planNam
 
     const productId = subscriptions.data[0].items.data[0].price.product as string;
     
-    if (productId === PLAN_CONFIG.professional.product_id) {
+    if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
       return { planName: "Professional", leadLimit: PLAN_CONFIG.professional.lead_limit };
-    } else if (productId === PLAN_CONFIG.featured.product_id) {
+    } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
       return { planName: "Featured", leadLimit: PLAN_CONFIG.featured.lead_limit };
     }
     
