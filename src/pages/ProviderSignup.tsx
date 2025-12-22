@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,14 +33,12 @@ import {
   Lock,
   Image as ImageIcon,
   ShieldCheck,
-  Crown,
+  
 } from "lucide-react";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
-import { PlanSelectionStep } from "@/components/provider/PlanSelectionStep";
-import { PLAN_DETAILS } from "@/hooks/useSubscription";
 import { providerNavLinks } from "@/data/providerNavLinks";
 import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
 
@@ -79,8 +77,7 @@ const steps = [
   { id: 4, name: "Branding", icon: ImageIcon },
   { id: 5, name: "Services", icon: Stethoscope },
   { id: 6, name: "Insurance", icon: CreditCard },
-  { id: 7, name: "Plan", icon: Crown },
-  { id: 8, name: "Review", icon: CheckCircle },
+  { id: 7, name: "Review", icon: CheckCircle },
 ];
 
 const treatmentTypes = [
@@ -140,10 +137,6 @@ export default function ProviderSignup() {
   const [emailVerified, setEmailVerified] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  // Get plan from URL query parameter
-  const planFromUrl = searchParams.get("plan") as "basic" | "professional" | "featured" | null;
 
   // Check if user is already logged in
   useEffect(() => {
@@ -195,19 +188,10 @@ export default function ProviderSignup() {
     licensingInfo: "",
     accreditations: "",
 
-    // Step 7: Plan
-    selectedPlan: "basic" as "basic" | "professional" | "featured",
-
     // Terms
     agreeToTerms: false,
   });
 
-  // Set selected plan from URL parameter
-  useEffect(() => {
-    if (planFromUrl && ["basic", "professional", "featured"].includes(planFromUrl)) {
-      setFormData(prev => ({ ...prev, selectedPlan: planFromUrl }));
-    }
-  }, [planFromUrl]);
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -486,7 +470,6 @@ export default function ProviderSignup() {
             facilityName: formData.facilityName,
             providerEmail: formData.email,
             providerFirstName: formData.firstName,
-            selectedPlan: formData.selectedPlan,
           },
         });
       } catch (welcomeError) {
@@ -494,45 +477,12 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if email fails
       }
 
-      // 13. Handle subscription for paid plans
-      if (formData.selectedPlan !== "basic") {
-        toast({
-          title: "Account Created!",
-          description: "Redirecting to complete your subscription...",
-        });
-
-        // Create checkout session and redirect to Stripe
-        try {
-          const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke("create-checkout", {
-            body: { plan: formData.selectedPlan },
-          });
-
-          if (checkoutError || !checkoutData?.url) {
-            console.error("Checkout error:", checkoutError);
-            toast({
-              title: "Account Created",
-              description: "Your account is ready. You can subscribe from your dashboard.",
-            });
-            navigate("/provider-dashboard");
-          } else {
-            // Redirect to Stripe Checkout
-            window.location.href = checkoutData.url;
-          }
-        } catch (checkoutErr) {
-          console.error("Checkout invocation error:", checkoutErr);
-          toast({
-            title: "Account Created",
-            description: "Your account is ready. You can subscribe from your dashboard.",
-          });
-          navigate("/provider-dashboard");
-        }
-      } else {
-        toast({
-          title: "Welcome to RehabLookup!",
-          description: "Your account and facility have been created successfully.",
-        });
-        navigate("/provider-dashboard");
-      }
+      // 13. Redirect to plan selection page
+      toast({
+        title: "Welcome to RehabLookup!",
+        description: "Your account has been created. Now choose your plan.",
+      });
+      navigate("/provider/choose-plan");
     } catch (error: any) {
       console.error("Signup error:", error);
       toast({
@@ -580,8 +530,6 @@ export default function ProviderSignup() {
       case 6:
         return formData.selectedInsurance.length > 0;
       case 7:
-        return true; // Plan selection always has a default
-      case 8:
         return formData.agreeToTerms;
       default:
         return false;
@@ -1232,18 +1180,9 @@ export default function ProviderSignup() {
               </div>
             )}
 
-            {/* Step 7: Plan Selection */}
-            {currentStep === 7 && (
-              <div key="step-7" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
-                <PlanSelectionStep
-                  selectedPlan={formData.selectedPlan}
-                  onPlanSelect={(plan) => updateFormData("selectedPlan", plan)}
-                />
-              </div>
-            )}
 
-            {/* Step 8: Review */}
-            {currentStep === 8 && (
+            {/* Step 7: Review */}
+            {currentStep === 7 && (
               <div key="step-8" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
                 <div className="space-y-4">
                   {/* Account Summary */}
@@ -1305,43 +1244,6 @@ export default function ProviderSignup() {
                     </div>
                   </div>
 
-                  {/* Plan Summary */}
-                  <div className="space-y-2">
-                    <h3 className="font-medium flex items-center gap-2 text-sm">
-                      <Crown className="h-4 w-4" /> Selected Plan
-                    </h3>
-                    <div className={cn(
-                      "rounded-lg p-3 text-sm",
-                      formData.selectedPlan === "basic" && "bg-muted/50",
-                      formData.selectedPlan === "professional" && "bg-primary/5 border border-primary/20",
-                      formData.selectedPlan === "featured" && "bg-accent/5 border border-accent/30"
-                    )}>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-foreground">
-                            {PLAN_DETAILS[formData.selectedPlan].name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formData.selectedPlan === "basic" 
-                              ? "Free forever" 
-                              : `${PLAN_DETAILS[formData.selectedPlan].price}${PLAN_DETAILS[formData.selectedPlan].period}`}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground">
-                            {formData.selectedPlan === "basic" 
-                              ? `${PLAN_DETAILS[formData.selectedPlan].lead_limit} lead (lifetime)` 
-                              : `${PLAN_DETAILS[formData.selectedPlan].lead_limit} leads/mo`}
-                          </p>
-                        </div>
-                      </div>
-                      {formData.selectedPlan !== "basic" && (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          You'll be redirected to complete payment after account creation.
-                        </p>
-                      )}
-                    </div>
-                  </div>
 
                   {/* Terms */}
                   <div className="flex items-start space-x-3 pt-4 border-t">
@@ -1384,7 +1286,7 @@ export default function ProviderSignup() {
                 <div />
               )}
 
-              {currentStep < 8 && currentStep !== 2 && (
+              {currentStep < 7 && currentStep !== 2 && (
                 <Button
                   onClick={nextStep}
                   disabled={!canProceed()}
@@ -1396,14 +1298,14 @@ export default function ProviderSignup() {
                 </Button>
               )}
 
-              {currentStep === 8 && (
+              {currentStep === 7 && (
                 <Button
                   onClick={handleSubmit}
                   disabled={!canProceed() || isSubmitting}
                   className="ml-auto"
                   size="default"
                 >
-                  {isSubmitting ? "Creating Account..." : formData.selectedPlan === "basic" ? "Create Account" : "Create Account & Subscribe"}
+                  {isSubmitting ? "Creating Account..." : "Create Account"}
                   <CheckCircle className="ml-2 h-4 w-4" />
                 </Button>
               )}
