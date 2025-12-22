@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
+import { GoogleReviewsSection } from '@/components/provider/GoogleReviewsSection';
 
 export default function ProviderReviews() {
   const { selectedFacility } = useSelectedFacility();
@@ -34,6 +35,7 @@ export default function ProviderReviews() {
   const [selectedTab, setSelectedTab] = useState('all');
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [selectedReviewForDispute, setSelectedReviewForDispute] = useState<ProviderReview | null>(null);
+  const [googleReviewsExpanded, setGoogleReviewsExpanded] = useState(false);
 
   const filteredReviews = useMemo(() => {
     return reviews.filter(r => {
@@ -87,6 +89,13 @@ export default function ProviderReviews() {
 
       {/* Stats Cards */}
       <ReviewStatsCards stats={stats} />
+
+      {/* Google Reviews Section */}
+      <GoogleReviewsSection
+        facilityId={selectedFacility.id}
+        expanded={googleReviewsExpanded}
+        onToggle={() => setGoogleReviewsExpanded(!googleReviewsExpanded)}
+      />
 
       {/* Reviews Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
