@@ -97,9 +97,9 @@ function MetricCard({
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             {isLoading ? (
-              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-7 w-20" />
             ) : (
-              <p className="text-3xl font-bold tracking-tight text-foreground">{value}</p>
+              <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
             )}
             {subtitle && (
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -349,7 +349,7 @@ export default function ProviderDashboardPage() {
             <p className="text-sm text-muted-foreground font-medium">
               {format(new Date(), "EEEE, MMMM d, yyyy")}
             </p>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
               {userName ? `Welcome back, ${userName}` : "Welcome back"}
             </h1>
             {facility && (
