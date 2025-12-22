@@ -161,18 +161,22 @@ export default function SeekerHome() {
             <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
               Search for addiction treatment centers by location, treatment type, or facility name.
             </p>
-            <form onSubmit={handleSearch} className="flex gap-2 max-w-xl mx-auto">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search by city, state, or zip code..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-12 text-base"
-                />
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+              <div className="relative flex-1 group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300" />
+                <div className="relative flex items-center">
+                  <Search className="absolute left-4 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Input
+                    type="text"
+                    placeholder="Search by city, state, or zip code..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 h-12 text-base bg-background border-border/60 shadow-md focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                </div>
               </div>
-              <Button type="submit" size="lg" className="h-12 px-6">
+              <Button type="submit" size="lg" className="h-12 px-8 shadow-md">
+                <Search className="h-4 w-4 mr-2" />
                 Search
               </Button>
             </form>
@@ -268,33 +272,39 @@ export default function SeekerHome() {
   // Main layout with sidebar
   return (
     <div className="min-h-full">
-      {/* Search Header */}
-      <div className="bg-card border-b border-border py-4 px-4 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto">
+      {/* Search Header - z-50 to stay above card elements */}
+      <div className="bg-card/95 backdrop-blur-md border-b border-border shadow-sm sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <form onSubmit={handleSearch} className="flex gap-2 flex-1 max-w-2xl">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search treatment centers by location..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="relative flex-1 group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300" />
+                <div className="relative flex items-center">
+                  <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Input
+                    type="text"
+                    placeholder="Search by city, state, or facility name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 h-11 bg-background border-border/60 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                  />
+                </div>
               </div>
-              <Button type="submit">Search</Button>
+              <Button type="submit" size="lg" className="h-11 px-5 shadow-sm">
+                <Search className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Search</span>
+              </Button>
             </form>
             <Button
               variant={showFilters ? "default" : "outline"}
-              size="default"
+              size="lg"
               onClick={() => setShowFilters(!showFilters)}
-              className="gap-2 shrink-0"
+              className="h-11 gap-2 shrink-0 shadow-sm"
             >
               <SlidersHorizontal className="h-4 w-4" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
               {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs rounded-full">
+                <Badge variant={showFilters ? "secondary" : "default"} className="ml-1 h-5 min-w-5 px-1.5 flex items-center justify-center text-xs rounded-full">
                   {activeFiltersCount}
                 </Badge>
               )}
