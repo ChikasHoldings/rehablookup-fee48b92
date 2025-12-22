@@ -80,6 +80,17 @@ export interface Lead {
   budget_preference: string | null;
   qualified: boolean | null;
   exclusivity: string | null;
+  // Additional fields
+  assignment_status: string | null;
+  assignment_reason: string | null;
+  assigned_at: string | null;
+  validation_status: string | null;
+  quality_flag: string | null;
+  routing_order: number | null;
+  shared_with: string[] | null;
+  follow_up_reminder_sent_at: string | null;
+  ip_hash: string | null;
+  qualification_reason: string | null;
 }
 
 interface LeadNote {
@@ -547,7 +558,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                       <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
                         <User className="h-2.5 w-2.5" /> Seeking For
                       </p>
-                      <p className="text-sm font-medium text-foreground capitalize">{lead.who_seeking_help}</p>
+                      <p className="text-sm font-medium text-foreground capitalize">{lead.who_seeking_help.replace(/-|_/g, ' ')}</p>
                     </div>
                   )}
                   {lead.urgency && (
@@ -622,15 +633,105 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
               </section>
             )}
 
+            {/* Lead Quality & Status Section */}
+            <section>
+              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <ShieldCheck className="h-3 w-3 text-primary" />
+                Lead Quality & Status
+              </h3>
+              <div className="grid grid-cols-2 gap-1.5">
+                {lead.qualified !== null && (
+                  <div className={cn(
+                    "py-1.5 px-2 rounded",
+                    lead.qualified ? "bg-green-50 border border-green-200" : "bg-muted/40"
+                  )}>
+                    <p className="text-[10px] text-muted-foreground uppercase">Qualified</p>
+                    <p className={cn(
+                      "text-sm font-medium",
+                      lead.qualified ? "text-green-700" : "text-foreground"
+                    )}>{lead.qualified ? "Yes" : "No"}</p>
+                  </div>
+                )}
+                {lead.quality_flag && (
+                  <div className={cn(
+                    "py-1.5 px-2 rounded",
+                    lead.quality_flag === "qualified" ? "bg-green-50 border border-green-200" : "bg-muted/40"
+                  )}>
+                    <p className="text-[10px] text-muted-foreground uppercase">Quality Flag</p>
+                    <p className={cn(
+                      "text-sm font-medium capitalize",
+                      lead.quality_flag === "qualified" ? "text-green-700" : "text-foreground"
+                    )}>{lead.quality_flag.replace(/-|_/g, ' ')}</p>
+                  </div>
+                )}
+                {lead.validation_status && (
+                  <div className={cn(
+                    "py-1.5 px-2 rounded",
+                    lead.validation_status === "valid" ? "bg-green-50 border border-green-200" : "bg-amber-50 border border-amber-200"
+                  )}>
+                    <p className="text-[10px] text-muted-foreground uppercase">Validation</p>
+                    <p className={cn(
+                      "text-sm font-medium capitalize",
+                      lead.validation_status === "valid" ? "text-green-700" : "text-amber-700"
+                    )}>{lead.validation_status.replace(/-|_/g, ' ')}</p>
+                  </div>
+                )}
+                {lead.assignment_status && (
+                  <div className="py-1.5 px-2 rounded bg-muted/40">
+                    <p className="text-[10px] text-muted-foreground uppercase">Assignment</p>
+                    <p className="text-sm font-medium text-foreground capitalize">{lead.assignment_status.replace(/-|_/g, ' ')}</p>
+                  </div>
+                )}
+                {lead.preferred_contact && (
+                  <div className="py-1.5 px-2 rounded bg-muted/40">
+                    <p className="text-[10px] text-muted-foreground uppercase">Preferred Contact</p>
+                    <p className="text-sm font-medium text-foreground capitalize">{lead.preferred_contact}</p>
+                  </div>
+                )}
+                {lead.exclusivity && (
+                  <div className={cn(
+                    "py-1.5 px-2 rounded",
+                    lead.exclusivity === "exclusive" ? "bg-amber-50 border border-amber-200" : "bg-blue-50 border border-blue-200"
+                  )}>
+                    <p className="text-[10px] text-muted-foreground uppercase">Exclusivity</p>
+                    <p className={cn(
+                      "text-sm font-medium capitalize",
+                      lead.exclusivity === "exclusive" ? "text-amber-700" : "text-blue-700"
+                    )}>{lead.exclusivity}</p>
+                  </div>
+                )}
+              </div>
+              {lead.assignment_reason && (
+                <div className="py-1.5 px-2 rounded bg-muted/40 mt-1.5">
+                  <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Assignment Reason</p>
+                  <p className="text-sm text-foreground">{lead.assignment_reason}</p>
+                </div>
+              )}
+              {lead.qualification_reason && (
+                <div className="py-1.5 px-2 rounded bg-muted/40 mt-1.5">
+                  <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Qualification Reason</p>
+                  <p className="text-sm text-foreground">{lead.qualification_reason}</p>
+                </div>
+              )}
+            </section>
+
             {/* Source & Timestamp */}
             <section className="pt-2 border-t border-border/50">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  Source: <span className="font-medium text-foreground">
-                    {lead.source === "Request Help Page" ? "Qualified Lead" : (lead.source || "Direct")}
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    Source: <span className="font-medium text-foreground">
+                      {lead.source === "Request Help Page" ? "Qualified Lead" : (lead.source?.replace(/_/g, ' ') || "Direct")}
+                    </span>
                   </span>
-                </span>
-                <span>{format(new Date(lead.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
+                  <span>{format(new Date(lead.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
+                </div>
+                {lead.assigned_at && (
+                  <div className="flex items-center justify-between">
+                    <span>Assigned:</span>
+                    <span className="font-medium text-foreground">{format(new Date(lead.assigned_at), "MMM d, yyyy 'at' h:mm a")}</span>
+                  </div>
+                )}
               </div>
             </section>
           </TabsContent>
