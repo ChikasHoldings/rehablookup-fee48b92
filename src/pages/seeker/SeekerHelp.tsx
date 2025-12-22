@@ -126,19 +126,19 @@ export default function SeekerHelp() {
         <meta name="description" content="Get help finding treatment centers and managing your account." />
       </Helmet>
 
-      <div className="min-h-screen bg-slate-950 pb-24">
+      <div className="min-h-screen bg-background pb-24">
         {/* Header */}
-        <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-lg border-b border-slate-800">
+        <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
           <div className="flex items-center gap-3 px-4 py-4">
             <Link 
               to="/account" 
-              className="p-2 -ml-2 rounded-lg hover:bg-slate-800 transition-colors"
+              className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
             >
-              <ArrowLeft className="h-5 w-5 text-slate-400" />
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Link>
             <div>
-              <h1 className="text-lg font-semibold text-white">Help & Support</h1>
-              <p className="text-xs text-slate-400">Get assistance and find answers</p>
+              <h1 className="text-lg font-semibold text-foreground">Help & Support</h1>
+              <p className="text-xs text-muted-foreground">Get assistance and find answers</p>
             </div>
           </div>
         </div>
@@ -146,24 +146,24 @@ export default function SeekerHelp() {
         <div className="px-4 py-6 space-y-6">
           {/* Quick Help Topics */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Quick Help
             </h2>
             <div className="space-y-2">
               {helpTopics.map((topic) => {
                 const Icon = topic.icon;
                 return (
-                  <Card key={topic.title} className="bg-slate-900/50 border-slate-800">
+                  <Card key={topic.title} className="bg-card border-border hover:bg-muted/50 transition-colors cursor-pointer">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center">
                           <Icon className="h-5 w-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-white">{topic.title}</h3>
-                          <p className="text-sm text-slate-400 line-clamp-1">{topic.description}</p>
+                          <h3 className="font-medium text-foreground">{topic.title}</h3>
+                          <p className="text-sm text-muted-foreground line-clamp-1">{topic.description}</p>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-slate-600" />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
                       </div>
                     </CardContent>
                   </Card>
@@ -174,26 +174,26 @@ export default function SeekerHelp() {
 
           {/* Crisis Resources */}
           <section>
-            <Card className="bg-gradient-to-br from-red-500/10 to-orange-500/10 border-red-500/20">
+            <Card className="bg-gradient-to-br from-destructive/10 to-orange-500/10 border-destructive/30">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-red-500/20 flex items-center justify-center">
-                    <Phone className="h-5 w-5 text-red-400" />
+                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-destructive/20 flex items-center justify-center">
+                    <Phone className="h-5 w-5 text-destructive" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white mb-1">Need Immediate Help?</h3>
-                    <p className="text-sm text-slate-300 mb-3">
+                    <h3 className="font-semibold text-foreground mb-1">Need Immediate Help?</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
                       For emergencies call 911. For crisis support:
                     </p>
                     <a 
                       href="tel:1-800-662-4357"
-                      className="inline-flex items-center gap-2 text-sm font-medium text-red-400 hover:text-red-300"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-destructive hover:text-destructive/80 transition-colors"
                     >
                       <Phone className="h-4 w-4" />
                       SAMHSA: 1-800-662-4357
                       <ExternalLink className="h-3 w-3" />
                     </a>
-                    <p className="text-xs text-slate-400 mt-1">Available 24/7, free and confidential</p>
+                    <p className="text-xs text-muted-foreground mt-1">Available 24/7, free and confidential</p>
                   </div>
                 </div>
               </CardContent>
@@ -202,22 +202,22 @@ export default function SeekerHelp() {
 
           {/* FAQs */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Frequently Asked Questions
             </h2>
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card border-border">
               <CardContent className="p-0">
                 <Accordion type="single" collapsible className="w-full">
                   {faqs.map((faq, index) => (
                     <AccordionItem 
                       key={index} 
                       value={`faq-${index}`}
-                      className="border-slate-800 last:border-b-0"
+                      className="border-border last:border-b-0"
                     >
-                      <AccordionTrigger className="px-4 py-3 text-left text-sm text-white hover:no-underline hover:bg-slate-800/50">
+                      <AccordionTrigger className="px-4 py-3 text-left text-sm text-foreground hover:no-underline hover:bg-muted/50">
                         {faq.question}
                       </AccordionTrigger>
-                      <AccordionContent className="px-4 pb-4 text-sm text-slate-400">
+                      <AccordionContent className="px-4 pb-4 text-sm text-muted-foreground">
                         {faq.answer}
                       </AccordionContent>
                     </AccordionItem>
@@ -229,12 +229,12 @@ export default function SeekerHelp() {
 
           {/* Contact Form */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Contact Support
             </h2>
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base text-white flex items-center gap-2">
+                <CardTitle className="text-base text-foreground flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-primary" />
                   Send us a message
                 </CardTitle>
@@ -242,9 +242,9 @@ export default function SeekerHelp() {
               <CardContent>
                 <form onSubmit={handleContactSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="category" className="text-slate-300">Category</Label>
+                    <Label htmlFor="category" className="text-foreground">Category</Label>
                     <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectTrigger className="bg-muted border-border text-foreground">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -259,25 +259,25 @@ export default function SeekerHelp() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subject" className="text-slate-300">Subject</Label>
+                    <Label htmlFor="subject" className="text-foreground">Subject</Label>
                     <Input
                       id="subject"
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                       placeholder="Brief description of your issue"
-                      className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                      className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="message" className="text-slate-300">Message</Label>
+                    <Label htmlFor="message" className="text-foreground">Message</Label>
                     <Textarea
                       id="message"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="Please describe your question or issue in detail..."
                       rows={4}
-                      className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 resize-none"
+                      className="bg-muted border-border text-foreground placeholder:text-muted-foreground resize-none"
                     />
                   </div>
 
@@ -302,21 +302,21 @@ export default function SeekerHelp() {
 
           {/* Direct Contact */}
           <section>
-            <Card className="bg-slate-900/50 border-slate-800">
+            <Card className="bg-card border-border">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center">
                     <Mail className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-white">Email Support</h3>
+                    <h3 className="font-medium text-foreground">Email Support</h3>
                     <a 
                       href="mailto:support@recoverydirectory.com"
                       className="text-sm text-primary hover:underline"
                     >
                       support@recoverydirectory.com
                     </a>
-                    <p className="text-xs text-slate-500 mt-0.5">We typically respond within 24 hours</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">We typically respond within 24 hours</p>
                   </div>
                 </div>
               </CardContent>
