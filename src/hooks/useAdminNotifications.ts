@@ -178,10 +178,11 @@ export function useAdminNotifications() {
 
   const deleteAllMutation = useMutation({
     mutationFn: async () => {
+      // Delete all notifications - use gte on created_at to ensure we get all records
       const { error } = await supabase
         .from("admin_notifications")
         .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
+        .gte("created_at", "1970-01-01T00:00:00Z");
       if (error) throw error;
     },
     onMutate: async () => {
