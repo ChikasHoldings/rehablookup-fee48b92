@@ -1,0 +1,253 @@
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Star, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { FacilityReview } from '@/hooks/useFacilityReviews';
+
+interface ReviewFormProps {
+  facilityName: string;
+  userReview: FacilityReview | null;
+  isAuthenticated: boolean;
+  onSubmit: (rating: number, reviewText: string) => Promise<{ error: Error | null }>;
+  onUpdate: (rating: number, reviewText: string) => Promise<{ error: Error | null }>;
+  onDelete: () => Promise<{ error: Error | null }>;
+}
+
+export function ReviewForm({ 
+  facilityName, 
+  userReview, 
+  isAuthenticated,
+  onSubmit,
+  onUpdate,
+  onDelete
+}: ReviewFormProps) {
+  const [rating, setRating] = useState(userReview?.rating || 0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState(userReview?.review_text || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (rating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    const { error } = userReview 
+      ? await onUpdate(rating, reviewText)
+      : await onSubmit(rating, reviewText);
+    
+    setIsSubmitting(false);
+
+    if (error) {
+      if (error.message.includes('duplicate')) {
+        toast.error('You have already reviewed this facility');
+      } else {
+        toast.error('Failed to submit review');
+      }
+    } else {
+      toast.success(userReview ? 'Review updated! It will be visible after moderation.' : 'Review submitted! It will be visible after moderation.');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete your review?')) return;
+    
+    setIsDeleting(true);
+    const { error } = await onDelete();
+    setIsDeleting(false);
+
+    if (error) {
+      toast.error('Failed to delete review');
+    } else {
+      toast.success('Review deleted');
+      setRating(0);
+      setReviewText('');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="py-8 text-center">
+          <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+          <h3 className="font-medium text-lg mb-2">Share Your Experience</h3>
+          <p className="text-muted-foreground mb-4">
+            Sign in to leave a review for {facilityName}
+          </p>
+          <Button asChild>
+            <Link to="/auth">Sign In to Review</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (userReview && userReview.status === 'approved') {
+    return (
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="py-6">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
+            <div>
+              <h3 className="font-medium">Your Review is Live</h3>
+              <div className="flex items-center gap-1 mt-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={cn(
+                      "h-4 w-4",
+                      star <= userReview.rating
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-muted-foreground/30"
+                    )}
+                  />
+                ))}
+              </div>
+              {userReview.review_text && (
+                <p className="text-sm text-muted-foreground mt-2">{userReview.review_text}</p>
+              )}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-3 text-destructive hover:text-destructive"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Review'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (userReview && userReview.status === 'pending') {
+    return (
+      <Card className="border-yellow-500/20 bg-yellow-500/5">
+        <CardContent className="py-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <div>
+              <h3 className="font-medium">Review Pending Approval</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Your review is being reviewed by our team and will be visible shortly.
+              </p>
+              <div className="flex items-center gap-1 mt-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={cn(
+                      "h-4 w-4",
+                      star <= userReview.rating
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-muted-foreground/30"
+                    )}
+                  />
+                ))}
+              </div>
+              {userReview.review_text && (
+                <p className="text-sm text-muted-foreground mt-2">{userReview.review_text}</p>
+              )}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-3 text-destructive hover:text-destructive"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Review'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Write a Review</CardTitle>
+        <CardDescription>
+          Share your experience at {facilityName}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Your Rating</label>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  className="p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={() => setRating(star)}
+                >
+                  <Star
+                    className={cn(
+                      "h-8 w-8 transition-colors",
+                      star <= (hoverRating || rating)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-muted-foreground/30 hover:text-yellow-300"
+                    )}
+                  />
+                </button>
+              ))}
+              {rating > 0 && (
+                <span className="ml-2 text-sm text-muted-foreground">
+                  {rating === 1 && 'Poor'}
+                  {rating === 2 && 'Fair'}
+                  {rating === 3 && 'Good'}
+                  {rating === 4 && 'Very Good'}
+                  {rating === 5 && 'Excellent'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="review-text" className="block text-sm font-medium mb-2">
+              Your Review (optional)
+            </label>
+            <Textarea
+              id="review-text"
+              placeholder="Share details about your experience..."
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              rows={4}
+              maxLength={1000}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {reviewText.length}/1000 characters
+            </p>
+          </div>
+
+          <Button type="submit" disabled={isSubmitting || rating === 0}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              'Submit Review'
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
