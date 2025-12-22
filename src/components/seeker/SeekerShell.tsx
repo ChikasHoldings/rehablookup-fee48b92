@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SeekerHeader } from "./SeekerHeader";
 import { SeekerMobileNav } from "./SeekerMobileNav";
+import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -13,7 +14,9 @@ export function SeekerShell() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [userName, setUserName] = useState<string | undefined>();
+  const [userEmail, setUserEmail] = useState<string | undefined>();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
 
   // Scroll content area to top on route change
@@ -29,6 +32,8 @@ export function SeekerShell() {
       const { data: { session } } = await supabase.auth.getSession();
       
       setIsAuthenticated(!!session);
+      setIsEmailVerified(!!session?.user?.email_confirmed_at);
+      setUserEmail(session?.user?.email);
       
       if (session) {
         // Get profile
@@ -48,6 +53,8 @@ export function SeekerShell() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setIsAuthenticated(!!session);
+        setIsEmailVerified(!!session?.user?.email_confirmed_at);
+        setUserEmail(session?.user?.email);
         
         if (session) {
           const { data: profile } = await supabase
@@ -59,6 +66,7 @@ export function SeekerShell() {
           setUserName(profile?.display_name || session.user.email?.split('@')[0]);
         } else {
           setUserName(undefined);
+          setUserEmail(undefined);
         }
       }
     );
@@ -105,6 +113,11 @@ export function SeekerShell() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
+      {/* Email Verification Banner */}
+      {isAuthenticated && !isEmailVerified && (
+        <EmailVerificationBanner email={userEmail} />
+      )}
+      
       {/* Fixed Header */}
       <div className="flex-shrink-0 z-50">
         <SeekerHeader 
