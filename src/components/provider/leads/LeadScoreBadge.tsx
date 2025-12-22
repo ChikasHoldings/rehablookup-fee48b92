@@ -4,7 +4,7 @@ import {
   getScoreColor, 
   type LeadScoringInput,
   type LeadScore 
-} from "@/lib/leadScoring";
+} from "@/lib/scoring";
 import { 
   Tooltip,
   TooltipContent,
@@ -13,6 +13,13 @@ import {
 } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp } from "lucide-react";
+
+// Re-export advanced components
+export { 
+  AdvancedLeadScoreBadge, 
+  useAdvancedLeadScore, 
+  useQuickLeadScore 
+} from "./AdvancedLeadScoreBadge";
 
 interface LeadScoreBadgeProps {
   lead: LeadScoringInput;
