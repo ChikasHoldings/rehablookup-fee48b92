@@ -69,6 +69,8 @@ import Contact from "./pages/Contact";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
+import SeekerAuth from "./pages/SeekerAuth";
+import MyAccount from "./pages/MyAccount";
 
 // Near Me SEO Pages
 import DrugRehabNearMe from "./pages/near-me/DrugRehabNearMe";
@@ -181,6 +183,8 @@ const App = () => (
             <Route path="/request-help" element={<RequestHelp />} />
             <Route path="/lp/treatment" element={<AdLanding />} />
             <Route path="/lp/social" element={<SocialLanding />} />
+            <Route path="/auth" element={<SeekerAuth />} />
+            <Route path="/my-account" element={<MyAccount />} />
             <Route path="/for-providers" element={<ForProviders />} />
             <Route path="/provider-resources" element={<ProviderResources />} />
             <Route path="/provider-login" element={<ProviderLogin />} />

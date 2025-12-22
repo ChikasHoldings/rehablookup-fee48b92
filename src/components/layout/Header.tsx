@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info } from "lucide-react";
+import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
+import { useSeekerAuth } from "@/hooks/useSeekerAuth";
+import { useFavorites } from "@/hooks/useFavorites";
 
 export interface NavLink {
   href: string;
@@ -49,6 +51,8 @@ export function Header({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated: isSeekerLoggedIn, isLoading: seekerLoading } = useSeekerAuth();
+  const { favoritesCount } = useFavorites();
 
   useEffect(() => {
     if (variant === "provider") {
@@ -186,16 +190,37 @@ export function Header({
                 )}
               </>
             ) : (
-              <PrefetchLink 
-                to={ctaLink} 
-                className="hidden sm:block"
-                onClick={() => analytics.ctaClick(ctaLabel, "header")}
-              >
-                <Button size="sm" className="h-8 text-sm gap-1.5">
-                  <Heart className="h-3.5 w-3.5" />
-                  {ctaLabel}
-                </Button>
-              </PrefetchLink>
+              <div className="hidden sm:flex items-center gap-2">
+                {!seekerLoading && isSeekerLoggedIn ? (
+                  <PrefetchLink to="/my-account">
+                    <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
+                      <User className="h-4 w-4" />
+                      My Account
+                      {favoritesCount > 0 && (
+                        <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
+                          {favoritesCount > 9 ? '9+' : favoritesCount}
+                        </span>
+                      )}
+                    </Button>
+                  </PrefetchLink>
+                ) : (
+                  <PrefetchLink to="/auth">
+                    <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5">
+                      <User className="h-4 w-4" />
+                      Sign In
+                    </Button>
+                  </PrefetchLink>
+                )}
+                <PrefetchLink 
+                  to={ctaLink} 
+                  onClick={() => analytics.ctaClick(ctaLabel, "header")}
+                >
+                  <Button size="sm" className="h-8 text-sm gap-1.5">
+                    <Heart className="h-3.5 w-3.5" />
+                    {ctaLabel}
+                  </Button>
+                </PrefetchLink>
+              </div>
             )}
             <button
               className={cn(
@@ -430,6 +455,26 @@ export function Header({
               </>
             ) : (
               <div className="space-y-3">
+                {!seekerLoading && isSeekerLoggedIn ? (
+                  <PrefetchLink to="/my-account" onClick={() => setMobileMenuOpen(false)} className="block">
+                    <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2 relative">
+                      <User className="h-4 w-4" />
+                      My Account
+                      {favoritesCount > 0 && (
+                        <span className="absolute top-2 right-3 h-5 w-5 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
+                          {favoritesCount > 9 ? '9+' : favoritesCount}
+                        </span>
+                      )}
+                    </Button>
+                  </PrefetchLink>
+                ) : (
+                  <PrefetchLink to="/auth" onClick={() => setMobileMenuOpen(false)} className="block">
+                    <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2">
+                      <User className="h-4 w-4" />
+                      Sign In / Create Account
+                    </Button>
+                  </PrefetchLink>
+                )}
                 <PrefetchLink to={ctaLink} onClick={() => setMobileMenuOpen(false)} className="block">
                   <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 gap-2">
                     <Heart className="h-4 w-4 animate-pulse" />
