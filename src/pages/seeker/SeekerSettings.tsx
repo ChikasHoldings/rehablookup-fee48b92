@@ -348,18 +348,20 @@ export default function SeekerSettings() {
       ? `${firstName.trim()} ${lastName.trim()}`
       : displayName;
 
+    // Use upsert to handle cases where profile doesn't exist yet
     const { error } = await supabase
       .from('seeker_profiles')
-      .update({ 
+      .upsert({ 
+        user_id: session.user.id,
         display_name: fullDisplayName,
         first_name: firstName.trim() || null,
         last_name: lastName.trim() || null,
         phone: phone || null,
         zipcode: zipcode || null,
         city: city || null,
-        state: state || null
-      })
-      .eq('user_id', session.user.id);
+        state: state || null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
 
     if (error) {
       toast({
@@ -369,6 +371,8 @@ export default function SeekerSettings() {
       });
     } else {
       setDisplayName(fullDisplayName);
+      // Invalidate the seeker profile query to update header name
+      queryClient.invalidateQueries({ queryKey: ['seeker-profile', session.user.id] });
       await logActivity({
         eventType: "profile_update",
         description: "Updated profile information"
