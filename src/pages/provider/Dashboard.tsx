@@ -44,31 +44,7 @@ import { BasicPlanUpgradeBanner } from "@/components/provider/BasicPlanUpgradeBa
 import { LeadUsageProgressCard } from "@/components/provider/LeadUsageProgressCard";
 import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
-
-interface Lead {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  message: string | null;
-  status: string;
-  created_at: string;
-  preferred_contact: string;
-  facility_id: string;
-  source: string | null;
-  email_verified: boolean | null;
-  snooze_until: string | null;
-  who_seeking_help: string | null;
-  location_zip: string | null;
-  location_city_state: string | null;
-  urgency: string | null;
-  primary_substance: string[] | null;
-  level_of_care: string | null;
-  dual_diagnosis: string | null;
-  insurance_type: string | null;
-  insurance_provider: string | null;
-  budget_preference: string | null;
-}
+import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 
 // Metric Card Component for consistent styling
 function MetricCard({ 

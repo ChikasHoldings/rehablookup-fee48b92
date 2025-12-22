@@ -1204,6 +1204,7 @@ export type Database = {
           shared_with: string[] | null
           snooze_until: string | null
           source: string | null
+          special_needs: string[] | null
           status: string
           urgency: string | null
           validation_status: string | null
@@ -1240,6 +1241,7 @@ export type Database = {
           shared_with?: string[] | null
           snooze_until?: string | null
           source?: string | null
+          special_needs?: string[] | null
           status?: string
           urgency?: string | null
           validation_status?: string | null
@@ -1276,6 +1278,7 @@ export type Database = {
           shared_with?: string[] | null
           snooze_until?: string | null
           source?: string | null
+          special_needs?: string[] | null
           status?: string
           urgency?: string | null
           validation_status?: string | null

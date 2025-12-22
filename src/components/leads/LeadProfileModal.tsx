@@ -58,31 +58,10 @@ import { LeadScoreBadge } from "@/components/provider/leads/LeadScoreBadge";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 import { calculateLeadScore } from "@/lib/leadScoring";
+import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 
-export interface Lead {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  message: string | null;
-  preferred_contact: string;
-  created_at: string;
-  status: string;
-  facility_id: string | null;
-  source: string | null;
-  email_verified: boolean | null;
-  snooze_until: string | null;
-  who_seeking_help: string | null;
-  location_zip: string | null;
-  location_city_state: string | null;
-  urgency: string | null;
-  primary_substance: string[] | null;
-  level_of_care: string | null;
-  dual_diagnosis: string | null;
-  insurance_type: string | null;
-  insurance_provider: string | null;
-  budget_preference: string | null;
-}
+// Re-export Lead for backwards compatibility
+export type { Lead };
 
 interface LeadNote {
   id: string;
@@ -851,6 +830,25 @@ export function LeadProfileModal({
                       {lead.primary_substance.map((substance, idx) => (
                         <Badge key={idx} variant="secondary" className="capitalize">
                           {substance}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Special Requirements */}
+                {lead.special_needs && lead.special_needs.length > 0 && (
+                  <div className="p-4 rounded-xl bg-purple-50 border border-purple-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <User className="h-4 w-4 text-purple-600" />
+                      <span className="text-xs font-medium text-purple-700 uppercase tracking-wide">
+                        Special Requirements
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {lead.special_needs.map((need, idx) => (
+                        <Badge key={idx} variant="outline" className="capitalize border-purple-300 text-purple-700 bg-purple-50">
+                          {need.replace(/-/g, ' ')}
                         </Badge>
                       ))}
                     </div>

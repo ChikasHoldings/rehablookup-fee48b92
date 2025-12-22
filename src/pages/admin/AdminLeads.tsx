@@ -145,6 +145,7 @@ type Lead = {
   facility_id: string | null;
   snooze_until: string | null;
   budget_preference: string | null;
+  special_needs: string[] | null;
   qualified: boolean | null;
   qualification_reason: string | null;
   assignment_status: string | null;
@@ -154,6 +155,9 @@ type Lead = {
   quality_flag: string | null;
   exclusivity: string | null;
   shared_with: string[] | null;
+  routing_order: number | null;
+  follow_up_reminder_sent_at: string | null;
+  ip_hash: string | null;
 };
 
 type Facility = {
