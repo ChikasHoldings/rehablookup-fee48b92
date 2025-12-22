@@ -146,8 +146,21 @@ serve(async (req) => {
         plan = "featured";
       }
 
-      const createdDate = new Date(sub.created * 1000);
-      const canceledDate = sub.canceled_at ? new Date(sub.canceled_at * 1000) : null;
+      // Safely parse dates - handle null/undefined/invalid timestamps
+      const createdTimestamp = sub.created;
+      const createdDate = createdTimestamp && !isNaN(createdTimestamp) 
+        ? new Date(createdTimestamp * 1000) 
+        : null;
+      
+      const canceledTimestamp = sub.canceled_at;
+      const canceledDate = canceledTimestamp && !isNaN(canceledTimestamp)
+        ? new Date(canceledTimestamp * 1000)
+        : null;
+
+      const periodEndTimestamp = sub.current_period_end;
+      const periodEndDate = periodEndTimestamp && !isNaN(periodEndTimestamp)
+        ? new Date(periodEndTimestamp * 1000)
+        : null;
 
       if (sub.status === "active") {
         activeCount++;
@@ -160,7 +173,7 @@ serve(async (req) => {
         }
 
         // New subscription in last 30 days
-        if (createdDate > thirtyDaysAgo) {
+        if (createdDate && createdDate > thirtyDaysAgo) {
           newLast30Days++;
           recentEvents.push({
             type: "new",
@@ -188,8 +201,8 @@ serve(async (req) => {
         customer_name: customer.name || "Unknown",
         plan,
         status: sub.status,
-        current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
-        created: createdDate.toISOString(),
+        current_period_end: periodEndDate ? periodEndDate.toISOString() : new Date().toISOString(),
+        created: createdDate ? createdDate.toISOString() : new Date().toISOString(),
         cancel_at_period_end: sub.cancel_at_period_end,
         monthly_amount: monthlyAmount / 100,
       });
