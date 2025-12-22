@@ -106,7 +106,9 @@ const platformNews = [
     title: "New Lead Analytics Dashboard",
     description: "Track your conversion rates and lead quality with enhanced analytics.",
     date: "Dec 20",
-    isNew: true
+    isNew: true,
+    link: "/provider/analytics",
+    linkType: "internal" as const
   },
   {
     id: 2,
@@ -115,7 +117,9 @@ const platformNews = [
     title: "Holiday Support Hours",
     description: "Support available Dec 24-25 with limited hours. Happy Holidays!",
     date: "Dec 18",
-    isNew: true
+    isNew: true,
+    link: "/provider/settings",
+    linkType: "internal" as const
   },
   {
     id: 3,
@@ -124,7 +128,20 @@ const platformNews = [
     title: "Complete Your Profile",
     description: "Facilities with complete profiles receive 40% more inquiries.",
     date: "Dec 15",
-    isNew: false
+    isNew: false,
+    link: "/provider/listing",
+    linkType: "internal" as const
+  },
+  {
+    id: 4,
+    type: "feature",
+    icon: Star,
+    title: "Review Management",
+    description: "Respond to client reviews and manage your reputation directly.",
+    date: "Dec 12",
+    isNew: false,
+    link: "/provider/reviews",
+    linkType: "internal" as const
   }
 ];
 
@@ -651,28 +668,47 @@ export default function ProviderDashboardPage() {
                 <div className="divide-y">
                   {platformNews.map((news) => {
                     const NewsIcon = news.icon;
-                    return (
-                      <div key={news.id} className="p-3 hover:bg-muted/30 transition-colors">
-                        <div className="flex items-start gap-2.5">
-                          <div className={cn(
-                            "h-7 w-7 rounded flex items-center justify-center shrink-0",
-                            news.type === 'feature' ? 'bg-blue-500/10 text-blue-600' :
-                            news.type === 'announcement' ? 'bg-amber-500/10 text-amber-600' :
-                            'bg-violet-500/10 text-violet-600'
-                          )}>
-                            <NewsIcon className="h-3.5 w-3.5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <p className="text-xs font-semibold text-foreground leading-tight truncate">{news.title}</p>
-                              {news.isNew && (
-                                <span className="px-1.5 py-0.5 text-[9px] font-medium bg-primary text-primary-foreground rounded shrink-0">NEW</span>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{news.description}</p>
-                          </div>
+                    const content = (
+                      <div className="flex items-start gap-2.5">
+                        <div className={cn(
+                          "h-7 w-7 rounded flex items-center justify-center shrink-0",
+                          news.type === 'feature' ? 'bg-blue-500/10 text-blue-600' :
+                          news.type === 'announcement' ? 'bg-amber-500/10 text-amber-600' :
+                          'bg-violet-500/10 text-violet-600'
+                        )}>
+                          <NewsIcon className="h-3.5 w-3.5" />
                         </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-semibold text-foreground leading-tight truncate">{news.title}</p>
+                            {news.isNew && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-medium bg-primary text-primary-foreground rounded shrink-0">NEW</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{news.description}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0 mt-0.5" />
                       </div>
+                    );
+                    
+                    return news.linkType === 'internal' ? (
+                      <Link
+                        key={news.id}
+                        to={news.link}
+                        className="block p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                      >
+                        {content}
+                      </Link>
+                    ) : (
+                      <a
+                        key={news.id}
+                        href={news.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                      >
+                        {content}
+                      </a>
                     );
                   })}
                 </div>
