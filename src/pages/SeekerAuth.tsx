@@ -344,7 +344,13 @@ export default function SeekerAuth() {
                 <Link to="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
               </p>
               
-              <div className="mt-6 pt-4 border-t border-border">
+              <div className="mt-6 pt-4 border-t border-border space-y-2">
+                <p className="text-sm text-muted-foreground text-center">
+                  New here?{' '}
+                  <Link to="/signup" className="text-primary font-medium hover:underline">
+                    Create an account
+                  </Link>
+                </p>
                 <p className="text-sm text-muted-foreground text-center">
                   Are you a treatment provider?{' '}
                   <Link to="/provider-login" className="text-primary font-medium hover:underline">
