@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,11 +14,58 @@ export interface SeekerNotification {
   created_at: string;
 }
 
+// Simple notification sound (base64 encoded short beep)
+const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleA0AFQN/kI6sxr2UXQAAxuzXooRCBgmQx+/FeSQNTfj3vE8PFq3s7qF1IkJ1wdbhoF4XLpG/xaCJTitdoNm6qXlPVYCgzcDBm2s5RnKUwdDFvJFfRFZ9l7bRzcKqeE1Laz5LWnSUqbXCzL+pgV1AMDlXboSZq7q+xb6uhFk6LkNedI6iu8XDu65/VDAsOlV5lq3Cx7+0qIhfQC8yTGJ+mbO/wruzqopiQy4sRV12j6S2wcS7t6+JYEQsKUBYcoabrrzAuba1qotgRCsmP1RvgoySnaWtsLe4ubaxqp+ThntuZV5bXmNqc4CQnq20uLy6tq+ij3xrX1NLSkpOVl9sdIiXpay0trStpJqOgnZqYFhTUldaX2hxgI2Zoa2ys7Cvqp2PhHpvZ2JfX2FlaXJ5g4+Yoqqvs7OvrKaclIqBd3FtaWpsb3R5gImRmqGnq66vraqknpaNhH15dnV1dnh7foSKkJebnqOlp6elo5+blo+JhIB9fHt7fH6Bh4yRlpmcnqCgo6OioJ2ZlpKOioeDgYGBgoWIjJCTlpmbnZ+goaKioaCemZaRjYqIhoWEhYaHioyPkpWYmpydn5+goKCfnpyZl5SSj4yLioqKi4yNj5KUlpianJ2en5+fnp2cm5mWk5GQjo2NjY2OjpCSlJaYmZudnZ6enp2cm5qYlpSTkZCPj4+Pj5CRkpSVl5mam5ycnZ2dnJuamJeVk5KRkJCQkJCRkpOUlZaXmJmanJycnJybmpmYl5WUk5KRkZGRkZGSkpOUlZaXmJmampubm5uamZiXlpWUk5OSkpKSkpOTk5SVlpaXmJmZmpqampqZmZiXlpWVlJSUk5OTk5SUlJWVlpaXl5iYmZmZmZmYmJeWlpWVlJSUlJSUlJSVlZWWlpeXl5iYmJiYmJeXlpaWlZWVlZWVlZWVlZaWlpaWl5eXl5eXl5eXlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eXl5aWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eX";
+
 export function useSeekerNotifications() {
   const [notifications, setNotifications] = useState<SeekerNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const previousNotificationsRef = useRef<string[]>([]);
+
+  // Initialize audio element on mount
+  useEffect(() => {
+    audioRef.current = new Audio(NOTIFICATION_SOUND_URL);
+    audioRef.current.volume = 0.5;
+
+    // Request notification permission
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    return () => {
+      audioRef.current = null;
+    };
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch((err) => {
+        console.log("Could not play notification sound:", err);
+      });
+    }
+  }, []);
+
+  const showBrowserNotification = useCallback((title: string, body: string, link?: string | null) => {
+    if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
+      const notification = new Notification(title, {
+        body,
+        icon: "/favicon.svg",
+        tag: "rehablookup-seeker",
+      });
+      notification.onclick = () => {
+        window.focus();
+        if (link) {
+          window.location.href = link;
+        }
+        notification.close();
+      };
+      setTimeout(() => notification.close(), 5000);
+    }
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -45,6 +92,7 @@ export function useSeekerNotifications() {
       const notifs = (data || []) as SeekerNotification[];
       setNotifications(notifs);
       setUnreadCount(notifs.filter(n => !n.read).length);
+      previousNotificationsRef.current = notifs.map(n => n.id);
     } catch (err) {
       console.error("Error fetching notifications:", err);
     } finally {
@@ -57,16 +105,67 @@ export function useSeekerNotifications() {
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel("seeker-notifications")
+      .channel("seeker-notifications-realtime")
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "seeker_notifications",
         },
-        () => {
-          fetchNotifications();
+        (payload) => {
+          const newNotification = payload.new as SeekerNotification;
+          
+          // Check if this is a genuinely new notification
+          if (!previousNotificationsRef.current.includes(newNotification.id)) {
+            playNotificationSound();
+            showBrowserNotification(
+              newNotification.title,
+              newNotification.message,
+              newNotification.link
+            );
+            
+            // Update local state immediately
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            previousNotificationsRef.current = [newNotification.id, ...previousNotificationsRef.current];
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "seeker_notifications",
+        },
+        (payload) => {
+          const updatedNotification = payload.new as SeekerNotification;
+          setNotifications(prev =>
+            prev.map(n => (n.id === updatedNotification.id ? updatedNotification : n))
+          );
+          // Recalculate unread count
+          setNotifications(current => {
+            setUnreadCount(current.filter(n => !n.read).length);
+            return current;
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "seeker_notifications",
+        },
+        (payload) => {
+          const deletedId = (payload.old as { id: string }).id;
+          setNotifications(prev => {
+            const updated = prev.filter(n => n.id !== deletedId);
+            setUnreadCount(updated.filter(n => !n.read).length);
+            return updated;
+          });
+          previousNotificationsRef.current = previousNotificationsRef.current.filter(id => id !== deletedId);
         }
       )
       .subscribe();
@@ -74,9 +173,15 @@ export function useSeekerNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchNotifications]);
+  }, [fetchNotifications, playNotificationSound, showBrowserNotification]);
 
   const markAsRead = useCallback(async (notificationId: string) => {
+    // Optimistic update
+    setNotifications(prev =>
+      prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+
     try {
       const { error } = await supabase
         .from("seeker_notifications")
@@ -84,17 +189,18 @@ export function useSeekerNotifications() {
         .eq("id", notificationId);
 
       if (error) throw error;
-
-      setNotifications(prev =>
-        prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       console.error("Error marking notification as read:", err);
+      // Revert on error
+      fetchNotifications();
     }
-  }, []);
+  }, [fetchNotifications]);
 
   const markAllAsRead = useCallback(async () => {
+    // Optimistic update
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -106,37 +212,39 @@ export function useSeekerNotifications() {
         .eq("read", false);
 
       if (error) throw error;
-
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
       
       toast({
         title: "All notifications marked as read",
       });
     } catch (err) {
       console.error("Error marking all as read:", err);
+      // Revert on error
+      fetchNotifications();
     }
-  }, [toast]);
+  }, [toast, fetchNotifications]);
 
   const deleteNotification = useCallback(async (notificationId: string) => {
+    const notification = notifications.find(n => n.id === notificationId);
+    
+    // Optimistic update
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    if (notification && !notification.read) {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+
     try {
-      const notification = notifications.find(n => n.id === notificationId);
-      
       const { error } = await supabase
         .from("seeker_notifications")
         .delete()
         .eq("id", notificationId);
 
       if (error) throw error;
-
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      if (notification && !notification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
     } catch (err) {
       console.error("Error deleting notification:", err);
+      // Revert on error
+      fetchNotifications();
     }
-  }, [notifications]);
+  }, [notifications, fetchNotifications]);
 
   return {
     notifications,
