@@ -39,11 +39,11 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
   const moreItems = isAuthenticated ? [
     { href: "/account/requests", label: "My Requests", icon: FileText },
     { href: "/account/settings", label: "Settings", icon: Settings },
-    { href: "/help", label: "Help & Support", icon: HelpCircle },
+    { href: "/account/help", label: "Help & Support", icon: HelpCircle },
   ] : [
     { href: "/auth", label: "Sign In", icon: LogIn },
     { href: "/auth?mode=signup", label: "Create Account", icon: User },
-    { href: "/help", label: "Help & Support", icon: HelpCircle },
+    { href: "/account/help", label: "Help & Support", icon: HelpCircle },
   ];
 
   return (
