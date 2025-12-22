@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RatingBadge } from "@/components/ui/RatingBadge";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFacilityReviews } from "@/hooks/useFacilityReviews";
+import { useFacilityRating } from "@/hooks/useFacilityRating";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { ReviewsList } from "@/components/reviews/ReviewsList";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
@@ -283,6 +285,9 @@ export default function SeekerFacilityProfile() {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Fetch facility rating
+  const ratingData = useFacilityRating(facility?.id);
+
   // Track view
   useEffect(() => {
     if (facility?.id) {
@@ -398,11 +403,17 @@ export default function SeekerFacilityProfile() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  {/* Badges */}
+                  {/* Badges row with rating */}
                   <div className="flex flex-wrap items-center gap-2 mb-2">
+                    {/* Rating badge - most prominent */}
+                    <RatingBadge 
+                      rating={ratingData.averageRating} 
+                      reviewCount={ratingData.reviewCount} 
+                      size="md" 
+                    />
                     {facility.featured && (
                       <Badge className="gap-1.5 px-2.5 py-1 text-xs font-semibold bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
-                        <Star className="h-3 w-3 fill-current" />
+                        <Sparkles className="h-3 w-3" />
                         Featured
                       </Badge>
                     )}
