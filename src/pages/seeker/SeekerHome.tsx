@@ -397,13 +397,13 @@ export default function SeekerHome() {
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Feed */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-display font-bold text-foreground flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Treatment Centers For You
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h2 className="text-lg sm:text-xl font-display font-bold text-foreground flex items-center gap-2 truncate">
+                <TrendingUp className="h-5 w-5 text-primary shrink-0" />
+                <span className="truncate">Treatment Centers For You</span>
               </h2>
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs shrink-0">
                 {filteredFacilities.length} result{filteredFacilities.length !== 1 ? 's' : ''}
               </Badge>
             </div>
@@ -449,7 +449,7 @@ export default function SeekerHome() {
           </div>
 
           {/* Sidebar */}
-          <aside className="lg:w-80 shrink-0 space-y-4">
+          <aside className="w-full lg:w-72 xl:w-80 shrink-0 space-y-4">
             {/* Quick Stats */}
             <Card className="border-border/50">
               <CardHeader className="pb-3">
