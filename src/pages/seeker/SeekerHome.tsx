@@ -27,6 +27,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
+import { useFeaturedFacilityIds } from "@/hooks/useApprovedFacilities";
+import { sortByPlanHierarchyWithSecondary, getPlanPriority } from "@/lib/facilityPlanSort";
 
 type SortOption = "name-asc" | "name-desc" | "state-asc" | "state-desc" | "years-desc" | "years-asc";
 
@@ -39,6 +41,7 @@ export default function SeekerHome() {
   const [selectedState, setSelectedState] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("name-asc");
   const { favoritesCount } = useFavorites();
+  const { data: featuredData } = useFeaturedFacilityIds();
 
   useEffect(() => {
     const fetchNearbyFacilities = async () => {
@@ -55,16 +58,29 @@ export default function SeekerHome() {
     fetchNearbyFacilities();
   }, []);
 
-  // Filter and sort facilities
+  // Get plan tier for a facility based on subscription data
+  const getPlanTier = (facilityId: string): 'featured' | 'professional' | 'free' => {
+    if (featuredData?.featuredFacilityIds?.includes(facilityId)) return 'featured';
+    if (featuredData?.professionalFacilityIds?.includes(facilityId)) return 'professional';
+    return 'free';
+  };
+
+  // Filter and sort facilities with plan hierarchy
   const filteredFacilities = useMemo(() => {
-    let result = nearbyFacilities.filter((facility) => {
+    // Add plan tier to facilities
+    const facilitiesWithPlan = nearbyFacilities.map(f => ({
+      ...f,
+      planTier: getPlanTier(f.id),
+    }));
+
+    let result = facilitiesWithPlan.filter((facility) => {
       const matchesType = selectedType === "all" || facility.facility_type === selectedType;
       const matchesState = selectedState === "all" || facility.state === selectedState;
       return matchesType && matchesState;
     });
 
-    // Sort facilities
-    result.sort((a, b) => {
+    // Sort with plan hierarchy first, then secondary sort
+    result = sortByPlanHierarchyWithSecondary(result, (a, b) => {
       switch (sortBy) {
         case "name-asc":
           return a.name.localeCompare(b.name);
@@ -88,7 +104,7 @@ export default function SeekerHome() {
     });
 
     return result;
-  }, [nearbyFacilities, selectedType, selectedState, sortBy]);
+  }, [nearbyFacilities, selectedType, selectedState, sortBy, featuredData]);
 
   // Get unique states and types from data
   const availableStates = useMemo(() => {

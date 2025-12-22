@@ -8,8 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Featured plan product IDs - support both old and new IDs
+// Plan product IDs - support both old and new IDs
 const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"];
+const PROFESSIONAL_PRODUCT_IDS = ["prod_Tbyz1bf6iYyzYd"]; // Professional plan
 const DEFAULT_MAX_HOMEPAGE_FEATURED = 6;
 
 const logStep = (step: string, details?: unknown) => {
@@ -273,9 +274,11 @@ serve(async (req) => {
       provider_email?: string;
       provider_name?: string;
       facility_name?: string;
+      plan_type?: 'featured' | 'professional';
     }
 
     const eligibleFacilities: EligibleFacility[] = [];
+    const professionalFacilityIds: string[] = []; // Track professional plan facilities
 
     // Check each facility's owner for Featured subscription
     for (const facility of facilities || []) {
@@ -308,6 +311,7 @@ serve(async (req) => {
           const subscription = subscriptions.data[0];
           const productId = subscription.items.data[0].price.product as string;
 
+          // Check for Featured subscription
           if (FEATURED_PRODUCT_IDS.includes(productId)) {
             // Get facility name
             const { data: facilityData } = await supabaseClient
@@ -325,8 +329,14 @@ serve(async (req) => {
               provider_email: providerEmail,
               provider_name: profile?.first_name || "",
               facility_name: facilityData?.name || "",
+              plan_type: 'featured',
             });
             logStep("Found Featured subscriber", { facilityId: facility.id, email: providerEmail });
+          } 
+          // Check for Professional subscription
+          else if (PROFESSIONAL_PRODUCT_IDS.includes(productId)) {
+            professionalFacilityIds.push(facility.id);
+            logStep("Found Professional subscriber", { facilityId: facility.id, email: providerEmail });
           }
         }
       } catch (stripeError) {
@@ -336,6 +346,7 @@ serve(async (req) => {
     }
 
     logStep("Total eligible Featured subscription facilities", { count: eligibleFacilities.length });
+    logStep("Total Professional subscription facilities", { count: professionalFacilityIds.length });
 
     // Also include legacy featured facilities (those with featured=true in database)
     const legacyFeaturedFacilities = (facilities || []).filter(f => 
@@ -505,6 +516,7 @@ serve(async (req) => {
     logStep("Completed", { 
       totalEligible: allEligibleIds.length,
       homepageFeatured: homepageFeaturedIds.length,
+      professional: professionalFacilityIds.length,
       newlyFeatured: newlyFeaturedFacilities.length
     });
 
@@ -512,7 +524,9 @@ serve(async (req) => {
       JSON.stringify({ 
         featuredFacilityIds: allEligibleIds, // All eligible for search priority
         homepageFeaturedIds, // Max 6 for homepage display
-        allEligibleIds // Alias for clarity
+        allEligibleIds, // Alias for clarity
+        professionalFacilityIds, // All facilities with Professional plan
+        paidFacilityIds: [...allEligibleIds, ...professionalFacilityIds], // All paid facilities combined
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -526,7 +540,9 @@ serve(async (req) => {
       error: errorMessage, 
       featuredFacilityIds: [],
       homepageFeaturedIds: [],
-      allEligibleIds: []
+      allEligibleIds: [],
+      professionalFacilityIds: [],
+      paidFacilityIds: [],
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200, // Return 200 with empty array to not break the UI

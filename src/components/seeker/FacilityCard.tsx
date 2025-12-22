@@ -6,12 +6,15 @@ import {
   Building2, 
   Heart, 
   ArrowRight, 
-  Clock 
+  Clock,
+  Star,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFavorites } from "@/hooks/useFavorites";
 import { cn } from "@/lib/utils";
+import { PlanTier } from "@/lib/facilityPlanSort";
 
 export interface FacilityCardData {
   id: string;
@@ -26,6 +29,11 @@ export interface FacilityCardData {
   gallery_urls: string[] | null;
   verified: boolean | null;
   year_established: number | null;
+  // Plan tier for display
+  planTier?: PlanTier;
+  featured?: boolean;
+  hasFeaturedSubscription?: boolean;
+  hasProfessionalPlan?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -54,6 +62,10 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
   const yearsInBusiness = facility.year_established 
     ? new Date().getFullYear() - facility.year_established 
     : null;
+  
+  // Determine plan tier for badge display
+  const isFeaturedPlan = facility.planTier === 'featured' || facility.hasFeaturedSubscription || facility.featured;
+  const isProfessionalPlan = facility.planTier === 'professional' || facility.hasProfessionalPlan;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -164,6 +176,19 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
 
           {/* Badges */}
           <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            {/* Plan tier badges */}
+            {isFeaturedPlan && (
+              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 border-0">
+                <Star className="h-2.5 w-2.5 fill-current" />
+                Featured
+              </Badge>
+            )}
+            {!isFeaturedPlan && isProfessionalPlan && (
+              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 border-0">
+                <Sparkles className="h-2.5 w-2.5" />
+                Professional
+              </Badge>
+            )}
             {facility.verified && (
               <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-0">
                 <Shield className="h-2.5 w-2.5" />

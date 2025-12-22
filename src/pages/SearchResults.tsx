@@ -318,10 +318,10 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
-    // Helper to get priority score (featured/paid plans first)
+    // Helper to get priority score (plan hierarchy: Featured > Professional > Free)
     const getPriorityScore = (center: any): number => {
-      if (center.hasFeaturedSubscription) return 3; // Featured subscription = highest priority
-      if (center.hasPaidPlan) return 2; // Paid plan = second priority
+      if (center.hasFeaturedSubscription || center.planTier === 'featured') return 3; // Featured = highest priority
+      if (center.hasProfessionalPlan || center.planTier === 'professional') return 2; // Professional = second priority
       if (center.featured) return 1; // Legacy featured = third priority
       return 0; // Free/basic plan = lowest priority
     };

@@ -29,18 +29,22 @@ export interface ApprovedFacility extends TreatmentCenter {
   logo_url: string | null;
   gallery_urls: string[] | null;
   hasFeaturedSubscription?: boolean;
+  hasProfessionalPlan?: boolean; // true for professional plan
   hasPaidPlan?: boolean; // true for professional or featured plans
   verified?: boolean | null;
   year_established?: number | null;
   facilityType?: string | null;
   googleRating?: number | null;
   googleReviewCount?: number | null;
+  // Plan tier for sorting: 'featured' | 'professional' | 'free'
+  planTier?: 'featured' | 'professional' | 'free';
 }
 
 interface FeaturedFacilitiesResponse {
   featuredFacilityIds: string[];
   homepageFeaturedIds: string[];
   allEligibleIds: string[];
+  professionalFacilityIds?: string[]; // Facilities with Professional plan
   paidFacilityIds?: string[]; // All facilities with any paid subscription
 }
 
@@ -53,16 +57,18 @@ export const useFeaturedFacilityIds = () => {
         const { data, error } = await supabase.functions.invoke("get-featured-facilities");
         if (error) {
           console.error("Error fetching featured facilities:", error);
-          return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [] };
+          return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [], professionalFacilityIds: [], paidFacilityIds: [] };
         }
         return {
           featuredFacilityIds: data?.featuredFacilityIds || [],
           homepageFeaturedIds: data?.homepageFeaturedIds || [],
           allEligibleIds: data?.allEligibleIds || [],
+          professionalFacilityIds: data?.professionalFacilityIds || [],
+          paidFacilityIds: data?.paidFacilityIds || [],
         };
       } catch (err) {
         console.error("Failed to fetch featured facility IDs:", err);
-        return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [] };
+        return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [], professionalFacilityIds: [], paidFacilityIds: [] };
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes - cached per session to prevent flickering
@@ -75,6 +81,7 @@ export const useApprovedFacilities = () => {
   const { data: featuredData } = useFeaturedFacilityIds();
   const featuredIds = featuredData?.featuredFacilityIds || [];
   const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
+  const professionalIds = featuredData?.professionalFacilityIds || [];
 
   // Real-time subscription for approved facilities updates
   useEffect(() => {
@@ -131,7 +138,7 @@ export const useApprovedFacilities = () => {
   }, [queryClient]);
 
   return useQuery({
-    queryKey: ["approved-facilities", featuredIds, homepageFeaturedIds],
+    queryKey: ["approved-facilities", featuredIds, homepageFeaturedIds, professionalIds],
     queryFn: async (): Promise<ApprovedFacility[]> => {
       // Use public_facilities view which excludes sensitive fields like admin_notes
       const { data: facilitiesData, error: facilitiesError } = await supabase
@@ -193,10 +200,18 @@ export const useApprovedFacilities = () => {
       // Transform database facilities to TreatmentCenter format
       return (data as (FacilityWithRelations & { reviewsConfig: { rating: number | null; count: number | null } | null })[]).map((facility) => {
         const hasFeaturedSubscription = featuredIds.includes(facility.id);
+        const hasProfessionalPlan = professionalIds.includes(facility.id);
         const isHomepageFeatured = homepageFeaturedIds.includes(facility.id);
-        // For now, assume featured subscription means paid plan
-        // In the future, this could be expanded to include professional plan checks
-        const hasPaidPlan = hasFeaturedSubscription;
+        // Paid plan if featured or professional subscription
+        const hasPaidPlan = hasFeaturedSubscription || hasProfessionalPlan;
+        
+        // Determine plan tier for sorting
+        let planTier: 'featured' | 'professional' | 'free' = 'free';
+        if (hasFeaturedSubscription || facility.featured) {
+          planTier = 'featured';
+        } else if (hasProfessionalPlan) {
+          planTier = 'professional';
+        }
         
         return {
           id: facility.id,
@@ -214,8 +229,10 @@ export const useApprovedFacilities = () => {
           // Featured if they have Featured subscription OR legacy featured flag
           featured: hasFeaturedSubscription || facility.featured,
           hasFeaturedSubscription,
+          hasProfessionalPlan,
           hasPaidPlan,
           isHomepageFeatured,
+          planTier,
           verified: facility.verified,
           year_established: facility.year_established,
           facilityType: facility.facility_type,
