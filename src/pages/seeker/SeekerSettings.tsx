@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 export default function SeekerSettings() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -24,6 +26,10 @@ export default function SeekerSettings() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -35,6 +41,7 @@ export default function SeekerSettings() {
 
       setEmail(session.user.email || "");
       setUserId(session.user.id);
+      setIsEmailVerified(!!session.user.email_confirmed_at);
 
       const { data: profile } = await supabase
         .from('seeker_profiles')
@@ -203,6 +210,64 @@ export default function SeekerSettings() {
     setIsChangingPassword(false);
   };
 
+  const handleChangeEmail = async () => {
+    if (!newEmail || !newEmail.includes('@')) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsChangingEmail(true);
+
+    const { error } = await supabase.auth.updateUser({
+      email: newEmail
+    });
+
+    if (error) {
+      toast({
+        title: "Error changing email",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Verification email sent",
+        description: "Please check your new email address to confirm the change."
+      });
+      setNewEmail("");
+      setShowEmailForm(false);
+    }
+
+    setIsChangingEmail(false);
+  };
+
+  const handleResendVerification = async () => {
+    setIsResendingVerification(true);
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email
+    });
+
+    if (error) {
+      toast({
+        title: "Error sending verification",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Verification email sent",
+        description: "Please check your inbox for the verification link."
+      });
+    }
+
+    setIsResendingVerification(false);
+  };
+
   const getInitials = () => {
     if (displayName) {
       return displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -280,16 +345,105 @@ export default function SeekerSettings() {
             </div>
 
             <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                value={email}
-                disabled
-                className="mt-1 bg-muted"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Email cannot be changed
-              </p>
+              <div className="flex items-center gap-2 mb-1">
+                <Label htmlFor="email">Email</Label>
+                {isEmailVerified ? (
+                  <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/30">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    Unverified
+                  </Badge>
+                )}
+              </div>
+              
+              {!showEmailForm ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      id="email"
+                      value={email}
+                      disabled
+                      className="bg-muted flex-1"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowEmailForm(true)}
+                      title="Change email"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {!isEmailVerified && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-xs text-primary"
+                      onClick={handleResendVerification}
+                      disabled={isResendingVerification}
+                    >
+                      {isResendingVerification ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="h-3 w-3 mr-1" />
+                          Resend verification email
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3 p-3 bg-muted/50 rounded-lg mt-2">
+                  <div>
+                    <Label htmlFor="new-email" className="text-sm">New Email Address</Label>
+                    <Input
+                      id="new-email"
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="Enter new email"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      You'll need to verify your new email address
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={handleChangeEmail}
+                      disabled={isChangingEmail || !newEmail}
+                    >
+                      {isChangingEmail ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        "Update Email"
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowEmailForm(false);
+                        setNewEmail("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button onClick={handleSaveProfile} disabled={isSaving}>
