@@ -33,6 +33,8 @@ export interface ApprovedFacility extends TreatmentCenter {
   verified?: boolean | null;
   year_established?: number | null;
   facilityType?: string | null;
+  googleRating?: number | null;
+  googleReviewCount?: number | null;
 }
 
 interface FeaturedFacilitiesResponse {
@@ -153,12 +155,13 @@ export const useApprovedFacilities = () => {
 
       if (facilitiesError) throw facilitiesError;
 
-      // Fetch services and insurance separately since views don't support joins
+      // Fetch services, insurance, and reviews separately since views don't support joins
       const facilityIds = (facilitiesData || []).map(f => f.id).filter(Boolean) as string[];
       
-      const [servicesResult, insuranceResult] = await Promise.all([
+      const [servicesResult, insuranceResult, reviewsResult] = await Promise.all([
         supabase.from("facility_services").select("facility_id, service_name").in("facility_id", facilityIds),
         supabase.from("facility_insurance").select("facility_id, insurance_name").in("facility_id", facilityIds),
+        supabase.from("facility_reviews_config").select("facility_id, google_rating, google_review_count, show_on_profile").in("facility_id", facilityIds).eq("show_on_profile", true),
       ]);
 
       // Create lookup maps
@@ -174,15 +177,21 @@ export const useApprovedFacilities = () => {
         insuranceMap.set(i.facility_id, [...existing, i.insurance_name]);
       });
 
+      const reviewsMap = new Map<string, { rating: number | null; count: number | null }>();
+      (reviewsResult.data || []).forEach(r => {
+        reviewsMap.set(r.facility_id, { rating: r.google_rating, count: r.google_review_count });
+      });
+
       const data = (facilitiesData || []).map(f => ({
         ...f,
         year_established: null as number | null, // Not in public view
         facility_services: (servicesMap.get(f.id!) || []).map(name => ({ service_name: name })),
         facility_insurance: (insuranceMap.get(f.id!) || []).map(name => ({ insurance_name: name })),
+        reviewsConfig: reviewsMap.get(f.id!) || null,
       }));
 
       // Transform database facilities to TreatmentCenter format
-      return (data as FacilityWithRelations[]).map((facility) => {
+      return (data as (FacilityWithRelations & { reviewsConfig: { rating: number | null; count: number | null } | null })[]).map((facility) => {
         const hasFeaturedSubscription = featuredIds.includes(facility.id);
         const isHomepageFeatured = homepageFeaturedIds.includes(facility.id);
         // For now, assume featured subscription means paid plan
@@ -217,6 +226,8 @@ export const useApprovedFacilities = () => {
           isFromDatabase: true,
           logo_url: facility.logo_url,
           gallery_urls: facility.gallery_urls,
+          googleRating: facility.reviewsConfig?.rating ?? null,
+          googleReviewCount: facility.reviewsConfig?.count ?? null,
         };
       });
     },
