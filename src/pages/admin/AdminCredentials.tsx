@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { format } from "date-fns";
 import {
   FileCheck,
@@ -68,6 +69,7 @@ const ITEMS_PER_PAGE = 20;
 
 export default function AdminCredentials() {
   const queryClient = useQueryClient();
+  const { logError } = useAdminErrorHandler("AdminCredentials");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("pending");
   const [currentPage, setCurrentPage] = useState(1);
