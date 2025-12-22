@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, forwardRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useNavigate } from "react-router-dom";
@@ -68,22 +68,23 @@ const CHART_COLORS = {
   cyan: "#06B6D4",
 };
 
-// Custom tooltip component for charts
-const CustomTooltip = ({ active, payload, label }: any) => {
+// Custom tooltip component for charts - wrapped in forwardRef for recharts compatibility
+const CustomTooltip = forwardRef<HTMLDivElement, any>(({ active, payload, label }, ref) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-background border border-border rounded-lg shadow-lg p-3">
+      <div ref={ref} className="bg-background border border-border rounded-lg shadow-lg p-3">
         <p className="font-medium text-sm mb-1">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {entry.name}: <span className="font-semibold">{entry.value.toLocaleString()}</span>
+            {entry.name}: <span className="font-semibold">{typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}</span>
           </p>
         ))}
       </div>
     );
   }
   return null;
-};
+});
+CustomTooltip.displayName = "CustomTooltip";
 
 export default function AdminAnalytics() {
   const queryClient = useQueryClient();
