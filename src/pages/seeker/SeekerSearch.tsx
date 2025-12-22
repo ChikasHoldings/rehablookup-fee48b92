@@ -1,12 +1,16 @@
 import { useState, useMemo, useCallback } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { 
   Search, 
   MapPin, 
   SlidersHorizontal, 
   X,
   Building2,
-  Navigation
+  Navigation,
+  TrendingUp,
+  Clock,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,7 +31,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
-import { useFavorites } from "@/hooks/useFavorites";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { 
   parseLocationInput, 
@@ -35,6 +38,35 @@ import {
 } from "@/lib/proximitySearch";
 import { cn } from "@/lib/utils";
 import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
+
+// Popular search terms
+const popularSearches = [
+  "Alcohol Rehab",
+  "Drug Treatment",
+  "Detox Centers",
+  "Dual Diagnosis",
+  "Outpatient Programs",
+  "Inpatient Rehab",
+];
+
+// Quick search keywords
+const searchKeywords = [
+  { label: "Detox", icon: "🏥" },
+  { label: "Inpatient", icon: "🏠" },
+  { label: "Outpatient", icon: "📋" },
+  { label: "Sober Living", icon: "🏡" },
+  { label: "Holistic", icon: "🌿" },
+  { label: "Mental Health", icon: "🧠" },
+];
+
+// Recent locations (could be stored in localStorage)
+const popularLocations = [
+  { city: "Los Angeles", state: "CA" },
+  { city: "Miami", state: "FL" },
+  { city: "New York", state: "NY" },
+  { city: "Chicago", state: "IL" },
+  { city: "Houston", state: "TX" },
+];
 
 // Treatment type filters
 const treatmentTypeFilters = [
@@ -54,22 +86,16 @@ const facilityTypeFilters = [
 ];
 
 export default function SeekerSearch() {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { data: facilities, isLoading: facilitiesLoading } = useApprovedFacilities();
-  const { favorites, toggleFavorite } = useFavorites();
   
   // Search state
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
-  const [locationInput, setLocationInput] = useState(searchParams.get("location") || "");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationInput, setLocationInput] = useState("");
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
-  const [selectedTreatmentTypes, setSelectedTreatmentTypes] = useState<string[]>(
-    searchParams.get("type")?.split(",").filter(Boolean) || []
-  );
-  const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>(
-    searchParams.get("facility")?.split(",").filter(Boolean) || []
-  );
+  const [selectedTreatmentTypes, setSelectedTreatmentTypes] = useState<string[]>([]);
+  const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   
   // Location suggestions
   const locationSuggestions = useMemo(() => {
@@ -81,20 +107,50 @@ export default function SeekerSearch() {
   const handleLocationSelect = useCallback((suggestion: LocationSuggestion) => {
     setLocationInput(formatLocationSuggestion(suggestion));
     setShowLocationSuggestions(false);
+    setHasSearched(true);
   }, []);
+
+  // Handle popular location click
+  const handlePopularLocationClick = (city: string, state: string) => {
+    setLocationInput(`${city}, ${state}`);
+    setHasSearched(true);
+  };
+
+  // Handle search keyword click
+  const handleKeywordClick = (keyword: string) => {
+    setSearchQuery(keyword);
+    setHasSearched(true);
+  };
+
+  // Handle popular search click
+  const handlePopularSearchClick = (term: string) => {
+    setSearchQuery(term);
+    setHasSearched(true);
+  };
+
+  // Handle search submission
+  const handleSearch = () => {
+    if (searchQuery.trim() || locationInput.trim() || selectedTreatmentTypes.length > 0 || selectedFacilityTypes.length > 0) {
+      setHasSearched(true);
+    }
+  };
+
+  // Check if there's an active search
+  const hasActiveSearch = searchQuery.trim() || locationInput.trim() || selectedTreatmentTypes.length > 0 || selectedFacilityTypes.length > 0;
   
-  // Filter and search facilities
+  // Filter and search facilities - only when searched
   const filteredFacilities = useMemo(() => {
-    if (!facilities) return [];
+    if (!facilities || !hasSearched) return [];
     
     let results = [...facilities];
     
-    // Filter by search query (name)
+    // Filter by search query (name, description, facility type)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(f => 
         f.name.toLowerCase().includes(query) ||
-        f.description?.toLowerCase().includes(query)
+        f.description?.toLowerCase().includes(query) ||
+        f.facilityType?.toLowerCase().includes(query)
       );
     }
     
@@ -103,7 +159,6 @@ export default function SeekerSearch() {
       const locationMatch = parseLocationInput(locationInput);
       const proximityResults = sortByProximity(results, locationMatch);
       
-      // Only include results that have some proximity match
       results = proximityResults
         .filter(r => r.tier !== "nationwide" || !locationInput)
         .map(r => r.item);
@@ -113,7 +168,10 @@ export default function SeekerSearch() {
     if (selectedTreatmentTypes.length > 0) {
       results = results.filter(f => {
         const facilityType = f.facilityType?.toLowerCase() || "";
-        return selectedTreatmentTypes.some(type => facilityType.includes(type));
+        const description = f.description?.toLowerCase() || "";
+        return selectedTreatmentTypes.some(type => 
+          facilityType.includes(type) || description.includes(type)
+        );
       });
     }
     
@@ -126,7 +184,7 @@ export default function SeekerSearch() {
     }
     
     return results;
-  }, [facilities, searchQuery, locationInput, selectedTreatmentTypes, selectedFacilityTypes]);
+  }, [facilities, searchQuery, locationInput, selectedTreatmentTypes, selectedFacilityTypes, hasSearched]);
   
   // Map to FacilityCardData
   const facilityCards: FacilityCardData[] = useMemo(() => {
@@ -173,261 +231,378 @@ export default function SeekerSearch() {
     setSelectedFacilityTypes([]);
     setLocationInput("");
     setSearchQuery("");
+    setHasSearched(false);
   };
   
   const activeFilterCount = selectedTreatmentTypes.length + selectedFacilityTypes.length;
   
   return (
-    <div className="flex flex-col min-h-full">
-      {/* Search Header */}
-      <div className="sticky top-0 z-40 bg-background border-b">
-        <div className="p-4 space-y-3">
-          {/* Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search treatment centers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-10 h-11 bg-muted/50 border-muted"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-          
-          {/* Location Input */}
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="City, State or ZIP code"
-              value={locationInput}
-              onChange={(e) => {
-                setLocationInput(e.target.value);
-                setShowLocationSuggestions(true);
-              }}
-              onFocus={() => setShowLocationSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-              className="pl-9 pr-10 h-11 bg-muted/50 border-muted"
-            />
-            {locationInput && (
-              <button
-                onClick={() => setLocationInput("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button>
-            )}
-            
-            {/* Location Suggestions */}
-            {showLocationSuggestions && locationSuggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
-                {locationSuggestions.map((suggestion, index) => (
-                  <button
-                    key={`${suggestion.name}-${index}`}
-                    onClick={() => handleLocationSelect(suggestion)}
-                    className="w-full px-4 py-3 text-left hover:bg-muted flex items-center gap-2 border-b last:border-b-0"
-                  >
-                    <Navigation className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm">
-                      {formatLocationSuggestion(suggestion)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          {/* Filter Bar */}
-          <div className="flex items-center gap-2">
-            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-              <SheetTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className={cn(
-                    "gap-2",
-                    activeFilterCount > 0 && "border-primary text-primary"
-                  )}
+    <>
+      <Helmet>
+        <title>Search Treatment Centers | Recovery Directory</title>
+        <meta name="description" content="Search and find treatment centers near you. Filter by location, treatment type, and facility type." />
+      </Helmet>
+
+      <div className="flex flex-col min-h-full bg-background">
+        {/* Search Header */}
+        <div className="sticky top-0 z-40 bg-card border-b border-border shadow-sm">
+          <div className="p-4 space-y-3">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search treatment centers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="pl-10 pr-10 h-12 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-muted rounded-lg transition-colors"
                 >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Filters
-                  {activeFilterCount > 0 && (
-                    <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                      {activeFilterCount}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
-                <SheetHeader className="pb-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <SheetTitle>Filters</SheetTitle>
-                    {activeFilterCount > 0 && (
-                      <Button variant="ghost" size="sm" onClick={clearFilters}>
-                        Clear all
-                      </Button>
-                    )}
-                  </div>
-                </SheetHeader>
-                
-                <div className="py-4 overflow-y-auto h-[calc(100%-8rem)]">
-                  <Accordion type="multiple" defaultValue={["treatment", "facility"]} className="w-full">
-                    <AccordionItem value="treatment">
-                      <AccordionTrigger className="text-base font-medium">
-                        Treatment Type
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-3 pt-2">
-                          {treatmentTypeFilters.map((filter) => (
-                            <div key={filter.value} className="flex items-center space-x-3">
-                              <Checkbox
-                                id={`treatment-${filter.value}`}
-                                checked={selectedTreatmentTypes.includes(filter.value)}
-                                onCheckedChange={() => toggleTreatmentType(filter.value)}
-                              />
-                              <Label 
-                                htmlFor={`treatment-${filter.value}`}
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                {filter.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                    
-                    <AccordionItem value="facility">
-                      <AccordionTrigger className="text-base font-medium">
-                        Facility Type
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-3 pt-2">
-                          {facilityTypeFilters.map((filter) => (
-                            <div key={filter.value} className="flex items-center space-x-3">
-                              <Checkbox
-                                id={`facility-${filter.value}`}
-                                checked={selectedFacilityTypes.includes(filter.value)}
-                                onCheckedChange={() => toggleFacilityType(filter.value)}
-                              />
-                              <Label 
-                                htmlFor={`facility-${filter.value}`}
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                {filter.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </div>
-                
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    onClick={() => setFiltersOpen(false)}
-                  >
-                    Show {facilityCards.length} Results
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
             
-            {/* Active filter badges */}
-            <div className="flex-1 overflow-x-auto scrollbar-hide">
-              <div className="flex items-center gap-2">
-                {selectedTreatmentTypes.map((type) => {
-                  const filter = treatmentTypeFilters.find(f => f.value === type);
-                  return (
-                    <Badge 
-                      key={type} 
-                      variant="secondary" 
-                      className="shrink-0 gap-1 pr-1"
+            {/* Location Input */}
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="City, State or ZIP code"
+                value={locationInput}
+                onChange={(e) => {
+                  setLocationInput(e.target.value);
+                  setShowLocationSuggestions(true);
+                }}
+                onFocus={() => setShowLocationSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="pl-10 pr-10 h-12 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl"
+              />
+              {locationInput && (
+                <button
+                  onClick={() => setLocationInput("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-muted rounded-lg transition-colors"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
+              
+              {/* Location Suggestions */}
+              {showLocationSuggestions && locationSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
+                  {locationSuggestions.map((suggestion, index) => (
+                    <button
+                      key={`${suggestion.name}-${index}`}
+                      onClick={() => handleLocationSelect(suggestion)}
+                      className="w-full px-4 py-3 text-left hover:bg-muted flex items-center gap-3 border-b border-border last:border-b-0 transition-colors"
                     >
-                      {filter?.label}
-                      <button 
-                        onClick={() => toggleTreatmentType(type)}
-                        className="ml-1 p-0.5 hover:bg-muted rounded"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  );
-                })}
-                {selectedFacilityTypes.map((type) => {
-                  const filter = facilityTypeFilters.find(f => f.value === type);
-                  return (
-                    <Badge 
-                      key={type} 
-                      variant="secondary" 
-                      className="shrink-0 gap-1 pr-1"
+                      <Navigation className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-sm text-foreground">
+                        {formatLocationSuggestion(suggestion)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Search Button & Filters */}
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={handleSearch}
+                disabled={!hasActiveSearch}
+                className="flex-1 h-11 rounded-xl font-medium"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Search
+              </Button>
+              
+              <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+                <SheetTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className={cn(
+                      "h-11 w-11 rounded-xl shrink-0",
+                      activeFilterCount > 0 && "border-primary text-primary"
+                    )}
+                  >
+                    <SlidersHorizontal className="h-5 w-5" />
+                    {activeFilterCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
+                  <SheetHeader className="pb-4 border-b border-border">
+                    <div className="flex items-center justify-between">
+                      <SheetTitle className="text-foreground">Filters</SheetTitle>
+                      {activeFilterCount > 0 && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-primary">
+                          Clear all
+                        </Button>
+                      )}
+                    </div>
+                  </SheetHeader>
+                  
+                  <div className="py-4 overflow-y-auto h-[calc(100%-8rem)]">
+                    <Accordion type="multiple" defaultValue={["treatment", "facility"]} className="w-full">
+                      <AccordionItem value="treatment" className="border-border">
+                        <AccordionTrigger className="text-base font-medium text-foreground">
+                          Treatment Type
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-3 pt-2">
+                            {treatmentTypeFilters.map((filter) => (
+                              <div key={filter.value} className="flex items-center space-x-3">
+                                <Checkbox
+                                  id={`treatment-${filter.value}`}
+                                  checked={selectedTreatmentTypes.includes(filter.value)}
+                                  onCheckedChange={() => toggleTreatmentType(filter.value)}
+                                />
+                                <Label 
+                                  htmlFor={`treatment-${filter.value}`}
+                                  className="text-sm font-normal cursor-pointer text-foreground"
+                                >
+                                  {filter.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                      
+                      <AccordionItem value="facility" className="border-border">
+                        <AccordionTrigger className="text-base font-medium text-foreground">
+                          Facility Type
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-3 pt-2">
+                            {facilityTypeFilters.map((filter) => (
+                              <div key={filter.value} className="flex items-center space-x-3">
+                                <Checkbox
+                                  id={`facility-${filter.value}`}
+                                  checked={selectedFacilityTypes.includes(filter.value)}
+                                  onCheckedChange={() => toggleFacilityType(filter.value)}
+                                />
+                                <Label 
+                                  htmlFor={`facility-${filter.value}`}
+                                  className="text-sm font-normal cursor-pointer text-foreground"
+                                >
+                                  {filter.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </div>
+                  
+                  <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-card">
+                    <Button 
+                      className="w-full h-12 rounded-xl font-medium" 
+                      onClick={() => {
+                        setFiltersOpen(false);
+                        setHasSearched(true);
+                      }}
                     >
-                      {filter?.label}
-                      <button 
-                        onClick={() => toggleFacilityType(type)}
-                        className="ml-1 p-0.5 hover:bg-muted rounded"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  );
-                })}
-              </div>
+                      Apply Filters
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* Results */}
-      <div className="flex-1 p-4">
-        {facilitiesLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <FacilityCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : facilityCards.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="p-4 rounded-full bg-muted mb-4">
-              <Building2 className="h-8 w-8 text-muted-foreground" />
+        
+        {/* Content Area */}
+        <div className="flex-1 p-4 pb-24">
+          {!hasSearched ? (
+            /* Initial State - Show suggestions */
+            <div className="space-y-6">
+              {/* Quick Search Keywords */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground">Quick Search</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {searchKeywords.map((keyword) => (
+                    <button
+                      key={keyword.label}
+                      onClick={() => handleKeywordClick(keyword.label)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full hover:bg-muted hover:border-primary/50 transition-all active:scale-95"
+                    >
+                      <span className="text-base">{keyword.icon}</span>
+                      <span className="text-sm font-medium text-foreground">{keyword.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Popular Searches */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground">Popular Searches</h2>
+                </div>
+                <div className="space-y-1">
+                  {popularSearches.map((term) => (
+                    <button
+                      key={term}
+                      onClick={() => handlePopularSearchClick(term)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-card border border-border rounded-xl hover:bg-muted hover:border-primary/50 transition-all active:scale-[0.99]"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-foreground">{term}</span>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Popular Locations */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground">Popular Locations</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {popularLocations.map((loc) => (
+                    <button
+                      key={`${loc.city}-${loc.state}`}
+                      onClick={() => handlePopularLocationClick(loc.city, loc.state)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-full hover:bg-muted hover:border-primary/50 transition-all active:scale-95"
+                    >
+                      <MapPin className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-sm font-medium text-foreground">{loc.city}, {loc.state}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Help Text */}
+              <div className="mt-8 p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                <div className="flex gap-3">
+                  <div className="shrink-0 h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground mb-1">Find the Right Treatment</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Search by name, location, or treatment type to find verified treatment centers that match your needs.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold mb-2">No facilities found</h3>
-            <p className="text-muted-foreground text-sm max-w-xs mb-4">
-              Try adjusting your search or filters to find treatment centers.
-            </p>
-            {activeFilterCount > 0 && (
-              <Button variant="outline" size="sm" onClick={clearFilters}>
-                Clear filters
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {facilityCards.length} {facilityCards.length === 1 ? "facility" : "facilities"} found
-              {locationInput && ` near ${locationInput}`}
-            </p>
-            
-            {facilityCards.map((facility) => (
-              <FacilityCard
-                key={facility.id}
-                facility={facility}
-              />
-            ))}
-          </div>
-        )}
+          ) : (
+            /* Search Results */
+            <div>
+              {/* Active Filters */}
+              {(selectedTreatmentTypes.length > 0 || selectedFacilityTypes.length > 0) && (
+                <div className="mb-4 overflow-x-auto scrollbar-hide">
+                  <div className="flex items-center gap-2">
+                    {selectedTreatmentTypes.map((type) => {
+                      const filter = treatmentTypeFilters.find(f => f.value === type);
+                      return (
+                        <Badge 
+                          key={type} 
+                          variant="secondary" 
+                          className="shrink-0 gap-1 pr-1 bg-primary/10 text-primary border-primary/20"
+                        >
+                          {filter?.label}
+                          <button 
+                            onClick={() => toggleTreatmentType(type)}
+                            className="ml-1 p-0.5 hover:bg-primary/20 rounded"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })}
+                    {selectedFacilityTypes.map((type) => {
+                      const filter = facilityTypeFilters.find(f => f.value === type);
+                      return (
+                        <Badge 
+                          key={type} 
+                          variant="secondary" 
+                          className="shrink-0 gap-1 pr-1 bg-primary/10 text-primary border-primary/20"
+                        >
+                          {filter?.label}
+                          <button 
+                            onClick={() => toggleFacilityType(type)}
+                            className="ml-1 p-0.5 hover:bg-primary/20 rounded"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {facilitiesLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <FacilityCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : facilityCards.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="p-4 rounded-full bg-muted mb-4">
+                    <Building2 className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No facilities found</h3>
+                  <p className="text-muted-foreground text-sm max-w-xs mb-4">
+                    Try adjusting your search terms or filters to find treatment centers.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="rounded-xl">
+                    Clear search & filters
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      {facilityCards.length} {facilityCards.length === 1 ? "result" : "results"}
+                      {searchQuery && <span className="text-foreground font-medium"> for "{searchQuery}"</span>}
+                      {locationInput && <span> near <span className="text-foreground font-medium">{locationInput}</span></span>}
+                    </p>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={clearFilters}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                  
+                  {facilityCards.map((facility) => (
+                    <FacilityCard
+                      key={facility.id}
+                      facility={facility}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
