@@ -5,7 +5,7 @@ import { SeekerHeader } from "./SeekerHeader";
 import { SeekerMobileNav } from "./SeekerMobileNav";
 import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 interface SeekerProfile {
   display_name: string | null;
@@ -19,11 +19,27 @@ export function SeekerShell() {
   const location = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [profile, setProfile] = useState<SeekerProfile | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isEmailVerified, setIsEmailVerified] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Use React Query to fetch profile - this allows invalidation from settings
+  const { data: profile } = useQuery({
+    queryKey: ['seeker-profile', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data } = await supabase
+        .from('seeker_profiles')
+        .select('display_name, first_name, avatar_url')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return data as SeekerProfile | null;
+    },
+    enabled: !!userId,
+    staleTime: 0, // Always check for fresh data
+  });
 
   // Scroll content area to top on route change
   useEffect(() => {
@@ -45,19 +61,7 @@ export function SeekerShell() {
         setIsAuthenticated(!!session);
         setIsEmailVerified(!!session?.user?.email_confirmed_at);
         setUserEmail(session?.user?.email);
-        
-        if (session) {
-          // Get profile with all needed fields
-          const { data: profileData } = await supabase
-            .from('seeker_profiles')
-            .select('display_name, first_name, avatar_url')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
-          if (isMounted && profileData) {
-            setProfile(profileData);
-          }
-        }
+        setUserId(session?.user?.id || null);
       } catch (error) {
         console.error('Auth check error:', error);
       } finally {
@@ -76,25 +80,8 @@ export function SeekerShell() {
         setIsAuthenticated(!!session);
         setIsEmailVerified(!!session?.user?.email_confirmed_at);
         setUserEmail(session?.user?.email);
+        setUserId(session?.user?.id || null);
         setIsLoading(false);
-        
-        if (session) {
-          // Defer Supabase calls
-          setTimeout(async () => {
-            const { data: profileData } = await supabase
-              .from('seeker_profiles')
-              .select('display_name, first_name, avatar_url')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-            
-            if (isMounted && profileData) {
-              setProfile(profileData);
-            }
-          }, 0);
-        } else {
-          setProfile(null);
-          setUserEmail(undefined);
-        }
       }
     );
 

@@ -29,6 +29,7 @@ import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CameraCaptureDialog } from "@/components/seeker/CameraCaptureDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SeekerProfile {
   display_name: string | null;
@@ -83,6 +84,7 @@ export default function SeekerSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   const zipcodeLookup = useZipcodeLookup();
 
@@ -205,6 +207,8 @@ export default function SeekerSettings() {
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
+      // Invalidate the seeker profile query to update header avatar
+      queryClient.invalidateQueries({ queryKey: ['seeker-profile', userId] });
       await logActivity({
         eventType: "avatar_update",
         description: "Updated profile picture"
@@ -249,6 +253,8 @@ export default function SeekerSettings() {
       if (updateError) throw updateError;
 
       setAvatarUrl(null);
+      // Invalidate the seeker profile query to update header avatar
+      queryClient.invalidateQueries({ queryKey: ['seeker-profile', userId] });
       await logActivity({
         eventType: "avatar_remove",
         description: "Removed profile picture"
@@ -301,6 +307,8 @@ export default function SeekerSettings() {
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
+      // Invalidate the seeker profile query to update header avatar
+      queryClient.invalidateQueries({ queryKey: ['seeker-profile', userId] });
       await logActivity({
         eventType: "avatar_update",
         description: "Updated profile picture via camera"
