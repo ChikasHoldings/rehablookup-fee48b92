@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Star, Edit2, Trash2, Clock } from "lucide-react";
+import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -20,10 +21,37 @@ interface UserReview {
   facility_id: string;
   facility_name: string;
   facility_slug: string;
+  facility_city: string;
+  facility_state: string;
+  facility_type: string;
+  facility_logo_url: string | null;
   rating: number;
   review_text: string | null;
   status: string;
   created_at: string;
+}
+
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
+function ReviewCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="flex flex-col sm:flex-row">
+        <div className="h-[100px] sm:h-[140px] sm:w-40 bg-muted animate-pulse" />
+        <div className="p-4 flex-1 space-y-3">
+          <div className="h-5 w-3/4 bg-muted rounded animate-pulse" />
+          <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+          <div className="h-4 w-full bg-muted rounded animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function SeekerReviews() {
@@ -52,7 +80,7 @@ export default function SeekerReviews() {
         review_text,
         status,
         created_at,
-        facilities!inner(name, slug)
+        facilities!inner(name, slug, city, state, facility_type, logo_url)
       `)
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false });
@@ -63,6 +91,10 @@ export default function SeekerReviews() {
         facility_id: review.facility_id,
         facility_name: (review.facilities as any)?.name || 'Unknown Facility',
         facility_slug: (review.facilities as any)?.slug || '',
+        facility_city: (review.facilities as any)?.city || '',
+        facility_state: (review.facilities as any)?.state || '',
+        facility_type: (review.facilities as any)?.facility_type || '',
+        facility_logo_url: (review.facilities as any)?.logo_url || null,
         rating: review.rating,
         review_text: review.review_text,
         status: review.status,
@@ -149,11 +181,11 @@ export default function SeekerReviews() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">Published</span>;
+        return <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">Published</Badge>;
       case 'pending':
-        return <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">Pending Review</span>;
+        return <Badge className="bg-amber-100 text-amber-700 border-0 text-[10px]">Pending Review</Badge>;
       case 'rejected':
-        return <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">Rejected</span>;
+        return <Badge className="bg-red-100 text-red-700 border-0 text-[10px]">Rejected</Badge>;
       default:
         return null;
     }
@@ -161,16 +193,16 @@ export default function SeekerReviews() {
 
   if (isLoading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-display font-bold mb-6">My Reviews</h1>
-        <div className="space-y-4">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 rounded-lg bg-amber-100">
+            <Star className="h-5 w-5 text-amber-600" />
+          </div>
+          <h1 className="text-2xl font-display font-bold">My Reviews</h1>
+        </div>
+        <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="h-5 bg-muted rounded w-2/3 mb-2" />
-                <div className="h-4 bg-muted rounded w-1/3" />
-              </CardContent>
-            </Card>
+            <ReviewCardSkeleton key={i} />
           ))}
         </div>
       </div>
@@ -178,94 +210,152 @@ export default function SeekerReviews() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-display font-bold mb-6">
-        My Reviews
+    <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-amber-100">
+            <Star className="h-5 w-5 text-amber-600" />
+          </div>
+          <h1 className="text-2xl font-display font-bold">My Reviews</h1>
+        </div>
         {reviews.length > 0 && (
-          <span className="text-muted-foreground font-normal text-lg ml-2">
-            ({reviews.length})
-          </span>
+          <Badge variant="secondary" className="text-xs">
+            {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+          </Badge>
         )}
-      </h1>
+      </div>
 
       {reviews.length === 0 ? (
-        <Card>
+        <Card className="border-dashed">
           <CardContent className="p-8 text-center">
-            <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-4">
+              <MessageSquare className="h-8 w-8 text-muted-foreground" />
+            </div>
             <h3 className="font-semibold text-foreground mb-2">No Reviews Yet</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
               Share your experience by leaving reviews on treatment centers you've visited.
             </p>
-            <Button asChild variant="outline">
-              <Link to="/rehab-centers">Browse Facilities</Link>
+            <Button asChild>
+              <Link to="/account">Browse Facilities</Link>
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {reviews.map((review) => (
-            <Card key={review.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Link 
-                        to={`/center/${review.facility_slug}`}
-                        className="font-semibold text-foreground hover:text-primary transition-colors"
-                      >
-                        {review.facility_name}
-                      </Link>
-                      {getStatusBadge(review.status)}
-                    </div>
+        <div className="grid gap-4">
+          {reviews.map((review) => {
+            const initials = getInitials(review.facility_name);
+            const [logoError, setLogoError] = useState(false);
+            const hasLogo = review.facility_logo_url && !logoError;
 
-                    <div className="flex items-center gap-1 mb-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`h-4 w-4 ${
-                            star <= review.rating
-                              ? "fill-amber-400 text-amber-400"
-                              : "text-muted-foreground"
-                          }`}
+            return (
+              <article 
+                key={review.id} 
+                className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300"
+              >
+                <div className="flex flex-col sm:flex-row">
+                  {/* Facility Logo Section */}
+                  <div className="relative sm:w-40 shrink-0 overflow-hidden bg-muted">
+                    <div className="h-[100px] sm:h-full w-full">
+                      {hasLogo ? (
+                        <img 
+                          src={review.facility_logo_url!}
+                          alt={`${review.facility_name} logo`}
+                          className="absolute inset-0 h-full w-full object-contain object-center p-4 bg-white"
+                          loading="lazy"
+                          onError={() => setLogoError(true)}
                         />
-                      ))}
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                          <div className="text-center">
+                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 shadow-sm">
+                              <span className="font-display text-xl font-bold text-primary">
+                                {initials}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Content Section */}
+                  <div className="flex flex-1 flex-col p-4">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <Link 
+                            to={`/center/${review.facility_slug}`}
+                            className="font-display text-base font-bold leading-tight hover:text-primary transition-colors"
+                          >
+                            {review.facility_name}
+                          </Link>
+                          {getStatusBadge(review.status)}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
+                          <span className="font-medium">{review.facility_city}, {review.facility_state}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        {review.status === 'pending' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(review)}
+                            className="h-8 w-8"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(review.id)}
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
 
+                    {/* Rating & Type */}
+                    <div className="flex items-center gap-3 flex-wrap mb-2">
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`h-4 w-4 ${
+                              star <= review.rating
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-muted-foreground/30"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold">
+                        <Building2 className="h-3 w-3" />
+                        {review.facility_type}
+                      </Badge>
+                    </div>
+
+                    {/* Review Text */}
                     {review.review_text && (
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {review.review_text}
+                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">
+                        "{review.review_text}"
                       </p>
                     )}
 
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    {/* Date */}
+                    <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {formatDate(review.created_at)}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    {review.status === 'pending' && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(review)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(review.id)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <span>Reviewed on {formatDate(review.created_at)}</span>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
 
