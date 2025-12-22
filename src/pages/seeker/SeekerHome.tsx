@@ -64,8 +64,8 @@ function FacilityCard({ facility }: { facility: NearbyFacility }) {
     : null;
 
   return (
-    <article className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300">
-      <div className="flex flex-col sm:flex-row">
+    <article className="group relative h-full overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300">
+      <div className="flex h-full flex-col sm:flex-row">
         {/* Image Section */}
         <div className="relative sm:w-48 lg:w-56 shrink-0 overflow-hidden">
           <div className="aspect-[16/10] sm:aspect-auto sm:h-full sm:min-h-[160px]">
@@ -407,7 +407,7 @@ export default function SeekerHome() {
                 ))}
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid gap-4">
                 {nearbyFacilities.map((facility) => (
                   <FacilityCard key={facility.id} facility={facility} />
                 ))}
