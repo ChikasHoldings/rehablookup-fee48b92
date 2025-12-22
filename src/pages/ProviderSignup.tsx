@@ -176,6 +176,7 @@ export default function ProviderSignup() {
     state: "",
     zipCode: "",
     description: "",
+    yearEstablished: "",
 
     // Step 4: Branding
     logoFile: null as File | null,
@@ -316,6 +317,7 @@ export default function ProviderSignup() {
           description: formData.description,
           bed_count: formData.bedCount,
           gender_served: formData.genderServed,
+          year_established: formData.yearEstablished ? parseInt(formData.yearEstablished) : null,
         })
         .select()
         .single();
@@ -922,16 +924,31 @@ export default function ProviderSignup() {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="website" className="text-sm font-medium">Website</Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="website" className="text-sm font-medium">Website</Label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          id="website"
+                          value={formData.website}
+                          onChange={(e) => updateFormData("website", e.target.value)}
+                          placeholder="https://www.yourfacility.com"
+                          className="pl-10 h-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="yearEstablished" className="text-sm font-medium">Year Established</Label>
                       <Input
-                        id="website"
-                        value={formData.website}
-                        onChange={(e) => updateFormData("website", e.target.value)}
-                        placeholder="https://www.yourfacility.com"
-                        className="pl-10 h-10"
+                        id="yearEstablished"
+                        type="number"
+                        value={formData.yearEstablished}
+                        onChange={(e) => updateFormData("yearEstablished", e.target.value)}
+                        placeholder="2010"
+                        min="1900"
+                        max={new Date().getFullYear()}
+                        className="h-10"
                       />
                     </div>
                   </div>
