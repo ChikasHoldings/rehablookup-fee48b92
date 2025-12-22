@@ -1,65 +1,155 @@
-import { forwardRef } from "react";
-import { NavLink, Link } from "react-router-dom";
-import { Home, Send, Heart, Star, Settings, LogIn } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { 
+  Home, 
+  Search, 
+  Heart, 
+  Star, 
+  MoreHorizontal
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { Settings, LogIn, User, HelpCircle, FileText } from "lucide-react";
+import { useState } from "react";
 
 interface SeekerMobileNavProps extends React.HTMLAttributes<HTMLElement> {
   isAuthenticated?: boolean;
 }
 
 const navItems = [
-  { to: "/account", icon: Home, label: "Home" },
-  { to: "/account/requests", icon: Send, label: "Requests" },
-  { to: "/account/saved", icon: Heart, label: "Saved" },
-  { to: "/account/reviews", icon: Star, label: "Reviews" },
-  { to: "/account/settings", icon: Settings, label: "Settings" },
+  { href: "/account", label: "Home", icon: Home },
+  { href: "/search", label: "Search", icon: Search },
+  { href: "/account/saved", label: "Saved", icon: Heart },
+  { href: "/account/reviews", label: "Reviews", icon: Star },
 ];
 
-export const SeekerMobileNav = forwardRef<HTMLElement, SeekerMobileNavProps>(
-  function SeekerMobileNav({ isAuthenticated = false, ...props }, ref) {
-    return (
-      <nav ref={ref} {...props} className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">
-        <div className="flex items-center justify-around h-16 px-2">
-          {navItems.slice(0, 4).map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/account"}
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors ${
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                }`
-              }
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{item.label}</span>
-            </NavLink>
-          ))}
-          {/* Show login or settings based on auth */}
-          {isAuthenticated ? (
-            <NavLink
-              to="/account/settings"
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors ${
-                  isActive ? "text-primary" : "text-muted-foreground"
-                }`
-              }
-            >
-              <Settings className="h-5 w-5" />
-              <span className="text-xs font-medium">Settings</span>
-            </NavLink>
-          ) : (
+export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMobileNavProps) {
+  const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const isMoreActive = ["/account/settings", "/account/requests", "/auth"].some(
+    path => location.pathname.startsWith(path)
+  );
+
+  const moreItems = isAuthenticated ? [
+    { href: "/account/requests", label: "My Requests", icon: FileText },
+    { href: "/account/settings", label: "Settings", icon: Settings },
+    { href: "/help", label: "Help & Support", icon: HelpCircle },
+  ] : [
+    { href: "/auth", label: "Sign In", icon: LogIn },
+    { href: "/auth?mode=signup", label: "Create Account", icon: User },
+    { href: "/help", label: "Help & Support", icon: HelpCircle },
+  ];
+
+  return (
+    <nav {...props} className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 backdrop-blur-lg border-t border-slate-800 safe-area-bottom shadow-2xl">
+      <div className="flex items-center justify-around h-16 px-2">
+        {navItems.map((item) => {
+          const isActive = item.href === "/account" 
+            ? location.pathname === "/account"
+            : location.pathname.startsWith(item.href);
+          const Icon = item.icon;
+          
+          return (
             <Link
-              to="/auth"
-              className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors text-primary"
+              key={item.href}
+              to={item.href}
+              className={cn(
+                "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
+                isActive 
+                  ? "text-white" 
+                  : "text-slate-400 hover:text-slate-200"
+              )}
             >
-              <LogIn className="h-5 w-5" />
-              <span className="text-xs font-medium">Sign In</span>
+              <div className={cn(
+                "flex items-center justify-center h-7 w-7 rounded-lg transition-all",
+                isActive && "bg-primary/20"
+              )}>
+                <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
+              </div>
+              <span className={cn(
+                "text-[10px] font-medium transition-colors",
+                isActive ? "text-white font-semibold" : "text-slate-400"
+              )}>
+                {item.label}
+              </span>
             </Link>
-          )}
-        </div>
-      </nav>
-    );
-  }
-);
+          );
+        })}
+        
+        {/* More button with drawer */}
+        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+          <DrawerTrigger asChild>
+            <button
+              className={cn(
+                "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
+                isMoreActive 
+                  ? "text-white" 
+                  : "text-slate-400 hover:text-slate-200"
+              )}
+            >
+              <div className={cn(
+                "flex items-center justify-center h-7 w-7 rounded-lg transition-all",
+                isMoreActive && "bg-primary/20"
+              )}>
+                <MoreHorizontal className={cn("h-5 w-5 transition-transform", isMoreActive && "scale-110")} />
+              </div>
+              <span className={cn(
+                "text-[10px] font-medium transition-colors",
+                isMoreActive ? "text-white font-semibold" : "text-slate-400"
+              )}>
+                More
+              </span>
+            </button>
+          </DrawerTrigger>
+          <DrawerContent className="bg-slate-900 border-slate-800">
+            <DrawerHeader className="border-b border-slate-800 pb-4">
+              <DrawerTitle className="text-white text-lg">
+                {isAuthenticated ? "Account & Settings" : "Get Started"}
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="p-4 space-y-1">
+              {moreItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setDrawerOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 active:scale-[0.98]",
+                      isActive 
+                        ? "bg-primary/20 text-white" 
+                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    )}
+                  >
+                    <div className={cn(
+                      "flex items-center justify-center h-10 w-10 rounded-lg",
+                      isActive ? "bg-primary/30" : "bg-slate-800"
+                    )}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            {isAuthenticated && (
+              <div className="p-4 pt-0 border-t border-slate-800 mt-2">
+                <p className="text-xs text-slate-500 text-center py-3">
+                  Signed in as {isAuthenticated ? "User" : "Guest"}
+                </p>
+              </div>
+            )}
+          </DrawerContent>
+        </Drawer>
+      </div>
+    </nav>
+  );
+}
