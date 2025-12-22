@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "https://esm.sh/stripe@14.21.0";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -28,6 +29,8 @@ interface CompletionStatus {
   percentage: number;
   missingItems: string[];
 }
+
+type PlanType = 'basic' | 'professional' | 'featured';
 
 function calculateCompletion(facility: FacilityWithProfile): CompletionStatus {
   const checks = {
@@ -58,11 +61,127 @@ function calculateCompletion(facility: FacilityWithProfile): CompletionStatus {
   };
 }
 
-function generateReminderEmail(firstName: string, facilityName: string, completion: CompletionStatus, dashboardUrl: string): string {
+async function getProviderPlan(email: string, stripe: Stripe): Promise<PlanType> {
+  try {
+    const customers = await stripe.customers.list({ email, limit: 1 });
+    if (customers.data.length === 0) return 'basic';
+
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customers.data[0].id,
+      status: 'active',
+      limit: 10,
+    });
+
+    if (subscriptions.data.length === 0) return 'basic';
+
+    for (const sub of subscriptions.data) {
+      const priceId = sub.items.data[0]?.price?.id;
+      if (!priceId) continue;
+
+      const price = await stripe.prices.retrieve(priceId, { expand: ['product'] });
+      const product = price.product as Stripe.Product;
+      const productName = product.name?.toLowerCase() || '';
+
+      if (productName.includes('featured') || productName.includes('premium')) {
+        return 'featured';
+      }
+      if (productName.includes('professional') || productName.includes('pro')) {
+        return 'professional';
+      }
+    }
+
+    return 'professional';
+  } catch (error) {
+    console.error('[PROFILE-REMINDERS] Error checking plan:', error);
+    return 'basic';
+  }
+}
+
+function generateReminderEmail(
+  firstName: string,
+  facilityName: string,
+  completion: CompletionStatus,
+  dashboardUrl: string,
+  plan: PlanType
+): string {
+  const isFeatured = plan === 'featured';
+  const isProfessional = plan === 'professional';
+  const isPaidPlan = isFeatured || isProfessional;
+
+  // Plan-aware header styling
+  let headerGradient: string;
+  let planBadge = '';
+  
+  if (isFeatured) {
+    headerGradient = 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)';
+    planBadge = `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle;">⭐ FEATURED</span>`;
+  } else if (isProfessional) {
+    headerGradient = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+    planBadge = `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle;">Professional</span>`;
+  } else {
+    headerGradient = 'linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%)';
+  }
+
   const missingItemsHtml = completion.missingItems
     .slice(0, 3)
     .map(item => `<li style="margin-bottom: 8px; color: hsl(215, 19%, 35%); font-size: 14px; line-height: 1.5;">${item}</li>`)
     .join("");
+
+  // Featured provider insights section
+  const featuredInsights = isFeatured ? `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #c4b5fd; border-radius: 8px; margin-bottom: 24px;">
+    <tr>
+      <td style="padding: 16px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #5b21b6;">⭐ Featured Provider Benefits</p>
+        <p style="margin: 0; font-size: 13px; color: #6b21a8;">
+          Complete profiles receive priority placement in search results. Your featured status is amplified with a complete profile.
+        </p>
+      </td>
+    </tr>
+  </table>
+  ` : '';
+
+  // Professional provider insights
+  const professionalInsights = isProfessional && !isFeatured ? `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 24px;">
+    <tr>
+      <td style="padding: 16px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1e40af;">Professional Profile Tip</p>
+        <p style="margin: 0; font-size: 13px; color: #1e3a8a;">
+          Complete profiles build trust with families and improve your visibility in our provider directory.
+        </p>
+      </td>
+    </tr>
+  </table>
+  ` : '';
+
+  // Tip section - different for paid vs basic
+  const tipSection = isPaidPlan ? `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: ${isFeatured ? '#f5f3ff' : '#eff6ff'}; border: 1px solid ${isFeatured ? '#c4b5fd' : '#bfdbfe'}; border-radius: 8px; margin-bottom: 24px;">
+    <tr>
+      <td style="padding: 16px;">
+        <p style="margin: 0; color: ${isFeatured ? '#5b21b6' : '#1e40af'}; font-size: 14px; line-height: 1.5;">
+          💡 <strong>Tip:</strong> ${isFeatured 
+            ? 'Your featured status combined with a complete profile maximizes your lead conversion potential.' 
+            : 'Complete profiles receive up to 3x more engagement from families seeking treatment.'}
+        </p>
+      </td>
+    </tr>
+  </table>
+  ` : `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(45, 93%, 95%); border: 1px solid hsl(45, 93%, 85%); border-radius: 8px; margin-bottom: 24px;">
+    <tr>
+      <td style="padding: 16px;">
+        <p style="margin: 0; color: hsl(32, 81%, 29%); font-size: 14px; line-height: 1.5;">
+          💡 <strong>Tip:</strong> Complete profiles receive up to 3x more leads from families seeking treatment.
+        </p>
+      </td>
+    </tr>
+  </table>
+  `;
+
+  // Progress circle color based on plan
+  const progressCircleColor = isFeatured ? '#7c3aed' : isProfessional ? '#2563eb' : 'hsl(217, 54%, 23%)';
 
   return `
 <!DOCTYPE html>
@@ -79,13 +198,13 @@ function generateReminderEmail(firstName: string, facilityName: string, completi
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
+            <td style="background: ${headerGradient}; padding: 32px; border-radius: 12px 12px 0 0;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
                     <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup</p>
                     <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">
-                      Complete Your Profile
+                      Complete Your Profile${planBadge}
                     </h1>
                   </td>
                 </tr>
@@ -105,6 +224,9 @@ function generateReminderEmail(firstName: string, facilityName: string, completi
                 Your listing for <strong>${facilityName}</strong> is ${completion.percentage}% complete. Finishing your profile helps families find and trust your facility.
               </p>
               
+              ${featuredInsights}
+              ${professionalInsights}
+              
               <!-- Progress Section -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border-radius: 8px; margin-bottom: 24px;">
                 <tr>
@@ -114,14 +236,14 @@ function generateReminderEmail(firstName: string, facilityName: string, completi
                         <td width="70" valign="top">
                           <table cellpadding="0" cellspacing="0" border="0">
                             <tr>
-                              <td style="background: hsl(217, 54%, 23%); color: hsl(0, 0%, 100%); border-radius: 50%; width: 56px; height: 56px; text-align: center; vertical-align: middle; font-weight: 700; font-size: 16px;">
+                              <td style="background: ${progressCircleColor}; color: hsl(0, 0%, 100%); border-radius: 50%; width: 56px; height: 56px; text-align: center; vertical-align: middle; font-weight: 700; font-size: 16px;">
                                 ${completion.percentage}%
                               </td>
                             </tr>
                           </table>
                         </td>
                         <td valign="top" style="padding-left: 16px;">
-                          <p style="margin: 0 0 12px 0; font-weight: 600; color: hsl(217, 54%, 23%); font-size: 15px;">To improve your listing:</p>
+                          <p style="margin: 0 0 12px 0; font-weight: 600; color: ${progressCircleColor}; font-size: 15px;">To improve your listing:</p>
                           <ul style="margin: 0; padding-left: 20px;">
                             ${missingItemsHtml}
                           </ul>
@@ -132,22 +254,13 @@ function generateReminderEmail(firstName: string, facilityName: string, completi
                 </tr>
               </table>
               
-              <!-- Tip -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(45, 93%, 95%); border: 1px solid hsl(45, 93%, 85%); border-radius: 8px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 16px;">
-                    <p style="margin: 0; color: hsl(32, 81%, 29%); font-size: 14px; line-height: 1.5;">
-                      💡 <strong>Tip:</strong> Complete profiles receive up to 3x more leads from families seeking treatment.
-                    </p>
-                  </td>
-                </tr>
-              </table>
+              ${tipSection}
               
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <a href="${dashboardUrl}/listing" style="display: inline-block; background: hsl(217, 54%, 23%); color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                    <a href="${dashboardUrl}/listing" style="display: inline-block; background: ${progressCircleColor}; color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
                       Complete Your Profile
                     </a>
                   </td>
@@ -204,7 +317,9 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" }) : null;
 
     const dashboardUrl = Deno.env.get("DASHBOARD_URL") || "https://rehablookup.com/provider";
 
@@ -289,13 +404,18 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
+        // Get provider plan for styling
+        const plan = stripe ? await getProviderPlan(profile.email, stripe) : 'basic';
+        console.log(`[PROFILE-REMINDERS] Provider ${profile.email} is on ${plan} plan`);
+
         console.log(`[PROFILE-REMINDERS] Sending reminder to ${profile.email} for ${facility.name} (${completion.percentage}% complete)`);
 
         const emailHtml = generateReminderEmail(
           profile.first_name || "there",
           facility.name,
           completion,
-          dashboardUrl
+          dashboardUrl,
+          plan
         );
 
         const emailResponse = await fetch("https://api.resend.com/emails", {
