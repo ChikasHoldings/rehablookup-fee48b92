@@ -183,14 +183,14 @@ export default function SeekerSettings() {
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
-        .from('facility-images')
+        .from('seeker-avatars')
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('facility-images')
+        .from('seeker-avatars')
         .getPublicUrl(fileName);
 
       // Update profile

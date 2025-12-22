@@ -6,7 +6,13 @@ interface SeekerProfile {
   id: string;
   user_id: string;
   display_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   avatar_url: string | null;
+  phone: string | null;
+  zipcode: string | null;
+  city: string | null;
+  state: string | null;
   created_at: string;
   updated_at: string;
 }
