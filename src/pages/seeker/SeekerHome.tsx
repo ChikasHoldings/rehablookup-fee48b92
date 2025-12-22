@@ -95,9 +95,9 @@ function FacilityCard({ facility }: { facility: NearbyFacility }) {
   return (
     <article className="group relative h-full overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300">
       <div className="flex h-full flex-col sm:flex-row">
-        {/* Image Section */}
+        {/* Image Section - Fixed height to ensure consistent card sizes */}
         <div className="relative sm:w-48 lg:w-56 shrink-0 overflow-hidden">
-          <div className="aspect-[16/10] sm:aspect-auto sm:h-full sm:min-h-[160px]">
+          <div className="aspect-[16/10] sm:aspect-auto sm:h-[160px]">
             {hasHeroImage ? (
               <>
                 <img 
@@ -110,7 +110,7 @@ function FacilityCard({ facility }: { facility: NearbyFacility }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
               </>
             ) : (
-              <div className="flex h-full w-full items-center justify-center min-h-[120px] sm:min-h-[160px] bg-gradient-to-br from-secondary via-background to-secondary">
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-secondary via-background to-secondary">
                 <div className="text-center">
                   <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-muted shadow-sm">
                     <span className="font-display text-lg font-bold text-muted-foreground">
