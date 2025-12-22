@@ -143,6 +143,15 @@ export default function SeekerSignup() {
           console.error('Profile update error:', profileError);
         }
         
+        // Send welcome email and create welcome notification
+        supabase.functions.invoke('send-seeker-emails', {
+          body: {
+            type: 'welcome',
+            seekerId: data.user.id,
+            email: email.trim()
+          }
+        }).catch(err => console.error('Failed to send welcome email:', err));
+        
         toast.success('Account created successfully!');
         navigate('/account');
       }

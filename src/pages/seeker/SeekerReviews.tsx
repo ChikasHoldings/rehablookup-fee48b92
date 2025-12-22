@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2, Search } from "lucide-react";
+import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2, Search, Reply } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface ReviewResponse {
+  id: string;
+  response_text: string;
+  created_at: string;
+}
+
 interface UserReview {
   id: string;
   facility_id: string;
@@ -41,6 +48,7 @@ interface UserReview {
   review_text: string | null;
   status: string;
   created_at: string;
+  response?: ReviewResponse | null;
 }
 
 function getInitials(name: string): string {
@@ -72,13 +80,15 @@ function ReviewCard({
   onEdit, 
   onDelete,
   getStatusBadge,
-  formatDate
+  formatDate,
+  formatRelativeDate
 }: { 
   review: UserReview; 
   onEdit: (review: UserReview) => void;
   onDelete: (reviewId: string) => void;
   getStatusBadge: (status: string) => React.ReactNode;
   formatDate: (dateString: string) => string;
+  formatRelativeDate: (dateString: string) => string;
 }) {
   const [logoError, setLogoError] = useState(false);
   const initials = getInitials(review.facility_name);
@@ -186,6 +196,20 @@ function ReviewCard({
             </p>
           )}
 
+          {/* Facility Response */}
+          {review.response && review.status === 'approved' && (
+            <div className="mt-2 mb-3 border-l-2 border-primary/20 pl-3 bg-muted/30 rounded-r-lg py-2 pr-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Reply className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-medium text-primary">Response from Facility</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatRelativeDate(review.response.created_at)}
+                </span>
+              </div>
+              <p className="text-sm text-foreground/80 line-clamp-2">{review.response.response_text}</p>
+            </div>
+          )}
+
           {/* Date */}
           <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
@@ -266,23 +290,37 @@ export default function SeekerReviews() {
 
       // Fetch facility details for the reviews
       const facilityIds = [...new Set(reviewsData.map(r => r.facility_id))];
-      const { data: facilitiesData, error: facilitiesError } = await supabase
-        .from('facilities')
-        .select('id, name, slug, city, state, facility_type, logo_url')
-        .in('id', facilityIds);
+      const reviewIds = reviewsData.map(r => r.id);
 
-      if (facilitiesError) {
-        console.error('Error fetching facilities:', facilitiesError);
+      // Fetch facilities and responses in parallel
+      const [facilitiesResult, responsesResult] = await Promise.all([
+        supabase
+          .from('facilities')
+          .select('id, name, slug, city, state, facility_type, logo_url')
+          .in('id', facilityIds),
+        supabase
+          .from('review_responses')
+          .select('id, review_id, response_text, created_at')
+          .in('review_id', reviewIds)
+          .eq('status', 'active')
+      ]);
+
+      if (facilitiesResult.error) {
+        console.error('Error fetching facilities:', facilitiesResult.error);
       }
 
-      // Create a map for quick facility lookup
+      // Create maps for quick lookup
       const facilityMap = new Map(
-        (facilitiesData || []).map(f => [f.id, f])
+        (facilitiesResult.data || []).map(f => [f.id, f])
+      );
+      const responseMap = new Map(
+        (responsesResult.data || []).map(r => [r.review_id, r])
       );
 
-      // Map reviews with facility data
+      // Map reviews with facility data and responses
       const mappedReviews: UserReview[] = reviewsData.map(review => {
         const facility = facilityMap.get(review.facility_id);
+        const response = responseMap.get(review.id);
         return {
           id: review.id,
           facility_id: review.facility_id,
@@ -295,7 +333,12 @@ export default function SeekerReviews() {
           rating: review.rating,
           review_text: review.review_text,
           status: review.status,
-          created_at: review.created_at
+          created_at: review.created_at,
+          response: response ? {
+            id: response.id,
+            response_text: response.response_text,
+            created_at: response.created_at
+          } : null
         };
       });
 
@@ -389,6 +432,10 @@ export default function SeekerReviews() {
       day: 'numeric',
       year: 'numeric'
     });
+  };
+
+  const formatRelativeDate = (dateString: string) => {
+    return formatDistanceToNow(new Date(dateString), { addSuffix: true });
   };
 
   const getStatusBadge = (status: string) => {
@@ -486,6 +533,7 @@ export default function SeekerReviews() {
               onDelete={(id) => setDeleteReviewId(id)}
               getStatusBadge={getStatusBadge}
               formatDate={formatDate}
+              formatRelativeDate={formatRelativeDate}
             />
           ))}
         </div>
