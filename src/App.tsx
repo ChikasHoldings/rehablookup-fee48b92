@@ -91,6 +91,7 @@ import ProviderHelpPage from "./pages/provider/Help";
 import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
 import ProviderImageGuidelines from "./pages/provider/ImageGuidelines";
 import ProviderAddLocation from "./pages/provider/AddLocation";
+import ProviderChoosePlan from "./pages/provider/ChoosePlan";
 
 // Admin Panel - eagerly load shell, lazy load pages (shell handles its own Suspense)
 import { AdminShell } from "./components/admin/AdminShell";
@@ -203,6 +204,7 @@ const App = () => (
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
               <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
               <Route path="add-location" element={<ProviderAddLocation />} />
+              <Route path="choose-plan" element={<ProviderChoosePlan />} />
             </Route>
             
             {/* Admin Panel Routes - Nested under admin shell */}
