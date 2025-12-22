@@ -567,22 +567,7 @@ export function RequestInfoModal({
                 </div>
                 
                 {/* Lead Counter Badge */}
-                {isPaidPlan && leadUsage && (
-                  <Badge 
-                    variant="outline" 
-                    className={cn(
-                      "shrink-0 gap-1.5 text-xs font-medium",
-                      leadUsage.remaining <= 10 
-                        ? "border-red-300 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-950/50 dark:text-red-300"
-                        : leadUsage.remaining <= 25
-                          ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-                          : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                    )}
-                  >
-                    <Zap className="h-3 w-3" />
-                    {leadUsage.remaining} leads left
-                  </Badge>
-                )}
+                {/* Lead usage badge hidden from public view - internal metric only */}
             </div>
             </div>
 
