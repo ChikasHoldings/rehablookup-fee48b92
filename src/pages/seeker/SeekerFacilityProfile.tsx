@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useFacilityReviews } from "@/hooks/useFacilityReviews";
+import { ReviewForm } from "@/components/reviews/ReviewForm";
+import { ReviewsList } from "@/components/reviews/ReviewsList";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import {
@@ -32,6 +35,7 @@ import {
   Award,
   Star,
   Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
@@ -101,6 +105,49 @@ function ProfileSection({
       </div>
       <div className="p-4">{children}</div>
     </div>
+  );
+}
+
+function ReviewsSection({ facilityId, facilityName }: { facilityId: string; facilityName: string }) {
+  const {
+    reviews,
+    userReview,
+    isLoading,
+    averageRating,
+    reviewCount,
+    isAuthenticated,
+    isEmailVerified,
+    submitReview,
+    updateReview,
+    deleteReview,
+    toggleHelpful,
+    resendVerificationEmail
+  } = useFacilityReviews(facilityId);
+
+  return (
+    <ProfileSection icon={MessageSquare} title="Reviews" iconColor="bg-amber-500/10 text-amber-600">
+      <div className="space-y-4">
+        <ReviewForm
+          facilityName={facilityName}
+          userReview={userReview}
+          isAuthenticated={isAuthenticated}
+          isEmailVerified={isEmailVerified}
+          onSubmit={submitReview}
+          onUpdate={updateReview}
+          onDelete={deleteReview}
+          onResendVerification={resendVerificationEmail}
+        />
+        <ReviewsList
+          reviews={reviews}
+          averageRating={averageRating}
+          reviewCount={reviewCount}
+          isLoading={isLoading}
+          isAuthenticated={isAuthenticated}
+          onToggleHelpful={toggleHelpful}
+          facilityId={facilityId}
+        />
+      </div>
+    </ProfileSection>
   );
 }
 
@@ -516,6 +563,9 @@ export default function SeekerFacilityProfile() {
               </div>
             </ProfileSection>
           )}
+
+          {/* Reviews Section */}
+          <ReviewsSection facilityId={facility.id} facilityName={facility.name} />
 
           {/* CTA to view on main site */}
           <div className="rounded-xl border border-border/50 bg-muted/50 p-4 text-center">
