@@ -95,24 +95,47 @@ export function useProviderNotifications() {
         (payload) => {
           const newNotification = payload.new as ProviderNotification;
           
-          // Play sound and show browser notification for lead notifications
-          if (newNotification.type === "lead_received") {
-            playNotificationSound();
-            showBrowserNotification(newNotification.title, newNotification.message);
-          }
+          // Play sound and show browser notification
+          playNotificationSound();
+          showBrowserNotification(newNotification.title, newNotification.message);
           
-          queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
+          // Update cache immediately for instant UI update
+          queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+            if (!old) return [newNotification];
+            // Avoid duplicates
+            if (old.some(n => n.id === newNotification.id)) return old;
+            return [newNotification, ...old];
+          });
         }
       )
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "UPDATE",
           schema: "public",
           table: "provider_notifications",
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
+        (payload) => {
+          const updatedNotification = payload.new as ProviderNotification;
+          queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+            if (!old) return old;
+            return old.map(n => n.id === updatedNotification.id ? updatedNotification : n);
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "provider_notifications",
+        },
+        (payload) => {
+          const deletedId = (payload.old as { id: string }).id;
+          queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
+            if (!old) return old;
+            return old.filter(n => n.id !== deletedId);
+          });
         }
       )
       .subscribe();
