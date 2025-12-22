@@ -138,14 +138,14 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
 
   return (
     <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
-      <div className="h-16 md:h-[72px] max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="h-14 sm:h-16 md:h-[72px] max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between gap-3 sm:gap-4">
         {/* Left - Logo */}
         <div className="flex items-center shrink-0">
-          <Link to="/">
+          <Link to="/" className="flex items-center">
             <img 
               src="/logo.png" 
               alt="RehabLookup" 
-              className="h-6 sm:h-7 md:h-8 w-auto brightness-0 invert"
+              className="h-7 sm:h-8 md:h-9 w-auto brightness-0 invert"
             />
           </Link>
         </div>
@@ -246,15 +246,16 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
         </nav>
 
         {/* Right - Actions */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Mobile Search Toggle */}
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
-            onClick={() => navigate("/search")}
+            className="lg:hidden h-9 w-9 text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
+            onClick={() => navigate("/account/search")}
+            aria-label="Search"
           >
-            <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Search className="h-5 w-5" />
           </Button>
 
           {/* Notifications */}
@@ -264,11 +265,12 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="relative h-9 w-9 sm:h-10 sm:w-10 text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
+                  className="relative h-9 w-9 text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
+                  aria-label="Notifications"
                 >
-                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-destructive text-[9px] sm:text-[10px] font-bold text-white ring-2 ring-primary">
+                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white ring-2 ring-primary">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
@@ -343,10 +345,11 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="gap-2 sm:gap-2.5 text-white hover:text-white hover:bg-white/15 h-10 sm:h-11 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ml-1 sm:ml-2"
+                  className="gap-2 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 p-1 sm:pl-1.5 sm:pr-2.5 rounded-lg transition-all duration-200 active:scale-[0.98]"
+                  aria-label="User menu"
                 >
                   <div className="relative">
-                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9 ring-2 ring-white/40 ring-offset-1 ring-offset-primary">
+                    <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-white/30">
                       {avatarUrl ? (
                         <AvatarImage 
                           src={avatarUrl} 
@@ -354,13 +357,13 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                           className="object-cover"
                         />
                       ) : null}
-                      <AvatarFallback className="bg-gradient-to-br from-white/40 to-white/20 text-white text-xs sm:text-sm font-bold">
+                      <AvatarFallback className="bg-gradient-to-br from-white/40 to-white/20 text-white text-xs font-bold">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-400 border-2 border-primary" />
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-400 border-2 border-primary" />
                   </div>
-                  <div className="hidden sm:flex flex-col items-start">
+                  <div className="hidden md:flex flex-col items-start">
                     <span className="text-sm font-semibold text-white leading-tight max-w-[100px] truncate">
                       {userName || "User"}
                     </span>
@@ -412,11 +415,11 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
           ) : (
             <Button 
               asChild 
-              className="h-10 sm:h-11 px-4 sm:px-5 bg-white text-primary hover:bg-white/90 font-semibold text-sm rounded-xl shadow-lg shadow-black/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ml-1 sm:ml-2"
+              className="h-9 sm:h-10 px-3 sm:px-4 bg-white text-primary hover:bg-white/90 font-semibold text-sm rounded-lg shadow-md transition-all duration-200 active:scale-[0.98]"
             >
-              <Link to="/auth" className="flex items-center gap-2">
+              <Link to="/auth" className="flex items-center gap-1.5">
                 <LogIn className="h-4 w-4" />
-                <span>Sign In</span>
+                <span className="hidden xs:inline">Sign In</span>
               </Link>
             </Button>
           )}
