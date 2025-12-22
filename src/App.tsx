@@ -70,7 +70,12 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import SeekerAuth from "./pages/SeekerAuth";
-import MyAccount from "./pages/MyAccount";
+import { SeekerShell } from "./components/seeker/SeekerShell";
+import SeekerHome from "./pages/seeker/SeekerHome";
+import SeekerInbox from "./pages/seeker/SeekerInbox";
+import SeekerSaved from "./pages/seeker/SeekerSaved";
+import SeekerReviews from "./pages/seeker/SeekerReviews";
+import SeekerSettings from "./pages/seeker/SeekerSettings";
 
 // Near Me SEO Pages
 import DrugRehabNearMe from "./pages/near-me/DrugRehabNearMe";
@@ -185,7 +190,16 @@ const App = () => (
             <Route path="/lp/treatment" element={<AdLanding />} />
             <Route path="/lp/social" element={<SocialLanding />} />
             <Route path="/auth" element={<SeekerAuth />} />
-            <Route path="/my-account" element={<MyAccount />} />
+            
+            {/* Seeker Account Routes - Nested under seeker shell */}
+            <Route path="/account" element={<SeekerShell />}>
+              <Route index element={<SeekerHome />} />
+              <Route path="inbox" element={<SeekerInbox />} />
+              <Route path="saved" element={<SeekerSaved />} />
+              <Route path="reviews" element={<SeekerReviews />} />
+              <Route path="settings" element={<SeekerSettings />} />
+            </Route>
+            <Route path="/my-account" element={<Navigate to="/account" replace />} />
             <Route path="/for-providers" element={<ForProviders />} />
             <Route path="/provider-resources" element={<ProviderResources />} />
             <Route path="/provider-login" element={<ProviderLogin />} />
