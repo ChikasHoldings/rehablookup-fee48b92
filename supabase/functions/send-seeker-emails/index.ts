@@ -150,16 +150,32 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Create in-app notification for certain email types
-    if (seekerId && ["facility_contacted_you", "request_confirmation"].includes(type)) {
+    if (seekerId && ["facility_contacted_you", "request_confirmation", "welcome"].includes(type)) {
+      let notificationTitle = subject;
+      let notificationMessage = "";
+      
+      switch (type) {
+        case "welcome":
+          notificationTitle = "Welcome to RehabLookup! 💙";
+          notificationMessage = "We're here to help you find the right treatment center. Start by browsing facilities or saving your favorites.";
+          break;
+        case "facility_contacted_you":
+          notificationMessage = `${metadata?.facilityName || "A facility"} has responded to your request.`;
+          break;
+        case "request_confirmation":
+          notificationMessage = "Your request has been sent successfully.";
+          break;
+      }
+
       await supabase.from("seeker_notifications").insert({
         user_id: seekerId,
         type: type,
-        title: subject,
-        message: type === "facility_contacted_you" 
-          ? `${metadata?.facilityName || "A facility"} has responded to your request.`
-          : "Your request has been sent successfully.",
+        title: notificationTitle,
+        message: notificationMessage,
+        link: type === "welcome" ? "/account" : null,
         metadata: metadata || {},
       });
+      logStep("In-app notification created", { type, seekerId });
     }
 
     logStep("Email sent successfully", { type, to: seekerEmail, resendId: emailResult?.id });

@@ -237,6 +237,22 @@ export function SeekerRequestForm({
 
       if (error) throw error;
 
+      // Send request confirmation email and notification to seeker
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        supabase.functions.invoke('send-seeker-emails', {
+          body: {
+            type: 'request_confirmation',
+            seekerId: session.user.id,
+            email: data.email,
+            metadata: {
+              facilityName: facilityName,
+              facilityId: facilityId
+            }
+          }
+        }).catch(err => console.error('Failed to send request confirmation email:', err));
+      }
+
       setIsSuccess(true);
       toast({
         title: "Request sent successfully!",

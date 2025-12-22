@@ -101,77 +101,91 @@ export function useSeekerNotifications() {
   }, []);
 
   useEffect(() => {
-    fetchNotifications();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel("seeker-notifications-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "seeker_notifications",
-        },
-        (payload) => {
-          const newNotification = payload.new as SeekerNotification;
-          
-          // Check if this is a genuinely new notification
-          if (!previousNotificationsRef.current.includes(newNotification.id)) {
-            playNotificationSound();
-            showBrowserNotification(
-              newNotification.title,
-              newNotification.message,
-              newNotification.link
-            );
+    const setupSubscription = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      await fetchNotifications();
+
+      // Subscribe to realtime updates filtered by user_id
+      channel = supabase
+        .channel("seeker-notifications-realtime")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "seeker_notifications",
+            filter: `user_id=eq.${session.user.id}`,
+          },
+          (payload) => {
+            const newNotification = payload.new as SeekerNotification;
             
-            // Update local state immediately
-            setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
-            previousNotificationsRef.current = [newNotification.id, ...previousNotificationsRef.current];
+            // Check if this is a genuinely new notification
+            if (!previousNotificationsRef.current.includes(newNotification.id)) {
+              playNotificationSound();
+              showBrowserNotification(
+                newNotification.title,
+                newNotification.message,
+                newNotification.link
+              );
+              
+              // Update local state immediately
+              setNotifications(prev => [newNotification, ...prev]);
+              setUnreadCount(prev => prev + 1);
+              previousNotificationsRef.current = [newNotification.id, ...previousNotificationsRef.current];
+            }
           }
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "seeker_notifications",
-        },
-        (payload) => {
-          const updatedNotification = payload.new as SeekerNotification;
-          setNotifications(prev =>
-            prev.map(n => (n.id === updatedNotification.id ? updatedNotification : n))
-          );
-          // Recalculate unread count
-          setNotifications(current => {
-            setUnreadCount(current.filter(n => !n.read).length);
-            return current;
-          });
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "seeker_notifications",
-        },
-        (payload) => {
-          const deletedId = (payload.old as { id: string }).id;
-          setNotifications(prev => {
-            const updated = prev.filter(n => n.id !== deletedId);
-            setUnreadCount(updated.filter(n => !n.read).length);
-            return updated;
-          });
-          previousNotificationsRef.current = previousNotificationsRef.current.filter(id => id !== deletedId);
-        }
-      )
-      .subscribe();
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "seeker_notifications",
+            filter: `user_id=eq.${session.user.id}`,
+          },
+          (payload) => {
+            const updatedNotification = payload.new as SeekerNotification;
+            setNotifications(prev =>
+              prev.map(n => (n.id === updatedNotification.id ? updatedNotification : n))
+            );
+            // Recalculate unread count
+            setNotifications(current => {
+              setUnreadCount(current.filter(n => !n.read).length);
+              return current;
+            });
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "DELETE",
+            schema: "public",
+            table: "seeker_notifications",
+            filter: `user_id=eq.${session.user.id}`,
+          },
+          (payload) => {
+            const deletedId = (payload.old as { id: string }).id;
+            setNotifications(prev => {
+              const updated = prev.filter(n => n.id !== deletedId);
+              setUnreadCount(updated.filter(n => !n.read).length);
+              return updated;
+            });
+            previousNotificationsRef.current = previousNotificationsRef.current.filter(id => id !== deletedId);
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [fetchNotifications, playNotificationSound, showBrowserNotification]);
 
