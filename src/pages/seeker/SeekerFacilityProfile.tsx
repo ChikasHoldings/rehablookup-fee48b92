@@ -284,13 +284,21 @@ export default function SeekerFacilityProfile() {
     <div className="flex-1 py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Back button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate("/account");
+            }
+          }}
+          className="mb-4 gap-1.5 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
-        </button>
+        </Button>
 
         <div className="space-y-4">
           {/* Header Card */}
