@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { History, LogIn, KeyRound, UserCog, Mail, Image, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,7 +29,8 @@ const eventColors: Record<string, string> = {
   avatar_update: "text-pink-500 bg-pink-500/10",
 };
 
-export function ActivityLog() {
+export const ActivityLog = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  function ActivityLog(props, ref) {
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -68,7 +69,7 @@ export function ActivityLog() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card ref={ref} {...props}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <History className="h-5 w-5" />
@@ -83,7 +84,7 @@ export function ActivityLog() {
   }
 
   return (
-    <Card>
+    <Card ref={ref} {...props}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <History className="h-5 w-5" />
@@ -127,4 +128,4 @@ export function ActivityLog() {
       </CardContent>
     </Card>
   );
-}
+});
