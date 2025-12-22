@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Lock, Bell, LogOut, Camera, Loader2 } from "lucide-react";
+import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,12 @@ export default function SeekerSettings() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -151,6 +157,50 @@ export default function SeekerSettings() {
       description: "You've been logged out."
     });
     navigate("/", { replace: true });
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are the same.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      toast({
+        title: "Error changing password",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully."
+      });
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordForm(false);
+    }
+
+    setIsChangingPassword(false);
   };
 
   const getInitials = () => {
@@ -290,10 +340,88 @@ export default function SeekerSettings() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full justify-start" disabled>
-              Change Password
-              <span className="ml-auto text-xs text-muted-foreground">Coming soon</span>
-            </Button>
+            {!showPasswordForm ? (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => setShowPasswordForm(true)}
+              >
+                Change Password
+              </Button>
+            ) : (
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="new-password"
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirm-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Password must be at least 6 characters
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword || !newPassword || !confirmPassword}
+                  >
+                    {isChangingPassword ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Password"
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <Separator />
 
