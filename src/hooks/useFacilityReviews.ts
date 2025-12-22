@@ -14,6 +14,10 @@ export interface FacilityReview {
   updated_at: string;
   // Joined data
   user_display_name?: string;
+  reviewer_first_name?: string;
+  reviewer_last_initial?: string;
+  reviewer_city?: string;
+  reviewer_state?: string;
   has_voted_helpful?: boolean;
 }
 
@@ -53,20 +57,30 @@ export function useFacilityReviews(facilityId: string) {
       votedReviewIds = votes?.map(v => v.review_id) || [];
     }
 
-    // Fetch user display names from seeker_profiles
+    // Fetch user profile info from seeker_profiles
     const userIds = [...new Set(reviewsData?.map(r => r.user_id) || [])];
     const { data: profiles } = await supabase
       .from('seeker_profiles')
-      .select('user_id, display_name')
+      .select('user_id, display_name, first_name, last_name, city, state')
       .in('user_id', userIds);
 
-    const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) || []);
+    const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
-    const enrichedReviews: FacilityReview[] = (reviewsData || []).map(review => ({
-      ...review,
-      user_display_name: profileMap.get(review.user_id) || 'Anonymous',
-      has_voted_helpful: votedReviewIds.includes(review.id)
-    }));
+    const enrichedReviews: FacilityReview[] = (reviewsData || []).map(review => {
+      const profile = profileMap.get(review.user_id);
+      const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || 'Anonymous';
+      const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
+      
+      return {
+        ...review,
+        user_display_name: firstName + (lastInitial ? ` ${lastInitial}.` : ''),
+        reviewer_first_name: firstName,
+        reviewer_last_initial: lastInitial,
+        reviewer_city: profile?.city || null,
+        reviewer_state: profile?.state || null,
+        has_voted_helpful: votedReviewIds.includes(review.id)
+      };
+    });
 
     setReviews(enrichedReviews);
     setReviewCount(enrichedReviews.length);

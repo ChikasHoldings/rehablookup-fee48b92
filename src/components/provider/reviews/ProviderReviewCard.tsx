@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Loader2,
-  User,
+  MapPin,
   Send,
   Edit2,
   Trash2
@@ -96,12 +96,21 @@ export const ProviderReviewCard = memo(function ProviderReviewCard({
         <div className="p-4 border-b border-border/50">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 shrink-0 rounded-full bg-muted flex items-center justify-center">
-                <User className="h-5 w-5 text-muted-foreground" />
+              <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-sm font-semibold text-primary">
+                  {review.reviewer_first_name?.charAt(0) || 'A'}
+                  {review.reviewer_last_initial || ''}
+                </span>
               </div>
               <div className="min-w-0">
                 <p className="font-medium text-foreground truncate">{review.user_display_name}</p>
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                {(review.reviewer_city || review.reviewer_state) && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <MapPin className="h-3 w-3" />
+                    {[review.reviewer_city, review.reviewer_state].filter(Boolean).join(', ')}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <div className="flex items-center">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star

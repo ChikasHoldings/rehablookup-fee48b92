@@ -15,7 +15,9 @@ import {
   Loader2,
   RefreshCw,
   AlertTriangle,
-  Flag
+  Flag,
+  MapPin,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -33,6 +35,9 @@ interface ReviewWithDetails {
   created_at: string;
   updated_at: string;
   facility_name?: string;
+  reviewer_name?: string;
+  reviewer_city?: string;
+  reviewer_state?: string;
 }
 
 interface DisputeWithDetails {
@@ -76,17 +81,29 @@ export default function AdminReviews() {
     }
 
     const facilityIds = [...new Set(data?.map(r => r.facility_id) || [])];
-    const { data: facilities } = await supabase
-      .from('facilities')
-      .select('id, name')
-      .in('id', facilityIds);
+    const userIds = [...new Set(data?.map(r => r.user_id) || [])];
+    
+    const [facilitiesResult, profilesResult] = await Promise.all([
+      supabase.from('facilities').select('id, name').in('id', facilityIds),
+      supabase.from('seeker_profiles').select('user_id, first_name, last_name, city, state, display_name').in('user_id', userIds)
+    ]);
 
-    const facilityMap = new Map(facilities?.map(f => [f.id, f.name]) || []);
+    const facilityMap = new Map(facilitiesResult.data?.map(f => [f.id, f.name]) || []);
+    const profileMap = new Map(profilesResult.data?.map(p => [p.user_id, p]) || []);
 
-    const enrichedReviews: ReviewWithDetails[] = (data || []).map(review => ({
-      ...review,
-      facility_name: facilityMap.get(review.facility_id) || 'Unknown Facility'
-    }));
+    const enrichedReviews: ReviewWithDetails[] = (data || []).map(review => {
+      const profile = profileMap.get(review.user_id);
+      const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || 'Anonymous';
+      const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
+      
+      return {
+        ...review,
+        facility_name: facilityMap.get(review.facility_id) || 'Unknown Facility',
+        reviewer_name: firstName + (lastInitial ? ` ${lastInitial}.` : ''),
+        reviewer_city: profile?.city || null,
+        reviewer_state: profile?.state || null
+      };
+    });
 
     setReviews(enrichedReviews);
     setIsLoading(false);
@@ -116,8 +133,28 @@ export default function AdminReviews() {
       .select('id, name')
       .in('id', facilityIds);
 
-    const reviewMap = new Map(reviewsData?.map(r => [r.id, r]) || []);
+    // Get reviewer profiles for disputed reviews
+    const userIds = [...new Set(reviewsData?.map(r => r.user_id) || [])];
+    const { data: profilesData } = await supabase
+      .from('seeker_profiles')
+      .select('user_id, first_name, last_name, city, state, display_name')
+      .in('user_id', userIds);
+
+    const profileMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
     const facilityMap = new Map(facilitiesData?.map(f => [f.id, f.name]) || []);
+    
+    const reviewMap = new Map(reviewsData?.map(r => {
+      const profile = profileMap.get(r.user_id);
+      const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || 'Anonymous';
+      const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
+      
+      return [r.id, {
+        ...r,
+        reviewer_name: firstName + (lastInitial ? ` ${lastInitial}.` : ''),
+        reviewer_city: profile?.city || null,
+        reviewer_state: profile?.state || null
+      }];
+    }) || []);
 
     const enrichedDisputes: DisputeWithDetails[] = (disputesData || []).map(dispute => ({
       ...dispute,
@@ -436,7 +473,21 @@ export default function AdminReviews() {
                   <CardContent className="space-y-4">
                     {dispute.review && (
                       <div className="bg-muted/50 p-4 rounded-lg">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">ORIGINAL REVIEW</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-3">ORIGINAL REVIEW</p>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{dispute.review.reviewer_name || 'Anonymous'}</p>
+                            {(dispute.review.reviewer_city || dispute.review.reviewer_state) && (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {[dispute.review.reviewer_city, dispute.review.reviewer_state].filter(Boolean).join(', ')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                         <div className="flex items-center gap-1 mb-2">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <Star
@@ -528,10 +579,26 @@ export default function AdminReviews() {
                   <Card key={review.id}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-muted-foreground" />
                             <span className="font-medium">{review.facility_name}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">{review.reviewer_name || 'Anonymous'}</p>
+                                {(review.reviewer_city || review.reviewer_state) && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {[review.reviewer_city, review.reviewer_state].filter(Boolean).join(', ')}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-0.5">
@@ -552,7 +619,7 @@ export default function AdminReviews() {
                             </span>
                           </div>
                         </div>
-                        <Badge 
+                        <Badge
                           variant={
                             review.status === 'approved' ? 'default' : 
                             review.status === 'rejected' ? 'destructive' : 

@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, AlertTriangle, Star, User } from 'lucide-react';
+import { Loader2, AlertTriangle, Star, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ProviderReview } from '@/hooks/useProviderReviews';
@@ -82,12 +82,21 @@ export function FlagReviewDialog({ review, open, onOpenChange, onSubmit }: FlagR
         {review && (
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-background flex items-center justify-center">
-                <User className="h-4 w-4 text-muted-foreground" />
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-xs font-semibold text-primary">
+                  {review.reviewer_first_name?.charAt(0) || 'A'}
+                  {review.reviewer_last_initial || ''}
+                </span>
               </div>
               <div>
                 <p className="text-sm font-medium">{review.user_display_name}</p>
-                <div className="flex items-center gap-1">
+                {(review.reviewer_city || review.reviewer_state) && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {[review.reviewer_city, review.reviewer_state].filter(Boolean).join(', ')}
+                  </p>
+                )}
+                <div className="flex items-center gap-1 mt-0.5">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
