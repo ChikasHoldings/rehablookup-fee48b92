@@ -63,7 +63,7 @@ import {
 import { FacilityImageUpload } from "@/components/provider/FacilityImageUpload";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
-import { GoogleReviewsSection } from "@/components/provider/GoogleReviewsSection";
+
 import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
 import {
@@ -1940,13 +1940,6 @@ export default function ProviderListingPage() {
                 </CollapsibleContent>
               </Card>
             </Collapsible>
-
-            {/* Google Reviews */}
-            <GoogleReviewsSection
-              facilityId={facility.id}
-              expanded={expandedSections.has("googleReviews")}
-              onToggle={() => toggleSection("googleReviews")}
-            />
           </div>
 
           {/* Right Column - Sidebar */}
