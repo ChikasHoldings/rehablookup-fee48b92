@@ -9,10 +9,10 @@ const corsHeaders = {
 };
 
 // Updated lead limits: Professional and Featured both get 100 leads/month
-const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number }> = {
-  basic: { product_ids: [], lead_limit: 0 },
-  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 100 },
-  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 100 },
+const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; name: string }> = {
+  basic: { product_ids: [], lead_limit: 0, name: "Basic" },
+  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 100, name: "Professional" },
+  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 100, name: "Featured" },
 };
 
 interface Lead {
@@ -76,8 +76,24 @@ function generateDigestEmail(
   facilityNameMap: Record<string, string>,
   usedLeads: number,
   leadLimit: number,
-  remainingLeads: number
+  remainingLeads: number,
+  planName: string
 ): string {
+  const isFeatured = planName === "featured";
+  const isProfessional = planName === "professional";
+  const isPaidPlan = isFeatured || isProfessional;
+  
+  // Plan-specific styling
+  const headerGradient = isFeatured 
+    ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
+    : "linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%)";
+  
+  const planBadge = isFeatured 
+    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
+    : isProfessional 
+    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
+    : '';
+  
   const leadsHtml = leads.slice(0, 5).map((lead: Lead) => `
     <tr>
       <td style="padding: 16px 0; border-bottom: 1px solid hsl(220, 13%, 91%);">
@@ -91,6 +107,48 @@ function generateDigestEmail(
       </td>
     </tr>
   `).join("");
+
+  // Featured provider insights
+  const featuredInsights = isFeatured ? `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
+      <tr>
+        <td style="padding: 20px;">
+          <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #92400e;">⭐ Featured Provider Insights</p>
+          <p style="margin: 0; font-size: 14px; color: #78350f; line-height: 1.5;">
+            As a Featured provider, your listings appear at the top of search results. You're receiving exclusive, high-intent leads.
+          </p>
+        </td>
+      </tr>
+    </table>
+  ` : '';
+
+  // Usage section - show for paid plans
+  const usageSection = leadLimit > 0 ? `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border-radius: 8px; margin-bottom: 24px;">
+      <tr>
+        <td style="padding: 20px; text-align: center;">
+          <p style="margin: 0 0 6px 0; font-size: 12px; color: hsl(220, 9%, 46%); text-transform: uppercase; letter-spacing: 0.5px;">Monthly Usage</p>
+          <p style="margin: 0; font-size: 28px; font-weight: 700; color: ${isFeatured ? '#7c3aed' : 'hsl(217, 54%, 23%)'};">${usedLeads} / ${leadLimit}</p>
+          <p style="margin: 6px 0 0 0; font-size: 14px; color: hsl(220, 9%, 46%);">${remainingLeads} remaining this month</p>
+        </td>
+      </tr>
+    </table>
+  ` : "";
+
+  // Tips section - only show upgrade prompts for Basic plan
+  const tipsSection = !isPaidPlan ? `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 0 8px 8px 0; margin-top: 24px;">
+      <tr>
+        <td style="padding: 16px;">
+          <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #0369a1;">💡 Tip: Upgrade to receive qualified leads</p>
+          <p style="margin: 0; font-size: 13px; color: #0c4a6e;">
+            Professional and Featured plans include exclusive leads delivered directly to you.
+            <a href="https://rehablookup.com/provider/billing" style="color: #0284c7; text-decoration: underline;">View plans</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  ` : "";
 
   return `
 <!DOCTYPE html>
@@ -107,13 +165,13 @@ function generateDigestEmail(
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%); padding: 32px; border-radius: 12px 12px 0 0;">
+            <td style="background: ${headerGradient}; padding: 32px; border-radius: 12px 12px 0 0;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
                     <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup</p>
                     <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">
-                      ${digestType} Lead Digest
+                      ${digestType} Lead Digest${planBadge}
                     </h1>
                   </td>
                 </tr>
@@ -133,18 +191,8 @@ function generateDigestEmail(
                 You received <strong>${leads.length} new lead${leads.length === 1 ? "" : "s"}</strong> in the past ${periodText}.
               </p>
               
-              ${leadLimit > 0 ? `
-              <!-- Monthly Usage -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border-radius: 8px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 20px; text-align: center;">
-                    <p style="margin: 0 0 6px 0; font-size: 12px; color: hsl(220, 9%, 46%); text-transform: uppercase; letter-spacing: 0.5px;">Monthly Usage</p>
-                    <p style="margin: 0; font-size: 28px; font-weight: 700; color: hsl(217, 54%, 23%);">${usedLeads} / ${leadLimit}</p>
-                    <p style="margin: 6px 0 0 0; font-size: 14px; color: hsl(220, 9%, 46%);">${remainingLeads} remaining this month</p>
-                  </td>
-                </tr>
-              </table>
-              ` : ""}
+              ${featuredInsights}
+              ${usageSection}
               
               <!-- Leads List -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -161,12 +209,14 @@ function generateDigestEmail(
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 32px;">
                 <tr>
                   <td align="center">
-                    <a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: hsl(217, 54%, 23%); color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                    <a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: ${isFeatured ? '#7c3aed' : 'hsl(217, 54%, 23%)'}; color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
                       View All Leads
                     </a>
                   </td>
                 </tr>
               </table>
+              
+              ${tipsSection}
               
             </td>
           </tr>
@@ -345,14 +395,18 @@ const handler = async (req: Request): Promise<Response> => {
         facilityNameMap,
         usedLeads,
         leadLimit,
-        remainingLeads
+        remainingLeads,
+        planName
       );
 
       try {
+        const planDisplayName = PLAN_CONFIG[planName]?.name || "Basic";
+        const subjectPrefix = planName === "featured" ? "⭐ " : "";
+        
         await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
-          subject: `${digestType} Digest: ${leads.length} new lead${leads.length === 1 ? "" : "s"}`,
+          subject: `${subjectPrefix}${digestType} Digest: ${leads.length} new lead${leads.length === 1 ? "" : "s"}`,
           html: emailHtml,
         });
 

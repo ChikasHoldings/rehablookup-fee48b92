@@ -19,32 +19,92 @@ interface WelcomeEmailRequest {
   selectedPlan: string;
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+function generateWelcomeEmail(
+  providerFirstName: string,
+  facilityName: string,
+  selectedPlan: string
+): string {
+  const isFeatured = selectedPlan === "featured";
+  const isProfessional = selectedPlan === "professional";
+  const isPaidPlan = isFeatured || isProfessional;
+  
+  const planDisplayName = selectedPlan === "basic" ? "Basic" : selectedPlan === "professional" ? "Professional" : "Featured";
+  
+  const headerGradient = isFeatured 
+    ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
+    : "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)";
+  
+  const planBadge = isFeatured 
+    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
+    : isProfessional 
+    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
+    : '';
 
-  try {
-    logStep("Function started");
+  // Featured provider welcome benefits
+  const featuredWelcome = isFeatured ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 28px;">
+      <tr>
+        <td style="padding: 20px;">
+          <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #92400e;">
+            ⭐ Welcome to Featured!
+          </p>
+          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #78350f; line-height: 1.6;">
+            You've chosen our premium tier. Once approved, you'll enjoy priority placement, exclusive leads, and maximum visibility.
+          </p>
+        </td>
+      </tr>
+    </table>
+  ` : '';
 
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      logStep("ERROR", "RESEND_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+  // Professional plan info
+  const professionalWelcome = isProfessional ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
+      <tr>
+        <td style="padding: 16px 20px;">
+          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #0369a1;">
+            ✓ <strong>Professional Plan Selected:</strong> Once approved, you'll start receiving qualified leads directly.
+          </p>
+        </td>
+      </tr>
+    </table>
+  ` : '';
 
-    const resend = new Resend(resendApiKey);
+  // Plan info section
+  const planInfo = isPaidPlan ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 12px; margin-bottom: 28px;">
+      <tr>
+        <td style="padding: 20px;">
+          <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">
+            Your Plan
+          </p>
+          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600; color: ${isFeatured ? '#7c3aed' : '#1B365D'};">
+            ${planDisplayName}
+          </p>
+          <p style="margin: 8px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #10b981;">
+            ✓ Subscription active
+          </p>
+        </td>
+      </tr>
+    </table>
+  ` : `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 12px; margin-bottom: 28px;">
+      <tr>
+        <td style="padding: 20px;">
+          <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">
+            Your Plan
+          </p>
+          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #1B365D;">
+            ${planDisplayName}
+          </p>
+          <p style="margin: 8px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #64748b;">
+            Upgrade anytime to receive exclusive qualified leads
+          </p>
+        </td>
+      </tr>
+    </table>
+  `;
 
-    const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan }: WelcomeEmailRequest = await req.json();
-    logStep("Received request", { facilityId, facilityName, providerEmail, selectedPlan });
-
-    const planDisplayName = selectedPlan === "basic" ? "Basic" : selectedPlan === "professional" ? "Professional" : "Featured";
-    const isPaidPlan = selectedPlan !== "basic";
-
-    const emailHtml = `
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -60,9 +120,9 @@ serve(async (req) => {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 40px 32px; text-align: center;">
+            <td style="background: ${headerGradient}; padding: 40px 32px; text-align: center;">
               <h1 style="margin: 0 0 8px 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 28px; font-weight: 700;">
-                Welcome to RehabLookup!
+                Welcome to RehabLookup!${planBadge}
               </h1>
               <p style="margin: 0; color: rgba(255,255,255,0.8); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px;">
                 Your facility is now registered
@@ -81,6 +141,9 @@ serve(async (req) => {
                 Thank you for registering <strong style="color: #1B365D;">${facilityName}</strong> on RehabLookup. We're excited to help you connect with families seeking treatment.
               </p>
               
+              ${featuredWelcome}
+              ${professionalWelcome}
+              
               <!-- Status Box -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
                 <tr>
@@ -95,28 +158,7 @@ serve(async (req) => {
                 </tr>
               </table>
               
-              <!-- Plan Info -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 12px; margin-bottom: 28px;">
-                <tr>
-                  <td style="padding: 20px;">
-                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">
-                      Your Plan
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #1B365D;">
-                      ${planDisplayName}
-                    </p>
-                    ${isPaidPlan ? `
-                    <p style="margin: 8px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #10b981;">
-                      ✓ Subscription active
-                    </p>
-                    ` : `
-                    <p style="margin: 8px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #64748b;">
-                      Upgrade anytime to receive exclusive qualified leads
-                    </p>
-                    `}
-                  </td>
-                </tr>
-              </table>
+              ${planInfo}
               
               <!-- What's Next Section -->
               <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #1B365D;">
@@ -129,7 +171,7 @@ serve(async (req) => {
                     <table role="presentation" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background: #dbeafe; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: #1B365D;">1</span>
+                          <span style="display: inline-block; width: 24px; height: 24px; background: ${isFeatured ? '#ede9fe' : '#dbeafe'}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${isFeatured ? '#7c3aed' : '#1B365D'};">1</span>
                         </td>
                         <td style="padding-left: 12px;">
                           <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 500; color: #1B365D;">
@@ -148,7 +190,7 @@ serve(async (req) => {
                     <table role="presentation" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background: #dbeafe; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: #1B365D;">2</span>
+                          <span style="display: inline-block; width: 24px; height: 24px; background: ${isFeatured ? '#ede9fe' : '#dbeafe'}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${isFeatured ? '#7c3aed' : '#1B365D'};">2</span>
                         </td>
                         <td style="padding-left: 12px;">
                           <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 500; color: #1B365D;">
@@ -167,14 +209,14 @@ serve(async (req) => {
                     <table role="presentation" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background: #dbeafe; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: #1B365D;">3</span>
+                          <span style="display: inline-block; width: 24px; height: 24px; background: ${isFeatured ? '#ede9fe' : '#dbeafe'}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${isFeatured ? '#7c3aed' : '#1B365D'};">3</span>
                         </td>
                         <td style="padding-left: 12px;">
                           <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 500; color: #1B365D;">
                             Start receiving leads
                           </p>
                           <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b;">
-                            Connect with families actively seeking treatment
+                            ${isPaidPlan ? 'Qualified leads will be delivered directly to your dashboard' : 'Connect with families actively seeking treatment'}
                           </p>
                         </td>
                       </tr>
@@ -187,7 +229,7 @@ serve(async (req) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="https://rehablookup.com/provider-dashboard" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 16px 40px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 16px;">
+                    <a href="https://rehablookup.com/provider-dashboard" style="display: inline-block; background: ${isFeatured ? '#7c3aed' : '#1B365D'}; color: #ffffff; padding: 16px 40px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 16px;">
                       Go to Dashboard
                     </a>
                   </td>
@@ -231,12 +273,40 @@ serve(async (req) => {
   </table>
 </body>
 </html>
-    `;
+  `;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      logStep("ERROR", "RESEND_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "Email service not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const resend = new Resend(resendApiKey);
+
+    const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan }: WelcomeEmailRequest = await req.json();
+    logStep("Received request", { facilityId, facilityName, providerEmail, selectedPlan });
+
+    const emailHtml = generateWelcomeEmail(providerFirstName, facilityName, selectedPlan);
+
+    const isFeatured = selectedPlan === "featured";
+    const subjectPrefix = isFeatured ? "⭐ " : "";
 
     const { error: emailError } = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
-      subject: `Welcome to RehabLookup, ${providerFirstName}!`,
+      subject: `${subjectPrefix}Welcome to RehabLookup, ${providerFirstName}!`,
       html: emailHtml,
     });
 
