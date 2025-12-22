@@ -7,11 +7,11 @@ import {
   Heart, 
   ArrowRight, 
   Clock,
-  Star,
   Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RatingBadge } from "@/components/ui/RatingBadge";
 import { useFavorites } from "@/hooks/useFavorites";
 import { cn } from "@/lib/utils";
 import { PlanTier } from "@/lib/facilityPlanSort";
@@ -185,34 +185,30 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
 
           {/* Badges */}
           <div className="flex items-center gap-1.5 flex-wrap mb-2">
-            {/* Rating badge */}
-            {averageRating && reviewCount > 0 && (
-              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-yellow-100 text-yellow-700 border-0">
-                <Star className="h-2.5 w-2.5 fill-current" />
-                {averageRating} ({reviewCount})
-              </Badge>
-            )}
+            {/* Rating badge - prominent position */}
+            <RatingBadge rating={averageRating} reviewCount={reviewCount} size="sm" />
+            
             {/* Plan tier badges */}
             {isFeaturedPlan && (
-              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 border-0">
+              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
                 <Sparkles className="h-2.5 w-2.5" />
                 Featured
               </Badge>
             )}
             {!isFeaturedPlan && isProfessionalPlan && (
-              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 border-0">
+              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-200/60 shadow-sm">
                 <Sparkles className="h-2.5 w-2.5" />
                 Professional
               </Badge>
             )}
             {facility.verified && (
-              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-0">
+              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
                 <Shield className="h-2.5 w-2.5" />
                 Verified
               </Badge>
             )}
             {facility.facility_type && (
-              <Badge variant="secondary" className="gap-1 px-1.5 py-0.5 text-[10px] font-semibold">
+              <Badge variant="secondary" className="gap-1 px-1.5 py-0.5 text-[10px] font-semibold border border-border/60">
                 <Building2 className="h-2.5 w-2.5" />
                 <span className="truncate max-w-[100px]">{facility.facility_type}</span>
               </Badge>
