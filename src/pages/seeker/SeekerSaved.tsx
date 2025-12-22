@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useOutletContext } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Heart, Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,18 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 
-interface SeekerOutletContext {
-  isAuthenticated: boolean;
-  userName?: string;
-}
-
 export default function SeekerSaved() {
-  const context = useOutletContext<SeekerOutletContext>();
-  const isAuthenticated = context?.isAuthenticated ?? false;
-  
-  const { favorites, toggleFavorite, isLoading: favoritesLoading, isAuthenticated: favoritesAuth } = useFavorites();
+  const { favorites, toggleFavorite, isLoading: favoritesLoading, isAuthenticated } = useFavorites();
   const [facilities, setFacilities] = useState<FacilityCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFacilities = async () => {
@@ -30,14 +23,43 @@ export default function SeekerSaved() {
         return;
       }
 
-      const { data } = await supabase
-        .from('facilities')
-        .select('id, name, city, state, phone, facility_type, slug, description, logo_url, gallery_urls, verified, year_established')
-        .in('id', favorites)
-        .eq('status', 'approved');
+      try {
+        const { data, error: queryError } = await supabase
+          .from('facilities')
+          .select('id, name, city, state, phone, facility_type, slug, description, logo_url, gallery_urls, verified, year_established')
+          .in('id', favorites)
+          .eq('status', 'approved');
 
-      setFacilities(data || []);
-      setIsLoading(false);
+        if (queryError) {
+          console.error('Error fetching saved facilities:', queryError);
+          setError('Failed to load saved facilities');
+          setFacilities([]);
+        } else {
+          // Map to ensure proper typing
+          const mappedFacilities: FacilityCardData[] = (data || []).map(f => ({
+            id: f.id,
+            name: f.name,
+            city: f.city,
+            state: f.state,
+            phone: f.phone,
+            facility_type: f.facility_type,
+            slug: f.slug,
+            description: f.description,
+            logo_url: f.logo_url,
+            gallery_urls: f.gallery_urls,
+            verified: f.verified,
+            year_established: f.year_established
+          }));
+          setFacilities(mappedFacilities);
+          setError(null);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching facilities:', err);
+        setError('An unexpected error occurred');
+        setFacilities([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     if (!favoritesLoading) {
@@ -51,7 +73,7 @@ export default function SeekerSaved() {
   };
 
   // Show auth prompt if not authenticated
-  if (!isAuthenticated && !favoritesAuth) {
+  if (!isAuthenticated && !favoritesLoading) {
     return (
       <AuthPrompt 
         title="Sign in to view saved facilities"
@@ -96,7 +118,15 @@ export default function SeekerSaved() {
         )}
       </div>
 
-      {facilities.length === 0 ? (
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/5 mb-4">
+          <CardContent className="p-4 text-center text-destructive">
+            {error}
+          </CardContent>
+        </Card>
+      )}
+
+      {facilities.length === 0 && !error ? (
         <Card className="border-dashed">
           <CardContent className="p-8 text-center">
             <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-4">
