@@ -14,6 +14,10 @@ export interface ProviderReview {
   created_at: string;
   updated_at: string;
   user_display_name?: string;
+  reviewer_first_name?: string;
+  reviewer_last_initial?: string;
+  reviewer_city?: string;
+  reviewer_state?: string;
   response?: ReviewResponse | null;
   dispute?: ReviewDispute | null;
 }
@@ -95,26 +99,36 @@ export function useProviderReviews() {
       const responseMap = new Map(responsesResult.data?.map(r => [r.review_id, r]) || []);
       const disputeMap = new Map(disputesResult.data?.map(d => [d.review_id, d]) || []);
 
-      // Fetch user display names only if we have reviews
-      let profileMap = new Map<string, string>();
+      // Fetch user profile info only if we have reviews
+      let profileMap = new Map<string, { display_name: string | null; first_name: string | null; last_name: string | null; city: string | null; state: string | null }>();
       const userIds = [...new Set(reviewsData.map(r => r.user_id))];
       
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from('seeker_profiles')
-          .select('user_id, display_name')
+          .select('user_id, display_name, first_name, last_name, city, state')
           .in('user_id', userIds);
         
-        profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) || []);
+        profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
       }
 
-      const enrichedReviews: ProviderReview[] = reviewsData.map(review => ({
-        ...review,
-        disputed: review.disputed || false,
-        user_display_name: profileMap.get(review.user_id) || 'Anonymous',
-        response: responseMap.get(review.id) || null,
-        dispute: disputeMap.get(review.id) || null
-      }));
+      const enrichedReviews: ProviderReview[] = reviewsData.map(review => {
+        const profile = profileMap.get(review.user_id);
+        const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || 'Anonymous';
+        const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
+        
+        return {
+          ...review,
+          disputed: review.disputed || false,
+          user_display_name: firstName + (lastInitial ? ` ${lastInitial}.` : ''),
+          reviewer_first_name: firstName,
+          reviewer_last_initial: lastInitial,
+          reviewer_city: profile?.city || null,
+          reviewer_state: profile?.state || null,
+          response: responseMap.get(review.id) || null,
+          dispute: disputeMap.get(review.id) || null
+        };
+      });
 
       setReviews(enrichedReviews);
     } catch (error) {

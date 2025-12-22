@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, ThumbsUp, User, Building2 } from 'lucide-react';
+import { Star, ThumbsUp, User, Building2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -107,12 +107,21 @@ export function ReviewsList({
                 <div key={review.id} className="border-b border-border/50 pb-6 last:border-0 last:pb-0">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                        <User className="h-5 w-5 text-muted-foreground" />
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-primary">
+                          {review.reviewer_first_name?.charAt(0) || 'A'}
+                          {review.reviewer_last_initial || ''}
+                        </span>
                       </div>
                       <div>
-                        <p className="font-medium">{review.user_display_name || 'Anonymous'}</p>
-                        <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground">{review.user_display_name || 'Anonymous'}</p>
+                        {(review.reviewer_city || review.reviewer_state) && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <MapPin className="h-3 w-3" />
+                            {[review.reviewer_city, review.reviewer_state].filter(Boolean).join(', ')}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1">
                           <div className="flex items-center gap-0.5">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Star
