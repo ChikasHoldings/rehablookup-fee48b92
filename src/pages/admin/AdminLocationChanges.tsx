@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   MapPin,
@@ -133,6 +134,7 @@ function getChangeTypeBadges(changedFields: string[]) {
 
 export default function AdminLocationChanges() {
   const queryClient = useQueryClient();
+  const { logError } = useAdminErrorHandler("AdminLocationChanges");
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChange, setSelectedChange] = useState<PendingChange | null>(null);
