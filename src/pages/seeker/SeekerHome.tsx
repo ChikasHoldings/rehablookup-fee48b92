@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { 
   Search, 
@@ -15,13 +15,17 @@ import {
   TrendingUp,
   Bookmark,
   MessageSquare,
-  ChevronRight
+  ChevronRight,
+  Filter,
+  X,
+  SlidersHorizontal
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import { cn } from "@/lib/utils";
@@ -40,6 +44,28 @@ interface NearbyFacility {
   verified: boolean | null;
   year_established: number | null;
 }
+
+const FACILITY_TYPES = [
+  "Residential Treatment",
+  "Outpatient",
+  "Detox Center",
+  "Sober Living",
+  "Dual Diagnosis",
+  "Luxury Rehab",
+  "Faith-Based",
+  "Adolescent Treatment"
+];
+
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+  "Wisconsin", "Wyoming"
+];
 
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/);
@@ -218,6 +244,9 @@ export default function SeekerHome() {
   const [searchQuery, setSearchQuery] = useState("");
   const [nearbyFacilities, setNearbyFacilities] = useState<NearbyFacility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedState, setSelectedState] = useState<string>("all");
   const { favoritesCount } = useFavorites();
 
   useEffect(() => {
@@ -226,7 +255,7 @@ export default function SeekerHome() {
         .from('facilities')
         .select('id, name, city, state, facility_type, slug, phone, description, logo_url, gallery_urls, verified, year_established')
         .eq('status', 'approved')
-        .limit(10);
+        .limit(50);
       
       setNearbyFacilities(data || []);
       setIsLoading(false);
@@ -234,6 +263,33 @@ export default function SeekerHome() {
 
     fetchNearbyFacilities();
   }, []);
+
+  // Filter facilities based on selected filters
+  const filteredFacilities = useMemo(() => {
+    return nearbyFacilities.filter((facility) => {
+      const matchesType = selectedType === "all" || facility.facility_type === selectedType;
+      const matchesState = selectedState === "all" || facility.state === selectedState;
+      return matchesType && matchesState;
+    });
+  }, [nearbyFacilities, selectedType, selectedState]);
+
+  // Get unique states and types from data
+  const availableStates = useMemo(() => {
+    const states = [...new Set(nearbyFacilities.map(f => f.state))].sort();
+    return states;
+  }, [nearbyFacilities]);
+
+  const availableTypes = useMemo(() => {
+    const types = [...new Set(nearbyFacilities.map(f => f.facility_type))].sort();
+    return types;
+  }, [nearbyFacilities]);
+
+  const activeFiltersCount = (selectedType !== "all" ? 1 : 0) + (selectedState !== "all" ? 1 : 0);
+
+  const clearFilters = () => {
+    setSelectedType("all");
+    setSelectedState("all");
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -369,19 +425,120 @@ export default function SeekerHome() {
       {/* Search Header */}
       <div className="bg-card border-b border-border py-4 px-4 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto">
-          <form onSubmit={handleSearch} className="flex gap-2 max-w-2xl">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search treatment centers by location..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <form onSubmit={handleSearch} className="flex gap-2 flex-1 max-w-2xl">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search treatment centers by location..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button type="submit">Search</Button>
+            </form>
+            <Button
+              variant={showFilters ? "default" : "outline"}
+              size="default"
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2 shrink-0"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs rounded-full">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
+
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Filter Results
+                </h3>
+                {activeFiltersCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
+                    <X className="h-3 w-3" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Facility Type Filter */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Facility Type</label>
+                  <Select value={selectedType} onValueChange={setSelectedType}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      {availableTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* State Filter */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">State</label>
+                  <Select value={selectedState} onValueChange={setSelectedState}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="All States" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All States</SelectItem>
+                      {availableStates.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Active Filters */}
+              {activeFiltersCount > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-border">
+                  {selectedType !== "all" && (
+                    <Badge variant="secondary" className="gap-1 pr-1">
+                      <Building2 className="h-3 w-3" />
+                      {selectedType}
+                      <button
+                        onClick={() => setSelectedType("all")}
+                        className="ml-1 p-0.5 rounded-full hover:bg-muted-foreground/20"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  {selectedState !== "all" && (
+                    <Badge variant="secondary" className="gap-1 pr-1">
+                      <MapPin className="h-3 w-3" />
+                      {selectedState}
+                      <button
+                        onClick={() => setSelectedState("all")}
+                        className="ml-1 p-0.5 rounded-full hover:bg-muted-foreground/20"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
-            <Button type="submit">Search</Button>
-          </form>
+          )}
         </div>
       </div>
 
@@ -396,7 +553,7 @@ export default function SeekerHome() {
                 Treatment Centers For You
               </h2>
               <Badge variant="secondary" className="text-xs">
-                {nearbyFacilities.length} results
+                {filteredFacilities.length} result{filteredFacilities.length !== 1 ? 's' : ''}
               </Badge>
             </div>
             
@@ -406,16 +563,29 @@ export default function SeekerHome() {
                   <FacilityCardSkeleton key={i} />
                 ))}
               </div>
+            ) : filteredFacilities.length === 0 ? (
+              <Card className="p-8 text-center border-dashed">
+                <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-3">
+                  <Search className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-1">No facilities found</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Try adjusting your filters or search criteria
+                </p>
+                <Button variant="outline" onClick={clearFilters}>
+                  Clear Filters
+                </Button>
+              </Card>
             ) : (
               <div className="grid gap-4">
-                {nearbyFacilities.map((facility) => (
+                {filteredFacilities.map((facility) => (
                   <FacilityCard key={facility.id} facility={facility} />
                 ))}
               </div>
             )}
 
             {/* Load More */}
-            {!isLoading && nearbyFacilities.length > 0 && (
+            {!isLoading && filteredFacilities.length > 0 && (
               <div className="mt-6 text-center">
                 <Button variant="outline" asChild>
                   <Link to="/search-results" className="gap-2">
