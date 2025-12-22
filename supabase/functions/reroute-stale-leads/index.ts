@@ -46,9 +46,11 @@ const PAID_PLANS = ["professional", "featured"];
 const SCORING_WEIGHTS = {
   PLAN_FEATURED: 30,
   PLAN_PROFESSIONAL: 15,
-  LOCATION_CITY_MATCH: 25,
-  LOCATION_METRO_MATCH: 15,
-  LOCATION_STATE_MATCH: 5,
+  // Tiered location matching: zip > city > state > nationwide
+  LOCATION_ZIP_MATCH: 40,      // Exact zip code match - highest priority
+  LOCATION_CITY_MATCH: 25,     // Same city
+  LOCATION_STATE_MATCH: 10,    // Same state
+  LOCATION_NATIONWIDE: 0,      // No location match but still eligible
   TREATMENT_LEVEL_MATCH: 20,
   INSURANCE_MATCH: 10,
   FAIRNESS_FEW_LEADS: 15,
@@ -91,6 +93,7 @@ interface ProviderCapacity {
   providerEmail: string | null;
   city: string;
   state: string;
+  zipCode: string;  // Added for zip code matching
   planName: string;
   leadLimit: number;
   usedLeads: number;
@@ -101,6 +104,7 @@ interface ProviderCapacity {
   leadsThisCycle: number;
   nonResponseCount: number;
   reassignedCount: number;
+  locationTier: 'zip' | 'city' | 'state' | 'nationwide';  // Track match tier
 }
 
 interface ProviderScore {
@@ -165,7 +169,7 @@ async function getEligibleProviders(
   const { data: facilities, error } = await supabase
     .from("facilities")
     .select(`
-      id, name, email, user_id, city, state, suspended,
+      id, name, email, user_id, city, state, zip_code, suspended,
       facility_services (service_name),
       facility_insurance (insurance_name)
     `)
@@ -179,8 +183,10 @@ async function getEligibleProviders(
   }
 
   const startOfMonth = getStartOfMonth();
-  // Normalize lead state to 2-letter abbreviation for comparison
+  // Normalize lead location for comparison
   const leadState = normalizeState(lead.location_city_state?.split(",").pop()?.trim() || "");
+  const leadCity = (lead.location_city_state?.split(",")[0]?.trim() || "").toLowerCase();
+  const leadZip = (lead.location_zip || "").trim();
   const providers: ProviderCapacity[] = [];
 
   for (const facility of facilities) {
@@ -225,10 +231,21 @@ async function getEligibleProviders(
     // Skip non-paid plans
     if (!PAID_PLANS.includes(planName)) continue;
 
-    // Check state match (hard filter) - normalize provider state too
+    // ============ TIERED LOCATION MATCHING (NO hard filter - nationwide fallback) ============
     const providerState = normalizeState(facility.state || "");
-    if (leadState && providerState && providerState !== leadState) continue;
-
+    const providerCity = (facility.city || "").trim().toLowerCase();
+    const providerZip = (facility.zip_code || "").trim();
+    
+    // Determine location tier for this provider
+    let locationTier: 'zip' | 'city' | 'state' | 'nationwide' = 'nationwide';
+    if (leadZip && providerZip && providerZip === leadZip) {
+      locationTier = 'zip';
+    } else if (leadCity && providerCity && providerCity === leadCity && providerState === leadState) {
+      locationTier = 'city';
+    } else if (leadState && providerState && providerState === leadState) {
+      locationTier = 'state';
+    }
+    // No continue here - nationwide providers are still eligible!
     // Count leads this month
     const { count: monthlyLeadCount } = await supabase
       .from("leads")
@@ -273,6 +290,7 @@ async function getEligibleProviders(
       providerEmail: profile.email,
       city: facility.city,
       state: facility.state,
+      zipCode: facility.zip_code || "",
       planName,
       leadLimit,
       usedLeads,
@@ -283,10 +301,19 @@ async function getEligibleProviders(
       leadsThisCycle: usedLeads,
       nonResponseCount: nonResponseCount || 0,
       reassignedCount: reassignedCount || 0,
+      locationTier,
     });
   }
 
-  log(requestId, "INFO", "Alternative providers found", { count: providers.length });
+  log(requestId, "INFO", "Alternative providers found", { 
+    count: providers.length,
+    byTier: {
+      zip: providers.filter(p => p.locationTier === 'zip').length,
+      city: providers.filter(p => p.locationTier === 'city').length,
+      state: providers.filter(p => p.locationTier === 'state').length,
+      nationwide: providers.filter(p => p.locationTier === 'nationwide').length,
+    }
+  });
   return providers;
 }
 
@@ -311,16 +338,21 @@ function calculateProviderScore(
     breakdown.planPriority = SCORING_WEIGHTS.PLAN_PROFESSIONAL;
   }
 
-  // Location relevance
-  const leadState = lead.location_city_state?.split(",").pop()?.trim().toUpperCase() || "";
-  const leadCity = lead.location_city_state?.split(",")[0]?.trim().toLowerCase() || "";
-  const providerState = provider.state?.toUpperCase() || "";
-  const providerCity = provider.city?.toLowerCase() || "";
-
-  if (providerCity && leadCity && providerCity === leadCity && providerState === leadState) {
-    breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_CITY_MATCH;
-  } else if (providerState === leadState) {
-    breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_METRO_MATCH;
+  // Location relevance - use pre-computed location tier
+  switch (provider.locationTier) {
+    case 'zip':
+      breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_ZIP_MATCH;
+      break;
+    case 'city':
+      breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_CITY_MATCH;
+      break;
+    case 'state':
+      breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_STATE_MATCH;
+      break;
+    case 'nationwide':
+    default:
+      breakdown.locationRelevance = SCORING_WEIGHTS.LOCATION_NATIONWIDE;
+      break;
   }
 
   // Service relevance
