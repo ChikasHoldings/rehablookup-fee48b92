@@ -77,6 +77,7 @@ import SeekerInbox from "./pages/seeker/SeekerInbox";
 import SeekerSaved from "./pages/seeker/SeekerSaved";
 import SeekerReviews from "./pages/seeker/SeekerReviews";
 import SeekerSettings from "./pages/seeker/SeekerSettings";
+import SeekerFacilityProfile from "./pages/seeker/SeekerFacilityProfile";
 
 // Near Me SEO Pages
 import DrugRehabNearMe from "./pages/near-me/DrugRehabNearMe";
@@ -200,6 +201,7 @@ const App = () => (
               <Route path="saved" element={<SeekerSaved />} />
               <Route path="reviews" element={<SeekerReviews />} />
               <Route path="settings" element={<SeekerSettings />} />
+              <Route path="facility/:slug" element={<SeekerFacilityProfile />} />
             </Route>
             <Route path="/my-account" element={<Navigate to="/account" replace />} />
             <Route path="/for-providers" element={<ForProviders />} />

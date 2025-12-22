@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { 
   MapPin, 
   Shield, 
@@ -52,6 +52,7 @@ interface FacilityCardProps {
 
 export function FacilityCard({ facility, onRemove, showRemoveButton = false }: FacilityCardProps) {
   const { toggleFavorite, isFavorite } = useFavorites();
+  const location = useLocation();
   const [logoError, setLogoError] = useState(false);
   const [heroError, setHeroError] = useState(false);
 
@@ -66,6 +67,12 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
   // Determine plan tier for badge display
   const isFeaturedPlan = facility.planTier === 'featured' || facility.hasFeaturedSubscription || facility.featured;
   const isProfessionalPlan = facility.planTier === 'professional' || facility.hasProfessionalPlan;
+
+  // Determine if we're in the seeker account area
+  const isInSeekerAccount = location.pathname.startsWith('/account');
+  const facilityLink = isInSeekerAccount 
+    ? `/account/facility/${facility.slug || facility.id}`
+    : facility.slug ? `/center/${facility.slug}` : `/center/${facility.id}`;
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -147,7 +154,7 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
           {/* Header row */}
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex-1 min-w-0">
-              <Link to={facility.slug ? `/center/${facility.slug}` : `/center/${facility.id}`}>
+              <Link to={facilityLink}>
                 <h3 className="font-display text-sm sm:text-base font-bold leading-tight truncate mb-1 group-hover:text-primary transition-colors">
                   {facility.name}
                 </h3>
@@ -212,7 +219,7 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
 
           {/* Action */}
           <div className="mt-auto pt-1">
-            <Link to={facility.slug ? `/center/${facility.slug}` : `/center/${facility.id}`}>
+            <Link to={facilityLink}>
               <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1.5 text-xs group/btn">
                 View Details
                 <ArrowRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5" />
