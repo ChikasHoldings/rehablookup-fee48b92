@@ -56,6 +56,7 @@ export default function SeekerSettings() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -219,6 +220,50 @@ export default function SeekerSettings() {
       });
     } finally {
       setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!userId || !avatarUrl) return;
+
+    setIsRemovingAvatar(true);
+
+    try {
+      // Extract file path from URL to delete from storage
+      const urlParts = avatarUrl.split('/seeker-avatars/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        await supabase.storage
+          .from('seeker-avatars')
+          .remove([filePath]);
+      }
+
+      // Update profile to remove avatar_url
+      const { error: updateError } = await supabase
+        .from('seeker_profiles')
+        .update({ avatar_url: null })
+        .eq('user_id', userId);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(null);
+      await logActivity({
+        eventType: "avatar_remove",
+        description: "Removed profile picture"
+      });
+      toast({
+        title: "Photo removed",
+        description: "Your profile picture has been removed."
+      });
+    } catch (error) {
+      console.error('Avatar removal error:', error);
+      toast({
+        title: "Removal failed",
+        description: "Could not remove your avatar. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRemovingAvatar(false);
     }
   };
 
@@ -569,25 +614,48 @@ export default function SeekerSettings() {
                 <p className="text-sm text-muted-foreground mb-3">
                   Upload a photo to personalize your profile
                 </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleAvatarClick}
-                  disabled={isUploadingAvatar}
-                  className="gap-2"
-                >
-                  {isUploadingAvatar ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="h-4 w-4" />
-                      Change Photo
-                    </>
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleAvatarClick}
+                    disabled={isUploadingAvatar || isRemovingAvatar}
+                    className="gap-2"
+                  >
+                    {isUploadingAvatar ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Camera className="h-4 w-4" />
+                        {avatarUrl ? "Change Photo" : "Upload Photo"}
+                      </>
+                    )}
+                  </Button>
+                  {avatarUrl && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleRemoveAvatar}
+                      disabled={isUploadingAvatar || isRemovingAvatar}
+                      className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      {isRemovingAvatar ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Removing...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4" />
+                          Remove
+                        </>
+                      )}
+                    </Button>
                   )}
-                </Button>
+                </div>
               </div>
             </div>
 

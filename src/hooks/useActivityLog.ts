@@ -7,7 +7,8 @@ type ActivityEventType =
   | "password_change" 
   | "profile_update" 
   | "email_change" 
-  | "avatar_update";
+  | "avatar_update"
+  | "avatar_remove";
 
 interface LogActivityParams {
   eventType: ActivityEventType;
