@@ -1896,27 +1896,45 @@ export type Database = {
       seeker_profiles: {
         Row: {
           avatar_url: string | null
+          city: string | null
           created_at: string
           display_name: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
+          phone: string | null
+          state: string | null
           updated_at: string
           user_id: string
+          zipcode: string | null
         }
         Insert: {
           avatar_url?: string | null
+          city?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
+          phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id: string
+          zipcode?: string | null
         }
         Update: {
           avatar_url?: string | null
+          city?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
+          phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id?: string
+          zipcode?: string | null
         }
         Relationships: []
       }

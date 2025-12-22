@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2 } from "lucide-react";
+import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +24,29 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ActivityLog } from "@/components/seeker/ActivityLog";
 import { logActivity } from "@/hooks/useActivityLog";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
+
+interface SeekerProfile {
+  display_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  zipcode: string | null;
+  city: string | null;
+  state: string | null;
+}
 
 export default function SeekerSettings() {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [zipcode, setZipcode] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -48,6 +67,8 @@ export default function SeekerSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  const zipcodeLookup = useZipcodeLookup();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -60,18 +81,38 @@ export default function SeekerSettings() {
 
       const { data: profile } = await supabase
         .from('seeker_profiles')
-        .select('display_name, avatar_url')
+        .select('display_name, first_name, last_name, avatar_url, phone, zipcode, city, state')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
       if (profile) {
         setDisplayName(profile.display_name || "");
+        setFirstName(profile.first_name || "");
+        setLastName(profile.last_name || "");
         setAvatarUrl(profile.avatar_url);
+        setPhone(profile.phone || "");
+        setZipcode(profile.zipcode || "");
+        setCity(profile.city || "");
+        setState(profile.state || "");
       }
     };
 
     loadProfile();
   }, []);
+
+  // Auto-fill city/state when zipcode changes
+  useEffect(() => {
+    if (zipcode.length === 5 && !city && !state) {
+      zipcodeLookup.lookup(zipcode);
+    }
+  }, [zipcode]);
+
+  useEffect(() => {
+    if (zipcodeLookup.data && !city && !state) {
+      setCity(zipcodeLookup.data.city);
+      setState(zipcodeLookup.data.stateAbbr);
+    }
+  }, [zipcodeLookup.data]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -106,7 +147,7 @@ export default function SeekerSettings() {
     try {
       // Create unique filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
+      const fileName = `seeker-avatars/${userId}/avatar-${Date.now()}.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -155,9 +196,21 @@ export default function SeekerSettings() {
 
     setIsSaving(true);
 
+    const fullDisplayName = firstName && lastName 
+      ? `${firstName.trim()} ${lastName.trim()}`
+      : displayName;
+
     const { error } = await supabase
       .from('seeker_profiles')
-      .update({ display_name: displayName })
+      .update({ 
+        display_name: fullDisplayName,
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
+        phone: phone || null,
+        zipcode: zipcode || null,
+        city: city || null,
+        state: state || null
+      })
       .eq('user_id', session.user.id);
 
     if (error) {
@@ -167,9 +220,10 @@ export default function SeekerSettings() {
         variant: "destructive"
       });
     } else {
+      setDisplayName(fullDisplayName);
       await logActivity({
         eventType: "profile_update",
-        description: "Updated display name"
+        description: "Updated profile information"
       });
       toast({
         title: "Profile updated",
@@ -348,6 +402,9 @@ export default function SeekerSettings() {
   };
 
   const getInitials = () => {
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
     if (displayName) {
       return displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
@@ -409,20 +466,88 @@ export default function SeekerSettings() {
 
             <Separator />
 
-            <div>
-              <Label htmlFor="display-name">Display Name</Label>
-              <Input
-                id="display-name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your name"
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                This name will be shown on your reviews
-              </p>
+            {/* Name Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="first-name">First Name</Label>
+                <Input
+                  id="first-name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="last-name">Last Name</Label>
+                <Input
+                  id="last-name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last name"
+                  className="mt-1"
+                />
+              </div>
             </div>
 
+            {/* Phone */}
+            <div>
+              <Label htmlFor="phone">Phone Number</Label>
+              <div className="relative mt-1">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <PhoneInput
+                  id="phone"
+                  value={phone}
+                  onChange={setPhone}
+                  placeholder="(555) 123-4567"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Location */}
+            <div>
+              <Label>Location</Label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={zipcode}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 5);
+                      setZipcode(value);
+                      if (value.length === 5) {
+                        zipcodeLookup.lookup(value);
+                      }
+                    }}
+                    placeholder="Zip"
+                    className="pl-10"
+                    maxLength={5}
+                  />
+                </div>
+                <Input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City"
+                />
+                <Input
+                  value={state}
+                  onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
+                  placeholder="State"
+                  maxLength={2}
+                />
+              </div>
+              {zipcodeLookup.isLoading && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Looking up location...
+                </p>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Email */}
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Label htmlFor="email">Email</Label>
