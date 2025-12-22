@@ -79,6 +79,86 @@ function generateDigestEmail(digest: ProviderDigest): string {
   
   const dateRange = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
+  // Plan-specific styling and messaging
+  const isFeatured = digest.planName === "Featured";
+  const isProfessional = digest.planName === "Professional";
+  const isPaidPlan = isFeatured || isProfessional;
+  
+  // Premium header for Featured providers
+  const headerGradient = isFeatured 
+    ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
+    : "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)";
+  
+  const planBadge = isFeatured 
+    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
+    : isProfessional 
+    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
+    : '';
+
+  // Featured-exclusive insights section
+  const featuredInsights = isFeatured ? `
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #92400e; display: flex; align-items: center;">
+        ⭐ Featured Provider Insights
+      </h3>
+      <ul style="margin: 0; padding-left: 20px; color: #78350f; font-size: 14px;">
+        <li style="margin-bottom: 8px;">Your facility appears in <strong>premium placement</strong> across search results</li>
+        <li style="margin-bottom: 8px;">Featured badge increases click-through rates by up to 85%</li>
+        <li>You have access to <strong>priority lead routing</strong> in your area</li>
+      </ul>
+    </div>
+  ` : '';
+
+  // Usage section - different for each plan tier
+  const usageSection = isPaidPlan ? `
+    <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 style="margin: 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Lead Usage</h3>
+        <span style="background: ${isFeatured ? 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)' : '#1B365D'}; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">${digest.planName}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 14px; color: #4b5563;">${digest.monthlyLeads} of ${digest.leadLimit} leads used</span>
+        <span style="font-size: 14px; font-weight: 600; color: ${usagePercent >= 80 ? '#dc2626' : '#16a34a'};">${usagePercent}%</span>
+      </div>
+      <div style="background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden;">
+        <div style="background: ${usagePercent >= 80 ? '#dc2626' : isFeatured ? '#7c3aed' : '#16a34a'}; height: 100%; width: ${Math.min(usagePercent, 100)}%;"></div>
+      </div>
+      <p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">
+        ${remainingLeads} leads remaining this month
+      </p>
+    </div>
+  ` : `
+    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <p style="margin: 0; color: #92400e; font-size: 14px;">
+        <strong>You're on the Basic plan</strong> - Upgrade to start receiving leads and grow your patient base.
+      </p>
+      <a href="${dashboardUrl}/provider/billing" style="display: inline-block; margin-top: 12px; background: #1B365D; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px;">
+        View Plans →
+      </a>
+    </div>
+  `;
+
+  // Tips section - contextual based on plan
+  const tipsSection = isPaidPlan ? `
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #1e40af;">💡 ${isFeatured ? 'Featured Provider Tips' : 'Quick Tips'}</h3>
+      <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px;">
+        ${digest.newLeads > 0 ? `<li style="margin-bottom: 8px;">You have <strong>${digest.newLeads} leads</strong> awaiting response. Quick follow-ups convert 400% better!</li>` : ''}
+        ${isFeatured ? `<li style="margin-bottom: 8px;">Reply to reviews to boost your profile engagement and trust score.</li>` : `<li style="margin-bottom: 8px;">Keep your facility description updated to improve search visibility.</li>`}
+        <li>Add photos to increase engagement by up to 60%.</li>
+      </ul>
+    </div>
+  ` : `
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #1e40af;">💡 Quick Tips</h3>
+      <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px;">
+        <li style="margin-bottom: 8px;">Complete your facility profile to improve search ranking.</li>
+        <li style="margin-bottom: 8px;">Add photos to increase engagement by up to 60%.</li>
+        <li>Upgrade to start receiving leads from families seeking treatment.</li>
+      </ul>
+    </div>
+  `;
+
   return `
 <!DOCTYPE html>
 <html>
@@ -87,8 +167,11 @@ function generateDigestEmail(digest: ProviderDigest): string {
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">📊 Weekly Performance Digest</h1>
+  <div style="background: ${headerGradient}; padding: 30px; border-radius: 12px 12px 0 0;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+      <h1 style="color: #fff; margin: 0; font-size: 24px;">📊 Weekly Performance Digest</h1>
+      ${planBadge}
+    </div>
     <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0;">${dateRange}</p>
   </div>
   
@@ -96,6 +179,8 @@ function generateDigestEmail(digest: ProviderDigest): string {
     <p style="font-size: 16px; color: #4b5563; margin: 0 0 24px 0;">
       Hi ${digest.firstName}! Here's how <strong>${digest.facilityName}</strong> performed this week.
     </p>
+    
+    ${featuredInsights}
     
     <!-- Weekly Highlights -->
     <div style="display: grid; gap: 16px; margin-bottom: 24px;">
@@ -120,44 +205,12 @@ function generateDigestEmail(digest: ProviderDigest): string {
       </div>
     </div>
     
-    <!-- Monthly Usage -->
-    ${digest.leadLimit > 0 ? `
-    <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Lead Usage</h3>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="font-size: 14px; color: #4b5563;">${digest.monthlyLeads} of ${digest.leadLimit} leads used</span>
-        <span style="font-size: 14px; font-weight: 600; color: ${usagePercent >= 80 ? '#dc2626' : '#16a34a'};">${usagePercent}%</span>
-      </div>
-      <div style="background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden;">
-        <div style="background: ${usagePercent >= 80 ? '#dc2626' : '#16a34a'}; height: 100%; width: ${Math.min(usagePercent, 100)}%;"></div>
-      </div>
-      <p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">
-        ${remainingLeads} leads remaining this month • ${digest.planName} Plan
-      </p>
-    </div>
-    ` : `
-    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <p style="margin: 0; color: #92400e; font-size: 14px;">
-        <strong>You're on the Basic plan</strong> - Upgrade to start receiving leads and grow your patient base.
-      </p>
-      <a href="${dashboardUrl}/provider/billing" style="display: inline-block; margin-top: 12px; background: #1B365D; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px;">
-        View Plans →
-      </a>
-    </div>
-    `}
+    ${usageSection}
     
-    <!-- Quick Tips -->
-    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #1e40af;">💡 Quick Tips</h3>
-      <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px;">
-        ${digest.newLeads > 0 ? `<li style="margin-bottom: 8px;">You have <strong>${digest.newLeads} leads</strong> awaiting response. Quick follow-ups convert 400% better!</li>` : ''}
-        <li style="margin-bottom: 8px;">Keep your facility description updated to improve search visibility.</li>
-        <li>Add photos to increase engagement by up to 60%.</li>
-      </ul>
-    </div>
+    ${tipsSection}
     
     <div style="text-align: center; margin-top: 28px;">
-      <a href="${dashboardUrl}/provider/leads" style="display: inline-block; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(27, 54, 93, 0.3);">
+      <a href="${dashboardUrl}/provider/leads" style="display: inline-block; background: ${isFeatured ? 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)' : 'linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)'}; color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px ${isFeatured ? 'rgba(124, 58, 237, 0.3)' : 'rgba(27, 54, 93, 0.3)'};">
         View All Leads
       </a>
     </div>
