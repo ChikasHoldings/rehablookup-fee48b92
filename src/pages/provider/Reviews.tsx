@@ -65,7 +65,7 @@ export default function ProviderReviews() {
   }
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-full overflow-x-hidden">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0">
