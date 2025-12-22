@@ -174,7 +174,7 @@ serve(async (req) => {
               `;
 
               const { error: emailError } = await resend.emails.send({
-                from: "RehabLookup <noreply@resend.dev>",
+                from: "RehabLookup <no-reply@rehablookup.com>",
                 to: [profile.email],
                 subject: `Your ${planConfig.name} plan renews in ${days} day${days > 1 ? "s" : ""}`,
                 html: emailHtml,
@@ -313,7 +313,7 @@ serve(async (req) => {
                   `;
 
                   const { error: emailError } = await resend.emails.send({
-                    from: "RehabLookup <noreply@resend.dev>",
+                    from: "RehabLookup <no-reply@rehablookup.com>",
                     to: [profile.email],
                     subject: `${threshold.subject} - ${planConfig.name} Plan`,
                     html: emailHtml,

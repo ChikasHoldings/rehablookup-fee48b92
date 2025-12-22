@@ -10,7 +10,7 @@ const corsHeaders = {
 
 // Plan product IDs - support both old and new IDs
 const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"];
-const PROFESSIONAL_PRODUCT_IDS = ["prod_Tbyz1bf6iYyzYd"]; // Professional plan
+const PROFESSIONAL_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"]; // Professional plan (both old and new IDs)
 const DEFAULT_MAX_HOMEPAGE_FEATURED = 6;
 
 const logStep = (step: string, details?: unknown) => {
