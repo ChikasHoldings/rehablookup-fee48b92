@@ -120,6 +120,16 @@ export function useFacilityReviews(facilityId: string) {
 
     if (!error && data) {
       setUserReview(data);
+      
+      // Notify admins about new review
+      supabase.functions.invoke('send-review-notification', {
+        body: {
+          type: 'review_submitted',
+          reviewId: data.id,
+          facilityId,
+          seekerId: user.id,
+        }
+      }).catch(err => console.error('Failed to send review notification:', err));
     }
 
     return { data, error };

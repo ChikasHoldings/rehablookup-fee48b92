@@ -158,11 +158,24 @@ export function useProviderReviews() {
       .single();
 
     if (!error) {
+      // Notify seeker about response
+      const review = reviews.find(r => r.id === reviewId);
+      if (review) {
+        supabase.functions.invoke('send-review-notification', {
+          body: {
+            type: 'review_response',
+            reviewId,
+            facilityId,
+            seekerId: review.user_id,
+            responseText: responseText.trim(),
+          }
+        }).catch(err => console.error('Failed to send response notification:', err));
+      }
       fetchReviews();
     }
 
     return { data, error };
-  }, [facilityId, fetchReviews]);
+  }, [facilityId, fetchReviews, reviews]);
 
   const updateResponse = useCallback(async (responseId: string, responseText: string) => {
     const { data, error } = await supabase
