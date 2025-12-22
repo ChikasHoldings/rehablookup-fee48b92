@@ -40,7 +40,7 @@ import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { BasicPlanUpgradeBanner } from "@/components/provider/BasicPlanUpgradeBanner";
-import { OnboardingTour } from "@/components/provider/OnboardingTour";
+
 import { LeadUsageProgressCard } from "@/components/provider/LeadUsageProgressCard";
 import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
@@ -766,9 +766,6 @@ export default function ProviderDashboardPage() {
           open={drawerOpen}
           onOpenChange={setDrawerOpen}
         />
-
-        {/* Onboarding Tour */}
-        <OnboardingTour />
       </div>
     </div>
   );
