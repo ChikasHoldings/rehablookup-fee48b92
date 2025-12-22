@@ -300,9 +300,9 @@ export default function SeekerHome() {
   // Main layout with sidebar
   return (
     <div className="min-h-full">
-      {/* Search Header - z-50 to stay above card elements */}
-      <div className="bg-card/95 backdrop-blur-md border-b border-border shadow-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-3">
+      {/* Search Header */}
+      <div className="bg-gradient-to-b from-primary/5 to-background border-b border-border/50">
+        <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex flex-col sm:flex-row gap-3">
             <form onSubmit={handleSearch} className="flex gap-2 flex-1 max-w-2xl">
               <div className="relative flex-1 group">
