@@ -71,23 +71,23 @@ function MetricCard({
     <Card className="border-border/40 hover:border-border/60 transition-colors">
       <CardContent className="p-3 sm:p-4">
         <div className="flex items-center gap-3">
-          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center shrink-0", iconBg)}>
-            <Icon className={cn("h-4 w-4", iconColor)} />
+          <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center shrink-0", iconBg)}>
+            <Icon className={cn("h-4.5 w-4.5", iconColor)} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
             {isLoading ? (
-              <Skeleton className="h-5 w-12 mt-0.5" />
+              <Skeleton className="h-6 w-12 mt-0.5" />
             ) : (
-              <p className="text-lg font-bold text-foreground leading-tight">{value}</p>
+              <p className="text-xl font-bold text-foreground leading-tight">{value}</p>
             )}
-            {subtitle && <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>}
+            {subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
           </div>
           {action && (
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+            <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs" asChild>
               <Link to={action.href}>
                 {action.label}
-                <ChevronRight className="h-3 w-3 ml-0.5" />
+                <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Link>
             </Button>
           )}
@@ -348,21 +348,21 @@ export default function ProviderDashboardPage() {
             
             {/* Header Card */}
             <Card>
-              <CardContent className="p-3 sm:p-4">
+              <CardContent className="p-4 sm:p-5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                       {format(new Date(), "EEEE, MMM d")}
                     </p>
-                    <h1 className="text-lg sm:text-xl font-bold text-foreground">
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">
                       {userName ? `Welcome, ${userName}` : "Dashboard"}
                     </h1>
                     {facility && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span>{facility.name}</span>
                         {facility.status === "approved" && (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-medium text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                            <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                             Live
                           </span>
                         )}
@@ -372,15 +372,15 @@ export default function ProviderDashboardPage() {
                   
                   {facility && profileUrl && (
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1" asChild>
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" asChild>
                         <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-                          <Eye className="h-3 w-3" />
+                          <Eye className="h-3.5 w-3.5" />
                           Preview
                         </a>
                       </Button>
-                      <Button size="sm" className="h-7 text-[11px] gap-1" asChild>
+                      <Button size="sm" className="h-8 text-xs gap-1.5" asChild>
                         <Link to="/provider/listing">
-                          <FileEdit className="h-3 w-3" />
+                          <FileEdit className="h-3.5 w-3.5" />
                           Edit
                         </Link>
                       </Button>
@@ -432,16 +432,16 @@ export default function ProviderDashboardPage() {
 
             {/* Recent Leads Card */}
             <Card>
-              <CardHeader className="p-3 pb-2 border-b">
+              <CardHeader className="p-3 sm:p-4 pb-2 border-b">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Users className="h-3.5 w-3.5 text-primary" />
-                    <CardTitle className="text-xs font-semibold">Recent Leads</CardTitle>
+                    <Users className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-sm font-semibold">Recent Leads</CardTitle>
                   </div>
                   {!subscriptionLoading && planKey !== "basic" && recentLeads.length > 0 && (
-                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" asChild>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs px-2.5" asChild>
                       <Link to="/provider/leads">
-                        View All <ChevronRight className="h-3 w-3 ml-0.5" />
+                        View All <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
                       </Link>
                     </Button>
                   )}
@@ -464,21 +464,21 @@ export default function ProviderDashboardPage() {
                   <div className="relative p-5">
                     <div className="space-y-2 blur-sm pointer-events-none select-none">
                       {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex items-center gap-2 p-2 rounded-lg border">
-                          <div className="h-7 w-7 rounded-full bg-muted" />
+                        <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg border">
+                          <div className="h-8 w-8 rounded-full bg-muted" />
                           <div className="flex-1">
-                            <div className="h-3 w-20 bg-muted rounded" />
-                            <div className="h-2 w-28 bg-muted rounded mt-1" />
+                            <div className="h-3.5 w-20 bg-muted rounded" />
+                            <div className="h-2.5 w-28 bg-muted rounded mt-1" />
                           </div>
                         </div>
                       ))}
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/95">
-                      <Lock className="h-5 w-5 text-muted-foreground mb-2" />
-                      <p className="text-xs font-medium text-foreground">Upgrade to View</p>
-                      <Button size="sm" className="mt-2 h-6 text-[10px]" asChild>
+                      <Lock className="h-6 w-6 text-muted-foreground mb-2" />
+                      <p className="text-sm font-medium text-foreground">Upgrade to View</p>
+                      <Button size="sm" className="mt-2 h-7 text-xs" asChild>
                         <Link to="/provider/billing">
-                          <Sparkles className="h-3 w-3 mr-1" />
+                          <Sparkles className="h-3.5 w-3.5 mr-1" />
                           Upgrade
                         </Link>
                       </Button>
@@ -486,9 +486,9 @@ export default function ProviderDashboardPage() {
                   </div>
                 ) : recentLeads.length === 0 ? (
                   <div className="text-center py-6 px-4">
-                    <Users className="h-5 w-5 text-muted-foreground/40 mx-auto mb-1.5" />
-                    <p className="text-xs font-medium text-foreground">No leads yet</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Leads appear when families reach out</p>
+                    <Users className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-foreground">No leads yet</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Leads appear when families reach out</p>
                   </div>
                 ) : (
                   <div className="divide-y">
@@ -497,31 +497,31 @@ export default function ProviderDashboardPage() {
                         key={lead.id}
                         onClick={() => handleLeadClick(lead)}
                         className={cn(
-                          "w-full flex items-center gap-2.5 p-2.5 hover:bg-muted/50 transition-colors text-left",
+                          "w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left",
                           index === 0 && lead.status === 'new' && "bg-primary/[0.02]"
                         )}
                       >
                         <div className="relative">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-primary">
+                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-bold text-primary">
                               {lead.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           {index === 0 && lead.status === 'new' && (
-                            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-emerald-500 rounded-full border border-background" />
+                            <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-xs font-medium text-foreground truncate">{lead.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-foreground truncate">{lead.name}</p>
                             <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
                           </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
-                            {lead.preferred_contact === "call" ? <Phone className="h-2.5 w-2.5" /> : <Mail className="h-2.5 w-2.5" />}
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                            {lead.preferred_contact === "call" ? <Phone className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
                             <span className="truncate">{lead.preferred_contact === "call" ? lead.phone : lead.email}</span>
                           </div>
                         </div>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
                       </button>
                     ))}
                   </div>
@@ -540,21 +540,21 @@ export default function ProviderDashboardPage() {
             
             {/* Alerts Card */}
             {!subscriptionLoading && (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {planKey === "basic" && totalLeadsCount > 0 && (
                   <Card className="border-emerald-500/30 bg-emerald-500/5">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-9 w-9 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
-                          <span className="text-xs font-bold text-white">{totalLeadsCount}</span>
+                    <CardContent className="p-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                          <span className="text-sm font-bold text-white">{totalLeadsCount}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-foreground">
+                          <p className="text-sm font-semibold text-foreground">
                             {totalLeadsCount} Lead{totalLeadsCount !== 1 ? 's' : ''} Waiting
                           </p>
-                          <p className="text-[10px] text-muted-foreground">Upgrade to unlock</p>
+                          <p className="text-xs text-muted-foreground">Upgrade to unlock</p>
                         </div>
-                        <Button size="sm" className="h-6 text-[10px] bg-emerald-600 hover:bg-emerald-700" asChild>
+                        <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" asChild>
                           <Link to="/provider/billing">
                             Unlock
                           </Link>
@@ -567,20 +567,20 @@ export default function ProviderDashboardPage() {
                 {/* Urgent Leads Alert */}
                 {planKey !== "basic" && urgentLeads.length > 0 && (
                   <Card className="border-l-2 border-l-amber-500">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                          <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <CardContent className="p-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                          <AlertTriangle className="h-4.5 w-4.5 text-amber-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-foreground">
+                          <p className="text-sm font-semibold text-foreground">
                             {urgentLeads.length} Need Follow-up
                           </p>
-                          <p className="text-[10px] text-muted-foreground">Waiting 24h+</p>
+                          <p className="text-xs text-muted-foreground">Waiting 24h+</p>
                         </div>
-                        <Button size="sm" className="h-6 text-[10px] bg-amber-600 hover:bg-amber-700" asChild>
+                        <Button size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700" asChild>
                           <Link to="/provider/leads?status=new">
-                            <Phone className="h-3 w-3 mr-1" />
+                            <Phone className="h-3.5 w-3.5 mr-1" />
                             Call
                           </Link>
                         </Button>
@@ -598,21 +598,21 @@ export default function ProviderDashboardPage() {
                   
                   return (
                     <Card className="border-dashed border-primary/30 bg-primary/5">
-                      <CardContent className="p-3">
-                        <div className="flex items-center gap-2">
-                          <FileEdit className="h-4 w-4 text-primary shrink-0" />
+                      <CardContent className="p-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <FileEdit className="h-4.5 w-4.5 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-foreground">Complete Profile</p>
-                            <p className="text-[10px] text-muted-foreground">{missingFields.length} items missing</p>
+                            <p className="text-sm font-medium text-foreground">Complete Profile</p>
+                            <p className="text-xs text-muted-foreground">{missingFields.length} items missing</p>
                           </div>
-                          <Button size="sm" className="h-6 text-[10px]" asChild>
+                          <Button size="sm" className="h-7 text-xs" asChild>
                             <Link to="/provider/listing">Add</Link>
                           </Button>
                           <button
                             onClick={(e) => handleDismissProfilePrompt(e, missingFields)}
-                            className="p-1 hover:bg-muted/50 rounded text-muted-foreground"
+                            className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground"
                           >
-                            <X className="h-3 w-3" />
+                            <X className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </CardContent>
@@ -623,14 +623,14 @@ export default function ProviderDashboardPage() {
                 {/* Status Banner */}
                 {facility?.status !== "approved" && (
                   <Card className={cn("border-l-2", statusConfig.dotClass === 'bg-amber-500' ? "border-l-amber-500" : "border-l-muted-foreground")}>
-                    <CardContent className="p-3 flex items-center gap-2.5">
-                      <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center shrink-0", statusConfig.bgClass)}>
-                        <StatusIcon className={cn("h-3.5 w-3.5", statusConfig.textClass)} />
+                    <CardContent className="p-3.5 flex items-center gap-3">
+                      <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", statusConfig.bgClass)}>
+                        <StatusIcon className={cn("h-4 w-4", statusConfig.textClass)} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className={cn("text-xs font-medium", statusConfig.textClass)}>{statusConfig.label}</span>
+                        <span className={cn("text-sm font-medium", statusConfig.textClass)}>{statusConfig.label}</span>
                         {facility?.status === "pending" && (
-                          <p className="text-[10px] text-muted-foreground">Review: 24-48h</p>
+                          <p className="text-xs text-muted-foreground">Review: 24-48h</p>
                         )}
                       </div>
                     </CardContent>
@@ -641,10 +641,10 @@ export default function ProviderDashboardPage() {
 
             {/* Platform News */}
             <Card>
-              <CardHeader className="p-3 pb-2 border-b">
-                <div className="flex items-center gap-1.5">
-                  <Newspaper className="h-3.5 w-3.5 text-primary" />
-                  <CardTitle className="text-xs font-semibold">Platform News</CardTitle>
+              <CardHeader className="p-3.5 pb-2.5 border-b">
+                <div className="flex items-center gap-2">
+                  <Newspaper className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm font-semibold">Platform News</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
@@ -652,24 +652,24 @@ export default function ProviderDashboardPage() {
                   {platformNews.map((news) => {
                     const NewsIcon = news.icon;
                     return (
-                      <div key={news.id} className="p-2.5 hover:bg-muted/30 transition-colors">
-                        <div className="flex items-start gap-2">
+                      <div key={news.id} className="p-3 hover:bg-muted/30 transition-colors">
+                        <div className="flex items-start gap-2.5">
                           <div className={cn(
-                            "h-6 w-6 rounded flex items-center justify-center shrink-0",
+                            "h-7 w-7 rounded flex items-center justify-center shrink-0",
                             news.type === 'feature' ? 'bg-blue-500/10 text-blue-600' :
                             news.type === 'announcement' ? 'bg-amber-500/10 text-amber-600' :
                             'bg-violet-500/10 text-violet-600'
                           )}>
-                            <NewsIcon className="h-3 w-3" />
+                            <NewsIcon className="h-3.5 w-3.5" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1">
-                              <p className="text-[11px] font-semibold text-foreground leading-tight truncate">{news.title}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs font-semibold text-foreground leading-tight truncate">{news.title}</p>
                               {news.isNew && (
-                                <span className="px-1 py-0.5 text-[8px] font-medium bg-primary text-primary-foreground rounded shrink-0">NEW</span>
+                                <span className="px-1.5 py-0.5 text-[9px] font-medium bg-primary text-primary-foreground rounded shrink-0">NEW</span>
                               )}
                             </div>
-                            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{news.description}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{news.description}</p>
                           </div>
                         </div>
                       </div>
@@ -681,32 +681,32 @@ export default function ProviderDashboardPage() {
 
             {/* Quick Actions */}
             <Card>
-              <CardHeader className="p-3 pb-2 border-b">
-                <CardTitle className="text-xs font-semibold">Quick Actions</CardTitle>
+              <CardHeader className="p-3.5 pb-2.5 border-b">
+                <CardTitle className="text-sm font-semibold">Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent className="p-2">
-                <div className="grid grid-cols-2 gap-1">
-                  <Button variant="ghost" size="sm" className="justify-start h-7 text-[10px] px-2" asChild>
+              <CardContent className="p-2.5">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
                     <Link to="/provider/listing">
-                      <FileEdit className="h-3 w-3 mr-1.5" />
+                      <FileEdit className="h-3.5 w-3.5 mr-2" />
                       Listing
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="sm" className="justify-start h-7 text-[10px] px-2" asChild>
+                  <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
                     <Link to="/provider/leads">
-                      <Users className="h-3 w-3 mr-1.5" />
+                      <Users className="h-3.5 w-3.5 mr-2" />
                       Leads
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="sm" className="justify-start h-7 text-[10px] px-2" asChild>
+                  <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
                     <Link to="/provider/analytics">
-                      <TrendingUp className="h-3 w-3 mr-1.5" />
+                      <TrendingUp className="h-3.5 w-3.5 mr-2" />
                       Analytics
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="sm" className="justify-start h-7 text-[10px] px-2" asChild>
+                  <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
                     <Link to="/provider/billing">
-                      <CreditCard className="h-3 w-3 mr-1.5" />
+                      <CreditCard className="h-3.5 w-3.5 mr-2" />
                       Billing
                     </Link>
                   </Button>
@@ -717,16 +717,16 @@ export default function ProviderDashboardPage() {
             {/* Lead Usage Progress - if applicable */}
             {!subscriptionLoading && (planKey === "professional" || planKey === "featured") && (
               <Card>
-                <CardHeader className="p-3 pb-2 border-b">
-                  <CardTitle className="text-xs font-semibold">Lead Usage</CardTitle>
+                <CardHeader className="p-3.5 pb-2.5 border-b">
+                  <CardTitle className="text-sm font-semibold">Lead Usage</CardTitle>
                 </CardHeader>
-                <CardContent className="p-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
+                <CardContent className="p-3.5">
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Used</span>
                       <span className="font-semibold">{monthlyLeadsCount} / {leadLimit}</span>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                       <div 
                         className={cn(
                           "h-full rounded-full transition-all",
@@ -736,7 +736,7 @@ export default function ProviderDashboardPage() {
                         style={{ width: `${Math.min((monthlyLeadsCount / leadLimit) * 100, 100)}%` }}
                       />
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {leadLimit - monthlyLeadsCount > 0 
                         ? `${leadLimit - monthlyLeadsCount} leads remaining`
                         : "Limit reached"}
@@ -756,20 +756,20 @@ export default function ProviderDashboardPage() {
           {!facility && (
             <div className="lg:col-span-12">
               <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="p-4">
+                <CardContent className="p-5">
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Building2 className="h-4 w-4 text-primary" />
+                    <div className="flex items-center gap-3.5">
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Building2 className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-foreground">Complete your listing</p>
-                        <p className="text-xs text-muted-foreground">Add facility info to start receiving leads</p>
+                        <p className="text-base font-semibold text-foreground">Complete your listing</p>
+                        <p className="text-sm text-muted-foreground">Add facility info to start receiving leads</p>
                       </div>
                     </div>
-                    <Button size="sm" className="h-8 text-xs" asChild>
+                    <Button size="sm" className="h-9 text-sm" asChild>
                       <Link to="/provider/listing">
-                        Get Started <ArrowRight className="h-3 w-3 ml-1" />
+                        Get Started <ArrowRight className="h-4 w-4 ml-1.5" />
                       </Link>
                     </Button>
                   </div>
