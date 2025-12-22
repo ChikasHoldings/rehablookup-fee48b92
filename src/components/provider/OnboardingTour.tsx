@@ -177,63 +177,63 @@ export function OnboardingTour({ forceOpen = false, onComplete }: OnboardingTour
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) dismissTour();
     }}>
-      <DialogContent className="sm:max-w-[420px] p-0 gap-0 overflow-hidden border-border bg-card">
+      <DialogContent 
+        className="sm:max-w-[440px] p-0 gap-0 overflow-hidden border-border bg-card rounded-xl shadow-xl [&>button]:hidden"
+      >
         {/* Progress bar */}
-        <div className="h-1 bg-muted">
+        <div className="h-1.5 bg-muted w-full">
           <div 
-            className="h-full bg-primary transition-all duration-300 ease-out"
+            className="h-full bg-primary transition-all duration-300 ease-out rounded-r-full"
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        {/* Close button - always visible */}
+        {/* Custom close button */}
         <button
           onClick={dismissTour}
-          className="absolute right-3 top-3 z-10 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="absolute right-4 top-4 z-10 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
           aria-label="Close tour"
         >
           <X className="h-4 w-4" />
         </button>
 
-        {/* Content */}
-        <div className="px-6 pt-8 pb-4">
-          <DialogHeader className="space-y-4">
+        {/* Content area */}
+        <div className="px-6 pt-10 pb-6">
+          <DialogHeader className="space-y-0 flex flex-col items-center">
             {/* Icon */}
-            <div className="flex items-center justify-center">
-              <div className={cn(
-                "p-4 rounded-full transition-colors",
-                isLastStep ? "bg-green-500/10" : "bg-primary/10"
-              )}>
-                <Icon className={cn(
-                  "h-8 w-8",
-                  isLastStep ? "text-green-500" : "text-primary"
-                )} />
-              </div>
+            <div className={cn(
+              "p-4 rounded-full transition-colors mb-4",
+              isLastStep ? "bg-green-500/10" : "bg-primary/10"
+            )}>
+              <Icon className={cn(
+                "h-10 w-10",
+                isLastStep ? "text-green-500" : "text-primary"
+              )} />
             </div>
 
             {/* Title */}
-            <DialogTitle className="text-center text-lg font-semibold leading-tight px-2">
+            <DialogTitle className="text-center text-xl font-semibold leading-tight mb-3">
               {step.title}
             </DialogTitle>
 
             {/* Description */}
-            <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed px-2">
+            <DialogDescription className="text-center text-sm text-muted-foreground leading-relaxed max-w-[360px]">
               {step.description}
             </DialogDescription>
           </DialogHeader>
 
           {/* Tip box */}
           {step.tip && (
-            <div className="mt-4 bg-muted/50 border border-border rounded-lg p-3">
-              <p className="text-sm text-muted-foreground flex items-start gap-2">
+            <div className="mt-5 bg-primary/5 border border-primary/20 rounded-lg p-3.5">
+              <p className="text-sm text-muted-foreground flex items-start gap-2.5">
                 <Sparkles className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span><strong className="text-foreground">Tip:</strong> {step.tip}</span>
+                <span><strong className="text-foreground font-medium">Tip:</strong> {step.tip}</span>
               </p>
             </div>
           )}
 
           {/* Step indicators */}
-          <div className="flex items-center justify-center gap-1.5 mt-5">
+          <div className="flex items-center justify-center gap-2 mt-6">
             {tourSteps.map((_, index) => (
               <button
                 key={index}
@@ -241,10 +241,10 @@ export function OnboardingTour({ forceOpen = false, onComplete }: OnboardingTour
                 className={cn(
                   "h-2 rounded-full transition-all duration-200 hover:opacity-80",
                   index === currentStep 
-                    ? "w-6 bg-primary" 
+                    ? "w-8 bg-primary" 
                     : index < currentStep 
-                      ? "w-2 bg-primary/60" 
-                      : "w-2 bg-muted-foreground/30"
+                      ? "w-2 bg-primary/50" 
+                      : "w-2 bg-muted-foreground/25"
                 )}
                 aria-label={`Go to step ${index + 1}`}
               />
@@ -252,33 +252,33 @@ export function OnboardingTour({ forceOpen = false, onComplete }: OnboardingTour
           </div>
 
           {/* Step counter */}
-          <p className="text-center text-xs text-muted-foreground mt-2">
+          <p className="text-center text-xs text-muted-foreground mt-3">
             Step {currentStep + 1} of {tourSteps.length}
           </p>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 bg-muted/30 border-t border-border">
-          <div className="min-w-[80px]">
+        <div className="flex items-center justify-between px-6 py-4 bg-muted/40 border-t border-border">
+          <div className="w-24">
             {!isFirstStep ? (
-              <Button variant="ghost" size="sm" onClick={handlePrev} className="gap-1">
+              <Button variant="ghost" size="sm" onClick={handlePrev} className="gap-1 h-9">
                 <ChevronLeft className="h-4 w-4" />
                 Back
               </Button>
             ) : (
-              <Button variant="ghost" size="sm" onClick={dismissTour} className="text-muted-foreground">
-                Skip
+              <Button variant="ghost" size="sm" onClick={dismissTour} className="text-muted-foreground h-9">
+                Skip tour
               </Button>
             )}
           </div>
           
           <div className="flex items-center gap-2">
             {!isLastStep && !isFirstStep && (
-              <Button variant="ghost" size="sm" onClick={dismissTour} className="text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={dismissTour} className="text-muted-foreground h-9">
                 Skip
               </Button>
             )}
-            <Button onClick={handleNext} size="sm" className="min-w-[100px]">
+            <Button onClick={handleNext} size="sm" className="min-w-[110px] h-9 font-medium">
               {isLastStep ? (
                 "Get Started"
               ) : (
