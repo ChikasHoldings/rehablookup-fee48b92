@@ -78,6 +78,12 @@ Deno.serve(async (req) => {
       .delete()
       .eq("user_id", user.id);
 
+    // Delete account activity log entries
+    await adminClient
+      .from("account_activity_log")
+      .delete()
+      .eq("user_id", user.id);
+
     // Delete facility reviews by this user
     await adminClient
       .from("facility_reviews")

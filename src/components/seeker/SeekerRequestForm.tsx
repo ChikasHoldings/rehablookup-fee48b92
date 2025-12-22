@@ -215,6 +215,7 @@ export function SeekerRequestForm({
     setIsSubmitting(true);
 
     try {
+      // User is authenticated when using seeker request form, so email is verified
       const { error } = await supabase.from('leads').insert({
         facility_id: facilityId,
         name: `${data.firstName} ${data.lastName}`.trim(),
@@ -231,6 +232,7 @@ export function SeekerRequestForm({
         primary_substance: selectedSubstances.length > 0 ? selectedSubstances : null,
         source: 'seeker_direct',
         status: 'new',
+        email_verified: true,
       });
 
       if (error) throw error;

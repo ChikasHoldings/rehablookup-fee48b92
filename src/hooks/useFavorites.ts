@@ -57,12 +57,19 @@ export function useFavorites() {
 
       const dbFavoriteIds = dbFavorites?.map(f => f.facility_id) || [];
       
-      // Get local favorites
-      const localFavorites = favorites.filter(id => !dbFavoriteIds.includes(id));
+      // Get local favorites that aren't already in database
+      let localFavoritesToSync: string[] = [];
+      try {
+        const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        const localFavorites = stored ? JSON.parse(stored) : [];
+        localFavoritesToSync = localFavorites.filter((id: string) => !dbFavoriteIds.includes(id));
+      } catch {
+        // Ignore parse errors
+      }
       
       // Merge: add local favorites to database that aren't already there
-      if (localFavorites.length > 0) {
-        const insertPromises = localFavorites.map(facilityId =>
+      if (localFavoritesToSync.length > 0) {
+        const insertPromises = localFavoritesToSync.map(facilityId =>
           supabase
             .from('user_favorites')
             .insert({ user_id: user.id, facility_id: facilityId })
@@ -73,7 +80,7 @@ export function useFavorites() {
       }
 
       // Set combined favorites
-      const allFavorites = [...new Set([...dbFavoriteIds, ...localFavorites])];
+      const allFavorites = [...new Set([...dbFavoriteIds, ...localFavoritesToSync])];
       setFavorites(allFavorites);
       setIsSynced(true);
       setIsLoading(false);
