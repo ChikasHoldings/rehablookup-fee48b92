@@ -18,7 +18,8 @@ import {
   ChevronRight,
   Filter,
   X,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ArrowUpDown
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,8 @@ const US_STATES = [
   "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
   "Wisconsin", "Wyoming"
 ];
+
+type SortOption = "name-asc" | "name-desc" | "state-asc" | "state-desc" | "years-desc" | "years-asc";
 
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/);
@@ -247,6 +250,7 @@ export default function SeekerHome() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedState, setSelectedState] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("name-asc");
   const { favoritesCount } = useFavorites();
 
   useEffect(() => {
@@ -264,14 +268,40 @@ export default function SeekerHome() {
     fetchNearbyFacilities();
   }, []);
 
-  // Filter facilities based on selected filters
+  // Filter and sort facilities
   const filteredFacilities = useMemo(() => {
-    return nearbyFacilities.filter((facility) => {
+    let result = nearbyFacilities.filter((facility) => {
       const matchesType = selectedType === "all" || facility.facility_type === selectedType;
       const matchesState = selectedState === "all" || facility.state === selectedState;
       return matchesType && matchesState;
     });
-  }, [nearbyFacilities, selectedType, selectedState]);
+
+    // Sort facilities
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "name-asc":
+          return a.name.localeCompare(b.name);
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        case "state-asc":
+          return a.state.localeCompare(b.state) || a.city.localeCompare(b.city);
+        case "state-desc":
+          return b.state.localeCompare(a.state) || b.city.localeCompare(a.city);
+        case "years-desc":
+          const yearsA = a.year_established ? new Date().getFullYear() - a.year_established : 0;
+          const yearsB = b.year_established ? new Date().getFullYear() - b.year_established : 0;
+          return yearsB - yearsA;
+        case "years-asc":
+          const yearsA2 = a.year_established ? new Date().getFullYear() - a.year_established : Infinity;
+          const yearsB2 = b.year_established ? new Date().getFullYear() - b.year_established : Infinity;
+          return yearsA2 - yearsB2;
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [nearbyFacilities, selectedType, selectedState, sortBy]);
 
   // Get unique states and types from data
   const availableStates = useMemo(() => {
@@ -289,6 +319,19 @@ export default function SeekerHome() {
   const clearFilters = () => {
     setSelectedType("all");
     setSelectedState("all");
+    setSortBy("name-asc");
+  };
+
+  const getSortLabel = (sort: SortOption): string => {
+    switch (sort) {
+      case "name-asc": return "Name (A-Z)";
+      case "name-desc": return "Name (Z-A)";
+      case "state-asc": return "Location (A-Z)";
+      case "state-desc": return "Location (Z-A)";
+      case "years-desc": return "Most Established";
+      case "years-asc": return "Newest First";
+      default: return "Sort";
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -503,6 +546,27 @@ export default function SeekerHome() {
                           {state}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Sort By */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <ArrowUpDown className="h-3 w-3" />
+                    Sort By
+                  </label>
+                  <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Sort by..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                      <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                      <SelectItem value="state-asc">Location (A-Z)</SelectItem>
+                      <SelectItem value="state-desc">Location (Z-A)</SelectItem>
+                      <SelectItem value="years-desc">Most Established</SelectItem>
+                      <SelectItem value="years-asc">Newest First</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
