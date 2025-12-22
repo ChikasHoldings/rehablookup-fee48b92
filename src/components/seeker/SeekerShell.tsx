@@ -12,8 +12,9 @@ export function SeekerShell() {
   const location = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const hasRedirected = useRef(false);
   const [userName, setUserName] = useState<string | undefined>();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Scroll content area to top on route change
   useEffect(() => {
@@ -22,37 +23,33 @@ export function SeekerShell() {
     }
   }, [location.pathname]);
 
-  // Auth check
+  // Auth check - NO FORCED REDIRECT
   useEffect(() => {
-    if (hasRedirected.current) return;
-    
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session) {
-        hasRedirected.current = true;
-        navigate("/auth", { replace: true });
-        return;
-      }
-
-      // Get profile
-      const { data: profile } = await supabase
-        .from('seeker_profiles')
-        .select('display_name')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
+      setIsAuthenticated(!!session);
       
-      setUserName(profile?.display_name || session.user.email?.split('@')[0]);
+      if (session) {
+        // Get profile
+        const { data: profile } = await supabase
+          .from('seeker_profiles')
+          .select('display_name')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        setUserName(profile?.display_name || session.user.email?.split('@')[0]);
+      }
+      setIsLoading(false);
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!session && !hasRedirected.current) {
-          hasRedirected.current = true;
-          navigate("/auth", { replace: true });
-        } else if (session) {
+        setIsAuthenticated(!!session);
+        
+        if (session) {
           const { data: profile } = await supabase
             .from('seeker_profiles')
             .select('display_name')
@@ -60,12 +57,14 @@ export function SeekerShell() {
             .maybeSingle();
           
           setUserName(profile?.display_name || session.user.email?.split('@')[0]);
+        } else {
+          setUserName(undefined);
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -96,11 +95,23 @@ export function SeekerShell() {
     }
   }, [navigate, toast, queryClient]);
 
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Fixed Header */}
       <div className="flex-shrink-0 z-50">
-        <SeekerHeader userName={userName} onLogout={handleLogout} />
+        <SeekerHeader 
+          userName={userName} 
+          onLogout={handleLogout} 
+          isAuthenticated={isAuthenticated}
+        />
       </div>
 
       {/* Main Content Area */}
@@ -108,11 +119,16 @@ export function SeekerShell() {
         ref={mainContentRef} 
         className="flex-1 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
       >
-        <Outlet />
+        <Outlet context={{ isAuthenticated, userName }} />
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <SeekerMobileNav />
+      <SeekerMobileNav isAuthenticated={isAuthenticated} />
     </div>
   );
+}
+
+// Hook to get auth context in child routes
+export function useSeekerShellContext() {
+  return { isAuthenticated: false, userName: undefined };
 }

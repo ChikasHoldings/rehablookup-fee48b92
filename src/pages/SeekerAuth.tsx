@@ -15,6 +15,10 @@ export default function SeekerAuth() {
   const navigate = useNavigate();
   const { signUp, signIn, isAuthenticated, isLoading } = useSeekerAuth();
   
+  // Get returnTo from URL params
+  const searchParams = new URLSearchParams(window.location.search);
+  const returnTo = searchParams.get('returnTo') || '/account';
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -25,9 +29,9 @@ export default function SeekerAuth() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/my-account');
+      navigate(returnTo);
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, returnTo]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +52,7 @@ export default function SeekerAuth() {
       }
     } else {
       toast.success('Welcome back!');
-      navigate('/my-account');
+      navigate(returnTo);
     }
   };
 
@@ -81,7 +85,7 @@ export default function SeekerAuth() {
       }
     } else {
       toast.success('Account created successfully!');
-      navigate('/my-account');
+      navigate(returnTo);
     }
   };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { Heart, Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { useFavorites } from "@/hooks/useFavorites";
 import { supabase } from "@/integrations/supabase/client";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
+import { AuthPrompt } from "@/components/seeker/AuthPrompt";
+
+interface SeekerOutletContext {
+  isAuthenticated: boolean;
+  userName?: string;
+}
 
 export default function SeekerSaved() {
-  const { favorites, toggleFavorite, isLoading: favoritesLoading } = useFavorites();
+  const context = useOutletContext<SeekerOutletContext>();
+  const isAuthenticated = context?.isAuthenticated ?? false;
+  
+  const { favorites, toggleFavorite, isLoading: favoritesLoading, isAuthenticated: favoritesAuth } = useFavorites();
   const [facilities, setFacilities] = useState<FacilityCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,6 +49,18 @@ export default function SeekerSaved() {
     toggleFavorite(facilityId);
     setFacilities(prev => prev.filter(f => f.id !== facilityId));
   };
+
+  // Show auth prompt if not authenticated
+  if (!isAuthenticated && !favoritesAuth) {
+    return (
+      <AuthPrompt 
+        title="Sign in to view saved facilities"
+        description="Create a free account to save and organize your favorite treatment centers."
+        icon="heart"
+        returnTo="/account/saved"
+      />
+    );
+  }
 
   if (isLoading || favoritesLoading) {
     return (

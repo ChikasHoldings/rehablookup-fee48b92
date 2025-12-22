@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,12 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { AuthPrompt } from "@/components/seeker/AuthPrompt";
+
+interface SeekerOutletContext {
+  isAuthenticated: boolean;
+  userName?: string;
+}
 
 interface UserReview {
   id: string;
@@ -55,6 +61,9 @@ function ReviewCardSkeleton() {
 }
 
 export default function SeekerReviews() {
+  const context = useOutletContext<SeekerOutletContext>();
+  const isAuthenticated = context?.isAuthenticated ?? false;
+  
   const [reviews, setReviews] = useState<UserReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingReview, setEditingReview] = useState<UserReview | null>(null);
@@ -64,8 +73,12 @@ export default function SeekerReviews() {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchReviews();
-  }, []);
+    if (isAuthenticated) {
+      fetchReviews();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
 
   const fetchReviews = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -190,6 +203,18 @@ export default function SeekerReviews() {
         return null;
     }
   };
+
+  // Show auth prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <AuthPrompt 
+        title="Sign in to view your reviews"
+        description="Create a free account to leave and manage reviews for treatment centers."
+        icon="star"
+        returnTo="/account/reviews"
+      />
+    );
+  }
 
   if (isLoading) {
     return (
