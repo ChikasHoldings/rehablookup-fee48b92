@@ -204,22 +204,20 @@ export function Header({
                     </Button>
                   </PrefetchLink>
                 ) : (
-                  <PrefetchLink to="/auth">
-                    <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5">
-                      <User className="h-4 w-4" />
-                      Sign In
-                    </Button>
-                  </PrefetchLink>
+                  <>
+                    <PrefetchLink to="/auth">
+                      <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5">
+                        <User className="h-4 w-4" />
+                        Sign In
+                      </Button>
+                    </PrefetchLink>
+                    <PrefetchLink to="/auth">
+                      <Button size="sm" className="h-8 text-sm">
+                        Sign Up
+                      </Button>
+                    </PrefetchLink>
+                  </>
                 )}
-                <PrefetchLink 
-                  to={ctaLink} 
-                  onClick={() => analytics.ctaClick(ctaLabel, "header")}
-                >
-                  <Button size="sm" className="h-8 text-sm gap-1.5">
-                    <Heart className="h-3.5 w-3.5" />
-                    {ctaLabel}
-                  </Button>
-                </PrefetchLink>
               </div>
             )}
             <button
@@ -468,22 +466,20 @@ export function Header({
                     </Button>
                   </PrefetchLink>
                 ) : (
-                  <PrefetchLink to="/auth" onClick={() => setMobileMenuOpen(false)} className="block">
-                    <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2">
-                      <User className="h-4 w-4" />
-                      Sign In / Create Account
-                    </Button>
-                  </PrefetchLink>
+                  <div className="space-y-2.5">
+                    <PrefetchLink to="/auth" onClick={() => setMobileMenuOpen(false)} className="block">
+                      <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30">
+                        Sign Up
+                      </Button>
+                    </PrefetchLink>
+                    <PrefetchLink to="/auth" onClick={() => setMobileMenuOpen(false)} className="block">
+                      <Button variant="ghost" className="w-full h-11 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/50 gap-2">
+                        <User className="h-4 w-4" />
+                        Sign In
+                      </Button>
+                    </PrefetchLink>
+                  </div>
                 )}
-                <PrefetchLink to={ctaLink} onClick={() => setMobileMenuOpen(false)} className="block">
-                  <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 gap-2">
-                    <Heart className="h-4 w-4 animate-pulse" />
-                    {ctaLabel}
-                  </Button>
-                </PrefetchLink>
-                <p className="text-center text-[11px] text-muted-foreground/60">
-                  Free & confidential support available 24/7
-                </p>
               </div>
             )}
           </div>
