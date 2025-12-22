@@ -363,14 +363,28 @@ const handler = async (req: Request): Promise<Response> => {
       facilityError = result.error;
       console.log("Admin accessing facility:", { facilityId: leadCheck.facility_id, found: !!facility });
     } else {
-      // Regular provider can only access their own facility
-      const result = await supabase
-        .from("facilities")
-        .select("id, name, email, reply_email, user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      facility = result.data;
-      facilityError = result.error;
+      // Regular provider - get their facility that has this lead assigned
+      // If the lead has a facility_id, use that to match the user's facility
+      if (leadCheck.facility_id) {
+        const result = await supabase
+          .from("facilities")
+          .select("id, name, email, reply_email, user_id")
+          .eq("id", leadCheck.facility_id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        facility = result.data;
+        facilityError = result.error;
+      } else {
+        // Lead has no facility, get the user's first facility
+        const result = await supabase
+          .from("facilities")
+          .select("id, name, email, reply_email, user_id")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+        facility = result.data;
+        facilityError = result.error;
+      }
     }
 
     if (facilityError || !facility) {
