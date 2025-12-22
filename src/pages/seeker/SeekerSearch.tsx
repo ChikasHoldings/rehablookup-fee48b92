@@ -245,23 +245,24 @@ export default function SeekerSearch() {
 
       <div className="flex flex-col min-h-full bg-background">
         {/* Search Header */}
-        <div className="sticky top-0 z-40 bg-card border-b border-border shadow-sm">
-          <div className="p-4 space-y-3">
+        <div className="bg-card border-b border-border">
+          <div className="px-4 pt-4 pb-4 space-y-3">
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
               <Input
                 type="text"
                 placeholder="Search treatment centers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="pl-10 pr-10 h-12 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl"
+                className="pl-12 pr-11 h-12 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl text-base"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-muted rounded-lg transition-colors"
+                  aria-label="Clear search"
                 >
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>
@@ -270,7 +271,7 @@ export default function SeekerSearch() {
             
             {/* Location Input */}
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
               <Input
                 type="text"
                 placeholder="City, State or ZIP code"
@@ -282,12 +283,13 @@ export default function SeekerSearch() {
                 onFocus={() => setShowLocationSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="pl-10 pr-10 h-12 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl"
+                className="pl-12 pr-11 h-12 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl text-base"
               />
               {locationInput && (
                 <button
                   onClick={() => setLocationInput("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-muted rounded-lg transition-colors"
+                  aria-label="Clear location"
                 >
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>
@@ -313,11 +315,11 @@ export default function SeekerSearch() {
             </div>
             
             {/* Search Button & Filters */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button 
                 onClick={handleSearch}
                 disabled={!hasActiveSearch}
-                className="flex-1 h-11 rounded-xl font-medium"
+                className="flex-1 h-12 rounded-xl font-medium text-base"
               >
                 <Search className="h-4 w-4 mr-2" />
                 Search
@@ -329,7 +331,7 @@ export default function SeekerSearch() {
                     variant="outline" 
                     size="icon"
                     className={cn(
-                      "h-11 w-11 rounded-xl shrink-0",
+                      "h-12 w-12 rounded-xl shrink-0 relative",
                       activeFilterCount > 0 && "border-primary text-primary"
                     )}
                   >
