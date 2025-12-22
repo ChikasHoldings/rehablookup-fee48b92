@@ -574,38 +574,38 @@ export default function ProviderSettingsPage() {
         throw new Error("Not authenticated");
       }
 
-      // Delete user's facility and related data (cascades via FK)
-      await supabase
-        .from("facilities")
-        .delete()
-        .eq("user_id", session.user.id);
+      // Call edge function to delete account and all associated data
+      const response = await supabase.functions.invoke("delete-provider-account", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
 
-      // Delete profile
-      await supabase
-        .from("profiles")
-        .delete()
-        .eq("user_id", session.user.id);
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to delete account");
+      }
 
-      // Delete notification preferences
-      await supabase
-        .from("notification_preferences")
-        .delete()
-        .eq("user_id", session.user.id);
+      // Log activity before sign out
+      await logActivity.mutateAsync({
+        userId: session.user.id,
+        eventType: "account_deleted",
+        eventDescription: "Account permanently deleted",
+      }).catch(() => {}); // Ignore errors as account is being deleted
 
-      // Sign out and redirect
-      await supabase.auth.signOut();
-      
       toast({
         title: "Account deleted",
         description: "Your account has been permanently deleted.",
       });
       
-      navigate("/");
-    } catch (error) {
+      // Sign out and redirect
+      await supabase.auth.signOut();
+      queryClient.clear();
+      navigate("/", { replace: true });
+    } catch (error: any) {
       console.error("Error deleting account:", error);
       toast({
         title: "Error deleting account",
-        description: "Failed to delete your account. Please contact support.",
+        description: error.message || "Failed to delete your account. Please contact support.",
         variant: "destructive",
       });
     } finally {
