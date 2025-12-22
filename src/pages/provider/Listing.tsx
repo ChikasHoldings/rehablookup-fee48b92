@@ -33,7 +33,8 @@ import {
   CircleDashed,
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Star
 } from "lucide-react";
 import { MultiSelectDropdown } from "@/components/search/MultiSelectDropdown";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -65,6 +66,7 @@ import {
 import { FacilityImageUpload } from "@/components/provider/FacilityImageUpload";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
+import { GoogleReviewsSection } from "@/components/provider/GoogleReviewsSection";
 import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
 
@@ -2073,6 +2075,13 @@ export default function ProviderListingPage() {
                 </CollapsibleContent>
               </Card>
             </Collapsible>
+
+            {/* Google Reviews */}
+            <GoogleReviewsSection
+              facilityId={facility.id}
+              expanded={expandedSections.has("googleReviews")}
+              onToggle={() => toggleSection("googleReviews")}
+            />
           </div>
 
           {/* Right Column - Sidebar */}
