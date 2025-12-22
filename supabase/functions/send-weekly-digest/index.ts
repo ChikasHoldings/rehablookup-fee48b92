@@ -2,17 +2,25 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import {
+  getProviderPlan,
+  getPlanStyles,
+  emailStart,
+  emailEnd,
+  emailHeader,
+  emailBodyStart,
+  emailBodyEnd,
+  emailFooter,
+  featuredInsightsBox,
+  tipBox,
+  usageBox,
+  ctaButton,
+  type PlanType,
+} from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// Plan configuration - Updated lead limits (100 for both Professional and Featured)
-const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; name: string }> = {
-  basic: { product_ids: [], lead_limit: 0, name: "Basic" },
-  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 100, name: "Professional" },
-  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 100, name: "Featured" },
 };
 
 interface ProviderDigest {
@@ -24,6 +32,7 @@ interface ProviderDigest {
   monthlyLeads: number;
   leadLimit: number;
   planName: string;
+  plan: PlanType;
   weeklyViews: number;
   newLeads: number;
   contactedLeads: number;
@@ -35,202 +44,136 @@ const logStep = (step: string, details?: any) => {
   console.log(`[WEEKLY-DIGEST] ${step}${detailsStr}`);
 };
 
-async function getProviderPlan(stripe: Stripe, email: string): Promise<{ planName: string; leadLimit: number }> {
-  try {
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    
-    if (customers.data.length === 0) {
-      return { planName: "Basic", leadLimit: 0 };
-    }
-
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customers.data[0].id,
-      status: "active",
-      limit: 1,
-    });
-
-    if (subscriptions.data.length === 0) {
-      return { planName: "Basic", leadLimit: 0 };
-    }
-
-    const productId = subscriptions.data[0].items.data[0].price.product as string;
-    
-    if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-      return { planName: "Professional", leadLimit: PLAN_CONFIG.professional.lead_limit };
-    } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-      return { planName: "Featured", leadLimit: PLAN_CONFIG.featured.lead_limit };
-    }
-    
-    return { planName: "Basic", leadLimit: 0 };
-  } catch (error) {
-    console.error("Error getting plan:", error);
-    return { planName: "Unknown", leadLimit: 0 };
-  }
-}
-
 function generateDigestEmail(digest: ProviderDigest): string {
   const dashboardUrl = "https://rehablookup.com";
-  const usagePercent = digest.leadLimit > 0 ? Math.round((digest.monthlyLeads / digest.leadLimit) * 100) : 0;
-  const remainingLeads = digest.leadLimit > 0 ? digest.leadLimit - digest.monthlyLeads : 0;
   
   const weekEnd = new Date();
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - 7);
-  
   const dateRange = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
-  // Plan-specific styling and messaging
-  const isFeatured = digest.planName === "Featured";
-  const isProfessional = digest.planName === "Professional";
+  const { plan, planName, leadLimit, monthlyLeads, weeklyLeads, weeklyViews, newLeads, contactedLeads, firstName, facilityName } = digest;
+  const styles = getPlanStyles(plan);
+  const isFeatured = plan === 'featured';
+  const isProfessional = plan === 'professional';
   const isPaidPlan = isFeatured || isProfessional;
-  
-  // Premium header for Featured providers
-  const headerGradient = isFeatured 
-    ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
-    : "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)";
-  
-  const planBadge = isFeatured 
-    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
-    : isProfessional 
-    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
+
+  // Featured-exclusive insights
+  const featuredInsights = isFeatured 
+    ? featuredInsightsBox(`
+        Your facility appears in <strong>premium placement</strong> across search results. 
+        Featured badge increases click-through rates by up to 85%. 
+        You have access to <strong>priority lead routing</strong> in your area.
+      `)
     : '';
 
-  // Featured-exclusive insights section
-  const featuredInsights = isFeatured ? `
-    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #92400e; display: flex; align-items: center;">
-        ⭐ Featured Provider Insights
-      </h3>
-      <ul style="margin: 0; padding-left: 20px; color: #78350f; font-size: 14px;">
-        <li style="margin-bottom: 8px;">Your facility appears in <strong>premium placement</strong> across search results</li>
-        <li style="margin-bottom: 8px;">Featured badge increases click-through rates by up to 85%</li>
-        <li>You have access to <strong>priority lead routing</strong> in your area</li>
-      </ul>
-    </div>
-  ` : '';
+  // Usage section
+  const usageSection = isPaidPlan 
+    ? usageBox(monthlyLeads, leadLimit, plan)
+    : `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; margin-bottom: 24px;">
+        <tr>
+          <td style="padding: 20px;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">
+              <strong>You're on the Basic plan</strong> - Upgrade to start receiving leads and grow your patient base.
+            </p>
+            <a href="${dashboardUrl}/provider/billing" style="display: inline-block; margin-top: 12px; background: #1B365D; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px;">
+              View Plans →
+            </a>
+          </td>
+        </tr>
+      </table>
+    `;
 
-  // Usage section - different for each plan tier
-  const usageSection = isPaidPlan ? `
-    <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h3 style="margin: 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Lead Usage</h3>
-        <span style="background: ${isFeatured ? 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)' : '#1B365D'}; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;">${digest.planName}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="font-size: 14px; color: #4b5563;">${digest.monthlyLeads} of ${digest.leadLimit} leads used</span>
-        <span style="font-size: 14px; font-weight: 600; color: ${usagePercent >= 80 ? '#dc2626' : '#16a34a'};">${usagePercent}%</span>
-      </div>
-      <div style="background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden;">
-        <div style="background: ${usagePercent >= 80 ? '#dc2626' : isFeatured ? '#7c3aed' : '#16a34a'}; height: 100%; width: ${Math.min(usagePercent, 100)}%;"></div>
-      </div>
-      <p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">
-        ${remainingLeads} leads remaining this month
-      </p>
-    </div>
-  ` : `
-    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <p style="margin: 0; color: #92400e; font-size: 14px;">
-        <strong>You're on the Basic plan</strong> - Upgrade to start receiving leads and grow your patient base.
-      </p>
-      <a href="${dashboardUrl}/provider/billing" style="display: inline-block; margin-top: 12px; background: #1B365D; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px;">
-        View Plans →
-      </a>
-    </div>
-  `;
+  // Tips section
+  let tipsContent = '';
+  if (isPaidPlan) {
+    const tipItems = [];
+    if (newLeads > 0) {
+      tipItems.push(`You have <strong>${newLeads} leads</strong> awaiting response. Quick follow-ups convert 400% better!`);
+    }
+    tipItems.push(isFeatured 
+      ? 'Reply to reviews to boost your profile engagement and trust score.'
+      : 'Keep your facility description updated to improve search visibility.');
+    tipItems.push('Add photos to increase engagement by up to 60%.');
 
-  // Tips section - contextual based on plan
-  const tipsSection = isPaidPlan ? `
-    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #1e40af;">💡 ${isFeatured ? 'Featured Provider Tips' : 'Quick Tips'}</h3>
-      <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px;">
-        ${digest.newLeads > 0 ? `<li style="margin-bottom: 8px;">You have <strong>${digest.newLeads} leads</strong> awaiting response. Quick follow-ups convert 400% better!</li>` : ''}
-        ${isFeatured ? `<li style="margin-bottom: 8px;">Reply to reviews to boost your profile engagement and trust score.</li>` : `<li style="margin-bottom: 8px;">Keep your facility description updated to improve search visibility.</li>`}
-        <li>Add photos to increase engagement by up to 60%.</li>
-      </ul>
-    </div>
-  ` : `
-    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #1e40af;">💡 Quick Tips</h3>
-      <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px;">
-        <li style="margin-bottom: 8px;">Complete your facility profile to improve search ranking.</li>
-        <li style="margin-bottom: 8px;">Add photos to increase engagement by up to 60%.</li>
-        <li>Upgrade to start receiving leads from families seeking treatment.</li>
-      </ul>
-    </div>
-  `;
+    tipsContent = `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 24px;">
+        <tr>
+          <td style="padding: 20px;">
+            <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #1e40af;">💡 ${isFeatured ? 'Featured Provider Tips' : 'Quick Tips'}</p>
+            <ul style="margin: 0; padding-left: 20px; color: #1e40af; font-size: 14px;">
+              ${tipItems.map(tip => `<li style="margin-bottom: 8px;">${tip}</li>`).join('')}
+            </ul>
+          </td>
+        </tr>
+      </table>
+    `;
+  } else {
+    tipsContent = tipBox('Complete your facility profile to improve search ranking. Add photos to increase engagement by up to 60%. Upgrade to start receiving leads from families seeking treatment.', plan, { showUpgradePrompt: true });
+  }
 
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: ${headerGradient}; padding: 30px; border-radius: 12px 12px 0 0;">
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-      <h1 style="color: #fff; margin: 0; font-size: 24px;">📊 Weekly Performance Digest</h1>
-      ${planBadge}
-    </div>
-    <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0;">${dateRange}</p>
-  </div>
-  
-  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
-    <p style="font-size: 16px; color: #4b5563; margin: 0 0 24px 0;">
-      Hi ${digest.firstName}! Here's how <strong>${digest.facilityName}</strong> performed this week.
-    </p>
-    
-    ${featuredInsights}
-    
-    <!-- Weekly Highlights -->
-    <div style="display: grid; gap: 16px; margin-bottom: 24px;">
-      <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; text-align: center;">
-        <p style="margin: 0; font-size: 36px; font-weight: bold; color: #166534;">${digest.weeklyLeads}</p>
-        <p style="margin: 4px 0 0 0; color: #15803d; font-size: 14px;">New Leads This Week</p>
-      </div>
-    </div>
-    
-    <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-      <div style="flex: 1; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; text-align: center;">
-        <p style="margin: 0; font-size: 24px; font-weight: bold; color: #0369a1;">${digest.weeklyViews}</p>
-        <p style="margin: 4px 0 0 0; color: #0284c7; font-size: 12px;">Profile Views</p>
-      </div>
-      <div style="flex: 1; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; text-align: center;">
-        <p style="margin: 0; font-size: 24px; font-weight: bold; color: #92400e;">${digest.newLeads}</p>
-        <p style="margin: 4px 0 0 0; color: #a16207; font-size: 12px;">Awaiting Response</p>
-      </div>
-      <div style="flex: 1; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 16px; text-align: center;">
-        <p style="margin: 0; font-size: 24px; font-weight: bold; color: #7c3aed;">${digest.contactedLeads}</p>
-        <p style="margin: 4px 0 0 0; color: #8b5cf6; font-size: 12px;">Contacted</p>
-      </div>
-    </div>
-    
-    ${usageSection}
-    
-    ${tipsSection}
-    
-    <div style="text-align: center; margin-top: 28px;">
-      <a href="${dashboardUrl}/provider/leads" style="display: inline-block; background: ${isFeatured ? 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)' : 'linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)'}; color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px ${isFeatured ? 'rgba(124, 58, 237, 0.3)' : 'rgba(27, 54, 93, 0.3)'};">
-        View All Leads
-      </a>
-    </div>
-    
-  </div>
-  
-  <div style="background: #1B365D; padding: 28px; border-radius: 12px; margin-top: 20px;">
-    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #fff; text-align: center;">RehabLookup</p>
-    <p style="margin: 0 0 16px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center;">Connecting families with trusted treatment providers</p>
-    <div style="text-align: center; margin-bottom: 16px;">
-      <a href="${dashboardUrl}/provider/settings" style="color: #93c5fd; font-size: 12px; text-decoration: none;">Notification Settings</a>
-      <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
-      <a href="https://rehablookup.com" style="color: #93c5fd; font-size: 12px; text-decoration: none;">Website</a>
-      <span style="color: rgba(255,255,255,0.3); margin: 0 8px;">|</span>
-      <a href="mailto:support@rehablookup.com" style="color: #93c5fd; font-size: 12px; text-decoration: none;">Support</a>
-    </div>
-    <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center;">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p>
-  </div>
-</body>
-</html>
+${emailStart()}
+${emailHeader('📊 Weekly Performance Digest', plan, { subtitle: dateRange })}
+${emailBodyStart()}
+              <p style="margin: 0 0 24px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                Hi ${firstName}! Here's how <strong>${facilityName}</strong> performed this week.
+              </p>
+              
+              ${featuredInsights}
+              
+              <!-- Weekly Highlights -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px; text-align: center;">
+                    <p style="margin: 0; font-size: 36px; font-weight: bold; color: #166534;">${weeklyLeads}</p>
+                    <p style="margin: 4px 0 0 0; color: #15803d; font-size: 14px;">New Leads This Week</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td width="33%" style="padding-right: 6px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
+                      <tr>
+                        <td style="padding: 16px; text-align: center;">
+                          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #0369a1;">${weeklyViews}</p>
+                          <p style="margin: 4px 0 0 0; color: #0284c7; font-size: 12px;">Profile Views</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding: 0 3px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px;">
+                      <tr>
+                        <td style="padding: 16px; text-align: center;">
+                          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #92400e;">${newLeads}</p>
+                          <p style="margin: 4px 0 0 0; color: #a16207; font-size: 12px;">Awaiting Response</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding-left: 6px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px;">
+                      <tr>
+                        <td style="padding: 16px; text-align: center;">
+                          <p style="margin: 0; font-size: 24px; font-weight: bold; color: #7c3aed;">${contactedLeads}</p>
+                          <p style="margin: 4px 0 0 0; color: #8b5cf6; font-size: 12px;">Contacted</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              ${usageSection}
+              ${tipsContent}
+              ${ctaButton('View All Leads', `${dashboardUrl}/provider/leads`, plan)}
+${emailBodyEnd()}
+${emailFooter()}
+${emailEnd()}
   `;
 }
 
@@ -324,8 +267,8 @@ const handler = async (req: Request): Promise<Response> => {
         const facility = userFacilities[0]; // Primary facility
         const facilityIds = userFacilities.map(f => f.id);
         
-        // Get plan info
-        const planInfo = await getProviderPlan(stripe, profile.email);
+        // Get plan info using shared template
+        const planInfo = await getProviderPlan(profile.email, stripe);
         
         // Get weekly leads
         const { count: weeklyLeads } = await supabase
@@ -378,47 +321,49 @@ const handler = async (req: Request): Promise<Response> => {
           monthlyLeads: monthlyLeads || 0,
           leadLimit: planInfo.leadLimit,
           planName: planInfo.planName,
+          plan: planInfo.plan,
           weeklyViews,
           newLeads: newLeads || 0,
           contactedLeads: contactedLeads || 0,
           convertedLeads: convertedLeads || 0,
         };
         
-        // Generate and send email
         const emailHtml = generateDigestEmail(digest);
+        const subjectPrefix = planInfo.plan === 'featured' ? '⭐ ' : '';
         
-        await resend.emails.send({
+        const { error: emailError } = await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
-          subject: `📊 Weekly Digest: ${digest.weeklyLeads} new leads for ${facility.name}`,
+          subject: `${subjectPrefix}Weekly Digest: ${weeklyLeads || 0} new leads for ${facility.name}`,
           html: emailHtml,
         });
         
-        logStep("Sent digest email", { email: profile.email, weeklyLeads: digest.weeklyLeads });
-        sentCount++;
+        if (emailError) {
+          logStep("Failed to send email", { email: profile.email, error: emailError });
+          errorCount++;
+        } else {
+          logStep("Email sent successfully", { email: profile.email });
+          sentCount++;
+        }
         
-      } catch (error) {
-        console.error(`Error processing provider ${profile.email}:`, error);
+      } catch (providerError) {
+        logStep("Error processing provider", { userId: profile.user_id, error: providerError });
         errorCount++;
       }
     }
     
-    logStep("Digest complete", { sent: sentCount, errors: errorCount });
+    logStep("Completed", { sent: sentCount, errors: errorCount });
     
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        sent: sentCount, 
-        errors: errorCount,
-        message: `Sent ${sentCount} digest emails` 
-      }),
+      JSON.stringify({ success: true, sent: sentCount, errors: errorCount }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
     
-  } catch (error: any) {
-    console.error("Error in send-weekly-digest:", error);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
