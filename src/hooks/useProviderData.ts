@@ -101,6 +101,23 @@ export function useProviderData(facilityId?: string) {
     };
   }, [facilityId, queryClient]);
 
+  // Get cached provider data for instant initial render
+  const getCachedData = (): ProviderData | undefined => {
+    try {
+      const cached = localStorage.getItem(`provider-data-${facilityId || 'default'}`);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        // Return cached data if less than 5 minutes old
+        if (Date.now() - timestamp < 1000 * 60 * 5) {
+          return data;
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return undefined;
+  };
+
   return useQuery({
     queryKey: ["provider-data", facilityId],
     queryFn: async (): Promise<ProviderData> => {
@@ -110,87 +127,99 @@ export function useProviderData(facilityId?: string) {
         throw new Error("Not authenticated");
       }
 
-      // Fetch profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("first_name, last_name, email, phone, job_title")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+      // Run all queries in parallel for faster loading
+      const [profileResult, facilityResult] = await Promise.all([
+        // Fetch profile
+        supabase
+          .from("profiles")
+          .select("first_name, last_name, email, phone, job_title")
+          .eq("user_id", session.user.id)
+          .maybeSingle(),
+        // Fetch facility
+        facilityId
+          ? supabase
+              .from("facilities")
+              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
+              .eq("id", facilityId)
+              .eq("user_id", session.user.id)
+              .maybeSingle()
+          : supabase
+              .from("facilities")
+              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
+              .eq("user_id", session.user.id)
+              .limit(1)
+              .maybeSingle(),
+      ]);
 
-      // Fetch facility - either specific one or first one
-      let facilityData: Facility | null = null;
-      
-      if (facilityId) {
-        const { data } = await supabase
-          .from("facilities")
-          .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
-          .eq("id", facilityId)
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-        facilityData = data;
-      } else {
-        const { data } = await supabase
-          .from("facilities")
-          .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
-          .eq("user_id", session.user.id)
-          .limit(1)
-          .maybeSingle();
-        facilityData = data;
-      }
+      const profileData = profileResult.data;
+      const facilityData = facilityResult.data as Facility | null;
 
       let viewsCount = 0;
       let leadsCount = 0;
       let monthlyLeadsCount = 0;
 
       if (facilityData) {
-        // Fetch view counts for last 30 days
+        // Fetch stats in parallel
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
-        const { data: viewsData } = await supabase
-          .from("facility_views")
-          .select("view_count")
-          .eq("facility_id", facilityData.id)
-          .gte("view_date", thirtyDaysAgo.toISOString().split('T')[0]);
-        
-        if (viewsData) {
-          viewsCount = viewsData.reduce((sum, row) => sum + row.view_count, 0);
-        }
-
-        // Fetch total leads count
-        const { count: totalCount } = await supabase
-          .from("leads")
-          .select("*", { count: "exact", head: true })
-          .eq("facility_id", facilityData.id);
-        
-        leadsCount = totalCount || 0;
-
-        // Fetch monthly QUALIFIED leads count (current month) - this is what counts against the cap
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
-        
-        const { count: monthlyCount } = await supabase
-          .from("leads")
-          .select("*", { count: "exact", head: true })
-          .eq("facility_id", facilityData.id)
-          .eq("qualified", true) // Only count qualified leads against the cap
-          .gte("created_at", startOfMonth.toISOString());
-        
-        monthlyLeadsCount = monthlyCount || 0;
+
+        const [viewsResult, totalLeadsResult, monthlyLeadsResult] = await Promise.all([
+          // Views count for last 30 days
+          supabase
+            .from("facility_views")
+            .select("view_count")
+            .eq("facility_id", facilityData.id)
+            .gte("view_date", thirtyDaysAgo.toISOString().split('T')[0]),
+          // Total leads count
+          supabase
+            .from("leads")
+            .select("*", { count: "exact", head: true })
+            .eq("facility_id", facilityData.id),
+          // Monthly qualified leads count
+          supabase
+            .from("leads")
+            .select("*", { count: "exact", head: true })
+            .eq("facility_id", facilityData.id)
+            .eq("qualified", true)
+            .gte("created_at", startOfMonth.toISOString()),
+        ]);
+
+        if (viewsResult.data) {
+          viewsCount = viewsResult.data.reduce((sum, row) => sum + row.view_count, 0);
+        }
+        leadsCount = totalLeadsResult.count || 0;
+        monthlyLeadsCount = monthlyLeadsResult.count || 0;
       }
 
-      return {
+      const result: ProviderData = {
         profile: profileData,
         facility: facilityData,
         viewsCount,
         leadsCount,
         monthlyLeadsCount,
       };
+
+      // Cache the result for instant future loads
+      try {
+        localStorage.setItem(`provider-data-${facilityId || 'default'}`, JSON.stringify({
+          data: result,
+          timestamp: Date.now(),
+        }));
+      } catch {
+        // Ignore storage errors
+      }
+
+      return result;
     },
-    staleTime: 1000 * 60 * 10, // 10 minutes - prevent refetching on navigation
+    // Use cached data for instant initial render
+    placeholderData: getCachedData,
+    staleTime: 1000 * 60 * 10, // 10 minutes
     gcTime: 1000 * 60 * 60, // 1 hour cache
     refetchOnWindowFocus: false,
-    refetchOnMount: false, // Don't refetch when component remounts (navigation)
+    refetchOnMount: false,
   });
 }

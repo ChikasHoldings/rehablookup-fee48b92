@@ -19,12 +19,44 @@ const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   subscribed: false,
   plan: "basic",
   plan_name: "Basic Listing",
-  lead_limit: 0, // Basic plan gets no qualified leads
+  lead_limit: 0,
   subscription_end: null,
   current_period_start: null,
   status: null,
   cancel_at_period_end: false,
 };
+
+const SUBSCRIPTION_CACHE_KEY = "subscription_cache";
+const SUBSCRIPTION_CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+
+// Get cached subscription from localStorage for instant loading
+function getCachedSubscription(): SubscriptionData | null {
+  try {
+    const cached = localStorage.getItem(SUBSCRIPTION_CACHE_KEY);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      // Return cached data if not expired
+      if (Date.now() - timestamp < SUBSCRIPTION_CACHE_TTL) {
+        return data as SubscriptionData;
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
+// Save subscription to localStorage cache
+function cacheSubscription(data: SubscriptionData) {
+  try {
+    localStorage.setItem(SUBSCRIPTION_CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now(),
+    }));
+  } catch {
+    // Ignore storage errors
+  }
+}
 
 export function useSubscription() {
   return useQuery({
@@ -41,19 +73,26 @@ export function useSubscription() {
         
         if (error) {
           console.error("Error checking subscription:", error);
-          return DEFAULT_SUBSCRIPTION;
+          // Return cached data on error
+          return getCachedSubscription() || DEFAULT_SUBSCRIPTION;
         }
         
-        return data as SubscriptionData;
+        const subscriptionData = data as SubscriptionData;
+        // Cache the result for instant future loads
+        cacheSubscription(subscriptionData);
+        return subscriptionData;
       } catch (err) {
         console.error("Network error checking subscription:", err);
-        return DEFAULT_SUBSCRIPTION;
+        // Return cached data on network error
+        return getCachedSubscription() || DEFAULT_SUBSCRIPTION;
       }
     },
-    staleTime: 1000 * 60 * 10, // 10 minutes - subscription doesn't change often
+    // Use cached data for instant initial render
+    placeholderData: getCachedSubscription() || undefined,
+    staleTime: 1000 * 60 * 10, // 10 minutes
     gcTime: 1000 * 60 * 60, // 1 hour cache
     refetchOnWindowFocus: false,
-    refetchOnMount: false, // Don't refetch when component remounts (navigation)
+    refetchOnMount: false,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
