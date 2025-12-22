@@ -337,39 +337,74 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
             </DropdownMenu>
           )}
 
-          <div className="hidden sm:block h-6 sm:h-7 w-px bg-white/30 mx-1 sm:mx-2" />
-
           {/* User Menu or Sign In */}
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="gap-1.5 sm:gap-2 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                  className="gap-2 sm:gap-2.5 text-white hover:text-white hover:bg-white/15 h-10 sm:h-11 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ml-1 sm:ml-2"
                 >
-                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8 border border-white/30">
-                    {avatarUrl ? (
-                      <AvatarImage src={avatarUrl} alt={userName || "User"} />
-                    ) : null}
-                    <AvatarFallback className="bg-white/30 text-white text-xs sm:text-sm font-semibold">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden sm:block text-sm font-medium text-white/90 max-w-[100px] truncate">
-                    {userName || "User"}
-                  </span>
+                  <div className="relative">
+                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9 ring-2 ring-white/40 ring-offset-1 ring-offset-primary">
+                      {avatarUrl ? (
+                        <AvatarImage 
+                          src={avatarUrl} 
+                          alt={userName || "User"} 
+                          className="object-cover"
+                        />
+                      ) : null}
+                      <AvatarFallback className="bg-gradient-to-br from-white/40 to-white/20 text-white text-xs sm:text-sm font-bold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-400 border-2 border-primary" />
+                  </div>
+                  <div className="hidden sm:flex flex-col items-start">
+                    <span className="text-sm font-semibold text-white leading-tight max-w-[100px] truncate">
+                      {userName || "User"}
+                    </span>
+                    <span className="text-[10px] text-white/60 leading-tight">My Account</span>
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-card" sideOffset={8}>
-                <DropdownMenuItem asChild>
-                  <Link to="/account/settings" className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
+              <DropdownMenuContent align="end" className="w-56 bg-card p-1.5" sideOffset={8}>
+                {/* User Info Header */}
+                <div className="px-3 py-2.5 mb-1">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                      {avatarUrl ? (
+                        <AvatarImage src={avatarUrl} alt={userName || "User"} className="object-cover" />
+                      ) : null}
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{userName || "User"}</p>
+                      <p className="text-xs text-muted-foreground">Seeker Account</p>
+                    </div>
+                  </div>
+                </div>
+                <DropdownMenuSeparator className="my-1" />
+                <DropdownMenuItem asChild className="rounded-lg">
+                  <Link to="/account" className="flex items-center gap-2.5 py-2">
+                    <Home className="h-4 w-4 text-muted-foreground" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="rounded-lg">
+                  <Link to="/account/settings" className="flex items-center gap-2.5 py-2">
+                    <Settings className="h-4 w-4 text-muted-foreground" />
                     Settings
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onLogout} className="text-destructive">
-                  <LogOut className="h-4 w-4 mr-2" />
+                <DropdownMenuSeparator className="my-1" />
+                <DropdownMenuItem 
+                  onClick={onLogout} 
+                  className="text-destructive rounded-lg focus:text-destructive focus:bg-destructive/10"
+                >
+                  <LogOut className="h-4 w-4 mr-2.5" />
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -377,11 +412,11 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
           ) : (
             <Button 
               asChild 
-              className="h-9 sm:h-10 px-3 sm:px-4 bg-white text-primary hover:bg-white/90 font-medium text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="h-10 sm:h-11 px-4 sm:px-5 bg-white text-primary hover:bg-white/90 font-semibold text-sm rounded-xl shadow-lg shadow-black/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ml-1 sm:ml-2"
             >
               <Link to="/auth" className="flex items-center gap-2">
                 <LogIn className="h-4 w-4" />
-                <span className="hidden sm:inline">Sign In</span>
+                <span>Sign In</span>
               </Link>
             </Button>
           )}
