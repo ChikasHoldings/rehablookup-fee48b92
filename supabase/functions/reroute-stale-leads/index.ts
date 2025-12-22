@@ -115,6 +115,35 @@ interface ProviderScore {
   };
 }
 
+// State name to abbreviation mapping
+const STATE_ABBREVIATIONS: Record<string, string> = {
+  "alabama": "AL", "alaska": "AK", "arizona": "AZ", "arkansas": "AR", "california": "CA",
+  "colorado": "CO", "connecticut": "CT", "delaware": "DE", "florida": "FL", "georgia": "GA",
+  "hawaii": "HI", "idaho": "ID", "illinois": "IL", "indiana": "IN", "iowa": "IA",
+  "kansas": "KS", "kentucky": "KY", "louisiana": "LA", "maine": "ME", "maryland": "MD",
+  "massachusetts": "MA", "michigan": "MI", "minnesota": "MN", "mississippi": "MS", "missouri": "MO",
+  "montana": "MT", "nebraska": "NE", "nevada": "NV", "new hampshire": "NH", "new jersey": "NJ",
+  "new mexico": "NM", "new york": "NY", "north carolina": "NC", "north dakota": "ND", "ohio": "OH",
+  "oklahoma": "OK", "oregon": "OR", "pennsylvania": "PA", "rhode island": "RI", "south carolina": "SC",
+  "south dakota": "SD", "tennessee": "TN", "texas": "TX", "utah": "UT", "vermont": "VT",
+  "virginia": "VA", "washington": "WA", "west virginia": "WV", "wisconsin": "WI", "wyoming": "WY",
+  "district of columbia": "DC"
+};
+
+// Normalize state to 2-letter abbreviation
+function normalizeState(state: string): string {
+  if (!state) return "";
+  const trimmed = state.trim().toLowerCase();
+  
+  // If it's already a 2-letter code, return uppercase
+  if (trimmed.length === 2) {
+    return trimmed.toUpperCase();
+  }
+  
+  // Look up full state name
+  return STATE_ABBREVIATIONS[trimmed] || trimmed.toUpperCase();
+}
+
 function getStartOfMonth(): Date {
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
@@ -150,7 +179,8 @@ async function getEligibleProviders(
   }
 
   const startOfMonth = getStartOfMonth();
-  const leadState = lead.location_city_state?.split(",").pop()?.trim().toUpperCase() || "";
+  // Normalize lead state to 2-letter abbreviation for comparison
+  const leadState = normalizeState(lead.location_city_state?.split(",").pop()?.trim() || "");
   const providers: ProviderCapacity[] = [];
 
   for (const facility of facilities) {
@@ -195,9 +225,9 @@ async function getEligibleProviders(
     // Skip non-paid plans
     if (!PAID_PLANS.includes(planName)) continue;
 
-    // Check state match (hard filter)
-    const providerState = facility.state?.toUpperCase() || "";
-    if (leadState && providerState !== leadState) continue;
+    // Check state match (hard filter) - normalize provider state too
+    const providerState = normalizeState(facility.state || "");
+    if (leadState && providerState && providerState !== leadState) continue;
 
     // Count leads this month
     const { count: monthlyLeadCount } = await supabase

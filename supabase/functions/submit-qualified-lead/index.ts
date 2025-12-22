@@ -140,6 +140,36 @@ interface ProviderEligibility {
 }
 
 // ============ UTILITY FUNCTIONS ============
+
+// State name to abbreviation mapping
+const STATE_ABBREVIATIONS: Record<string, string> = {
+  "alabama": "AL", "alaska": "AK", "arizona": "AZ", "arkansas": "AR", "california": "CA",
+  "colorado": "CO", "connecticut": "CT", "delaware": "DE", "florida": "FL", "georgia": "GA",
+  "hawaii": "HI", "idaho": "ID", "illinois": "IL", "indiana": "IN", "iowa": "IA",
+  "kansas": "KS", "kentucky": "KY", "louisiana": "LA", "maine": "ME", "maryland": "MD",
+  "massachusetts": "MA", "michigan": "MI", "minnesota": "MN", "mississippi": "MS", "missouri": "MO",
+  "montana": "MT", "nebraska": "NE", "nevada": "NV", "new hampshire": "NH", "new jersey": "NJ",
+  "new mexico": "NM", "new york": "NY", "north carolina": "NC", "north dakota": "ND", "ohio": "OH",
+  "oklahoma": "OK", "oregon": "OR", "pennsylvania": "PA", "rhode island": "RI", "south carolina": "SC",
+  "south dakota": "SD", "tennessee": "TN", "texas": "TX", "utah": "UT", "vermont": "VT",
+  "virginia": "VA", "washington": "WA", "west virginia": "WV", "wisconsin": "WI", "wyoming": "WY",
+  "district of columbia": "DC"
+};
+
+// Normalize state to 2-letter abbreviation
+function normalizeState(state: string): string {
+  if (!state) return "";
+  const trimmed = state.trim().toLowerCase();
+  
+  // If it's already a 2-letter code, return uppercase
+  if (trimmed.length === 2) {
+    return trimmed.toUpperCase();
+  }
+  
+  // Look up full state name
+  return STATE_ABBREVIATIONS[trimmed] || trimmed.toUpperCase();
+}
+
 async function hashIP(ip: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(ip + Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
@@ -386,8 +416,8 @@ async function getEligibleProviders(
     
     const startOfMonth = getStartOfMonth();
     
-    // Parse lead location for matching
-    const leadState = leadData.locationCityState?.split(",").pop()?.trim().toUpperCase() || "";
+    // Parse lead location for matching - normalize state to 2-letter abbreviation
+    const leadState = normalizeState(leadData.locationCityState?.split(",").pop()?.trim() || "");
     const leadCity = leadData.locationCityState?.split(",")[0]?.trim().toLowerCase() || "";
     
     const providers: ProviderCapacity[] = [];
@@ -450,9 +480,10 @@ async function getEligibleProviders(
       }
       
       // ============ HARD FILTER: Location Match (Must match at least state) ============
-      const providerState = facility.state?.toUpperCase() || "";
+      // Normalize provider state to 2-letter abbreviation for comparison
+      const providerState = normalizeState(facility.state || "");
       
-      if (leadState && providerState !== leadState) {
+      if (leadState && providerState && providerState !== leadState) {
         skippedStateMismatch++;
         continue;
       }
