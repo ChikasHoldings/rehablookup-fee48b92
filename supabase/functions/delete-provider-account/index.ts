@@ -184,6 +184,18 @@ Deno.serve(async (req) => {
         .delete()
         .eq("user_id", user.id);
 
+      // Delete reply email verification codes
+      await adminClient
+        .from("reply_email_verification_codes")
+        .delete()
+        .in("facility_id", facilityIds);
+
+      // Delete facility reviews (reviews on provider's facilities)
+      await adminClient
+        .from("facility_reviews")
+        .delete()
+        .in("facility_id", facilityIds);
+
       // Delete facilities themselves
       await adminClient
         .from("facilities")
