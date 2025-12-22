@@ -214,8 +214,15 @@ serve(async (req) => {
       ? Math.round((canceledLast30Days / activeAtPeriodStart) * 100 * 10) / 10
       : 0;
 
-    // Sort events by date descending
-    recentEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Sort events by date descending - safely handle invalid dates
+    recentEvents.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      // Handle NaN values
+      const safeA = isNaN(dateA) ? 0 : dateA;
+      const safeB = isNaN(dateB) ? 0 : dateB;
+      return safeB - safeA;
+    });
 
     // Get last month's charges for MRR comparison
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
