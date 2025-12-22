@@ -196,6 +196,18 @@ Deno.serve(async (req) => {
         .delete()
         .in("facility_id", facilityIds);
 
+      // Delete request help analytics
+      await adminClient
+        .from("request_help_analytics")
+        .delete()
+        .in("facility_id", facilityIds);
+
+      // Delete flagged images
+      await adminClient
+        .from("flagged_images")
+        .delete()
+        .in("facility_id", facilityIds);
+
       // Delete facilities themselves
       await adminClient
         .from("facilities")
