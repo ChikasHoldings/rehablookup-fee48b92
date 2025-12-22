@@ -12,6 +12,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { providerNavLinks } from "@/data/providerNavLinks";
+import { useQueryClient } from "@tanstack/react-query";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
@@ -143,6 +144,7 @@ export default function ProviderLogin() {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Generate new CAPTCHA
   const refreshCaptcha = useCallback(() => {
@@ -437,6 +439,50 @@ export default function ProviderLogin() {
             user_id: data.session.user.id,
             event_type: "login",
             event_description: `Signed in to account${rememberMe ? " (remembered)" : ""} from ${browser} on ${os}`,
+          },
+        });
+        
+        // Prefetch subscription and provider data for instant dashboard load
+        queryClient.prefetchQuery({
+          queryKey: ["subscription"],
+          queryFn: async () => {
+            const { data: subData } = await supabase.functions.invoke("check-subscription");
+            // Cache in localStorage for instant future loads
+            if (subData) {
+              try {
+                localStorage.setItem("subscription_cache", JSON.stringify({
+                  data: subData,
+                  timestamp: Date.now(),
+                }));
+              } catch {}
+            }
+            return subData;
+          },
+        });
+        
+        queryClient.prefetchQuery({
+          queryKey: ["provider-facilities"],
+          queryFn: async () => {
+            const { data: facilities } = await supabase
+              .from("facilities")
+              .select("id, name, slug, status, city, state, logo_url, created_at")
+              .eq("user_id", data.session.user.id)
+              .order("created_at", { ascending: false });
+            // Cache in localStorage for instant future loads
+            if (facilities) {
+              try {
+                localStorage.setItem("provider-facilities-cache", JSON.stringify({
+                  data: facilities,
+                  timestamp: Date.now(),
+                }));
+                // Also cache the first facility data
+                if (facilities.length > 0) {
+                  localStorage.setItem("selectedFacilityData", JSON.stringify(facilities[0]));
+                  localStorage.setItem("selectedFacilityId", facilities[0].id);
+                }
+              } catch {}
+            }
+            return facilities || [];
           },
         });
         
