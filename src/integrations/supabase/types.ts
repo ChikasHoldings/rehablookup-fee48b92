@@ -804,6 +804,7 @@ export type Database = {
         Row: {
           admin_notes: string | null
           created_at: string
+          disputed: boolean | null
           facility_id: string
           helpful_count: number
           id: string
@@ -818,6 +819,7 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           created_at?: string
+          disputed?: boolean | null
           facility_id: string
           helpful_count?: number
           id?: string
@@ -832,6 +834,7 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           created_at?: string
+          disputed?: boolean | null
           facility_id?: string
           helpful_count?: number
           id?: string
@@ -1742,6 +1745,70 @@ export type Database = {
           },
         ]
       }
+      review_disputes: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          details: string | null
+          disputed_by: string
+          facility_id: string
+          id: string
+          reason: string
+          resolved_at: string | null
+          resolved_by: string | null
+          review_id: string
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          details?: string | null
+          disputed_by: string
+          facility_id: string
+          id?: string
+          reason: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          review_id: string
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          details?: string | null
+          disputed_by?: string
+          facility_id?: string
+          id?: string
+          reason?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          review_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_disputes_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_disputes_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_disputes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "facility_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_helpful_votes: {
         Row: {
           created_at: string
@@ -1766,6 +1833,61 @@ export type Database = {
             foreignKeyName: "review_helpful_votes_review_id_fkey"
             columns: ["review_id"]
             isOneToOne: false
+            referencedRelation: "facility_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_responses: {
+        Row: {
+          created_at: string | null
+          facility_id: string
+          id: string
+          responder_user_id: string
+          response_text: string
+          review_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          facility_id: string
+          id?: string
+          responder_user_id: string
+          response_text: string
+          review_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          facility_id?: string
+          id?: string
+          responder_user_id?: string
+          response_text?: string
+          review_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_responses_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_responses_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_responses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
             referencedRelation: "facility_reviews"
             referencedColumns: ["id"]
           },

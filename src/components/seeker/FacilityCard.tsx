@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { useFavorites } from "@/hooks/useFavorites";
 import { cn } from "@/lib/utils";
 import { PlanTier } from "@/lib/facilityPlanSort";
+import { useFacilityRating } from "@/hooks/useFacilityRating";
 
 export interface FacilityCardData {
   id: string;
@@ -55,6 +56,7 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
   const location = useLocation();
   const [logoError, setLogoError] = useState(false);
   const [heroError, setHeroError] = useState(false);
+  const { averageRating, reviewCount } = useFacilityRating(facility.id);
 
   const initials = getInitials(facility.name);
   const hasLogo = facility.logo_url && !logoError;
@@ -183,10 +185,17 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
 
           {/* Badges */}
           <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            {/* Rating badge */}
+            {averageRating && reviewCount > 0 && (
+              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-yellow-100 text-yellow-700 border-0">
+                <Star className="h-2.5 w-2.5 fill-current" />
+                {averageRating} ({reviewCount})
+              </Badge>
+            )}
             {/* Plan tier badges */}
             {isFeaturedPlan && (
               <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 border-0">
-                <Star className="h-2.5 w-2.5 fill-current" />
+                <Sparkles className="h-2.5 w-2.5" />
                 Featured
               </Badge>
             )}
