@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useSeekerAuth } from '@/hooks/useSeekerAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +30,9 @@ export default function SeekerAuth() {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -104,6 +108,28 @@ export default function SeekerAuth() {
     if (error) {
       toast.error(error.message);
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    
+    setIsSendingReset(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setIsSendingReset(false);
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Check your email for a password reset link');
+      setShowForgotPassword(false);
+      setForgotEmail('');
     }
   };
 
@@ -221,6 +247,17 @@ export default function SeekerAuth() {
                       </div>
                     </div>
                     
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="px-0 h-auto text-sm text-muted-foreground hover:text-primary"
+                        onClick={() => setShowForgotPassword(true)}
+                      >
+                        Forgot password?
+                      </Button>
+                    </div>
+                    
                     <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                       {isSubmitting ? 'Signing in...' : 'Sign In'}
                     </Button>
@@ -310,6 +347,43 @@ export default function SeekerAuth() {
           </Card>
         </div>
       </div>
+      
+      {/* Forgot Password Dialog */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset your password</DialogTitle>
+            <DialogDescription>
+              Enter your email address and we'll send you a link to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="forgot-email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  className="pl-10"
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={() => setShowForgotPassword(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSendingReset}>
+                {isSendingReset ? 'Sending...' : 'Send Reset Link'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
