@@ -347,7 +347,8 @@ const CenterProfile = () => {
     queryFn: async (): Promise<boolean> => {
       if (!facility?.id) return false;
       const { data } = await supabase.functions.invoke("get-featured-facilities");
-      const featuredIds: string[] = data?.featured_facility_ids || [];
+      // Use correct property names from edge function response
+      const featuredIds: string[] = data?.featuredFacilityIds || data?.allEligibleIds || [];
       return featuredIds.includes(facility.id);
     },
     enabled: !!facility?.id,

@@ -583,7 +583,7 @@ async function sendLeadLimitWarningEmail(
 
   try {
     const { data: emailResult, error: emailError } = await resend.emails.send({
-      from: "RehabLookup <noreply@resend.dev>",
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
       subject: `${headerEmoji} ${headerTitle}: ${isLimitReached ? 'Leads Paused' : `${remainingLeads} leads remaining`}`,
       html: emailHtml,
@@ -930,7 +930,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         const emailResponse = await resend.emails.send({
-          from: "RehabLookup <noreply@resend.dev>",
+          from: "RehabLookup <no-reply@rehablookup.com>",
           to: emailRecipients,
           subject: emailSubject,
           html: emailHtml,
