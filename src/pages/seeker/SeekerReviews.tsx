@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useOutletContext } from "react-router-dom";
-import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2 } from "lucide-react";
+import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +12,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SeekerOutletContext {
   isAuthenticated: boolean;
@@ -60,6 +71,135 @@ function ReviewCardSkeleton() {
   );
 }
 
+// Separate component for review card to properly use useState
+function ReviewCard({ 
+  review, 
+  onEdit, 
+  onDelete,
+  getStatusBadge,
+  formatDate
+}: { 
+  review: UserReview; 
+  onEdit: (review: UserReview) => void;
+  onDelete: (reviewId: string) => void;
+  getStatusBadge: (status: string) => React.ReactNode;
+  formatDate: (dateString: string) => string;
+}) {
+  const [logoError, setLogoError] = useState(false);
+  const initials = getInitials(review.facility_name);
+  const hasLogo = review.facility_logo_url && !logoError;
+
+  return (
+    <article 
+      className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300"
+    >
+      <div className="flex flex-col sm:flex-row">
+        {/* Facility Logo Section */}
+        <div className="relative sm:w-40 shrink-0 overflow-hidden bg-muted">
+          <div className="h-[100px] sm:h-full w-full">
+            {hasLogo ? (
+              <img 
+                src={review.facility_logo_url!}
+                alt={`${review.facility_name} logo`}
+                className="absolute inset-0 h-full w-full object-contain object-center p-4 bg-white"
+                loading="lazy"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                <div className="text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 shadow-sm">
+                    <span className="font-display text-xl font-bold text-primary">
+                      {initials}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="flex flex-1 flex-col p-4">
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <Link 
+                  to={`/center/${review.facility_slug}`}
+                  className="font-display text-base font-bold leading-tight hover:text-primary transition-colors"
+                >
+                  {review.facility_name}
+                </Link>
+                {getStatusBadge(review.status)}
+              </div>
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="font-medium">{review.facility_city}, {review.facility_state}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              {review.status === 'pending' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEdit(review)}
+                  className="h-8 w-8"
+                  title="Edit review"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(review.id)}
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                title="Delete review"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Rating & Type */}
+          <div className="flex items-center gap-3 flex-wrap mb-2">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`h-4 w-4 ${
+                    star <= review.rating
+                      ? "fill-amber-400 text-amber-400"
+                      : "text-muted-foreground/30"
+                  }`}
+                />
+              ))}
+            </div>
+            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold">
+              <Building2 className="h-3 w-3" />
+              {review.facility_type}
+            </Badge>
+          </div>
+
+          {/* Review Text */}
+          {review.review_text && (
+            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">
+              "{review.review_text}"
+            </p>
+          )}
+
+          {/* Date */}
+          <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span>Reviewed on {formatDate(review.created_at)}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function SeekerReviews() {
   const context = useOutletContext<SeekerOutletContext>();
   const isAuthenticated = context?.isAuthenticated ?? false;
@@ -70,6 +210,8 @@ export default function SeekerReviews() {
   const [editRating, setEditRating] = useState(5);
   const [editText, setEditText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -84,7 +226,7 @@ export default function SeekerReviews() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('facility_reviews')
       .select(`
         id,
@@ -98,7 +240,14 @@ export default function SeekerReviews() {
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false });
 
-    if (data) {
+    if (error) {
+      console.error('Error fetching reviews:', error);
+      toast({
+        title: "Error loading reviews",
+        description: "Could not load your reviews. Please try again.",
+        variant: "destructive"
+      });
+    } else if (data) {
       setReviews(data.map(review => ({
         id: review.id,
         facility_id: review.facility_id,
@@ -122,7 +271,7 @@ export default function SeekerReviews() {
     if (review.status !== 'pending') {
       toast({
         title: "Cannot edit",
-        description: "Only pending reviews can be edited.",
+        description: "Only pending reviews can be edited. Published reviews cannot be modified.",
         variant: "destructive"
       });
       return;
@@ -147,13 +296,13 @@ export default function SeekerReviews() {
     if (error) {
       toast({
         title: "Error saving",
-        description: "Could not update your review.",
+        description: "Could not update your review. Please try again.",
         variant: "destructive"
       });
     } else {
       toast({
         title: "Review updated",
-        description: "Your review has been updated."
+        description: "Your review has been updated successfully."
       });
       fetchReviews();
     }
@@ -162,25 +311,31 @@ export default function SeekerReviews() {
     setEditingReview(null);
   };
 
-  const handleDelete = async (reviewId: string) => {
+  const handleDeleteConfirm = async () => {
+    if (!deleteReviewId) return;
+
+    setIsDeleting(true);
     const { error } = await supabase
       .from('facility_reviews')
       .delete()
-      .eq('id', reviewId);
+      .eq('id', deleteReviewId);
 
     if (error) {
       toast({
         title: "Error deleting",
-        description: "Could not delete your review.",
+        description: "Could not delete your review. Please try again.",
         variant: "destructive"
       });
     } else {
       toast({
         title: "Review deleted",
-        description: "Your review has been removed."
+        description: "Your review has been removed successfully."
       });
-      setReviews(prev => prev.filter(r => r.id !== reviewId));
+      setReviews(prev => prev.filter(r => r.id !== deleteReviewId));
     }
+
+    setIsDeleting(false);
+    setDeleteReviewId(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -261,126 +416,25 @@ export default function SeekerReviews() {
               Share your experience by leaving reviews on treatment centers you've visited.
             </p>
             <Button asChild>
-              <Link to="/account">Browse Facilities</Link>
+              <Link to="/search" className="gap-2">
+                <Search className="h-4 w-4" />
+                Find Treatment Centers
+              </Link>
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
-          {reviews.map((review) => {
-            const initials = getInitials(review.facility_name);
-            const [logoError, setLogoError] = useState(false);
-            const hasLogo = review.facility_logo_url && !logoError;
-
-            return (
-              <article 
-                key={review.id} 
-                className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300"
-              >
-                <div className="flex flex-col sm:flex-row">
-                  {/* Facility Logo Section */}
-                  <div className="relative sm:w-40 shrink-0 overflow-hidden bg-muted">
-                    <div className="h-[100px] sm:h-full w-full">
-                      {hasLogo ? (
-                        <img 
-                          src={review.facility_logo_url!}
-                          alt={`${review.facility_name} logo`}
-                          className="absolute inset-0 h-full w-full object-contain object-center p-4 bg-white"
-                          loading="lazy"
-                          onError={() => setLogoError(true)}
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                          <div className="text-center">
-                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 shadow-sm">
-                              <span className="font-display text-xl font-bold text-primary">
-                                {initials}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="flex flex-1 flex-col p-4">
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <Link 
-                            to={`/center/${review.facility_slug}`}
-                            className="font-display text-base font-bold leading-tight hover:text-primary transition-colors"
-                          >
-                            {review.facility_name}
-                          </Link>
-                          {getStatusBadge(review.status)}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
-                          <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
-                          <span className="font-medium">{review.facility_city}, {review.facility_state}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        {review.status === 'pending' && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(review)}
-                            className="h-8 w-8"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(review.id)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Rating & Type */}
-                    <div className="flex items-center gap-3 flex-wrap mb-2">
-                      <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`h-4 w-4 ${
-                              star <= review.rating
-                                ? "fill-amber-400 text-amber-400"
-                                : "text-muted-foreground/30"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold">
-                        <Building2 className="h-3 w-3" />
-                        {review.facility_type}
-                      </Badge>
-                    </div>
-
-                    {/* Review Text */}
-                    {review.review_text && (
-                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">
-                        "{review.review_text}"
-                      </p>
-                    )}
-
-                    {/* Date */}
-                    <div className="mt-auto flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>Reviewed on {formatDate(review.created_at)}</span>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+          {reviews.map((review) => (
+            <ReviewCard
+              key={review.id}
+              review={review}
+              onEdit={handleEdit}
+              onDelete={(id) => setDeleteReviewId(id)}
+              getStatusBadge={getStatusBadge}
+              formatDate={formatDate}
+            />
+          ))}
         </div>
       )}
 
@@ -389,6 +443,9 @@ export default function SeekerReviews() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Review</DialogTitle>
+            <DialogDescription>
+              Update your review for {editingReview?.facility_name}
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
@@ -438,6 +495,28 @@ export default function SeekerReviews() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteReviewId} onOpenChange={() => setDeleteReviewId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Review?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Your review will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete Review"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
