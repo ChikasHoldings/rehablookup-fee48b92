@@ -2,17 +2,27 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import {
+  getProviderPlan,
+  getPlanStyles,
+  emailStart,
+  emailEnd,
+  emailHeader,
+  emailBodyStart,
+  emailBodyEnd,
+  emailFooter,
+  emailGreeting,
+  emailParagraph,
+  featuredInsightsBox,
+  usageBox,
+  tipBox,
+  ctaButton,
+  type PlanType,
+} from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// Updated lead limits: Professional and Featured both get 100 leads/month
-const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; name: string }> = {
-  basic: { product_ids: [], lead_limit: 0, name: "Basic" },
-  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 100, name: "Professional" },
-  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 100, name: "Featured" },
 };
 
 interface Lead {
@@ -26,47 +36,10 @@ interface Lead {
   facility_id: string;
 }
 
-async function getProviderPlan(providerEmail: string): Promise<{ planName: string; leadLimit: number }> {
-  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-  
-  if (!stripeKey) {
-    return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
-  }
-
-  try {
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
-    
-    if (customers.data.length === 0) {
-      return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
-    }
-
-    const customerId = customers.data[0].id;
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
-    });
-
-    if (subscriptions.data.length === 0) {
-      return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
-    }
-
-    const productId = subscriptions.data[0].items.data[0].price.product as string;
-    
-    // Support both old and new product IDs
-    if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-      return { planName: "professional", leadLimit: PLAN_CONFIG.professional.lead_limit };
-    } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-      return { planName: "featured", leadLimit: PLAN_CONFIG.featured.lead_limit };
-    }
-    
-    return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
-  } catch (error) {
-    console.error("Error checking subscription:", error);
-    return { planName: "basic", leadLimit: PLAN_CONFIG.basic.lead_limit };
-  }
-}
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[LEAD-DIGEST] ${step}${detailsStr}`);
+};
 
 function generateDigestEmail(
   firstName: string,
@@ -76,32 +49,21 @@ function generateDigestEmail(
   facilityNameMap: Record<string, string>,
   usedLeads: number,
   leadLimit: number,
-  remainingLeads: number,
-  planName: string
+  plan: PlanType
 ): string {
-  const isFeatured = planName === "featured";
-  const isProfessional = planName === "professional";
+  const isFeatured = plan === 'featured';
+  const isProfessional = plan === 'professional';
   const isPaidPlan = isFeatured || isProfessional;
-  
-  // Plan-specific styling
-  const headerGradient = isFeatured 
-    ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
-    : "linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%)";
-  
-  const planBadge = isFeatured 
-    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
-    : isProfessional 
-    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
-    : '';
+  const styles = getPlanStyles(plan);
   
   const leadsHtml = leads.slice(0, 5).map((lead: Lead) => `
     <tr>
-      <td style="padding: 16px 0; border-bottom: 1px solid hsl(220, 13%, 91%);">
-        <p style="margin: 0 0 6px 0; font-weight: 600; color: hsl(217, 54%, 23%); font-size: 15px;">${lead.name}</p>
-        <p style="margin: 0 0 6px 0; font-size: 14px; color: hsl(215, 19%, 35%);">
+      <td style="padding: 16px 0; border-bottom: 1px solid #e5e7eb;">
+        <p style="margin: 0 0 6px 0; font-weight: 600; color: #1B365D; font-size: 15px;">${lead.name}</p>
+        <p style="margin: 0 0 6px 0; font-size: 14px; color: #4b5563;">
           ${lead.phone} • ${lead.email}
         </p>
-        <p style="margin: 0; font-size: 13px; color: hsl(220, 9%, 46%);">
+        <p style="margin: 0; font-size: 13px; color: #6b7280;">
           ${facilityNameMap[lead.facility_id] || "Facility"} • ${lead.preferred_contact === "call" ? "Prefers call" : "Prefers email"}
         </p>
       </td>
@@ -109,152 +71,44 @@ function generateDigestEmail(
   `).join("");
 
   // Featured provider insights
-  const featuredInsights = isFeatured ? `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
-      <tr>
-        <td style="padding: 20px;">
-          <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #92400e;">⭐ Featured Provider Insights</p>
-          <p style="margin: 0; font-size: 14px; color: #78350f; line-height: 1.5;">
-            As a Featured provider, your listings appear at the top of search results. You're receiving exclusive, high-intent leads.
-          </p>
-        </td>
-      </tr>
-    </table>
-  ` : '';
+  const featuredInsights = isFeatured 
+    ? featuredInsightsBox('As a Featured provider, your listings appear at the top of search results. You\'re receiving exclusive, high-intent leads.')
+    : '';
 
-  // Usage section - show for paid plans
-  const usageSection = leadLimit > 0 ? `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border-radius: 8px; margin-bottom: 24px;">
-      <tr>
-        <td style="padding: 20px; text-align: center;">
-          <p style="margin: 0 0 6px 0; font-size: 12px; color: hsl(220, 9%, 46%); text-transform: uppercase; letter-spacing: 0.5px;">Monthly Usage</p>
-          <p style="margin: 0; font-size: 28px; font-weight: 700; color: ${isFeatured ? '#7c3aed' : 'hsl(217, 54%, 23%)'};">${usedLeads} / ${leadLimit}</p>
-          <p style="margin: 6px 0 0 0; font-size: 14px; color: hsl(220, 9%, 46%);">${remainingLeads} remaining this month</p>
-        </td>
-      </tr>
-    </table>
-  ` : "";
+  // Usage section
+  const usageSection = leadLimit > 0 ? usageBox(usedLeads, leadLimit, plan) : '';
 
   // Tips section - only show upgrade prompts for Basic plan
-  const tipsSection = !isPaidPlan ? `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 0 8px 8px 0; margin-top: 24px;">
-      <tr>
-        <td style="padding: 16px;">
-          <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #0369a1;">💡 Tip: Upgrade to receive qualified leads</p>
-          <p style="margin: 0; font-size: 13px; color: #0c4a6e;">
-            Professional and Featured plans include exclusive leads delivered directly to you.
-            <a href="https://rehablookup.com/provider/billing" style="color: #0284c7; text-decoration: underline;">View plans</a>
-          </p>
-        </td>
-      </tr>
-    </table>
-  ` : "";
+  const tipsSection = !isPaidPlan 
+    ? tipBox('Professional and Featured plans include exclusive leads delivered directly to you.', plan, { showUpgradePrompt: true })
+    : '';
 
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: hsl(210, 20%, 96%);">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: hsl(210, 20%, 96%); padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background: ${headerGradient}; padding: 32px; border-radius: 12px 12px 0 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td>
-                    <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup</p>
-                    <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">
-                      ${digestType} Lead Digest${planBadge}
-                    </h1>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-          <!-- Content -->
-          <tr>
-            <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
-              
-              <p style="margin: 0 0 20px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
-                Hi ${firstName},
-              </p>
-              
-              <p style="margin: 0 0 24px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
-                You received <strong>${leads.length} new lead${leads.length === 1 ? "" : "s"}</strong> in the past ${periodText}.
-              </p>
+${emailStart()}
+${emailHeader(`${digestType} Lead Digest`, plan)}
+${emailBodyStart()}
+              ${emailGreeting(firstName)}
+              ${emailParagraph(`You received <strong>${leads.length} new lead${leads.length === 1 ? "" : "s"}</strong> in the past ${periodText}.`)}
               
               ${featuredInsights}
               ${usageSection}
               
               <!-- Leads List -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 ${leadsHtml}
               </table>
               
               ${leads.length > 5 ? `
-              <p style="margin: 16px 0 0 0; font-size: 14px; color: hsl(220, 9%, 46%); text-align: center;">
+              <p style="margin: 16px 0 0 0; font-size: 14px; color: #6b7280; text-align: center;">
                 + ${leads.length - 5} more leads
               </p>
               ` : ""}
               
-              <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 32px;">
-                <tr>
-                  <td align="center">
-                    <a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: ${isFeatured ? '#7c3aed' : 'hsl(217, 54%, 23%)'}; color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                      View All Leads
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
+              ${ctaButton('View All Leads', 'https://rehablookup.com/provider/leads', plan)}
               ${tipsSection}
-              
-            </td>
-          </tr>
-          
-          <!-- Footer -->
-          <tr>
-            <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center">
-                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">RehabLookup</p>
-                    <p style="margin: 0 0 16px 0; font-size: 13px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Connecting families with trusted treatment providers</p>
-                    <table cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td style="padding: 0 8px;">
-                          <a href="https://rehablookup.com/provider/settings" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Notification Settings</a>
-                        </td>
-                        <td style="color: hsla(0, 0%, 100%, 0.4); font-size: 12px;">|</td>
-                        <td style="padding: 0 8px;">
-                          <a href="mailto:help@rehablookup.com" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Contact Support</a>
-                        </td>
-                      </tr>
-                    </table>
-                    <p style="margin: 16px 0 0 0; font-size: 11px; color: hsla(0, 0%, 100%, 0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+${emailBodyEnd()}
+${emailFooter()}
+${emailEnd()}
   `;
 }
 
@@ -266,6 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
 
   if (!resendApiKey) {
     console.error("RESEND_API_KEY not configured");
@@ -277,13 +132,14 @@ const handler = async (req: Request): Promise<Response> => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const resend = new Resend(resendApiKey);
+  const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" }) : null;
 
   try {
     const now = new Date();
     const currentHour = now.getUTCHours().toString().padStart(2, "0") + ":00";
     const currentDay = now.getUTCDay();
 
-    console.log(`[LEAD-DIGEST] Running at ${now.toISOString()}, checking for hour: ${currentHour}`);
+    logStep(`Running at ${now.toISOString()}, checking for hour: ${currentHour}`);
 
     const { data: providers, error: providersError } = await supabase
       .from("notification_preferences")
@@ -297,20 +153,20 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!providers || providers.length === 0) {
-      console.log("[LEAD-DIGEST] No providers scheduled for this time slot");
+      logStep("No providers scheduled for this time slot");
       return new Response(
         JSON.stringify({ success: true, message: "No digests to send", count: 0 }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log(`[LEAD-DIGEST] Found ${providers.length} providers to process`);
+    logStep(`Found ${providers.length} providers to process`);
 
     let digestsSent = 0;
 
     for (const provider of providers) {
       if (provider.lead_notification_frequency === "weekly_digest" && currentDay !== 1) {
-        console.log(`[LEAD-DIGEST] Skipping weekly digest for ${provider.user_id} - not Monday`);
+        logStep(`Skipping weekly digest for ${provider.user_id} - not Monday`);
         continue;
       }
 
@@ -321,12 +177,13 @@ const handler = async (req: Request): Promise<Response> => {
         .maybeSingle();
 
       if (!profile?.email) {
-        console.log(`[LEAD-DIGEST] No email found for user ${provider.user_id}`);
+        logStep(`No email found for user ${provider.user_id}`);
         continue;
       }
 
-      const { planName, leadLimit } = await getProviderPlan(profile.email);
-      console.log(`[LEAD-DIGEST] Provider ${profile.email} is on ${planName} plan`);
+      // Get plan info using shared template
+      const planInfo = await getProviderPlan(profile.email, stripe);
+      logStep(`Provider ${profile.email} is on ${planInfo.planName} plan`);
 
       const lookbackHours = provider.lead_notification_frequency === "daily_digest" ? 24 : 168;
       const lookbackDate = new Date(now.getTime() - lookbackHours * 60 * 60 * 1000);
@@ -337,7 +194,7 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("user_id", provider.user_id);
 
       if (!facilities || facilities.length === 0) {
-        console.log(`[LEAD-DIGEST] No facilities for user ${provider.user_id}`);
+        logStep(`No facilities for user ${provider.user_id}`);
         continue;
       }
 
@@ -361,7 +218,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       if (!leads || leads.length === 0) {
-        console.log(`[LEAD-DIGEST] No new leads for user ${provider.user_id}`);
+        logStep(`No new leads for user ${provider.user_id}`);
         await supabase
           .from("notification_preferences")
           .update({ last_digest_sent_at: now.toISOString() })
@@ -380,9 +237,8 @@ const handler = async (req: Request): Promise<Response> => {
         .gte("created_at", startOfMonth.toISOString());
       
       const usedLeads = monthlyLeadCount || 0;
-      const remainingLeads = leadLimit - usedLeads;
 
-      console.log(`[LEAD-DIGEST] Sending digest with ${leads.length} leads to ${profile.email}`);
+      logStep(`Sending digest with ${leads.length} leads to ${profile.email}`);
 
       const digestType = provider.lead_notification_frequency === "daily_digest" ? "Daily" : "Weekly";
       const periodText = provider.lead_notification_frequency === "daily_digest" ? "24 hours" : "week";
@@ -394,19 +250,17 @@ const handler = async (req: Request): Promise<Response> => {
         leads,
         facilityNameMap,
         usedLeads,
-        leadLimit,
-        remainingLeads,
-        planName
+        planInfo.leadLimit,
+        planInfo.plan
       );
 
       try {
-        const planDisplayName = PLAN_CONFIG[planName]?.name || "Basic";
-        const subjectPrefix = planName === "featured" ? "⭐ " : "";
+        const subjectPrefix = planInfo.plan === "featured" ? "⭐ " : "";
         
         await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
-          subject: `${subjectPrefix}${digestType} Digest: ${leads.length} new lead${leads.length === 1 ? "" : "s"}`,
+          subject: `${subjectPrefix}${digestType} Digest: ${leads.length} New Lead${leads.length === 1 ? "" : "s"}`,
           html: emailHtml,
         });
 
@@ -416,21 +270,21 @@ const handler = async (req: Request): Promise<Response> => {
           .eq("user_id", provider.user_id);
 
         digestsSent++;
-        console.log(`[LEAD-DIGEST] Successfully sent digest to ${profile.email}`);
+        logStep(`Digest sent to ${profile.email}`);
       } catch (emailError) {
-        console.error(`[LEAD-DIGEST] Failed to send digest to ${profile.email}:`, emailError);
+        console.error(`Failed to send digest to ${profile.email}:`, emailError);
       }
     }
 
-    console.log(`[LEAD-DIGEST] Completed - sent ${digestsSent} digests`);
+    logStep(`Completed. Sent ${digestsSent} digests.`);
 
     return new Response(
-      JSON.stringify({ success: true, digestsSent }),
+      JSON.stringify({ success: true, count: digestsSent }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
-  } catch (error: unknown) {
-    console.error("[LEAD-DIGEST] Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }

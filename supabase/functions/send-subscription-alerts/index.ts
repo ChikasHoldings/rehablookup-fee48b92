@@ -2,24 +2,25 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import {
+  PLAN_CONFIG,
+  PRODUCT_TO_PLAN,
+  getPlanStyles,
+  emailStart,
+  emailEnd,
+  emailHeader,
+  emailBodyStart,
+  emailBodyEnd,
+  emailGreeting,
+  emailParagraph,
+  featuredInsightsBox,
+  ctaButton,
+  type PlanType,
+} from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const PLAN_CONFIG: Record<string, { lead_limit: number; name: string; exclusivity: string }> = {
-  basic: { lead_limit: 0, name: "Basic", exclusivity: "none" },
-  professional: { lead_limit: 100, name: "Professional", exclusivity: "shared" },
-  featured: { lead_limit: 100, name: "Featured", exclusivity: "exclusive" },
-};
-
-// Support both old and new product IDs for existing subscriptions
-const PRODUCT_TO_PLAN: Record<string, string> = {
-  "prod_TbalLOPujTIoUe": "professional",
-  "prod_Tbyz1bf6iYyzYd": "professional",
-  "prod_TbalOeJZA2ZoJl": "featured",
-  "prod_TbyzJVNOQL71NN": "featured",
 };
 
 const logStep = (step: string, details?: unknown) => {
@@ -29,188 +30,89 @@ const logStep = (step: string, details?: unknown) => {
 
 function generateRenewalEmail(
   firstName: string,
-  planConfig: typeof PLAN_CONFIG[string],
-  plan: string,
+  plan: PlanType,
   days: number,
   renewalDate: string
 ): string {
-  const isFeatured = plan === "featured";
-  const isProfessional = plan === "professional";
+  const planConfig = PLAN_CONFIG[plan];
+  const isFeatured = plan === 'featured';
   
-  const headerGradient = isFeatured 
-    ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
-    : "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)";
-  
-  const planBadge = isFeatured 
-    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
-    : isProfessional 
-    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
+  const featuredBenefits = isFeatured 
+    ? featuredInsightsBox('Priority placement, exclusive leads, and premium visibility will continue after renewal.')
     : '';
 
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          
-          <tr>
-            <td style="background: ${headerGradient}; padding: 24px 32px; border-radius: 8px 8px 0 0;">
-              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
-              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                Subscription Renewal${planBadge}
-              </h1>
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+${emailStart()}
+${emailHeader('Subscription Renewal', plan)}
+${emailBodyStart()}
+              ${emailGreeting(firstName)}
+              ${emailParagraph(`Your <strong>${planConfig.name}</strong> plan renews in <strong>${days} day${days > 1 ? "s" : ""}</strong> on ${renewalDate}.`)}
               
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Hi ${firstName},
-              </p>
+              ${featuredBenefits}
               
-              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Your <strong>${planConfig.name}</strong> plan renews in <strong>${days} day${days > 1 ? "s" : ""}</strong> on ${renewalDate}.
-              </p>
+              ${emailParagraph('No action needed if you want to continue. To update your payment method or change plans, visit your billing settings.')}
               
-              ${isFeatured ? `
-              <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-                <p style="margin: 0; font-size: 14px; color: #92400e;">
-                  ⭐ <strong>Featured Provider Benefits:</strong> Priority placement, exclusive leads, and premium visibility will continue after renewal.
-                </p>
-              </div>
-              ` : ''}
-              
-              <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                No action needed if you want to continue. To update your payment method or change plans, visit your billing settings.
-              </p>
-              
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center">
-                    <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: ${isFeatured ? '#7c3aed' : '#1B365D'}; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                      Manage Subscription
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
-              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
-              </p>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+              ${ctaButton('Manage Subscription', 'https://rehablookup.com/provider/billing', plan)}
+${emailBodyEnd()}
+              <tr>
+                <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
+                  <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
+                  </p>
+                </td>
+              </tr>
+${emailEnd()}
   `;
 }
 
 function generateLeadLimitEmail(
   firstName: string,
-  planConfig: typeof PLAN_CONFIG[string],
-  plan: string,
+  plan: PlanType,
   threshold: { percent: number; key: string; subject: string; isUrgent: boolean },
   leadCount: number
 ): string {
-  const isFeatured = plan === "featured";
-  const isProfessional = plan === "professional";
-  const isPaidPlan = isFeatured || isProfessional;
-  
-  // For paid plans, use plan-colored headers instead of red/orange
-  let headerGradient: string;
-  if (threshold.isUrgent) {
-    headerGradient = isFeatured 
-      ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
-      : isProfessional 
-      ? "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)"
-      : "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)";
-  } else {
-    headerGradient = isFeatured 
-      ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
-      : isProfessional 
-      ? "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)"
-      : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)";
-  }
-  
-  const planBadge = isFeatured 
-    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
-    : isProfessional 
-    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
-    : '';
+  const planConfig = PLAN_CONFIG[plan];
+  const isFeatured = plan === 'featured';
+  const isProfessional = plan === 'professional';
+  const styles = getPlanStyles(plan, { isUrgent: threshold.isUrgent });
 
   // For Featured providers at limit, show different messaging
-  const limitMessage = threshold.isUrgent
-    ? (isFeatured 
-      ? `<p style="margin: 0 0 24px 0; color: #7c3aed; font-size: 14px; line-height: 1.6;">
-          You've maximized your lead allocation for this month! Your leads will reset at the start of next month.
-        </p>`
-      : isProfessional
-      ? `<p style="margin: 0 0 24px 0; color: #1B365D; font-size: 14px; line-height: 1.6;">
-          You've used all your leads for this month. Consider upgrading to Featured for priority placement and exclusive leads.
-        </p>`
-      : `<p style="margin: 0 0 24px 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
-          New qualified leads will not be delivered until your limit resets next month or you upgrade your plan.
-        </p>`)
-    : `<p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-        ${isPaidPlan ? "You're making great progress this month!" : "Consider upgrading to receive more leads and grow your business."}
+  let limitMessage = '';
+  if (threshold.isUrgent) {
+    if (isFeatured) {
+      limitMessage = `<p style="margin: 0 0 24px 0; color: #7c3aed; font-size: 14px; line-height: 1.6;">
+        You've maximized your lead allocation for this month! Your leads will reset at the start of next month.
       </p>`;
+    } else if (isProfessional) {
+      limitMessage = `<p style="margin: 0 0 24px 0; color: #1B365D; font-size: 14px; line-height: 1.6;">
+        You've used all your leads for this month. Consider upgrading to Featured for priority placement and exclusive leads.
+      </p>`;
+    } else {
+      limitMessage = `<p style="margin: 0 0 24px 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
+        New qualified leads will not be delivered until your limit resets next month or you upgrade your plan.
+      </p>`;
+    }
+  } else {
+    limitMessage = emailParagraph(isFeatured || isProfessional 
+      ? "You're making great progress this month!" 
+      : "Consider upgrading to receive more leads and grow your business.");
+  }
 
   // CTA button - don't show upgrade for Featured
-  const ctaButton = isFeatured
-    ? `<a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: #7c3aed; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-        View Your Leads
-      </a>`
-    : `<a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-        ${threshold.isUrgent && !isProfessional ? "Upgrade Now" : "View Plans"}
-      </a>`;
+  const ctaText = isFeatured 
+    ? 'View Your Leads'
+    : (threshold.isUrgent && !isProfessional ? 'Upgrade Now' : 'View Plans');
+  const ctaUrl = isFeatured 
+    ? 'https://rehablookup.com/provider/leads'
+    : 'https://rehablookup.com/provider/billing';
 
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          
-          <tr>
-            <td style="background: ${headerGradient}; padding: 24px 32px; border-radius: 8px 8px 0 0;">
-              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
-              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                ${threshold.subject}${planBadge}
-              </h1>
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+${emailStart()}
+${emailHeader(threshold.subject, plan, { isUrgent: threshold.isUrgent })}
+${emailBodyStart()}
+              ${emailGreeting(firstName)}
               
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Hi ${firstName},
-              </p>
-              
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 6px; margin-bottom: 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 6px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px; text-align: center;">
                     <p style="margin: 0 0 4px 0; font-size: 28px; font-weight: 600; color: ${isFeatured ? '#7c3aed' : '#1B365D'};">${leadCount} / ${planConfig.lead_limit}</p>
@@ -221,31 +123,16 @@ function generateLeadLimitEmail(
               
               ${limitMessage}
               
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center">
-                    ${ctaButton}
-                  </td>
-                </tr>
-              </table>
-              
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
-              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
-              </p>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+              ${ctaButton(ctaText, ctaUrl, plan)}
+${emailBodyEnd()}
+              <tr>
+                <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
+                  <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
+                  </p>
+                </td>
+              </tr>
+${emailEnd()}
   `;
 }
 
@@ -308,7 +195,7 @@ serve(async (req) => {
         const subscriptionEnd = new Date(subscription.current_period_end * 1000);
         const daysUntilExpiry = Math.ceil((subscriptionEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         const productId = subscription.items.data[0].price.product as string;
-        const plan = PRODUCT_TO_PLAN[productId] || "basic";
+        const plan = (PRODUCT_TO_PLAN[productId] || "basic") as PlanType;
         const planConfig = PLAN_CONFIG[plan];
 
         logStep("Checking user", { email: profile.email, plan, daysUntilExpiry });
@@ -331,7 +218,6 @@ serve(async (req) => {
               
               const emailHtml = generateRenewalEmail(
                 profile.first_name || "there",
-                planConfig,
                 plan,
                 days,
                 renewalDate
@@ -403,7 +289,6 @@ serve(async (req) => {
                 if (!existingAlert) {
                   const emailHtml = generateLeadLimitEmail(
                     profile.first_name || "there",
-                    planConfig,
                     plan,
                     threshold,
                     leadCount || 0
@@ -414,18 +299,20 @@ serve(async (req) => {
                   const { error: emailError } = await resend.emails.send({
                     from: "RehabLookup <no-reply@rehablookup.com>",
                     to: [profile.email],
-                    subject: `${subjectPrefix}${threshold.subject} - ${planConfig.name} Plan`,
+                    subject: `${subjectPrefix}${threshold.subject}`,
                     html: emailHtml,
                   });
 
                   if (!emailError) {
                     await supabaseClient.from("subscription_alerts").insert({
                       user_id: profile.user_id,
-                      alert_type: threshold.isUrgent ? "lead_limit_reached" : "lead_limit_warning",
+                      alert_type: "lead_limit",
                       alert_key: alertKey,
                     });
-                    alertsSent.push({ type: `lead_${threshold.key}`, email: profile.email });
-                    logStep("Sent lead limit alert", { email: profile.email, threshold: threshold.percent });
+                    alertsSent.push({ type: threshold.key, email: profile.email });
+                    logStep("Sent lead limit alert", { email: profile.email, threshold: threshold.key });
+                  } else {
+                    logStep("Failed to send lead limit email", { email: profile.email, error: emailError });
                   }
                 }
                 break;
@@ -434,26 +321,22 @@ serve(async (req) => {
           }
         }
       } catch (userError) {
-        logStep("Error processing user", { email: profile.email, error: String(userError) });
+        logStep("Error processing user", { email: profile.email, error: userError });
       }
     }
 
     logStep("Completed", { alertsSent: alertsSent.length });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        alertsSent,
-        message: `Processed ${profiles.length} users, sent ${alertsSent.length} alerts` 
-      }),
+      JSON.stringify({ success: true, alerts_sent: alertsSent }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+    );
   }
 });
