@@ -74,11 +74,13 @@ export function useProviderFacilities() {
 
   // Real-time subscription for facilities
   useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
     const setupSubscription = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const channel = supabase
+      channel = supabase
         .channel("provider-facilities-realtime")
         .on(
           "postgres_changes",
@@ -94,13 +96,15 @@ export function useProviderFacilities() {
           }
         )
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     };
 
     setupSubscription();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, [queryClient]);
 
   return {

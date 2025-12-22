@@ -179,3 +179,9 @@ verify_jwt = false
 
 [functions.send-credential-notification]
 verify_jwt = true
+
+[functions.delete-provider-account]
+verify_jwt = true
+
+[functions.delete-seeker-account]
+verify_jwt = true
