@@ -401,7 +401,7 @@ export default function SeekerRequests() {
               Browse treatment centers and send a request to get started. Your form information will be saved for quick submissions to other facilities.
             </p>
             <Button asChild>
-              <Link to="/search" className="gap-2">
+              <Link to="/account" className="gap-2">
                 <Building2 className="h-4 w-4" />
                 Browse Treatment Centers
               </Link>
