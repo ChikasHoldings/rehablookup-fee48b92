@@ -1,18 +1,37 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import Stripe from "https://esm.sh/stripe@14.21.0";
+import {
+  PLAN_CONFIG,
+  getProviderPlan,
+  emailStart,
+  emailHeader,
+  emailBodyStart,
+  emailBodyEnd,
+  emailGreeting,
+  emailParagraph,
+  featuredInsightsBox,
+  professionalInfoBox,
+  alertBox,
+  upgradePromptBox,
+  ctaButton,
+  emailFooter,
+  emailEnd,
+  type PlanType,
+} from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan configuration
-const PLAN_CONFIG: Record<string, { product_ids: string[]; name: string }> = {
-  basic: { product_ids: [], name: "Basic" },
-  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], name: "Professional" },
-  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], name: "Featured" },
+// Plan configuration (for product ID lookups)
+const PRODUCT_TO_PLAN: Record<string, string> = {
+  "prod_TbalLOPujTIoUe": "professional",
+  "prod_Tbyz1bf6iYyzYd": "professional",
+  "prod_TbalOeJZA2ZoJl": "featured",
+  "prod_TbyzJVNOQL71NN": "featured",
 };
 
 interface ApprovalEmailRequest {
@@ -21,256 +40,112 @@ interface ApprovalEmailRequest {
   userId: string;
 }
 
-async function getProviderPlan(email: string): Promise<string> {
-  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-  if (!stripeKey) return "basic";
-
-  try {
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    
-    if (customers.data.length === 0) return "basic";
-
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customers.data[0].id,
-      status: "active",
-      limit: 1,
-    });
-
-    if (subscriptions.data.length === 0) return "basic";
-
-    const productId = subscriptions.data[0].items.data[0].price.product as string;
-    
-    if (PLAN_CONFIG.professional.product_ids.includes(productId)) return "professional";
-    if (PLAN_CONFIG.featured.product_ids.includes(productId)) return "featured";
-    
-    return "basic";
-  } catch (error) {
-    console.error("Error getting plan:", error);
-    return "basic";
-  }
-}
-
 function generateApprovalEmail(
   providerName: string,
   facilityName: string,
   profileUrl: string,
-  plan: string
+  plan: PlanType
 ): string {
   const isFeatured = plan === "featured";
   const isProfessional = plan === "professional";
   const isPaidPlan = isFeatured || isProfessional;
-  
+
+  // Use green gradient for approval success
   const headerGradient = isFeatured 
     ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
     : "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)";
+
+  let email = emailStart('#f4f6f9');
   
-  const planBadge = isFeatured 
-    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
-    : isProfessional 
-    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
-    : '';
-
-  // Featured-specific benefits
-  const featuredBenefits = isFeatured ? `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 28px;">
-      <tr>
-        <td style="padding: 20px;">
-          <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #92400e;">
-            ⭐ Your Featured Provider Benefits:
-          </p>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #78350f;">
-                • Priority placement at the top of search results
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #78350f;">
-                • Exclusive, high-intent leads
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #78350f;">
-                • Premium visibility with Featured badge
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  ` : '';
-
-  // Professional benefits
-  const professionalBenefits = isProfessional ? `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
-      <tr>
-        <td style="padding: 16px 20px;">
-          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #0369a1;">
-            ✓ <strong>Professional Plan Active:</strong> You'll receive qualified leads directly to your dashboard.
-          </p>
-        </td>
-      </tr>
-    </table>
-  ` : '';
-
-  // Basic plan upsell
-  const basicUpsell = !isPaidPlan ? `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 12px; margin-bottom: 28px;">
-      <tr>
-        <td style="padding: 20px;">
-          <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #1B365D;">
-            💡 Ready to receive leads?
-          </p>
-          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">
-            Upgrade to Professional or Featured to start receiving qualified leads from families actively seeking treatment.
-            <a href="https://rehablookup.com/provider/billing" style="color: #1B365D; font-weight: 500;">View plans →</a>
-          </p>
-        </td>
-      </tr>
-    </table>
-  ` : '';
-
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Listing Approved</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
+  // Custom header for approval (includes checkmark icon)
+  email += `
           <tr>
-            <td style="background: ${headerGradient}; padding: 40px 32px; text-align: center;">
+            <td style="background: ${headerGradient}; padding: 40px 32px; text-align: center; border-radius: 12px 12px 0 0;">
               <div style="font-size: 48px; margin-bottom: 16px;">✓</div>
-              <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 26px; font-weight: 700;">
-                You're Live on RehabLookup${planBadge}
+              <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
+              <h1 style="margin: 0; font-size: 26px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700;">
+                You're Live on RehabLookup${isFeatured ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>` : isProfessional ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>` : ''}
               </h1>
             </td>
           </tr>
-          
-          <!-- Body -->
-          <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 17px; color: #1a1a1a; line-height: 1.6;">
-                Hi ${providerName},
-              </p>
-              
-              <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.7;">
-                Your listing for <strong style="color: #1a1a1a;">${facilityName}</strong> has been approved. Families searching for treatment can now find and contact you directly.
-              </p>
-              
-              ${featuredBenefits}
-              ${professionalBenefits}
-              
-              <!-- Info Box -->
+  `;
+
+  email += emailBodyStart();
+  email += emailGreeting(providerName);
+  email += emailParagraph(`Your listing for <strong style="color: #1a1a1a;">${facilityName}</strong> has been approved. Families searching for treatment can now find and contact you directly.`);
+
+  // Featured benefits
+  if (isFeatured) {
+    email += `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; color: #92400e;">
+                      ⭐ Your Featured Provider Benefits:
+                    </p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr><td style="padding: 4px 0; font-size: 14px; color: #78350f;">• Priority placement at the top of search results</td></tr>
+                      <tr><td style="padding: 4px 0; font-size: 14px; color: #78350f;">• Exclusive, high-intent leads</td></tr>
+                      <tr><td style="padding: 4px 0; font-size: 14px; color: #78350f;">• Premium visibility with Featured badge</td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+    `;
+  } else if (isProfessional) {
+    email += professionalInfoBox("✓ <strong>Professional Plan Active:</strong> You'll receive qualified leads directly to your dashboard.");
+  }
+
+  // What happens next
+  email += `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdf4; border-radius: 12px; margin-bottom: 32px;">
                 <tr>
                   <td style="padding: 24px;">
-                    <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #166534;">
+                    <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; color: #166534;">
                       What happens next:
                     </p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #166534; line-height: 1.6;">
-                          • Your profile shows up in search results
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #166534; line-height: 1.6;">
-                          • New leads go straight to your dashboard
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #166534; line-height: 1.6;">
-                          • You get notified when someone reaches out
-                        </td>
-                      </tr>
+                      <tr><td style="padding: 8px 0; font-size: 15px; color: #166534; line-height: 1.6;">• Your profile shows up in search results</td></tr>
+                      <tr><td style="padding: 8px 0; font-size: 15px; color: #166534; line-height: 1.6;">• New leads go straight to your dashboard</td></tr>
+                      <tr><td style="padding: 8px 0; font-size: 15px; color: #166534; line-height: 1.6;">• You get notified when someone reaches out</td></tr>
                     </table>
                   </td>
                 </tr>
               </table>
-              
-              ${basicUpsell}
-              
-              <!-- CTA Button -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+  `;
+
+  // Basic plan upsell
+  if (!isPaidPlan) {
+    email += `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 12px; margin-bottom: 28px;">
                 <tr>
-                  <td align="center">
-                    <a href="${profileUrl}" style="display: inline-block; background: ${isFeatured ? '#7c3aed' : '#1B365D'}; color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 16px;">
-                      See Your Listing
-                    </a>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; color: #1B365D;">
+                      💡 Ready to receive leads?
+                    </p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">
+                      Upgrade to Professional or Featured to start receiving qualified leads from families actively seeking treatment.
+                      <a href="https://rehablookup.com/provider/billing" style="color: #1B365D; font-weight: 500;">View plans →</a>
+                    </p>
                   </td>
                 </tr>
               </table>
-              
-              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; color: #64748b; text-align: center;">
+    `;
+  }
+
+  email += ctaButton("See Your Listing", profileUrl, plan);
+  
+  email += `
+              <p style="margin: 24px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #64748b; text-align: center;">
                 <a href="https://rehablookup.com/provider/dashboard" style="color: #1B365D; text-decoration: none; font-weight: 500;">Go to Dashboard</a>
               </p>
-            </td>
-          </tr>
-          
-          <!-- Footer -->
-          <tr>
-            <td style="background: #1B365D; padding: 32px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding-bottom: 12px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #ffffff;">
-                      RehabLookup
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-bottom: 20px;">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.8);">
-                      Connecting families with trusted treatment providers
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-bottom: 16px;">
-                    <table role="presentation" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 0 12px;">
-                          <a href="https://rehablookup.com" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Website</a>
-                        </td>
-                        <td style="color: rgba(255,255,255,0.3);">|</td>
-                        <td style="padding: 0 12px;">
-                          <a href="mailto:help@rehablookup.com" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Support</a>
-                        </td>
-                        <td style="color: rgba(255,255,255,0.3);">|</td>
-                        <td style="padding: 0 12px;">
-                          <a href="https://rehablookup.com/privacy-policy" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #93c5fd; text-decoration: none;">Privacy</a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center">
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.5);">
-                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
   `;
+
+  email += emailBodyEnd();
+  email += emailFooter({ includeNotificationSettings: false });
+  email += emailEnd();
+
+  return email;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -282,6 +157,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
 
     if (!resendApiKey) {
       console.error("RESEND_API_KEY not configured");
@@ -297,6 +173,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending approval email for facility:", { facilityId, facilityName, userId });
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" }) : null;
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
@@ -329,13 +206,13 @@ const handler = async (req: Request): Promise<Response> => {
     const providerName = profile.first_name || "there";
     
     // Get provider plan for styling
-    const providerPlan = await getProviderPlan(profile.email);
-    console.log("Provider plan:", providerPlan);
+    const planInfo = await getProviderPlan(profile.email, stripe);
+    console.log("Provider plan:", planInfo.plan);
 
-    const emailHtml = generateApprovalEmail(providerName, facilityName, profileUrl, providerPlan);
+    const emailHtml = generateApprovalEmail(providerName, facilityName, profileUrl, planInfo.plan);
 
     const resend = new Resend(resendApiKey);
-    const subjectPrefix = providerPlan === "featured" ? "⭐ " : "";
+    const subjectPrefix = planInfo.plan === "featured" ? "⭐ " : "";
     
     const emailResponse = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
