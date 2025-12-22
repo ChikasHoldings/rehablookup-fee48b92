@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Star, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Star, Loader2, AlertCircle, CheckCircle2, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -12,24 +12,42 @@ interface ReviewFormProps {
   facilityName: string;
   userReview: FacilityReview | null;
   isAuthenticated: boolean;
+  isEmailVerified?: boolean;
   onSubmit: (rating: number, reviewText: string) => Promise<{ error: Error | null }>;
   onUpdate: (rating: number, reviewText: string) => Promise<{ error: Error | null }>;
   onDelete: () => Promise<{ error: Error | null }>;
+  onResendVerification?: () => Promise<{ error: Error | null }>;
 }
 
 export function ReviewForm({ 
   facilityName, 
   userReview, 
   isAuthenticated,
+  isEmailVerified = true,
   onSubmit,
   onUpdate,
-  onDelete
+  onDelete,
+  onResendVerification
 }: ReviewFormProps) {
   const [rating, setRating] = useState(userReview?.rating || 0);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState(userReview?.review_text || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResendVerification = async () => {
+    if (!onResendVerification) return;
+    setIsResending(true);
+    const { error } = await onResendVerification();
+    setIsResending(false);
+    
+    if (error) {
+      toast.error('Failed to send verification email');
+    } else {
+      toast.success('Verification email sent! Check your inbox.');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +103,27 @@ export function ReviewForm({
           </p>
           <Button asChild>
             <Link to="/auth">Sign In to Review</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isEmailVerified) {
+    return (
+      <Card className="border-yellow-500/20 bg-yellow-500/5">
+        <CardContent className="py-8 text-center">
+          <Mail className="h-10 w-10 text-yellow-600 mx-auto mb-3" />
+          <h3 className="font-medium text-lg mb-2">Verify Your Email</h3>
+          <p className="text-muted-foreground mb-4">
+            Please verify your email address before leaving a review. Check your inbox for a verification link.
+          </p>
+          <Button 
+            onClick={handleResendVerification} 
+            disabled={isResending}
+            variant="outline"
+          >
+            {isResending ? 'Sending...' : 'Resend Verification Email'}
           </Button>
         </CardContent>
       </Card>

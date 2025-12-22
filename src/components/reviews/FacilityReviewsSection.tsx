@@ -15,10 +15,12 @@ export function FacilityReviewsSection({ facilityId, facilityName }: FacilityRev
     averageRating,
     reviewCount,
     isAuthenticated,
+    isEmailVerified,
     submitReview,
     updateReview,
     deleteReview,
-    toggleHelpful
+    toggleHelpful,
+    resendVerificationEmail
   } = useFacilityReviews(facilityId);
 
   return (
@@ -27,9 +29,11 @@ export function FacilityReviewsSection({ facilityId, facilityName }: FacilityRev
         facilityName={facilityName}
         userReview={userReview}
         isAuthenticated={isAuthenticated}
+        isEmailVerified={isEmailVerified}
         onSubmit={submitReview}
         onUpdate={updateReview}
         onDelete={deleteReview}
+        onResendVerification={resendVerificationEmail}
       />
       
       <ReviewsList
