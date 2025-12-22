@@ -11,7 +11,7 @@ import {
   Star,
   TrendingUp,
   Bookmark,
-  MessageSquare,
+  Send,
   ChevronRight,
   Filter,
   X,
@@ -494,13 +494,13 @@ export default function SeekerHome() {
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
-                <Link to="/account/inbox" className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group">
+                <Link to="/account/requests" className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group">
                   <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
-                    <MessageSquare className="h-4 w-4" />
+                    <Send className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">Inbox</p>
-                    <p className="text-xs text-muted-foreground">Messages & Forms</p>
+                    <p className="font-semibold text-foreground">My Requests</p>
+                    <p className="text-xs text-muted-foreground">Track Submissions</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>

@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, Star, Lock, LogIn, UserPlus } from "lucide-react";
+import { Heart, Star, Lock, LogIn, UserPlus, Send } from "lucide-react";
 
 interface AuthPromptProps {
   title?: string;
   description?: string;
-  icon?: "heart" | "star" | "lock";
+  icon?: "heart" | "star" | "lock" | "send";
   returnTo?: string;
 }
 
@@ -16,7 +16,7 @@ export function AuthPrompt({
   icon = "lock",
   returnTo
 }: AuthPromptProps) {
-  const IconComponent = icon === "heart" ? Heart : icon === "star" ? Star : Lock;
+  const IconComponent = icon === "heart" ? Heart : icon === "star" ? Star : icon === "send" ? Send : Lock;
   const authUrl = returnTo ? `/auth?returnTo=${encodeURIComponent(returnTo)}` : "/auth";
 
   return (

@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { Home, Inbox, Heart, Star, Settings, LogOut, LogIn } from "lucide-react";
+import { Home, Send, Heart, Star, Settings, LogOut, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,7 +18,7 @@ export interface SeekerHeaderProps {
 
 const navItems = [
   { to: "/account", icon: Home, label: "Home" },
-  { to: "/account/inbox", icon: Inbox, label: "Inbox" },
+  { to: "/account/requests", icon: Send, label: "My Requests" },
   { to: "/account/saved", icon: Heart, label: "Saved" },
   { to: "/account/reviews", icon: Star, label: "My Reviews" },
 ];
