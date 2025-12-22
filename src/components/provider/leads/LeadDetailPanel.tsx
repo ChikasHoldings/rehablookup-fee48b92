@@ -485,12 +485,12 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Details Tab */}
-          <TabsContent value="details" className="p-3 space-y-3 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="details" className="p-4 space-y-4 mt-0 data-[state=inactive]:hidden">
             {/* Message/Note - Prominent display */}
             {lead.message && (
-              <section className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                <h3 className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5" />
+              <section className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4">
+                <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
                   Message from {firstName}
                 </h3>
                 <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
@@ -499,251 +499,269 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
               </section>
             )}
 
-            {/* Contact Info */}
-            <section>
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Contact</h3>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Phone className="h-3 w-3 text-green-600" />
+            {/* Contact Info - Card style */}
+            <section className="bg-card border rounded-xl overflow-hidden">
+              <div className="px-4 py-3 bg-muted/30 border-b">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-primary" />
+                  Contact Information
+                </h3>
+              </div>
+              <div className="p-4 space-y-3">
+                {/* Phone */}
+                <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <Phone className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">{lead.phone}</p>
-                      <p className="text-[10px] text-muted-foreground">{lead.preferred_contact === "call" ? "Preferred" : "Phone"}</p>
+                      <p className="text-base font-semibold text-foreground">{lead.phone}</p>
+                      <p className="text-xs text-muted-foreground">{lead.preferred_contact === "call" ? "✓ Preferred" : "Phone"}</p>
                     </div>
                   </div>
-                  <div className="flex gap-0.5">
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(lead.phone, "phone")}>
-                      {copiedField === "phone" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.phone, "phone")}>
+                      {copiedField === "phone" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
-                      <a href={`tel:${lead.phone}`}><ExternalLink className="h-3 w-3" /></a>
+                    <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                      <a href={`tel:${lead.phone}`}><ExternalLink className="h-4 w-4" /></a>
                     </Button>
                   </div>
                 </div>
-                <div className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="h-6 w-6 rounded bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <Mail className="h-3 w-3 text-blue-600" />
+                {/* Email */}
+                <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Mail className="h-5 w-5 text-blue-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{lead.email}</p>
-                      <p className="text-[10px] text-muted-foreground">{lead.preferred_contact === "email" ? "Preferred" : "Email"}</p>
+                      <p className="text-base font-semibold text-foreground truncate">{lead.email}</p>
+                      <p className="text-xs text-muted-foreground">{lead.preferred_contact === "email" ? "✓ Preferred" : "Email"}</p>
                     </div>
                   </div>
-                  <div className="flex gap-0.5 flex-shrink-0">
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCopy(lead.email, "email")}>
-                      {copiedField === "email" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+                  <div className="flex gap-1 flex-shrink-0">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.email, "email")}>
+                      {copiedField === "email" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
-                      <a href={`mailto:${lead.email}`}><ExternalLink className="h-3 w-3" /></a>
+                    <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                      <a href={`mailto:${lead.email}`}><ExternalLink className="h-4 w-4" /></a>
                     </Button>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Intake Details - Show for all leads with data */}
+            {/* Treatment Details - Card style */}
             {(lead.urgency || lead.level_of_care || lead.insurance_type || lead.insurance_provider || 
               lead.who_seeking_help || lead.dual_diagnosis || lead.budget_preference || 
               lead.location_city_state || lead.location_zip || 
               (lead.primary_substance && lead.primary_substance.length > 0) ||
               (lead.special_needs && lead.special_needs.length > 0)) && (
-              <section>
-                <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3 text-primary" />
-                  Intake Information
-                </h3>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {lead.who_seeking_help && (
-                    <div className="py-1.5 px-2 rounded bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
-                        <User className="h-2.5 w-2.5" /> Seeking For
-                      </p>
-                      <p className="text-sm font-medium text-foreground capitalize">{lead.who_seeking_help.replace(/-|_/g, ' ')}</p>
+              <section className="bg-card border rounded-xl overflow-hidden">
+                <div className="px-4 py-3 bg-muted/30 border-b">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-primary" />
+                    Treatment Details
+                  </h3>
+                </div>
+                <div className="p-4">
+                  {/* Key Details Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {lead.who_seeking_help && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <User className="h-3 w-3" /> Seeking For
+                        </p>
+                        <p className="text-sm font-semibold text-foreground capitalize">{lead.who_seeking_help.replace(/-|_/g, ' ')}</p>
+                      </div>
+                    )}
+                    {lead.urgency && (
+                      <div className={cn(
+                        "p-3 rounded-lg",
+                        lead.urgency === "immediate" ? "bg-red-50 border border-red-200 dark:bg-red-950/30 dark:border-red-800" : "bg-muted/40"
+                      )}>
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <AlertTriangle className="h-3 w-3" /> Urgency
+                        </p>
+                        <p className={cn(
+                          "text-sm font-semibold",
+                          lead.urgency === "immediate" ? "text-red-700 dark:text-red-400" : "text-foreground"
+                        )}>{formatUrgency(lead.urgency)}</p>
+                      </div>
+                    )}
+                    {lead.level_of_care && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <Stethoscope className="h-3 w-3" /> Level of Care
+                        </p>
+                        <p className="text-sm font-semibold text-foreground">{formatLevel(lead.level_of_care)}</p>
+                      </div>
+                    )}
+                    {(lead.insurance_type || lead.insurance_provider) && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <CreditCard className="h-3 w-3" /> Insurance
+                        </p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {lead.insurance_provider || formatInsurance(lead.insurance_type)}
+                        </p>
+                        {lead.insurance_provider && lead.insurance_type && (
+                          <p className="text-xs text-muted-foreground">{formatInsurance(lead.insurance_type)}</p>
+                        )}
+                      </div>
+                    )}
+                    {(lead.location_city_state || lead.location_zip) && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <MapPin className="h-3 w-3" /> Location
+                        </p>
+                        <p className="text-sm font-semibold text-foreground">{lead.location_city_state || lead.location_zip}</p>
+                        {lead.location_city_state && lead.location_zip && (
+                          <p className="text-xs text-muted-foreground">{lead.location_zip}</p>
+                        )}
+                      </div>
+                    )}
+                    {lead.dual_diagnosis && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1">Mental Health Support</p>
+                        <p className="text-sm font-semibold text-foreground capitalize">{lead.dual_diagnosis}</p>
+                      </div>
+                    )}
+                    {lead.budget_preference && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1">Budget</p>
+                        <p className="text-sm font-semibold text-foreground capitalize">{lead.budget_preference.replace(/-/g, ' ')}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Substances */}
+                  {lead.primary_substance && lead.primary_substance.length > 0 && (
+                    <div className="p-3 rounded-lg bg-muted/40 mt-3">
+                      <p className="text-xs text-muted-foreground mb-2">Primary Substance(s)</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {lead.primary_substance.map((s, i) => (
+                          <Badge key={i} variant="secondary" className="capitalize text-xs h-6 px-2 font-medium">{s}</Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  {lead.urgency && (
-                    <div className={cn(
-                      "py-1.5 px-2 rounded",
-                      lead.urgency === "immediate" ? "bg-red-50 border border-red-200" : "bg-muted/40"
-                    )}>
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
-                        <AlertTriangle className="h-2.5 w-2.5" /> Urgency
-                      </p>
-                      <p className={cn(
-                        "text-sm font-medium",
-                        lead.urgency === "immediate" ? "text-red-700" : "text-foreground"
-                      )}>{formatUrgency(lead.urgency)}</p>
-                    </div>
-                  )}
-                  {lead.level_of_care && (
-                    <div className="py-1.5 px-2 rounded bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
-                        <Stethoscope className="h-2.5 w-2.5" /> Level of Care
-                      </p>
-                      <p className="text-sm font-medium text-foreground">{formatLevel(lead.level_of_care)}</p>
-                    </div>
-                  )}
-                  {(lead.insurance_type || lead.insurance_provider) && (
-                    <div className="py-1.5 px-2 rounded bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
-                        <CreditCard className="h-2.5 w-2.5" /> Insurance
-                      </p>
-                      <p className="text-sm font-medium text-foreground">
-                        {lead.insurance_provider || formatInsurance(lead.insurance_type)}
-                      </p>
-                      {lead.insurance_provider && lead.insurance_type && (
-                        <p className="text-[10px] text-muted-foreground">{formatInsurance(lead.insurance_type)}</p>
-                      )}
-                    </div>
-                  )}
-                  {(lead.location_city_state || lead.location_zip) && (
-                    <div className="py-1.5 px-2 rounded bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
-                        <MapPin className="h-2.5 w-2.5" /> Location
-                      </p>
-                      <p className="text-sm font-medium text-foreground">{lead.location_city_state || lead.location_zip}</p>
-                      {lead.location_city_state && lead.location_zip && (
-                        <p className="text-[10px] text-muted-foreground">{lead.location_zip}</p>
-                      )}
-                    </div>
-                  )}
-                  {lead.dual_diagnosis && (
-                    <div className="py-1.5 px-2 rounded bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase">Dual Diagnosis</p>
-                      <p className="text-sm font-medium text-foreground capitalize">{lead.dual_diagnosis}</p>
-                    </div>
-                  )}
-                  {lead.budget_preference && (
-                    <div className="py-1.5 px-2 rounded bg-muted/40">
-                      <p className="text-[10px] text-muted-foreground uppercase">Budget</p>
-                      <p className="text-sm font-medium text-foreground capitalize">{lead.budget_preference.replace(/-/g, ' ')}</p>
+
+                  {/* Special Needs */}
+                  {lead.special_needs && lead.special_needs.length > 0 && (
+                    <div className="p-3 rounded-lg bg-purple-50 border border-purple-200 dark:bg-purple-950/30 dark:border-purple-800 mt-3">
+                      <p className="text-xs text-muted-foreground mb-2">Special Requirements</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {lead.special_needs.map((need, i) => (
+                          <Badge key={i} variant="outline" className="capitalize text-xs h-6 px-2 font-medium border-purple-300 text-purple-700 dark:text-purple-300">
+                            {need.replace(/-/g, ' ')}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
-                {lead.primary_substance && lead.primary_substance.length > 0 && (
-                  <div className="py-1.5 px-2 rounded bg-muted/40 mt-1.5">
-                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Primary Substance(s)</p>
-                    <div className="flex flex-wrap gap-1">
-                      {lead.primary_substance.map((s, i) => (
-                        <Badge key={i} variant="secondary" className="capitalize text-xs h-5 px-1.5">{s}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {lead.special_needs && lead.special_needs.length > 0 && (
-                  <div className="py-1.5 px-2 rounded bg-purple-50 border border-purple-200 mt-1.5">
-                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Special Requirements</p>
-                    <div className="flex flex-wrap gap-1">
-                      {lead.special_needs.map((need, i) => (
-                        <Badge key={i} variant="outline" className="capitalize text-xs h-5 px-1.5 border-purple-300 text-purple-700 bg-purple-50">
-                          {need.replace(/-/g, ' ')}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </section>
             )}
 
-            {/* Lead Quality & Status Section */}
-            <section>
-              <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <ShieldCheck className="h-3 w-3 text-primary" />
-                Lead Quality & Status
-              </h3>
-              <div className="grid grid-cols-2 gap-1.5">
-                {lead.qualified !== null && (
-                  <div className={cn(
-                    "py-1.5 px-2 rounded",
-                    lead.qualified ? "bg-green-50 border border-green-200" : "bg-muted/40"
-                  )}>
-                    <p className="text-[10px] text-muted-foreground uppercase">Qualified</p>
-                    <p className={cn(
-                      "text-sm font-medium",
-                      lead.qualified ? "text-green-700" : "text-foreground"
-                    )}>{lead.qualified ? "Yes" : "No"}</p>
-                  </div>
-                )}
-                {lead.quality_flag && (
-                  <div className={cn(
-                    "py-1.5 px-2 rounded",
-                    lead.quality_flag === "qualified" ? "bg-green-50 border border-green-200" : "bg-muted/40"
-                  )}>
-                    <p className="text-[10px] text-muted-foreground uppercase">Quality Flag</p>
-                    <p className={cn(
-                      "text-sm font-medium capitalize",
-                      lead.quality_flag === "qualified" ? "text-green-700" : "text-foreground"
-                    )}>{lead.quality_flag.replace(/-|_/g, ' ')}</p>
-                  </div>
-                )}
-                {lead.validation_status && (
-                  <div className={cn(
-                    "py-1.5 px-2 rounded",
-                    lead.validation_status === "valid" ? "bg-green-50 border border-green-200" : "bg-amber-50 border border-amber-200"
-                  )}>
-                    <p className="text-[10px] text-muted-foreground uppercase">Validation</p>
-                    <p className={cn(
-                      "text-sm font-medium capitalize",
-                      lead.validation_status === "valid" ? "text-green-700" : "text-amber-700"
-                    )}>{lead.validation_status.replace(/-|_/g, ' ')}</p>
-                  </div>
-                )}
-                {lead.assignment_status && (
-                  <div className="py-1.5 px-2 rounded bg-muted/40">
-                    <p className="text-[10px] text-muted-foreground uppercase">Assignment</p>
-                    <p className="text-sm font-medium text-foreground capitalize">{lead.assignment_status.replace(/-|_/g, ' ')}</p>
-                  </div>
-                )}
-                {lead.preferred_contact && (
-                  <div className="py-1.5 px-2 rounded bg-muted/40">
-                    <p className="text-[10px] text-muted-foreground uppercase">Preferred Contact</p>
-                    <p className="text-sm font-medium text-foreground capitalize">{lead.preferred_contact}</p>
-                  </div>
-                )}
-                {lead.exclusivity && (
-                  <div className={cn(
-                    "py-1.5 px-2 rounded",
-                    lead.exclusivity === "exclusive" ? "bg-amber-50 border border-amber-200" : "bg-blue-50 border border-blue-200"
-                  )}>
-                    <p className="text-[10px] text-muted-foreground uppercase">Exclusivity</p>
-                    <p className={cn(
-                      "text-sm font-medium capitalize",
-                      lead.exclusivity === "exclusive" ? "text-amber-700" : "text-blue-700"
-                    )}>{lead.exclusivity}</p>
+            {/* Lead Status & Quality - Card style */}
+            <section className="bg-card border rounded-xl overflow-hidden">
+              <div className="px-4 py-3 bg-muted/30 border-b">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  Lead Status
+                </h3>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {lead.qualified !== null && (
+                    <div className={cn(
+                      "p-3 rounded-lg",
+                      lead.qualified ? "bg-green-50 border border-green-200 dark:bg-green-950/30 dark:border-green-800" : "bg-muted/40"
+                    )}>
+                      <p className="text-xs text-muted-foreground mb-1">Qualification</p>
+                      <p className={cn(
+                        "text-sm font-semibold flex items-center gap-1.5",
+                        lead.qualified ? "text-green-700 dark:text-green-400" : "text-foreground"
+                      )}>
+                        {lead.qualified ? <><Sparkles className="h-3.5 w-3.5" /> Qualified</> : "Direct Lead"}
+                      </p>
+                    </div>
+                  )}
+                  {lead.exclusivity && (
+                    <div className={cn(
+                      "p-3 rounded-lg",
+                      lead.exclusivity === "exclusive" 
+                        ? "bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800" 
+                        : "bg-blue-50 border border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+                    )}>
+                      <p className="text-xs text-muted-foreground mb-1">Exclusivity</p>
+                      <p className={cn(
+                        "text-sm font-semibold capitalize flex items-center gap-1.5",
+                        lead.exclusivity === "exclusive" ? "text-amber-700 dark:text-amber-400" : "text-blue-700 dark:text-blue-400"
+                      )}>
+                        {lead.exclusivity === "exclusive" ? <><Star className="h-3.5 w-3.5" /> Exclusive</> : <><Share2 className="h-3.5 w-3.5" /> Shared</>}
+                      </p>
+                    </div>
+                  )}
+                  {lead.validation_status && (
+                    <div className={cn(
+                      "p-3 rounded-lg",
+                      lead.validation_status === "valid" 
+                        ? "bg-green-50 border border-green-200 dark:bg-green-950/30 dark:border-green-800" 
+                        : "bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800"
+                    )}>
+                      <p className="text-xs text-muted-foreground mb-1">Validation</p>
+                      <p className={cn(
+                        "text-sm font-semibold capitalize",
+                        lead.validation_status === "valid" ? "text-green-700 dark:text-green-400" : "text-amber-700 dark:text-amber-400"
+                      )}>{lead.validation_status.replace(/-|_/g, ' ')}</p>
+                    </div>
+                  )}
+                  {lead.assignment_status && (
+                    <div className="p-3 rounded-lg bg-muted/40">
+                      <p className="text-xs text-muted-foreground mb-1">Assignment</p>
+                      <p className="text-sm font-semibold text-foreground capitalize">{lead.assignment_status.replace(/-|_/g, ' ')}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Additional Info */}
+                {(lead.assignment_reason || lead.qualification_reason) && (
+                  <div className="mt-3 space-y-2">
+                    {lead.assignment_reason && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1">Assignment Reason</p>
+                        <p className="text-sm text-foreground">{lead.assignment_reason}</p>
+                      </div>
+                    )}
+                    {lead.qualification_reason && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1">Qualification Reason</p>
+                        <p className="text-sm text-foreground">{lead.qualification_reason}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-              {lead.assignment_reason && (
-                <div className="py-1.5 px-2 rounded bg-muted/40 mt-1.5">
-                  <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Assignment Reason</p>
-                  <p className="text-sm text-foreground">{lead.assignment_reason}</p>
-                </div>
-              )}
-              {lead.qualification_reason && (
-                <div className="py-1.5 px-2 rounded bg-muted/40 mt-1.5">
-                  <p className="text-[10px] text-muted-foreground uppercase mb-0.5">Qualification Reason</p>
-                  <p className="text-sm text-foreground">{lead.qualification_reason}</p>
-                </div>
-              )}
             </section>
 
             {/* Source & Timestamp */}
-            <section className="pt-2 border-t border-border/50">
-              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+            <section className="bg-muted/30 rounded-xl p-4">
+              <div className="flex flex-col gap-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    Source: <span className="font-medium text-foreground">
-                      {lead.source === "Request Help Page" ? "Qualified Lead" : (lead.source?.replace(/_/g, ' ') || "Direct")}
-                    </span>
+                  <span className="text-muted-foreground">Source</span>
+                  <span className="font-medium text-foreground">
+                    {lead.source === "Request Help Page" ? "Qualified Lead Form" : (lead.source?.replace(/_/g, ' ') || "Direct Inquiry")}
                   </span>
-                  <span>{format(new Date(lead.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Submitted</span>
+                  <span className="font-medium text-foreground">{format(new Date(lead.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
                 </div>
                 {lead.assigned_at && (
                   <div className="flex items-center justify-between">
-                    <span>Assigned:</span>
+                    <span className="text-muted-foreground">Assigned</span>
                     <span className="font-medium text-foreground">{format(new Date(lead.assigned_at), "MMM d, yyyy 'at' h:mm a")}</span>
                   </div>
                 )}

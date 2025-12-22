@@ -82,10 +82,17 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
   }, [lookupTimeout]);
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
+      {/* Section Header */}
+      <div className="mb-2">
+        <h2 className="text-lg font-semibold text-foreground">Tell us about your situation</h2>
+        <p className="text-sm text-muted-foreground mt-1">This helps us find the best treatment options for you.</p>
+      </div>
+
       {/* Who is seeking help - compact cards */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">
+      <div className="space-y-3">
+        <Label className="text-sm font-medium flex items-center gap-2">
+          <User className="h-4 w-4 text-primary" />
           Who is seeking help? <span className="text-destructive">*</span>
         </Label>
         <RadioGroup
@@ -97,68 +104,87 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
           className="grid grid-cols-2 gap-3"
         >
           <label
-            className={`relative flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all duration-200 ${
+            className={cn(
+              "relative flex items-center gap-3 px-4 py-4 border-2 rounded-xl cursor-pointer transition-all duration-200",
               formData.whoSeekingHelp === "self"
-                ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-sm"
+                ? "border-primary bg-primary/5 shadow-sm"
                 : "border-border hover:border-primary/50 hover:bg-muted/30"
-            }`}
+            )}
           >
             <RadioGroupItem value="self" className="sr-only" />
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200",
               formData.whoSeekingHelp === "self" 
                 ? "bg-primary text-primary-foreground shadow-md" 
                 : "bg-muted text-muted-foreground"
-            }`}>
-              <User className="w-4 h-4" />
+            )}>
+              <User className="w-5 h-5" />
             </div>
-            <span className={`font-medium text-sm ${formData.whoSeekingHelp === "self" ? "text-primary" : ""}`}>
-              Myself
-            </span>
+            <div>
+              <span className={cn(
+                "font-semibold text-sm block",
+                formData.whoSeekingHelp === "self" ? "text-primary" : "text-foreground"
+              )}>
+                Myself
+              </span>
+              <span className="text-xs text-muted-foreground">I need help</span>
+            </div>
           </label>
           <label
-            className={`relative flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all duration-200 ${
+            className={cn(
+              "relative flex items-center gap-3 px-4 py-4 border-2 rounded-xl cursor-pointer transition-all duration-200",
               formData.whoSeekingHelp === "loved-one"
-                ? "border-primary bg-primary/5 ring-1 ring-primary/20 shadow-sm"
+                ? "border-primary bg-primary/5 shadow-sm"
                 : "border-border hover:border-primary/50 hover:bg-muted/30"
-            }`}
+            )}
           >
             <RadioGroupItem value="loved-one" className="sr-only" />
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200",
               formData.whoSeekingHelp === "loved-one" 
                 ? "bg-primary text-primary-foreground shadow-md" 
                 : "bg-muted text-muted-foreground"
-            }`}>
-              <Users className="w-4 h-4" />
+            )}>
+              <Users className="w-5 h-5" />
             </div>
-            <span className={`font-medium text-sm ${formData.whoSeekingHelp === "loved-one" ? "text-primary" : ""}`}>
-              A Loved One
-            </span>
+            <div>
+              <span className={cn(
+                "font-semibold text-sm block",
+                formData.whoSeekingHelp === "loved-one" ? "text-primary" : "text-foreground"
+              )}>
+                A Loved One
+              </span>
+              <span className="text-xs text-muted-foreground">Helping someone else</span>
+            </div>
           </label>
         </RadioGroup>
         {errors.whoSeekingHelp && (
-          <p className="text-xs text-destructive">{errors.whoSeekingHelp}</p>
+          <p className="text-xs text-destructive flex items-center gap-1">
+            <span className="h-1 w-1 rounded-full bg-destructive" />
+            {errors.whoSeekingHelp}
+          </p>
         )}
       </div>
 
-      {/* Enhanced Location Input */}
-      <div className="space-y-2">
+      {/* Location Input - Streamlined */}
+      <div className="space-y-3">
         <Label htmlFor="locationZip" className="text-sm font-medium flex items-center gap-2">
-          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+          <MapPin className="h-4 w-4 text-primary" />
           Your Location <span className="text-destructive">*</span>
         </Label>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="relative">
+        <div className="grid grid-cols-5 gap-3">
+          <div className="col-span-2 relative">
             <Input
               id="locationZip"
               placeholder="ZIP Code"
               value={formData.locationZip}
               onChange={(e) => handleZipcodeChange(e.target.value)}
               className={cn(
-                "h-11 text-sm pr-10 transition-all duration-200",
+                "h-12 text-sm pr-10 transition-all duration-200 font-medium",
                 errors.locationZip || lookupError 
                   ? "border-destructive focus-visible:ring-destructive" 
                   : hasAutoFilled 
-                    ? "border-green-300 focus-visible:ring-green-300"
+                    ? "border-green-400 bg-green-50/50"
                     : ""
               )}
               inputMode="numeric"
@@ -170,63 +196,74 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
               ) : hasAutoFilled ? (
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
               ) : (
-                <MapPin className="h-4 w-4 text-muted-foreground/50" />
+                <MapPin className="h-4 w-4 text-muted-foreground/40" />
               )}
             </div>
           </div>
-          <Input
-            placeholder={isLookingUp ? "Detecting..." : "City, State"}
-            value={formData.locationCityState}
-            onChange={(e) => {
-              updateFormData({ locationCityState: e.target.value });
-              setHasAutoFilled(false);
-            }}
-            className={cn(
-              "h-11 text-sm transition-all duration-200",
-              hasAutoFilled && "bg-green-50/50 border-green-200 dark:bg-green-950/20"
-            )}
-            disabled={isLookingUp}
-          />
+          <div className="col-span-3">
+            <Input
+              placeholder={isLookingUp ? "Detecting..." : "City, State"}
+              value={formData.locationCityState}
+              onChange={(e) => {
+                updateFormData({ locationCityState: e.target.value });
+                setHasAutoFilled(false);
+              }}
+              className={cn(
+                "h-12 text-sm transition-all duration-200",
+                hasAutoFilled && "bg-green-50/50 border-green-400"
+              )}
+              disabled={isLookingUp}
+            />
+          </div>
         </div>
         {errors.locationZip && (
-          <p className="text-xs text-destructive">{errors.locationZip}</p>
+          <p className="text-xs text-destructive flex items-center gap-1">
+            <span className="h-1 w-1 rounded-full bg-destructive" />
+            {errors.locationZip}
+          </p>
         )}
         {lookupError && !errors.locationZip && (
-          <p className="text-xs text-amber-600">Could not auto-detect location. Please enter manually.</p>
+          <p className="text-xs text-amber-600">Could not auto-detect. Please enter manually.</p>
         )}
         {hasAutoFilled && !lookupError && (
-          <p className="text-xs text-green-600 flex items-center gap-1 animate-fade-in">
-            <CheckCircle2 className="h-3 w-3" />
-            Location detected automatically
+          <p className="text-xs text-green-600 flex items-center gap-1.5 animate-fade-in">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Location detected
           </p>
         )}
       </div>
 
-      {/* Urgency - enhanced dropdown */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">
+      {/* Urgency - Enhanced */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium flex items-center gap-2">
+          <ArrowRight className="h-4 w-4 text-primary" />
           How urgent is the need?
         </Label>
         <Select
           value={formData.urgency}
           onValueChange={(value) => updateFormData({ urgency: value })}
         >
-          <SelectTrigger className="h-11 text-sm">
+          <SelectTrigger className="h-12 text-sm">
             <SelectValue placeholder="Select urgency level" />
           </SelectTrigger>
           <SelectContent>
             {URGENCY_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value} className="py-2.5">
-                {option.label}
+              <SelectItem key={option.value} value={option.value} className="py-3">
+                <span className="flex items-center gap-2">
+                  {option.value === "immediate" && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
+                  {option.value === "within-week" && <span className="h-2 w-2 rounded-full bg-amber-500" />}
+                  {option.value === "flexible" && <span className="h-2 w-2 rounded-full bg-blue-500" />}
+                  {option.label}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <Button onClick={handleNext} className="w-full h-12 text-sm font-medium rounded-xl" size="lg">
+      <Button onClick={handleNext} className="w-full h-14 text-base font-semibold rounded-xl shadow-sm" size="lg">
         Continue
-        <ArrowRight className="ml-2 h-4 w-4" />
+        <ArrowRight className="ml-2 h-5 w-5" />
       </Button>
     </div>
   );

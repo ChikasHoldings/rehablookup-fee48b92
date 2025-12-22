@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 import { 
   LeadIntakeFormData, 
   SUBSTANCE_OPTIONS, 
@@ -59,94 +59,99 @@ export function StepEligibility({ formData, updateFormData, onNext, onBack, isUr
   };
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="mb-4">
-        <h2 className="text-base font-semibold text-foreground">
-          Help Us Find the Right Fit
-        </h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          All fields are optional but help us match you better.
+    <div className="space-y-6 animate-fade-in">
+      {/* Section Header */}
+      <div className="mb-2">
+        <h2 className="text-lg font-semibold text-foreground">Treatment Preferences</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          All fields are optional but help us find the right match.
         </p>
       </div>
 
-      {/* Level of Care - Dropdown */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Level of care needed</Label>
-        <Select
-          value={formData.levelOfCare}
-          onValueChange={(value) => updateFormData({ levelOfCare: value })}
-        >
-          <SelectTrigger className="h-10 text-sm">
-            <SelectValue placeholder="Select level of care" />
-          </SelectTrigger>
-          <SelectContent>
-            {LEVEL_OF_CARE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Insurance Type - Dropdown */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Insurance or payment</Label>
-        <Select
-          value={formData.insuranceType}
-          onValueChange={(value) => updateFormData({ insuranceType: value })}
-        >
-          <SelectTrigger className="h-10 text-sm">
-            <SelectValue placeholder="Select payment type" />
-          </SelectTrigger>
-          <SelectContent>
-            {INSURANCE_TYPE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Insurance Provider Name */}
-      {formData.insuranceType && formData.insuranceType !== "self-pay" && formData.insuranceType !== "not-sure" && (
+      {/* Primary Fields - Always Visible */}
+      <div className="space-y-5">
+        {/* Level of Care */}
         <div className="space-y-2">
-          <Label htmlFor="insuranceProvider" className="text-sm font-medium">
-            Insurance provider <span className="text-muted-foreground text-xs">(optional)</span>
-          </Label>
-          <Input
-            id="insuranceProvider"
-            placeholder="e.g., Blue Cross, Aetna"
-            value={formData.insuranceProvider}
-            onChange={(e) => updateFormData({ insuranceProvider: e.target.value })}
-            className="h-10 text-sm"
-          />
+          <Label className="text-sm font-medium">What level of care are you looking for?</Label>
+          <Select
+            value={formData.levelOfCare}
+            onValueChange={(value) => updateFormData({ levelOfCare: value })}
+          >
+            <SelectTrigger className="h-12 text-sm">
+              <SelectValue placeholder="Select level of care" />
+            </SelectTrigger>
+            <SelectContent>
+              {LEVEL_OF_CARE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="py-2.5">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      )}
 
-      {/* Mental Health - Compact inline options */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Mental health concern?</Label>
-        <RadioGroup
-          value={formData.dualDiagnosis}
-          onValueChange={(value) => updateFormData({ dualDiagnosis: value })}
-          className="flex gap-2"
-        >
-          {DUAL_DIAGNOSIS_OPTIONS.map((option) => (
-            <label
-              key={option.value}
-              className={`flex-1 flex items-center justify-center px-3 py-2 border rounded-lg cursor-pointer transition-all text-sm ${
-                formData.dualDiagnosis === option.value
-                  ? "border-primary bg-primary/5 text-primary font-medium"
-                  : "border-border hover:border-primary/50"
-              }`}
+        {/* Insurance - Two columns on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Payment method</Label>
+            <Select
+              value={formData.insuranceType}
+              onValueChange={(value) => updateFormData({ insuranceType: value })}
             >
-              <RadioGroupItem value={option.value} className="sr-only" />
-              {option.label}
-            </label>
-          ))}
-        </RadioGroup>
+              <SelectTrigger className="h-12 text-sm">
+                <SelectValue placeholder="Select payment type" />
+              </SelectTrigger>
+              <SelectContent>
+                {INSURANCE_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="py-2.5">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Insurance Provider - Conditional */}
+          {formData.insuranceType && formData.insuranceType !== "self-pay" && formData.insuranceType !== "not-sure" && (
+            <div className="space-y-2">
+              <Label htmlFor="insuranceProvider" className="text-sm font-medium">
+                Insurance provider <span className="text-muted-foreground text-xs">(optional)</span>
+              </Label>
+              <Input
+                id="insuranceProvider"
+                placeholder="e.g., Blue Cross, Aetna"
+                value={formData.insuranceProvider}
+                onChange={(e) => updateFormData({ insuranceProvider: e.target.value })}
+                className="h-12 text-sm"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Mental Health - Inline Pills */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Do you also need mental health support?</Label>
+          <RadioGroup
+            value={formData.dualDiagnosis}
+            onValueChange={(value) => updateFormData({ dualDiagnosis: value })}
+            className="flex gap-2"
+          >
+            {DUAL_DIAGNOSIS_OPTIONS.map((option) => (
+              <label
+                key={option.value}
+                className={cn(
+                  "flex-1 flex items-center justify-center px-4 py-3 border-2 rounded-xl cursor-pointer transition-all text-sm font-medium",
+                  formData.dualDiagnosis === option.value
+                    ? "border-primary bg-primary/5 text-primary shadow-sm"
+                    : "border-border hover:border-primary/50"
+                )}
+              >
+                <RadioGroupItem value={option.value} className="sr-only" />
+                {option.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </div>
       </div>
 
       {/* Collapsible Advanced Options */}
@@ -155,55 +160,51 @@ export function StepEligibility({ formData, updateFormData, onNext, onBack, isUr
           <Button 
             variant="outline" 
             size="sm"
-            className="w-full justify-between text-sm font-medium text-foreground border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 h-10 px-4"
+            className="w-full justify-between text-sm font-medium text-foreground border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 h-11 px-4"
           >
             <span className="flex items-center gap-2">
-              <span className="text-primary">+</span>
-              More options (substance, budget, special needs)
+              <span className="text-primary font-bold">{showAdvanced ? "−" : "+"}</span>
+              Additional preferences
             </span>
             {showAdvanced ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-4 pt-3">
-          {/* Primary Substance - Compact checkboxes */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Primary substance(s)</Label>
-            <div className="grid grid-cols-2 gap-2">
+        <CollapsibleContent className="space-y-5 pt-4">
+          {/* Primary Substance - Pill Selection */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">What substance(s) are you seeking help for?</Label>
+            <div className="flex flex-wrap gap-2">
               {SUBSTANCE_OPTIONS.map((substance) => (
-                <label
+                <button
                   key={substance}
-                  className={`flex items-center px-3 py-2 border rounded-lg cursor-pointer transition-all text-xs ${
+                  type="button"
+                  onClick={() => toggleSubstance(substance)}
+                  className={cn(
+                    "px-3 py-2 border-2 rounded-lg cursor-pointer transition-all text-xs font-medium",
                     formData.primarySubstance.includes(substance)
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50 text-foreground"
+                  )}
                 >
-                  <Checkbox
-                    checked={formData.primarySubstance.includes(substance)}
-                    onCheckedChange={() => toggleSubstance(substance)}
-                    className="mr-2 h-4 w-4"
-                  />
-                  <span className={formData.primarySubstance.includes(substance) ? "text-primary font-medium" : ""}>
-                    {substance}
-                  </span>
-                </label>
+                  {substance}
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Budget - Dropdown */}
+          {/* Budget */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Budget preference</Label>
             <Select
               value={formData.budgetPreference}
               onValueChange={(value) => updateFormData({ budgetPreference: value })}
             >
-              <SelectTrigger className="h-10 text-sm">
-                <SelectValue placeholder="Select budget" />
+              <SelectTrigger className="h-12 text-sm">
+                <SelectValue placeholder="Select budget preference" />
               </SelectTrigger>
               <SelectContent>
                 {BUDGET_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem key={option.value} value={option.value} className="py-2.5">
                     {option.label}
                   </SelectItem>
                 ))}
@@ -211,42 +212,39 @@ export function StepEligibility({ formData, updateFormData, onNext, onBack, isUr
             </Select>
           </div>
 
-          {/* Special Needs - Compact */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Special requirements</Label>
-            <div className="grid grid-cols-2 gap-2">
+          {/* Special Needs - Pill Selection */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Any special requirements?</Label>
+            <div className="flex flex-wrap gap-2">
               {SPECIAL_NEEDS_OPTIONS.map((option) => (
-                <label
+                <button
                   key={option.value}
-                  className={`flex items-center px-3 py-2 border rounded-lg cursor-pointer transition-all text-xs ${
+                  type="button"
+                  onClick={() => toggleSpecialNeed(option.value)}
+                  className={cn(
+                    "px-3 py-2 border-2 rounded-lg cursor-pointer transition-all text-xs font-medium",
                     formData.specialNeeds.includes(option.value)
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50 text-foreground"
+                  )}
                 >
-                  <Checkbox
-                    checked={formData.specialNeeds.includes(option.value)}
-                    onCheckedChange={() => toggleSpecialNeed(option.value)}
-                    className="mr-2 h-4 w-4"
-                  />
-                  <span className={formData.specialNeeds.includes(option.value) ? "text-primary font-medium" : ""}>
-                    {option.label}
-                  </span>
-                </label>
+                  {option.label}
+                </button>
               ))}
             </div>
           </div>
         </CollapsibleContent>
       </Collapsible>
 
+      {/* Navigation Buttons */}
       <div className="flex gap-3 pt-2">
-        <Button variant="outline" onClick={onBack} className="flex-1 h-11 text-sm" size="lg">
-          <ArrowLeft className="mr-2 h-4 w-4" />
+        <Button variant="outline" onClick={onBack} className="flex-1 h-14 text-base font-semibold rounded-xl" size="lg">
+          <ArrowLeft className="mr-2 h-5 w-5" />
           Back
         </Button>
-        <Button onClick={handleNext} className="flex-1 h-11 text-sm" size="lg">
+        <Button onClick={handleNext} className="flex-1 h-14 text-base font-semibold rounded-xl shadow-sm" size="lg">
           Continue
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
       </div>
     </div>

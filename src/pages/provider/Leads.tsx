@@ -24,6 +24,7 @@ import {
   Download,
   Lock,
   Bell,
+  MapPin,
 } from "lucide-react";
 import {
   Select,
@@ -822,7 +823,7 @@ export default function ProviderLeadsPage() {
                       );
                     }
                     
-                    // Desktop card (original)
+                    // Desktop card - Professional redesign
                     const location = lead.location_city_state || (lead.location_zip ? `ZIP: ${lead.location_zip}` : null);
                     return (
                       <button
@@ -830,21 +831,20 @@ export default function ProviderLeadsPage() {
                         onClick={() => !locked && handleSelectLead(lead)}
                         disabled={locked}
                         className={cn(
-                          "w-full text-left rounded-xl border-2 transition-all duration-200 overflow-hidden shadow-sm",
+                          "w-full text-left rounded-xl border transition-all duration-200 overflow-hidden",
                           selected 
-                            ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/10" 
-                            : isQualified
-                              ? "border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-emerald-50/30 hover:border-emerald-300 hover:shadow-md dark:border-emerald-800/50 dark:from-emerald-950/30 dark:to-emerald-950/10"
-                              : "border-slate-200 bg-gradient-to-br from-slate-50/80 to-white hover:border-slate-300 hover:shadow-md dark:border-slate-700/50 dark:from-slate-900/30 dark:to-slate-900/10",
+                            ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20" 
+                            : "border-border bg-card hover:border-primary/40 hover:shadow-md",
                           locked && "opacity-60 cursor-not-allowed"
                         )}
                       >
                         <div className="p-4">
-                          {/* Top Row - Name & Time */}
+                          {/* Top Row - Avatar, Name, Status */}
                           <div className="flex items-start justify-between gap-3 mb-3">
                             <div className="flex items-center gap-3 min-w-0">
+                              {/* Avatar */}
                               <div className={cn(
-                                "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold shadow-sm",
+                                "h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold",
                                 selected 
                                   ? "bg-primary text-primary-foreground" 
                                   : isQualified
@@ -853,93 +853,98 @@ export default function ProviderLeadsPage() {
                               )}>
                                 {locked ? "?" : lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                               </div>
-                              <div className="min-w-0">
+                              {/* Name and Location */}
+                              <div className="min-w-0 flex-1">
                                 <h4 className={cn(
-                                  "font-semibold text-[15px] truncate leading-tight",
+                                  "font-semibold text-base truncate leading-tight",
                                   selected ? "text-primary" : "text-foreground"
                                 )}>
                                   {locked ? "Hidden Lead" : lead.name}
                                 </h4>
-                                {location && !locked && (
-                                  <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
-                                    <span className="inline-block w-1 h-1 rounded-full bg-muted-foreground/40" />
-                                    {location}
-                                  </p>
-                                )}
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {location && !locked && (
+                                    <span className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {location}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                            <span className="text-[10px] text-muted-foreground font-medium">
-                              {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true }).replace('about ', '')}
-                            </span>
+                            {/* Right side - Time and Status */}
+                            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                              <span className="text-[11px] text-muted-foreground font-medium">
+                                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true }).replace('about ', '')}
+                              </span>
+                              <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                            </div>
                           </div>
 
-                          {/* Bottom Row - Tags */}
+                          {/* Tags Row - Clean grid */}
                           {!locked && (
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {/* Facility Location Tag - show when multiple facilities */}
-                              {facilities.length > 1 && lead.facility_name && (
-                                <Badge variant="outline" className="h-5 px-2 text-[10px] border-primary/30 bg-primary/5 text-primary font-medium">
-                                  <Building2 className="h-2.5 w-2.5 mr-1" />
-                                  {lead.facility_name.length > 20 ? lead.facility_name.slice(0, 20) + "..." : lead.facility_name}
-                                </Badge>
-                              )}
-                              {/* Lead Type Tag - Primary distinction */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Lead Type Badge - Primary indicator */}
                               {isQualified ? (
-                                <Badge className="h-5 px-2 text-[10px] bg-emerald-500 text-white border-0 font-semibold shadow-sm">
-                                  <Sparkles className="h-2.5 w-2.5 mr-1" />
+                                <Badge className="h-6 px-2.5 text-xs bg-emerald-500 text-white border-0 font-semibold">
+                                  <Sparkles className="h-3 w-3 mr-1" />
                                   Qualified
                                 </Badge>
                               ) : (
-                                <Badge className="h-5 px-2 text-[10px] bg-slate-500 text-white border-0 font-semibold shadow-sm">
+                                <Badge variant="secondary" className="h-6 px-2.5 text-xs font-semibold">
                                   Direct
                                 </Badge>
                               )}
-                              {/* Exclusivity Badge - based on lead data or plan */}
-                              {leadExclusivity === "shared" && (
-                                <Badge variant="outline" className="h-5 px-2 text-[10px] border-blue-300 bg-blue-50 text-blue-700 font-medium dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
-                                  <Share2 className="h-2.5 w-2.5 mr-1" />
-                                  Shared (Max 2)
-                                </Badge>
-                              )}
-                              {leadExclusivity === "exclusive" && (
-                                <Badge variant="outline" className="h-5 px-2 text-[10px] border-amber-300 bg-amber-50 text-amber-700 font-medium dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
-                                  <Star className="h-2.5 w-2.5 mr-1" />
-                                  Exclusive
-                                </Badge>
-                              )}
-                              {/* Urgency Tag */}
+
+                              {/* Urgency Badge */}
                               {lead.urgency === 'immediate' && (
-                                <Badge className="h-5 px-2 text-[10px] bg-red-500 text-white border-0 font-semibold shadow-sm">
-                                  <AlertTriangle className="h-2.5 w-2.5 mr-1" />
+                                <Badge className="h-6 px-2.5 text-xs bg-red-500 text-white border-0 font-semibold animate-pulse">
+                                  <Zap className="h-3 w-3 mr-1" />
                                   Urgent
                                 </Badge>
                               )}
-                              {lead.urgency === 'within_week' && (
-                                <Badge className="h-5 px-2 text-[10px] bg-amber-500 text-white border-0 font-semibold shadow-sm">
-                                  <Clock className="h-2.5 w-2.5 mr-1" />
+                              {lead.urgency === 'within-week' && (
+                                <Badge className="h-6 px-2.5 text-xs bg-amber-500 text-white border-0 font-semibold">
+                                  <Clock className="h-3 w-3 mr-1" />
                                   This Week
                                 </Badge>
                               )}
-                              {lead.urgency === 'within_month' && (
-                                <Badge variant="outline" className="h-5 px-2 text-[10px] border-muted-foreground/40 font-medium">
-                                  <Clock className="h-2.5 w-2.5 mr-1" />
-                                  This Month
+
+                              {/* Exclusivity Badge */}
+                              {leadExclusivity === "exclusive" && (
+                                <Badge variant="outline" className="h-6 px-2.5 text-xs border-amber-300 bg-amber-50 text-amber-700 font-medium dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Exclusive
                                 </Badge>
                               )}
-                              <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
-                              <LeadScoreBadge lead={lead} size="sm" />
-                              {/* Email verified indicator */}
-                              {lead.email_verified && (
-                                <div className="h-5 w-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center" title="Email verified">
-                                  <ShieldCheck className="h-2.5 w-2.5 text-green-600 dark:text-green-400" />
-                                </div>
+                              {leadExclusivity === "shared" && (
+                                <Badge variant="outline" className="h-6 px-2.5 text-xs border-blue-300 bg-blue-50 text-blue-700 font-medium dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                                  <Share2 className="h-3 w-3 mr-1" />
+                                  Shared
+                                </Badge>
                               )}
-                              {/* Message indicator */}
-                              {lead.message && (
-                                <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center" title="Has message">
-                                  <MessageSquare className="h-2.5 w-2.5 text-blue-600 dark:text-blue-400" />
-                                </div>
+
+                              {/* Facility Badge - Multi-location */}
+                              {facilities.length > 1 && lead.facility_name && (
+                                <Badge variant="outline" className="h-6 px-2.5 text-xs border-primary/30 text-primary font-medium">
+                                  <Building2 className="h-3 w-3 mr-1" />
+                                  {lead.facility_name.length > 15 ? lead.facility_name.slice(0, 15) + "..." : lead.facility_name}
+                                </Badge>
                               )}
+
+                              {/* Verified & Message indicators */}
+                              <div className="flex items-center gap-1.5 ml-auto">
+                                {lead.email_verified && (
+                                  <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center" title="Email verified">
+                                    <ShieldCheck className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                  </div>
+                                )}
+                                {lead.message && (
+                                  <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center" title="Has message">
+                                    <MessageSquare className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                                  </div>
+                                )}
+                                <LeadScoreBadge lead={lead} size="sm" />
+                              </div>
                             </div>
                           )}
                         </div>
