@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useProviderReviews, ProviderReview } from '@/hooks/useProviderReviews';
 import { useSelectedFacility } from '@/contexts/SelectedFacilityContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Star, 
   MessageSquare, 
   Clock, 
   Flag, 
@@ -36,11 +35,13 @@ export default function ProviderReviews() {
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [selectedReviewForDispute, setSelectedReviewForDispute] = useState<ProviderReview | null>(null);
 
-  const filteredReviews = reviews.filter(r => {
-    if (selectedTab === 'needs-response') return !r.response;
-    if (selectedTab === 'disputed') return r.dispute;
-    return true;
-  });
+  const filteredReviews = useMemo(() => {
+    return reviews.filter(r => {
+      if (selectedTab === 'needs-response') return !r.response;
+      if (selectedTab === 'disputed') return r.dispute;
+      return true;
+    });
+  }, [reviews, selectedTab]);
 
   const handleFlagReview = (review: ProviderReview) => {
     setSelectedReviewForDispute(review);
@@ -64,20 +65,20 @@ export default function ProviderReviews() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-hidden">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">Reviews</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage and respond to reviews for {selectedFacility.name}
+          <p className="text-muted-foreground mt-1 truncate">
+            Manage reviews for {selectedFacility.name}
           </p>
         </div>
         <Button 
           variant="outline" 
           onClick={refetch} 
           disabled={isLoading}
-          className="shrink-0"
+          className="shrink-0 self-start sm:self-auto"
         >
           <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
           Refresh
@@ -88,69 +89,69 @@ export default function ProviderReviews() {
       <ReviewStatsCards stats={stats} />
 
       {/* Reviews Tabs */}
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="all" className="gap-2">
-            <MessageSquare className="h-4 w-4" />
-            <span className="hidden sm:inline">All Reviews</span>
-            <span className="sm:hidden">All</span>
-            <span className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded-full">
-              {reviews.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="needs-response" className="gap-2">
-            <Clock className="h-4 w-4" />
-            <span className="hidden sm:inline">Needs Response</span>
-            <span className="sm:hidden">Pending</span>
-            {stats.needsResponse > 0 && (
-              <span className="ml-1 text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded-full">
-                {stats.needsResponse}
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0">
+            <TabsTrigger value="all" className="flex-1 sm:flex-none gap-1.5 text-xs sm:text-sm">
+              <MessageSquare className="h-4 w-4" />
+              <span>All</span>
+              <span className="bg-muted px-1.5 py-0.5 rounded text-xs">
+                {reviews.length}
               </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="disputed" className="gap-2">
-            <Flag className="h-4 w-4" />
-            <span className="hidden sm:inline">Disputed</span>
-            <span className="sm:hidden">Flagged</span>
-            {stats.disputed > 0 && (
-              <span className="ml-1 text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">
-                {stats.disputed}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
+            </TabsTrigger>
+            <TabsTrigger value="needs-response" className="flex-1 sm:flex-none gap-1.5 text-xs sm:text-sm">
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Needs Response</span>
+              <span className="sm:hidden">Pending</span>
+              {stats.needsResponse > 0 && (
+                <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded text-xs">
+                  {stats.needsResponse}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="disputed" className="flex-1 sm:flex-none gap-1.5 text-xs sm:text-sm">
+              <Flag className="h-4 w-4" />
+              <span>Disputed</span>
+              {stats.disputed > 0 && (
+                <span className="bg-red-500 text-white px-1.5 py-0.5 rounded text-xs">
+                  {stats.disputed}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value={selectedTab} className="mt-6 space-y-4">
+        <TabsContent value={selectedTab} className="mt-4 space-y-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
               <p className="text-muted-foreground">Loading reviews...</p>
             </div>
           ) : filteredReviews.length === 0 ? (
             <Card className="border-dashed">
-              <CardContent className="py-16 text-center">
-                <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <CardContent className="py-12 text-center">
+                <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
                   {selectedTab === 'needs-response' ? (
-                    <Clock className="h-8 w-8 text-muted-foreground" />
+                    <Clock className="h-7 w-7 text-muted-foreground" />
                   ) : selectedTab === 'disputed' ? (
-                    <Flag className="h-8 w-8 text-muted-foreground" />
+                    <Flag className="h-7 w-7 text-muted-foreground" />
                   ) : (
-                    <Inbox className="h-8 w-8 text-muted-foreground" />
+                    <Inbox className="h-7 w-7 text-muted-foreground" />
                   )}
                 </div>
-                <h3 className="text-lg font-semibold mb-2">
+                <h3 className="text-lg font-semibold mb-1">
                   {selectedTab === 'needs-response' 
                     ? 'All caught up!' 
                     : selectedTab === 'disputed' 
                     ? 'No disputed reviews'
                     : 'No reviews yet'}
                 </h3>
-                <p className="text-muted-foreground max-w-sm mx-auto">
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                   {selectedTab === 'needs-response'
-                    ? "You've responded to all reviews. Great job staying engaged with your clients!"
+                    ? "You've responded to all reviews."
                     : selectedTab === 'disputed'
-                    ? "You haven't flagged any reviews for admin review."
-                    : "When clients leave reviews for your facility, they'll appear here."}
+                    ? "No reviews have been flagged."
+                    : "Reviews will appear here when clients leave them."}
                 </p>
               </CardContent>
             </Card>
