@@ -5,36 +5,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { 
-  Save, 
   Building2, 
   Phone, 
   Globe, 
-  FileText, 
   CheckCircle,
   MapPin,
   Mail,
   Users,
   Bed,
-  Eye,
-  ArrowUpRight,
-  Shield,
   AlertCircle,
   Clock,
   Image as ImageIcon,
-  X,
   Loader2,
   Stethoscope,
   CreditCard,
   ShieldCheck,
   Send,
-  Sparkles,
-  TrendingUp,
-  CircleCheck,
-  CircleDashed,
   Info,
   ChevronDown,
   ChevronUp,
-  Star
+  Save,
+  Eye,
+  ArrowUpRight,
+  Sparkles,
+  TrendingUp,
+  X,
+  CircleCheck,
+  CircleDashed
 } from "lucide-react";
 import { MultiSelectDropdown } from "@/components/search/MultiSelectDropdown";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -69,6 +66,16 @@ import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
 import { GoogleReviewsSection } from "@/components/provider/GoogleReviewsSection";
 import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
+import {
+  ListingSectionHeader,
+  ListingTagChip,
+  ListingEmptyTagsState,
+  ListingProfileCompletion,
+  ListingStatusCard,
+  ListingTipsCard,
+  ListingFloatingSaveBar,
+  ListingFormField
+} from "@/components/provider/listing";
 
 interface Facility {
   id: string;
@@ -214,153 +221,11 @@ const validateField = (field: string, value: string | null): string | null => {
   }
 };
 
-// Section Header Component
-function SectionHeader({ 
-  icon: Icon, 
-  iconColor,
-  title, 
-  description,
-  badge
-}: { 
-  icon: React.ElementType; 
-  iconColor: string;
-  title: string; 
-  description: string;
-  badge?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className={cn(
-        "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105",
-        iconColor
-      )}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <CardTitle className="text-base font-semibold">{title}</CardTitle>
-          {badge}
-        </div>
-        <CardDescription className="text-xs mt-0.5">{description}</CardDescription>
-      </div>
-    </div>
-  );
-}
-
-// Form Field with enhanced styling
-function FormField({
-  label,
-  required,
-  error,
-  touched,
-  hint,
-  children,
-  className
-}: {
-  label: string;
-  required?: boolean;
-  error?: string | null;
-  touched?: boolean;
-  hint?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("space-y-2", className)}>
-      <Label className="text-sm font-medium flex items-center gap-1.5">
-        {label}
-        {required && <span className="text-destructive">*</span>}
-      </Label>
-      {children}
-      {error && touched && (
-        <p className="text-xs text-destructive flex items-center gap-1">
-          <AlertCircle className="h-3 w-3" />
-          {error}
-        </p>
-      )}
-      {hint && !error && (
-        <p className="text-xs text-muted-foreground">{hint}</p>
-      )}
-    </div>
-  );
-}
-
-// Tag/Chip Component for Services and Insurance
-function TagChip({ 
-  label, 
-  onRemove,
-  variant = "default"
-}: { 
-  label: string; 
-  onRemove: () => void;
-  variant?: "default" | "service" | "insurance";
-}) {
-  const variantStyles = {
-    default: "bg-secondary hover:bg-secondary/80",
-    service: "bg-teal-500/10 text-teal-700 border-teal-200 hover:bg-teal-500/20",
-    insurance: "bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-500/20"
-  };
-
-  return (
-    <Badge 
-      variant="outline"
-      className={cn(
-        "gap-1.5 pr-1.5 py-1.5 text-sm font-normal transition-all duration-200",
-        variantStyles[variant]
-      )}
-    >
-      {label}
-      <button
-        onClick={onRemove}
-        className="ml-1 rounded-full p-0.5 hover:bg-foreground/10 transition-colors"
-        aria-label={`Remove ${label}`}
-      >
-        <X className="h-3 w-3" />
-      </button>
-    </Badge>
-  );
-}
-
-// Empty State Component
-function EmptyTagsState({ type }: { type: "services" | "insurance" }) {
-  return (
-    <div className="py-4 px-3 rounded-lg border border-dashed border-border bg-muted/30 text-center">
-      <p className="text-sm text-muted-foreground">
-        {type === "services" 
-          ? "No services added yet. Add your treatment services to help families find the right care."
-          : "No insurance providers added yet. Add accepted insurance to help families understand their options."}
-      </p>
-    </div>
-  );
-}
-
-// Profile Completion Item
-function CompletionItem({ 
-  label, 
-  completed,
-  onClick
-}: { 
-  label: string; 
-  completed: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-2.5 w-full text-left py-1.5 px-2 rounded-md transition-colors",
-        completed ? "text-muted-foreground" : "text-foreground hover:bg-muted/50"
-      )}
-    >
-      {completed ? (
-        <CircleCheck className="h-4 w-4 text-green-600 shrink-0" />
-      ) : (
-        <CircleDashed className="h-4 w-4 text-muted-foreground shrink-0" />
-      )}
-      <span className={cn("text-xs", completed && "line-through")}>{label}</span>
-    </button>
-  );
-}
+// Use components from imports with local aliases
+const SectionHeader = ListingSectionHeader;
+const TagChip = ListingTagChip;
+const EmptyTagsState = ListingEmptyTagsState;
+const FormField = ListingFormField;
 
 export default function ProviderListingPage() {
   const queryClient = useQueryClient();
@@ -2087,182 +1952,32 @@ export default function ProviderListingPage() {
           {/* Right Column - Sidebar */}
           <div className="space-y-4 order-1 lg:order-2 lg:sticky lg:top-6 lg:self-start">
             {/* Profile Completion Card */}
-            <Card className="border-border/60 shadow-sm overflow-hidden">
-              <CardHeader className="pb-3 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    Profile Completion
-                  </CardTitle>
-                  <Badge 
-                    variant={profileCompletion.percentage === 100 ? "default" : "secondary"}
-                    className={cn(
-                      "text-xs font-semibold",
-                      profileCompletion.percentage === 100 && "bg-green-500 hover:bg-green-500/90"
-                    )}
-                  >
-                    {profileCompletion.percentage}%
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Progress 
-                  value={profileCompletion.percentage} 
-                  className="h-2"
-                />
-                
-                {profileCompletion.percentage < 100 ? (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Complete your profile to improve visibility
-                    </p>
-                    {profileCompletion.items.map((item) => (
-                      <CompletionItem
-                        key={item.key}
-                        label={item.label}
-                        completed={item.completed}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-200">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="text-sm font-medium text-green-700">Profile Complete!</p>
-                      <p className="text-xs text-green-600">Your listing is fully optimized</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ListingProfileCompletion
+              percentage={profileCompletion.percentage}
+              items={profileCompletion.items}
+            />
 
             {/* Status Card */}
-            <Card className="border-border/60 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold">Listing Status</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
-                  <div className={cn(
-                    "h-10 w-10 rounded-xl flex items-center justify-center",
-                    facility.status === 'approved' ? 'bg-green-500/10' : 
-                    facility.status === 'pending' ? 'bg-amber-500/10' : 'bg-muted'
-                  )}>
-                    <StatusIcon className={cn(
-                      "h-5 w-5",
-                      facility.status === 'approved' ? 'text-green-600' : 
-                      facility.status === 'pending' ? 'text-amber-600' : 'text-muted-foreground'
-                    )} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{statusConfig.label}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {facility.status === 'approved' ? 'Visible to families' : 
-                       facility.status === 'pending' ? 'Under review' : 'Not published'}
-                    </p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Visibility</span>
-                    <Badge variant={facility.status === 'approved' ? "default" : "secondary"} className="text-xs">
-                      {facility.status === 'approved' ? 'Public' : 'Private'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Type</span>
-                    <span className="font-medium text-xs">{facility.facility_type || "Not set"}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Location</span>
-                    <span className="font-medium text-xs">{facility.city}, {facility.state}</span>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">Need Help?</p>
-                  <Button variant="outline" size="sm" className="w-full text-xs gap-2" asChild>
-                    <Link to="/provider-support">
-                      <Info className="h-3.5 w-3.5" />
-                      Contact Support
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ListingStatusCard
+              status={facility.status}
+              facilityType={facility.facility_type}
+              city={facility.city}
+              state={facility.state}
+              slug={facility.slug}
+            />
 
             {/* Tips Card */}
-            <Card className="bg-gradient-to-br from-primary/5 via-transparent to-accent/5 border-primary/10 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Optimization Tips
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-2.5">
-                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-xs text-muted-foreground">Add a detailed description with your unique approach</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-xs text-muted-foreground">Upload high-quality photos of your facility</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-xs text-muted-foreground">Respond to leads within 24 hours</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-xs text-muted-foreground">Keep services and insurance list up to date</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <ListingTipsCard />
           </div>
         </div>
 
         {/* Floating Save Bar */}
-        <div className="sticky bottom-4 flex justify-center pt-4 z-10">
-          <div className={cn(
-            "flex items-center gap-3 px-4 py-3 rounded-full bg-card/95 backdrop-blur-sm border shadow-lg transition-all duration-300",
-            hasChanges ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
-          )}>
-            <span className="text-sm text-muted-foreground">You have unsaved changes</span>
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving || isAutoSaving} 
-              size="sm"
-              className="gap-2 rounded-full"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
+        <ListingFloatingSaveBar
+          hasChanges={hasChanges}
+          isSaving={isSaving}
+          isAutoSaving={isAutoSaving}
+          onSave={handleSave}
+        />
       </div>
     </div>
   );
