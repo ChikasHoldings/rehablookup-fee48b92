@@ -182,8 +182,8 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
     >
       <div className="flex flex-col md:flex-row">
         {/* Image Section */}
-        <div className="relative md:w-64 lg:w-72 shrink-0 overflow-hidden">
-          <div className="aspect-[16/10] md:aspect-auto md:h-full md:min-h-[220px]">
+        <div className="relative md:w-60 lg:w-64 shrink-0 overflow-hidden">
+          <div className="aspect-[16/10] md:aspect-auto md:h-full md:min-h-[180px]">
             {hasValidHeroImage ? (
               <>
                 <img 
@@ -200,7 +200,7 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
               </>
             ) : (
               <div className={cn(
-                "flex h-full w-full items-center justify-center min-h-[180px] md:min-h-[220px]",
+                "flex h-full w-full items-center justify-center min-h-[140px] md:min-h-[180px]",
                 showFeaturedBadge 
                   ? "bg-gradient-to-br from-amber-100 via-amber-50 to-white"
                   : "bg-gradient-to-br from-secondary via-background to-secondary"
@@ -305,9 +305,9 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
         </div>
 
         {/* Content Section */}
-        <div className="flex flex-1 flex-col p-4 md:p-5">
+        <div className="flex flex-1 flex-col p-3 md:p-4">
           {/* Header Row */}
-          <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex-1 min-w-0">
               <h3 className={cn(
                 "font-display text-base lg:text-lg font-bold leading-tight line-clamp-1 mb-1.5",
@@ -366,7 +366,7 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
             <a 
               href={telLink}
               className={cn(
-                "inline-flex items-center gap-1.5 text-sm font-medium mb-3 w-fit",
+                "inline-flex items-center gap-1.5 text-sm font-medium mb-2 w-fit",
                 "hover:underline transition-colors",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded",
                 showFeaturedBadge ? "text-amber-700 hover:text-amber-800" : "text-primary hover:text-primary/80"
@@ -380,7 +380,7 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
           )}
 
           {/* Stats Badges Row */}
-          <div className="flex items-center gap-2 flex-wrap mb-3" role="list" aria-label="Provider credentials">
+          <div className="flex items-center gap-2 flex-wrap mb-2" role="list" aria-label="Provider credentials">
             {center.verified && (
               <Badge className="gap-1.5 px-2.5 py-1 text-[11px] font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0 rounded-md shadow-sm" role="listitem">
                 <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
@@ -402,12 +402,12 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
           </div>
 
           {/* Description */}
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-2">
             {center.description}
           </p>
 
           {/* Treatment Types & Insurance - Inline */}
-          <div className="flex items-center gap-2 flex-wrap mb-4">
+          <div className="flex items-center gap-2 flex-wrap mb-3">
             {center.treatmentTypes.slice(0, 4).map((type) => (
               <Badge 
                 key={type} 
@@ -431,7 +431,7 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
 
           {/* Insurance Preview */}
           {hasInsurance && center.insuranceAccepted.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap mb-4 pb-3 border-b border-border/50" role="list" aria-label="Accepted insurance providers">
+            <div className="flex items-center gap-2 flex-wrap mb-3 pb-2 border-b border-border/50" role="list" aria-label="Accepted insurance providers">
               <span className="text-[10px] text-muted-foreground font-medium">Accepts:</span>
               {center.insuranceAccepted.slice(0, 3).map((ins) => (
                 <span 
