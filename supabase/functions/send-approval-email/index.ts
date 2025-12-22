@@ -1,10 +1,18 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Plan configuration
+const PLAN_CONFIG: Record<string, { product_ids: string[]; name: string }> = {
+  basic: { product_ids: [], name: "Basic" },
+  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], name: "Professional" },
+  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], name: "Featured" },
 };
 
 interface ApprovalEmailRequest {
@@ -13,62 +21,117 @@ interface ApprovalEmailRequest {
   userId: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+async function getProviderPlan(email: string): Promise<string> {
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!stripeKey) return "basic";
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const customers = await stripe.customers.list({ email, limit: 1 });
+    
+    if (customers.data.length === 0) return "basic";
 
-    if (!resendApiKey) {
-      console.error("RESEND_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customers.data[0].id,
+      status: "active",
+      limit: 1,
+    });
 
-    const body: ApprovalEmailRequest = await req.json();
-    const { facilityId, facilityName, userId } = body;
+    if (subscriptions.data.length === 0) return "basic";
 
-    console.log("Sending approval email for facility:", { facilityId, facilityName, userId });
+    const productId = subscriptions.data[0].items.data[0].price.product as string;
+    
+    if (PLAN_CONFIG.professional.product_ids.includes(productId)) return "professional";
+    if (PLAN_CONFIG.featured.product_ids.includes(productId)) return "featured";
+    
+    return "basic";
+  } catch (error) {
+    console.error("Error getting plan:", error);
+    return "basic";
+  }
+}
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+function generateApprovalEmail(
+  providerName: string,
+  facilityName: string,
+  profileUrl: string,
+  plan: string
+): string {
+  const isFeatured = plan === "featured";
+  const isProfessional = plan === "professional";
+  const isPaidPlan = isFeatured || isProfessional;
+  
+  const headerGradient = isFeatured 
+    ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
+    : "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)";
+  
+  const planBadge = isFeatured 
+    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
+    : isProfessional 
+    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
+    : '';
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("first_name, last_name, email")
-      .eq("user_id", userId)
-      .maybeSingle();
+  // Featured-specific benefits
+  const featuredBenefits = isFeatured ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 28px;">
+      <tr>
+        <td style="padding: 20px;">
+          <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #92400e;">
+            ⭐ Your Featured Provider Benefits:
+          </p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #78350f;">
+                • Priority placement at the top of search results
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #78350f;">
+                • Exclusive, high-intent leads
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #78350f;">
+                • Premium visibility with Featured badge
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  ` : '';
 
-    if (profileError || !profile) {
-      console.error("Profile not found:", profileError);
-      return new Response(
-        JSON.stringify({ error: "Provider profile not found" }),
-        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
+  // Professional benefits
+  const professionalBenefits = isProfessional ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
+      <tr>
+        <td style="padding: 16px 20px;">
+          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #0369a1;">
+            ✓ <strong>Professional Plan Active:</strong> You'll receive qualified leads directly to your dashboard.
+          </p>
+        </td>
+      </tr>
+    </table>
+  ` : '';
 
-    const { data: facility, error: facilityError } = await supabase
-      .from("facilities")
-      .select("slug, city, state")
-      .eq("id", facilityId)
-      .maybeSingle();
+  // Basic plan upsell
+  const basicUpsell = !isPaidPlan ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 12px; margin-bottom: 28px;">
+      <tr>
+        <td style="padding: 20px;">
+          <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #1B365D;">
+            💡 Ready to receive leads?
+          </p>
+          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; color: #64748b; line-height: 1.6;">
+            Upgrade to Professional or Featured to start receiving qualified leads from families actively seeking treatment.
+            <a href="https://rehablookup.com/provider/billing" style="color: #1B365D; font-weight: 500;">View plans →</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  ` : '';
 
-    if (facilityError) {
-      console.error("Error fetching facility:", facilityError);
-    }
-
-    const profileUrl = facility?.slug 
-      ? `https://rehablookup.com/center/${facility.slug}`
-      : `https://rehablookup.com/rehab-centers`;
-
-    const providerName = profile.first_name || "there";
-
-    const emailHtml = `
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -84,10 +147,10 @@ const handler = async (req: Request): Promise<Response> => {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 40px 32px; text-align: center;">
+            <td style="background: ${headerGradient}; padding: 40px 32px; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">✓</div>
               <h1 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 26px; font-weight: 700;">
-                You're Live on RehabLookup
+                You're Live on RehabLookup${planBadge}
               </h1>
             </td>
           </tr>
@@ -102,6 +165,9 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="margin: 0 0 28px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; color: #4b5563; line-height: 1.7;">
                 Your listing for <strong style="color: #1a1a1a;">${facilityName}</strong> has been approved. Families searching for treatment can now find and contact you directly.
               </p>
+              
+              ${featuredBenefits}
+              ${professionalBenefits}
               
               <!-- Info Box -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdf4; border-radius: 12px; margin-bottom: 32px;">
@@ -131,11 +197,13 @@ const handler = async (req: Request): Promise<Response> => {
                 </tr>
               </table>
               
+              ${basicUpsell}
+              
               <!-- CTA Button -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                 <tr>
                   <td align="center">
-                    <a href="${profileUrl}" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 16px;">
+                    <a href="${profileUrl}" style="display: inline-block; background: ${isFeatured ? '#7c3aed' : '#1B365D'}; color: #ffffff; padding: 16px 36px; border-radius: 10px; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 16px;">
                       See Your Listing
                     </a>
                   </td>
@@ -202,13 +270,77 @@ const handler = async (req: Request): Promise<Response> => {
   </table>
 </body>
 </html>
-    `;
+  `;
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "Email service not configured" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const body: ApprovalEmailRequest = await req.json();
+    const { facilityId, facilityName, userId } = body;
+
+    console.log("Sending approval email for facility:", { facilityId, facilityName, userId });
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("first_name, last_name, email")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      console.error("Profile not found:", profileError);
+      return new Response(
+        JSON.stringify({ error: "Provider profile not found" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { data: facility, error: facilityError } = await supabase
+      .from("facilities")
+      .select("slug, city, state")
+      .eq("id", facilityId)
+      .maybeSingle();
+
+    if (facilityError) {
+      console.error("Error fetching facility:", facilityError);
+    }
+
+    const profileUrl = facility?.slug 
+      ? `https://rehablookup.com/center/${facility.slug}`
+      : `https://rehablookup.com/rehab-centers`;
+
+    const providerName = profile.first_name || "there";
+    
+    // Get provider plan for styling
+    const providerPlan = await getProviderPlan(profile.email);
+    console.log("Provider plan:", providerPlan);
+
+    const emailHtml = generateApprovalEmail(providerName, facilityName, profileUrl, providerPlan);
 
     const resend = new Resend(resendApiKey);
+    const subjectPrefix = providerPlan === "featured" ? "⭐ " : "";
+    
     const emailResponse = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [profile.email],
-      subject: `Your listing is live: ${facilityName}`,
+      subject: `${subjectPrefix}Your listing is live: ${facilityName}`,
       html: emailHtml,
     });
 

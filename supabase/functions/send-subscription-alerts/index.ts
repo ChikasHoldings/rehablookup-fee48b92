@@ -27,6 +27,228 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[SUBSCRIPTION-ALERTS] ${step}${detailsStr}`);
 };
 
+function generateRenewalEmail(
+  firstName: string,
+  planConfig: typeof PLAN_CONFIG[string],
+  plan: string,
+  days: number,
+  renewalDate: string
+): string {
+  const isFeatured = plan === "featured";
+  const isProfessional = plan === "professional";
+  
+  const headerGradient = isFeatured 
+    ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
+    : "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)";
+  
+  const planBadge = isFeatured 
+    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
+    : isProfessional 
+    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
+    : '';
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          
+          <tr>
+            <td style="background: ${headerGradient}; padding: 24px 32px; border-radius: 8px 8px 0 0;">
+              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
+              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
+                Subscription Renewal${planBadge}
+              </h1>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+              
+              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+                Hi ${firstName},
+              </p>
+              
+              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+                Your <strong>${planConfig.name}</strong> plan renews in <strong>${days} day${days > 1 ? "s" : ""}</strong> on ${renewalDate}.
+              </p>
+              
+              ${isFeatured ? `
+              <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                <p style="margin: 0; font-size: 14px; color: #92400e;">
+                  ⭐ <strong>Featured Provider Benefits:</strong> Priority placement, exclusive leads, and premium visibility will continue after renewal.
+                </p>
+              </div>
+              ` : ''}
+              
+              <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                No action needed if you want to continue. To update your payment method or change plans, visit your billing settings.
+              </p>
+              
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: ${isFeatured ? '#7c3aed' : '#1B365D'}; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+                      Manage Subscription
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+function generateLeadLimitEmail(
+  firstName: string,
+  planConfig: typeof PLAN_CONFIG[string],
+  plan: string,
+  threshold: { percent: number; key: string; subject: string; isUrgent: boolean },
+  leadCount: number
+): string {
+  const isFeatured = plan === "featured";
+  const isProfessional = plan === "professional";
+  const isPaidPlan = isFeatured || isProfessional;
+  
+  // For paid plans, use plan-colored headers instead of red/orange
+  let headerGradient: string;
+  if (threshold.isUrgent) {
+    headerGradient = isFeatured 
+      ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
+      : isProfessional 
+      ? "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)"
+      : "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)";
+  } else {
+    headerGradient = isFeatured 
+      ? "linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)" 
+      : isProfessional 
+      ? "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)"
+      : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)";
+  }
+  
+  const planBadge = isFeatured 
+    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
+    : isProfessional 
+    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
+    : '';
+
+  // For Featured providers at limit, show different messaging
+  const limitMessage = threshold.isUrgent
+    ? (isFeatured 
+      ? `<p style="margin: 0 0 24px 0; color: #7c3aed; font-size: 14px; line-height: 1.6;">
+          You've maximized your lead allocation for this month! Your leads will reset at the start of next month.
+        </p>`
+      : isProfessional
+      ? `<p style="margin: 0 0 24px 0; color: #1B365D; font-size: 14px; line-height: 1.6;">
+          You've used all your leads for this month. Consider upgrading to Featured for priority placement and exclusive leads.
+        </p>`
+      : `<p style="margin: 0 0 24px 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
+          New qualified leads will not be delivered until your limit resets next month or you upgrade your plan.
+        </p>`)
+    : `<p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+        ${isPaidPlan ? "You're making great progress this month!" : "Consider upgrading to receive more leads and grow your business."}
+      </p>`;
+
+  // CTA button - don't show upgrade for Featured
+  const ctaButton = isFeatured
+    ? `<a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: #7c3aed; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+        View Your Leads
+      </a>`
+    : `<a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+        ${threshold.isUrgent && !isProfessional ? "Upgrade Now" : "View Plans"}
+      </a>`;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+          
+          <tr>
+            <td style="background: ${headerGradient}; padding: 24px 32px; border-radius: 8px 8px 0 0;">
+              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
+              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
+                ${threshold.subject}${planBadge}
+              </h1>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
+              
+              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
+                Hi ${firstName},
+              </p>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 6px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px; text-align: center;">
+                    <p style="margin: 0 0 4px 0; font-size: 28px; font-weight: 600; color: ${isFeatured ? '#7c3aed' : '#1B365D'};">${leadCount} / ${planConfig.lead_limit}</p>
+                    <p style="margin: 0; font-size: 14px; color: #6b7280;">leads used this month</p>
+                  </td>
+                </tr>
+              </table>
+              
+              ${limitMessage}
+              
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    ${ctaButton}
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -107,76 +329,20 @@ serve(async (req) => {
             if (!existingAlert) {
               const renewalDate = subscriptionEnd.toLocaleDateString("en-US", { month: "long", day: "numeric" });
               
-              const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          
-          <tr>
-            <td style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 24px 32px; border-radius: 8px 8px 0 0;">
-              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
-              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                Subscription Renewal
-              </h1>
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
-              
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Hi ${profile.first_name || "there"},
-              </p>
-              
-              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Your <strong>${planConfig.name}</strong> plan renews in <strong>${days} day${days > 1 ? "s" : ""}</strong> on ${renewalDate}.
-              </p>
-              
-              <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                No action needed if you want to continue. To update your payment method or change plans, visit your billing settings.
-              </p>
-              
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center">
-                    <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                      Manage Subscription
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
-              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
-              </p>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-              `;
+              const emailHtml = generateRenewalEmail(
+                profile.first_name || "there",
+                planConfig,
+                plan,
+                days,
+                renewalDate
+              );
 
+              const subjectPrefix = plan === "featured" ? "⭐ " : "";
+              
               const { error: emailError } = await resend.emails.send({
                 from: "RehabLookup <no-reply@rehablookup.com>",
                 to: [profile.email],
-                subject: `Your ${planConfig.name} plan renews in ${days} day${days > 1 ? "s" : ""}`,
+                subject: `${subjectPrefix}Your ${planConfig.name} plan renews in ${days} day${days > 1 ? "s" : ""}`,
                 html: emailHtml,
               });
 
@@ -235,87 +401,20 @@ serve(async (req) => {
                   .single();
 
                 if (!existingAlert) {
-                  const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          
-          <tr>
-            <td style="background: ${threshold.isUrgent ? "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)" : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"}; padding: 24px 32px; border-radius: 8px 8px 0 0;">
-              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
-              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                ${threshold.subject}
-              </h1>
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
-              
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Hi ${profile.first_name || "there"},
-              </p>
-              
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 6px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 20px; text-align: center;">
-                    <p style="margin: 0 0 4px 0; font-size: 28px; font-weight: 600; color: #1B365D;">${leadCount || 0} / ${planConfig.lead_limit}</p>
-                    <p style="margin: 0; font-size: 14px; color: #6b7280;">leads used this month</p>
-                  </td>
-                </tr>
-              </table>
-              
-              ${threshold.isUrgent ? `
-              <p style="margin: 0 0 24px 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
-                New qualified leads will not be delivered until your limit resets next month or you upgrade your plan.
-              </p>
-              ` : `
-              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Consider upgrading to receive more leads and grow your business.
-              </p>
-              `}
-              
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center">
-                    <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                      ${threshold.isUrgent ? "Upgrade Now" : "View Plans"}
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
-              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
-              </p>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-                  `;
+                  const emailHtml = generateLeadLimitEmail(
+                    profile.first_name || "there",
+                    planConfig,
+                    plan,
+                    threshold,
+                    leadCount || 0
+                  );
+
+                  const subjectPrefix = plan === "featured" ? "⭐ " : "";
 
                   const { error: emailError } = await resend.emails.send({
                     from: "RehabLookup <no-reply@rehablookup.com>",
                     to: [profile.email],
-                    subject: `${threshold.subject} - ${planConfig.name} Plan`,
+                    subject: `${subjectPrefix}${threshold.subject} - ${planConfig.name} Plan`,
                     html: emailHtml,
                   });
 
