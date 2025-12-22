@@ -1,5 +1,5 @@
 import { NavLink, Link } from "react-router-dom";
-import { Home, Inbox, Heart, Star, Settings, LogIn } from "lucide-react";
+import { Home, Send, Heart, Star, Settings, LogIn } from "lucide-react";
 
 interface SeekerMobileNavProps {
   isAuthenticated?: boolean;
@@ -7,7 +7,7 @@ interface SeekerMobileNavProps {
 
 const navItems = [
   { to: "/account", icon: Home, label: "Home" },
-  { to: "/account/inbox", icon: Inbox, label: "Inbox" },
+  { to: "/account/requests", icon: Send, label: "Requests" },
   { to: "/account/saved", icon: Heart, label: "Saved" },
   { to: "/account/reviews", icon: Star, label: "Reviews" },
   { to: "/account/settings", icon: Settings, label: "Settings" },

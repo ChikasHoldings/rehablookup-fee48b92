@@ -73,7 +73,7 @@ import SeekerAuth from "./pages/SeekerAuth";
 import ResetPassword from "./pages/ResetPassword";
 import { SeekerShell } from "./components/seeker/SeekerShell";
 import SeekerHome from "./pages/seeker/SeekerHome";
-import SeekerInbox from "./pages/seeker/SeekerInbox";
+import SeekerRequests from "./pages/seeker/SeekerRequests";
 import SeekerSaved from "./pages/seeker/SeekerSaved";
 import SeekerReviews from "./pages/seeker/SeekerReviews";
 import SeekerSettings from "./pages/seeker/SeekerSettings";
@@ -198,7 +198,7 @@ const App = () => (
             {/* Seeker Account Routes - Nested under seeker shell */}
             <Route path="/account" element={<SeekerShell />}>
               <Route index element={<SeekerHome />} />
-              <Route path="inbox" element={<SeekerInbox />} />
+              <Route path="requests" element={<SeekerRequests />} />
               <Route path="saved" element={<SeekerSaved />} />
               <Route path="reviews" element={<SeekerReviews />} />
               <Route path="settings" element={<SeekerSettings />} />
