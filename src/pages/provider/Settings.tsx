@@ -31,7 +31,7 @@ import { formatPhoneNumber, isValidPhoneNumber } from "@/lib/phoneUtils";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
 import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
 import { useLogActivity } from "@/hooks/useActivityLog";
-import { resetOnboardingTour } from "@/components/provider/OnboardingTour";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -973,30 +973,6 @@ export default function ProviderSettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Dashboard Tour</p>
-                    <p className="text-xs text-muted-foreground">
-                      Replay the onboarding tour to learn about dashboard features
-                    </p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      resetOnboardingTour();
-                      navigate("/provider/dashboard");
-                      toast({
-                        title: "Tour restarted",
-                        description: "The onboarding tour will start on your dashboard.",
-                      });
-                    }}
-                    className="gap-2"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Restart Tour
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
