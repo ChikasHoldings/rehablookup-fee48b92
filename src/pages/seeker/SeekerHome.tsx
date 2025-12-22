@@ -45,13 +45,24 @@ export default function SeekerHome() {
 
   useEffect(() => {
     const fetchNearbyFacilities = async () => {
-      const { data } = await supabase
-        .from('facilities')
-        .select('id, name, city, state, facility_type, slug, phone, description, logo_url, gallery_urls, verified, year_established')
+      // Use public_facilities view which is accessible to all users
+      const { data, error } = await supabase
+        .from('public_facilities')
+        .select('id, name, city, state, facility_type, slug, phone, description, logo_url, gallery_urls, verified')
         .eq('status', 'approved')
         .limit(50);
       
-      setNearbyFacilities(data || []);
+      if (error) {
+        console.error('Error fetching facilities:', error);
+      }
+      
+      // Map data to include year_established as undefined since public_facilities view doesn't have it
+      const mappedData = (data || []).map(f => ({
+        ...f,
+        year_established: undefined
+      })) as FacilityCardData[];
+      
+      setNearbyFacilities(mappedData);
       setIsLoading(false);
     };
 
