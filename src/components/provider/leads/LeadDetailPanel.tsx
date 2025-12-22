@@ -78,6 +78,7 @@ export interface Lead {
   insurance_type: string | null;
   insurance_provider: string | null;
   budget_preference: string | null;
+  special_needs: string[] | null;
   qualified: boolean | null;
   exclusivity: string | null;
   // Additional fields
@@ -546,7 +547,9 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
             {/* Intake Details - Show for all leads with data */}
             {(lead.urgency || lead.level_of_care || lead.insurance_type || lead.insurance_provider || 
               lead.who_seeking_help || lead.dual_diagnosis || lead.budget_preference || 
-              lead.location_city_state || lead.location_zip || (lead.primary_substance && lead.primary_substance.length > 0)) && (
+              lead.location_city_state || lead.location_zip || 
+              (lead.primary_substance && lead.primary_substance.length > 0) ||
+              (lead.special_needs && lead.special_needs.length > 0)) && (
               <section>
                 <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3 text-primary" />
@@ -626,6 +629,18 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                     <div className="flex flex-wrap gap-1">
                       {lead.primary_substance.map((s, i) => (
                         <Badge key={i} variant="secondary" className="capitalize text-xs h-5 px-1.5">{s}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {lead.special_needs && lead.special_needs.length > 0 && (
+                  <div className="py-1.5 px-2 rounded bg-purple-50 border border-purple-200 mt-1.5">
+                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Special Requirements</p>
+                    <div className="flex flex-wrap gap-1">
+                      {lead.special_needs.map((need, i) => (
+                        <Badge key={i} variant="outline" className="capitalize text-xs h-5 px-1.5 border-purple-300 text-purple-700 bg-purple-50">
+                          {need.replace(/-/g, ' ')}
+                        </Badge>
                       ))}
                     </div>
                   </div>

@@ -1,27 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, subMonths, format, startOfDay, endOfDay, isWithinInterval, subDays } from "date-fns";
+import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 
-export interface Lead {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: string;
-  created_at: string;
-  preferred_contact: string;
-  source: string | null;
-  insurance_type: string | null;
-  urgency: string | null;
-  email_verified: boolean | null;
-  level_of_care: string | null;
-  dual_diagnosis: string | null;
-  primary_substance: string[] | null;
-  who_seeking_help: string | null;
-  message: string | null;
-  exclusivity: string | null;
-  qualified: boolean | null;
-}
+// Re-export Lead for backwards compatibility
+export type { Lead };
 
 export interface DateRange {
   from: Date | undefined;

@@ -87,6 +87,7 @@ interface QualifiedLeadRequest {
   insuranceType: string;
   insuranceProvider?: string;
   budgetPreference?: string;
+  specialNeeds?: string[];
   name: string;
   firstName?: string;
   lastName?: string;
@@ -1686,6 +1687,7 @@ const handler = async (req: Request): Promise<Response> => {
         insurance_type: leadData.insuranceType,
         insurance_provider: leadData.insuranceProvider || null,
         budget_preference: leadData.budgetPreference || null,
+        special_needs: leadData.specialNeeds || [],
         status: "new",
         quality_flag: isQualified ? "qualified" : "unqualified",
         validation_status: "valid",

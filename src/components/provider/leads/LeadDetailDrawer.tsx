@@ -50,31 +50,8 @@ import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatus
 import { EmailLeadDialog } from "./EmailLeadDialog";
 import { LeadScoreBadge } from "./LeadScoreBadge";
 
-interface Lead {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  message: string | null;
-  preferred_contact: string;
-  created_at: string;
-  status: string;
-  facility_id: string;
-  source: string | null;
-  email_verified: boolean | null;
-  snooze_until: string | null;
-  // Qualified intake fields
-  who_seeking_help: string | null;
-  location_zip: string | null;
-  location_city_state: string | null;
-  urgency: string | null;
-  primary_substance: string[] | null;
-  level_of_care: string | null;
-  dual_diagnosis: string | null;
-  insurance_type: string | null;
-  insurance_provider: string | null;
-  budget_preference: string | null;
-}
+// Import Lead type from LeadDetailPanel to avoid duplication
+import { Lead } from "./LeadDetailPanel";
 
 interface LeadNote {
   id: string;
