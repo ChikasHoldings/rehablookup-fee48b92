@@ -79,6 +79,7 @@ import SeekerSaved from "./pages/seeker/SeekerSaved";
 import SeekerReviews from "./pages/seeker/SeekerReviews";
 import SeekerSettings from "./pages/seeker/SeekerSettings";
 import SeekerNotifications from "./pages/seeker/SeekerNotifications";
+import SeekerNotificationPreferences from "./pages/seeker/SeekerNotificationPreferences";
 import SeekerFacilityProfile from "./pages/seeker/SeekerFacilityProfile";
 import SeekerSearch from "./pages/seeker/SeekerSearch";
 import SeekerHelp from "./pages/seeker/SeekerHelp";
@@ -208,6 +209,7 @@ const App = () => (
               <Route path="reviews" element={<SeekerReviews />} />
               <Route path="settings" element={<SeekerSettings />} />
               <Route path="notifications" element={<SeekerNotifications />} />
+              <Route path="notification-preferences" element={<SeekerNotificationPreferences />} />
               <Route path="facility/:slug" element={<SeekerFacilityProfile />} />
               <Route path="search" element={<SeekerSearch />} />
               <Route path="help" element={<SeekerHelp />} />

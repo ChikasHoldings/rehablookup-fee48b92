@@ -71,15 +71,6 @@ export default function SeekerSettings() {
   const [isResendingVerification, setIsResendingVerification] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  // Notification preferences (stored in localStorage for now)
-  const [emailNotifications, setEmailNotifications] = useState(() => {
-    const stored = localStorage.getItem('seeker-email-notifications');
-    return stored !== null ? stored === 'true' : true;
-  });
-  const [facilityResponses, setFacilityResponses] = useState(() => {
-    const stored = localStorage.getItem('seeker-facility-responses');
-    return stored !== null ? stored === 'true' : true;
-  });
   const [showCameraDialog, setShowCameraDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -566,28 +557,6 @@ export default function SeekerSettings() {
     return 'U';
   };
 
-  const handleEmailNotificationsChange = (checked: boolean) => {
-    setEmailNotifications(checked);
-    localStorage.setItem('seeker-email-notifications', String(checked));
-    toast({
-      title: checked ? "Notifications enabled" : "Notifications disabled",
-      description: checked 
-        ? "You'll receive email updates about your inquiries."
-        : "Email notifications for inquiries are now off."
-    });
-  };
-
-  const handleFacilityResponsesChange = (checked: boolean) => {
-    setFacilityResponses(checked);
-    localStorage.setItem('seeker-facility-responses', String(checked));
-    toast({
-      title: checked ? "Notifications enabled" : "Notifications disabled",
-      description: checked 
-        ? "You'll be notified when facilities respond."
-        : "Facility response notifications are now off."
-    });
-  };
-
   // Show auth prompt if not authenticated
   if (!isAuthenticated && !isLoading) {
     return (
@@ -951,34 +920,18 @@ export default function SeekerSettings() {
               Notifications
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Email Notifications</p>
-                <p className="text-sm text-muted-foreground">
-                  Receive updates about your inquiries
-                </p>
-              </div>
-              <Switch 
-                checked={emailNotifications} 
-                onCheckedChange={handleEmailNotificationsChange}
-              />
-            </div>
-            
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Facility Responses</p>
-                <p className="text-sm text-muted-foreground">
-                  Get notified when facilities respond
-                </p>
-              </div>
-              <Switch 
-                checked={facilityResponses}
-                onCheckedChange={handleFacilityResponsesChange}
-              />
-            </div>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="w-full justify-between"
+              onClick={() => navigate('/account/notification-preferences')}
+            >
+              <span>Manage notification preferences</span>
+              <Settings className="h-4 w-4" />
+            </Button>
+            <p className="text-sm text-muted-foreground mt-2">
+              Control email, in-app, and review notifications
+            </p>
           </CardContent>
         </Card>
 
