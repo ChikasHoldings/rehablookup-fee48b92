@@ -192,7 +192,7 @@ export function Header({
             ) : (
               <div className="hidden sm:flex items-center gap-2">
                 {!seekerLoading && isSeekerLoggedIn ? (
-                  <PrefetchLink to="/my-account">
+                  <PrefetchLink to="/account">
                     <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5 relative">
                       <User className="h-4 w-4" />
                       My Account
@@ -456,7 +456,7 @@ export function Header({
             ) : (
               <div className="space-y-3">
                 {!seekerLoading && isSeekerLoggedIn ? (
-                  <PrefetchLink to="/my-account" onClick={() => setMobileMenuOpen(false)} className="block">
+                  <PrefetchLink to="/account" onClick={() => setMobileMenuOpen(false)} className="block">
                     <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl gap-2 relative">
                       <User className="h-4 w-4" />
                       My Account
