@@ -16,6 +16,7 @@ import {
   FileCheck,
   GitCompare,
   ChevronDown,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { prefetchAdminPage } from "@/lib/adminPrefetch";
@@ -78,6 +79,7 @@ const navEntries: NavEntry[] = [
     ],
   },
   { to: "/admin/flagged-images", icon: Image, label: "Flagged Images", permission: "flagged_images" },
+  { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews" },
   {
     icon: Settings,
     label: "Settings",

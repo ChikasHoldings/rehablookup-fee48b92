@@ -800,6 +800,66 @@ export type Database = {
           },
         ]
       }
+      facility_reviews: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          facility_id: string
+          helpful_count: number
+          id: string
+          rating: number
+          review_text: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          facility_id: string
+          helpful_count?: number
+          id?: string
+          rating: number
+          review_text?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          facility_id?: string
+          helpful_count?: number
+          id?: string
+          rating?: number
+          review_text?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_reviews_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_reviews_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_reviews_config: {
         Row: {
           created_at: string | null
@@ -1678,6 +1738,35 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_helpful_votes: {
+        Row: {
+          created_at: string
+          id: string
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_helpful_votes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "facility_reviews"
             referencedColumns: ["id"]
           },
         ]

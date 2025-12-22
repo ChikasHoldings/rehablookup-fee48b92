@@ -39,6 +39,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 import { TrustBadgesInline, TrustBadgesSection } from "@/components/trust/TrustBadgesSection";
 import { GoogleReviewsCard } from "@/components/reviews/GoogleReviewsCard";
+import { FacilityReviewsSection } from "@/components/reviews/FacilityReviewsSection";
 import { usePublicGoogleReviews } from "@/hooks/useGoogleReviews";
 import { cn } from "@/lib/utils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
@@ -990,6 +991,14 @@ const CenterProfile = () => {
 
               {/* Google Reviews - shown below trust badges */}
               <GoogleReviewsDisplay facilityId={facility.id} />
+
+              {/* Community Reviews Section */}
+              <div className="mt-6">
+                <FacilityReviewsSection 
+                  facilityId={facility.id} 
+                  facilityName={facility.name} 
+                />
+              </div>
             </div>
 
             {/* Right Column - Sticky Sidebar */}
