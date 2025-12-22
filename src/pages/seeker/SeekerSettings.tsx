@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
-import { User, Lock, Bell, LogOut } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { User, Lock, Bell, LogOut, Camera, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +14,11 @@ import { useNavigate } from "react-router-dom";
 export default function SeekerSettings() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -23,20 +28,94 @@ export default function SeekerSettings() {
       if (!session) return;
 
       setEmail(session.user.email || "");
+      setUserId(session.user.id);
 
       const { data: profile } = await supabase
         .from('seeker_profiles')
-        .select('display_name')
+        .select('display_name, avatar_url')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      if (profile?.display_name) {
-        setDisplayName(profile.display_name);
+      if (profile) {
+        setDisplayName(profile.display_name || "");
+        setAvatarUrl(profile.avatar_url);
       }
     };
 
     loadProfile();
   }, []);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 2MB.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('facility-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('facility-images')
+        .getPublicUrl(fileName);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('seeker_profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', userId);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      toast({
+        title: "Avatar updated",
+        description: "Your profile picture has been updated."
+      });
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Could not upload your avatar. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -74,6 +153,16 @@ export default function SeekerSettings() {
     navigate("/", { replace: true });
   };
 
+  const getInitials = () => {
+    if (displayName) {
+      return displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (email) {
+      return email[0].toUpperCase();
+    }
+    return 'U';
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-display font-bold mb-6">Settings</h1>
@@ -87,7 +176,45 @@ export default function SeekerSettings() {
               Profile
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Avatar Section */}
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={avatarUrl || undefined} alt={displayName} />
+                  <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={handleAvatarClick}
+                  disabled={isUploadingAvatar}
+                  className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {isUploadingAvatar ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Camera className="h-3.5 w-3.5" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+              </div>
+              <div>
+                <p className="font-medium">Profile Picture</p>
+                <p className="text-sm text-muted-foreground">
+                  Click the camera icon to upload a new photo
+                </p>
+              </div>
+            </div>
+
+            <Separator />
+
             <div>
               <Label htmlFor="display-name">Display Name</Label>
               <Input
@@ -97,6 +224,9 @@ export default function SeekerSettings() {
                 placeholder="Your name"
                 className="mt-1"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                This name will be shown on your reviews
+              </p>
             </div>
 
             <div>
