@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useOutletContext } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface SeekerOutletContext {
-  isAuthenticated: boolean;
-  userName?: string;
-}
 
 interface UserReview {
   id: string;
@@ -125,7 +120,7 @@ function ReviewCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <Link 
-                  to={`/center/${review.facility_slug}`}
+                  to={`/account/facility/${review.facility_slug || review.facility_id}`}
                   className="font-display text-base font-bold leading-tight hover:text-primary transition-colors"
                 >
                   {review.facility_name}
@@ -176,10 +171,12 @@ function ReviewCard({
                 />
               ))}
             </div>
-            <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold">
-              <Building2 className="h-3 w-3" />
-              {review.facility_type}
-            </Badge>
+            {review.facility_type && (
+              <Badge variant="secondary" className="gap-1 px-2 py-0.5 text-[10px] font-semibold">
+                <Building2 className="h-3 w-3" />
+                {review.facility_type}
+              </Badge>
+            )}
           </div>
 
           {/* Review Text */}
@@ -201,70 +198,114 @@ function ReviewCard({
 }
 
 export default function SeekerReviews() {
-  const context = useOutletContext<SeekerOutletContext>();
-  const isAuthenticated = context?.isAuthenticated ?? false;
-  
   const [reviews, setReviews] = useState<UserReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [editingReview, setEditingReview] = useState<UserReview | null>(null);
   const [editRating, setEditRating] = useState(5);
   const [editText, setEditText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchReviews();
-    } else {
+    const checkAuthAndFetch = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      
+      if (session) {
+        await fetchReviews(session.user.id);
+      } else {
+        setIsLoading(false);
+      }
+    };
+    
+    checkAuthAndFetch();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setIsAuthenticated(!!session);
+        if (session) {
+          await fetchReviews(session.user.id);
+        } else {
+          setReviews([]);
+          setIsLoading(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchReviews = async (userId: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // First fetch reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('facility_reviews')
+        .select('id, facility_id, rating, review_text, status, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (reviewsError) {
+        console.error('Error fetching reviews:', reviewsError);
+        setError('Could not load your reviews');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!reviewsData || reviewsData.length === 0) {
+        setReviews([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch facility details for the reviews
+      const facilityIds = [...new Set(reviewsData.map(r => r.facility_id))];
+      const { data: facilitiesData, error: facilitiesError } = await supabase
+        .from('facilities')
+        .select('id, name, slug, city, state, facility_type, logo_url')
+        .in('id', facilityIds);
+
+      if (facilitiesError) {
+        console.error('Error fetching facilities:', facilitiesError);
+      }
+
+      // Create a map for quick facility lookup
+      const facilityMap = new Map(
+        (facilitiesData || []).map(f => [f.id, f])
+      );
+
+      // Map reviews with facility data
+      const mappedReviews: UserReview[] = reviewsData.map(review => {
+        const facility = facilityMap.get(review.facility_id);
+        return {
+          id: review.id,
+          facility_id: review.facility_id,
+          facility_name: facility?.name || 'Unknown Facility',
+          facility_slug: facility?.slug || '',
+          facility_city: facility?.city || '',
+          facility_state: facility?.state || '',
+          facility_type: facility?.facility_type || '',
+          facility_logo_url: facility?.logo_url || null,
+          rating: review.rating,
+          review_text: review.review_text,
+          status: review.status,
+          created_at: review.created_at
+        };
+      });
+
+      setReviews(mappedReviews);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred');
+    } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
-
-  const fetchReviews = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data, error } = await supabase
-      .from('facility_reviews')
-      .select(`
-        id,
-        facility_id,
-        rating,
-        review_text,
-        status,
-        created_at,
-        facilities!inner(name, slug, city, state, facility_type, logo_url)
-      `)
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching reviews:', error);
-      toast({
-        title: "Error loading reviews",
-        description: "Could not load your reviews. Please try again.",
-        variant: "destructive"
-      });
-    } else if (data) {
-      setReviews(data.map(review => ({
-        id: review.id,
-        facility_id: review.facility_id,
-        facility_name: (review.facilities as any)?.name || 'Unknown Facility',
-        facility_slug: (review.facilities as any)?.slug || '',
-        facility_city: (review.facilities as any)?.city || '',
-        facility_state: (review.facilities as any)?.state || '',
-        facility_type: (review.facilities as any)?.facility_type || '',
-        facility_logo_url: (review.facilities as any)?.logo_url || null,
-        rating: review.rating,
-        review_text: review.review_text,
-        status: review.status,
-        created_at: review.created_at
-      })));
-    }
-
-    setIsLoading(false);
   };
 
   const handleEdit = (review: UserReview) => {
@@ -285,6 +326,8 @@ export default function SeekerReviews() {
     if (!editingReview) return;
 
     setIsSaving(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    
     const { error } = await supabase
       .from('facility_reviews')
       .update({
@@ -304,7 +347,9 @@ export default function SeekerReviews() {
         title: "Review updated",
         description: "Your review has been updated successfully."
       });
-      fetchReviews();
+      if (session) {
+        fetchReviews(session.user.id);
+      }
     }
 
     setIsSaving(false);
@@ -405,7 +450,15 @@ export default function SeekerReviews() {
         )}
       </div>
 
-      {reviews.length === 0 ? (
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/5 mb-4">
+          <CardContent className="p-4 text-center text-destructive">
+            {error}
+          </CardContent>
+        </Card>
+      )}
+
+      {reviews.length === 0 && !error ? (
         <Card className="border-dashed">
           <CardContent className="p-8 text-center">
             <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-4">
