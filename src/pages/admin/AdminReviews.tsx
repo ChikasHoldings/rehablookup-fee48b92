@@ -150,6 +150,18 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to approve review');
     } else {
+      // Send notifications to provider and seeker
+      const review = reviews.find(r => r.id === reviewId);
+      if (review) {
+        supabase.functions.invoke('send-review-notification', {
+          body: {
+            type: 'review_approved',
+            reviewId,
+            facilityId: review.facility_id,
+            seekerId: review.user_id,
+          }
+        }).catch(err => console.error('Failed to send approval notification:', err));
+      }
       toast.success('Review approved');
       fetchReviews();
     }
@@ -177,6 +189,19 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to reject review');
     } else {
+      // Send rejection notification to seeker
+      const review = reviews.find(r => r.id === reviewId);
+      if (review) {
+        supabase.functions.invoke('send-review-notification', {
+          body: {
+            type: 'review_rejected',
+            reviewId,
+            facilityId: review.facility_id,
+            seekerId: review.user_id,
+            rejectionReason: adminNotes[reviewId],
+          }
+        }).catch(err => console.error('Failed to send rejection notification:', err));
+      }
       toast.success('Review rejected');
       fetchReviews();
     }

@@ -185,3 +185,6 @@ verify_jwt = true
 
 [functions.delete-seeker-account]
 verify_jwt = true
+
+[functions.send-review-notification]
+verify_jwt = false
