@@ -37,7 +37,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { SubscriptionHistoryWidget } from "@/components/provider/SubscriptionHistoryWidget";
-import { PaymentMethodCard } from "@/components/provider/PaymentMethodCard";
 import { analytics } from "@/lib/analytics";
 
 // Price values for ecommerce tracking
@@ -721,11 +720,6 @@ export default function ProviderBillingPage() {
           </CardContent>
         </Card>
 
-        {/* Payment Method Card */}
-        <PaymentMethodCard 
-          onManagePayment={handleManageSubscription}
-          portalLoading={portalLoading}
-        />
 
         {/* Promo Code - Compact */}
         {currentPlan !== "featured" && (
