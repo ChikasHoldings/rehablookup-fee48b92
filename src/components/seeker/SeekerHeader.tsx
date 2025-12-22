@@ -27,15 +27,12 @@ export function SeekerHeader({ userName, onLogout }: SeekerHeaderProps) {
     <header className="h-16 border-b border-border bg-card/95 backdrop-blur-sm px-4 lg:px-6">
       <div className="h-full flex items-center justify-between max-w-7xl mx-auto">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center">
           <img 
-            src="/logo.svg" 
-            alt="Recovery Directory" 
+            src="/logo.png" 
+            alt="RehabLookup" 
             className="h-8 w-auto"
           />
-          <span className="font-display font-semibold text-lg hidden sm:block">
-            Recovery Directory
-          </span>
         </Link>
 
         {/* Desktop Navigation */}
