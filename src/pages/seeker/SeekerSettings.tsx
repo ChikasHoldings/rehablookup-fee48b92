@@ -177,9 +177,9 @@ export default function SeekerSettings() {
     setIsUploadingAvatar(true);
 
     try {
-      // Create unique filename
+      // Create unique filename - don't include bucket name in path
       const fileExt = file.name.split('.').pop();
-      const fileName = `seeker-avatars/${userId}/avatar-${Date.now()}.${fileExt}`;
+      const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -519,23 +519,41 @@ export default function SeekerSettings() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Avatar Section */}
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={avatarUrl || undefined} alt={displayName} />
-                  <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
+            <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-gradient-to-br from-primary/5 via-background to-accent/5 rounded-xl border border-border/50">
+              <div className="relative group">
+                <div className="relative">
+                  <Avatar className="h-28 w-28 ring-4 ring-background shadow-xl">
+                    <AvatarImage 
+                      src={avatarUrl || undefined} 
+                      alt={displayName}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-2xl font-semibold bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+                      {getInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Hover overlay */}
+                  <div 
+                    onClick={handleAvatarClick}
+                    className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer flex items-center justify-center"
+                  >
+                    {isUploadingAvatar ? (
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
+                  </div>
+                </div>
+                {/* Upload button */}
                 <button
                   onClick={handleAvatarClick}
                   disabled={isUploadingAvatar}
-                  className="absolute bottom-0 right-0 p-1.5 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  className="absolute -bottom-1 -right-1 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 hover:scale-110 transition-all duration-200 disabled:opacity-50 ring-2 ring-background"
                 >
                   {isUploadingAvatar ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Camera className="h-3.5 w-3.5" />
+                    <Camera className="h-4 w-4" />
                   )}
                 </button>
                 <input
@@ -546,11 +564,30 @@ export default function SeekerSettings() {
                   className="hidden"
                 />
               </div>
-              <div>
-                <p className="font-medium">Profile Picture</p>
-                <p className="text-sm text-muted-foreground">
-                  Click the camera icon to upload a new photo
+              <div className="text-center sm:text-left">
+                <p className="font-semibold text-lg">Profile Picture</p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Upload a photo to personalize your profile
                 </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleAvatarClick}
+                  disabled={isUploadingAvatar}
+                  className="gap-2"
+                >
+                  {isUploadingAvatar ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-4 w-4" />
+                      Change Photo
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
 
