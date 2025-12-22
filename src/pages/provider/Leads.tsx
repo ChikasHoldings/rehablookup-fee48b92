@@ -959,7 +959,7 @@ export default function ProviderLeadsPage() {
 
         {/* Right Panel - Detail */}
         <div className={cn(
-          "flex-1 min-w-0 transition-all duration-300",
+          "flex-1 min-w-0 min-h-0 overflow-hidden transition-all duration-300",
           // Desktop behavior
           !isMobile && selectedLead && "flex",
           !isMobile && !selectedLead && "hidden md:flex",
