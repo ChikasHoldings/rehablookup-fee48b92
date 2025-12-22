@@ -188,3 +188,6 @@ verify_jwt = true
 
 [functions.send-review-notification]
 verify_jwt = false
+
+[functions.send-seeker-emails]
+verify_jwt = false
