@@ -332,7 +332,7 @@ export default function ProviderLeadsPage() {
   }, [filteredLeads]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col" {...swipeHandlers}>
+    <div className="h-full flex flex-col overflow-hidden" {...swipeHandlers}>
       {/* Header */}
       <div className="flex-shrink-0 px-4 md:px-6 py-4 bg-background border-b">
         <div className="flex items-center justify-between gap-4">
@@ -537,7 +537,7 @@ export default function ProviderLeadsPage() {
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Left Panel - Lead List */}
         <div className={cn(
-          "flex flex-col bg-background transition-all duration-300",
+          "flex flex-col bg-background transition-all duration-300 min-h-0 overflow-hidden",
           // Desktop behavior
           !isMobile && selectedLead && "hidden md:flex w-[280px] lg:w-[320px] xl:w-[360px] border-r",
           !isMobile && !selectedLead && "flex-1 max-w-full md:max-w-2xl border-r",
