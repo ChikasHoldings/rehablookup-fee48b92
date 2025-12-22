@@ -75,7 +75,7 @@ export default function SeekerHome() {
 
     let result = facilitiesWithPlan.filter((facility) => {
       const matchesType = selectedType === "all" || facility.facility_type === selectedType;
-      const matchesState = selectedState === "all" || facility.state === selectedState;
+      const matchesState = selectedState === "all" || facility.state?.toLowerCase() === selectedState.toLowerCase();
       return matchesType && matchesState;
     });
 
@@ -113,7 +113,7 @@ export default function SeekerHome() {
   }, [nearbyFacilities]);
 
   const availableTypes = useMemo(() => {
-    const types = [...new Set(nearbyFacilities.map(f => f.facility_type))].sort();
+    const types = [...new Set(nearbyFacilities.map(f => f.facility_type).filter(Boolean))].sort() as string[];
     return types;
   }, [nearbyFacilities]);
 
