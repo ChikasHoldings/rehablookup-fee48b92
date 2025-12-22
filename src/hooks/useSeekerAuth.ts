@@ -90,6 +90,20 @@ export function useSeekerAuth() {
       password
     });
     
+    // Log successful sign-in
+    if (!error && data.user) {
+      try {
+        await supabase.from("account_activity_log").insert([{
+          user_id: data.user.id,
+          event_type: "sign_in",
+          event_description: "Signed in to account",
+          metadata: {},
+        }]);
+      } catch {
+        // Silently fail - don't break sign-in if logging fails
+      }
+    }
+    
     return { data, error };
   };
 
