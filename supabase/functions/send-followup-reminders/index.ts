@@ -2,6 +2,21 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import Stripe from "https://esm.sh/stripe@14.21.0";
+import {
+  getProviderPlan,
+  emailStart,
+  emailHeader,
+  emailBodyStart,
+  emailBodyEnd,
+  emailGreeting,
+  emailParagraph,
+  featuredInsightsBox,
+  alertBox,
+  ctaButton,
+  emailFooter,
+  emailEnd,
+  type PlanType,
+} from "../_shared/email-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,8 +50,6 @@ interface ProviderLeads {
   userId: string;
 }
 
-type PlanType = 'basic' | 'professional' | 'featured';
-
 function isLeadSnoozed(snoozeUntil: string | null): boolean {
   if (!snoozeUntil) return false;
   return new Date(snoozeUntil).getTime() > Date.now();
@@ -68,42 +81,6 @@ function getReminderTier(createdAt: string, lastReminderAt: string | null): type
   return null;
 }
 
-async function getProviderPlan(email: string, stripe: Stripe): Promise<PlanType> {
-  try {
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    if (customers.data.length === 0) return 'basic';
-
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customers.data[0].id,
-      status: 'active',
-      limit: 10,
-    });
-
-    if (subscriptions.data.length === 0) return 'basic';
-
-    for (const sub of subscriptions.data) {
-      const priceId = sub.items.data[0]?.price?.id;
-      if (!priceId) continue;
-
-      const price = await stripe.prices.retrieve(priceId, { expand: ['product'] });
-      const product = price.product as Stripe.Product;
-      const productName = product.name?.toLowerCase() || '';
-
-      if (productName.includes('featured') || productName.includes('premium')) {
-        return 'featured';
-      }
-      if (productName.includes('professional') || productName.includes('pro')) {
-        return 'professional';
-      }
-    }
-
-    return 'professional';
-  } catch (error) {
-    console.error('[FOLLOWUP-REMINDERS] Error checking plan:', error);
-    return 'basic';
-  }
-}
-
 function generateFollowupEmail(
   providerData: ProviderLeads,
   highestTier: typeof REMINDER_TIERS[0],
@@ -112,29 +89,6 @@ function generateFollowupEmail(
   const totalLeads = providerData.leads.length;
   const isUrgent = highestTier.level >= 2;
   const isFeatured = plan === 'featured';
-  const isProfessional = plan === 'professional';
-  const isPaidPlan = isFeatured || isProfessional;
-
-  // Plan-aware header styling
-  let headerGradient: string;
-  let planBadge = '';
-  
-  if (isFeatured) {
-    // Featured providers get premium purple gradient even for urgent alerts
-    headerGradient = 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)';
-    planBadge = `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle;">⭐ FEATURED</span>`;
-  } else if (isProfessional) {
-    // Professional gets darker blue for alerts
-    headerGradient = isUrgent 
-      ? 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)' 
-      : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
-    planBadge = `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle;">Professional</span>`;
-  } else {
-    // Basic plan uses original urgent colors
-    headerGradient = isUrgent 
-      ? 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)' 
-      : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-  }
 
   const leadsHtml = providerData.leads.slice(0, 4).map(({ lead, tier }) => {
     const badge = tier.level === 3 ? "72h+" : tier.level === 2 ? "48h+" : "24h+";
@@ -159,122 +113,39 @@ function generateFollowupEmail(
     </tr>
   `}).join("");
 
-  // Urgent alert section - styled differently for paid plans
-  let urgentSection = '';
-  if (isUrgent) {
-    if (isPaidPlan) {
-      urgentSection = `
-      <table width="100%" cellpadding="0" cellspacing="0" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; margin-bottom: 24px;">
-        <tr>
-          <td style="padding: 14px 16px;">
-            <p style="margin: 0; font-size: 14px; color: #1e40af;">
-              These leads have been waiting over ${highestTier.label}. Quick responses help families in need.
-            </p>
-          </td>
-        </tr>
-      </table>
-      `;
-    } else {
-      urgentSection = `
-      <table width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border-radius: 6px; margin-bottom: 24px;">
-        <tr>
-          <td style="padding: 14px 16px;">
-            <p style="margin: 0; font-size: 14px; color: #991b1b;">
-              Quick response times lead to better outcomes. These leads have been waiting over ${highestTier.label}.
-            </p>
-          </td>
-        </tr>
-      </table>
-      `;
-    }
+  let email = emailStart();
+  email += emailHeader(isUrgent ? "Leads Need Attention" : "Follow-Up Reminder", plan, { isUrgent });
+  email += emailBodyStart();
+  email += emailGreeting(providerData.providerName);
+  email += emailParagraph(`You have <strong>${totalLeads} lead${totalLeads === 1 ? "" : "s"}</strong> waiting for a response at ${providerData.facilityName}.`);
+
+  // Featured insights
+  if (isFeatured) {
+    email += featuredInsightsBox("Your featured status gives you priority lead matching. These families specifically requested premium providers.");
   }
 
-  // Featured provider insights section
-  const featuredInsights = isFeatured ? `
-  <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #c4b5fd; border-radius: 8px; margin-bottom: 24px;">
-    <tr>
-      <td style="padding: 16px;">
-        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #5b21b6;">⭐ Featured Provider Priority</p>
-        <p style="margin: 0; font-size: 13px; color: #6b21a8;">
-          Your featured status gives you priority lead matching. These families specifically requested premium providers.
-        </p>
-      </td>
-    </tr>
-  </table>
-  ` : '';
+  // Urgent alert
+  if (isUrgent) {
+    email += alertBox(`These leads have been waiting over ${highestTier.label}. Quick responses help families in need.`, plan, { isUrgent });
+  }
 
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
-          
-          <tr>
-            <td style="background: ${headerGradient}; padding: 24px 32px; border-radius: 8px 8px 0 0;">
-              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">REHABLOOKUP</p>
-              <h1 style="margin: 8px 0 0 0; font-size: 22px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                ${isUrgent ? "Leads Need Attention" : "Follow-Up Reminder"}${planBadge}
-              </h1>
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
-              
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Hi ${providerData.providerName},
-              </p>
-              
-              <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                You have <strong>${totalLeads} lead${totalLeads === 1 ? "" : "s"}</strong> waiting for a response at ${providerData.facilityName}.
-              </p>
-              
-              ${featuredInsights}
-              ${urgentSection}
-              
+  // Leads list
+  email += `
               <table width="100%" cellpadding="0" cellspacing="0">
                 ${leadsHtml}
               </table>
-              
-              ${totalLeads > 4 ? `<p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">+ ${totalLeads - 4} more</p>` : ""}
-              
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
-                <tr>
-                  <td align="center">
-                    <a href="https://rehablookup.com/provider/leads" style="display: inline-block; background: #1B365D; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                      Contact Leads Now
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 8px 8px;">
-              <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #fff; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">RehabLookup</p>
-              <p style="margin: 0 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Connecting families with trusted treatment providers</p>
-              <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd; text-decoration: underline;">Notification settings</a> · <a href="mailto:support@rehablookup.com" style="color: #93c5fd; text-decoration: underline;">Support</a>
-              </p>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
   `;
+
+  if (totalLeads > 4) {
+    email += `<p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">+ ${totalLeads - 4} more</p>`;
+  }
+
+  email += ctaButton("Contact Leads Now", "https://rehablookup.com/provider/leads", plan);
+  email += emailBodyEnd();
+  email += emailFooter();
+  email += emailEnd();
+
+  return email;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -408,10 +279,10 @@ const handler = async (req: Request): Promise<Response> => {
         const isUrgent = highestTier.level >= 2;
 
         // Get provider plan for styling
-        const plan = stripe ? await getProviderPlan(providerData.providerEmail, stripe) : 'basic';
-        console.log(`[FOLLOWUP-REMINDERS] Provider ${providerData.providerEmail} is on ${plan} plan`);
+        const planInfo = await getProviderPlan(providerData.providerEmail, stripe);
+        console.log(`[FOLLOWUP-REMINDERS] Provider ${providerData.providerEmail} is on ${planInfo.plan} plan`);
 
-        const emailHtml = generateFollowupEmail(providerData, highestTier, plan);
+        const emailHtml = generateFollowupEmail(providerData, highestTier, planInfo.plan);
 
         const subjectPrefix = highestTier.level === 3 ? "Urgent:" : highestTier.level === 2 ? "Action needed:" : "Reminder:";
 

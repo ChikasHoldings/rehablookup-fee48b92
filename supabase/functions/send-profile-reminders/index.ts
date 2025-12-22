@@ -1,6 +1,23 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.21.0";
+import {
+  getProviderPlan,
+  emailStart,
+  emailHeader,
+  emailBodyStart,
+  emailBodyEnd,
+  emailGreeting,
+  emailParagraph,
+  featuredInsightsBox,
+  professionalInfoBox,
+  tipBox,
+  ctaButton,
+  emailFooter,
+  emailEnd,
+  getPlanStyles,
+  type PlanType,
+} from "../_shared/email-templates.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -29,8 +46,6 @@ interface CompletionStatus {
   percentage: number;
   missingItems: string[];
 }
-
-type PlanType = 'basic' | 'professional' | 'featured';
 
 function calculateCompletion(facility: FacilityWithProfile): CompletionStatus {
   const checks = {
@@ -61,42 +76,6 @@ function calculateCompletion(facility: FacilityWithProfile): CompletionStatus {
   };
 }
 
-async function getProviderPlan(email: string, stripe: Stripe): Promise<PlanType> {
-  try {
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    if (customers.data.length === 0) return 'basic';
-
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customers.data[0].id,
-      status: 'active',
-      limit: 10,
-    });
-
-    if (subscriptions.data.length === 0) return 'basic';
-
-    for (const sub of subscriptions.data) {
-      const priceId = sub.items.data[0]?.price?.id;
-      if (!priceId) continue;
-
-      const price = await stripe.prices.retrieve(priceId, { expand: ['product'] });
-      const product = price.product as Stripe.Product;
-      const productName = product.name?.toLowerCase() || '';
-
-      if (productName.includes('featured') || productName.includes('premium')) {
-        return 'featured';
-      }
-      if (productName.includes('professional') || productName.includes('pro')) {
-        return 'professional';
-      }
-    }
-
-    return 'professional';
-  } catch (error) {
-    console.error('[PROFILE-REMINDERS] Error checking plan:', error);
-    return 'basic';
-  }
-}
-
 function generateReminderEmail(
   firstName: string,
   facilityName: string,
@@ -106,144 +85,44 @@ function generateReminderEmail(
 ): string {
   const isFeatured = plan === 'featured';
   const isProfessional = plan === 'professional';
-  const isPaidPlan = isFeatured || isProfessional;
-
-  // Plan-aware header styling
-  let headerGradient: string;
-  let planBadge = '';
-  
-  if (isFeatured) {
-    headerGradient = 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)';
-    planBadge = `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle;">⭐ FEATURED</span>`;
-  } else if (isProfessional) {
-    headerGradient = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
-    planBadge = `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle;">Professional</span>`;
-  } else {
-    headerGradient = 'linear-gradient(135deg, hsl(217, 54%, 23%) 0%, hsl(217, 41%, 35%) 100%)';
-  }
+  const styles = getPlanStyles(plan);
 
   const missingItemsHtml = completion.missingItems
     .slice(0, 3)
-    .map(item => `<li style="margin-bottom: 8px; color: hsl(215, 19%, 35%); font-size: 14px; line-height: 1.5;">${item}</li>`)
+    .map(item => `<li style="margin-bottom: 8px; color: #374151; font-size: 14px; line-height: 1.5;">${item}</li>`)
     .join("");
 
-  // Featured provider insights section
-  const featuredInsights = isFeatured ? `
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #c4b5fd; border-radius: 8px; margin-bottom: 24px;">
-    <tr>
-      <td style="padding: 16px;">
-        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #5b21b6;">⭐ Featured Provider Benefits</p>
-        <p style="margin: 0; font-size: 13px; color: #6b21a8;">
-          Complete profiles receive priority placement in search results. Your featured status is amplified with a complete profile.
-        </p>
-      </td>
-    </tr>
-  </table>
-  ` : '';
+  let email = emailStart();
+  email += emailHeader("Complete Your Profile", plan);
+  email += emailBodyStart();
+  email += emailGreeting(firstName);
+  email += emailParagraph(`Your listing for <strong>${facilityName}</strong> is ${completion.percentage}% complete. Finishing your profile helps families find and trust your facility.`);
 
-  // Professional provider insights
-  const professionalInsights = isProfessional && !isFeatured ? `
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 24px;">
-    <tr>
-      <td style="padding: 16px;">
-        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1e40af;">Professional Profile Tip</p>
-        <p style="margin: 0; font-size: 13px; color: #1e3a8a;">
-          Complete profiles build trust with families and improve your visibility in our provider directory.
-        </p>
-      </td>
-    </tr>
-  </table>
-  ` : '';
+  // Plan-specific insights
+  if (isFeatured) {
+    email += featuredInsightsBox("Complete profiles receive priority placement in search results. Your featured status is amplified with a complete profile.");
+  } else if (isProfessional) {
+    email += professionalInfoBox("✓ <strong>Professional Profile Tip:</strong> Complete profiles build trust with families and improve your visibility in our provider directory.");
+  }
 
-  // Tip section - different for paid vs basic
-  const tipSection = isPaidPlan ? `
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: ${isFeatured ? '#f5f3ff' : '#eff6ff'}; border: 1px solid ${isFeatured ? '#c4b5fd' : '#bfdbfe'}; border-radius: 8px; margin-bottom: 24px;">
-    <tr>
-      <td style="padding: 16px;">
-        <p style="margin: 0; color: ${isFeatured ? '#5b21b6' : '#1e40af'}; font-size: 14px; line-height: 1.5;">
-          💡 <strong>Tip:</strong> ${isFeatured 
-            ? 'Your featured status combined with a complete profile maximizes your lead conversion potential.' 
-            : 'Complete profiles receive up to 3x more engagement from families seeking treatment.'}
-        </p>
-      </td>
-    </tr>
-  </table>
-  ` : `
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(45, 93%, 95%); border: 1px solid hsl(45, 93%, 85%); border-radius: 8px; margin-bottom: 24px;">
-    <tr>
-      <td style="padding: 16px;">
-        <p style="margin: 0; color: hsl(32, 81%, 29%); font-size: 14px; line-height: 1.5;">
-          💡 <strong>Tip:</strong> Complete profiles receive up to 3x more leads from families seeking treatment.
-        </p>
-      </td>
-    </tr>
-  </table>
-  `;
-
-  // Progress circle color based on plan
-  const progressCircleColor = isFeatured ? '#7c3aed' : isProfessional ? '#2563eb' : 'hsl(217, 54%, 23%)';
-
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: hsl(210, 20%, 96%);">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: hsl(210, 20%, 96%); padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%;">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background: ${headerGradient}; padding: 32px; border-radius: 12px 12px 0 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td>
-                    <p style="margin: 0 0 8px 0; font-size: 12px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; text-transform: uppercase; letter-spacing: 1px;">RehabLookup</p>
-                    <h1 style="margin: 0; font-size: 24px; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-weight: 600;">
-                      Complete Your Profile${planBadge}
-                    </h1>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-          <!-- Content -->
-          <tr>
-            <td style="background: hsl(0, 0%, 100%); padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; border-left: 1px solid hsl(220, 13%, 91%); border-right: 1px solid hsl(220, 13%, 91%);">
-              
-              <p style="margin: 0 0 20px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
-                Hi ${firstName},
-              </p>
-              
-              <p style="margin: 0 0 24px 0; color: hsl(215, 19%, 35%); font-size: 16px; line-height: 1.6;">
-                Your listing for <strong>${facilityName}</strong> is ${completion.percentage}% complete. Finishing your profile helps families find and trust your facility.
-              </p>
-              
-              ${featuredInsights}
-              ${professionalInsights}
-              
-              <!-- Progress Section -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: hsl(210, 20%, 98%); border-radius: 8px; margin-bottom: 24px;">
+  // Progress section
+  email += `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f9fafb; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 24px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td width="70" valign="top">
-                          <table cellpadding="0" cellspacing="0" border="0">
+                          <table cellpadding="0" cellspacing="0">
                             <tr>
-                              <td style="background: ${progressCircleColor}; color: hsl(0, 0%, 100%); border-radius: 50%; width: 56px; height: 56px; text-align: center; vertical-align: middle; font-weight: 700; font-size: 16px;">
+                              <td style="background: ${styles.accentColor}; color: #fff; border-radius: 50%; width: 56px; height: 56px; text-align: center; vertical-align: middle; font-weight: 700; font-size: 16px;">
                                 ${completion.percentage}%
                               </td>
                             </tr>
                           </table>
                         </td>
                         <td valign="top" style="padding-left: 16px;">
-                          <p style="margin: 0 0 12px 0; font-weight: 600; color: ${progressCircleColor}; font-size: 15px;">To improve your listing:</p>
+                          <p style="margin: 0 0 12px 0; font-weight: 600; color: ${styles.accentColor}; font-size: 15px;">To improve your listing:</p>
                           <ul style="margin: 0; padding-left: 20px;">
                             ${missingItemsHtml}
                           </ul>
@@ -253,58 +132,20 @@ function generateReminderEmail(
                   </td>
                 </tr>
               </table>
-              
-              ${tipSection}
-              
-              <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center">
-                    <a href="${dashboardUrl}/listing" style="display: inline-block; background: ${progressCircleColor}; color: hsl(0, 0%, 100%); padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                      Complete Your Profile
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-            </td>
-          </tr>
-          
-          <!-- Footer -->
-          <tr>
-            <td style="background: hsl(217, 54%, 23%); padding: 32px; border-radius: 0 0 12px 12px;">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center">
-                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: hsl(0, 0%, 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">RehabLookup</p>
-                    <p style="margin: 0 0 16px 0; font-size: 13px; color: hsla(0, 0%, 100%, 0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Connecting families with trusted treatment providers</p>
-                    <table cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td style="padding: 0 8px;">
-                          <a href="${dashboardUrl}/settings" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Notification Settings</a>
-                        </td>
-                        <td style="color: hsla(0, 0%, 100%, 0.4); font-size: 12px;">|</td>
-                        <td style="padding: 0 8px;">
-                          <a href="mailto:help@rehablookup.com" style="color: hsl(199, 89%, 78%); text-decoration: none; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">Contact Support</a>
-                        </td>
-                      </tr>
-                    </table>
-                    <p style="margin: 16px 0 0 0; font-size: 11px; color: hsla(0, 0%, 100%, 0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-                      © ${new Date().getFullYear()} RehabLookup. All rights reserved.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
   `;
+
+  // Tip
+  const tipContent = isFeatured 
+    ? "Your featured status combined with a complete profile maximizes your lead conversion potential." 
+    : "Complete profiles receive up to 3x more leads from families seeking treatment.";
+  email += tipBox(tipContent, plan);
+
+  email += ctaButton("Complete Your Profile", `${dashboardUrl}/listing`, plan);
+  email += emailBodyEnd();
+  email += emailFooter({ settingsUrl: `${dashboardUrl}/settings` });
+  email += emailEnd();
+
+  return email;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -405,8 +246,8 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         // Get provider plan for styling
-        const plan = stripe ? await getProviderPlan(profile.email, stripe) : 'basic';
-        console.log(`[PROFILE-REMINDERS] Provider ${profile.email} is on ${plan} plan`);
+        const planInfo = await getProviderPlan(profile.email, stripe);
+        console.log(`[PROFILE-REMINDERS] Provider ${profile.email} is on ${planInfo.plan} plan`);
 
         console.log(`[PROFILE-REMINDERS] Sending reminder to ${profile.email} for ${facility.name} (${completion.percentage}% complete)`);
 
@@ -415,7 +256,7 @@ const handler = async (req: Request): Promise<Response> => {
           facility.name,
           completion,
           dashboardUrl,
-          plan
+          planInfo.plan
         );
 
         const emailResponse = await fetch("https://api.resend.com/emails", {
