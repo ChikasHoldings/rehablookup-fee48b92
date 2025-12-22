@@ -548,6 +548,27 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                     </Button>
                   </div>
                 </div>
+                {/* Location - Prominent display in Contact section */}
+                {(lead.location_city_state || lead.location_zip) && (
+                  <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="text-base font-semibold text-foreground">
+                          {lead.location_city_state || lead.location_zip}
+                        </p>
+                        {lead.location_city_state && lead.location_zip && (
+                          <p className="text-xs text-muted-foreground">ZIP: {lead.location_zip}</p>
+                        )}
+                        {!lead.location_city_state && lead.location_zip && (
+                          <p className="text-xs text-muted-foreground">ZIP Code</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
 
