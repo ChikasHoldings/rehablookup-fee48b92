@@ -198,11 +198,14 @@ export default function SeekerSettings() {
         .from('seeker-avatars')
         .getPublicUrl(fileName);
 
-      // Update profile
+      // Upsert profile (creates if doesn't exist)
       const { error: updateError } = await supabase
         .from('seeker_profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('user_id', userId);
+        .upsert({ 
+          user_id: userId, 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
 
       if (updateError) throw updateError;
 
@@ -244,11 +247,14 @@ export default function SeekerSettings() {
           .remove([filePath]);
       }
 
-      // Update profile to remove avatar_url
+      // Upsert profile to remove avatar_url
       const { error: updateError } = await supabase
         .from('seeker_profiles')
-        .update({ avatar_url: null })
-        .eq('user_id', userId);
+        .upsert({ 
+          user_id: userId, 
+          avatar_url: null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
 
       if (updateError) throw updateError;
 
@@ -298,11 +304,14 @@ export default function SeekerSettings() {
         .from('seeker-avatars')
         .getPublicUrl(fileName);
 
-      // Update profile
+      // Upsert profile (creates if doesn't exist)
       const { error: updateError } = await supabase
         .from('seeker_profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('user_id', userId);
+        .upsert({ 
+          user_id: userId, 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
 
       if (updateError) throw updateError;
 
