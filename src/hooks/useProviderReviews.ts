@@ -229,6 +229,18 @@ export function useProviderReviews() {
       .eq('id', reviewId);
 
     if (!updateError) {
+      // Notify admins about the dispute
+      supabase.functions.invoke('send-review-notification', {
+        body: {
+          type: 'review_disputed',
+          reviewId,
+          facilityId,
+          providerId: user.id,
+          reason,
+          details: details?.trim() || null,
+        }
+      }).catch(err => console.error('Failed to send dispute notification:', err));
+      
       fetchReviews();
     }
 
