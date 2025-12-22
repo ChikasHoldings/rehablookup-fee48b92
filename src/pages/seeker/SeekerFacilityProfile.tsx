@@ -36,8 +36,16 @@ import {
   Star,
   Sparkles,
   MessageSquare,
+  Send,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+
+interface SeekerProfile {
+  first_name: string | null;
+  last_name: string | null;
+  display_name: string | null;
+  phone: string | null;
+}
 
 interface FacilityData {
   id: string;
@@ -160,6 +168,40 @@ export default function SeekerFacilityProfile() {
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [showAllServices, setShowAllServices] = useState(false);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
+
+  // Fetch current seeker's profile for prefill
+  const { data: seekerProfile } = useQuery({
+    queryKey: ["seeker-profile-prefill"],
+    queryFn: async (): Promise<SeekerProfile | null> => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return null;
+      
+      const { data } = await supabase
+        .from("seeker_profiles")
+        .select("first_name, last_name, display_name, phone")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      
+      return data as SeekerProfile | null;
+    },
+  });
+
+  // Get user email for prefill
+  const { data: userEmail } = useQuery({
+    queryKey: ["user-email"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.user?.email || "";
+    },
+  });
+
+  // Prepare prefill data for the modal
+  const prefillData = {
+    firstName: seekerProfile?.first_name || "",
+    lastName: seekerProfile?.last_name || "",
+    email: userEmail || "",
+    phone: seekerProfile?.phone || "",
+  };
 
   const { data: facility, isLoading } = useQuery({
     queryKey: ["seeker-facility", slug],
@@ -391,29 +433,43 @@ export default function SeekerFacilityProfile() {
             </div>
 
             {/* Action buttons */}
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button 
+                onClick={() => setRequestModalOpen(true)} 
+                className="gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md"
+                size="lg"
+              >
+                <Send className="h-4 w-4" />
+                Send Request
+              </Button>
               {showContactDetails ? (
-                <a href={`tel:${facility.phone}`} className="flex-1">
-                  <Button className="w-full gap-2">
+                <a href={`tel:${facility.phone}`}>
+                  <Button variant="outline" className="w-full gap-2" size="lg">
                     <Phone className="h-4 w-4" />
-                    {formatPhoneNumber(facility.phone)}
+                    Call Now
                   </Button>
                 </a>
               ) : (
-                <Button onClick={() => setRequestModalOpen(true)} className="flex-1 gap-2">
-                  <Phone className="h-4 w-4" />
-                  Get Contact Info
-                </Button>
-              )}
-              {facility.website && showContactDetails && (
-                <a href={facility.website} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="gap-2">
-                    <Globe className="h-4 w-4" />
-                    <ExternalLink className="h-3 w-3" />
+                <a href={`tel:${facility.phone}`}>
+                  <Button variant="outline" className="w-full gap-2" size="lg">
+                    <Phone className="h-4 w-4" />
+                    Call
                   </Button>
                 </a>
               )}
             </div>
+            {facility.website && (
+              <a 
+                href={facility.website} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="mt-2 flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Globe className="h-3.5 w-3.5" />
+                Visit website
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
           </div>
 
           {/* Gallery */}
@@ -575,22 +631,30 @@ export default function SeekerFacilityProfile() {
           {/* Reviews Section */}
           <ReviewsSection facilityId={facility.id} facilityName={facility.name} />
 
-          {/* CTA to view on main site */}
-          <div className="rounded-xl border border-border/50 bg-muted/50 p-4 text-center">
-            <p className="text-sm text-muted-foreground mb-3">
-              Want to see more details and submit a contact request?
+          {/* Request CTA Section */}
+          <div className="rounded-xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+              <Send className="h-5 w-5 text-primary" />
+            </div>
+            <h3 className="font-display font-bold text-foreground mb-1">
+              Ready to Connect?
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
+              Send a request to {facility.name} and they'll reach out to discuss your needs.
             </p>
-            <Link to={`/center/${facility.slug}`} target="_blank">
-              <Button variant="outline" className="gap-2">
-                View Full Profile
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            </Link>
+            <Button 
+              onClick={() => setRequestModalOpen(true)} 
+              className="gap-2 px-6"
+              size="lg"
+            >
+              <Send className="h-4 w-4" />
+              Send Request Now
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Request Info Modal */}
+      {/* Request Info Modal with prefill */}
       <RequestInfoModal
         open={requestModalOpen}
         onOpenChange={setRequestModalOpen}
@@ -604,6 +668,7 @@ export default function SeekerFacilityProfile() {
           logo_url: facility.logo_url,
           featured: facility.featured,
         }}
+        prefillData={prefillData}
       />
     </div>
   );
