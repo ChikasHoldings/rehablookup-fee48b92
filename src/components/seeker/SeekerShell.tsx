@@ -28,33 +28,49 @@ export function SeekerShell() {
 
   // Auth check - NO FORCED REDIRECT
   useEffect(() => {
+    let isMounted = true;
+    
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      setIsAuthenticated(!!session);
-      setIsEmailVerified(!!session?.user?.email_confirmed_at);
-      setUserEmail(session?.user?.email);
-      
-      if (session) {
-        // Get profile
-        const { data: profile } = await supabase
-          .from('seeker_profiles')
-          .select('display_name')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         
-        setUserName(profile?.display_name || session.user.email?.split('@')[0]);
+        if (!isMounted) return;
+        
+        setIsAuthenticated(!!session);
+        setIsEmailVerified(!!session?.user?.email_confirmed_at);
+        setUserEmail(session?.user?.email);
+        
+        if (session) {
+          // Get profile
+          const { data: profile } = await supabase
+            .from('seeker_profiles')
+            .select('display_name')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          if (isMounted) {
+            setUserName(profile?.display_name || session.user.email?.split('@')[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
     };
 
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+        
         setIsAuthenticated(!!session);
         setIsEmailVerified(!!session?.user?.email_confirmed_at);
         setUserEmail(session?.user?.email);
+        setIsLoading(false);
         
         if (session) {
           const { data: profile } = await supabase
@@ -63,7 +79,9 @@ export function SeekerShell() {
             .eq('user_id', session.user.id)
             .maybeSingle();
           
-          setUserName(profile?.display_name || session.user.email?.split('@')[0]);
+          if (isMounted) {
+            setUserName(profile?.display_name || session.user.email?.split('@')[0]);
+          }
         } else {
           setUserName(undefined);
           setUserEmail(undefined);
@@ -71,7 +89,10 @@ export function SeekerShell() {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = useCallback(async () => {
