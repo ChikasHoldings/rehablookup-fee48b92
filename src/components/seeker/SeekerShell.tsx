@@ -7,13 +7,19 @@ import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
+interface SeekerProfile {
+  display_name: string | null;
+  first_name: string | null;
+  avatar_url: string | null;
+}
+
 export function SeekerShell() {
   const mainContentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [userName, setUserName] = useState<string | undefined>();
+  const [profile, setProfile] = useState<SeekerProfile | null>(null);
   const [userEmail, setUserEmail] = useState<string | undefined>();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isEmailVerified, setIsEmailVerified] = useState<boolean>(true);
@@ -41,15 +47,15 @@ export function SeekerShell() {
         setUserEmail(session?.user?.email);
         
         if (session) {
-          // Get profile
-          const { data: profile } = await supabase
+          // Get profile with all needed fields
+          const { data: profileData } = await supabase
             .from('seeker_profiles')
-            .select('display_name')
+            .select('display_name, first_name, avatar_url')
             .eq('user_id', session.user.id)
             .maybeSingle();
           
-          if (isMounted) {
-            setUserName(profile?.display_name || session.user.email?.split('@')[0]);
+          if (isMounted && profileData) {
+            setProfile(profileData);
           }
         }
       } catch (error) {
@@ -73,17 +79,20 @@ export function SeekerShell() {
         setIsLoading(false);
         
         if (session) {
-          const { data: profile } = await supabase
-            .from('seeker_profiles')
-            .select('display_name')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
-          if (isMounted) {
-            setUserName(profile?.display_name || session.user.email?.split('@')[0]);
-          }
+          // Defer Supabase calls
+          setTimeout(async () => {
+            const { data: profileData } = await supabase
+              .from('seeker_profiles')
+              .select('display_name, first_name, avatar_url')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+            
+            if (isMounted && profileData) {
+              setProfile(profileData);
+            }
+          }, 0);
         } else {
-          setUserName(undefined);
+          setProfile(null);
           setUserEmail(undefined);
         }
       }
@@ -124,6 +133,9 @@ export function SeekerShell() {
     }
   }, [navigate, toast, queryClient]);
 
+  // Get display name - prefer first name, fall back to display name or email
+  const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
+
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
@@ -142,7 +154,8 @@ export function SeekerShell() {
       {/* Fixed Header */}
       <div className="flex-shrink-0 z-50">
         <SeekerHeader 
-          userName={userName} 
+          userName={displayName} 
+          avatarUrl={profile?.avatar_url}
           onLogout={handleLogout} 
           isAuthenticated={isAuthenticated}
         />
@@ -153,7 +166,7 @@ export function SeekerShell() {
         ref={mainContentRef} 
         className="flex-1 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
       >
-        <Outlet context={{ isAuthenticated, userName }} />
+        <Outlet context={{ isAuthenticated, userName: displayName }} />
       </main>
 
       {/* Mobile Bottom Navigation */}
