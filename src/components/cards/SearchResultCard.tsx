@@ -6,7 +6,6 @@ import {
   ArrowRight, 
   Crown, 
   ShieldCheck, 
-  Eye, 
   Clock, 
   CreditCard,
   Phone,
@@ -23,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { useState, useCallback, memo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
-import { FacilityQuickViewModal } from "./FacilityQuickViewModal";
+
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useFavorites } from "@/hooks/useFavorites";
 import type { ProximityTier } from "@/lib/proximitySearch";
@@ -95,7 +94,6 @@ function getInitials(name: string): string {
 export const SearchResultCard = memo(function SearchResultCard({ center, featured }: SearchResultCardProps) {
   const [logoError, setLogoError] = useState(false);
   const [heroImageError, setHeroImageError] = useState(false);
-  const [quickViewOpen, setQuickViewOpen] = useState(false);
   const cardRef = useRef<HTMLElement>(null);
   const hasTrackedImpression = useRef(false);
   const { trackImpression } = useProviderEventTracking();
@@ -453,22 +451,6 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
 
           {/* Actions Footer */}
           <div className="flex items-center gap-2 mt-auto">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setQuickViewOpen(true)}
-              aria-label={`Quick view ${center.name}`}
-              className={cn(
-                "h-10 px-4 gap-2 text-xs font-medium rounded-lg",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                showFeaturedBadge 
-                  ? "border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300"
-                  : "hover:bg-secondary"
-              )}
-            >
-              <Eye className="h-4 w-4" aria-hidden="true" />
-              Quick View
-            </Button>
             <Link 
               to={detailsUrl} 
               state={{ fromSearch: true }}
@@ -493,14 +475,6 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
           </div>
         </div>
       </div>
-      
-      {/* Quick View Modal */}
-      <FacilityQuickViewModal
-        center={center}
-        open={quickViewOpen}
-        onOpenChange={setQuickViewOpen}
-        featured={featured}
-      />
     </article>
   );
 });
