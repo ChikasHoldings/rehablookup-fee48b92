@@ -70,6 +70,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import SeekerAuth from "./pages/SeekerAuth";
+import ResetPassword from "./pages/ResetPassword";
 import { SeekerShell } from "./components/seeker/SeekerShell";
 import SeekerHome from "./pages/seeker/SeekerHome";
 import SeekerInbox from "./pages/seeker/SeekerInbox";
@@ -190,6 +191,7 @@ const App = () => (
             <Route path="/lp/treatment" element={<AdLanding />} />
             <Route path="/lp/social" element={<SocialLanding />} />
             <Route path="/auth" element={<SeekerAuth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             
             {/* Seeker Account Routes - Nested under seeker shell */}
             <Route path="/account" element={<SeekerShell />}>
