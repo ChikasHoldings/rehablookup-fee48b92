@@ -78,6 +78,7 @@ import SeekerRequests from "./pages/seeker/SeekerRequests";
 import SeekerSaved from "./pages/seeker/SeekerSaved";
 import SeekerReviews from "./pages/seeker/SeekerReviews";
 import SeekerSettings from "./pages/seeker/SeekerSettings";
+import SeekerNotifications from "./pages/seeker/SeekerNotifications";
 import SeekerFacilityProfile from "./pages/seeker/SeekerFacilityProfile";
 
 // Near Me SEO Pages
@@ -204,6 +205,7 @@ const App = () => (
               <Route path="saved" element={<SeekerSaved />} />
               <Route path="reviews" element={<SeekerReviews />} />
               <Route path="settings" element={<SeekerSettings />} />
+              <Route path="notifications" element={<SeekerNotifications />} />
               <Route path="facility/:slug" element={<SeekerFacilityProfile />} />
             </Route>
             <Route path="/my-account" element={<Navigate to="/account" replace />} />
