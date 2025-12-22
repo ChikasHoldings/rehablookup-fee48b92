@@ -23,7 +23,7 @@ interface SeekerMobileNavProps extends React.HTMLAttributes<HTMLElement> {
 
 const navItems = [
   { href: "/account", label: "Home", icon: Home },
-  { href: "/search", label: "Search", icon: Search },
+  { href: "/account/search", label: "Search", icon: Search },
   { href: "/account/saved", label: "Saved", icon: Heart },
   { href: "/account/reviews", label: "Reviews", icon: Star },
 ];
