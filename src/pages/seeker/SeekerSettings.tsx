@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings } from "lucide-react";
+import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings, Video } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CameraCaptureDialog } from "@/components/seeker/CameraCaptureDialog";
 
 interface SeekerProfile {
   display_name: string | null;
@@ -78,6 +79,7 @@ export default function SeekerSettings() {
     const stored = localStorage.getItem('seeker-facility-responses');
     return stored !== null ? stored === 'true' : true;
   });
+  const [showCameraDialog, setShowCameraDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -264,6 +266,58 @@ export default function SeekerSettings() {
       });
     } finally {
       setIsRemovingAvatar(false);
+    }
+  };
+
+  const handleCameraCapture = async (blob: Blob) => {
+    if (!userId) return;
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const fileName = `${userId}/avatar-${Date.now()}.jpg`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('seeker-avatars')
+        .upload(fileName, blob, { 
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('seeker-avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('seeker_profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', userId);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      await logActivity({
+        eventType: "avatar_update",
+        description: "Updated profile picture via camera"
+      });
+      toast({
+        title: "Photo saved",
+        description: "Your profile picture has been updated."
+      });
+    } catch (error) {
+      console.error('Camera capture upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Could not save your photo. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -630,9 +684,19 @@ export default function SeekerSettings() {
                     ) : (
                       <>
                         <Camera className="h-4 w-4" />
-                        {avatarUrl ? "Change Photo" : "Upload Photo"}
+                        {avatarUrl ? "Change" : "Upload"}
                       </>
                     )}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShowCameraDialog(true)}
+                    disabled={isUploadingAvatar || isRemovingAvatar}
+                    className="gap-2"
+                  >
+                    <Video className="h-4 w-4" />
+                    Take Photo
                   </Button>
                   {avatarUrl && (
                     <Button 
@@ -658,6 +722,13 @@ export default function SeekerSettings() {
                 </div>
               </div>
             </div>
+
+            {/* Camera Capture Dialog */}
+            <CameraCaptureDialog
+              open={showCameraDialog}
+              onOpenChange={setShowCameraDialog}
+              onCapture={handleCameraCapture}
+            />
 
             <Separator />
 
