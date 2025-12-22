@@ -69,8 +69,9 @@ export function MultiSelectDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "flex w-full items-center justify-between gap-2 text-left transition-colors",
-          "text-base focus:outline-none",
-          selected.length > 0 ? "text-foreground" : "text-muted-foreground/70"
+          "h-11 px-3 rounded-lg border border-border bg-background hover:bg-muted/50",
+          "text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          selected.length > 0 ? "text-foreground" : "text-muted-foreground"
         )}
       >
         <span className="flex-1 truncate">{getDisplayText()}</span>

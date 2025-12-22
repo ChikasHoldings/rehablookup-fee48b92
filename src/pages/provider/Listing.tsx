@@ -21,7 +21,6 @@ import {
   AlertCircle,
   Clock,
   Image as ImageIcon,
-  Plus,
   X,
   Loader2,
   Stethoscope,
@@ -36,6 +35,7 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
+import { MultiSelectDropdown } from "@/components/search/MultiSelectDropdown";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -367,9 +367,6 @@ export default function ProviderListingPage() {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
-  const [newService, setNewService] = useState("");
-  const [newInsurance, setNewInsurance] = useState("");
-  const [newAgeGroup, setNewAgeGroup] = useState("");
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
@@ -407,9 +404,6 @@ export default function ProviderListingPage() {
       setShowSaved(false);
       setTouchedFields(new Set());
       setFieldErrors({});
-      setNewService("");
-      setNewInsurance("");
-      setNewAgeGroup("");
       setVerificationCode("");
       setCodeSent(false);
       setVerificationError(null);
@@ -857,22 +851,95 @@ export default function ProviderListingPage() {
     return isValid;
   };
 
-  const handleAddService = async (serviceName: string) => {
-    if (!facility || !serviceName.trim()) return;
+  const handleServicesChange = async (selectedServices: string[]) => {
+    if (!facility) return;
     
-    const { error } = await supabase
-      .from("facility_services")
-      .insert({ facility_id: facility.id, service_name: serviceName.trim() });
-
-    if (error) {
-      toast({ title: "Failed to add service", variant: "destructive" });
-    } else {
-      setNewService("");
+    const currentServiceNames = services.map(s => s.service_name);
+    const toAdd = selectedServices.filter(s => !currentServiceNames.includes(s));
+    const toRemove = services.filter(s => !selectedServices.includes(s.service_name));
+    
+    // Add new services
+    for (const serviceName of toAdd) {
+      await supabase
+        .from("facility_services")
+        .insert({ facility_id: facility.id, service_name: serviceName });
+    }
+    
+    // Remove deselected services
+    for (const service of toRemove) {
+      await supabase
+        .from("facility_services")
+        .delete()
+        .eq("id", service.id);
+    }
+    
+    if (toAdd.length > 0 || toRemove.length > 0) {
       refetchServices();
       queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
-      toast({ title: "Service added" });
+      toast({ title: toAdd.length > 0 ? "Services updated" : "Service removed" });
+    }
+  };
+
+  const handleInsuranceChange = async (selectedInsurance: string[]) => {
+    if (!facility) return;
+    
+    const currentInsuranceNames = insurance.map(i => i.insurance_name);
+    const toAdd = selectedInsurance.filter(i => !currentInsuranceNames.includes(i));
+    const toRemove = insurance.filter(i => !selectedInsurance.includes(i.insurance_name));
+    
+    // Add new insurance
+    for (const insuranceName of toAdd) {
+      await supabase
+        .from("facility_insurance")
+        .insert({ facility_id: facility.id, insurance_name: insuranceName });
+    }
+    
+    // Remove deselected insurance
+    for (const ins of toRemove) {
+      await supabase
+        .from("facility_insurance")
+        .delete()
+        .eq("id", ins.id);
+    }
+    
+    if (toAdd.length > 0 || toRemove.length > 0) {
+      refetchInsurance();
+      queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
+      toast({ title: toAdd.length > 0 ? "Insurance updated" : "Insurance removed" });
+    }
+  };
+
+  const handleAgeGroupsChange = async (selectedAgeGroups: string[]) => {
+    if (!facility) return;
+    
+    const currentAgeGroupNames = ageGroups.map(ag => ag.age_group);
+    const toAdd = selectedAgeGroups.filter(ag => !currentAgeGroupNames.includes(ag));
+    const toRemove = ageGroups.filter(ag => !selectedAgeGroups.includes(ag.age_group));
+    
+    // Add new age groups
+    for (const ageGroup of toAdd) {
+      await supabase
+        .from("facility_age_groups")
+        .insert({ facility_id: facility.id, age_group: ageGroup });
+    }
+    
+    // Remove deselected age groups
+    for (const ag of toRemove) {
+      await supabase
+        .from("facility_age_groups")
+        .delete()
+        .eq("id", ag.id);
+    }
+    
+    if (toAdd.length > 0 || toRemove.length > 0) {
+      refetchAgeGroups();
+      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
+      toast({ title: toAdd.length > 0 ? "Age groups updated" : "Age group removed" });
     }
   };
 
@@ -894,25 +961,6 @@ export default function ProviderListingPage() {
     }
   };
 
-  const handleAddInsurance = async (insuranceName: string) => {
-    if (!facility || !insuranceName.trim()) return;
-    
-    const { error } = await supabase
-      .from("facility_insurance")
-      .insert({ facility_id: facility.id, insurance_name: insuranceName.trim() });
-
-    if (error) {
-      toast({ title: "Failed to add insurance", variant: "destructive" });
-    } else {
-      setNewInsurance("");
-      refetchInsurance();
-      queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
-      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
-      toast({ title: "Insurance added" });
-    }
-  };
-
   const handleRemoveInsurance = async (insuranceId: string) => {
     const { error } = await supabase
       .from("facility_insurance")
@@ -928,24 +976,6 @@ export default function ProviderListingPage() {
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       }
-    }
-  };
-
-  const handleAddAgeGroup = async (ageGroup: string) => {
-    if (!facility || !ageGroup.trim()) return;
-    
-    const { error } = await supabase
-      .from("facility_age_groups")
-      .insert({ facility_id: facility.id, age_group: ageGroup.trim() });
-
-    if (error) {
-      toast({ title: "Failed to add age group", variant: "destructive" });
-    } else {
-      setNewAgeGroup("");
-      refetchAgeGroups();
-      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
-      toast({ title: "Age group added" });
     }
   };
 
@@ -1880,7 +1910,7 @@ export default function ProviderListingPage() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="space-y-4 pt-2">
-                    {services.length > 0 ? (
+                    {services.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {services.map((service) => (
                           <TagChip
@@ -1891,34 +1921,14 @@ export default function ProviderListingPage() {
                           />
                         ))}
                       </div>
-                    ) : (
-                      <EmptyTagsState type="services" />
                     )}
 
-                    <div className="flex gap-2">
-                      <Select value={newService} onValueChange={setNewService}>
-                        <SelectTrigger className="h-11 flex-1">
-                          <SelectValue placeholder="Select a service to add..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card max-h-[200px]">
-                          {availableServices
-                            .filter(s => !services.some(existing => existing.service_name === s))
-                            .map((service) => (
-                              <SelectItem key={service} value={service}>
-                                {service}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <Button 
-                        onClick={() => handleAddService(newService)}
-                        disabled={!newService}
-                        className="h-11 gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add
-                      </Button>
-                    </div>
+                    <MultiSelectDropdown
+                      options={availableServices}
+                      selected={services.map(s => s.service_name)}
+                      onChange={handleServicesChange}
+                      placeholder="Select services to add..."
+                    />
                   </CardContent>
                 </CollapsibleContent>
               </Card>
@@ -1953,7 +1963,7 @@ export default function ProviderListingPage() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="space-y-4 pt-2">
-                    {insurance.length > 0 ? (
+                    {insurance.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {insurance.map((ins) => (
                           <TagChip
@@ -1964,34 +1974,14 @@ export default function ProviderListingPage() {
                           />
                         ))}
                       </div>
-                    ) : (
-                      <EmptyTagsState type="insurance" />
                     )}
 
-                    <div className="flex gap-2">
-                      <Select value={newInsurance} onValueChange={setNewInsurance}>
-                        <SelectTrigger className="h-11 flex-1">
-                          <SelectValue placeholder="Select insurance to add..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card max-h-[200px]">
-                          {availableInsurance
-                            .filter(i => !insurance.some(existing => existing.insurance_name === i))
-                            .map((ins) => (
-                              <SelectItem key={ins} value={ins}>
-                                {ins}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <Button 
-                        onClick={() => handleAddInsurance(newInsurance)}
-                        disabled={!newInsurance}
-                        className="h-11 gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add
-                      </Button>
-                    </div>
+                    <MultiSelectDropdown
+                      options={availableInsurance}
+                      selected={insurance.map(i => i.insurance_name)}
+                      onChange={handleInsuranceChange}
+                      placeholder="Select insurance providers to add..."
+                    />
                   </CardContent>
                 </CollapsibleContent>
               </Card>
@@ -2026,7 +2016,7 @@ export default function ProviderListingPage() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="space-y-4 pt-2">
-                    {ageGroups.length > 0 ? (
+                    {ageGroups.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {ageGroups.map((ag) => (
                           <TagChip
@@ -2037,38 +2027,14 @@ export default function ProviderListingPage() {
                           />
                         ))}
                       </div>
-                    ) : (
-                      <div className="py-4 px-3 rounded-lg border border-dashed border-border bg-muted/30 text-center">
-                        <p className="text-sm text-muted-foreground">
-                          No age groups added yet. Specify which age groups you serve to help families find appropriate care.
-                        </p>
-                      </div>
                     )}
 
-                    <div className="flex gap-2">
-                      <Select value={newAgeGroup} onValueChange={setNewAgeGroup}>
-                        <SelectTrigger className="h-11 flex-1">
-                          <SelectValue placeholder="Select age group to add..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card max-h-[200px]">
-                          {availableAgeGroups
-                            .filter(ag => !ageGroups.some(existing => existing.age_group === ag))
-                            .map((ag) => (
-                              <SelectItem key={ag} value={ag}>
-                                {ag}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <Button 
-                        onClick={() => handleAddAgeGroup(newAgeGroup)}
-                        disabled={!newAgeGroup}
-                        className="h-11 gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add
-                      </Button>
-                    </div>
+                    <MultiSelectDropdown
+                      options={availableAgeGroups}
+                      selected={ageGroups.map(ag => ag.age_group)}
+                      onChange={handleAgeGroupsChange}
+                      placeholder="Select age groups to add..."
+                    />
                   </CardContent>
                 </CollapsibleContent>
               </Card>
