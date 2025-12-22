@@ -8,10 +8,15 @@ import { cn } from "@/lib/utils";
 
 const notificationTypeIcons: Record<string, string> = {
   system: "🔔",
+  welcome: "👋",
   facility_update: "🏥",
   review_response: "💬",
+  review_approved: "✅",
+  review_rejected: "❌",
   saved_facility: "❤️",
   request_update: "📋",
+  request_confirmation: "📝",
+  facility_contacted: "📞",
 };
 
 function NotificationItem({
