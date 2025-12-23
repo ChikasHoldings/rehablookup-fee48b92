@@ -191,13 +191,20 @@ export const MobileLeadCard = memo(function MobileLeadCard({
           "relative border-2 bg-background transition-colors duration-200 overflow-hidden rounded-2xl",
           isSelected 
             ? "border-primary bg-primary/5 shadow-lg" 
-            : isQualified
-              ? "border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-emerald-50/30 dark:border-emerald-800/50 dark:from-emerald-950/30 dark:to-emerald-950/10"
-              : "border-slate-200 bg-gradient-to-br from-slate-50/80 to-white dark:border-slate-700/50 dark:from-slate-900/30 dark:to-slate-900/10",
-          isLocked && "opacity-60"
+            : lead.status === 'new'
+              ? "border-primary/50 bg-primary/5"
+              : isQualified
+                ? "border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-emerald-50/30 dark:border-emerald-800/50 dark:from-emerald-950/30 dark:to-emerald-950/10"
+                : "border-slate-200 bg-gradient-to-br from-slate-50/80 to-white dark:border-slate-700/50 dark:from-slate-900/30 dark:to-slate-900/10",
+          isLocked && "opacity-60",
+          lead.status !== 'new' && !isSelected && "opacity-80"
         )}
       >
-        <div className="p-4">
+        {/* Unread indicator dot */}
+        {lead.status === 'new' && (
+          <div className="absolute top-3 left-3 h-2.5 w-2.5 rounded-full bg-primary animate-pulse z-10" />
+        )}
+        <div className={cn("p-4", lead.status === 'new' && "pl-7")}>
           {/* Top Row - Avatar, Name, Time */}
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
