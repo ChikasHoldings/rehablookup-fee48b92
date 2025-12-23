@@ -152,6 +152,7 @@ export default function AdminDashboard() {
   const { data: revenueStats, isLoading: loadingRevenue } = useQuery<RevenueStats>({
     queryKey: ["admin-revenue-stats"],
     queryFn: async () => {
+      console.log('[AdminDashboard] Fetching revenue stats...');
       try {
         const { data, error } = await supabase.functions.invoke("get-revenue-stats");
         if (error) {
@@ -165,6 +166,7 @@ export default function AdminDashboard() {
             configured: false,
           };
         }
+        console.log('[AdminDashboard] Revenue stats loaded:', data?.monthlyRevenue);
         return data;
       } catch (error) {
         logError("fetch_revenue_stats", error);
@@ -179,12 +181,15 @@ export default function AdminDashboard() {
       }
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch subscription breakdown by plan (uses data from revenue stats)
   const { data: subscriptionBreakdown, isLoading: loadingBreakdown } = useQuery<SubscriptionBreakdown[]>({
     queryKey: ["admin-subscription-breakdown"],
     queryFn: async () => {
+      console.log('[AdminDashboard] Fetching subscription breakdown...');
       const { data, error } = await supabase.functions.invoke("get-revenue-stats");
       
       if (error || !data?.subscriptionsByPlan) {
@@ -195,6 +200,7 @@ export default function AdminDashboard() {
         ];
       }
       
+      console.log('[AdminDashboard] Subscription breakdown loaded');
       return [
         { name: "Basic", value: data.subscriptionsByPlan.basic || 0, color: PLAN_COLORS.basic },
         { name: "Professional", value: data.subscriptionsByPlan.professional || 0, color: PLAN_COLORS.professional },
@@ -202,12 +208,15 @@ export default function AdminDashboard() {
       ];
     },
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch weekly trend data for sparklines
   const { data: weeklyTrends } = useQuery({
     queryKey: ["admin-weekly-trends"],
     queryFn: async () => {
+      console.log('[AdminDashboard] Fetching weekly trends...');
       // Get last 7 days of data
       const days = 7;
       const now = new Date();
@@ -259,18 +268,22 @@ export default function AdminDashboard() {
       const leadsTrend: TrendDataPoint[] = Object.entries(leadsByDay).map(([date, value]) => ({ date, value }));
       const providersTrend: TrendDataPoint[] = Object.entries(providersByDay).map(([date, value]) => ({ date, value }));
       
+      console.log('[AdminDashboard] Weekly trends loaded');
       return {
         leads: leadsTrend,
         providers: providersTrend,
       };
     },
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch providers stats
   const { data: providerStats, isLoading: loadingProviders } = useQuery({
     queryKey: ["admin-provider-stats"],
     queryFn: async () => {
+      console.log('[AdminDashboard] Fetching provider stats...');
       const { count: total } = await supabase
         .from("facilities")
         .select("*", { count: "exact", head: true });
@@ -295,6 +308,7 @@ export default function AdminDashboard() {
         .select("*", { count: "exact", head: true })
         .eq("verified", true);
 
+      console.log('[AdminDashboard] Provider stats:', { total, approved, pending, featured });
       return {
         total: total || 0,
         approved: approved || 0,
@@ -303,12 +317,15 @@ export default function AdminDashboard() {
         verified: verified || 0,
       };
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch leads stats
   const { data: leadStats, isLoading: loadingLeads } = useQuery({
     queryKey: ["admin-lead-stats"],
     queryFn: async () => {
+      console.log('[AdminDashboard] Fetching lead stats...');
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
@@ -344,6 +361,7 @@ export default function AdminDashboard() {
         .select("*", { count: "exact", head: true })
         .eq("status", "new");
 
+      console.log('[AdminDashboard] Lead stats:', { totalMonth, totalAll, newLeads });
       return {
         totalMonth: totalMonth || 0,
         totalAll: totalAll || 0,
@@ -355,12 +373,15 @@ export default function AdminDashboard() {
         newLeads: newLeads || 0,
       };
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch top cities
   const { data: topCities } = useQuery({
     queryKey: ["admin-top-cities"],
     queryFn: async () => {
+      console.log('[AdminDashboard] Fetching top cities...');
       const { data } = await supabase
         .from("leads")
         .select("location_city_state")
@@ -382,25 +403,32 @@ export default function AdminDashboard() {
       
       const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
 
+      console.log('[AdminDashboard] Top cities loaded:', sorted.length);
       return sorted.map(([city, count]) => ({ 
         city, 
         count,
         percentage: Math.round((count / maxCount) * 100)
       }));
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch recent leads
   const { data: recentLeads } = useQuery({
     queryKey: ["admin-recent-leads"],
     queryFn: async () => {
+      console.log('[AdminDashboard] Fetching recent leads...');
       const { data } = await supabase
         .from("leads")
         .select("id, name, email, created_at, facility_id, email_verified, source, qualified, status")
         .order("created_at", { ascending: false })
         .limit(5);
+      console.log('[AdminDashboard] Recent leads loaded:', data?.length || 0);
       return data || [];
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const formatTimeAgo = (dateString: string) => {

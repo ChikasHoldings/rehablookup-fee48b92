@@ -262,6 +262,7 @@ export default function AdminProviders() {
   const { data: statusCounts } = useQuery({
     queryKey: ["admin-providers-status-counts"],
     queryFn: async () => {
+      console.log('[AdminProviders] Fetching status counts...');
       try {
         const [allResult, approvedResult, pendingResult, suspendedResult] = await Promise.all([
           supabase.from("facilities").select("id", { count: "exact", head: true }),
@@ -270,6 +271,7 @@ export default function AdminProviders() {
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
         ]);
 
+        console.log('[AdminProviders] Status counts:', { all: allResult.count, approved: approvedResult.count, pending: pendingResult.count });
         return {
           all: allResult.count || 0,
           approved: approvedResult.count || 0,
@@ -281,12 +283,15 @@ export default function AdminProviders() {
         throw error;
       }
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch providers with pagination and filtering
   const { data: providers, isLoading } = useQuery({
     queryKey: ["admin-providers", activeTab, searchQuery, currentPage],
     queryFn: async () => {
+      console.log('[AdminProviders] Fetching providers...', { activeTab, searchQuery, currentPage });
       try {
         const from = (currentPage - 1) * ITEMS_PER_PAGE;
         const to = from + ITEMS_PER_PAGE - 1;
@@ -311,12 +316,15 @@ export default function AdminProviders() {
 
         const { data, error } = await query;
         if (error) throw error;
+        console.log('[AdminProviders] Loaded', data?.length || 0, 'providers');
         return data as Facility[];
       } catch (error) {
         logError("fetch_providers", error, { activeTab, searchQuery, currentPage });
         throw error;
       }
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch total count for current filter

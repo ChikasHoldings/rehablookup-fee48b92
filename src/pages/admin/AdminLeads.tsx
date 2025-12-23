@@ -557,6 +557,7 @@ export default function AdminLeads() {
   const { data: totalCount } = useQuery({
     queryKey: ["admin-leads-count", activeTab, assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, blockReasonFilter, exclusivityFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
+      console.log('[AdminLeads] Fetching leads count...');
       try {
         let query = supabase
           .from("leads")
@@ -619,12 +620,15 @@ export default function AdminLeads() {
 
         const { count, error } = await query;
         if (error) throw error;
+        console.log('[AdminLeads] Total count:', count);
         return count || 0;
       } catch (error) {
         logError("fetch_leads_count", error, { activeTab, assignmentFilter, statusFilter });
         throw error;
       }
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch blocked leads count for tab badge
@@ -659,6 +663,7 @@ export default function AdminLeads() {
   const { data: leads, isLoading } = useQuery({
     queryKey: ["admin-leads", activeTab, assignmentFilter, statusFilter, urgencyFilter, qualifiedFilter, blockReasonFilter, exclusivityFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
+      console.log('[AdminLeads] Fetching leads...', { activeTab, assignmentFilter, currentPage });
       try {
         const from = (currentPage - 1) * ITEMS_PER_PAGE;
         const to = from + ITEMS_PER_PAGE - 1;
@@ -726,12 +731,15 @@ export default function AdminLeads() {
 
         const { data, error } = await query;
         if (error) throw error;
+        console.log('[AdminLeads] Loaded', data?.length || 0, 'leads');
         return data as Lead[];
       } catch (error) {
         logError("fetch_leads", error, { activeTab, assignmentFilter, statusFilter, currentPage });
         throw error;
       }
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Filter leads by score grade on client side
