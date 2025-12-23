@@ -1871,6 +1871,33 @@ const handler = async (req: Request): Promise<Response> => {
         leadExclusivity === 'shared',
         requestId
       );
+      
+      // Send SMS notification to primary provider
+      if (primaryFacilityUserId) {
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              userId: primaryFacilityUserId,
+              notificationType: "new_lead",
+              data: {
+                leadName: leadData.name,
+                leadCity: leadData.locationCityState?.split(",")[0]?.trim(),
+                levelOfCare: leadData.levelOfCare,
+                urgency: leadData.urgency,
+                facilityName: primaryFacilityName,
+              },
+            }),
+          });
+          log(requestId, "INFO", "SMS notification sent to primary provider", { userId: primaryFacilityUserId });
+        } catch (smsError) {
+          log(requestId, "WARN", "Failed to send SMS to primary provider", { error: String(smsError) });
+        }
+      }
     }
     
     // Email secondary provider for shared leads
@@ -1883,6 +1910,33 @@ const handler = async (req: Request): Promise<Response> => {
         true,
         requestId
       );
+      
+      // Send SMS notification to secondary provider
+      if (secondaryFacilityUserId) {
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              userId: secondaryFacilityUserId,
+              notificationType: "new_lead",
+              data: {
+                leadName: leadData.name,
+                leadCity: leadData.locationCityState?.split(",")[0]?.trim(),
+                levelOfCare: leadData.levelOfCare,
+                urgency: leadData.urgency,
+                facilityName: secondaryFacilityName,
+              },
+            }),
+          });
+          log(requestId, "INFO", "SMS notification sent to secondary provider", { userId: secondaryFacilityUserId });
+        } catch (smsError) {
+          log(requestId, "WARN", "Failed to send SMS to secondary provider", { error: String(smsError) });
+        }
+      }
     }
 
     // Create in-app notifications

@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ActivityLog } from "@/components/seeker/ActivityLog";
 import { logActivity } from "@/hooks/useActivityLog";
-import { PhoneInput } from "@/components/ui/phone-input";
+import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -754,19 +754,15 @@ export default function SeekerSettings() {
             </div>
 
             {/* Phone */}
-            <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative mt-1">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                <PhoneInput
-                  id="phone"
-                  value={phone}
-                  onChange={setPhone}
-                  placeholder="(555) 123-4567"
-                  className="pl-10"
-                />
-              </div>
-            </div>
+            <PhoneVerificationStep
+              phone={phone}
+              onPhoneChange={setPhone}
+              userId={userId || undefined}
+              userType="seeker"
+              onVerified={() => {
+                queryClient.invalidateQueries({ queryKey: ['seeker-profile', userId] });
+              }}
+            />
 
             {/* Location */}
             <div>
