@@ -81,9 +81,11 @@ export default function SeekerSettings() {
 
   useEffect(() => {
     const loadProfile = async () => {
+      console.log('[SeekerSettings] Loading profile...');
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        console.log('[SeekerSettings] No session found');
         setIsAuthenticated(false);
         setIsLoading(false);
         return;
@@ -94,13 +96,18 @@ export default function SeekerSettings() {
       setUserId(session.user.id);
       setIsEmailVerified(!!session.user.email_confirmed_at);
 
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('seeker_profiles')
         .select('display_name, first_name, last_name, avatar_url, phone, zipcode, city, state')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
+      if (error) {
+        console.error('[SeekerSettings] Profile fetch error:', error);
+      }
+
       if (profile) {
+        console.log('[SeekerSettings] Profile loaded:', profile.display_name || profile.first_name);
         setDisplayName(profile.display_name || "");
         setFirstName(profile.first_name || "");
         setLastName(profile.last_name || "");

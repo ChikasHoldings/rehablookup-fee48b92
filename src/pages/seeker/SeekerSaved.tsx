@@ -17,6 +17,7 @@ export default function SeekerSaved() {
 
   useEffect(() => {
     const fetchFacilities = async () => {
+      console.log('[SeekerSaved] Fetching saved facilities, count:', favorites.length);
       if (favorites.length === 0) {
         setFacilities([]);
         setIsLoading(false);
@@ -31,10 +32,11 @@ export default function SeekerSaved() {
           .eq('status', 'approved');
 
         if (queryError) {
-          console.error('Error fetching saved facilities:', queryError);
+          console.error('[SeekerSaved] Error fetching saved facilities:', queryError);
           setError('Failed to load saved facilities');
           setFacilities([]);
         } else {
+          console.log('[SeekerSaved] Loaded', data?.length || 0, 'saved facilities');
           // Map to ensure proper typing
           const mappedFacilities: FacilityCardData[] = (data || []).map(f => ({
             id: f.id,
@@ -54,7 +56,7 @@ export default function SeekerSaved() {
           setError(null);
         }
       } catch (err) {
-        console.error('Unexpected error fetching facilities:', err);
+        console.error('[SeekerSaved] Unexpected error fetching facilities:', err);
         setError('An unexpected error occurred');
         setFacilities([]);
       } finally {

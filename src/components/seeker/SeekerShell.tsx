@@ -29,16 +29,24 @@ export function SeekerShell() {
   const { data: profile } = useQuery({
     queryKey: ['seeker-profile', userId],
     queryFn: async () => {
+      console.log('[SeekerShell] Fetching profile for user:', userId);
       if (!userId) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('seeker_profiles')
         .select('display_name, first_name, avatar_url')
         .eq('user_id', userId)
         .maybeSingle();
+      if (error) {
+        console.error('[SeekerShell] Profile fetch error:', error);
+      } else {
+        console.log('[SeekerShell] Profile loaded:', data?.display_name || data?.first_name);
+      }
       return data as SeekerProfile | null;
     },
     enabled: !!userId,
     staleTime: 0, // Always check for fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Scroll content area to top on route change
