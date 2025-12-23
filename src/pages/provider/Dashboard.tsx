@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
+import { useAccountLeadUsage } from "@/hooks/useAccountLeadUsage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, differenceInHours, isPast, format } from "date-fns";
@@ -154,13 +155,16 @@ export default function ProviderDashboardPage() {
   const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { facilities } = useProviderFacilities();
   
+  // ACCOUNT-LEVEL lead usage (100 leads total, not per-facility)
+  const accountLeadUsage = useAccountLeadUsage();
+  const accountLeadsUsed = accountLeadUsage?.usedLeads ?? 0;
+  const accountLeadLimit = accountLeadUsage?.leadLimit ?? 0;
+  
   const facility = selectedFacility || providerData?.facility;
   const profile = providerData?.profile;
   const viewsCount = providerData?.viewsCount ?? 0;
-  const monthlyLeadsCount = providerData?.monthlyLeadsCount ?? 0;
   const userName = profile?.first_name || "";
   
-  const leadLimit = subscription?.lead_limit ?? 0;
   const planKey = subscriptionLoading ? undefined : (subscription?.plan || "basic");
   const locationLimit = planKey ? PLAN_DETAILS[planKey]?.location_limit ?? 1 : 1;
   const usedLocations = facilities?.length ?? 0;
@@ -428,12 +432,12 @@ export default function ProviderDashboardPage() {
               />
               <MetricCard
                 title="Leads"
-                value={monthlyLeadsCount}
-                subtitle="This month"
+                value={accountLeadsUsed}
+                subtitle="This month (all locations)"
                 icon={TrendingUp}
                 iconBg="bg-emerald-500/10"
                 iconColor="text-emerald-600"
-                isLoading={isLoading}
+                isLoading={isLoading || accountLeadUsage.isLoading}
               />
               <MetricCard
                 title="Locations"
@@ -767,22 +771,22 @@ export default function ProviderDashboardPage() {
                 <CardContent className="p-3.5">
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Used</span>
-                      <span className="font-semibold">{monthlyLeadsCount} / {leadLimit}</span>
+                      <span className="text-muted-foreground">Used (all locations)</span>
+                      <span className="font-semibold">{accountLeadsUsed} / {accountLeadLimit}</span>
                     </div>
                     <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                       <div 
                         className={cn(
                           "h-full rounded-full transition-all",
-                          monthlyLeadsCount >= leadLimit ? "bg-red-500" :
-                          monthlyLeadsCount >= leadLimit * 0.8 ? "bg-amber-500" : "bg-emerald-500"
+                          accountLeadsUsed >= accountLeadLimit ? "bg-red-500" :
+                          accountLeadsUsed >= accountLeadLimit * 0.8 ? "bg-amber-500" : "bg-emerald-500"
                         )}
-                        style={{ width: `${Math.min((monthlyLeadsCount / leadLimit) * 100, 100)}%` }}
+                        style={{ width: `${accountLeadLimit > 0 ? Math.min((accountLeadsUsed / accountLeadLimit) * 100, 100) : 0}%` }}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {leadLimit - monthlyLeadsCount > 0 
-                        ? `${leadLimit - monthlyLeadsCount} leads remaining`
+                      {accountLeadLimit - accountLeadsUsed > 0 
+                        ? `${accountLeadLimit - accountLeadsUsed} leads remaining`
                         : "Limit reached"}
                     </p>
                   </div>

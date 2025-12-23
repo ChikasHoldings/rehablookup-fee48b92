@@ -59,12 +59,12 @@ import {
   LeadLimitWarningBanner 
 } from "@/components/provider/LeadUsageIndicator";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
+import { useAccountLeadUsage } from "@/hooks/useAccountLeadUsage";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { toast } from "sonner";
 import { EmailLeadDialog } from "@/components/provider/leads/EmailLeadDialog";
 import { LeadLimitUpgradeModal } from "@/components/provider/LeadLimitUpgradeModal";
-import { useProviderData } from "@/hooks/useProviderData";
 import { Card } from "@/components/ui/card";
 import { exportLeadsToCSV } from "@/lib/csvExport";
 
@@ -100,11 +100,14 @@ export default function ProviderLeadsPage() {
   const queryClient = useQueryClient();
   const { facilities } = useProviderFacilities();
   const { data: subscription } = useSubscription();
-  const { data: providerData } = useProviderData(facilities[0]?.id);
+  
+  // ACCOUNT-LEVEL lead usage (100 leads total across all locations, not per-facility)
+  const accountLeadUsage = useAccountLeadUsage();
+  
   const isMobile = useIsMobile();
   const currentPlan = subscription?.plan || "basic";
-  const leadLimit = subscription?.lead_limit ?? 0;
-  const monthlyLeadsUsed = providerData?.monthlyLeadsCount ?? 0;
+  const leadLimit = accountLeadUsage?.leadLimit ?? 0;
+  const accountLeadsUsed = accountLeadUsage?.usedLeads ?? 0;
 
   // Create facility lookup map for quick access
   const facilityMap = useMemo(() => {
@@ -532,16 +535,16 @@ export default function ProviderLeadsPage() {
         </div>
       )}
 
-      {/* Lead Limit Banners - Consistent with Dashboard */}
+      {/* Lead Limit Banners - uses ACCOUNT-LEVEL lead count (across all locations) */}
       {(!isMobile || mobileView === 'list') && currentPlan !== "basic" && (
         <div className="flex-shrink-0 px-4 md:px-6 pt-2 space-y-2">
           <LeadLimitReachedBanner 
-            usedLeads={thisMonthQualified.length} 
+            usedLeads={accountLeadsUsed} 
             leadLimit={leadLimit} 
             plan={currentPlan as "basic" | "professional" | "featured"} 
           />
           <LeadLimitWarningBanner 
-            usedLeads={thisMonthQualified.length} 
+            usedLeads={accountLeadsUsed} 
             leadLimit={leadLimit} 
           />
         </div>
@@ -1036,9 +1039,9 @@ export default function ProviderLeadsPage() {
         />
       )}
 
-      {/* Lead Limit Upgrade Modal */}
+      {/* Lead Limit Upgrade Modal - uses account-level lead count */}
       <LeadLimitUpgradeModal
-        usedLeads={monthlyLeadsUsed}
+        usedLeads={accountLeadsUsed}
         leadLimit={leadLimit}
         currentPlan={currentPlan}
       />
