@@ -901,9 +901,40 @@ export default function AdminAnalytics() {
   };
 
   const isLoading = isLoadingViews || isLoadingInteractions || isLoadingLeads || isLoadingSubscriptions;
+  const hasError = viewsError || interactionsError || leadsError || subscriptionsError;
 
   return (
     <div className="space-y-6">
+      {/* Error Banner */}
+      {hasError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-500 shrink-0" />
+          <div className="flex-1">
+            <p className="font-medium text-red-800">Failed to load some data</p>
+            <p className="text-sm text-red-600">
+              {viewsError && "Views failed to load. "}
+              {interactionsError && "Interactions failed to load. "}
+              {leadsError && "Leads failed to load. "}
+              {subscriptionsError && "Subscription data failed to load. "}
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ["admin-analytics-views"] });
+              queryClient.invalidateQueries({ queryKey: ["admin-analytics-interactions"] });
+              queryClient.invalidateQueries({ queryKey: ["admin-analytics-leads"] });
+              queryClient.invalidateQueries({ queryKey: ["admin-analytics-subscriptions"] });
+            }}
+            className="shrink-0"
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Retry
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -1269,7 +1300,7 @@ export default function AdminAnalytics() {
               <CardContent className="pt-0">
                 {isLoading ? (
                   <Skeleton className="h-[280px] w-full" />
-                ) : (
+                ) : timeSeriesData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <AreaChart data={timeSeriesData}>
                       <defs>
@@ -1285,6 +1316,13 @@ export default function AdminAnalytics() {
                       <Area type="monotone" dataKey="visitors" stroke={CHART_COLORS.primary} strokeWidth={2} fillOpacity={1} fill="url(#colorVisitors)" name="Visitors" />
                     </AreaChart>
                   </ResponsiveContainer>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <Users className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No visitor data for selected period</p>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -1300,7 +1338,7 @@ export default function AdminAnalytics() {
               <CardContent className="pt-0">
                 {isLoading ? (
                   <Skeleton className="h-[280px] w-full" />
-                ) : (
+                ) : timeSeriesData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <AreaChart data={timeSeriesData}>
                       <defs>
@@ -1316,6 +1354,13 @@ export default function AdminAnalytics() {
                       <Area type="monotone" dataKey="clicks" stroke={CHART_COLORS.purple} strokeWidth={2} fillOpacity={1} fill="url(#colorClicks)" name="Clicks" />
                     </AreaChart>
                   </ResponsiveContainer>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <MousePointerClick className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No click data for selected period</p>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -1335,7 +1380,7 @@ export default function AdminAnalytics() {
               <CardContent className="pt-0">
                 {isLoading ? (
                   <Skeleton className="h-[280px] w-full" />
-                ) : (
+                ) : timeSeriesData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <AreaChart data={timeSeriesData}>
                       <defs>
@@ -1351,6 +1396,13 @@ export default function AdminAnalytics() {
                       <Area type="monotone" dataKey="leads" stroke={CHART_COLORS.cyan} strokeWidth={2} fillOpacity={1} fill="url(#colorLeads)" name="Leads" />
                     </AreaChart>
                   </ResponsiveContainer>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <FileText className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No lead data for selected period</p>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -1366,7 +1418,7 @@ export default function AdminAnalytics() {
               <CardContent className="pt-0">
                 {isLoading ? (
                   <Skeleton className="h-[280px] w-full" />
-                ) : (
+                ) : timeSeriesData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={timeSeriesData} barGap={0}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
@@ -1378,6 +1430,13 @@ export default function AdminAnalytics() {
                       <Bar dataKey="unqualifiedLeads" stackId="a" fill={CHART_COLORS.warning} name="Unqualified" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
+                ) : (
+                  <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <CheckCircle className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No lead quality data for selected period</p>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
