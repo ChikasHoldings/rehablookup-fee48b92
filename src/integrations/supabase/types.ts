@@ -2228,15 +2228,13 @@ export type Database = {
           logo_url: string | null
           name: string | null
           phone: string | null
-          reply_email: string | null
-          reply_email_verified: boolean | null
-          reply_email_verified_at: string | null
           slug: string | null
           state: string | null
           status: string | null
           updated_at: string | null
           verified: boolean | null
           website: string | null
+          year_established: number | null
           zip_code: string | null
         }
         Insert: {
@@ -2256,15 +2254,13 @@ export type Database = {
           logo_url?: string | null
           name?: string | null
           phone?: string | null
-          reply_email?: string | null
-          reply_email_verified?: boolean | null
-          reply_email_verified_at?: string | null
           slug?: string | null
           state?: string | null
           status?: string | null
           updated_at?: string | null
           verified?: boolean | null
           website?: string | null
+          year_established?: number | null
           zip_code?: string | null
         }
         Update: {
@@ -2284,15 +2280,13 @@ export type Database = {
           logo_url?: string | null
           name?: string | null
           phone?: string | null
-          reply_email?: string | null
-          reply_email_verified?: boolean | null
-          reply_email_verified_at?: string | null
           slug?: string | null
           state?: string | null
           status?: string | null
           updated_at?: string | null
           verified?: boolean | null
           website?: string | null
+          year_established?: number | null
           zip_code?: string | null
         }
         Relationships: []
