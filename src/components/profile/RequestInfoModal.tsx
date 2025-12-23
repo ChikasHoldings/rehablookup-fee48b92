@@ -852,7 +852,7 @@ export function RequestInfoModal({
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6 text-center">
                 <div className="flex items-center justify-center gap-2 text-amber-700 dark:text-amber-300">
                   <Crown className="h-4 w-4" />
-                  <span className="text-sm font-semibold">Your lead is exclusive to this provider</span>
+                  <span className="text-sm font-semibold">Your request is exclusive to this provider</span>
                 </div>
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                   Your information will only be shared with {facility.name}
