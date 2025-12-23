@@ -191,3 +191,9 @@ verify_jwt = false
 
 [functions.send-seeker-emails]
 verify_jwt = false
+
+[functions.send-sms-verification-code]
+verify_jwt = false
+
+[functions.verify-sms-code]
+verify_jwt = false
