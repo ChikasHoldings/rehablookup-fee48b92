@@ -422,7 +422,7 @@ export default function SeekerRequests() {
                 <p className="text-sm text-muted-foreground">Your information will be prefilled from your last request.</p>
               </div>
               <Button asChild size="sm" className="shrink-0">
-                <Link to="/search" className="gap-2">
+                <Link to="/account/search" className="gap-2">
                   <Plus className="h-4 w-4" />
                   New Request
                 </Link>
@@ -461,7 +461,7 @@ export default function SeekerRequests() {
               <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">Select a facility to send a request</p>
               <Button asChild>
-                <Link to="/search">Browse Facilities</Link>
+                <Link to="/account/search">Browse Facilities</Link>
               </Button>
             </div>
           )}

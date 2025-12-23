@@ -166,7 +166,7 @@ export default function MyAccount() {
                       Browse treatment centers and click the heart icon to save them here
                     </p>
                     <Button asChild>
-                      <Link to="/search">Find Treatment Centers</Link>
+                      <Link to="/account/search">Find Treatment Centers</Link>
                     </Button>
                   </div>
                 ) : (
