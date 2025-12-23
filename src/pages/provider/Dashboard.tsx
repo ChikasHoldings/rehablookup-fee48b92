@@ -180,9 +180,10 @@ export default function ProviderDashboardPage() {
   }, [facilityId]);
 
   // Fetch recent leads
-  const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
+  const { data: recentLeads = [], isLoading: leadsLoading, error: recentLeadsError } = useQuery({
     queryKey: ["recent-leads", facilityId],
     queryFn: async (): Promise<Lead[]> => {
+      console.log("[Dashboard] Fetching recent leads for facility:", facilityId);
       if (!facilityId) return [];
       const { data, error } = await supabase
         .from("leads")
@@ -190,13 +191,20 @@ export default function ProviderDashboardPage() {
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(4);
+      console.log("[Dashboard] Recent leads result:", { count: data?.length, error });
       if (error) throw error;
       return (data || []) as Lead[];
     },
     enabled: !!facilityId,
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    retry: 2,
   });
+  
+  if (recentLeadsError) {
+    console.error("[Dashboard] Error fetching recent leads:", recentLeadsError);
+  }
 
   // Fetch total leads count for Basic plan
   const { data: totalLeadsCount = 0 } = useQuery({
@@ -211,8 +219,8 @@ export default function ProviderDashboardPage() {
       return count || 0;
     },
     enabled: !!facilityId && planKey === "basic",
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 2,
+    refetchOnMount: true,
   });
 
   // Fetch services count for profile completion
@@ -228,8 +236,8 @@ export default function ProviderDashboardPage() {
       return count || 0;
     },
     enabled: !!facilityId,
-    staleTime: 1000 * 60 * 10,
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
   });
 
   // Fetch insurance count for profile completion
@@ -245,8 +253,8 @@ export default function ProviderDashboardPage() {
       return count || 0;
     },
     enabled: !!facilityId,
-    staleTime: 1000 * 60 * 10,
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
   });
 
   // Compute missing fields
