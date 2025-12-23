@@ -246,7 +246,7 @@ export default function SeekerSearch() {
       <div className="flex flex-col min-h-full bg-background">
         {/* Search Header */}
         <div className="bg-card border-b border-border">
-          <div className="px-4 pt-4 pb-4 space-y-3">
+          <div className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8 pt-4 pb-4 space-y-3">
             {/* Search Input */}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
@@ -427,7 +427,7 @@ export default function SeekerSearch() {
         </div>
         
         {/* Content Area */}
-        <div className="flex-1 p-4 pb-24">
+        <div className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-6 lg:px-8 py-4 pb-24">
           {!hasSearched ? (
             /* Initial State - Show suggestions */
             <div className="space-y-6">
