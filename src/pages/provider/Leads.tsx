@@ -839,20 +839,28 @@ export default function ProviderLeadsPage() {
                     
                     // Desktop card - Professional redesign
                     const location = lead.location_city_state || (lead.location_zip ? `ZIP: ${lead.location_zip}` : null);
-                    return (
+                      const isUnread = lead.status === 'new';
+                      return (
                       <button
                         key={lead.id}
                         onClick={() => !locked && handleSelectLead(lead)}
                         disabled={locked}
                         className={cn(
-                          "w-full text-left rounded-xl border transition-all duration-200 overflow-hidden",
+                          "w-full text-left rounded-xl border transition-all duration-200 overflow-hidden relative",
                           selected 
                             ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20" 
-                            : "border-border bg-card hover:border-primary/40 hover:shadow-md",
-                          locked && "opacity-60 cursor-not-allowed"
+                            : isUnread
+                              ? "border-primary/50 bg-primary/5 hover:border-primary hover:shadow-md"
+                              : "border-border bg-card hover:border-primary/40 hover:shadow-md",
+                          locked && "opacity-60 cursor-not-allowed",
+                          !isUnread && !selected && "opacity-80"
                         )}
                       >
-                        <div className="p-4">
+                        {/* Unread indicator dot */}
+                        {isUnread && (
+                          <div className="absolute top-3 left-3 h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />
+                        )}
+                        <div className={cn("p-4", isUnread && "pl-7")}>
                           {/* Top Row - Avatar, Name, Status */}
                           <div className="flex items-start justify-between gap-3 mb-3">
                             <div className="flex items-center gap-3 min-w-0">
