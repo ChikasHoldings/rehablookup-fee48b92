@@ -28,13 +28,19 @@ export function useSeekerAuth() {
   const isEmailVerified = !!user?.email_confirmed_at;
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
+    console.log('[useSeekerAuth] Fetching profile for:', userId);
+    const { data, error } = await supabase
       .from('seeker_profiles')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
     
+    if (error) {
+      console.error('[useSeekerAuth] Profile fetch error:', error);
+    }
+    
     if (data) {
+      console.log('[useSeekerAuth] Profile loaded:', data.display_name);
       setProfile(data);
       setIsSeeker(true);
     }

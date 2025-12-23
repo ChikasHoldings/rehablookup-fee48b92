@@ -196,8 +196,10 @@ export default function SeekerRequests() {
   }, [isAuthenticated]);
 
   const fetchRequests = async () => {
+    console.log('[SeekerRequests] Fetching requests...');
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user?.email) {
+      console.log('[SeekerRequests] No session/email found');
       setIsLoading(false);
       return;
     }
@@ -211,9 +213,11 @@ export default function SeekerRequests() {
         .order('created_at', { ascending: false });
 
       if (leadsError) {
-        console.error('Error fetching leads:', leadsError);
+        console.error('[SeekerRequests] Error fetching leads:', leadsError);
         throw leadsError;
       }
+
+      console.log('[SeekerRequests] Found', leadsData?.length || 0, 'leads');
 
       if (!leadsData || leadsData.length === 0) {
         setRequests([]);

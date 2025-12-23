@@ -35,6 +35,7 @@ export function useFavorites() {
   // Sync favorites with database when user logs in
   useEffect(() => {
     const syncFavorites = async () => {
+      console.log('[useFavorites] Syncing favorites for user:', user?.id);
       if (!user) {
         setIsLoading(false);
         setIsSynced(false);
@@ -50,10 +51,12 @@ export function useFavorites() {
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error fetching favorites:', error);
+        console.error('[useFavorites] Error fetching favorites:', error);
         setIsLoading(false);
         return;
       }
+      
+      console.log('[useFavorites] Loaded', dbFavorites?.length || 0, 'favorites from DB');
 
       const dbFavoriteIds = dbFavorites?.map(f => f.facility_id) || [];
       

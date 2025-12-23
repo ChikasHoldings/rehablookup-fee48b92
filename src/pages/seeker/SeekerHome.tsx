@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { 
   Search, 
@@ -29,13 +29,12 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { useFeaturedFacilityIds } from "@/hooks/useApprovedFacilities";
 import { sortByPlanHierarchyWithSecondary, getPlanPriority } from "@/lib/facilityPlanSort";
+import { useQuery } from "@tanstack/react-query";
 
 type SortOption = "name-asc" | "name-desc" | "state-asc" | "state-desc" | "years-desc" | "years-asc";
 
 export default function SeekerHome() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [nearbyFacilities, setNearbyFacilities] = useState<FacilityCardData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedState, setSelectedState] = useState<string>("all");
@@ -43,48 +42,45 @@ export default function SeekerHome() {
   const { favoritesCount } = useFavorites();
   const { data: featuredData } = useFeaturedFacilityIds();
 
-  useEffect(() => {
-    const fetchNearbyFacilities = async () => {
-      try {
-        // Use facilities table with RLS policy "Public can view approved facilities"
-        const { data, error } = await supabase
-          .from('facilities')
-          .select('id, name, city, state, facility_type, slug, phone, description, logo_url, gallery_urls, verified, year_established')
-          .eq('status', 'approved')
-          .limit(50);
-        
-        if (error) {
-          console.error('Error fetching facilities:', error);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Map data to FacilityCardData format
-        const mappedData: FacilityCardData[] = (data || []).map(f => ({
-          id: f.id,
-          name: f.name,
-          city: f.city,
-          state: f.state,
-          facility_type: f.facility_type,
-          slug: f.slug,
-          phone: f.phone,
-          description: f.description,
-          logo_url: f.logo_url,
-          gallery_urls: f.gallery_urls,
-          verified: f.verified,
-          year_established: f.year_established
-        }));
-        
-        setNearbyFacilities(mappedData);
-      } catch (err) {
-        console.error('Unexpected error fetching facilities:', err);
-      } finally {
-        setIsLoading(false);
+  // Use React Query for facilities with caching for speed
+  const { data: nearbyFacilities = [], isLoading } = useQuery({
+    queryKey: ['seeker-home-facilities'],
+    queryFn: async () => {
+      console.log('[SeekerHome] Fetching facilities...');
+      const { data, error } = await supabase
+        .from('facilities')
+        .select('id, name, city, state, facility_type, slug, phone, description, logo_url, gallery_urls, verified, year_established')
+        .eq('status', 'approved')
+        .limit(50);
+      
+      if (error) {
+        console.error('[SeekerHome] Error fetching facilities:', error);
+        throw error;
       }
-    };
-
-    fetchNearbyFacilities();
-  }, []);
+      
+      // Map data to FacilityCardData format
+      const mappedData: FacilityCardData[] = (data || []).map(f => ({
+        id: f.id,
+        name: f.name,
+        city: f.city,
+        state: f.state,
+        facility_type: f.facility_type,
+        slug: f.slug,
+        phone: f.phone,
+        description: f.description,
+        logo_url: f.logo_url,
+        gallery_urls: f.gallery_urls,
+        verified: f.verified,
+        year_established: f.year_established
+      }));
+      
+      console.log('[SeekerHome] Loaded', mappedData.length, 'facilities');
+      return mappedData;
+    },
+    staleTime: 30000, // Cache for 30 seconds for speed
+    refetchOnMount: true,
+    refetchOnWindowFocus: false, // Don't refetch on focus for speed
+  });
 
   // Get plan tier for a facility based on subscription data
   const getPlanTier = (facilityId: string): 'featured' | 'professional' | 'free' => {
