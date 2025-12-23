@@ -20,6 +20,7 @@ export function useAdminNotifications() {
   const { data: notifications = [], isLoading, error, refetch } = useQuery({
     queryKey: ["admin-notifications"],
     queryFn: async () => {
+      console.log('[useAdminNotifications] Fetching notifications...');
       const { data, error } = await supabase
         .from("admin_notifications")
         .select("*")
@@ -27,12 +28,16 @@ export function useAdminNotifications() {
         .limit(100);
 
       if (error) {
+        console.error('[useAdminNotifications] Fetch error:', error);
         logAdminError("useAdminNotifications", "fetch_notifications", error, { queryKey: "admin-notifications" });
         return [];
       }
+      console.log('[useAdminNotifications] Loaded', data?.length || 0, 'notifications');
       return (data || []) as AdminNotification[];
     },
     staleTime: 30 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     retry: false,
   });
 

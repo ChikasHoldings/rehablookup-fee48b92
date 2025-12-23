@@ -47,6 +47,7 @@ export function useAdminAuth() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const checkAdminStatus = useCallback(async (userId: string): Promise<boolean> => {
+    console.log('[useAdminAuth] Checking admin status for:', userId);
     try {
       const { data, error } = await supabase.rpc("has_role", {
         _user_id: userId,
@@ -54,13 +55,14 @@ export function useAdminAuth() {
       });
 
       if (error) {
-        console.error("Error checking admin status:", error);
+        console.error("[useAdminAuth] Error checking admin status:", error);
         return false;
       }
 
+      console.log('[useAdminAuth] Admin status:', data);
       return data === true;
     } catch (err) {
-      console.error("Exception checking admin status:", err);
+      console.error("[useAdminAuth] Exception checking admin status:", err);
       return false;
     }
   }, []);
@@ -84,6 +86,7 @@ export function useAdminAuth() {
   }, []);
 
   const fetchPermissions = useCallback(async (userId: string): Promise<Record<string, boolean>> => {
+    console.log('[useAdminAuth] Fetching permissions for:', userId);
     try {
       const { data, error } = await supabase
         .from("admin_user_permissions")
@@ -91,7 +94,7 @@ export function useAdminAuth() {
         .eq("user_id", userId);
 
       if (error) {
-        console.error("Error fetching permissions:", error);
+        console.error("[useAdminAuth] Error fetching permissions:", error);
         return {};
       }
 
@@ -99,9 +102,10 @@ export function useAdminAuth() {
       data?.forEach((p) => {
         perms[p.permission_key] = p.granted;
       });
+      console.log('[useAdminAuth] Loaded permissions:', Object.keys(perms).length);
       return perms;
     } catch (err) {
-      console.error("Exception fetching permissions:", err);
+      console.error("[useAdminAuth] Exception fetching permissions:", err);
       return {};
     }
   }, []);
