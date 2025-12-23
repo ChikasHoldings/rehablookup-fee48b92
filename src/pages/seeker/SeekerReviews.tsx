@@ -516,7 +516,7 @@ export default function SeekerReviews() {
               Share your experience by leaving reviews on treatment centers you've visited.
             </p>
             <Button asChild>
-              <Link to="/search" className="gap-2">
+              <Link to="/account/search" className="gap-2">
                 <Search className="h-4 w-4" />
                 Find Treatment Centers
               </Link>
