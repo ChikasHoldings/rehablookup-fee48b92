@@ -36,9 +36,12 @@ export function useProviderFacilities() {
   const query = useQuery({
     queryKey: ["provider-facilities"],
     queryFn: async (): Promise<ProviderFacility[]> => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log("[useProviderFacilities] Session check:", { hasSession: !!session, sessionError, userId: session?.user?.id });
       
       if (!session) {
+        console.warn("[useProviderFacilities] No session found");
         return [];
       }
 
@@ -47,6 +50,8 @@ export function useProviderFacilities() {
         .select("id, name, slug, status, city, state, logo_url, created_at")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
+
+      console.log("[useProviderFacilities] Fetch result:", { count: data?.length, error, facilities: data });
 
       if (error) throw error;
       
@@ -66,10 +71,11 @@ export function useProviderFacilities() {
     },
     // Use cached data for instant initial render
     placeholderData: getCachedFacilities,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 60, // 1 hour cache
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    retry: 2,
   });
 
   // Real-time subscription for facilities

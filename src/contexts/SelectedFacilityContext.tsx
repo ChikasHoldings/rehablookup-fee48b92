@@ -40,12 +40,19 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
 
   // Update selected facility when facilities load
   useEffect(() => {
+    console.log("[SelectedFacilityContext] Effect triggered:", { 
+      facilitiesLoading, 
+      facilitiesCount: facilities.length, 
+      selectedFacilityId: selectedFacility?.id 
+    });
+    
     if (facilitiesLoading || facilities.length === 0) return;
     
     // If we have a selected facility, try to find the full version
     if (selectedFacility?.id) {
       const fullFacility = facilities.find(f => f.id === selectedFacility.id);
       if (fullFacility) {
+        console.log("[SelectedFacilityContext] Found full facility:", fullFacility.name);
         setSelectedFacilityState(fullFacility);
         localStorage.setItem("selectedFacilityData", JSON.stringify(fullFacility));
         return;
@@ -53,6 +60,7 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
     }
     
     // Default to first facility
+    console.log("[SelectedFacilityContext] Defaulting to first facility:", facilities[0]?.name);
     setSelectedFacilityState(facilities[0]);
     localStorage.setItem("selectedFacilityId", facilities[0].id);
     localStorage.setItem("selectedFacilityData", JSON.stringify(facilities[0]));

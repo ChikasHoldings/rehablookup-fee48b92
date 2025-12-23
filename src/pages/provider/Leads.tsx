@@ -148,15 +148,22 @@ export default function ProviderLeadsPage() {
   };
 
   // Fetch ALL leads across all facilities
-  const { data: leads = [], isLoading } = useQuery({
+  const { data: leads = [], isLoading, error: leadsError } = useQuery({
     queryKey: ["provider-leads-all", facilityIds],
     queryFn: async (): Promise<LeadWithFacility[]> => {
-      if (facilityIds.length === 0) return [];
+      console.log("[ProviderLeads] Fetching leads for facilities:", facilityIds);
+      if (facilityIds.length === 0) {
+        console.warn("[ProviderLeads] No facility IDs provided");
+        return [];
+      }
       const { data, error } = await supabase
         .from("leads")
         .select("*")
         .in("facility_id", facilityIds)
         .order("created_at", { ascending: false });
+      
+      console.log("[ProviderLeads] Leads fetch result:", { count: data?.length, error });
+      
       if (error) throw error;
       
       // Enrich leads with facility info
@@ -168,9 +175,16 @@ export default function ProviderLeadsPage() {
       })) as LeadWithFacility[];
     },
     enabled: facilityIds.length > 0,
-    staleTime: 1000 * 60 * 5, // 5 minutes - leads update via realtime
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    retry: 2,
   });
+  
+  // Log any errors for debugging
+  if (leadsError) {
+    console.error("[ProviderLeads] Error fetching leads:", leadsError);
+  }
 
   // For Basic plan lifetime count
   const totalLeadsCount = leads.length;

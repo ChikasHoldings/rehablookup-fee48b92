@@ -62,37 +62,42 @@ export function useSubscription() {
   return useQuery({
     queryKey: ["subscription"],
     queryFn: async (): Promise<SubscriptionData> => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log("[useSubscription] Session check:", { hasSession: !!session, sessionError });
       
       if (!session) {
+        console.warn("[useSubscription] No session, returning default");
         return DEFAULT_SUBSCRIPTION;
       }
 
       try {
+        console.log("[useSubscription] Invoking check-subscription function");
         const { data, error } = await supabase.functions.invoke("check-subscription");
         
         if (error) {
-          console.error("Error checking subscription:", error);
+          console.error("[useSubscription] Error checking subscription:", error);
           // Return cached data on error
           return getCachedSubscription() || DEFAULT_SUBSCRIPTION;
         }
         
+        console.log("[useSubscription] Subscription result:", data);
         const subscriptionData = data as SubscriptionData;
         // Cache the result for instant future loads
         cacheSubscription(subscriptionData);
         return subscriptionData;
       } catch (err) {
-        console.error("Network error checking subscription:", err);
+        console.error("[useSubscription] Network error checking subscription:", err);
         // Return cached data on network error
         return getCachedSubscription() || DEFAULT_SUBSCRIPTION;
       }
     },
     // Use cached data for instant initial render
     placeholderData: getCachedSubscription() || undefined,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 60, // 1 hour cache
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
