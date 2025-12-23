@@ -1463,6 +1463,36 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_verification_codes: {
+        Row: {
+          attempts: number | null
+          code: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          phone: string
+          verified: boolean | null
+        }
+        Insert: {
+          attempts?: number | null
+          code: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          phone: string
+          verified?: boolean | null
+        }
+        Update: {
+          attempts?: number | null
+          code?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          phone?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           description: string | null
@@ -1499,6 +1529,8 @@ export type Database = {
           job_title: string | null
           last_name: string
           phone: string | null
+          phone_verified: boolean | null
+          phone_verified_at: string | null
           primary_contact_name: string | null
           timezone: string | null
           updated_at: string
@@ -1512,6 +1544,8 @@ export type Database = {
           job_title?: string | null
           last_name: string
           phone?: string | null
+          phone_verified?: boolean | null
+          phone_verified_at?: string | null
           primary_contact_name?: string | null
           timezone?: string | null
           updated_at?: string
@@ -1525,6 +1559,8 @@ export type Database = {
           job_title?: string | null
           last_name?: string
           phone?: string | null
+          phone_verified?: boolean | null
+          phone_verified_at?: string | null
           primary_contact_name?: string | null
           timezone?: string | null
           updated_at?: string
@@ -1939,6 +1975,8 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          phone_verified: boolean | null
+          phone_verified_at: string | null
           state: string | null
           updated_at: string
           user_id: string
@@ -1953,6 +1991,8 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          phone_verified?: boolean | null
+          phone_verified_at?: string | null
           state?: string | null
           updated_at?: string
           user_id: string
@@ -1967,6 +2007,8 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          phone_verified?: boolean | null
+          phone_verified_at?: string | null
           state?: string | null
           updated_at?: string
           user_id?: string
