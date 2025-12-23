@@ -8,6 +8,8 @@ interface Profile {
   email: string;
   phone: string | null;
   job_title: string | null;
+  phone_verified: boolean | null;
+  phone_verified_at: string | null;
 }
 
 interface Facility {
@@ -135,7 +137,7 @@ export function useProviderData(facilityId?: string) {
         // Fetch profile
         supabase
           .from("profiles")
-          .select("first_name, last_name, email, phone, job_title")
+          .select("first_name, last_name, email, phone, job_title, phone_verified, phone_verified_at")
           .eq("user_id", session.user.id)
           .maybeSingle(),
         // Fetch facility

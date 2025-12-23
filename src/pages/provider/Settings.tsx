@@ -26,7 +26,7 @@ import {
   HelpCircle,
   RotateCcw
 } from "lucide-react";
-import { PhoneInput } from "@/components/ui/phone-input";
+import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
 import { formatPhoneNumber, isValidPhoneNumber } from "@/lib/phoneUtils";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
 import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
@@ -135,6 +135,7 @@ export default function ProviderSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
+  const [userId, setUserId] = useState<string | null>(null);
   
   // Password states
   const [currentPassword, setCurrentPassword] = useState("");
@@ -178,12 +179,15 @@ export default function ProviderSettingsPage() {
   const queryClient = useQueryClient();
   const logActivity = useLogActivity();
 
-  // Fetch notification preferences
+  // Fetch user ID and notification preferences
   const { data: notificationPrefs, isLoading: isLoadingNotifications } = useQuery({
     queryKey: ["notification-preferences"],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
+      
+      // Set userId for phone verification
+      setUserId(session.user.id);
 
       const { data, error } = await supabase
         .from("notification_preferences")
@@ -870,21 +874,16 @@ export default function ProviderSettingsPage() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
-                    <Smartphone className="h-4 w-4 text-muted-foreground" />
-                    Phone Number
-                  </Label>
-                  <PhoneInput
-                    id="phone"
-                    value={profile?.phone || ""}
-                    onChange={(value) => updateField("phone", value)}
-                    className={`h-10 ${profileErrors.phone ? "border-destructive" : ""}`}
-                  />
-                  {profileErrors.phone && (
-                    <p className="text-xs text-destructive">{profileErrors.phone}</p>
-                  )}
-                </div>
+                <PhoneVerificationStep
+                  phone={profile?.phone || ""}
+                  onPhoneChange={(value) => updateField("phone", value)}
+                  userId={userId || undefined}
+                  userType="provider"
+                  isVerified={!!(providerData?.profile as any)?.phone_verified}
+                  onVerified={() => {
+                    queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+                  }}
+                />
 
                 <div className="flex items-center justify-end pt-2">
                   <Button 
