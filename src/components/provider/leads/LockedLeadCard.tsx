@@ -1,4 +1,4 @@
-import { Lock, Sparkles, Phone, Mail, Clock, Zap } from "lucide-react";
+import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,8 @@ interface LockedLeadCardProps {
   createdAt: string;
   urgency?: string | null;
   source?: string | null;
+  facilityName?: string;
+  showFacility?: boolean;
   onClick?: () => void;
   isSelected?: boolean;
 }
@@ -21,6 +23,8 @@ export function LockedLeadCard({
   createdAt,
   urgency,
   source,
+  facilityName,
+  showFacility,
   onClick,
   isSelected,
 }: LockedLeadCardProps) {
@@ -78,6 +82,14 @@ export function LockedLeadCard({
           
           {/* Visible metadata */}
           <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {/* Facility Badge */}
+            {showFacility && facilityName && (
+              <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-primary/30 bg-primary/5 text-primary font-medium">
+                <Building2 className="h-2.5 w-2.5 mr-0.5" />
+                {facilityName.length > 12 ? facilityName.slice(0, 12) + "..." : facilityName}
+              </Badge>
+            )}
+            
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
