@@ -63,6 +63,8 @@ export function useReviewRequests(facilityId: string | null) {
 
     setIsSending(true);
     try {
+      console.log('[useReviewRequests] Sending review request:', { facilityId, recipientName, recipientEmail: recipientEmail.trim().toLowerCase() });
+      
       const { data, error } = await supabase.functions.invoke('send-review-request', {
         body: {
           facilityId,
@@ -71,17 +73,44 @@ export function useReviewRequests(facilityId: string | null) {
         },
       });
 
+      console.log('[useReviewRequests] Response:', { data, error });
+
+      // Handle edge function invocation errors
       if (error) {
-        console.error('Error sending review request:', error);
+        console.error('[useReviewRequests] Invocation error:', error);
+        
+        // Try to extract a better error message from the error
+        let errorMessage = "Could not send review request";
+        
+        // The error might contain the response body with our custom error
+        if (error.message) {
+          try {
+            // Sometimes the error message is JSON
+            const parsed = JSON.parse(error.message);
+            if (parsed.error) {
+              errorMessage = parsed.error;
+            }
+          } catch {
+            // If not JSON, check if it contains our error text
+            if (error.message.includes("already sent")) {
+              errorMessage = "A review request was already sent to this email within the last 30 days";
+            } else {
+              errorMessage = error.message;
+            }
+          }
+        }
+        
         toast({
           title: "Failed to send",
-          description: error.message || "Could not send review request",
+          description: errorMessage,
           variant: "destructive",
         });
         return { error };
       }
 
+      // Handle application-level errors in the response data
       if (data?.error) {
+        console.log('[useReviewRequests] Application error:', data.error);
         toast({
           title: "Could not send",
           description: data.error,
@@ -98,6 +127,14 @@ export function useReviewRequests(facilityId: string | null) {
       // Refresh the list
       fetchRequests();
       return { data };
+    } catch (unexpectedError) {
+      console.error('[useReviewRequests] Unexpected error:', unexpectedError);
+      toast({
+        title: "Failed to send",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+      return { error: unexpectedError };
     } finally {
       setIsSending(false);
     }
