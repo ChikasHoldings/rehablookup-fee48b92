@@ -127,10 +127,9 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Send the email using Resend's default domain for testing
-    // In production, replace with your verified domain
+    // Send the email
     const emailResponse = await resend.emails.send({
-      from: "PathwayHub <onboarding@resend.dev>",
+      from: "RehabLookup <no-reply@rehablookup.com>",
       to: [recipientEmail],
       subject: `${facility.name} would love to hear about your experience`,
       html: `
