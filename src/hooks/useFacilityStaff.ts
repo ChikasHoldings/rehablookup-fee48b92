@@ -200,7 +200,7 @@ export function usePublicFacilityStaff(facilityId: string | undefined) {
       
       const { data, error } = await supabase
         .from("facility_staff")
-        .select("id, name, job_title, bio, photo_url, display_order")
+        .select("id, name, job_title, bio, photo_url, email, phone, display_order")
         .eq("facility_id", facilityId)
         .eq("is_visible", true)
         .order("display_order", { ascending: true });
