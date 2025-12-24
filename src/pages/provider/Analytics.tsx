@@ -1,10 +1,7 @@
-import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { BarChart3, CalendarIcon, X, ChevronDown, Phone, Globe } from "lucide-react";
-import { LeadAnalyticsDashboard } from "@/components/provider/LeadAnalyticsDashboard";
-import { EngagementAnalytics } from "@/components/provider/EngagementAnalytics";
-import { supabase } from "@/integrations/supabase/client";
-import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
+import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +23,6 @@ import { cn } from "@/lib/utils";
 import { format, startOfMonth } from "date-fns";
 
 export default function ProviderAnalyticsPage() {
-  const queryClient = useQueryClient();
-  const { selectedFacility } = useSelectedFacility();
-  const facilityId = selectedFacility?.id;
-  
   // Default to current billing cycle
   const [dateRange, setDateRange] = useState<DateRange>(() => ({
     from: startOfMonth(new Date()),
@@ -37,48 +30,6 @@ export default function ProviderAnalyticsPage() {
   }));
   const [selectedPreset, setSelectedPreset] = useState<string>("billing_cycle");
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-
-  // Real-time subscription for analytics updates
-  useEffect(() => {
-    if (!facilityId) return;
-    
-    const leadsChannel = supabase
-      .channel("analytics-leads-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "leads",
-          filter: `facility_id=eq.${facilityId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["lead-analytics", facilityId] });
-        }
-      )
-      .subscribe();
-
-    const interactionsChannel = supabase
-      .channel("analytics-interactions-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "facility_interactions",
-          filter: `facility_id=eq.${facilityId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["interaction-analytics", facilityId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(leadsChannel);
-      supabase.removeChannel(interactionsChannel);
-    };
-  }, [facilityId, queryClient]);
 
   const handlePresetSelect = (preset: typeof DATE_RANGE_PRESETS[number]) => {
     const range = preset.getRange();
@@ -126,14 +77,13 @@ export default function ProviderAnalyticsPage() {
           <div className="min-w-0">
             <h1 className="font-display text-xl md:text-2xl font-bold text-foreground truncate">Analytics</h1>
             <p className="text-muted-foreground text-xs md:text-sm">
-              Track your lead performance and engagement
+              Track lead performance and engagement across all locations
             </p>
           </div>
         </div>
 
         {/* Date Range Filter */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Quick Presets Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2 h-9">
@@ -203,7 +153,6 @@ export default function ProviderAnalyticsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Clear Filter Button */}
           {hasActiveFilter && (
             <Button
               variant="ghost"
@@ -244,11 +193,11 @@ export default function ProviderAnalyticsPage() {
         </TabsList>
 
         <TabsContent value="leads">
-          <LeadAnalyticsDashboard facilityId={facilityId} dateRange={dateRange} />
+          <CentralizedLeadAnalyticsDashboard dateRange={dateRange} />
         </TabsContent>
 
         <TabsContent value="engagement">
-          <EngagementAnalytics facilityId={facilityId} dateRange={dateRange} />
+          <CentralizedEngagementAnalytics dateRange={dateRange} />
         </TabsContent>
       </Tabs>
       </div>
