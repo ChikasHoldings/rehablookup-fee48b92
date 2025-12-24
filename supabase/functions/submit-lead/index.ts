@@ -17,26 +17,32 @@ const PLAN_CONFIG: Record<string, {
   lead_limit: number; 
   exclusivity: 'shared' | 'exclusive';
   max_providers_per_lead: number;
+  priority_score: number;
 }> = {
   basic: { 
     product_ids: [], 
     lead_limit: 0, 
     exclusivity: 'exclusive',
-    max_providers_per_lead: 0
+    max_providers_per_lead: 0,
+    priority_score: 0
   },
   professional: { 
     product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], 
     lead_limit: 100,
     exclusivity: 'shared',
-    max_providers_per_lead: 2
+    max_providers_per_lead: 2,
+    priority_score: 15
   },
   featured: { 
     product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], 
     lead_limit: 100,
     exclusivity: 'exclusive',
-    max_providers_per_lead: 1
+    max_providers_per_lead: 1,
+    priority_score: 30
   },
 };
+
+const PAID_PLANS = ["professional", "featured"];
 
 interface LeadRequest {
   facilityId: string;
@@ -74,7 +80,7 @@ async function hashIP(ip: string): Promise<string> {
 }
 
 // Check provider's subscription and lead cap - STRICT ENFORCEMENT
-// Returns false if provider has reached their monthly cap
+// deno-lint-ignore no-explicit-any
 async function checkProviderLeadCap(
   supabase: any,
   facilityUserId: string,
@@ -87,20 +93,18 @@ async function checkProviderLeadCap(
   }
 
   try {
-    let leadLimit = PLAN_CONFIG.basic.lead_limit; // Default to 0 (no leads for basic)
+    let leadLimit = PLAN_CONFIG.basic.lead_limit;
     let planName = "basic";
     let exclusivity: 'shared' | 'exclusive' = PLAN_CONFIG.basic.exclusivity;
     
     if (stripeKey) {
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
       
-      // Find Stripe customer by email
       const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
       
       if (customers.data.length > 0) {
         const customerId = customers.data[0].id;
         
-        // Check for active subscription
         const subscriptions = await stripe.subscriptions.list({
           customer: customerId,
           status: "active",
@@ -111,21 +115,20 @@ async function checkProviderLeadCap(
           const subscription = subscriptions.data[0];
           const productId = subscription.items.data[0].price.product as string;
           
-          // Determine plan based on product (supports both old and new product IDs)
           if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-            leadLimit = PLAN_CONFIG.professional.lead_limit; // 100
+            leadLimit = PLAN_CONFIG.professional.lead_limit;
             planName = "professional";
-            exclusivity = PLAN_CONFIG.professional.exclusivity; // shared
+            exclusivity = PLAN_CONFIG.professional.exclusivity;
           } else if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-            leadLimit = PLAN_CONFIG.featured.lead_limit; // 100
+            leadLimit = PLAN_CONFIG.featured.lead_limit;
             planName = "featured";
-            exclusivity = PLAN_CONFIG.featured.exclusivity; // exclusive
+            exclusivity = PLAN_CONFIG.featured.exclusivity;
           }
         }
       }
     }
     
-    // Basic plan: no leads allowed (show upgrade prompt instead)
+    // Basic plan: no leads allowed
     if (planName === "basic") {
       return {
         canReceiveLeads: false,
@@ -149,8 +152,6 @@ async function checkProviderLeadCap(
       return { canReceiveLeads: true, leadLimit, usedLeads: 0, planName, exclusivity };
     }
     
-    // STRICT MONTHLY CAP ENFORCEMENT
-    // Count leads this billing cycle (calendar month)
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -163,11 +164,10 @@ async function checkProviderLeadCap(
     
     const usedLeads = monthlyLeadCount || 0;
     
-    // STRICT: If at or over cap, exclude from routing
     if (usedLeads >= leadLimit) {
       return { 
         canReceiveLeads: false, 
-        reason: `Provider has reached monthly lead cap (${usedLeads}/${leadLimit}). Excluded from routing until billing cycle resets.`,
+        reason: `Provider has reached monthly lead cap (${usedLeads}/${leadLimit}).`,
         leadLimit,
         usedLeads,
         planName,
@@ -178,7 +178,6 @@ async function checkProviderLeadCap(
     return { canReceiveLeads: true, leadLimit, usedLeads, planName, exclusivity };
   } catch (error) {
     console.error("Error checking lead cap:", error);
-    // On error, DO NOT allow leads through - be strict
     return { 
       canReceiveLeads: false, 
       leadLimit: 0, 
@@ -190,16 +189,229 @@ async function checkProviderLeadCap(
   }
 }
 
+// Find next eligible paying provider for lead reassignment
+// deno-lint-ignore no-explicit-any
+async function findNextEligibleProvider(
+  supabase: any,
+  excludeFacilityId: string,
+  facilityState: string,
+  facilityCity: string
+): Promise<{
+  facilityId: string;
+  facilityName: string;
+  userId: string;
+  providerEmail: string;
+  planName: string;
+  leadLimit: number;
+  usedLeads: number;
+} | null> {
+  console.log("Finding next eligible paying provider...", { excludeFacilityId, facilityState, facilityCity });
+  
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!stripeKey) {
+    console.error("STRIPE_SECRET_KEY not set");
+    return null;
+  }
+  
+  const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+  
+  // Get all approved facilities except the current one
+  const { data: facilities, error } = await supabase
+    .from("facilities")
+    .select("id, name, email, user_id, city, state, zip_code, suspended")
+    .eq("status", "approved")
+    .neq("suspended", true)
+    .neq("id", excludeFacilityId);
+  
+  if (error || !facilities || facilities.length === 0) {
+    console.log("No alternative facilities found");
+    return null;
+  }
+  
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+  
+  interface EligibleProvider {
+    facilityId: string;
+    facilityName: string;
+    userId: string;
+    providerEmail: string;
+    planName: string;
+    leadLimit: number;
+    usedLeads: number;
+    priorityScore: number;
+    isLocalMatch: boolean;
+    leadsThisCycle: number;
+  }
+  
+  const eligibleProviders: EligibleProvider[] = [];
+  
+  for (const facility of facilities) {
+    // Get provider email
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("user_id", facility.user_id)
+      .maybeSingle();
+    
+    if (!profile?.email) continue;
+    
+    // Check subscription
+    let planName = "basic";
+    let leadLimit = 0;
+    let priorityScore = 0;
+    
+    try {
+      const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
+      if (customers.data.length > 0) {
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customers.data[0].id,
+          status: "active",
+          limit: 1,
+        });
+        
+        if (subscriptions.data.length > 0) {
+          const productId = subscriptions.data[0].items.data[0].price.product as string;
+          if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
+            planName = "featured";
+            leadLimit = PLAN_CONFIG.featured.lead_limit;
+            priorityScore = PLAN_CONFIG.featured.priority_score;
+          } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
+            planName = "professional";
+            leadLimit = PLAN_CONFIG.professional.lead_limit;
+            priorityScore = PLAN_CONFIG.professional.priority_score;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Stripe error for provider:", profile.email, e);
+      continue;
+    }
+    
+    // Skip non-paid plans
+    if (!PAID_PLANS.includes(planName)) continue;
+    
+    // Count leads this month
+    const { count: monthlyLeadCount } = await supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .eq("facility_id", facility.id)
+      .gte("created_at", startOfMonth.toISOString());
+    
+    const usedLeads = monthlyLeadCount || 0;
+    if (usedLeads >= leadLimit) continue;
+    
+    // Check location match
+    const isLocalMatch = facility.state?.toLowerCase() === facilityState?.toLowerCase() || 
+                         facility.city?.toLowerCase() === facilityCity?.toLowerCase();
+    
+    eligibleProviders.push({
+      facilityId: facility.id,
+      facilityName: facility.name,
+      userId: facility.user_id,
+      providerEmail: profile.email,
+      planName,
+      leadLimit,
+      usedLeads,
+      priorityScore,
+      isLocalMatch,
+      leadsThisCycle: usedLeads,
+    });
+  }
+  
+  if (eligibleProviders.length === 0) {
+    console.log("No eligible paying providers found");
+    return null;
+  }
+  
+  // Sort by: local match first, then priority score, then fewer leads
+  eligibleProviders.sort((a, b) => {
+    // Local matches first
+    if (a.isLocalMatch && !b.isLocalMatch) return -1;
+    if (!a.isLocalMatch && b.isLocalMatch) return 1;
+    // Then by priority score (higher is better)
+    if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;
+    // Then by fewer leads (fairness)
+    return a.leadsThisCycle - b.leadsThisCycle;
+  });
+  
+  const selected = eligibleProviders[0];
+  console.log("Selected eligible provider:", { 
+    facilityId: selected.facilityId, 
+    planName: selected.planName,
+    isLocalMatch: selected.isLocalMatch 
+  });
+  
+  return {
+    facilityId: selected.facilityId,
+    facilityName: selected.facilityName,
+    userId: selected.userId,
+    providerEmail: selected.providerEmail,
+    planName: selected.planName,
+    leadLimit: selected.leadLimit,
+    usedLeads: selected.usedLeads,
+  };
+}
+
+// Send conversion SMS to free plan provider
+async function sendConversionSMS(
+  phone: string,
+  facilityName: string,
+  leadName: string
+): Promise<boolean> {
+  const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const twilioAuth = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const twilioPhone = Deno.env.get("TWILIO_PHONE_NUMBER");
+  
+  if (!twilioSid || !twilioAuth || !twilioPhone) {
+    console.log("Twilio credentials not configured, skipping SMS");
+    return false;
+  }
+  
+  try {
+    const message = `RehabLookup: ${leadName} just inquired about ${facilityName}! Upgrade to Professional to receive leads and grow your business. Visit rehablookup.com/provider/billing`;
+    
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Basic " + btoa(`${twilioSid}:${twilioAuth}`),
+        },
+        body: new URLSearchParams({
+          To: phone,
+          From: twilioPhone,
+          Body: message,
+        }),
+      }
+    );
+    
+    if (response.ok) {
+      console.log("Conversion SMS sent to free provider");
+      return true;
+    } else {
+      const error = await response.text();
+      console.error("Failed to send conversion SMS:", error);
+      return false;
+    }
+  } catch (error) {
+    console.error("Error sending conversion SMS:", error);
+    return false;
+  }
+}
+
 // Special email template for Basic plan providers - prompts to upgrade to view leads
 function getBasicPlanUpgradeEmail(
   facilityName: string,
-  supabaseUrl: string,
-  totalLeadsCount: number
+  totalLeadsCount: number,
+  leadName: string
 ): { subject: string; html: string } {
   const billingUrl = "https://rehablookup.com/provider/billing";
   const dashboardUrl = "https://rehablookup.com/provider/leads";
   
-  const subject = `🔒 New Lead Waiting - Upgrade to View & Contact`;
+  const subject = `🔒 ${leadName} Just Inquired - Upgrade to Receive Leads`;
   
   const html = `
 <!DOCTYPE html>
@@ -211,7 +423,7 @@ function getBasicPlanUpgradeEmail(
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
   <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
     <h1 style="color: #fff; margin: 0; font-size: 24px;">🔒 Someone Is Looking for Help</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You have a new lead waiting for ${facilityName}</p>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${leadName} just inquired about ${facilityName}</p>
   </div>
   
   <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
@@ -225,52 +437,50 @@ function getBasicPlanUpgradeEmail(
         <p style="margin: 0; font-size: 16px; color: #374151;">Message: ████████ ████████ ████████...</p>
       </div>
       <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(27, 54, 93, 0.95); padding: 16px 24px; border-radius: 8px; text-align: center;">
-        <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">🔒 Lead details hidden</p>
+        <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">🔒 Upgrade to view leads</p>
       </div>
     </div>
     
-    <!-- Leads Waiting Counter -->
+    <!-- Leads Counter -->
     <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #C9A227; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
       <p style="margin: 0 0 8px 0; font-size: 48px; font-weight: bold; color: #92400e;">${totalLeadsCount}</p>
-      <p style="margin: 0; color: #92400e; font-size: 16px; font-weight: 600;">Lead${totalLeadsCount > 1 ? 's' : ''} Waiting For You</p>
+      <p style="margin: 0; color: #92400e; font-size: 16px; font-weight: 600;">Lead${totalLeadsCount > 1 ? 's' : ''} You've Missed</p>
     </div>
     
     <!-- Upgrade Message -->
     <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
       <h3 style="margin: 0 0 12px 0; color: #166534; font-size: 16px;">🚀 Upgrade to Professional to:</h3>
       <ul style="margin: 0; padding-left: 20px; color: #166534;">
-        <li style="margin-bottom: 8px;">View complete lead contact details</li>
-        <li style="margin-bottom: 8px;">Call and email leads directly</li>
-        <li style="margin-bottom: 8px;">Receive up to 100 qualified leads per month</li>
-        <li>Get priority placement in search results</li>
+        <li style="margin-bottom: 8px;">Receive qualified leads directly</li>
+        <li style="margin-bottom: 8px;">View complete contact details</li>
+        <li style="margin-bottom: 8px;">Get up to 100 qualified leads per month</li>
+        <li>Priority placement in search results</li>
       </ul>
     </div>
     
     <!-- CTA Buttons -->
     <div style="text-align: center; margin-top: 28px;">
       <a href="${billingUrl}" style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
-        🔓 Upgrade & View Leads
+        🔓 Upgrade & Get Leads
       </a>
     </div>
     
     <div style="text-align: center; margin-top: 16px;">
       <a href="${dashboardUrl}" style="display: inline-block; color: #6b7280; padding: 12px 32px; text-decoration: none; font-size: 14px;">
-        View in Dashboard →
+        View Dashboard →
       </a>
     </div>
     
-    <!-- Value Proposition -->
     <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin-top: 24px; text-align: center;">
       <p style="margin: 0; color: #4b5563; font-size: 13px;">
-        <strong>Professional plan:</strong> $399/month · 25 exclusive leads · Priority support
+        <strong>Professional plan:</strong> $399/month · Up to 100 leads · Priority support
       </p>
     </div>
     
     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
     
     <p style="font-size: 13px; color: #9ca3af; text-align: center; margin: 0;">
-      This lead was submitted via <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a><br>
-      <a href="${dashboardUrl}" style="color: #1B365D; font-weight: 500;">View all leads in your dashboard →</a>
+      This inquiry was submitted via <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a>
     </p>
   </div>
 </body>
@@ -280,7 +490,7 @@ function getBasicPlanUpgradeEmail(
   return { subject, html };
 }
 
-// Tier-based email templates with different urgency levels (for Professional and Featured plans)
+// Email template for paying providers
 function getLeadEmailTemplate(
   planName: string,
   facilityName: string,
@@ -289,7 +499,6 @@ function getLeadEmailTemplate(
   leadEmail: string,
   preferredContact: string,
   message: string | null,
-  supabaseUrl: string,
   usedLeads: number,
   leadLimit: number
 ): { subject: string; html: string } {
@@ -302,22 +511,16 @@ function getLeadEmailTemplate(
     minute: '2-digit'
   });
   
-  const firstName = leadName.split(' ')[0];
   const dashboardUrl = "https://rehablookup.com/provider/leads";
-  const billingUrl = "https://rehablookup.com/provider/billing";
   
-  // Plan-specific styling and messaging (Professional and Featured only now)
   const planConfig = {
     professional: {
       headerGradient: "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)",
       headerEmoji: "🎯",
       headerTitle: "New Qualified Lead",
-      urgencyLevel: "priority",
-      showUpgradeCTA: true,
       tipColor: "#dcfce7",
       tipBorderColor: "#bbf7d0",
       tipTextColor: "#166534",
-      ctaColor: "#16a34a",
       ctaGradient: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
       leadCounterBg: "#dbeafe",
       leadCounterBorder: "#93c5fd",
@@ -327,12 +530,9 @@ function getLeadEmailTemplate(
       headerGradient: "linear-gradient(135deg, #C9A227 0%, #b8860b 100%)",
       headerEmoji: "⭐",
       headerTitle: "Priority Lead Alert",
-      urgencyLevel: "urgent",
-      showUpgradeCTA: false,
       tipColor: "#fef3c7",
       tipBorderColor: "#fcd34d",
       tipTextColor: "#92400e",
-      ctaColor: "#C9A227",
       ctaGradient: "linear-gradient(135deg, #C9A227 0%, #b8860b 100%)",
       leadCounterBg: "#fef3c7",
       leadCounterBorder: "#fcd34d",
@@ -342,41 +542,15 @@ function getLeadEmailTemplate(
   
   const config = planConfig[planName as keyof typeof planConfig] || planConfig.professional;
   const remainingLeads = leadLimit - usedLeads;
-  const usagePercentage = leadLimit > 0 ? Math.round((usedLeads / leadLimit) * 100) : 0;
   
-  // Different tip messages based on plan
-  const tipMessages = {
-    professional: "⚡ Quick tip: Respond within 5 minutes to increase your conversion rate by 400%!",
-    featured: "🌟 As a Featured provider, you get priority placement and maximum visibility!"
-  };
+  const subject = `${config.headerEmoji} New Lead: ${leadName} is interested in ${facilityName}`;
   
-  const tip = tipMessages[planName as keyof typeof tipMessages] || tipMessages.professional;
-  
-  // Subject line varies by plan
-  const subjectPrefixes = {
-    professional: "🎯 Qualified Lead:",
-    featured: "⭐ Priority Lead:"
-  };
-  
-  const subjectPrefix = subjectPrefixes[planName as keyof typeof subjectPrefixes] || subjectPrefixes.professional;
-  const subject = `${subjectPrefix} ${leadName} is interested in ${facilityName}`;
-  
-  // Lead usage section for Professional
-  const leadUsageSection = config.showUpgradeCTA && leadLimit > 0 ? `
+  const leadUsageSection = leadLimit > 0 ? `
     <div style="background: ${config.leadCounterBg}; border: 1px solid ${config.leadCounterBorder}; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
       <p style="margin: 0 0 4px 0; font-size: 12px; color: ${config.leadCounterText}; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Lead Usage</p>
       <p style="margin: 0; font-size: 24px; font-weight: bold; color: ${config.leadCounterText};">${usedLeads} / ${leadLimit}</p>
       <p style="margin: 4px 0 0 0; font-size: 13px; color: ${config.leadCounterText};">
-        ${remainingLeads} leads remaining${usagePercentage >= 80 ? ' ⚠️' : ''}
-      </p>
-    </div>
-  ` : '';
-  
-  // Featured plan exclusive badge
-  const featuredBadge = planName === 'featured' ? `
-    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #C9A227; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; text-align: center;">
-      <p style="margin: 0; color: #92400e; font-weight: 600; font-size: 14px;">
-        ⭐ Featured Provider Priority Lead ⭐
+        ${remainingLeads} leads remaining
       </p>
     </div>
   ` : '';
@@ -399,11 +573,9 @@ function getLeadEmailTemplate(
       Received on ${currentDate}
     </p>
     
-    ${featuredBadge}
-    
     <div style="background: ${config.tipColor}; border: 1px solid ${config.tipBorderColor}; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
       <p style="margin: 0; color: ${config.tipTextColor}; font-weight: 600; font-size: 14px;">
-        ${tip}
+        ⚡ Quick tip: Respond within 5 minutes to increase your conversion rate by 400%!
       </p>
     </div>
     
@@ -430,40 +602,28 @@ function getLeadEmailTemplate(
           </td>
         </tr>
         <tr>
-          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Prefers:</td>
-          <td style="padding: 10px 0;">
-            <span style="background: ${preferredContact === 'call' ? '#dcfce7' : '#dbeafe'}; color: ${preferredContact === 'call' ? '#166534' : '#1e40af'}; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; text-transform: capitalize;">
-              ${preferredContact === 'call' ? '📞 Phone Call' : '✉️ Email'}
-            </span>
-          </td>
+          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Preferred:</td>
+          <td style="padding: 10px 0; text-transform: capitalize;">${preferredContact}</td>
         </tr>
+        ${message ? `
+        <tr>
+          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Message:</td>
+          <td style="padding: 10px 0;">${message}</td>
+        </tr>
+        ` : ''}
       </table>
     </div>
     
-    ${message ? `
-    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px;">💬 Their Message</h3>
-      <p style="margin: 0; color: #78350f; font-size: 15px; line-height: 1.6;">${message}</p>
-    </div>
-    ` : ''}
-    
     <div style="text-align: center; margin-top: 28px;">
-      <a href="tel:${leadPhone}" style="display: inline-block; background: ${config.ctaGradient}; color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
-        📞 Call ${firstName} Now
-      </a>
-    </div>
-    
-    <div style="text-align: center; margin-top: 16px;">
-      <a href="mailto:${leadEmail}" style="display: inline-block; background: #fff; color: #1B365D; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 500; border: 2px solid #1B365D;">
-        ✉️ Send Email
+      <a href="${dashboardUrl}" style="display: inline-block; background: ${config.ctaGradient}; color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
+        View in Dashboard
       </a>
     </div>
     
     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
     
     <p style="font-size: 13px; color: #9ca3af; text-align: center; margin: 0;">
-      This lead was submitted via <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a><br>
-      <a href="${dashboardUrl}" style="color: #1B365D; font-weight: 500;">View all leads in your dashboard →</a>
+      This lead was submitted via <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a>
     </p>
   </div>
 </body>
@@ -473,7 +633,8 @@ function getLeadEmailTemplate(
   return { subject, html };
 }
 
-// Send lead limit warning email with de-duplication
+// Send lead limit warning email
+// deno-lint-ignore no-explicit-any
 async function sendLeadLimitWarningEmail(
   supabase: any,
   userId: string,
@@ -486,126 +647,63 @@ async function sendLeadLimitWarningEmail(
 ): Promise<boolean> {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
   if (!resendApiKey) return false;
-
-  // De-duplication: Check if we've already sent this alert this month
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const alertKey = `lead_limit_${threshold}percent_${currentMonth}`;
-
+  
+  // Check for recent warning
+  const alertKey = `${userId}_${threshold}_${new Date().toISOString().slice(0, 7)}`;
   const { data: existingAlert } = await supabase
     .from("subscription_alerts")
     .select("id")
-    .eq("user_id", userId)
     .eq("alert_key", alertKey)
     .maybeSingle();
-
-  if (existingAlert) {
-    console.log(`Alert already sent: ${alertKey} for user ${userId}`);
-    return false; // Already sent this alert
-  }
-
-  const resend = new Resend(resendApiKey);
-  const percentage = Math.round((usedLeads / leadLimit) * 100);
-  const remainingLeads = Math.max(0, leadLimit - usedLeads);
   
-  const isLimitReached = threshold === '100';
-  const headerGradient = isLimitReached 
-    ? "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)"
-    : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)";
-  const headerEmoji = isLimitReached ? "🚨" : "⚠️";
-  const headerTitle = isLimitReached ? "Lead Limit Reached" : "Lead Limit Warning";
-  const urgencyMessage = isLimitReached 
-    ? "You've reached your monthly lead cap. New leads are paused until next billing cycle."
-    : "You're approaching your monthly lead limit";
-
-  const emailHtml = `
+  if (existingAlert) return false;
+  
+  const resend = new Resend(resendApiKey);
+  const billingUrl = "https://rehablookup.com/provider/billing";
+  
+  const isReached = threshold === '100';
+  const subject = isReached 
+    ? `🚨 Monthly Lead Limit Reached - ${facilityName}`
+    : `⚠️ ${Math.round((usedLeads / leadLimit) * 100)}% of Monthly Leads Used`;
+  
+  const html = `
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: ${headerGradient}; padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">${headerEmoji} ${headerTitle}</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${urgencyMessage}</p>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: ${isReached ? '#dc2626' : '#f59e0b'}; padding: 24px; border-radius: 8px 8px 0 0;">
+    <h1 style="color: white; margin: 0;">${isReached ? '🚨' : '⚠️'} Lead Limit ${isReached ? 'Reached' : 'Warning'}</h1>
   </div>
-  
-  <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
-    <div style="background: ${isLimitReached ? '#fee2e2' : '#fef3c7'}; border: 1px solid ${isLimitReached ? '#fca5a5' : '#fcd34d'}; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
-      <p style="margin: 0 0 8px 0; font-size: 48px; font-weight: bold; color: ${isLimitReached ? '#dc2626' : '#92400e'};">${isLimitReached ? '100%' : `${percentage}%`}</p>
-      <p style="margin: 0; color: ${isLimitReached ? '#dc2626' : '#92400e'}; font-size: 16px;">of your monthly lead limit ${isLimitReached ? 'reached' : 'used'}</p>
-    </div>
-    
-    <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Leads Used:</td>
-          <td style="padding: 8px 0; font-weight: 600; text-align: right;">${usedLeads} of ${leadLimit}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Leads Remaining:</td>
-          <td style="padding: 8px 0; font-weight: 600; text-align: right; color: ${remainingLeads === 0 ? '#dc2626' : remainingLeads <= 10 ? '#f59e0b' : '#16a34a'};">${remainingLeads}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Current Plan:</td>
-          <td style="padding: 8px 0; font-weight: 600; text-align: right; text-transform: capitalize;">${planName}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px 0; color: #6b7280;">Facility:</td>
-          <td style="padding: 8px 0; font-weight: 600; text-align: right;">${facilityName}</td>
-        </tr>
-      </table>
-    </div>
-    
-    <p style="color: #4b5563; font-size: 15px; margin-bottom: 24px;">
-      ${isLimitReached 
-        ? "Your profile has been <strong>temporarily removed</strong> from lead routing. To resume receiving qualified leads, upgrade to the Featured plan or wait until your billing cycle resets."
-        : "Once you reach your limit, new leads will be paused until next month. <strong>Upgrade your plan now</strong> to continue receiving valuable patient leads without interruption."
-      }
-    </p>
-    
-    <div style="text-align: center; margin-top: 28px;">
-      <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(27, 54, 93, 0.3);">
-        ${isLimitReached ? '🔓 Upgrade Now' : '🚀 Upgrade Your Plan'}
-      </a>
-    </div>
-    
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
-    
-    <p style="font-size: 13px; color: #9ca3af; text-align: center; margin: 0;">
-      This is an automated notification from <a href="https://rehablookup.com" style="color: #1B365D;">RehabLookup.com</a>
-    </p>
+  <div style="background: #fff; border: 1px solid #e5e7eb; padding: 24px; border-radius: 0 0 8px 8px;">
+    <p>You've used <strong>${usedLeads}</strong> of <strong>${leadLimit}</strong> leads this month for ${facilityName}.</p>
+    ${isReached ? '<p style="color: #dc2626;">Your profile has been removed from lead routing until your billing cycle resets.</p>' : ''}
+    <a href="${billingUrl}" style="display: inline-block; background: #1B365D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">
+      ${isReached ? 'Upgrade Your Plan' : 'View Billing'}
+    </a>
   </div>
 </body>
 </html>
   `;
-
+  
   try {
-    const { data: emailResult, error: emailError } = await resend.emails.send({
+    const response = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
-      subject: `${headerEmoji} ${headerTitle}: ${isLimitReached ? 'Leads Paused' : `${remainingLeads} leads remaining`}`,
-      html: emailHtml,
+      subject,
+      html,
     });
-
-    if (emailError) {
-      console.error("Failed to send lead limit email:", emailError);
-      return false;
-    }
-
-    // Record that we've sent this alert (prevent duplicates)
+    
+    // deno-lint-ignore no-explicit-any
+    const emailResponse = response as any;
     await supabase.from("subscription_alerts").insert({
       user_id: userId,
-      alert_type: isLimitReached ? "lead_limit_reached" : "lead_limit_warning",
+      alert_type: `lead_limit_${threshold}`,
       alert_key: alertKey,
-      resend_id: emailResult?.id || null,
+      resend_id: emailResponse?.id || null,
     });
-
-    console.log(`Lead limit ${threshold}% email sent to ${providerEmail} (${usedLeads}/${leadLimit})`);
+    
     return true;
   } catch (error) {
-    console.error("Failed to send lead limit warning email:", error);
+    console.error("Failed to send lead limit warning:", error);
     return false;
   }
 }
@@ -637,7 +735,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     // ============ INPUT VALIDATION ============
     
-    // Required fields check
     if (!body.facilityId || !body.name || !body.phone || !body.email) {
       console.error("Missing required fields");
       return new Response(
@@ -646,13 +743,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Sanitize inputs
     const sanitizedName = sanitizeInput(body.name, 100);
     const sanitizedPhone = sanitizeInput(body.phone, 20);
     const sanitizedEmail = sanitizeInput(body.email.toLowerCase(), 255);
     const sanitizedMessage = body.message ? sanitizeInput(body.message, 1000) : null;
 
-    // Validate email format
     if (!isValidEmail(sanitizedEmail)) {
       console.error("Invalid email format:", sanitizedEmail);
       return new Response(
@@ -661,7 +756,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Validate phone format
     if (!isValidPhone(sanitizedPhone)) {
       console.error("Invalid phone format:", sanitizedPhone);
       return new Response(
@@ -670,7 +764,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Validate name (basic check for non-empty after sanitization)
     if (sanitizedName.length < 2) {
       console.error("Name too short");
       return new Response(
@@ -679,7 +772,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create Supabase client with service role
+    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -740,7 +833,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     const { data: facility, error: facilityError } = await supabase
       .from("facilities")
-      .select("id, status, email, name, user_id")
+      .select("id, status, email, name, user_id, city, state, phone")
       .eq("id", body.facilityId)
       .eq("status", "approved")
       .maybeSingle();
@@ -755,6 +848,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Get provider's profile email and notification preferences
     let providerEmail: string | null = null;
+    let providerPhone: string | null = null;
     let notificationPrefs: { 
       lead_notification_frequency?: string; 
       notify_new_leads?: boolean;
@@ -764,12 +858,12 @@ const handler = async (req: Request): Promise<Response> => {
     if (facility.user_id) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("email")
+        .select("email, phone")
         .eq("user_id", facility.user_id)
         .maybeSingle();
       providerEmail = profile?.email || null;
+      providerPhone = profile?.phone || null;
       
-      // Fetch notification preferences
       const { data: prefs } = await supabase
         .from("notification_preferences")
         .select("lead_notification_frequency, notify_new_leads, notify_lead_limit_warnings")
@@ -778,37 +872,134 @@ const handler = async (req: Request): Promise<Response> => {
       notificationPrefs = prefs;
     }
 
-    // ============ LEAD CAP ENFORCEMENT ============
-    let capCheckResult: { canReceiveLeads: boolean; reason?: string; leadLimit: number; usedLeads: number; planName: string } | null = null;
+    // ============ LEAD CAP CHECK ============
+    let capCheckResult: { canReceiveLeads: boolean; reason?: string; leadLimit: number; usedLeads: number; planName: string; exclusivity: 'shared' | 'exclusive' } | null = null;
+    let assignedFacilityId = body.facilityId;
+    let assignedFacilityName = body.facilityName;
+    let assignedUserId = facility.user_id;
+    let assignedProviderEmail = providerEmail;
+    let isReassigned = false;
+    let reassignedProvider: Awaited<ReturnType<typeof findNextEligibleProvider>> = null;
     
     if (providerEmail && facility.user_id) {
       capCheckResult = await checkProviderLeadCap(supabase, facility.user_id, providerEmail);
       
-      if (!capCheckResult.canReceiveLeads) {
-        console.log(`Lead cap reached for facility ${body.facilityId}: ${capCheckResult.reason}`);
+      // If on basic/free plan, notify them and reassign to paying provider
+      if (capCheckResult.planName === "basic") {
+        console.log("Free plan provider - sending conversion notification and finding paying provider");
         
-        // Return a user-friendly message - don't expose internal details
+        // Send conversion email to free provider
+        const resendApiKey = Deno.env.get("RESEND_API_KEY");
+        if (resendApiKey) {
+          try {
+            const resend = new Resend(resendApiKey);
+            
+            // Count total missed leads for this facility
+            const { count: totalLeadsCount } = await supabase
+              .from("leads")
+              .select("*", { count: "exact", head: true })
+              .eq("facility_id", body.facilityId);
+            
+            const { subject, html } = getBasicPlanUpgradeEmail(
+              body.facilityName,
+              (totalLeadsCount || 0) + 1,
+              sanitizedName
+            );
+            
+            const facilityEmailAddress = body.facilityEmail || facility.email;
+            const emailRecipients: string[] = [];
+            if (facilityEmailAddress) emailRecipients.push(facilityEmailAddress);
+            if (providerEmail && providerEmail !== facilityEmailAddress) emailRecipients.push(providerEmail);
+            
+            if (emailRecipients.length > 0) {
+              await resend.emails.send({
+                from: "RehabLookup <no-reply@rehablookup.com>",
+                to: emailRecipients,
+                subject,
+                html,
+              });
+              console.log("Conversion email sent to free provider:", emailRecipients);
+            }
+          } catch (emailError) {
+            console.error("Failed to send conversion email:", emailError);
+          }
+        }
+        
+        // Send conversion SMS to free provider
+        if (providerPhone) {
+          await sendConversionSMS(providerPhone, body.facilityName, sanitizedName);
+        } else if (facility.phone) {
+          await sendConversionSMS(facility.phone, body.facilityName, sanitizedName);
+        }
+        
+        // Create in-app notification for free provider about upgrade
+        try {
+          await supabase.from("provider_notifications").insert({
+            user_id: facility.user_id,
+            facility_id: body.facilityId,
+            type: "upgrade_prompt",
+            title: `${sanitizedName} just inquired!`,
+            message: `Someone is looking for treatment help. Upgrade to Professional to receive leads and grow your business.`,
+            metadata: {
+              lead_name: sanitizedName,
+              action_url: "/provider/billing"
+            },
+          });
+        } catch (notifError) {
+          console.error("Failed to create upgrade notification:", notifError);
+        }
+        
+        // Find next eligible paying provider
+        reassignedProvider = await findNextEligibleProvider(
+          supabase, 
+          body.facilityId, 
+          facility.state, 
+          facility.city
+        );
+        
+        if (reassignedProvider) {
+          assignedFacilityId = reassignedProvider.facilityId;
+          assignedFacilityName = reassignedProvider.facilityName;
+          assignedUserId = reassignedProvider.userId;
+          assignedProviderEmail = reassignedProvider.providerEmail;
+          isReassigned = true;
+          
+          // Update cap check result for the new provider
+          capCheckResult = {
+            canReceiveLeads: true,
+            planName: reassignedProvider.planName,
+            leadLimit: reassignedProvider.leadLimit,
+            usedLeads: reassignedProvider.usedLeads,
+            exclusivity: reassignedProvider.planName === "featured" ? "exclusive" : "shared"
+          };
+          
+          console.log("Lead will be assigned to paying provider:", reassignedProvider.facilityId);
+        } else {
+          // No paying provider available - return success but don't create lead
+          console.log("No paying provider available for reassignment");
+          return new Response(
+            JSON.stringify({ success: true, message: "Request submitted successfully" }),
+            { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      } else if (!capCheckResult.canReceiveLeads) {
+        // Paid provider at capacity
+        console.log(`Lead cap reached for facility ${body.facilityId}: ${capCheckResult.reason}`);
         return new Response(
           JSON.stringify({ 
-            error: "This facility is not currently accepting new requests. Please try another facility or contact us directly.",
+            error: "This facility is not currently accepting new requests. Please try another facility.",
             code: "FACILITY_UNAVAILABLE"
           }),
           { status: 503, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
-      
-      console.log(`Lead cap check passed: ${capCheckResult.usedLeads}/${capCheckResult.leadLimit} leads used`);
     }
 
     // ============ CREATE LEAD ============
-    // Direct profile leads are QUALIFIED if they have valid contact info (already validated above)
-    const isQualified = true; // Already validated email and phone format above
-    const qualityFlag = "qualified";
-    
     const { data: lead, error: leadError } = await supabase
       .from("leads")
       .insert({
-        facility_id: body.facilityId,
+        facility_id: assignedFacilityId,
         name: sanitizedName,
         phone: sanitizedPhone,
         email: sanitizedEmail,
@@ -817,12 +1008,12 @@ const handler = async (req: Request): Promise<Response> => {
         ip_hash: ipHash,
         validation_status: "valid",
         source: "Direct",
-        qualified: isQualified,
-        quality_flag: qualityFlag,
+        qualified: true,
+        quality_flag: "qualified",
         assignment_status: "assigned",
-        assignment_reason: `Direct profile submission to ${body.facilityName}`,
+        assignment_reason: `Direct inquiry to ${assignedFacilityName}`,
         assigned_at: new Date().toISOString(),
-        exclusivity: "exclusive",
+        exclusivity: capCheckResult?.exclusivity || "exclusive",
       })
       .select()
       .single();
@@ -835,18 +1026,18 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Lead created successfully:", lead.id, "Validation: valid");
+    console.log("Lead created successfully:", lead.id, "Assigned to:", assignedFacilityId);
 
-    // ============ CREATE ROUTING LOG FOR DIRECT LEADS ============
+    // ============ CREATE ROUTING LOG ============
     try {
       const planName = capCheckResult?.planName || "basic";
       const usedLeads = capCheckResult?.usedLeads || 0;
-      const leadLimit = capCheckResult?.leadLimit || 1;
+      const leadLimit = capCheckResult?.leadLimit || 0;
       
       await supabase.from("lead_routing_logs").insert({
         lead_id: lead.id,
-        assigned_provider_id: body.facilityId,
-        assignment_reason: `Direct profile lead to ${body.facilityName} (${planName} plan)`,
+        assigned_provider_id: assignedFacilityId,
+        assignment_reason: `Direct inquiry to ${assignedFacilityName}`,
         plan_tier: planName,
         subscription_status: planName !== "basic" ? "active" : "none",
         lead_limit: leadLimit,
@@ -855,108 +1046,84 @@ const handler = async (req: Request): Promise<Response> => {
         requested_facility_id: body.facilityId,
         eligibility_check_result: {
           source: "direct_profile_form",
-          facility_name: body.facilityName,
-          lead_email: sanitizedEmail.substring(0, 3) + "***",
+          facility_name: assignedFacilityName,
           plan_name: planName,
           can_receive_leads: capCheckResult?.canReceiveLeads ?? true,
           lead_cap_status: `${usedLeads}/${leadLimit}`,
           timestamp: new Date().toISOString(),
         },
       });
-      console.log("Routing log created for direct lead:", lead.id);
+      console.log("Routing log created for lead:", lead.id);
     } catch (routingLogError) {
       console.error("Failed to create routing log:", routingLogError);
-      // Non-blocking - continue with email notification
     }
 
-    // ============ EMAIL NOTIFICATION ============
+    // ============ EMAIL NOTIFICATION TO ASSIGNED PROVIDER ============
     
-    // Check notification preferences - respect provider settings
     const shouldSendInstantEmail = 
-      (notificationPrefs?.notify_new_leads !== false) && // Default to true if not set
-      (notificationPrefs?.lead_notification_frequency === 'instant' || !notificationPrefs?.lead_notification_frequency); // Default to instant
+      (notificationPrefs?.notify_new_leads !== false) &&
+      (notificationPrefs?.lead_notification_frequency === 'instant' || !notificationPrefs?.lead_notification_frequency);
     
-    const facilityEmailAddress = body.facilityEmail || facility.email;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     
-    const emailRecipients: string[] = [];
-    if (facilityEmailAddress) emailRecipients.push(facilityEmailAddress);
-    if (providerEmail && providerEmail !== facilityEmailAddress) emailRecipients.push(providerEmail);
-
-    // Only send email if frequency is instant (or not set = default to instant)
-    if (emailRecipients.length > 0 && resendApiKey && shouldSendInstantEmail) {
+    if (assignedProviderEmail && resendApiKey && shouldSendInstantEmail && capCheckResult?.planName !== "basic") {
       try {
         const resend = new Resend(resendApiKey);
         
-        // Get tier-based email template
-        const planName = capCheckResult?.planName || "basic";
-        const usedLeads = capCheckResult?.usedLeads || 0;
-        const leadLimit = capCheckResult?.leadLimit || 1;
+        const planName = capCheckResult?.planName || "professional";
+        const usedLeads = (capCheckResult?.usedLeads || 0) + 1;
+        const leadLimit = capCheckResult?.leadLimit || 100;
         
-        let emailSubject: string;
-        let emailHtml: string;
-        
-        // Basic plan gets upgrade-focused email (blurred lead details)
-        if (planName === "basic") {
-          // Get total leads count for this facility
-          const { count: totalLeadsCount } = await supabase
-            .from("leads")
-            .select("*", { count: "exact", head: true })
-            .eq("facility_id", body.facilityId);
-          
-          const result = getBasicPlanUpgradeEmail(
-            body.facilityName,
-            supabaseUrl,
-            totalLeadsCount || 1
-          );
-          emailSubject = result.subject;
-          emailHtml = result.html;
-        } else {
-          // Professional and Featured plans get full lead details
-          const result = getLeadEmailTemplate(
-            planName,
-            body.facilityName,
-            sanitizedName,
-            sanitizedPhone,
-            sanitizedEmail,
-            body.preferredContact,
-            sanitizedMessage,
-            supabaseUrl,
-            usedLeads + 1, // Account for the lead we just created
-            leadLimit
-          );
-          emailSubject = result.subject;
-          emailHtml = result.html;
+        const { subject, html } = getLeadEmailTemplate(
+          planName,
+          assignedFacilityName,
+          sanitizedName,
+          sanitizedPhone,
+          sanitizedEmail,
+          body.preferredContact,
+          sanitizedMessage,
+          usedLeads,
+          leadLimit
+        );
+
+        // Get facility email for the assigned provider
+        const { data: assignedFacility } = await supabase
+          .from("facilities")
+          .select("email")
+          .eq("id", assignedFacilityId)
+          .maybeSingle();
+
+        const emailRecipients: string[] = [];
+        if (assignedFacility?.email) emailRecipients.push(assignedFacility.email);
+        if (assignedProviderEmail && assignedProviderEmail !== assignedFacility?.email) {
+          emailRecipients.push(assignedProviderEmail);
         }
 
-        const emailResponse = await resend.emails.send({
-          from: "RehabLookup <no-reply@rehablookup.com>",
-          to: emailRecipients,
-          subject: emailSubject,
-          html: emailHtml,
-        });
-
-        console.log("Email notification sent to:", emailRecipients, "Plan:", planName, "Response:", emailResponse);
+        if (emailRecipients.length > 0) {
+          await resend.emails.send({
+            from: "RehabLookup <no-reply@rehablookup.com>",
+            to: emailRecipients,
+            subject,
+            html,
+          });
+          console.log("Lead notification email sent to:", emailRecipients);
+        }
       } catch (emailError) {
         console.error("Failed to send email notification:", emailError);
       }
-    } else if (!shouldSendInstantEmail) {
-      console.log("Email notification skipped - provider prefers digest delivery");
-    } else {
-      console.log("Email notification skipped - no recipients or API key");
     }
 
     // ============ IN-APP NOTIFICATION ============
-    if (facility.user_id) {
+    if (assignedUserId) {
       try {
         await supabase
           .from("provider_notifications")
           .insert({
-            user_id: facility.user_id,
-            facility_id: body.facilityId,
+            user_id: assignedUserId,
+            facility_id: assignedFacilityId,
             type: "lead_received",
             title: `New lead from ${sanitizedName}`,
-            message: `${sanitizedName} is interested in ${body.facilityName}. They prefer to be contacted via ${body.preferredContact}.`,
+            message: `${sanitizedName} is interested in ${assignedFacilityName}. They prefer to be contacted via ${body.preferredContact}.`,
             metadata: {
               lead_id: lead.id,
               lead_name: sanitizedName,
@@ -965,74 +1132,38 @@ const handler = async (req: Request): Promise<Response> => {
               preferred_contact: body.preferredContact,
             },
           });
-        console.log("In-app notification created for user:", facility.user_id);
+        console.log("In-app notification created for user:", assignedUserId);
       } catch (notifError) {
         console.error("Failed to create in-app notification:", notifError);
       }
     }
 
-    // ============ LEAD LIMIT WARNING/REACHED EMAIL & NOTIFICATION ============
-    // Send email alerts at 80% (warning) and 100% (reached) thresholds
+    // ============ LEAD LIMIT WARNING ============
     const shouldSendLimitWarning = notificationPrefs?.notify_lead_limit_warnings !== false;
     
-    if (capCheckResult && providerEmail && facility.user_id && capCheckResult.leadLimit > 0 && shouldSendLimitWarning) {
-      const newUsedLeads = capCheckResult.usedLeads + 1; // Account for the lead we just created
+    if (capCheckResult && assignedProviderEmail && assignedUserId && capCheckResult.leadLimit > 0 && shouldSendLimitWarning) {
+      const newUsedLeads = capCheckResult.usedLeads + 1;
       const usagePercentage = (newUsedLeads / capCheckResult.leadLimit) * 100;
       
-      // Determine which threshold was crossed
       let threshold: '80' | '100' | null = null;
-      let notificationType = '';
-      let notificationTitle = '';
-      let notificationMessage = '';
       
       if (usagePercentage >= 100) {
         threshold = '100';
-        notificationType = 'lead_limit_reached';
-        notificationTitle = '🚨 Monthly lead limit reached';
-        notificationMessage = `You've used all ${capCheckResult.leadLimit} leads this month. Your profile has been removed from lead routing until your billing cycle resets.`;
       } else if (usagePercentage >= 80) {
         threshold = '80';
-        notificationType = 'lead_limit_warning';
-        notificationTitle = `⚠️ ${Math.round(usagePercentage)}% of monthly leads used`;
-        notificationMessage = `You've used ${newUsedLeads} of ${capCheckResult.leadLimit} leads this month. Consider upgrading to receive more leads.`;
       }
       
       if (threshold) {
-        // Send email with de-duplication
-        const emailSent = await sendLeadLimitWarningEmail(
+        await sendLeadLimitWarningEmail(
           supabase,
-          facility.user_id,
-          providerEmail,
-          body.facilityName,
+          assignedUserId,
+          assignedProviderEmail,
+          assignedFacilityName,
           newUsedLeads,
           capCheckResult.leadLimit,
           capCheckResult.planName,
           threshold
         );
-        
-        // Create in-app notification (only if email was sent = first time hitting this threshold)
-        if (emailSent) {
-          try {
-            await supabase
-              .from("provider_notifications")
-              .insert({
-                user_id: facility.user_id,
-                facility_id: body.facilityId,
-                type: notificationType,
-                title: notificationTitle,
-                message: notificationMessage,
-                metadata: {
-                  used_leads: newUsedLeads,
-                  lead_limit: capCheckResult.leadLimit,
-                  plan_name: capCheckResult.planName,
-                  percentage: usagePercentage,
-                  threshold: threshold,
-                },
-              });
-          } catch (notifError) {
-            console.error("Failed to create lead limit notification:", notifError);
-          }
-        }
       }
     }
 
