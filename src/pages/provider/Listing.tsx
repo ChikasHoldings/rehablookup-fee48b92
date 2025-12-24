@@ -74,7 +74,8 @@ import {
   ListingStatusCard,
   ListingTipsCard,
   ListingFloatingSaveBar,
-  ListingFormField
+  ListingFormField,
+  StaffManagementSection
 } from "@/components/provider/listing";
 
 interface Facility {
@@ -1940,6 +1941,13 @@ export default function ProviderListingPage() {
                 </CollapsibleContent>
               </Card>
             </Collapsible>
+
+            {/* Our Team / Staff */}
+            <StaffManagementSection
+              facilityId={facility.id}
+              isExpanded={expandedSections.has("staff")}
+              onToggle={() => toggleSection("staff")}
+            />
           </div>
 
           {/* Right Column - Sidebar */}
