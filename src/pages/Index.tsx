@@ -133,7 +133,10 @@ const treatmentOptions = [
 
 
 const Index = () => {
-  const { data: approvedFacilities = [], isLoading: isFacilitiesLoading } = useApprovedFacilities();
+  const { data: approvedFacilities = [], isLoading: isFacilitiesLoading, isFetching: isFacilitiesFetching } = useApprovedFacilities();
+  
+  // Show loading during initial load or when refetching featured data
+  const isLoadingFeatured = isFacilitiesLoading;
   
   // Get homepage featured centers (max 6, with rotation from backend)
   const featuredCenters = useMemo(() => {
@@ -485,7 +488,9 @@ const Index = () => {
           </div>
 
           {/* Carousel */}
-          {isFacilitiesLoading ? (
+          {isLoadingFeatured ? (
+            <FeaturedCentersLoading />
+          ) : featuredCenters.length === 0 ? (
             <FeaturedCentersLoading />
           ) : (
             <div className="relative -mx-4 px-4 md:mx-0 md:px-0">
