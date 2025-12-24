@@ -89,7 +89,7 @@ serve(async (req) => {
     // Fetch facility details
     const { data: facility } = await supabase
       .from("facilities")
-      .select("id, name, user_id, reply_email, email")
+      .select("id, name, slug, user_id, reply_email, email")
       .eq("id", facilityId || review.facility_id)
       .single();
 
@@ -301,7 +301,7 @@ async function handleReviewApproved(
       type: "review_approved",
       title: "Your Review is Live!",
       message: `Your review for ${facility.name} has been approved and is now visible.`,
-      link: `/facility/${facility.id}`,
+      link: facility.slug ? `/center/${facility.slug}` : `/account/reviews`,
       metadata: { review_id: review.id, facility_id: facility.id },
     });
   }
@@ -356,7 +356,7 @@ ${emailBodyStart()}
               ${emailGreeting(seekerProfile?.first_name || seekerProfile?.display_name || 'there')}
               ${emailParagraph(`Thank you for sharing your experience! Your review for <strong>${facility.name}</strong> has been approved and is now visible to others.`)}
               ${emailParagraph('Your feedback helps others make informed decisions about their treatment options.')}
-              ${ctaButton('View Your Review', `https://rehablookup.com/facility/${facility.id}`, 'basic')}
+              ${ctaButton('View Your Review', facility.slug ? `https://rehablookup.com/center/${facility.slug}` : 'https://rehablookup.com/account/reviews', 'basic')}
 ${emailBodyEnd()}
 ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
@@ -446,7 +446,7 @@ async function handleReviewResponse(
       type: "review_response",
       title: `${facility.name} Responded to Your Review`,
       message: responseText?.substring(0, 100) + (responseText && responseText.length > 100 ? "..." : ""),
-      link: `/facility/${facility.id}`,
+      link: facility.slug ? `/center/${facility.slug}` : `/account/reviews`,
       metadata: { review_id: review.id, facility_id: facility.id },
     });
   }
@@ -470,7 +470,7 @@ ${emailBodyStart()}
               </table>
               ` : ''}
               
-              ${ctaButton('View Response', `https://rehablookup.com/facility/${facility.id}`, 'basic')}
+              ${ctaButton('View Response', facility.slug ? `https://rehablookup.com/center/${facility.slug}` : 'https://rehablookup.com/account/reviews', 'basic')}
 ${emailBodyEnd()}
 ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
