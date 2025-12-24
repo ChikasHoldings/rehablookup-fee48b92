@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -49,29 +49,28 @@ export function StaffFormModal({
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [name, setName] = useState(staff?.name || "");
-  const [jobTitle, setJobTitle] = useState(staff?.job_title || "");
+  const [name, setName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
   const [customJobTitle, setCustomJobTitle] = useState("");
-  const [bio, setBio] = useState(staff?.bio || "");
-  const [photoUrl, setPhotoUrl] = useState(staff?.photo_url || "");
+  const [bio, setBio] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
   const isEditing = !!staff;
   const isCustomTitle = !JOB_TITLES.includes(jobTitle as typeof JOB_TITLES[number]) && jobTitle !== "";
 
-  // Reset form when modal opens/closes or staff changes
-  const resetForm = () => {
-    setName(staff?.name || "");
-    setJobTitle(staff?.job_title || "");
-    setCustomJobTitle("");
-    setBio(staff?.bio || "");
-    setPhotoUrl(staff?.photo_url || "");
-  };
+  // Reset form when modal opens or staff changes
+  useEffect(() => {
+    if (open) {
+      setName(staff?.name || "");
+      setJobTitle(staff?.job_title || "");
+      setCustomJobTitle("");
+      setBio(staff?.bio || "");
+      setPhotoUrl(staff?.photo_url || "");
+    }
+  }, [open, staff]);
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      resetForm();
-    }
     onOpenChange(newOpen);
   };
 
