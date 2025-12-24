@@ -127,9 +127,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Send the email
+    // Send the email using Resend's default domain for testing
+    // In production, replace with your verified domain
     const emailResponse = await resend.emails.send({
-      from: "PathwayHub <noreply@notifications.pathwayhub.com>",
+      from: "PathwayHub <onboarding@resend.dev>",
       to: [recipientEmail],
       subject: `${facility.name} would love to hear about your experience`,
       html: `
@@ -183,7 +184,26 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Email response:", JSON.stringify(emailResponse));
+
+    // Check if email sending failed
+    if (emailResponse.error) {
+      console.error("Resend error:", emailResponse.error);
+      // Still mark as failed but don't block
+      await supabase
+        .from("review_requests")
+        .update({
+          status: "failed",
+        })
+        .eq("id", reviewRequest.id);
+
+      return new Response(JSON.stringify({ 
+        error: `Failed to send email: ${emailResponse.error.message}` 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Update the review request with sent status and resend_id
     const { error: updateError } = await supabase
@@ -198,6 +218,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (updateError) {
       console.error("Error updating review request:", updateError);
     }
+
+    console.log("Review request sent successfully:", reviewRequest.id);
 
     return new Response(JSON.stringify({ 
       success: true, 
