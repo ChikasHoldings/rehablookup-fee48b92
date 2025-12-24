@@ -404,9 +404,19 @@ export default function SeekerFacilityProfile() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  {/* Badges row with rating */}
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    {/* Rating badge - most prominent */}
+                  <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight mb-1.5">
+                    {facility.name}
+                  </h1>
+                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                    <span>{facility.city}, {facility.state}</span>
+                  </p>
+                </div>
+
+                {/* Right side: Badges and Favorite */}
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  {/* Badges row */}
+                  <div className="flex flex-wrap items-center justify-end gap-2">
                     <RatingBadge 
                       rating={ratingData.averageRating} 
                       reviewCount={ratingData.reviewCount} 
@@ -426,27 +436,19 @@ export default function SeekerFacilityProfile() {
                     )}
                   </div>
 
-                  <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight mb-1.5">
-                    {facility.name}
-                  </h1>
-                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 shrink-0 text-primary" />
-                    <span>{facility.city}, {facility.state}</span>
-                  </p>
+                  {/* Favorite button */}
+                  <button
+                    onClick={handleFavoriteClick}
+                    className={cn(
+                      "p-2.5 rounded-xl border-2 transition-all duration-300 hover:scale-105 active:scale-95",
+                      isFavorite(facility.id)
+                        ? "bg-rose-50 border-rose-300 text-rose-500 shadow-md shadow-rose-100"
+                        : "bg-muted/50 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50"
+                    )}
+                  >
+                    <Heart className={cn("h-5 w-5 transition-transform", isFavorite(facility.id) && "fill-current scale-110")} />
+                  </button>
                 </div>
-
-                {/* Favorite button with animation */}
-                <button
-                  onClick={handleFavoriteClick}
-                  className={cn(
-                    "p-2.5 rounded-xl border-2 transition-all duration-300 shrink-0 hover:scale-105 active:scale-95",
-                    isFavorite(facility.id)
-                      ? "bg-rose-50 border-rose-300 text-rose-500 shadow-md shadow-rose-100"
-                      : "bg-muted/50 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50"
-                  )}
-                >
-                  <Heart className={cn("h-5 w-5 transition-transform", isFavorite(facility.id) && "fill-current scale-110")} />
-                </button>
               </div>
 
               {/* Quick stats grid */}
