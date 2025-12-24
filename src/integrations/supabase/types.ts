@@ -935,6 +935,66 @@ export type Database = {
           },
         ]
       }
+      facility_staff: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          display_order: number | null
+          email: string | null
+          facility_id: string
+          id: string
+          is_visible: boolean | null
+          job_title: string
+          name: string
+          phone: string | null
+          photo_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          email?: string | null
+          facility_id: string
+          id?: string
+          is_visible?: boolean | null
+          job_title: string
+          name: string
+          phone?: string | null
+          photo_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          email?: string | null
+          facility_id?: string
+          id?: string
+          is_visible?: boolean | null
+          job_title?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_staff_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_staff_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_views: {
         Row: {
           created_at: string

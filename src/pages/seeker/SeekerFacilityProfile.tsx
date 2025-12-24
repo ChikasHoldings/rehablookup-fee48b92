@@ -8,6 +8,7 @@ import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFacilityReviews } from "@/hooks/useFacilityReviews";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
+import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { ReviewsList } from "@/components/reviews/ReviewsList";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
@@ -707,6 +708,9 @@ export default function SeekerFacilityProfile() {
               </div>
             </ProfileSection>
           )}
+
+          {/* Our Team Section */}
+          <FacilityStaffSection facilityId={facility.id} />
 
           {/* Reviews Section */}
           <ReviewsSection facilityId={facility.id} facilityName={facility.name} />
