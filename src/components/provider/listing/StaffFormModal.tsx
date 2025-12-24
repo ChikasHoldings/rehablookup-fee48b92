@@ -100,8 +100,15 @@ export function StaffFormModal({
 
     setIsUploading(true);
     try {
+      // Get current user ID for storage policy compliance
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const fileName = `${facilityId}/staff/${crypto.randomUUID()}.${fileExt}`;
+      // Storage policy requires user ID as first folder (auth.uid())
+      const fileName = `${user.id}/staff/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("facility-images")
