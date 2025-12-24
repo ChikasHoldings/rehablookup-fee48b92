@@ -175,10 +175,18 @@ export function useProviderReviews() {
 
   const submitResponse = useCallback(async (reviewId: string, responseText: string) => {
     const review = reviews.find(r => r.id === reviewId);
-    if (!review) return { error: new Error('Review not found') };
+    if (!review) {
+      console.error('[submitResponse] Review not found:', reviewId);
+      return { error: new Error('Review not found') };
+    }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: new Error('Not authenticated') };
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('[submitResponse] Auth error:', authError);
+      return { error: authError || new Error('Not authenticated') };
+    }
+
+    console.log('[submitResponse] Submitting response:', { reviewId, facilityId: review.facility_id, userId: user.id });
 
     const { data, error } = await supabase
       .from('review_responses')
@@ -191,21 +199,26 @@ export function useProviderReviews() {
       .select()
       .single();
 
-    if (!error) {
-      // Notify seeker about response
-      supabase.functions.invoke('send-review-notification', {
-        body: {
-          type: 'review_response',
-          reviewId,
-          facilityId: review.facility_id,
-          seekerId: review.user_id,
-          responseText: responseText.trim(),
-        }
-      }).catch(err => console.error('Failed to send response notification:', err));
-      fetchReviews();
+    if (error) {
+      console.error('[submitResponse] Insert error:', error);
+      return { data: null, error };
     }
 
-    return { data, error };
+    console.log('[submitResponse] Response created:', data);
+
+    // Notify seeker about response
+    supabase.functions.invoke('send-review-notification', {
+      body: {
+        type: 'review_response',
+        reviewId,
+        facilityId: review.facility_id,
+        seekerId: review.user_id,
+        responseText: responseText.trim(),
+      }
+    }).catch(err => console.error('Failed to send response notification:', err));
+    
+    fetchReviews();
+    return { data, error: null };
   }, [reviews, fetchReviews]);
 
   const updateResponse = useCallback(async (responseId: string, responseText: string) => {

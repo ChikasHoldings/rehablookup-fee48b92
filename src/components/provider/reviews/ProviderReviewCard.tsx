@@ -50,14 +50,21 @@ export const ProviderReviewCard = memo(function ProviderReviewCard({
       return;
     }
     setIsSubmitting(true);
-    const { error } = await onSubmitResponse(review.id, responseText);
-    setIsSubmitting(false);
-    if (error) {
-      toast.error('Failed to submit response');
-    } else {
-      toast.success('Response submitted');
-      setIsResponding(false);
-      setResponseText('');
+    try {
+      const { error } = await onSubmitResponse(review.id, responseText);
+      if (error) {
+        console.error('[ProviderReviewCard] Submit error:', error);
+        toast.error(error.message || 'Failed to submit response');
+      } else {
+        toast.success('Response submitted');
+        setIsResponding(false);
+        setResponseText('');
+      }
+    } catch (err) {
+      console.error('[ProviderReviewCard] Unexpected error:', err);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
     }
   }, [responseText, review.id, onSubmitResponse]);
 
