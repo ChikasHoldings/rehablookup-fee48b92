@@ -21,6 +21,7 @@ interface RequestReviewSectionProps {
 
 export function RequestReviewSection({ facilityId, facilityName }: RequestReviewSectionProps) {
   const { requests, isLoading, isSending, sendReviewRequest, stats } = useReviewRequests(facilityId);
+  const [isOpen, setIsOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
@@ -45,41 +46,60 @@ export function RequestReviewSection({ facilityId, facilityName }: RequestReview
   const canSubmit = recipientName.trim() && recipientEmail.trim() && isValidEmail(recipientEmail);
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10 text-primary">
-              <Mail className="h-5 w-5" />
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-4 cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10 text-primary">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold">Request Reviews</CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Send email invitations to past clients to leave a review
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {stats.sent > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {stats.sent} sent
+                  </Badge>
+                )}
+                {isOpen ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-base font-semibold">Request Reviews</CardTitle>
-              <CardDescription className="text-xs mt-0.5">
-                Send email invitations to past clients to leave a review
-              </CardDescription>
-            </div>
-          </div>
-          <Button
-            variant={isFormOpen ? "outline" : "default"}
-            size="sm"
-            onClick={() => setIsFormOpen(!isFormOpen)}
-          >
-            {isFormOpen ? (
-              <>
-                <X className="h-4 w-4 mr-1" />
-                Cancel
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4 mr-1" />
-                New Request
-              </>
-            )}
-          </Button>
-        </div>
-      </CardHeader>
+          </CardHeader>
+        </CollapsibleTrigger>
 
-      <CardContent className="space-y-4">
+        <CollapsibleContent>
+          <CardContent className="space-y-4 pt-0">
+            {/* Action Button */}
+            <div className="flex justify-end">
+              <Button
+                variant={isFormOpen ? "outline" : "default"}
+                size="sm"
+                onClick={() => setIsFormOpen(!isFormOpen)}
+              >
+                {isFormOpen ? (
+                  <>
+                    <X className="h-4 w-4 mr-1" />
+                    Cancel
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-1" />
+                    New Request
+                  </>
+                )}
+              </Button>
+            </div>
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 rounded-lg bg-muted/50 text-center">
@@ -247,7 +267,9 @@ export function RequestReviewSection({ facilityId, facilityName }: RequestReview
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
