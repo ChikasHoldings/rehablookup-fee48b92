@@ -435,15 +435,15 @@ async function sendReassignmentNotification(
     await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: recipientEmail,
-      subject: `New Lead Re-assigned: ${lead.name}`,
+      subject: `🎉 You Have a New Lead: ${lead.name}`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #1B365D 0%, #2A4A7A 100%); padding: 24px; border-radius: 8px 8px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">New Lead Assigned</h1>
+            <h1 style="color: white; margin: 0; font-size: 24px;">🎉 You Have a New Lead!</h1>
           </div>
           <div style="background: #ffffff; padding: 24px; border: 1px solid #e5e7eb; border-top: none;">
             <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-              A lead has been re-assigned to your facility. Please respond promptly to maximize your conversion rate.
+              Great news! A new lead is waiting for you. Respond quickly to maximize your chances of connecting with them.
             </p>
             <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
               <p style="margin: 0 0 8px 0;"><strong>Name:</strong> ${lead.name}</p>
@@ -455,7 +455,7 @@ async function sendReassignmentNotification(
               View Lead Details
             </a>
             <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-              This lead was automatically re-assigned because the previous provider did not respond within 24 hours.
+              Tip: Leads that are contacted within 5 minutes have 21x higher conversion rates!
             </p>
           </div>
           <div style="background: #1B365D; padding: 20px; border-radius: 0 0 8px 8px;">
@@ -658,12 +658,11 @@ serve(async (req) => {
         user_id: bestProvider.provider.facilityUserId,
         facility_id: bestProvider.provider.facilityId,
         type: "lead_received",
-        title: `Re-assigned Lead: ${lead.name}`,
-        message: `A lead has been re-assigned to you because the original provider did not respond.`,
+        title: `🎉 You have a new lead!`,
+        message: `${lead.name} is interested in your facility. Contact them quickly for the best results!`,
         metadata: {
           lead_id: lead.id,
           lead_name: lead.name,
-          reassigned: true,
         },
       });
 

@@ -1122,8 +1122,8 @@ const handler = async (req: Request): Promise<Response> => {
             user_id: assignedUserId,
             facility_id: assignedFacilityId,
             type: "lead_received",
-            title: `New lead from ${sanitizedName}`,
-            message: `${sanitizedName} is interested in ${assignedFacilityName}. They prefer to be contacted via ${body.preferredContact}.`,
+            title: `🎉 You have a new lead!`,
+            message: `${sanitizedName} is interested in ${assignedFacilityName}. Contact them quickly for the best results!`,
             metadata: {
               lead_id: lead.id,
               lead_name: sanitizedName,

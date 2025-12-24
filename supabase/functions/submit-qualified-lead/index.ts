@@ -1946,8 +1946,8 @@ const handler = async (req: Request): Promise<Response> => {
           user_id: primaryFacilityUserId,
           facility_id: primaryFacilityId,
           type: "lead_received",
-          title: `New ${leadExclusivity === 'exclusive' ? 'exclusive' : 'shared'} lead from ${leadData.name}`,
-          message: `${leadData.name} is seeking ${leadData.levelOfCare} care. They prefer to be contacted via ${leadData.preferredContact}.`,
+          title: `🎉 You have a new lead!`,
+          message: `${leadData.name} is seeking ${leadData.levelOfCare} care. Contact them quickly for the best results!`,
           metadata: {
             lead_id: lead.id,
             lead_name: leadData.name,
@@ -1971,8 +1971,8 @@ const handler = async (req: Request): Promise<Response> => {
           user_id: secondaryFacilityUserId,
           facility_id: secondaryFacilityId,
           type: "lead_received",
-          title: `New shared lead from ${leadData.name}`,
-          message: `${leadData.name} is seeking ${leadData.levelOfCare} care. This lead has been shared with one other provider.`,
+          title: `🎉 You have a new lead!`,
+          message: `${leadData.name} is seeking ${leadData.levelOfCare} care. Contact them quickly for the best results!`,
           metadata: {
             lead_id: lead.id,
             lead_name: leadData.name,

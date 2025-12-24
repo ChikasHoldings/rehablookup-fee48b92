@@ -747,21 +747,13 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                   )}
                 </div>
 
-                {/* Additional Info */}
-                {(lead.assignment_reason || lead.qualification_reason) && (
+                {/* Qualification Info - only show qualification reason, not assignment reason */}
+                {lead.qualification_reason && (
                   <div className="mt-3 space-y-2">
-                    {lead.assignment_reason && (
-                      <div className="p-3 rounded-lg bg-muted/40">
-                        <p className="text-xs text-muted-foreground mb-1">Assignment Reason</p>
-                        <p className="text-sm text-foreground">{lead.assignment_reason}</p>
-                      </div>
-                    )}
-                    {lead.qualification_reason && (
-                      <div className="p-3 rounded-lg bg-muted/40">
-                        <p className="text-xs text-muted-foreground mb-1">Qualification Reason</p>
-                        <p className="text-sm text-foreground">{lead.qualification_reason}</p>
-                      </div>
-                    )}
+                    <div className="p-3 rounded-lg bg-muted/40">
+                      <p className="text-xs text-muted-foreground mb-1">Qualification Details</p>
+                      <p className="text-sm text-foreground">{lead.qualification_reason}</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -782,7 +774,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                 </div>
                 {lead.assigned_at && (
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Assigned</span>
+                    <span className="text-muted-foreground">Received</span>
                     <span className="font-medium text-foreground">{format(new Date(lead.assigned_at), "MMM d, yyyy 'at' h:mm a")}</span>
                   </div>
                 )}

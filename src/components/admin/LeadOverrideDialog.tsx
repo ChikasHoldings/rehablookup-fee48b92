@@ -180,10 +180,10 @@ export const LeadOverrideDialog = forwardRef<HTMLDivElement, LeadOverrideDialogP
         await supabase.from("provider_notifications").insert({
           user_id: facilityData.user_id,
           facility_id: selectedFacilityId,
-          type: "new_lead",
-          title: "New Lead Assigned",
-          message: `A new lead (${lead.name}) has been manually assigned to your facility by an admin.`,
-          metadata: { lead_id: lead.id, manual_assignment: true },
+          type: "lead_received",
+          title: `🎉 You have a new lead!`,
+          message: `${lead.name} is interested in your facility. Respond quickly for the best results!`,
+          metadata: { lead_id: lead.id },
         });
       }
 
