@@ -23,6 +23,8 @@ import { cn } from '@/lib/utils';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
+import { RequestReviewSection } from '@/components/provider/reviews/RequestReviewSection';
+import { GoogleReviewsImportSection } from '@/components/provider/reviews/GoogleReviewsImportSection';
 
 export default function ProviderReviews() {
   const { 
@@ -129,7 +131,18 @@ export default function ProviderReviews() {
         </div>
       </div>
 
-      {/* Stats Cards - use filtered stats */}
+      {/* Request Reviews & Import Google Reviews */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <RequestReviewSection 
+          facilityId={facilityFilter !== "all" ? facilityFilter : facilities[0]?.id || null}
+          facilityName={facilityFilter !== "all" ? facilities.find(f => f.id === facilityFilter)?.name : facilities[0]?.name}
+        />
+        <GoogleReviewsImportSection 
+          facilityId={facilityFilter !== "all" ? facilityFilter : facilities[0]?.id || null}
+        />
+      </div>
+
+      {/* Stats Cards */}
       <ReviewStatsCards stats={filteredStats} />
 
       {/* Reviews Tabs */}

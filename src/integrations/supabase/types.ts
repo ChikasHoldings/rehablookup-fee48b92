@@ -1934,6 +1934,69 @@ export type Database = {
           },
         ]
       }
+      review_requests: {
+        Row: {
+          clicked_at: string | null
+          created_at: string
+          facility_id: string
+          id: string
+          opened_at: string | null
+          recipient_email: string
+          recipient_name: string
+          resend_id: string | null
+          review_submitted_at: string | null
+          sender_user_id: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string
+          facility_id: string
+          id?: string
+          opened_at?: string | null
+          recipient_email: string
+          recipient_name: string
+          resend_id?: string | null
+          review_submitted_at?: string | null
+          sender_user_id: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string
+          facility_id?: string
+          id?: string
+          opened_at?: string | null
+          recipient_email?: string
+          recipient_name?: string
+          resend_id?: string | null
+          review_submitted_at?: string | null
+          sender_user_id?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_requests_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_requests_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_responses: {
         Row: {
           created_at: string | null

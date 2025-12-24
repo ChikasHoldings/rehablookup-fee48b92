@@ -203,3 +203,6 @@ verify_jwt = false
 
 [functions.admin-delete-provider]
 verify_jwt = true
+
+[functions.send-review-request]
+verify_jwt = true
