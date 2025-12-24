@@ -13,7 +13,8 @@ import {
   MapPin,
   Send,
   Edit2,
-  Trash2
+  Trash2,
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -22,6 +23,7 @@ import { ProviderReview } from '@/hooks/useProviderReviews';
 
 interface ProviderReviewCardProps {
   review: ProviderReview;
+  showFacility?: boolean;
   onSubmitResponse: (reviewId: string, text: string) => Promise<{ error: any }>;
   onUpdateResponse: (responseId: string, text: string) => Promise<{ error: any }>;
   onDeleteResponse: (responseId: string) => Promise<{ error: any }>;
@@ -29,7 +31,8 @@ interface ProviderReviewCardProps {
 }
 
 export const ProviderReviewCard = memo(function ProviderReviewCard({ 
-  review, 
+  review,
+  showFacility,
   onSubmitResponse, 
   onUpdateResponse, 
   onDeleteResponse,
@@ -131,6 +134,13 @@ export const ProviderReviewCard = memo(function ProviderReviewCard({
               </div>
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Facility Badge */}
+              {showFacility && review.facility_name && (
+                <Badge variant="outline" className="text-xs border-primary/30 bg-primary/5 text-primary font-medium">
+                  <Building2 className="h-3 w-3 mr-1" />
+                  {review.facility_name.length > 15 ? review.facility_name.slice(0, 15) + "..." : review.facility_name}
+                </Badge>
+              )}
               {review.dispute && (
                 <Badge 
                   variant={review.dispute.status === 'pending' ? 'destructive' : 'secondary'}

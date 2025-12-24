@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSelectedFacility } from '@/contexts/SelectedFacilityContext';
+import { useProviderFacilities } from './useProviderFacilities';
 
 export interface ProviderReview {
   id: string;
@@ -20,6 +20,10 @@ export interface ProviderReview {
   reviewer_state?: string;
   response?: ReviewResponse | null;
   dispute?: ReviewDispute | null;
+  // Facility info for centralized view
+  facility_name?: string;
+  facility_city?: string;
+  facility_state?: string;
 }
 
 export interface ReviewResponse {
@@ -55,14 +59,24 @@ export interface ReviewStats {
 }
 
 export function useProviderReviews() {
-  const { selectedFacility } = useSelectedFacility();
+  const { facilities } = useProviderFacilities();
   const [reviews, setReviews] = useState<ProviderReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const facilityId = selectedFacility?.id;
+  // Get all facility IDs
+  const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
+  
+  // Create facility lookup map
+  const facilityMap = useMemo(() => {
+    const map = new Map<string, { name: string; city: string; state: string }>();
+    facilities.forEach(f => {
+      map.set(f.id, { name: f.name, city: f.city, state: f.state });
+    });
+    return map;
+  }, [facilities]);
 
   const fetchReviews = useCallback(async () => {
-    if (!facilityId) {
+    if (facilityIds.length === 0) {
       setReviews([]);
       setIsLoading(false);
       return;
@@ -76,17 +90,17 @@ export function useProviderReviews() {
         supabase
           .from('facility_reviews')
           .select('*')
-          .eq('facility_id', facilityId)
+          .in('facility_id', facilityIds)
           .eq('status', 'approved')
           .order('created_at', { ascending: false }),
         supabase
           .from('review_responses')
           .select('*')
-          .eq('facility_id', facilityId),
+          .in('facility_id', facilityIds),
         supabase
           .from('review_disputes')
           .select('*')
-          .eq('facility_id', facilityId)
+          .in('facility_id', facilityIds)
       ]);
 
       if (reviewsResult.error) {
@@ -116,6 +130,7 @@ export function useProviderReviews() {
         const profile = profileMap.get(review.user_id);
         const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || 'Anonymous';
         const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
+        const facilityInfo = facilityMap.get(review.facility_id);
         
         return {
           ...review,
@@ -126,7 +141,11 @@ export function useProviderReviews() {
           reviewer_city: profile?.city || null,
           reviewer_state: profile?.state || null,
           response: responseMap.get(review.id) || null,
-          dispute: disputeMap.get(review.id) || null
+          dispute: disputeMap.get(review.id) || null,
+          // Add facility info
+          facility_name: facilityInfo?.name,
+          facility_city: facilityInfo?.city,
+          facility_state: facilityInfo?.state,
         };
       });
 
@@ -136,7 +155,7 @@ export function useProviderReviews() {
     } finally {
       setIsLoading(false);
     }
-  }, [facilityId]);
+  }, [facilityIds, facilityMap]);
 
   useEffect(() => {
     fetchReviews();
@@ -155,7 +174,8 @@ export function useProviderReviews() {
   }, [reviews]);
 
   const submitResponse = useCallback(async (reviewId: string, responseText: string) => {
-    if (!facilityId) return { error: new Error('No facility selected') };
+    const review = reviews.find(r => r.id === reviewId);
+    if (!review) return { error: new Error('Review not found') };
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: new Error('Not authenticated') };
@@ -164,7 +184,7 @@ export function useProviderReviews() {
       .from('review_responses')
       .insert({
         review_id: reviewId,
-        facility_id: facilityId,
+        facility_id: review.facility_id,
         responder_user_id: user.id,
         response_text: responseText.trim()
       })
@@ -173,23 +193,20 @@ export function useProviderReviews() {
 
     if (!error) {
       // Notify seeker about response
-      const review = reviews.find(r => r.id === reviewId);
-      if (review) {
-        supabase.functions.invoke('send-review-notification', {
-          body: {
-            type: 'review_response',
-            reviewId,
-            facilityId,
-            seekerId: review.user_id,
-            responseText: responseText.trim(),
-          }
-        }).catch(err => console.error('Failed to send response notification:', err));
-      }
+      supabase.functions.invoke('send-review-notification', {
+        body: {
+          type: 'review_response',
+          reviewId,
+          facilityId: review.facility_id,
+          seekerId: review.user_id,
+          responseText: responseText.trim(),
+        }
+      }).catch(err => console.error('Failed to send response notification:', err));
       fetchReviews();
     }
 
     return { data, error };
-  }, [facilityId, fetchReviews, reviews]);
+  }, [reviews, fetchReviews]);
 
   const updateResponse = useCallback(async (responseId: string, responseText: string) => {
     const { data, error } = await supabase
@@ -220,7 +237,8 @@ export function useProviderReviews() {
   }, [fetchReviews]);
 
   const flagReview = useCallback(async (reviewId: string, reason: string, details?: string) => {
-    if (!facilityId) return { error: new Error('No facility selected') };
+    const review = reviews.find(r => r.id === reviewId);
+    if (!review) return { error: new Error('Review not found') };
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: new Error('Not authenticated') };
@@ -229,7 +247,7 @@ export function useProviderReviews() {
       .from('review_disputes')
       .insert({
         review_id: reviewId,
-        facility_id: facilityId,
+        facility_id: review.facility_id,
         disputed_by: user.id,
         reason,
         details: details?.trim() || null
@@ -248,7 +266,7 @@ export function useProviderReviews() {
         body: {
           type: 'review_disputed',
           reviewId,
-          facilityId,
+          facilityId: review.facility_id,
           providerId: user.id,
           reason,
           details: details?.trim() || null,
@@ -259,10 +277,11 @@ export function useProviderReviews() {
     }
 
     return { error: updateError };
-  }, [facilityId, fetchReviews]);
+  }, [reviews, fetchReviews]);
 
   return {
     reviews,
+    facilities,
     isLoading,
     stats,
     submitResponse,

@@ -1,9 +1,15 @@
 import { useState, useMemo } from 'react';
 import { useProviderReviews, ProviderReview } from '@/hooks/useProviderReviews';
-import { useSelectedFacility } from '@/contexts/SelectedFacilityContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   MessageSquare, 
   Clock, 
@@ -17,12 +23,11 @@ import { cn } from '@/lib/utils';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
-import { GoogleReviewsSection } from '@/components/provider/GoogleReviewsSection';
 
 export default function ProviderReviews() {
-  const { selectedFacility } = useSelectedFacility();
   const { 
     reviews, 
+    facilities,
     isLoading, 
     stats, 
     submitResponse, 
@@ -33,17 +38,32 @@ export default function ProviderReviews() {
   } = useProviderReviews();
   
   const [selectedTab, setSelectedTab] = useState('all');
+  const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [selectedReviewForDispute, setSelectedReviewForDispute] = useState<ProviderReview | null>(null);
-  const [googleReviewsExpanded, setGoogleReviewsExpanded] = useState(false);
 
   const filteredReviews = useMemo(() => {
     return reviews.filter(r => {
+      // Facility filter
+      if (facilityFilter !== "all" && r.facility_id !== facilityFilter) return false;
+      // Tab filter
       if (selectedTab === 'needs-response') return !r.response;
       if (selectedTab === 'disputed') return r.dispute;
       return true;
     });
-  }, [reviews, selectedTab]);
+  }, [reviews, selectedTab, facilityFilter]);
+
+  // Calculate filtered stats
+  const filteredStats = useMemo(() => {
+    const filtered = facilityFilter === "all" ? reviews : reviews.filter(r => r.facility_id === facilityFilter);
+    const totalReviews = filtered.length;
+    const averageRating = totalReviews > 0
+      ? Math.round((filtered.reduce((sum, r) => sum + r.rating, 0) / totalReviews) * 10) / 10
+      : null;
+    const needsResponse = filtered.filter(r => !r.response).length;
+    const disputed = filtered.filter(r => r.dispute && r.dispute.status === 'pending').length;
+    return { totalReviews, averageRating, needsResponse, disputed };
+  }, [reviews, facilityFilter]);
 
   const handleFlagReview = (review: ProviderReview) => {
     setSelectedReviewForDispute(review);
@@ -54,13 +74,13 @@ export default function ProviderReviews() {
     return flagReview(reviewId, reason, details);
   };
 
-  if (!selectedFacility) {
+  if (facilities.length === 0 && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">
         <Building2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
-        <h2 className="text-xl font-semibold text-foreground mb-2">No Facility Selected</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-2">No Facilities Found</h2>
         <p className="text-muted-foreground text-center max-w-md">
-          Please select a facility from the dropdown to view and manage reviews.
+          You need to have at least one facility to view reviews.
         </p>
       </div>
     );
@@ -72,30 +92,45 @@ export default function ProviderReviews() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">Reviews</h1>
-          <p className="text-muted-foreground mt-1 truncate">
-            Manage reviews for {selectedFacility.name}
+          <p className="text-muted-foreground mt-1">
+            {facilities.length > 1 
+              ? `Manage reviews across ${facilities.length} locations`
+              : facilities[0]?.name ? `Manage reviews for ${facilities[0].name}` : 'Manage your reviews'
+            }
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={refetch} 
-          disabled={isLoading}
-          className="shrink-0 self-start sm:self-auto"
-        >
-          <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Facility Filter */}
+          {facilities.length > 1 && (
+            <Select value={facilityFilter} onValueChange={setFacilityFilter}>
+              <SelectTrigger className={cn("w-[180px]", facilityFilter !== "all" && "border-primary text-primary")}>
+                <Building2 className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="All Locations" />
+              </SelectTrigger>
+              <SelectContent className="bg-background">
+                <SelectItem value="all">All Locations</SelectItem>
+                {facilities.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    <span className="truncate">{f.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button 
+            variant="outline" 
+            onClick={refetch} 
+            disabled={isLoading}
+            className="shrink-0"
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <ReviewStatsCards stats={stats} />
-
-      {/* Google Reviews Section */}
-      <GoogleReviewsSection
-        facilityId={selectedFacility.id}
-        expanded={googleReviewsExpanded}
-        onToggle={() => setGoogleReviewsExpanded(!googleReviewsExpanded)}
-      />
+      {/* Stats Cards - use filtered stats */}
+      <ReviewStatsCards stats={filteredStats} />
 
       {/* Reviews Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
@@ -105,25 +140,25 @@ export default function ProviderReviews() {
               <MessageSquare className="h-4 w-4" />
               <span>All</span>
               <span className="bg-muted px-1.5 py-0.5 rounded text-xs">
-                {reviews.length}
+                {facilityFilter === "all" ? reviews.length : reviews.filter(r => r.facility_id === facilityFilter).length}
               </span>
             </TabsTrigger>
             <TabsTrigger value="needs-response" className="flex-1 sm:flex-none gap-1.5 text-xs sm:text-sm">
               <Clock className="h-4 w-4" />
               <span className="hidden sm:inline">Needs Response</span>
               <span className="sm:hidden">Pending</span>
-              {stats.needsResponse > 0 && (
+              {filteredStats.needsResponse > 0 && (
                 <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded text-xs">
-                  {stats.needsResponse}
+                  {filteredStats.needsResponse}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger value="disputed" className="flex-1 sm:flex-none gap-1.5 text-xs sm:text-sm">
               <Flag className="h-4 w-4" />
               <span>Disputed</span>
-              {stats.disputed > 0 && (
+              {filteredStats.disputed > 0 && (
                 <span className="bg-red-500 text-white px-1.5 py-0.5 rounded text-xs">
-                  {stats.disputed}
+                  {filteredStats.disputed}
                 </span>
               )}
             </TabsTrigger>
@@ -170,6 +205,7 @@ export default function ProviderReviews() {
                 <ProviderReviewCard
                   key={review.id}
                   review={review}
+                  showFacility={facilities.length > 1}
                   onSubmitResponse={submitResponse}
                   onUpdateResponse={updateResponse}
                   onDeleteResponse={deleteResponse}
