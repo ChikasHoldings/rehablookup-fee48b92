@@ -95,6 +95,9 @@ export const AdminAuditActions = {
   SUBSCRIPTION_OVERRIDE: "subscription_override",
   SUBSCRIPTION_CANCELED: "subscription_canceled",
   
+  // Provider deletion
+  PROVIDER_DELETED: "provider_deleted",
+  
   // Featured placement actions
   FEATURED_PINNED: "featured_pinned",
   FEATURED_UNPINNED: "featured_unpinned",
