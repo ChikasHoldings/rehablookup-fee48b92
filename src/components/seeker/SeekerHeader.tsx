@@ -387,7 +387,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm truncate">{userName || "User"}</p>
-                      <p className="text-xs text-muted-foreground">Seeker Account</p>
+                      <p className="text-xs text-muted-foreground">My Account</p>
                     </div>
                   </div>
                 </div>
