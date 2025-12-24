@@ -815,6 +815,8 @@ export default function ProviderLeadsPage() {
                           createdAt={lead.created_at}
                           urgency={lead.urgency}
                           source={lead.source}
+                          facilityName={lead.facility_name}
+                          showFacility={facilities.length > 1}
                           isSelected={selected}
                           onClick={() => handleSelectLead(lead)}
                         />
