@@ -185,8 +185,8 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
               },
             });
           } else {
-            toast.success("New Lead Assigned", {
-              description: `${lead.name || "A lead"} was automatically assigned`,
+            toast.success("New Lead Received", {
+              description: `${lead.name || "A new lead"} is ready for follow-up`,
             });
           }
         }
