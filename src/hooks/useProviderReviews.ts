@@ -222,6 +222,8 @@ export function useProviderReviews() {
   }, [reviews, fetchReviews]);
 
   const updateResponse = useCallback(async (responseId: string, responseText: string) => {
+    console.log('[updateResponse] Updating response:', responseId);
+    
     const { data, error } = await supabase
       .from('review_responses')
       .update({ response_text: responseText.trim() })
@@ -229,24 +231,32 @@ export function useProviderReviews() {
       .select()
       .single();
 
-    if (!error) {
-      fetchReviews();
+    if (error) {
+      console.error('[updateResponse] Error:', error);
+      return { data: null, error };
     }
 
-    return { data, error };
+    console.log('[updateResponse] Response updated successfully');
+    fetchReviews();
+    return { data, error: null };
   }, [fetchReviews]);
 
   const deleteResponse = useCallback(async (responseId: string) => {
+    console.log('[deleteResponse] Deleting response:', responseId);
+    
     const { error } = await supabase
       .from('review_responses')
       .delete()
       .eq('id', responseId);
 
-    if (!error) {
-      fetchReviews();
+    if (error) {
+      console.error('[deleteResponse] Error:', error);
+      return { error };
     }
 
-    return { error };
+    console.log('[deleteResponse] Response deleted successfully');
+    fetchReviews();
+    return { error: null };
   }, [fetchReviews]);
 
   const flagReview = useCallback(async (reviewId: string, reason: string, details?: string) => {

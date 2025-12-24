@@ -71,14 +71,21 @@ export const ProviderReviewCard = memo(function ProviderReviewCard({
   const handleUpdate = useCallback(async () => {
     if (!editText.trim() || !review.response) return;
     setIsSubmitting(true);
-    const { error } = await onUpdateResponse(review.response.id, editText);
-    setIsSubmitting(false);
-    if (error) {
-      toast.error('Failed to update response');
-    } else {
-      toast.success('Response updated');
-      setIsEditing(false);
-      setEditText('');
+    try {
+      const { error } = await onUpdateResponse(review.response.id, editText);
+      if (error) {
+        console.error('[ProviderReviewCard] Update error:', error);
+        toast.error(error.message || 'Failed to update response');
+      } else {
+        toast.success('Response updated');
+        setIsEditing(false);
+        setEditText('');
+      }
+    } catch (err) {
+      console.error('[ProviderReviewCard] Unexpected update error:', err);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
     }
   }, [editText, review.response, onUpdateResponse]);
 
