@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Star, ExternalLink, Info, Loader2, Save, AlertCircle, CheckCircle2, HelpCircle } from "lucide-react";
+import { Star, ExternalLink, Info, Loader2, Save, AlertCircle, CheckCircle2, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface GoogleReviewsImportSectionProps {
   facilityId: string | null;
@@ -60,6 +65,7 @@ export function GoogleReviewsImportSection({ facilityId }: GoogleReviewsImportSe
   const { toast } = useToast();
   const { reviewsConfig, isLoading, saveReviews, isSaving } = useGoogleReviews(facilityId || '');
 
+  const [isOpen, setIsOpen] = useState(false);
   const [googleUrl, setGoogleUrl] = useState("");
   const [rating, setRating] = useState("");
   const [reviewCount, setReviewCount] = useState("");
@@ -130,35 +136,46 @@ export function GoogleReviewsImportSection({ facilityId }: GoogleReviewsImportSe
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600">
-            <Star className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <CardTitle className="text-base font-semibold">Import Google Reviews</CardTitle>
-              {reviewsConfig?.google_rating && (
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  {reviewsConfig.google_rating.toFixed(1)}
-                </Badge>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-4 cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600">
+                  <Star className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <CardTitle className="text-base font-semibold">Import Google Reviews</CardTitle>
+                    {reviewsConfig?.google_rating && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        {reviewsConfig.google_rating.toFixed(1)}
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription className="text-xs mt-0.5">
+                    Display your Google rating on your facility profile
+                  </CardDescription>
+                </div>
+              </div>
+              {isOpen ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0" />
               )}
             </div>
-            <CardDescription className="text-xs mt-0.5">
-              Display your Google rating on your facility profile
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
+          </CardHeader>
+        </CollapsibleTrigger>
 
-      <CardContent className="space-y-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
+        <CollapsibleContent>
+          <CardContent className="space-y-4 pt-0">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
           <>
             {/* Info Box */}
             <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
@@ -353,9 +370,11 @@ export function GoogleReviewsImportSection({ facilityId }: GoogleReviewsImportSe
                 </a>
               </Button>
             )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+            </>
+          )}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
