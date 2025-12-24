@@ -46,6 +46,7 @@ import { usePublicGoogleReviews } from "@/hooks/useGoogleReviews";
 import { cn } from "@/lib/utils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
+import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 
 interface FacilityData {
   id: string;
@@ -1009,6 +1010,11 @@ const CenterProfile = () => {
 
               {/* Google Reviews - shown below trust badges */}
               <GoogleReviewsDisplay facilityId={facility.id} />
+
+              {/* Our Team Section */}
+              <div className="mt-6">
+                <FacilityStaffSection facilityId={facility.id} />
+              </div>
 
               {/* Community Reviews Section */}
               <div className="mt-6">
