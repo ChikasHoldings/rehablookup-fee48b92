@@ -200,3 +200,6 @@ verify_jwt = false
 
 [functions.send-sms-notification]
 verify_jwt = false
+
+[functions.admin-delete-provider]
+verify_jwt = true

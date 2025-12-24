@@ -38,6 +38,7 @@ import {
   Award,
   History,
   Gauge,
+  Trash2,
 } from "lucide-react";
 import { ProviderActivityTimeline } from "@/components/admin/ProviderActivityTimeline";
 import { ManageLeadCapDialog } from "@/components/admin/ManageLeadCapDialog";
@@ -211,9 +212,11 @@ export default function AdminProviders() {
   
   // Confirmation dialog state
   const [confirmAction, setConfirmAction] = useState<{
-    action: "suspend" | "reactivate" | "reject";
+    action: "suspend" | "reactivate" | "reject" | "delete";
     provider: Facility;
   } | null>(null);
+  const [deleteWithUser, setDeleteWithUser] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Lead cap management state
   const [showLeadCapDialog, setShowLeadCapDialog] = useState(false);
@@ -715,7 +718,12 @@ export default function AdminProviders() {
     setConfirmAction({ action: "reactivate", provider });
   };
 
-  const handleConfirmAction = () => {
+  const handleDelete = (provider: Facility) => {
+    setDeleteWithUser(false);
+    setConfirmAction({ action: "delete", provider });
+  };
+
+  const handleConfirmAction = async () => {
     if (!confirmAction) return;
     
     if (confirmAction.action === "suspend") {
@@ -724,16 +732,39 @@ export default function AdminProviders() {
         updates: { suspended: true },
         actionType: "suspended",
       });
+      setConfirmAction(null);
+      setShowDetailDialog(false);
     } else if (confirmAction.action === "reactivate") {
       updateProvider.mutate({
         id: confirmAction.provider.id,
         updates: { suspended: false, status: "approved" },
         actionType: "reactivated",
       });
+      setConfirmAction(null);
+      setShowDetailDialog(false);
+    } else if (confirmAction.action === "delete") {
+      setIsDeleting(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("admin-delete-provider", {
+          body: {
+            facilityId: confirmAction.provider.id,
+            deleteUser: deleteWithUser,
+          },
+        });
+
+        if (error) throw error;
+
+        toast.success(`Provider "${confirmAction.provider.name}" deleted successfully`);
+        invalidateProviderQueries();
+        setConfirmAction(null);
+        setShowDetailDialog(false);
+      } catch (error) {
+        console.error("Delete provider failed:", error);
+        toast.error("Failed to delete provider");
+      } finally {
+        setIsDeleting(false);
+      }
     }
-    
-    setConfirmAction(null);
-    setShowDetailDialog(false);
   };
 
   const handleSaveNotes = () => {
@@ -1028,6 +1059,11 @@ export default function AdminProviders() {
                             Suspend Provider
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleDelete(provider)} className="text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Provider
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -1942,7 +1978,7 @@ export default function AdminProviders() {
       </Dialog>
 
       {/* Confirmation Dialog for Destructive Actions */}
-      <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
+      <AlertDialog open={!!confirmAction} onOpenChange={() => !isDeleting && setConfirmAction(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -1958,33 +1994,87 @@ export default function AdminProviders() {
                   Reactivate Provider
                 </>
               )}
+              {confirmAction?.action === "delete" && (
+                <>
+                  <Trash2 className="h-5 w-5 text-destructive" />
+                  Delete Provider Permanently
+                </>
+              )}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmAction?.action === "suspend" && (
-                <>
-                  Are you sure you want to suspend <strong>{confirmAction.provider.name}</strong>?
-                  Their listing will be hidden from search results and they will not receive any leads.
-                </>
-              )}
-              {confirmAction?.action === "reactivate" && (
-                <>
-                  Reactivate <strong>{confirmAction?.provider.name}</strong>?
-                  Their listing will be visible again and they can receive leads.
-                </>
-              )}
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                {confirmAction?.action === "suspend" && (
+                  <p>
+                    Are you sure you want to suspend <strong>{confirmAction.provider.name}</strong>?
+                    Their listing will be hidden from search results and they will not receive any leads.
+                  </p>
+                )}
+                {confirmAction?.action === "reactivate" && (
+                  <p>
+                    Reactivate <strong>{confirmAction?.provider.name}</strong>?
+                    Their listing will be visible again and they can receive leads.
+                  </p>
+                )}
+                {confirmAction?.action === "delete" && (
+                  <>
+                    <p>
+                      Are you sure you want to <strong className="text-destructive">permanently delete</strong>{" "}
+                      <strong>{confirmAction.provider.name}</strong>?
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      This will permanently remove the facility and all associated data including:
+                    </p>
+                    <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                      <li>All leads and lead history</li>
+                      <li>Reviews and ratings</li>
+                      <li>Staff profiles</li>
+                      <li>Analytics and interaction data</li>
+                      <li>All facility settings and documents</li>
+                    </ul>
+                    <div className="flex items-center space-x-2 pt-2">
+                      <Checkbox
+                        id="deleteUser"
+                        checked={deleteWithUser}
+                        onCheckedChange={(checked) => setDeleteWithUser(checked === true)}
+                      />
+                      <label
+                        htmlFor="deleteUser"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Also delete the provider's user account (if no other facilities)
+                      </label>
+                    </div>
+                    <p className="text-sm font-semibold text-destructive">
+                      This action cannot be undone.
+                    </p>
+                  </>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmAction}
               className={cn(
                 confirmAction?.action === "suspend" && "bg-destructive hover:bg-destructive/90",
-                confirmAction?.action === "reactivate" && "bg-emerald-600 hover:bg-emerald-700"
+                confirmAction?.action === "reactivate" && "bg-emerald-600 hover:bg-emerald-700",
+                confirmAction?.action === "delete" && "bg-destructive hover:bg-destructive/90"
               )}
-              disabled={updateProvider.isPending}
+              disabled={updateProvider.isPending || isDeleting}
             >
-              {updateProvider.isPending ? "Processing..." : "Confirm"}
+              {isDeleting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : updateProvider.isPending ? (
+                "Processing..."
+              ) : confirmAction?.action === "delete" ? (
+                "Delete Permanently"
+              ) : (
+                "Confirm"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
