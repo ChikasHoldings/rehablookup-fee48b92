@@ -150,7 +150,7 @@ function generateWelcomeEmail(
               </table>
   `;
 
-  email += ctaButton("Go to Dashboard", "https://rehablookup.com/provider-dashboard", plan);
+  email += ctaButton("Go to Dashboard", "https://rehablookup.com/provider/dashboard", plan);
   email += emailBodyEnd();
   email += emailFooter({ includeNotificationSettings: false });
   email += emailEnd();
