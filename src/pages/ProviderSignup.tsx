@@ -477,12 +477,12 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if email fails
       }
 
-      // 13. Redirect to plan selection page
+      // 13. Redirect to dashboard
       toast({
         title: "Welcome to RehabLookup!",
-        description: "Your account has been created. Now choose your plan.",
+        description: "Your account has been created. Your listing is now live!",
       });
-      navigate("/provider/choose-plan");
+      navigate("/provider/dashboard");
     } catch (error: any) {
       console.error("Signup error:", error);
       toast({
