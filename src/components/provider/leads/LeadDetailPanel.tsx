@@ -51,7 +51,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeadScoreBadge } from "./LeadScoreBadge";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
-import { SharedLeadNudge } from "./SharedLeadNudge";
+
 import { cn } from "@/lib/utils";
 import { calculateLeadScore } from "@/lib/leadScoring";
 
@@ -376,10 +376,6 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
           )}
         </div>
 
-        {/* Soft upgrade nudge for shared leads - Professional only, per spec */}
-        {exclusivity === 'shared' && (
-          <SharedLeadNudge className="mt-3 pt-3 border-t border-border/50" />
-        )}
       </div>
 
       {/* Email Dialog */}

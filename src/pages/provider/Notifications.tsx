@@ -58,11 +58,11 @@ const notificationTypeIcons: Record<string, React.ReactNode> = {
 };
 
 const notificationTypeLabels: Record<string, string> = {
-  lead_received: "New Lead",
-  lead_status_changed: "Lead Update",
+  lead_received: "New Inquiry",
+  lead_status_changed: "Inquiry Update",
   listing_approved: "Listing",
-  subscription_updated: "Subscription",
-  lead_limit_warning: "Limit Warning",
+  subscription_updated: "Credits",
+  lead_limit_warning: "Low Credits",
   system: "System",
 };
 
@@ -102,9 +102,9 @@ function NotificationItem({
     
     // Type-based routing
     if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
-      navigate("/provider/leads");
+      navigate("/provider/inquiries");
     } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
-      navigate("/provider/billing");
+      navigate("/provider/credits");
     } else if (notification.type === "listing_approved") {
       navigate("/provider/listing");
     }
