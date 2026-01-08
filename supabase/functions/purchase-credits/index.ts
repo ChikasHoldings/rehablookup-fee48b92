@@ -9,10 +9,10 @@ const corsHeaders = {
 
 // Credit package options
 const CREDIT_PACKAGES = [
-  { amountCents: 5000, label: "$50" },
   { amountCents: 10000, label: "$100" },
   { amountCents: 25000, label: "$250" },
   { amountCents: 50000, label: "$500" },
+  { amountCents: 100000, label: "$1,000" },
 ];
 
 serve(async (req) => {
