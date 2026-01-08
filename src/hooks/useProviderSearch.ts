@@ -16,7 +16,7 @@ const NAVIGATION_PAGES: SearchResult[] = [
   { id: "listing", type: "page", title: "My Listing", subtitle: "Edit facility information", url: "/provider/listing" },
   { id: "inquiries", type: "page", title: "Inquiries", subtitle: "View all inquiries", url: "/provider/inquiries" },
   { id: "credits", type: "page", title: "Credits", subtitle: "Purchase & manage credits", url: "/provider/credits" },
-  { id: "unlock-history", type: "page", title: "Unlock History", subtitle: "View unlocked leads", url: "/provider/unlock-history" },
+  { id: "unlock-history", type: "page", title: "Unlock History", subtitle: "View unlocked leads", url: "/provider/settings?tab=unlock-history" },
   { id: "pro-upgrade", type: "page", title: "Pro Upgrade", subtitle: "Get featured placement", url: "/provider/pro-upgrade" },
   { id: "analytics", type: "page", title: "Analytics", subtitle: "Performance metrics", url: "/provider/analytics" },
   { id: "settings", type: "page", title: "Settings", subtitle: "Account preferences", url: "/provider/settings" },

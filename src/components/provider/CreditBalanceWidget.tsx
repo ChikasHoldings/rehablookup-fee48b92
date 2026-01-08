@@ -104,7 +104,7 @@ export function CreditBalanceWidget({
             
             {transactions.length > 3 && (
               <Button variant="ghost" size="sm" asChild className="w-full mt-2">
-                <Link to="/provider/unlock-history">
+                <Link to="/provider/settings?tab=unlock-history">
                   View all transactions
                 </Link>
               </Button>

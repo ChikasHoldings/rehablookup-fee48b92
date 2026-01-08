@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -24,12 +24,14 @@ import {
   Clock,
   BellOff,
   HelpCircle,
-  RotateCcw
+  RotateCcw,
+  History
 } from "lucide-react";
 import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
 import { formatPhoneNumber, isValidPhoneNumber } from "@/lib/phoneUtils";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
 import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
+import { UnlockHistoryTab } from "@/components/provider/settings/UnlockHistoryTab";
 import { useLogActivity } from "@/hooks/useActivityLog";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -130,6 +132,7 @@ const formatPhone = (phone: string): string => {
 
 export default function ProviderSettingsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: providerData, isLoading } = useProviderData();
   const [localProfile, setLocalProfile] = useState<ProfileFormData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -171,9 +174,17 @@ export default function ProviderSettingsPage() {
   const [notificationsSaved, setNotificationsSaved] = useState(false);
   
   // Tab state & unsaved changes
-  const [activeTab, setActiveTab] = useState("profile");
+  const urlTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(urlTab || "profile");
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
+
+  // Sync tab from URL
+  useEffect(() => {
+    if (urlTab && ["profile", "security", "notifications", "sessions", "activity", "unlock-history"].includes(urlTab)) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -774,6 +785,13 @@ export default function ProviderSettingsPage() {
               >
                 <Activity className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                 Activity
+              </TabsTrigger>
+              <TabsTrigger 
+                value="unlock-history" 
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
+              >
+                <History className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
+                Unlock History
               </TabsTrigger>
             </TabsList>
           </div>
@@ -1577,6 +1595,11 @@ export default function ProviderSettingsPage() {
           {/* Activity Tab */}
           <TabsContent value="activity" className="mt-6">
             <ActivityLogTab />
+          </TabsContent>
+
+          {/* Unlock History Tab */}
+          <TabsContent value="unlock-history" className="mt-6">
+            <UnlockHistoryTab />
           </TabsContent>
         </Tabs>
       </div>

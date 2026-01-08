@@ -106,7 +106,7 @@ import ProviderHelpPage from "./pages/provider/Help";
 import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
 import ProviderImageGuidelines from "./pages/provider/ImageGuidelines";
 import ProviderAddLocation from "./pages/provider/AddLocation";
-import ProviderUnlockHistoryPage from "./pages/provider/UnlockHistory";
+
 import ProviderProUpgradePage from "./pages/provider/ProUpgrade";
 import ProviderPlacementNetworkPage from "./pages/provider/PlacementNetwork";
 
@@ -235,7 +235,7 @@ const App = () => (
               <Route path="leads" element={<Navigate to="/provider/inquiries" replace />} />
               <Route path="credits" element={<ProviderCreditsPage />} />
               <Route path="billing" element={<Navigate to="/provider/credits" replace />} />
-              <Route path="unlock-history" element={<ProviderUnlockHistoryPage />} />
+              <Route path="unlock-history" element={<Navigate to="/provider/settings?tab=unlock-history" replace />} />
               <Route path="pro-upgrade" element={<ProviderProUpgradePage />} />
               <Route path="placement" element={<ProviderPlacementNetworkPage />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />

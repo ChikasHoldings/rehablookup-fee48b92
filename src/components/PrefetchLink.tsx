@@ -9,7 +9,6 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/provider/inquiries": () => import("@/pages/provider/Inquiries"),
   "/provider/analytics": () => import("@/pages/provider/Analytics"),
   "/provider/credits": () => import("@/pages/provider/Credits"),
-  "/provider/unlock-history": () => import("@/pages/provider/UnlockHistory"),
   "/provider/pro-upgrade": () => import("@/pages/provider/ProUpgrade"),
   "/provider/placement": () => import("@/pages/provider/PlacementNetwork"),
   "/provider/settings": () => import("@/pages/provider/Settings"),
