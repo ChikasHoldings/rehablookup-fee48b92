@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useGoogleReviews } from "@/hooks/useGoogleReviews";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useProStatus } from "@/hooks/useProStatus";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import {
@@ -68,10 +68,10 @@ const isValidReviewCount = (value: string): { valid: boolean; error?: string } =
 
 export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleReviewsSectionProps) {
   const { toast } = useToast();
-  const { data: subscription } = useSubscription();
+  const { data: proStatus } = useProStatus(facilityId);
   const { reviewsConfig, isLoading, saveReviews, isSaving } = useGoogleReviews(facilityId);
   
-  const isPaidPlan = subscription?.plan === "professional" || subscription?.plan === "featured";
+  const isPaidPlan = proStatus?.isPro || false;
   
   const [googleUrl, setGoogleUrl] = useState("");
   const [rating, setRating] = useState("");
@@ -179,7 +179,7 @@ export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleR
                   Upgrade to Professional or Featured to display your Google Reviews on your profile.
                 </p>
                 <Button asChild size="sm">
-                  <Link to="/provider/billing">Upgrade Plan</Link>
+                  <Link to="/provider/pro-upgrade">Upgrade to Pro</Link>
                 </Button>
               </div>
             </CardContent>

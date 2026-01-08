@@ -64,7 +64,7 @@ import { FacilityImageUpload } from "@/components/provider/FacilityImageUpload";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
 
-import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useProStatus } from "@/hooks/useProStatus";
 import { cn } from "@/lib/utils";
 import {
   ListingSectionHeader,
@@ -250,12 +250,10 @@ export default function ProviderListingPage() {
   const prevFacilityIdRef = useRef<string | null>(null);
   const { toast } = useToast();
   const { selectedFacility, setHasUnsavedChanges } = useSelectedFacility();
-  const { data: subscription } = useSubscription();
+  const { data: proStatus } = useProStatus(selectedFacility?.id);
   
-  // Get gallery limit based on plan
-  const galleryLimit = subscription?.plan 
-    ? PLAN_DETAILS[subscription.plan]?.gallery_limit || 5 
-    : 5;
+  // Get gallery limit based on Pro status (Pro gets 10, Basic gets 5)
+  const galleryLimit = proStatus?.isPro ? 10 : 5;
 
   // Reset state when facility changes
   useEffect(() => {
