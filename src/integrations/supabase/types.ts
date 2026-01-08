@@ -438,10 +438,14 @@ export type Database = {
       credit_transactions: {
         Row: {
           amount_cents: number
+          base_price_cents: number | null
           created_at: string
           description: string | null
+          discount_amount_cents: number | null
+          discount_applied: boolean | null
           facility_id: string | null
           id: string
+          inquiry_type: string | null
           provider_id: string
           reference_id: string | null
           stripe_payment_intent_id: string | null
@@ -449,10 +453,14 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          base_price_cents?: number | null
           created_at?: string
           description?: string | null
+          discount_amount_cents?: number | null
+          discount_applied?: boolean | null
           facility_id?: string | null
           id?: string
+          inquiry_type?: string | null
           provider_id: string
           reference_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -460,10 +468,14 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          base_price_cents?: number | null
           created_at?: string
           description?: string | null
+          discount_amount_cents?: number | null
+          discount_applied?: boolean | null
           facility_id?: string | null
           id?: string
+          inquiry_type?: string | null
           provider_id?: string
           reference_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -1587,6 +1599,7 @@ export type Database = {
           facility_id: string | null
           follow_up_reminder_sent_at: string | null
           id: string
+          inquiry_type: string | null
           insurance_provider: string | null
           insurance_type: string | null
           ip_hash: string | null
@@ -1598,6 +1611,8 @@ export type Database = {
           phone: string
           preferred_contact: string
           primary_substance: string[] | null
+          provider_responded_at: string | null
+          provider_response_status: string | null
           qualification_reason: string | null
           qualified: boolean | null
           quality_flag: string | null
@@ -1624,6 +1639,7 @@ export type Database = {
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           id?: string
+          inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
           ip_hash?: string | null
@@ -1635,6 +1651,8 @@ export type Database = {
           phone: string
           preferred_contact?: string
           primary_substance?: string[] | null
+          provider_responded_at?: string | null
+          provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
           quality_flag?: string | null
@@ -1661,6 +1679,7 @@ export type Database = {
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
           id?: string
+          inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
           ip_hash?: string | null
@@ -1672,6 +1691,8 @@ export type Database = {
           phone?: string
           preferred_contact?: string
           primary_substance?: string[] | null
+          provider_responded_at?: string | null
+          provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
           quality_flag?: string | null
