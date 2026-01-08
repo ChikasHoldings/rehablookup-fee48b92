@@ -96,17 +96,19 @@ import OutpatientNearMe from "./pages/near-me/OutpatientNearMe";
 import { ProviderShell } from "./components/provider/ProviderShell";
 import ProviderDashboardPage from "./pages/provider/Dashboard";
 import ProviderListingPage from "./pages/provider/Listing";
-import ProviderLeadsPage from "./pages/provider/Leads";
+import ProviderInquiriesPage from "./pages/provider/Inquiries";
 import ProviderReviewsPage from "./pages/provider/Reviews";
 import ProviderAnalyticsPage from "./pages/provider/Analytics";
-import ProviderBillingPage from "./pages/provider/Billing";
+import ProviderCreditsPage from "./pages/provider/Credits";
 import ProviderSettingsPage from "./pages/provider/Settings";
 import ProviderNotificationsPage from "./pages/provider/Notifications";
 import ProviderHelpPage from "./pages/provider/Help";
 import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
 import ProviderImageGuidelines from "./pages/provider/ImageGuidelines";
 import ProviderAddLocation from "./pages/provider/AddLocation";
-import ProviderChoosePlan from "./pages/provider/ChoosePlan";
+import ProviderUnlockHistoryPage from "./pages/provider/UnlockHistory";
+import ProviderProUpgradePage from "./pages/provider/ProUpgrade";
+import ProviderPlacementNetworkPage from "./pages/provider/PlacementNetwork";
 
 // Admin Panel - eagerly load shell, lazy load pages (shell handles its own Suspense)
 import { AdminShell } from "./components/admin/AdminShell";
@@ -229,17 +231,22 @@ const App = () => (
             <Route path="/provider" element={<ProviderShell />}>
               <Route path="dashboard" element={<ProviderDashboardPage />} />
               <Route path="listing" element={<ProviderListingPage />} />
-              <Route path="leads" element={<ProviderLeadsPage />} />
+              <Route path="inquiries" element={<ProviderInquiriesPage />} />
+              <Route path="leads" element={<Navigate to="/provider/inquiries" replace />} />
+              <Route path="credits" element={<ProviderCreditsPage />} />
+              <Route path="billing" element={<Navigate to="/provider/credits" replace />} />
+              <Route path="unlock-history" element={<ProviderUnlockHistoryPage />} />
+              <Route path="pro-upgrade" element={<ProviderProUpgradePage />} />
+              <Route path="placement" element={<ProviderPlacementNetworkPage />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
-              <Route path="billing" element={<ProviderBillingPage />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="notifications" element={<ProviderNotificationsPage />} />
               <Route path="help" element={<ProviderHelpPage />} />
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
               <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
               <Route path="add-location" element={<ProviderAddLocation />} />
-              <Route path="choose-plan" element={<ProviderChoosePlan />} />
+              <Route path="choose-plan" element={<Navigate to="/provider/dashboard" replace />} />
             </Route>
             
             {/* Admin Panel Routes - Nested under admin shell */}
