@@ -77,6 +77,7 @@ const log = (requestId: string, level: "INFO" | "WARN" | "ERROR", step: string, 
 // ============ INTERFACES ============
 interface QualifiedLeadRequest {
   facilityId?: string;
+  inquiryType?: 'request_info' | 'request_callback' | 'placement_match';
   whoSeekingHelp: string;
   locationZip: string;
   locationCityState?: string;
@@ -1677,6 +1678,7 @@ const handler = async (req: Request): Promise<Response> => {
         ip_hash: ipHash,
         email_verified: emailVerified,
         source: leadData.source || (leadData.facilityId ? "Profile Submission" : "Request Help"),
+        inquiry_type: leadData.inquiryType || 'request_info',
         who_seeking_help: leadData.whoSeekingHelp,
         location_zip: leadData.locationZip,
         location_city_state: leadData.locationCityState || null,
@@ -1699,6 +1701,7 @@ const handler = async (req: Request): Promise<Response> => {
         exclusivity: leadExclusivity,
         routing_order: 1,
         shared_with: sharedWithArray,
+        provider_response_status: 'pending',
       })
       .select()
       .single();

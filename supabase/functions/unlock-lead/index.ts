@@ -7,8 +7,49 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Default unlock price in cents ($25)
-const DEFAULT_UNLOCK_PRICE_CENTS = 2500;
+// Unlock pricing per inquiry type (in cents) - defaults if admin settings not found
+const DEFAULT_PRICES: Record<string, number> = {
+  request_info: 3900,      // $39.00
+  request_callback: 4900,  // $49.00
+  placement_match: 9900,   // $99.00
+};
+const DEFAULT_PRO_DISCOUNT_PERCENT = 20;
+
+// Fetch dynamic pricing from platform_settings
+// deno-lint-ignore no-explicit-any
+async function getUnlockPricing(supabase: any): Promise<{
+  prices: Record<string, number>;
+  proDiscountPercent: number;
+}> {
+  const { data: settings } = await supabase
+    .from("platform_settings")
+    .select("setting_key, setting_value")
+    .in("setting_key", [
+      "unlock_price_request_info",
+      "unlock_price_request_callback", 
+      "unlock_price_placement_match",
+      "pro_discount_percent"
+    ]);
+
+  const prices: Record<string, number> = { ...DEFAULT_PRICES };
+  let proDiscountPercent = DEFAULT_PRO_DISCOUNT_PERCENT;
+
+  if (settings) {
+    for (const setting of settings) {
+      if (setting.setting_key === "unlock_price_request_info") {
+        prices.request_info = (setting.setting_value as { cents: number })?.cents ?? DEFAULT_PRICES.request_info;
+      } else if (setting.setting_key === "unlock_price_request_callback") {
+        prices.request_callback = (setting.setting_value as { cents: number })?.cents ?? DEFAULT_PRICES.request_callback;
+      } else if (setting.setting_key === "unlock_price_placement_match") {
+        prices.placement_match = (setting.setting_value as { cents: number })?.cents ?? DEFAULT_PRICES.placement_match;
+      } else if (setting.setting_key === "pro_discount_percent") {
+        proDiscountPercent = (setting.setting_value as { value: number })?.value ?? DEFAULT_PRO_DISCOUNT_PERCENT;
+      }
+    }
+  }
+
+  return { prices, proDiscountPercent };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -83,6 +124,18 @@ serve(async (req) => {
       });
     }
 
+    // Fetch the lead to get inquiry_type
+    const { data: leadData } = await supabaseAdmin
+      .from("leads")
+      .select("inquiry_type")
+      .eq("id", leadId)
+      .single();
+
+    const inquiryType = leadData?.inquiry_type || 'request_info';
+
+    // Fetch dynamic pricing from admin settings
+    const { prices, proDiscountPercent: adminDiscountPercent } = await getUnlockPricing(supabaseAdmin);
+
     // Check Pro status for discount
     const { data: proSubscription } = await supabaseAdmin
       .from("pro_subscriptions")
@@ -93,13 +146,13 @@ serve(async (req) => {
 
     const isPro = proSubscription && 
       (!proSubscription.current_period_end || new Date(proSubscription.current_period_end) > new Date());
-    const discountPercent = isPro ? (proSubscription.unlock_discount_percent ?? 20) : 0;
+    // Use provider's custom discount if set, otherwise use admin default
+    const discountPercent = isPro ? (proSubscription.unlock_discount_percent ?? adminDiscountPercent) : 0;
     
-    // Calculate final price
-    let unlockPrice = DEFAULT_UNLOCK_PRICE_CENTS;
-    if (discountPercent > 0) {
-      unlockPrice = Math.round(unlockPrice * (1 - discountPercent / 100));
-    }
+    // Calculate final price based on inquiry type
+    const basePrice = prices[inquiryType] ?? prices.request_info;
+    const discountAmount = discountPercent > 0 ? Math.round(basePrice * discountPercent / 100) : 0;
+    const unlockPrice = basePrice - discountAmount;
 
     let stripePaymentIntentId: string | null = null;
 
@@ -144,14 +197,18 @@ serve(async (req) => {
         });
       }
 
-      // Log the credit transaction
+      // Log the credit transaction with enhanced details
       await supabaseAdmin.from("credit_transactions").insert({
         provider_id: user.id,
         facility_id: facilityId,
         amount_cents: -unlockPrice,
         transaction_type: "unlock",
         reference_id: leadId,
-        description: `Unlocked lead ${leadId.substring(0, 8)}...`,
+        description: `Unlocked ${inquiryType.replace('_', ' ')} inquiry`,
+        inquiry_type: inquiryType,
+        base_price_cents: basePrice,
+        discount_applied: isPro,
+        discount_amount_cents: discountAmount,
       });
 
     } else if (paymentMethod === 'stripe') {
@@ -242,8 +299,12 @@ serve(async (req) => {
       success: true,
       unlock,
       lead,
+      inquiryType,
+      basePrice,
+      discountApplied: isPro,
+      discountPercent,
+      discountAmount,
       pricePaid: unlockPrice,
-      discountApplied: discountPercent,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
