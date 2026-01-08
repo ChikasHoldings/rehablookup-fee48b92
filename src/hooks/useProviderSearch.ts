@@ -14,9 +14,11 @@ export interface SearchResult {
 const NAVIGATION_PAGES: SearchResult[] = [
   { id: "dashboard", type: "page", title: "Dashboard", subtitle: "Overview & statistics", url: "/provider/dashboard" },
   { id: "listing", type: "page", title: "My Listing", subtitle: "Edit facility information", url: "/provider/listing" },
-  { id: "leads", type: "page", title: "Leads", subtitle: "View all contact requests", url: "/provider/leads" },
+  { id: "inquiries", type: "page", title: "Inquiries", subtitle: "View all inquiries", url: "/provider/inquiries" },
+  { id: "credits", type: "page", title: "Credits", subtitle: "Purchase & manage credits", url: "/provider/credits" },
+  { id: "unlock-history", type: "page", title: "Unlock History", subtitle: "View unlocked leads", url: "/provider/unlock-history" },
+  { id: "pro-upgrade", type: "page", title: "Pro Upgrade", subtitle: "Get featured placement", url: "/provider/pro-upgrade" },
   { id: "analytics", type: "page", title: "Analytics", subtitle: "Performance metrics", url: "/provider/analytics" },
-  { id: "billing", type: "page", title: "Billing", subtitle: "Plans & payment methods", url: "/provider/billing" },
   { id: "settings", type: "page", title: "Settings", subtitle: "Account preferences", url: "/provider/settings" },
   { id: "notifications", type: "page", title: "Notifications", subtitle: "View all notifications", url: "/provider/notifications" },
 ];
@@ -83,7 +85,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
         type: "lead" as const,
         title: lead.name,
         subtitle: [lead.location_city_state, lead.phone, lead.status].filter(Boolean).join(" • "),
-        url: `/provider/leads?highlight=${lead.id}`,
+        url: `/provider/inquiries?highlight=${lead.id}`,
         metadata: { status: lead.status, email: lead.email, phone: lead.phone, location: lead.location_city_state },
       }));
 

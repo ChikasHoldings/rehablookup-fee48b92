@@ -1,8 +1,7 @@
-import { Lock, Sparkles, TrendingUp, CheckCircle, Phone, Users } from "lucide-react";
+import { Lock, Sparkles, TrendingUp, CheckCircle, Phone, Users, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { PLAN_DETAILS } from "@/hooks/useSubscription";
 
 interface LockedLeadDetailPanelProps {
   totalLeadsCount: number;
@@ -10,8 +9,6 @@ interface LockedLeadDetailPanelProps {
 }
 
 export function LockedLeadDetailPanel({ totalLeadsCount, onClose }: LockedLeadDetailPanelProps) {
-  const professionalPlan = PLAN_DETAILS.professional;
-  
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm text-center space-y-6">
@@ -23,10 +20,10 @@ export function LockedLeadDetailPanel({ totalLeadsCount, onClose }: LockedLeadDe
         {/* Title */}
         <div>
           <h2 className="text-lg font-semibold text-foreground">
-            Lead Details Locked
+            Inquiry Details Locked
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Upgrade to view and contact leads
+            Unlock with credits to view contact info
           </p>
         </div>
 
@@ -37,7 +34,7 @@ export function LockedLeadDetailPanel({ totalLeadsCount, onClose }: LockedLeadDe
               {totalLeadsCount}
             </div>
             <p className="text-sm text-primary/80 font-medium">
-              Lead{totalLeadsCount !== 1 ? 's' : ''} waiting for you
+              Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'} waiting for you
             </p>
           </div>
         )}
@@ -63,22 +60,20 @@ export function LockedLeadDetailPanel({ totalLeadsCount, onClose }: LockedLeadDe
           </div>
         </div>
 
-        {/* Upgrade section - compact */}
+        {/* How it works */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-center gap-2 text-sm">
             <Badge className="bg-green-600 text-white border-0">
-              {professionalPlan.price}{professionalPlan.period}
+              <Coins className="h-3 w-3 mr-1" />
+              Pay-per-unlock
             </Badge>
-            <span className="font-medium text-foreground">
-              {professionalPlan.name}
-            </span>
           </div>
           
           <ul className="space-y-1.5 text-left">
             {[
-              "100 qualified leads/month",
-              "Full contact details",
-              "Performance analytics",
+              "Only pay for inquiries you want",
+              "Full contact details on unlock",
+              "Pro members get 20% off",
             ].map((feature, i) => (
               <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
                 <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400 flex-shrink-0" />
@@ -100,9 +95,9 @@ export function LockedLeadDetailPanel({ totalLeadsCount, onClose }: LockedLeadDe
         {/* CTA */}
         <div className="space-y-2">
           <Button asChild size="default" className="w-full gap-2">
-            <Link to="/provider/billing">
-              <Lock className="h-4 w-4" />
-              Upgrade Now
+            <Link to="/provider/credits">
+              <Coins className="h-4 w-4" />
+              Get Credits
             </Link>
           </Button>
           <Button 

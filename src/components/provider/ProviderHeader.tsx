@@ -27,7 +27,7 @@ import {
   AlertCircle,
   ChevronRight,
 } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useProStatus } from "@/hooks/useProStatus";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,15 +72,8 @@ const notificationIcons: Record<string, React.ReactNode> = {
   system: <Settings className="h-4 w-4 text-muted-foreground" />,
 };
 
-const getLocationLimit = (plan: string): number => {
-  switch (plan) {
-    case "featured":
-      return 5;
-    case "professional":
-      return 3;
-    default:
-      return 1;
-  }
+const getLocationLimit = (isPro: boolean): number => {
+  return isPro ? 5 : 1;
 };
 
 export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
@@ -88,7 +81,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   const navigate = useNavigate();
   
   const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading } = useProviderNotifications();
-  const { data: subscription } = useSubscription();
+  const { data: proStatus } = useProStatus();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
   const { 
     selectedFacility, 
@@ -99,45 +92,34 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   } = useSelectedFacility();
   
   const recentNotifications = notifications.slice(0, 5);
-  const currentPlan = subscription?.plan || "basic";
-  const locationLimit = getLocationLimit(currentPlan);
+  const isPro = proStatus?.isPro || false;
+  const locationLimit = getLocationLimit(isPro);
   const canAddMore = facilities.length < locationLimit;
   const approvedFacilities = facilities.filter(f => f.status === "approved");
   const pendingFacilities = facilities.filter(f => f.status === "pending");
 
-  const getPlanConfig = (plan: string) => {
-    switch (plan) {
-      case "featured":
-        return {
-          label: "Featured",
-          icon: Crown,
-          gradient: "from-amber-500 to-yellow-400",
-          textColor: "text-amber-600 dark:text-amber-400",
-          bgColor: "bg-amber-500/10",
-          borderColor: "border-amber-500/20",
-        };
-      case "professional":
-        return {
-          label: "Professional",
-          icon: Star,
-          gradient: "from-emerald-500 to-teal-400",
-          textColor: "text-emerald-600 dark:text-emerald-400",
-          bgColor: "bg-emerald-500/10",
-          borderColor: "border-emerald-500/20",
-        };
-      default:
-        return {
-          label: "Basic",
-          icon: Sparkles,
-          gradient: "from-slate-400 to-slate-500",
-          textColor: "text-muted-foreground",
-          bgColor: "bg-muted/50",
-          borderColor: "border-border",
-        };
+  const getPlanConfig = (isPro: boolean) => {
+    if (isPro) {
+      return {
+        label: "Pro",
+        icon: Crown,
+        gradient: "from-amber-500 to-yellow-400",
+        textColor: "text-amber-600 dark:text-amber-400",
+        bgColor: "bg-amber-500/10",
+        borderColor: "border-amber-500/20",
+      };
     }
+    return {
+      label: "Free",
+      icon: Sparkles,
+      gradient: "from-slate-400 to-slate-500",
+      textColor: "text-muted-foreground",
+      bgColor: "bg-muted/50",
+      borderColor: "border-border",
+    };
   };
 
-  const planConfig = getPlanConfig(subscription?.plan || "basic");
+  const planConfig = getPlanConfig(isPro);
   const PlanIcon = planConfig.icon;
   
   const initials = userName
@@ -159,9 +141,9 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     }
     
     if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
-      navigate("/provider/leads");
+      navigate("/provider/inquiries");
     } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
-      navigate("/provider/billing");
+      navigate("/provider/credits");
     } else if (notification.type === "listing_approved") {
       navigate("/provider/listing");
     } else if (notification.type === "system") {
@@ -348,7 +330,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
 
               {/* Plan Badge - Compact */}
               <Link 
-                to="/provider/billing"
+                to={isPro ? "/provider/pro-upgrade" : "/provider/pro-upgrade"}
                 className={cn(
                   "flex items-center justify-between mx-3 my-2.5 px-3 py-2 rounded-lg transition-all",
                   planConfig.bgColor,
@@ -369,7 +351,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                       {planConfig.label} Plan
                     </span>
                     <span className="text-[10px] text-muted-foreground">
-                      {subscription?.plan === 'basic' ? 'Upgrade available' : 'Active subscription'}
+                      {!isPro ? 'Upgrade available' : 'Active subscription'}
                     </span>
                   </div>
                 </div>
