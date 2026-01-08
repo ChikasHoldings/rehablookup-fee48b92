@@ -55,7 +55,7 @@ export function useProviderNotifications() {
       });
       notification.onclick = () => {
         window.focus();
-        window.location.href = "/provider/leads";
+        window.location.href = "/provider/inquiries";
         notification.close();
       };
       setTimeout(() => notification.close(), 5000);

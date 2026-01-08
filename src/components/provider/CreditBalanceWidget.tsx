@@ -42,7 +42,7 @@ export function CreditBalanceWidget({
           </div>
           
           <Button asChild size="sm" className="gap-1.5">
-            <Link to="/provider/billing?tab=credits">
+            <Link to="/provider/credits">
               <Plus className="h-4 w-4" />
               Add Credits
             </Link>
@@ -104,7 +104,7 @@ export function CreditBalanceWidget({
             
             {transactions.length > 3 && (
               <Button variant="ghost" size="sm" asChild className="w-full mt-2">
-                <Link to="/provider/billing?tab=history">
+                <Link to="/provider/unlock-history">
                   View all transactions
                 </Link>
               </Button>

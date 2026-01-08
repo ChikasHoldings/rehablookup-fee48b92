@@ -14,7 +14,6 @@ import {
   ChevronDown, 
   ChevronUp,
   Loader2,
-  Sparkles,
   Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -22,7 +21,7 @@ import { ListingSectionHeader } from "./ListingSectionHeader";
 import { StaffCard } from "./StaffCard";
 import { StaffFormModal } from "./StaffFormModal";
 import { useFacilityStaff, type FacilityStaff, type CreateStaffData, type UpdateStaffData } from "@/hooks/useFacilityStaff";
-import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useProStatus } from "@/hooks/useProStatus";
 
 interface StaffManagementSectionProps {
   facilityId: string;
@@ -35,7 +34,7 @@ export function StaffManagementSection({
   isExpanded,
   onToggle,
 }: StaffManagementSectionProps) {
-  const { data: subscription } = useSubscription();
+  const { data: proStatus } = useProStatus();
   const { 
     staff, 
     isLoading, 
@@ -47,11 +46,10 @@ export function StaffManagementSection({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<FacilityStaff | null>(null);
 
-  // Get staff limit based on plan
-  const plan = subscription?.plan || "basic";
-  const staffLimit = plan === "featured" ? 10 : plan === "professional" ? 5 : 0;
+  // Get staff limit based on Pro status
+  const isPro = proStatus?.isPro || false;
+  const staffLimit = isPro ? 10 : 3;
   const canAddStaff = staff.length < staffLimit;
-  const isBasicPlan = plan === "basic";
 
   const handleAddClick = () => {
     setEditingStaff(null);
@@ -104,10 +102,10 @@ export function StaffManagementSection({
                           {staff.length}/{staffLimit} member{staff.length !== 1 ? "s" : ""}
                         </Badge>
                       )}
-                      {isBasicPlan && (
+                      {!isPro && (
                         <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-600">
                           <Lock className="h-3 w-3 mr-1" />
-                          Upgrade Required
+                          Pro for more
                         </Badge>
                       )}
                     </>
@@ -123,70 +121,54 @@ export function StaffManagementSection({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="space-y-4 pt-2">
-              {isBasicPlan ? (
-                <Alert className="bg-gradient-to-r from-amber-500/10 to-amber-500/5 border-amber-500/20">
-                  <Sparkles className="h-4 w-4 text-amber-600" />
-                  <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <span>
-                      Upgrade to Professional or Featured to add team members to your profile.
-                    </span>
-                    <Button size="sm" asChild className="shrink-0">
-                      <Link to="/provider/subscription">View Plans</Link>
-                    </Button>
-                  </AlertDescription>
-                </Alert>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
               ) : (
                 <>
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  {/* Staff List */}
+                  {staff.length > 0 ? (
+                    <div className="space-y-2">
+                      {staff.map((member) => (
+                        <StaffCard
+                          key={member.id}
+                          staff={member}
+                          onEdit={handleEditClick}
+                          onDelete={handleDelete}
+                          onToggleVisibility={handleToggleVisibility}
+                        />
+                      ))}
                     </div>
                   ) : (
-                    <>
-                      {/* Staff List */}
-                      {staff.length > 0 ? (
-                        <div className="space-y-2">
-                          {staff.map((member) => (
-                            <StaffCard
-                              key={member.id}
-                              staff={member}
-                              onEdit={handleEditClick}
-                              onDelete={handleDelete}
-                              onToggleVisibility={handleToggleVisibility}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-6 text-muted-foreground">
-                          <Users2 className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                          <p>No team members added yet</p>
-                          <p className="text-sm">Add your first team member to showcase your staff</p>
-                        </div>
-                      )}
+                    <div className="text-center py-6 text-muted-foreground">
+                      <Users2 className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                      <p>No team members added yet</p>
+                      <p className="text-sm">Add your first team member to showcase your staff</p>
+                    </div>
+                  )}
 
-                      {/* Add Button */}
-                      {canAddStaff ? (
-                        <Button
-                          variant="outline"
-                          onClick={handleAddClick}
-                          className="w-full"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Team Member
-                        </Button>
-                      ) : (
-                        <Alert className="bg-muted/50">
-                          <AlertDescription className="text-sm text-muted-foreground">
-                            You've reached the maximum of {staffLimit} team members for your {PLAN_DETAILS[plan]?.name} plan.
-                            {plan === "professional" && (
-                              <Link to="/provider/subscription" className="text-primary hover:underline ml-1">
-                                Upgrade to Featured for up to 10 members.
-                              </Link>
-                            )}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </>
+                  {/* Add Button */}
+                  {canAddStaff ? (
+                    <Button
+                      variant="outline"
+                      onClick={handleAddClick}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Team Member
+                    </Button>
+                  ) : (
+                    <Alert className="bg-muted/50">
+                      <AlertDescription className="text-sm text-muted-foreground">
+                        You've reached the maximum of {staffLimit} team members.
+                        {!isPro && (
+                          <Link to="/provider/pro-upgrade" className="text-primary hover:underline ml-1">
+                            Upgrade to Pro for up to 10 members.
+                          </Link>
+                        )}
+                      </AlertDescription>
+                    </Alert>
                   )}
                 </>
               )}
