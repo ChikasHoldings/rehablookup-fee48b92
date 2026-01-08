@@ -52,7 +52,7 @@ export function UnlockLeadButton({
   const handleUnlock = async () => {
     if (!hasEnoughCredits) {
       // Redirect to purchase credits
-      window.location.href = `/provider/billing?purchase_credits=true&amount=${finalPrice}`;
+      window.location.href = `/provider/credits?purchase_credits=true&amount=${finalPrice}`;
       return;
     }
 

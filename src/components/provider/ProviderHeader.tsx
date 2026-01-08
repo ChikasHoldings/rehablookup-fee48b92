@@ -484,13 +484,13 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                   </Link>
                 ) : (
                   <Link 
-                    to="/provider/billing" 
+                    to="/provider/pro-upgrade" 
                     className="flex items-center gap-2.5 mx-1.5 mt-1 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
                   >
                     <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
                       <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
-                    <span className="text-sm text-muted-foreground">Upgrade for more</span>
+                    <span className="text-sm text-muted-foreground">Upgrade to Pro</span>
                   </Link>
                 )}
               </div>
@@ -512,9 +512,9 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/provider/billing" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
+                  <Link to="/provider/credits" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Billing</span>
+                    <span className="text-sm">Credits & Payments</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

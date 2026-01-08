@@ -18,7 +18,7 @@ interface MobileBottomNavProps {
 const navItems = [
   { href: "/provider/dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/provider/listing", label: "Listing", icon: Building2 },
-  { href: "/provider/leads", label: "Leads", icon: Users },
+  { href: "/provider/inquiries", label: "Inquiries", icon: Users },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
@@ -44,7 +44,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
     staleTime: 1000 * 60 * 2,
   });
 
-  const isMoreActive = ["/provider/billing", "/provider/settings"].some(
+  const isMoreActive = ["/provider/credits", "/provider/settings", "/provider/pro-upgrade"].some(
     path => location.pathname.startsWith(path)
   );
 
@@ -54,7 +54,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
           const Icon = item.icon;
-          const isLeadsItem = item.href === "/provider/leads";
+          const isLeadsItem = item.href === "/provider/inquiries";
           const showBadge = isLeadsItem && newLeadsCount > 0;
           
           return (
