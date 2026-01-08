@@ -8,7 +8,6 @@ import {
   BarChart3,
   Sparkles,
   Star,
-  History,
   Network
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,7 +27,6 @@ const navItems = [
   { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/provider/inquiries", label: "Inquiries", icon: Users },
   { href: "/provider/credits", label: "Credits & Payments", icon: Wallet },
-  { href: "/provider/unlock-history", label: "Unlock History", icon: History },
   { href: "/provider/pro-upgrade", label: "Pro Visibility", icon: Sparkles },
   { href: "/provider/placement", label: "Placement Network", icon: Network },
   { href: "/provider/reviews", label: "Reviews", icon: Star },
