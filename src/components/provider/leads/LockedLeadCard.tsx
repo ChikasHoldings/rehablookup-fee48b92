@@ -1,12 +1,13 @@
-import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2 } from "lucide-react";
+import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { Link } from "react-router-dom";
+import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 
 interface LockedLeadCardProps {
   leadId: string;
+  facilityId: string;
   name: string;
   createdAt: string;
   urgency?: string | null;
@@ -15,10 +16,12 @@ interface LockedLeadCardProps {
   showFacility?: boolean;
   onClick?: () => void;
   isSelected?: boolean;
+  onUnlockSuccess?: () => void;
 }
 
 export function LockedLeadCard({
   leadId,
+  facilityId,
   name,
   createdAt,
   urgency,
@@ -27,6 +30,7 @@ export function LockedLeadCard({
   showFacility,
   onClick,
   isSelected,
+  onUnlockSuccess,
 }: LockedLeadCardProps) {
   // Get first letter of blurred name
   const initial = name.charAt(0).toUpperCase();
@@ -37,11 +41,10 @@ export function LockedLeadCard({
   return (
     <div
       className={cn(
-        "relative group p-4 border rounded-lg cursor-pointer transition-all",
+        "relative group p-4 border rounded-lg transition-all",
         "bg-muted/30 hover:bg-muted/50 border-muted-foreground/20",
         isSelected && "ring-2 ring-primary bg-primary/5"
       )}
-      onClick={onClick}
     >
       {/* Locked overlay badge */}
       <div className="absolute top-2 right-2">
@@ -50,7 +53,7 @@ export function LockedLeadCard({
           className="gap-1 bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700"
         >
           <Lock className="h-3 w-3" />
-          Upgrade to view
+          Locked
         </Badge>
       </div>
       
@@ -112,15 +115,14 @@ export function LockedLeadCard({
         </div>
       </div>
       
-      {/* Upgrade CTA on hover */}
-      <div className="absolute inset-0 flex items-center justify-center bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-        <Button size="sm" asChild className="gap-1.5 shadow-lg">
-          <Link to="/provider/billing">
-            <Lock className="h-3.5 w-3.5" />
-            Unlock Lead Details
-          </Link>
-        </Button>
-      </div>
+      {/* Unlock CTA on hover */}
+      <UnlockLeadButton
+        leadId={leadId}
+        facilityId={facilityId}
+        leadName={blurredName}
+        variant="card"
+        onUnlockSuccess={onUnlockSuccess}
+      />
     </div>
   );
 }

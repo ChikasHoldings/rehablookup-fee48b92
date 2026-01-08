@@ -805,12 +805,15 @@ export default function ProviderLeadsPage() {
                       : currentPlan === "professional" ? "shared" 
                       : null;
                     
-                    // Basic plan: show locked lead cards
-                    if (currentPlan === "basic") {
+                    // All leads start locked - must unlock to view contact details
+                    if (!locked) {
+                      // Lead is unlocked - show normal card (handled below)
+                    } else {
                       return (
                         <LockedLeadCard
                           key={lead.id}
                           leadId={lead.id}
+                          facilityId={lead.facility_id}
                           name={lead.name}
                           createdAt={lead.created_at}
                           urgency={lead.urgency}
