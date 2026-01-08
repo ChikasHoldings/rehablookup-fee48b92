@@ -1023,6 +1023,30 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Placement Concierge CTA */}
+      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-background to-accent/5 border-t">
+        <div className="container">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+              <Heart className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-accent">Free Placement Service</span>
+            </div>
+            <h2 className="mb-4 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+              Need Help Finding the Right Treatment?
+            </h2>
+            <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
+              Our specialists can help match you with verified treatment centers based on your specific needs, insurance, and preferences — at no cost to you.
+            </p>
+            <Link to="/request-help?source=placement_cta">
+              <Button size="lg" className="gap-2">
+                Get Placement Help
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-10 md:py-14 lg:py-20">
         <div className="container">

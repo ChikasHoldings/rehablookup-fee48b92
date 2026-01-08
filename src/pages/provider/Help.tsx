@@ -46,20 +46,20 @@ const faqs = [
     answer: "When someone interested in treatment views your facility profile and submits a contact request, it appears in your Leads tab. You'll receive an email notification (if enabled) and can manage lead status, add notes, and contact prospects directly."
   },
   {
-    question: "What's included in my subscription plan?",
-    answer: "Your plan includes a set number of leads per month, profile views tracking, analytics dashboard, and email notifications. Visit the Billing page to see your current plan details and upgrade options."
+    question: "How does billing work?",
+    answer: "Your listing is free. When families submit inquiries, you see a preview with basic details. To view contact info and respond, unlock the inquiry using credits. Pro subscribers get 20% off all unlocks."
   },
   {
     question: "How can I improve my listing visibility?",
-    answer: "Complete all profile fields, add high-quality images, ensure your services and insurance information is accurate, and consider upgrading to a featured listing for premium placement in search results."
+    answer: "Complete all profile fields, add high-quality images, ensure your services and insurance information is accurate, and consider upgrading to Pro for featured placement in search results."
   },
   {
     question: "How do I change my notification preferences?",
     answer: "Go to Settings > Notifications to customize which alerts you receive via email, SMS, or browser notifications. You can set up instant alerts or daily/weekly digests."
   },
   {
-    question: "What happens when I reach my lead limit?",
-    answer: "You'll receive a warning when approaching your monthly lead limit. Once reached, new leads won't be delivered until the next billing cycle or until you upgrade your plan."
+    question: "How do credits work?",
+    answer: "Purchase credits to unlock inquiry contact details. Each inquiry type has a set unlock price. Pro subscribers save 20% on every unlock. View your balance and purchase more in the Credits section."
   },
   {
     question: "How do I download my lead data?",
