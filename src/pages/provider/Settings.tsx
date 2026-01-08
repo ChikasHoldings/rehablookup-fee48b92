@@ -1337,9 +1337,9 @@ export default function ProviderSettingsPage() {
                     <Separator />
                     <div className="flex items-center justify-between py-4">
                       <div>
-                        <p className="text-sm font-medium text-foreground">Lead Limit Warnings</p>
+                        <p className="text-sm font-medium text-foreground">Credit Balance Alerts</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          When you're approaching your monthly lead limit
+                          When your credit balance is running low
                         </p>
                       </div>
                       <Switch

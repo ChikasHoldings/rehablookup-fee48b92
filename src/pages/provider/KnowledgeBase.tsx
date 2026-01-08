@@ -276,52 +276,59 @@ Choose between:
   },
   // Billing
   {
-    id: "subscription-plans",
-    title: "Understanding Subscription Plans",
-    excerpt: "Compare plans and choose the right one for your facility's needs.",
+    id: "how-billing-works",
+    title: "How Billing Works",
+    excerpt: "Understand how free listings and inquiry unlocks work for your facility.",
     content: `
-# Understanding Subscription Plans
+# How Billing Works
 
-Choose the plan that matches your facility's goals.
+RehabLookup offers a simple, transparent approach to connecting you with families seeking treatment.
 
-## Available Plans
+## Free Listing
 
-### Basic Plan
-- Free listing (no leads included)
-- Standard listing placement
-- Email support
+All providers can list their facility for free with:
+- Public provider profile
+- Visible in search results
+- Facility details, services, and insurance
+- Basic analytics dashboard
 
-### Professional Plan
-- Up to 100 qualified leads/month (shared with max 2 providers)
-- Featured listing badge
+## Inquiry Unlock System
+
+When families express interest in your facility:
+- You receive a notification with basic inquiry details
+- Preview includes: inquiry type, location, care needs, timestamp
+- Contact details are locked until you choose to unlock
+- You only pay when you decide to connect with a family
+
+This pay-per-inquiry model means:
+- No monthly commitments
+- No wasted spend on leads you don't want
+- Full control over which families you pursue
+
+## Pro Visibility (Optional Upgrade)
+
+For facilities wanting maximum exposure:
+- 20% discount on all inquiry unlocks
+- Featured placement on homepage
+- Priority placement on state and city pages
+- Top of search results
+- Gold Pro badge on your listing
 - Priority support
-- Advanced analytics
-- Up to 3 facility locations
 
-### Featured Plan
-- Up to 100 exclusive qualified leads/month (100% exclusive)
-- Homepage featured placement
-- Priority support
-- Premium analytics
-- Up to 5 facility locations
+## Managing Your Credits
 
-## Upgrading Your Plan
+1. Go to **Credits** to view your balance
+2. Purchase credits as needed
+3. Use credits to unlock inquiries
 
-1. Go to **Billing > Plans**
-2. Compare features
-3. Click "Upgrade" on desired plan
-4. Complete payment via Stripe
+## Payment Methods
 
-## Billing Cycle
-
-- Plans are billed monthly
-- Upgrade takes effect immediately
-- Unused leads don't roll over
+We accept all major credit cards via Stripe for secure payments.
     `,
     category: "billing",
-    tags: ["plans", "pricing", "subscription"],
+    tags: ["billing", "credits", "unlocks"],
     readTime: 5,
-    updatedAt: "2024-12-07"
+    updatedAt: "2025-01-08"
   },
   {
     id: "payment-methods",
