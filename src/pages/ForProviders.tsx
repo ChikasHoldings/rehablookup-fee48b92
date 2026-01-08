@@ -17,7 +17,6 @@ import {
   MessageSquare,
   BarChart3,
   Clock,
-  X,
   Sparkles,
   Quote,
   Zap,
@@ -27,26 +26,18 @@ import {
   Phone,
   Target,
   Check,
-  ChevronDown,
-  Calculator,
-  DollarSign,
+  Unlock,
+  CreditCard,
   Crown,
 } from "lucide-react";
-import { useState } from "react";
 import { providerNavLinks } from "@/data/providerNavLinks";
 import { cn } from "@/lib/utils";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Slider } from "@/components/ui/slider";
 import providerDashboardMockup from "@/assets/provider-dashboard-mockup.jpg";
 import rehabFacilityHero from "@/assets/rehab-facility-hero.jpg";
 import providerAvatar1 from "@/assets/avatars/provider-avatar-1.jpg";
@@ -63,10 +54,10 @@ import testimonialJennifer from "@/assets/testimonials/testimonial-jennifer.jpg"
 const benefits = [
   {
     icon: Target,
-    title: "High-Intent Leads",
+    title: "High-Intent Inquiries",
     description: "Connect with families actively seeking treatment—not cold prospects.",
     stat: "85%",
-    statLabel: "Conversion Ready",
+    statLabel: "Ready to Admit",
   },
   {
     icon: Eye,
@@ -80,12 +71,12 @@ const benefits = [
     title: "Trust & Credibility",
     description: "Our verification badge signals quality to families.",
     stat: "3x",
-    statLabel: "More Leads",
+    statLabel: "More Inquiries",
   },
   {
     icon: BarChart3,
     title: "Real-Time Analytics",
-    description: "Track every view, click, and lead with precision.",
+    description: "Track every view, click, and inquiry with precision.",
     stat: "24/7",
     statLabel: "Live Dashboard",
   },
@@ -99,7 +90,7 @@ const benefits = [
   {
     icon: HeartHandshake,
     title: "Dedicated Support",
-    description: "Our team helps optimize your listing and maximize ROI.",
+    description: "Our team helps optimize your listing and maximize results.",
     stat: "100%",
     statLabel: "Satisfaction",
   },
@@ -110,15 +101,13 @@ const listingFeatures = [
   { text: "Custom program descriptions and specializations", highlight: false },
   { text: "Insurance verification integration", highlight: true },
   { text: "Staff credentials and accreditations display", highlight: false },
-  { text: "Direct lead forms and contact capture", highlight: true },
+  { text: "Direct inquiry forms and contact capture", highlight: true },
   { text: "Real-time analytics dashboard", highlight: false },
-  { text: "Priority placement in search results", highlight: true },
-  { text: "Dedicated account manager", highlight: false },
 ];
 
 const testimonials = [
   {
-    quote: "RehabLookup transformed our admissions. We saw a 40% increase in qualified leads within three months.",
+    quote: "RehabLookup transformed our admissions. We saw a 40% increase in qualified inquiries within three months.",
     author: "Dr. Sarah Mitchell",
     role: "Clinical Director",
     facility: "Sunrise Recovery Center",
@@ -144,7 +133,7 @@ const testimonials = [
     verified: true,
   },
   {
-    quote: "The analytics alone are worth the investment. We finally have visibility into what drives admissions.",
+    quote: "The pay-per-inquiry model means we only pay for real opportunities. Best decision we made.",
     author: "Jennifer Adams",
     role: "Marketing Manager",
     facility: "Coastal Wellness Center",
@@ -158,378 +147,45 @@ const testimonials = [
   },
 ];
 
-const pricingPlans = [
+// How it works steps for providers
+const howItWorksSteps = [
   {
-    name: "Basic",
-    price: "Free",
-    period: "",
-    description: "Get listed and be discoverable",
-    icon: Sparkles,
-    gradient: "from-slate-500 to-slate-600",
-    features: [
-      { text: "Public provider profile", included: true },
-      { text: "Listed in search results", included: true },
-      { text: "Facility name, location & services", included: true },
-      { text: "Basic dashboard (views & clicks)", included: true },
-      { text: "1 facility location", included: true },
-    ],
-    limitations: [
-      "Phone number hidden on profile",
-      "Website link hidden on profile",
-      "No qualified leads",
-      "No lead notifications",
-    ],
-    cta: "Start Free",
-    ctaVariant: "outline" as const,
-    popular: false,
-    exclusivityBadge: "Visibility Only",
-    exclusivityColor: "bg-slate-500/10 text-slate-600 border-slate-500/20",
+    step: 1,
+    title: "List Your Facility Free",
+    description: "Create your profile in minutes. Add photos, services, insurance accepted, and your story.",
+    icon: Building2,
   },
   {
-    name: "Professional",
-    price: "$399",
-    period: "/mo",
-    description: "Shared leads + steady visibility",
-    icon: Star,
-    gradient: "from-emerald-500 to-teal-500",
-    features: [
-      { text: "Everything in Basic, plus:", included: true, isHeader: true },
-      { text: "100 qualified leads/month", included: true, highlight: true },
-      { text: "Shared with max 1 other provider", included: true },
-      { text: "Phone & website visible on profile", included: true, highlight: true },
-      { text: "Up to 3 facility locations", included: true },
-      { text: "Email lead notifications", included: true },
-      { text: "Lead management dashboard", included: true },
-      { text: "Performance analytics & insights", included: true },
-    ],
-    limitations: [],
-    cta: "Get Started",
-    ctaVariant: "default" as const,
-    popular: true,
-    exclusivityBadge: "Shared Leads",
-    exclusivityColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    step: 2,
+    title: "Receive Family Inquiries",
+    description: "When families find your facility and express interest, you'll receive a notification.",
+    icon: MessageSquare,
   },
   {
-    name: "Featured",
-    price: "$1,099",
-    period: "/mo",
-    description: "Exclusive leads & maximum visibility",
-    icon: Crown,
-    gradient: "from-amber-500 to-yellow-500",
-    features: [
-      { text: "Everything in Professional, plus:", included: true, isHeader: true },
-      { text: "100 exclusive leads/month", included: true, highlight: true },
-      { text: "Never shared with other providers", included: true, highlight: true },
-      { text: "Homepage featured placement", included: true },
-      { text: "Priority search placement", included: true },
-      { text: "Gold Featured badge", included: true },
-      { text: "Up to 5 facility locations", included: true },
-      { text: "Priority email support", included: true },
-      { text: "Advanced analytics", included: true },
-    ],
-    limitations: [],
-    cta: "Upgrade Now",
-    ctaVariant: "default" as const,
-    popular: false,
-    exclusivityBadge: "100% Exclusive",
-    exclusivityColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    step: 3,
+    title: "Review & Unlock",
+    description: "See inquiry details and choose to unlock contact information to connect directly.",
+    icon: Unlock,
+  },
+  {
+    step: 4,
+    title: "Connect & Convert",
+    description: "Reach out to families, answer their questions, and welcome them to your program.",
+    icon: Phone,
   },
 ];
 
-// Feature type for pricing
-type PricingFeature = {
-  text: string;
-  included: boolean;
-  highlight?: boolean;
-  isHeader?: boolean;
-};
-
-// Plan type
-type PricingPlan = {
-  name: string;
-  price: string;
-  period: string;
-  description: string;
-  icon: typeof Sparkles;
-  gradient: string;
-  features: PricingFeature[];
-  limitations: string[];
-  cta: string;
-  ctaVariant: "default" | "outline";
-  popular: boolean;
-  exclusivityBadge: string;
-  exclusivityColor: string;
-};
-
-// ROI Calculator Component
-const ROICalculator = () => {
-  const [leadsPerMonth, setLeadsPerMonth] = useState([15]);
-  const [conversionRate, setConversionRate] = useState([20]);
-  const [avgRevenuePerAdmission, setAvgRevenuePerAdmission] = useState([15000]);
-
-  const monthlyAdmissions = Math.round((leadsPerMonth[0] * conversionRate[0]) / 100);
-  const monthlyRevenue = monthlyAdmissions * avgRevenuePerAdmission[0];
-  const annualRevenue = monthlyRevenue * 12;
-  const planCost = leadsPerMonth[0] === 0 ? 0 : leadsPerMonth[0] <= 100 ? 399 : 1099;
-  const planName = leadsPerMonth[0] === 0 ? "Basic (Free)" : leadsPerMonth[0] <= 100 ? "Professional" : "Featured";
-  const roi = planCost > 0 && monthlyRevenue > 0 ? Math.round(((monthlyRevenue - planCost) / planCost) * 100) : monthlyRevenue > 0 ? Infinity : 0;
-
-  return (
-    <div className="mt-16 max-w-3xl mx-auto">
-      <div className="rounded-2xl border border-border bg-card p-8 shadow-lg">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mb-4">
-            <Calculator className="h-6 w-6 text-primary" />
-          </div>
-          <h3 className="text-2xl font-bold text-foreground mb-2">ROI Calculator</h3>
-          <p className="text-muted-foreground">See your potential return on investment</p>
-        </div>
-
-        <div className="grid gap-8 md:grid-cols-2">
-          {/* Inputs */}
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between mb-3">
-                <label className="text-sm font-medium text-foreground">Leads per Month</label>
-                <span className="text-sm font-bold text-primary">{leadsPerMonth[0]}</span>
-              </div>
-              <Slider
-                value={leadsPerMonth}
-                onValueChange={setLeadsPerMonth}
-                min={1}
-                max={100}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-                <span>1</span>
-                <span>100</span>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between mb-3">
-                <label className="text-sm font-medium text-foreground">Conversion Rate</label>
-                <span className="text-sm font-bold text-primary">{conversionRate[0]}%</span>
-              </div>
-              <Slider
-                value={conversionRate}
-                onValueChange={setConversionRate}
-                min={5}
-                max={50}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-                <span>5%</span>
-                <span>50%</span>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between mb-3">
-                <label className="text-sm font-medium text-foreground">Avg Revenue per Admission</label>
-                <span className="text-sm font-bold text-primary">${avgRevenuePerAdmission[0].toLocaleString()}</span>
-              </div>
-              <Slider
-                value={avgRevenuePerAdmission}
-                onValueChange={setAvgRevenuePerAdmission}
-                min={5000}
-                max={50000}
-                step={1000}
-                className="w-full"
-              />
-              <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-                <span>$5K</span>
-                <span>$50K</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Results */}
-          <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl p-6 space-y-4">
-            <div className="flex items-center justify-between py-3 border-b border-border/50">
-              <span className="text-muted-foreground">Monthly Admissions</span>
-              <span className="text-xl font-bold text-foreground">{monthlyAdmissions}</span>
-            </div>
-            <div className="flex items-center justify-between py-3 border-b border-border/50">
-              <span className="text-muted-foreground">Monthly Revenue</span>
-              <span className="text-xl font-bold text-foreground">${monthlyRevenue.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between py-3 border-b border-border/50">
-              <span className="text-muted-foreground">Annual Revenue</span>
-              <span className="text-xl font-bold text-accent">${annualRevenue.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between py-3 pt-4">
-              <span className="text-foreground font-medium">Estimated ROI</span>
-              <span className="text-2xl font-bold text-accent">
-                {roi === Infinity ? "∞" : roi > 0 ? `${roi}%` : "N/A"}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground text-center pt-2">
-              Based on {planName} plan{planCost > 0 ? ` at $${planCost}/mo` : ""}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Comparison Table Component
-const ComparisonTable = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const featureCategories = [
-    {
-      category: "Lead Generation",
-      features: [
-        { feature: "Qualified Leads", basic: "—", professional: "100/month", featured: "100/month" },
-        { feature: "Lead Exclusivity", basic: "—", professional: "Shared (max 2)", featured: "100% Exclusive" },
-        { feature: "Email Lead Notifications", basic: false, professional: true, featured: true },
-        { feature: "Lead Management Dashboard", basic: false, professional: true, featured: true },
-      ],
-    },
-    {
-      category: "Visibility & Placement",
-      features: [
-        { feature: "Listed in Search Results", basic: true, professional: true, featured: true },
-        { feature: "Phone & Website Visible", basic: false, professional: true, featured: true },
-        { feature: "Priority Search Placement", basic: false, professional: false, featured: true },
-        { feature: "Homepage Featured Section", basic: false, professional: false, featured: true },
-        { feature: "Gold Featured Badge", basic: false, professional: false, featured: true },
-      ],
-    },
-    {
-      category: "Tools & Analytics",
-      features: [
-        { feature: "Provider Dashboard", basic: true, professional: true, featured: true },
-        { feature: "Views & Clicks Analytics", basic: true, professional: true, featured: true },
-        { feature: "Performance Analytics", basic: false, professional: true, featured: true },
-        { feature: "Advanced Analytics", basic: false, professional: false, featured: true },
-      ],
-    },
-    {
-      category: "Account & Support",
-      features: [
-        { feature: "Facility Locations", basic: "1", professional: "Up to 3", featured: "Up to 5" },
-        { feature: "Standard Support", basic: true, professional: true, featured: true },
-        { feature: "Priority Email Support", basic: false, professional: false, featured: true },
-      ],
-    },
-  ];
-
-  return (
-    <div className="mt-12 max-w-5xl mx-auto">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <button className="w-full flex items-center justify-center gap-2 py-4 text-foreground hover:text-primary transition-colors group">
-            <span className="text-lg font-semibold">View Complete Feature Comparison</span>
-            <ChevronDown className={cn(
-              "h-5 w-5 transition-transform duration-200",
-              isOpen && "rotate-180"
-            )} />
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
-          <div className="overflow-x-auto pt-4 pb-2">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b-2 border-border">
-                  <th className="text-left py-4 px-4 text-foreground font-semibold w-[40%]">Feature</th>
-                  <th className="text-center py-4 px-4 w-[20%]">
-                    <div className="flex flex-col items-center gap-1">
-                      <Sparkles className="h-5 w-5 text-slate-500" />
-                      <span className="font-semibold text-foreground">Basic</span>
-                      <span className="text-xs text-muted-foreground">Free</span>
-                    </div>
-                  </th>
-                  <th className="text-center py-4 px-4 w-[20%] bg-emerald-500/5 border-x-2 border-emerald-500/20 rounded-t-xl">
-                    <div className="flex flex-col items-center gap-1">
-                      <Star className="h-5 w-5 text-emerald-500" />
-                      <span className="font-semibold text-foreground">Professional</span>
-                      <span className="text-xs text-emerald-600 font-medium">$399/mo</span>
-                    </div>
-                  </th>
-                  <th className="text-center py-4 px-4 w-[20%]">
-                    <div className="flex flex-col items-center gap-1">
-                      <Crown className="h-5 w-5 text-amber-500" />
-                      <span className="font-semibold text-foreground">Featured</span>
-                      <span className="text-xs text-amber-600 font-medium">$1,099/mo</span>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {featureCategories.map((category, catIndex) => (
-                  <>
-                    <tr key={`cat-${catIndex}`} className="bg-muted/30">
-                      <td colSpan={4} className="py-3 px-4 text-sm font-semibold text-foreground uppercase tracking-wide">
-                        {category.category}
-                      </td>
-                    </tr>
-                    {category.features.map((row, index) => (
-                      <tr key={`${catIndex}-${index}`} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                        <td className="py-3.5 px-4 text-foreground text-sm">{row.feature}</td>
-                        <td className="text-center py-3.5 px-4">
-                          {typeof row.basic === "boolean" ? (
-                            row.basic ? (
-                              <CheckCircle className="h-5 w-5 text-emerald-500 mx-auto" />
-                            ) : (
-                              <X className="h-5 w-5 text-muted-foreground/30 mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-muted-foreground text-sm">{row.basic}</span>
-                          )}
-                        </td>
-                        <td className="text-center py-3.5 px-4 bg-emerald-500/5 border-x-2 border-emerald-500/20">
-                          {typeof row.professional === "boolean" ? (
-                            row.professional ? (
-                              <CheckCircle className="h-5 w-5 text-emerald-500 mx-auto" />
-                            ) : (
-                              <X className="h-5 w-5 text-muted-foreground/30 mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-emerald-600 font-medium text-sm">{row.professional}</span>
-                          )}
-                        </td>
-                        <td className="text-center py-3.5 px-4">
-                          {typeof row.featured === "boolean" ? (
-                            row.featured ? (
-                              <CheckCircle className="h-5 w-5 text-amber-500 mx-auto" />
-                            ) : (
-                              <X className="h-5 w-5 text-muted-foreground/30 mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-amber-600 font-medium text-sm">{row.featured}</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-  );
-};
-
 const ForProviders = () => {
-  const [showAnnouncement, setShowAnnouncement] = useState(true);
-
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SEO
-        title="List Your Rehab Center - For Providers | RehabLookup"
-        description="Partner with RehabLookup to boost your treatment center visibility. Connect with families seeking addiction care. Free listing available."
+        title="List Your Rehab Center Free - For Providers | RehabLookup"
+        description="List your treatment center for free on RehabLookup. Receive inquiries from families seeking care and pay only when you choose to connect."
         canonical="/for-providers"
         keywords={[
-          "list rehab center",
+          "list rehab center free",
           "treatment center marketing",
-          "addiction treatment leads",
+          "addiction treatment referrals",
           "rehab facility listing",
           "treatment center directory",
           "behavioral health marketing"
@@ -538,38 +194,15 @@ const ForProviders = () => {
           "@context": "https://schema.org",
           "@type": "Service",
           name: "RehabLookup Provider Listing Service",
-          serviceType: "Treatment Center Marketing",
+          serviceType: "Treatment Center Directory Listing",
           provider: {
             "@type": "Organization",
             name: "RehabLookup",
           },
-          description: "Connect your treatment center with families actively seeking addiction recovery services",
+          description: "List your treatment center for free and connect with families actively seeking addiction recovery services",
           areaServed: {
             "@type": "Country",
             name: "United States",
-          },
-          hasOfferCatalog: {
-            "@type": "OfferCatalog",
-            name: "Provider Plans",
-            itemListElement: [
-              {
-                "@type": "Offer",
-                name: "Basic Listing",
-                price: "0",
-                priceCurrency: "USD",
-                description: "Free directory listing for treatment centers",
-              },
-              {
-                "@type": "Offer",
-                name: "Professional Plan",
-                description: "Enhanced visibility with lead generation",
-              },
-              {
-                "@type": "Offer",
-                name: "Featured Plan",
-                description: "Premium placement with exclusive leads",
-              },
-            ],
           },
         }}
         breadcrumbs={[
@@ -578,44 +211,10 @@ const ForProviders = () => {
         ]}
       />
       
-      {/* Sticky Announcement Bar */}
-      <div 
-        className={`sticky top-0 z-[60] bg-gradient-to-r from-accent via-accent/90 to-accent text-accent-foreground transition-all duration-300 ease-in-out overflow-hidden ${
-          showAnnouncement ? 'max-h-16 opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <div className="container px-4 md:px-6">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 py-2.5 sm:py-3 relative pr-8 sm:pr-10">
-            <div className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full bg-white/20 shrink-0">
-              <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-            </div>
-            <Sparkles className="h-4 w-4 shrink-0 animate-pulse sm:hidden" />
-            <p className="text-xs sm:text-sm font-medium text-center leading-tight">
-              <span className="font-bold">Limited Time:</span>{" "}
-              <span className="hidden xs:inline">Get </span>20% off your first 3 months
-              <Link 
-                to="/provider-signup?plan=professional" 
-                className="ml-1.5 sm:ml-2 inline-flex items-center gap-1 underline underline-offset-2 hover:no-underline font-semibold whitespace-nowrap"
-              >
-                Claim Offer
-                <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              </Link>
-            </p>
-            <button
-              onClick={() => setShowAnnouncement(false)}
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-1 sm:p-1.5 rounded-full hover:bg-white/20 transition-colors"
-              aria-label="Dismiss announcement"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-      
       <Header
         navLinks={providerNavLinks}
         ctaLink="/provider-signup"
-        ctaLabel="Get Started"
+        ctaLabel="List Free"
         variant="provider"
       />
       
@@ -640,20 +239,36 @@ const ForProviders = () => {
               </div>
 
               <h1 className="mb-4 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight">
-                Fill Your Beds With
-                <span className="text-primary"> Qualified Admissions</span>
+                List Your Facility.
+                <span className="text-primary"> Connect With Families.</span>
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
-                Join the network trusted by 500+ treatment centers. Connect with families 
-                actively seeking treatment—not tire kickers.
+                Create your free listing and receive inquiries from families actively seeking treatment. 
+                Pay only when you choose to connect.
               </p>
+
+              {/* Value Props */}
+              <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+                <div className="inline-flex items-center gap-2 rounded-full bg-card border border-border px-4 py-2">
+                  <CheckCircle className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-medium text-foreground">Free to List</span>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-card border border-border px-4 py-2">
+                  <CheckCircle className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-medium text-foreground">No Monthly Fees</span>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-card border border-border px-4 py-2">
+                  <CheckCircle className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-medium text-foreground">Pay Per Inquiry</span>
+                </div>
+              </div>
 
               {/* CTA Buttons */}
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row mb-8">
                 <Link to="/provider-signup">
                   <Button size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all">
-                    Get Started
+                    List Your Facility Free
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
@@ -715,6 +330,62 @@ const ForProviders = () => {
           </div>
         </section>
 
+        {/* How It Works - Clear 4-Step Process */}
+        <section className="section-padding bg-gradient-to-b from-muted/50 to-background">
+          <div className="container">
+            <div className="text-center mb-12">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <Clock className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-accent">How It Works</span>
+              </div>
+              <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
+                Simple, Transparent Process
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                List for free. Receive inquiries. Pay only when you choose to connect.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto">
+              {howItWorksSteps.map((item, index) => (
+                <div
+                  key={item.step}
+                  className="relative rounded-xl border border-border bg-card p-6 shadow-sm text-center animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {index < 3 && (
+                    <div className="hidden lg:block absolute top-1/2 -right-3 w-6 border-t-2 border-dashed border-accent/30" />
+                  )}
+                  
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-base font-bold text-accent-foreground shadow-md">
+                      {item.step}
+                    </div>
+                  </div>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 mx-auto mb-3">
+                    <item.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {item.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-10">
+              <Link to="/provider-signup">
+                <Button size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl">
+                  Get Started Free
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Benefits Grid */}
         <section className="section-padding">
           <div className="container">
@@ -759,77 +430,61 @@ const ForProviders = () => {
           </div>
         </section>
 
-        {/* How It Works */}
-        <section className="section-padding bg-gradient-to-b from-muted/50 to-background">
+        {/* Pro Visibility Upgrade Section */}
+        <section className="section-padding bg-gradient-to-b from-background to-muted/30">
           <div className="container">
-            <div className="text-center mb-12">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                <Clock className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">Get Started in Minutes</span>
-              </div>
-              <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
-                Simple 3-Step Process
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                Join our network quickly and start receiving qualified leads.
-              </p>
-            </div>
-
-            <div className="grid gap-8 md:grid-cols-3 max-w-4xl mx-auto">
-              {[
-                { 
-                  step: 1, 
-                  title: "Create Your Profile", 
-                  description: "Sign up and add your facility details in about 10 minutes.",
-                  icon: Building2,
-                },
-                { 
-                  step: 2, 
-                  title: "Get Verified", 
-                  description: "Our team reviews your credentials within 24 hours.",
-                  icon: BadgeCheck,
-                },
-                { 
-                  step: 3, 
-                  title: "Receive Leads", 
-                  description: "Go live and families start finding you immediately.",
-                  icon: MessageSquare,
-                },
-              ].map((item, index) => (
-                <div
-                  key={item.step}
-                  className="relative rounded-xl border border-border bg-card p-6 shadow-sm text-center animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  {index < 2 && (
-                    <div className="hidden md:block absolute top-1/2 -right-4 w-8 border-t-2 border-dashed border-accent/30" />
-                  )}
-                  
-                  <div className="flex items-center justify-center gap-3 mb-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent/80 text-base font-bold text-accent-foreground shadow-md">
-                      {item.step}
+            <div className="max-w-4xl mx-auto">
+              <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-accent/5 p-8 md:p-10 relative overflow-hidden">
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl" />
+                
+                <div className="relative z-10">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-8">
+                    <div className="flex-1">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 mb-4">
+                        <Crown className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-semibold text-primary">Pro Visibility</span>
+                      </div>
+                      
+                      <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
+                        Want More Visibility?
+                      </h2>
+                      
+                      <p className="text-muted-foreground mb-6 leading-relaxed">
+                        Upgrade to Pro for premium placement and save on every inquiry you unlock.
+                      </p>
+                      
+                      <ul className="space-y-3 mb-6">
+                        {[
+                          "20% off every inquiry unlock",
+                          "Featured on homepage",
+                          "Priority placement on state & city pages",
+                          "Top of search results",
+                          "Gold Pro badge on your listing",
+                        ].map((feature, idx) => (
+                          <li key={idx} className="flex items-center gap-3">
+                            <CheckCircle className="h-5 w-5 text-primary shrink-0" />
+                            <span className="text-foreground">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                      <item.icon className="h-4 w-4 text-primary" />
+                    
+                    <div className="lg:text-center">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Available after you create your free listing
+                      </p>
+                      <Link to="/provider-signup">
+                        <Button size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl">
+                          Start Free, Upgrade Later
+                          <ArrowRight className="h-5 w-5" />
+                        </Button>
+                      </Link>
                     </div>
                   </div>
-                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {item.description}
-                  </p>
                 </div>
-              ))}
-            </div>
-
-            <div className="text-center mt-10">
-              <Link to="/provider-signup">
-                <Button size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl">
-                  Get Started Now
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -839,64 +494,40 @@ const ForProviders = () => {
           <div className="container">
             <div className="grid gap-12 lg:grid-cols-2 items-center">
               <div>
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                  <CheckCircle className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-medium text-accent">Full Feature Set</span>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">Powerful Dashboard</span>
                 </div>
                 <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
-                  Everything You Need to Succeed
+                  Everything at Your Fingertips
                 </h2>
-                <p className="mb-8 text-lg text-muted-foreground leading-relaxed">
-                  Our platform gives you the tools to showcase your facility, connect with families, and grow your admissions.
+                <p className="text-lg text-muted-foreground mb-8">
+                  Manage your listing, track inquiries, and grow your admissions from one intuitive dashboard.
                 </p>
-
-                <ul className="space-y-3">
-                  {listingFeatures.map((feature, index) => (
-                    <li key={feature.text} className="flex items-start gap-3 animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                      <div className={cn(
-                        "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                        feature.highlight ? "bg-accent/15" : "bg-primary/10"
-                      )}>
-                        <Check className={cn(
-                          "h-3.5 w-3.5",
-                          feature.highlight ? "text-accent" : "text-primary"
-                        )} />
-                      </div>
+                
+                <ul className="space-y-4">
+                  {listingFeatures.map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <Check className={cn(
+                        "h-5 w-5 shrink-0 mt-0.5",
+                        feature.highlight ? "text-accent" : "text-muted-foreground"
+                      )} />
                       <span className={cn(
-                        "text-foreground",
-                        feature.highlight && "font-medium"
+                        "text-base",
+                        feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"
                       )}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-
-              <div className="relative lg:py-6 lg:px-6">
-                <div className="rounded-2xl overflow-hidden border border-border shadow-xl bg-card">
-                  <img 
-                    src={rehabFacilityHero} 
-                    alt="Modern professional rehabilitation treatment center with serene landscaping" 
-                    className="w-full h-auto"
-                  />
-                </div>
-                
-                {/* Floating badges - contained within section */}
-                <div className="absolute bottom-2 left-0 md:left-0 rounded-xl bg-primary px-4 py-3 shadow-lg z-10">
-                  <div className="flex items-center gap-3 text-primary-foreground">
-                    <Shield className="h-5 w-5 text-accent" />
-                    <div>
-                      <div className="text-sm font-bold">Verified Leads</div>
-                      <div className="text-xs opacity-80">Quality guaranteed</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="absolute top-2 right-0 md:right-0 rounded-xl bg-accent px-4 py-2 shadow-md animate-float z-10">
-                  <div className="flex items-center gap-2 text-accent-foreground">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="text-sm font-bold">Grow Your Reach</span>
-                  </div>
-                </div>
+              
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-3xl blur-2xl" />
+                <img 
+                  src={providerDashboardMockup} 
+                  alt="Provider Dashboard"
+                  className="relative rounded-2xl shadow-2xl border border-border"
+                />
               </div>
             </div>
           </div>
@@ -999,143 +630,6 @@ const ForProviders = () => {
           </div>
         </section>
 
-        {/* Pricing Section */}
-        <section className="section-padding">
-          <div className="container">
-            <div className="text-center mb-12">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
-                <Star className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">Simple Pricing</span>
-              </div>
-              <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
-                Plans That Scale With You
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-4">
-                Start free and upgrade as you grow. No hidden fees.
-              </p>
-              
-              {/* Exclusivity Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-5 py-2">
-                <Shield className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">No shared leads. No bidding. No race to call.</span>
-              </div>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-              {pricingPlans.map((plan, index) => {
-                const PlanIcon = plan.icon;
-                return (
-                  <AnimatedCard key={plan.name} delay={index * 100}>
-                    <div className={cn(
-                      "relative h-full flex flex-col rounded-2xl border p-8 transition-all",
-                      plan.popular 
-                        ? "border-emerald-500/50 bg-gradient-to-b from-emerald-500/5 to-background shadow-lg shadow-emerald-500/10 scale-[1.02]" 
-                        : "border-border bg-card hover:border-border/80 hover:shadow-md"
-                    )}>
-                      {plan.popular && (
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-1 text-sm font-semibold text-white shadow-md">
-                            <Sparkles className="h-3.5 w-3.5" />
-                            Most Popular
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Plan Header */}
-                      <div className="mb-6">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className={cn(
-                            "h-10 w-10 rounded-xl flex items-center justify-center bg-gradient-to-br",
-                            plan.gradient
-                          )}>
-                            <PlanIcon className="h-5 w-5 text-white" />
-                          </div>
-                          <h3 className="font-display text-xl font-bold text-foreground">{plan.name}</h3>
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                          <span className="text-lg text-muted-foreground">{plan.period}</span>
-                        </div>
-                        <p className="text-muted-foreground mt-2 text-sm">{plan.description}</p>
-                      </div>
-
-                      {/* Exclusivity Badge */}
-                      <div className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold mb-5 w-fit",
-                        plan.exclusivityColor
-                      )}>
-                        <Shield className="h-3 w-3" />
-                        {plan.exclusivityBadge}
-                      </div>
-                      
-                      {/* Features */}
-                      <ul className="flex-1 space-y-2.5 mb-6">
-                        {plan.features.map((feature, idx) => (
-                          <li key={idx} className={cn(
-                            "flex items-start gap-2.5",
-                            feature.isHeader && "mt-0 mb-1"
-                          )}>
-                            {feature.isHeader ? (
-                              <span className="text-sm font-medium text-muted-foreground">{feature.text}</span>
-                            ) : (
-                              <>
-                                <CheckCircle className={cn(
-                                  "h-4.5 w-4.5 shrink-0 mt-0.5",
-                                  feature.highlight ? "text-emerald-500" : "text-muted-foreground"
-                                )} />
-                                <span className={cn(
-                                  "text-sm",
-                                  feature.highlight ? "text-foreground font-medium" : "text-muted-foreground"
-                                )}>{feature.text}</span>
-                              </>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-
-                      {/* Limitations */}
-                      {plan.limitations.length > 0 && (
-                        <div className="mb-5 pt-4 border-t border-border/50">
-                          {plan.limitations.map((limitation, idx) => (
-                            <p key={idx} className="text-xs text-muted-foreground/70 flex items-center gap-1.5 mb-1">
-                              <X className="h-3 w-3" />
-                              {limitation}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                      
-                      <Link to={`/provider-signup?plan=${plan.name.toLowerCase()}`}>
-                        <Button 
-                          variant={plan.ctaVariant} 
-                          size="lg"
-                          className={cn(
-                            "w-full h-12 text-base font-semibold rounded-xl",
-                            plan.popular && "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 border-0"
-                          )}
-                        >
-                          {plan.cta}
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </AnimatedCard>
-                );
-              })}
-            </div>
-
-            <p className="text-center text-sm text-muted-foreground mt-8">
-              No credit card required to start • Cancel anytime
-            </p>
-
-            {/* ROI Calculator */}
-            <ROICalculator />
-
-            {/* Collapsible Comparison Table */}
-            <ComparisonTable />
-          </div>
-        </section>
-
         {/* FAQ Section */}
         <section className="section-padding bg-muted/30">
           <div className="container">
@@ -1148,54 +642,54 @@ const ForProviders = () => {
                 Got Questions? We've Got Answers
               </h2>
               <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                Everything you need to know about partnering with RehabLookup.
+                Everything you need to know about listing on RehabLookup.
               </p>
             </div>
 
             <div className="max-w-3xl mx-auto">
               <Accordion type="single" collapsible className="space-y-4">
-                <AccordionItem value="exclusivity" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                <AccordionItem value="free-listing" className="border border-border rounded-xl px-6 bg-card shadow-sm">
                   <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
-                    Are leads really exclusive? How does that work?
+                    Is it really free to list my facility?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground pb-5">
-                    Yes, 100% exclusive for Featured providers. When a family submits a request for your facility, that lead is delivered only to you—never shared with competitors. Unlike other platforms that sell the same lead to 5-10 centers, we believe in quality over quantity. You get the full opportunity to connect without racing against others.
+                    Yes, creating your listing is completely free. You only pay when you choose to unlock an inquiry to view contact details and reach out to a family. There are no monthly fees, setup fees, or hidden charges.
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="pricing" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                <AccordionItem value="how-unlock-works" className="border border-border rounded-xl px-6 bg-card shadow-sm">
                   <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
-                    How does pricing work? Are there any hidden fees?
+                    How does the inquiry unlock system work?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground pb-5">
-                    Our pricing is straightforward with no hidden fees. The Basic plan is free forever with 1 lead (lifetime). Professional is $399/month for up to 100 leads (shared with max 2 providers), and Featured is $1,099/month for up to 100 exclusive leads plus premium placement. No credit card required to start.
+                    When a family expresses interest in your facility, you'll receive a notification with basic details about their needs. If you'd like to connect with them, you can unlock the inquiry to view their full contact information (name, phone, email) and reach out directly. You're in complete control of which inquiries you pursue.
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="setup" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                <AccordionItem value="pro-upgrade" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
+                    What is Pro Visibility and do I need it?
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    Pro Visibility is an optional upgrade that gives you premium placement (homepage, state/city pages, top of search results) and 20% off every inquiry you unlock. It's designed for facilities that want maximum exposure. You can start free and upgrade anytime from your dashboard.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="inquiry-quality" className="border border-border rounded-xl px-6 bg-card shadow-sm">
+                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
+                    What kind of inquiry quality can I expect?
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    Our inquiries come from families actively seeking treatment—not cold prospects from purchased lists. Each inquiry includes verified contact information, treatment preferences, insurance details, and urgency level. Families find your facility through our directory and express genuine interest.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="setup-time" className="border border-border rounded-xl px-6 bg-card shadow-sm">
                   <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
                     How long does it take to get started?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground pb-5">
-                    Most providers complete their profile and go live in under 10 minutes. Simply create an account, fill in your facility details, add photos, and you're ready to receive leads. Our onboarding wizard guides you through each step, and our support team is available if you need help.
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="quality" className="border border-border rounded-xl px-6 bg-card shadow-sm">
-                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
-                    What kind of lead quality can I expect?
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground pb-5">
-                    Our leads are high-intent families actively seeking treatment—not cold prospects from purchased lists. Each lead includes verified contact information, insurance details, treatment preferences, and urgency level. We use quality scoring to help you prioritize, and our Professional and Featured plans include advanced filtering to match your ideal patient profile.
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="cancel" className="border border-border rounded-xl px-6 bg-card shadow-sm">
-                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
-                    Can I cancel or change my plan anytime?
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground pb-5">
-                    Absolutely. There are no long-term contracts or cancellation fees. You can upgrade, downgrade, or cancel your plan at any time from your dashboard. Changes take effect at your next billing cycle. We're confident in our service and want you to stay because of results, not obligations.
+                    Most providers complete their profile and go live in under 10 minutes. Simply create an account, fill in your facility details, add photos, and submit for verification. Our team reviews new listings quickly, and you'll be notified once you're approved and live.
                   </AccordionContent>
                 </AccordionItem>
 
@@ -1204,27 +698,14 @@ const ForProviders = () => {
                     What kind of support do you offer?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground pb-5">
-                    All plans include email support with same-day responses. Professional and Featured plans get priority support with faster response times. Featured partners also receive a dedicated account manager for strategic guidance. We're here to help you maximize your admissions and get the most from our platform.
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="multiple" className="border border-border rounded-xl px-6 bg-card shadow-sm">
-                  <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
-                    Can I list multiple facilities?
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground pb-5">
-                    Yes! The Basic plan includes 1 facility location, Professional supports up to 3 locations, and Featured allows up to 5 locations under one account. Each location gets its own profile, lead inbox, and analytics. Need more locations? Contact our sales team for enterprise solutions.
+                    All providers have access to email support and our comprehensive help center. We're here to help you optimize your listing and get the most from the platform. Pro members receive priority support with faster response times.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
 
-              <div className="text-center mt-10">
-                <p className="text-muted-foreground mb-4">Still have questions?</p>
-                <Link to="/contact">
-                  <Button variant="outline" className="gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Contact Our Team
-                  </Button>
+              <div className="mt-8 text-center">
+                <Link to="/provider-faq" className="text-primary hover:underline text-sm font-medium">
+                  View all FAQs <ArrowRight className="inline h-4 w-4 ml-1" />
                 </Link>
               </div>
             </div>
@@ -1232,33 +713,33 @@ const ForProviders = () => {
         </section>
 
         {/* Final CTA */}
-        <section className="section-padding bg-gradient-to-b from-primary/5 to-background">
+        <section className="section-padding bg-gradient-to-b from-background to-primary/5">
           <div className="container">
-            <div className="mx-auto max-w-2xl rounded-2xl border border-accent/20 bg-gradient-to-br from-primary via-primary to-primary/90 p-10 text-center shadow-xl">
-              <div className="mb-4 inline-flex items-center justify-center h-14 w-14 rounded-full bg-white/10 backdrop-blur">
-                <HeartHandshake className="h-7 w-7 text-accent" />
+            <div className="max-w-3xl mx-auto text-center">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5">
+                <Sparkles className="h-4 w-4 text-accent animate-pulse" />
+                <span className="text-sm font-medium text-accent">Join 500+ Treatment Centers</span>
               </div>
-              <h2 className="mb-4 font-display text-2xl md:text-3xl font-bold text-primary-foreground">
-                Ready to Transform Your Admissions?
+              
+              <h2 className="mb-4 font-display text-3xl md:text-4xl font-bold text-foreground">
+                Ready to Connect With More Families?
               </h2>
-              <p className="mb-8 text-lg text-primary-foreground/80 max-w-lg mx-auto">
-                Join 500+ treatment centers connecting with families who need their help.
+              
+              <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+                Create your free listing today and start receiving inquiries from families who need your help.
               </p>
-              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
                 <Link to="/provider-signup">
-                  <Button variant="hero-light" size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl">
-                    Get Started
+                  <Button size="lg" className="gap-2 h-14 px-10 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                    List Your Facility Free
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
-                <Link to="/contact">
-                  <Button variant="outline" size="lg" className="gap-2 h-12 px-8 text-base font-semibold rounded-xl bg-transparent border-white/30 text-primary-foreground hover:bg-white/10">
-                    Talk to Sales
-                  </Button>
-                </Link>
               </div>
-              <p className="mt-6 text-sm text-primary-foreground/60">
-                No credit card required • Setup in 10 minutes • Cancel anytime
+              
+              <p className="text-sm text-muted-foreground mt-6">
+                No credit card required • Free to list • Pay only when you connect
               </p>
             </div>
           </div>

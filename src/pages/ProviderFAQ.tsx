@@ -46,8 +46,8 @@ const faqCategories = [
         answer: "Verification typically takes 2-3 business days. We verify your state licensing, accreditations, and facility credentials. You'll receive an email notification once your listing is approved and live on the platform.",
       },
       {
-        question: "Is there a free listing option?",
-        answer: "Yes, we offer a free basic listing that includes your facility profile, contact information, and basic program details. Premium plans offer additional features like featured placement, enhanced analytics, and priority support.",
+        question: "Is it free to list my facility?",
+        answer: "Yes, listing your facility is completely free. You only pay when you choose to unlock an inquiry to connect with a family. There are no monthly fees or hidden costs. An optional Pro upgrade is available for enhanced visibility and discounts on unlocks.",
       },
     ],
   },
@@ -75,48 +75,48 @@ const faqCategories = [
     ],
   },
   {
-    id: "leads-management",
+    id: "inquiries-management",
     icon: Users,
-    title: "Leads & Contacts",
+    title: "Inquiries & Contacts",
     faqs: [
       {
-        question: "How do I receive and respond to leads?",
-        answer: "All leads are sent directly to your registered email and appear in your provider dashboard. You can respond via email or use our built-in messaging system. We recommend responding within 1 hour for the best conversion rates.",
+        question: "How do I receive and respond to inquiries?",
+        answer: "When a family expresses interest in your facility, you'll receive a notification with basic details. To view their full contact information and respond, you unlock the inquiry. Unlocked inquiries appear in your dashboard with complete details.",
       },
       {
-        question: "What information is included in a lead?",
-        answer: "Each lead includes the contact's name, phone number, email, preferred contact method, insurance information (if provided), treatment needs, and any additional message. You can also see the lead's urgency level and qualification status.",
+        question: "What information is included in an inquiry?",
+        answer: "Before unlocking, you see treatment needs, insurance type, location preference, and urgency level. After unlocking, you get full contact details including name, phone, email, and any additional message from the family.",
       },
       {
-        question: "How are leads distributed?",
-        answer: "Leads are distributed based on the family's selected preferences, your facility's location, treatment specialties, and insurance acceptance. Featured listings receive priority placement and additional lead visibility.",
+        question: "How does the unlock system work?",
+        answer: "When you see an inquiry that matches your facility, you can choose to unlock it to view full contact details. You only pay for inquiries you decide to pursue. Pro members receive 20% off all unlocks.",
       },
       {
-        question: "Can I set up lead notifications?",
-        answer: "Yes, you can customize your notification preferences in the dashboard settings. Options include instant email alerts, SMS notifications, daily digest emails, and browser push notifications.",
+        question: "Can I set up inquiry notifications?",
+        answer: "Yes, you can customize your notification preferences in the dashboard settings. Options include instant email alerts, SMS notifications, and daily digest emails so you never miss a potential admission.",
       },
     ],
   },
   {
-    id: "billing-plans",
+    id: "billing-credits",
     icon: CreditCard,
-    title: "Billing & Plans",
+    title: "Billing & Credits",
     faqs: [
       {
-        question: "What plans are available?",
-        answer: "We offer Basic (free), Professional, and Premium plans. Each tier includes different features like enhanced visibility, analytics, lead limits, and support levels. Visit our pricing page or contact sales for detailed comparisons.",
-      },
-      {
         question: "How does billing work?",
-        answer: "Paid plans are billed monthly or annually (with a discount for annual billing). You can upgrade, downgrade, or cancel your plan at any time from your billing settings. Changes take effect at the next billing cycle.",
+        answer: "Listing is free. You purchase credits to unlock inquiries, or pay per unlock. Pro Visibility is an optional monthly upgrade for enhanced placement and 20% off all unlocks. All payments are processed securely through Stripe.",
       },
       {
         question: "What payment methods do you accept?",
-        answer: "We accept all major credit cards (Visa, Mastercard, American Express, Discover) and can arrange ACH transfers for annual enterprise agreements. All payments are processed securely through Stripe.",
+        answer: "We accept all major credit cards (Visa, Mastercard, American Express, Discover). Credits can be purchased in packages and never expire. All payments are processed securely through Stripe.",
       },
       {
-        question: "Can I get a refund if I'm not satisfied?",
-        answer: "We offer a money-back guarantee for new paid subscriptions. If you're not satisfied, contact our support team to discuss refund options.",
+        question: "What is Pro Visibility?",
+        answer: "Pro Visibility is an optional upgrade that gives you featured placement on homepage, state, and city pages plus 20% off every inquiry unlock. It's designed for facilities that want maximum exposure and savings.",
+      },
+      {
+        question: "Can I get a refund for unused credits?",
+        answer: "Credits are non-refundable but never expire. If you have concerns about a specific inquiry quality, contact our support team and we'll review it. We stand behind the quality of our inquiries.",
       },
     ],
   },

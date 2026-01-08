@@ -42,7 +42,7 @@ import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/Le
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
-import { BasicPlanUpgradeBanner } from "@/components/provider/BasicPlanUpgradeBanner";
+
 import { LeadUsageProgressCard } from "@/components/provider/LeadUsageProgressCard";
 import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";

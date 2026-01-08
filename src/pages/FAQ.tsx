@@ -166,19 +166,19 @@ const faqCategories: FAQCategory[] = [
     faqs: [
       {
         question: "How can my facility be listed on RehabLookup?",
-        answer: "Treatment centers can apply through our For Providers page. We review licensing, accreditation, and credentials before approval. All facilities must meet our quality standards and provide accurate information. The listing process is straightforward and our team is available to assist."
+        answer: "Treatment centers can apply through our For Providers page. Listing is completely free. We review licensing, accreditation, and credentials before approval. All facilities must meet our quality standards and provide accurate information. The listing process is straightforward and our team is available to assist."
       },
       {
         question: "What are the requirements to be listed?",
         answer: "Facilities must have valid state licensing, appropriate accreditation, and a track record of providing quality care. We verify credentials and may request documentation. Facilities must keep their profile information accurate and current."
       },
       {
-        question: "How are leads distributed?",
-        answer: "When someone requests information about treatment, we connect them with facilities that match their specific needs, location, and insurance. We prioritize quality matches over quantity, ensuring that inquiries go to facilities genuinely suited to help each individual."
+        question: "How are inquiries distributed?",
+        answer: "When a family expresses interest in treatment, we notify matching facilities based on location, services, and insurance accepted. Providers can choose to unlock inquiries they want to respond to—you only pay when you decide to connect."
       },
       {
         question: "Is there a cost to list my facility?",
-        answer: "We offer different listing options including both free and premium tiers. Basic listings are available at no cost, while featured placements and additional visibility options are available through our subscription plans. Visit our For Providers page for current pricing and options."
+        answer: "Listing your facility is completely free. You only pay when you choose to unlock an inquiry to view contact details and connect with a family. There are no monthly fees or hidden charges. An optional Pro upgrade is available for enhanced visibility."
       },
       {
         question: "How do I update my facility information?",
