@@ -28,22 +28,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useProviderData } from "@/hooks/useProviderData";
-import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
-import { useAccountLeadUsage } from "@/hooks/useAccountLeadUsage";
+import { useProviderCredits } from "@/hooks/useProviderCredits";
+import { useProStatus } from "@/hooks/useProStatus";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow, differenceInHours, isPast, format } from "date-fns";
-import { 
-  LeadLimitWarningBanner, 
-  LeadLimitReachedBanner 
-} from "@/components/provider/LeadUsageIndicator";
+import { differenceInHours, isPast, format } from "date-fns";
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
-
-import { LeadUsageProgressCard } from "@/components/provider/LeadUsageProgressCard";
 import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
@@ -152,21 +146,17 @@ export default function ProviderDashboardPage() {
   const facilityId = selectedFacility?.id;
   
   const { data: providerData, isLoading } = useProviderData(facilityId);
-  const { data: subscription, isLoading: subscriptionLoading } = useSubscription();
   const { facilities } = useProviderFacilities();
-  
-  // ACCOUNT-LEVEL lead usage (100 leads total, not per-facility)
-  const accountLeadUsage = useAccountLeadUsage();
-  const accountLeadsUsed = accountLeadUsage?.usedLeads ?? 0;
-  const accountLeadLimit = accountLeadUsage?.leadLimit ?? 0;
+  const { data: creditsData, isLoading: creditsLoading } = useProviderCredits(facilityId);
+  const { data: proStatus, isLoading: proLoading } = useProStatus(facilityId);
   
   const facility = selectedFacility || providerData?.facility;
   const profile = providerData?.profile;
   const viewsCount = providerData?.viewsCount ?? 0;
   const userName = profile?.first_name || "";
   
-  const planKey = subscriptionLoading ? undefined : (subscription?.plan || "basic");
-  const locationLimit = planKey ? PLAN_DETAILS[planKey]?.location_limit ?? 1 : 1;
+  // Pro users get 5 locations, free users get 1
+  const locationLimit = proStatus?.isPro ? 5 : 1;
   const usedLocations = facilities?.length ?? 0;
   const facilityIds = facilities?.map(f => f.id) ?? [];
 
@@ -222,7 +212,7 @@ export default function ProviderDashboardPage() {
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!facilityId && planKey === "basic",
+    enabled: !!facilityId,
     staleTime: 1000 * 60 * 2,
     refetchOnMount: true,
   });
@@ -431,31 +421,32 @@ export default function ProviderDashboardPage() {
                 isLoading={isLoading}
               />
               <MetricCard
-                title="Leads"
-                value={accountLeadsUsed}
-                subtitle="This month (all locations)"
+                title="Inquiries"
+                value={recentLeads.length}
+                subtitle="Recent inquiries"
                 icon={TrendingUp}
                 iconBg="bg-emerald-500/10"
                 iconColor="text-emerald-600"
-                isLoading={isLoading || accountLeadUsage.isLoading}
+                isLoading={leadsLoading}
               />
               <MetricCard
                 title="Locations"
                 value={`${usedLocations}/${locationLimit}`}
-                subtitle={!subscriptionLoading && usedLocations >= locationLimit && planKey !== "featured" ? "Limit reached" : "Active"}
+                subtitle={!proLoading && usedLocations >= locationLimit && !proStatus?.isPro ? "Limit reached" : "Active"}
                 icon={Building2}
                 iconBg="bg-violet-500/10"
                 iconColor="text-violet-600"
-                isLoading={subscriptionLoading}
+                isLoading={proLoading}
               />
               <MetricCard
-                title="Plan"
-                value={subscriptionLoading ? "" : (subscription?.plan_name || "Basic")}
+                title="Credits"
+                value={creditsLoading ? "" : `$${((creditsData?.balance_cents || 0) / 100).toFixed(0)}`}
+                subtitle={proStatus?.isPro ? "Pro Member" : "Free Listing"}
                 icon={CreditCard}
                 iconBg="bg-primary/10"
                 iconColor="text-primary"
-                action={{ label: "Manage", href: "/provider/billing" }}
-                isLoading={subscriptionLoading}
+                action={{ label: "Add", href: "/provider/credits" }}
+                isLoading={creditsLoading}
               />
             </div>
 
@@ -467,9 +458,9 @@ export default function ProviderDashboardPage() {
                     <Users className="h-4 w-4 text-primary" />
                     <CardTitle className="text-sm font-semibold">Recent Leads</CardTitle>
                   </div>
-                  {!subscriptionLoading && planKey !== "basic" && recentLeads.length > 0 && (
+                  {recentLeads.length > 0 && (
                     <Button variant="ghost" size="sm" className="h-7 text-xs px-2.5" asChild>
-                      <Link to="/provider/leads">
+                      <Link to="/provider/inquiries">
                         View All <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
                       </Link>
                     </Button>
@@ -477,7 +468,7 @@ export default function ProviderDashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                {subscriptionLoading || leadsLoading ? (
+                {leadsLoading ? (
                   <div className="p-3 space-y-2">
                     {[1, 2, 3].map((i) => (
                       <div key={i} className="flex items-center gap-2 p-2 rounded-lg border">
@@ -488,30 +479,6 @@ export default function ProviderDashboardPage() {
                         </div>
                       </div>
                     ))}
-                  </div>
-                ) : planKey === "basic" ? (
-                  <div className="relative p-5">
-                    <div className="space-y-2 blur-sm pointer-events-none select-none">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg border">
-                          <div className="h-8 w-8 rounded-full bg-muted" />
-                          <div className="flex-1">
-                            <div className="h-3.5 w-20 bg-muted rounded" />
-                            <div className="h-2.5 w-28 bg-muted rounded mt-1" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/95">
-                      <Lock className="h-6 w-6 text-muted-foreground mb-2" />
-                      <p className="text-sm font-medium text-foreground">Upgrade to View</p>
-                      <Button size="sm" className="mt-2 h-7 text-xs" asChild>
-                        <Link to="/provider/billing">
-                          <Sparkles className="h-3.5 w-3.5 mr-1" />
-                          Upgrade
-                        </Link>
-                      </Button>
-                    </div>
                   </div>
                 ) : recentLeads.length === 0 ? (
                   <div className="text-center py-6 px-4">
@@ -558,8 +525,8 @@ export default function ProviderDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Lead Conversion Widget - Conditional */}
-            {!subscriptionLoading && planKey !== "basic" && facilityIds.length > 0 && (
+            {/* Lead Conversion Widget */}
+            {facilityIds.length > 0 && (
               <LeadConversionWidget facilityIds={facilityIds} />
             )}
           </div>
@@ -567,106 +534,105 @@ export default function ProviderDashboardPage() {
           {/* Right Column - Sidebar */}
           <div className="lg:col-span-4 space-y-3 sm:space-y-4">
             
-            {/* Alerts Card */}
-            {!subscriptionLoading && (
-              <div className="space-y-2.5">
-                {planKey === "basic" && totalLeadsCount > 0 && (
-                  <Card className="border-emerald-500/30 bg-emerald-500/5">
-                    <CardContent className="p-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
-                          <span className="text-sm font-bold text-white">{totalLeadsCount}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">
-                            {totalLeadsCount} Lead{totalLeadsCount !== 1 ? 's' : ''} Waiting
-                          </p>
-                          <p className="text-xs text-muted-foreground">Upgrade to unlock</p>
-                        </div>
-                        <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" asChild>
-                          <Link to="/provider/billing">
-                            Unlock
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Urgent Leads Alert */}
-                {planKey !== "basic" && urgentLeads.length > 0 && (
-                  <Card className="border-l-2 border-l-amber-500">
-                    <CardContent className="p-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                          <AlertTriangle className="h-4.5 w-4.5 text-amber-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">
-                            {urgentLeads.length} Need Follow-up
-                          </p>
-                          <p className="text-xs text-muted-foreground">Waiting 24h+</p>
-                        </div>
-                        <Button size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700" asChild>
-                          <Link to="/provider/leads?status=new">
-                            <Phone className="h-3.5 w-3.5 mr-1" />
-                            Call
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Profile Completion */}
-                {providerData?.facility && (() => {
-                  const missingFields = computeMissingFields();
-                  if (missingFields.length === 0) return null;
-                  const currentFieldsKey = missingFields.join(",");
-                  if (profilePromptDismissedFields === currentFieldsKey) return null;
-                  
-                  return (
-                    <Card className="border-dashed border-primary/30 bg-primary/5">
-                      <CardContent className="p-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <FileEdit className="h-4.5 w-4.5 text-primary shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground">Complete Profile</p>
-                            <p className="text-xs text-muted-foreground">{missingFields.length} items missing</p>
-                          </div>
-                          <Button size="sm" className="h-7 text-xs" asChild>
-                            <Link to="/provider/listing">Add</Link>
-                          </Button>
-                          <button
-                            onClick={(e) => handleDismissProfilePrompt(e, missingFields)}
-                            className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })()}
-
-                {/* Status Banner */}
-                {facility?.status !== "approved" && (
-                  <Card className={cn("border-l-2", statusConfig.dotClass === 'bg-amber-500' ? "border-l-amber-500" : "border-l-muted-foreground")}>
-                    <CardContent className="p-3.5 flex items-center gap-3">
-                      <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", statusConfig.bgClass)}>
-                        <StatusIcon className={cn("h-4 w-4", statusConfig.textClass)} />
+            {/* Alerts */}
+            <div className="space-y-2.5">
+              {/* Locked Inquiries Alert */}
+              {totalLeadsCount > 0 && (
+                <Card className="border-emerald-500/30 bg-emerald-500/5">
+                  <CardContent className="p-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-white">{totalLeadsCount}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className={cn("text-sm font-medium", statusConfig.textClass)}>{statusConfig.label}</span>
-                        {facility?.status === "pending" && (
-                          <p className="text-xs text-muted-foreground">Review: 24-48h</p>
-                        )}
+                        <p className="text-sm font-semibold text-foreground">
+                          {totalLeadsCount} Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'} Available
+                        </p>
+                        <p className="text-xs text-muted-foreground">Unlock to view details</p>
+                      </div>
+                      <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" asChild>
+                        <Link to="/provider/inquiries">
+                          View
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Urgent Leads Alert */}
+              {urgentLeads.length > 0 && (
+                <Card className="border-l-2 border-l-amber-500">
+                  <CardContent className="p-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">
+                          {urgentLeads.length} Need Follow-up
+                        </p>
+                        <p className="text-xs text-muted-foreground">Waiting 24h+</p>
+                      </div>
+                      <Button size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700" asChild>
+                        <Link to="/provider/inquiries?status=new">
+                          <Phone className="h-3.5 w-3.5 mr-1" />
+                          Call
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Profile Completion */}
+              {providerData?.facility && (() => {
+                const missingFields = computeMissingFields();
+                if (missingFields.length === 0) return null;
+                const currentFieldsKey = missingFields.join(",");
+                if (profilePromptDismissedFields === currentFieldsKey) return null;
+                
+                return (
+                  <Card className="border-dashed border-primary/30 bg-primary/5">
+                    <CardContent className="p-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <FileEdit className="h-4 w-4 text-primary shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground">Complete Profile</p>
+                          <p className="text-xs text-muted-foreground">{missingFields.length} items missing</p>
+                        </div>
+                        <Button size="sm" className="h-7 text-xs" asChild>
+                          <Link to="/provider/listing">Add</Link>
+                        </Button>
+                        <button
+                          onClick={(e) => handleDismissProfilePrompt(e, missingFields)}
+                          className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </CardContent>
                   </Card>
-                )}
-              </div>
-            )}
+                );
+              })()}
+
+              {/* Status Banner */}
+              {facility?.status !== "approved" && (
+                <Card className={cn("border-l-2", statusConfig.dotClass === 'bg-amber-500' ? "border-l-amber-500" : "border-l-muted-foreground")}>
+                  <CardContent className="p-3.5 flex items-center gap-3">
+                    <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", statusConfig.bgClass)}>
+                      <StatusIcon className={cn("h-4 w-4", statusConfig.textClass)} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className={cn("text-sm font-medium", statusConfig.textClass)}>{statusConfig.label}</span>
+                      {facility?.status === "pending" && (
+                        <p className="text-xs text-muted-foreground">Review: 24-48h</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
             {/* Platform News */}
             <Card>
@@ -741,9 +707,9 @@ export default function ProviderDashboardPage() {
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
-                    <Link to="/provider/leads">
+                    <Link to="/provider/inquiries">
                       <Users className="h-3.5 w-3.5 mr-2" />
-                      Leads
+                      Inquiries
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
@@ -753,49 +719,71 @@ export default function ProviderDashboardPage() {
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
-                    <Link to="/provider/billing">
+                    <Link to="/provider/credits">
                       <CreditCard className="h-3.5 w-3.5 mr-2" />
-                      Billing
+                      Credits
                     </Link>
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Lead Usage Progress - if applicable */}
-            {!subscriptionLoading && (planKey === "professional" || planKey === "featured") && (
-              <Card>
-                <CardHeader className="p-3.5 pb-2.5 border-b">
-                  <CardTitle className="text-sm font-semibold">Lead Usage</CardTitle>
-                </CardHeader>
+            {/* Credit Balance Card */}
+            <Card>
+              <CardHeader className="p-3.5 pb-2.5 border-b">
+                <CardTitle className="text-sm font-semibold">Credit Balance</CardTitle>
+              </CardHeader>
+              <CardContent className="p-3.5">
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-foreground">
+                      {creditsLoading ? (
+                        <Skeleton className="h-7 w-16" />
+                      ) : (
+                        `$${((creditsData?.balance_cents || 0) / 100).toFixed(2)}`
+                      )}
+                    </span>
+                    <Button size="sm" className="h-7 text-xs" asChild>
+                      <Link to="/provider/credits">
+                        <Sparkles className="h-3.5 w-3.5 mr-1" />
+                        Add Credits
+                      </Link>
+                    </Button>
+                  </div>
+                  {proStatus?.isPro && (
+                    <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-500/10 px-2 py-1 rounded">
+                      <Sparkles className="h-3 w-3" />
+                      <span className="font-medium">Pro Member — 20% off unlocks</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pro Status / Upgrade CTA */}
+            {!proStatus?.isPro && (
+              <Card className="border-accent/30 bg-gradient-to-br from-accent/5 to-primary/5">
                 <CardContent className="p-3.5">
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Used (all locations)</span>
-                      <span className="font-semibold">{accountLeadsUsed} / {accountLeadLimit}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-5 w-5 text-accent" />
                     </div>
-                    <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          accountLeadsUsed >= accountLeadLimit ? "bg-red-500" :
-                          accountLeadsUsed >= accountLeadLimit * 0.8 ? "bg-amber-500" : "bg-emerald-500"
-                        )}
-                        style={{ width: `${accountLeadLimit > 0 ? Math.min((accountLeadsUsed / accountLeadLimit) * 100, 100) : 0}%` }}
-                      />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">Upgrade to Pro</p>
+                      <p className="text-xs text-muted-foreground">20% off unlocks + featured placement</p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {accountLeadLimit - accountLeadsUsed > 0 
-                        ? `${accountLeadLimit - accountLeadsUsed} leads remaining`
-                        : "Limit reached"}
-                    </p>
+                    <Button size="sm" className="h-7 text-xs bg-accent hover:bg-accent/90" asChild>
+                      <Link to="/provider/pro-upgrade">
+                        Upgrade
+                      </Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Featured Analytics Widget - if applicable */}
-            {!subscriptionLoading && planKey === "featured" && facility?.id && (
+            {/* Featured Analytics Widget - if Pro */}
+            {proStatus?.isPro && facility?.id && (
               <FeaturedAnalyticsWidget facilityId={facility.id} />
             )}
           </div>
