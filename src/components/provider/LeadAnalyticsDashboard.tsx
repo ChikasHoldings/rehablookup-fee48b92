@@ -34,7 +34,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useLeadAnalytics } from "@/hooks/useLeadAnalytics";
-import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useProStatus } from "@/hooks/useProStatus";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -72,11 +72,9 @@ const EXCLUSIVITY_COLORS: Record<string, string> = {
 
 export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsDashboardProps) {
   const { data: analytics, isLoading } = useLeadAnalytics(facilityId, dateRange);
-  const { data: subscription } = useSubscription();
+  const { data: proStatus } = useProStatus(facilityId);
 
-  const plan = subscription?.plan || 'basic';
-  const planDetails = PLAN_DETAILS[plan] || PLAN_DETAILS.basic;
-  const isExclusivePlan = plan === 'featured';
+  const isPro = proStatus?.isPro || false;
 
   if (isLoading) {
     return <AnalyticsSkeleton />;
@@ -94,9 +92,6 @@ export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsD
     ? Math.round(((analytics.responseMetrics.respondedWithin24h + analytics.responseMetrics.respondedWithin48h) / analytics.totalLeads) * 100)
     : 0;
 
-  const leadCapPercentage = Math.round(((analytics.leadCap - analytics.leadsRemaining) / analytics.leadCap) * 100);
-  const isAtCap = analytics.leadsRemaining === 0;
-
   return (
     <Tabs defaultValue="overview" className="space-y-6">
       <TabsList>
@@ -105,13 +100,13 @@ export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsD
       </TabsList>
 
       <TabsContent value="overview" className="space-y-6">
-      {/* Lead Cap & Plan Indicator */}
-      <Card className={isAtCap ? "border-red-300 bg-red-50/50" : "border-primary/20"}>
+      {/* Pro Status Indicator */}
+      <Card className={isPro ? "border-amber-200 bg-amber-50/30" : "border-primary/20"}>
         <CardContent className="py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-xl ${isExclusivePlan ? "bg-amber-500/10" : "bg-primary/10"} flex items-center justify-center`}>
-                {isExclusivePlan ? (
+              <div className={`h-10 w-10 rounded-xl ${isPro ? "bg-amber-500/10" : "bg-primary/10"} flex items-center justify-center`}>
+                {isPro ? (
                   <Star className="h-5 w-5 text-amber-600" />
                 ) : (
                   <Share2 className="h-5 w-5 text-primary" />
@@ -119,39 +114,30 @@ export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsD
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-foreground">{planDetails.name} Plan</span>
-                  <Badge variant="outline" className={isExclusivePlan ? "bg-amber-100 text-amber-700 border-amber-300" : "bg-blue-100 text-blue-700 border-blue-300"}>
-                    {isExclusivePlan ? (
-                      <><Lock className="h-3 w-3 mr-1" /> Exclusive Leads</>
+                  <span className="font-semibold text-foreground">{isPro ? "Pro" : "Basic"}</span>
+                  <Badge variant="outline" className={isPro ? "bg-amber-100 text-amber-700 border-amber-300" : "bg-muted text-muted-foreground border-border"}>
+                    {isPro ? (
+                      <><Star className="h-3 w-3 mr-1" /> Pro Member</>
                     ) : (
-                      <><Share2 className="h-3 w-3 mr-1" /> Shared Leads</>
+                      "Free Account"
                     )}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {isExclusivePlan 
-                    ? "All leads are delivered exclusively to you" 
-                    : "Leads may be shared with up to one other provider"}
+                  {isPro 
+                    ? "Unlock leads at 20% discount" 
+                    : "Pay per lead unlock"}
                 </p>
               </div>
             </div>
             <div className="sm:text-right">
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-bold text-foreground">
-                  {analytics.leadCap - analytics.leadsRemaining}
+                  {analytics.totalLeads}
                 </span>
-                <span className="text-muted-foreground">/ {analytics.leadCap}</span>
+                <span className="text-muted-foreground">total leads</span>
               </div>
-              <p className="text-xs text-muted-foreground">Leads this billing cycle</p>
-              <div className="mt-2 w-full sm:w-40">
-                <Progress 
-                  value={leadCapPercentage} 
-                  className={`h-2 ${isAtCap ? "[&>div]:bg-red-500" : ""}`} 
-                />
-              </div>
-              {isAtCap && (
-                <p className="text-xs text-red-600 font-medium mt-1">Lead cap reached</p>
-              )}
+              <p className="text-xs text-muted-foreground">{analytics.thisMonthLeads} this month</p>
             </div>
           </div>
         </CardContent>
@@ -186,12 +172,12 @@ export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsD
           iconColor="text-purple-600"
         />
         <StatCard
-          title="Leads Remaining"
-          value={analytics.leadsRemaining}
+          title="Response Rate"
+          value={`${responseRate}%`}
           icon={Zap}
-          subtitle={isAtCap ? "Cap reached" : `${leadCapPercentage}% used this cycle`}
-          iconBg={isAtCap ? "bg-red-500/10" : "bg-amber-500/10"}
-          iconColor={isAtCap ? "text-red-600" : "text-amber-600"}
+          subtitle="Contacted within 48h"
+          iconBg="bg-amber-500/10"
+          iconColor="text-amber-600"
         />
       </div>
 
@@ -345,7 +331,7 @@ export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsD
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  {isExclusivePlan ? (
+                  {isPro ? (
                     <Lock className="h-4 w-4 text-amber-600" />
                   ) : (
                     <Share2 className="h-4 w-4 text-blue-600" />
@@ -354,7 +340,7 @@ export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsD
                 <div>
                   <CardTitle className="text-base">Lead Exclusivity</CardTitle>
                   <CardDescription className="text-xs">
-                    {isExclusivePlan 
+                    {isPro 
                       ? "All your leads are exclusive" 
                       : "Breakdown of shared vs exclusive leads"}
                   </CardDescription>
@@ -393,9 +379,9 @@ export function LeadAnalyticsDashboard({ facilityId, dateRange }: LeadAnalyticsD
                 </div>
               ))}
             </div>
-            {!isExclusivePlan && (
+            {!isPro && (
               <p className="text-xs text-muted-foreground mt-3 text-center">
-                Upgrade to Featured for 100% exclusive leads
+                Upgrade to Pro for 20% discount on all lead unlocks
               </p>
             )}
           </CardContent>

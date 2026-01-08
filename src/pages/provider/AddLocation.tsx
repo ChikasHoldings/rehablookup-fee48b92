@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useProStatus } from "@/hooks/useProStatus";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,7 @@ export default function AddLocationPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: subscription } = useSubscription();
+  const { data: proStatus } = useProStatus();
   const { facilities } = useProviderFacilities();
   
   const [formData, setFormData] = useState<FacilityFormData>(initialFormData);
@@ -98,9 +98,9 @@ export default function AddLocationPage() {
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
   const [lookupTimeout, setLookupTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // Get location limit based on plan
-  const planKey = subscription?.plan || "basic";
-  const locationLimit = PLAN_DETAILS[planKey]?.location_limit ?? 1;
+  // Get location limit based on Pro status (Pro gets 5, Basic gets 1)
+  const isPro = proStatus?.isPro || false;
+  const locationLimit = isPro ? 5 : 1;
   const usedLocations = facilities?.length ?? 0;
   const canAddMore = usedLocations < locationLimit;
 
@@ -249,23 +249,21 @@ export default function AddLocationPage() {
               </div>
               <CardTitle className="text-xl">Location Limit Reached</CardTitle>
               <CardDescription className="text-base">
-                Your {PLAN_DETAILS[planKey]?.name} plan allows up to {locationLimit} location{locationLimit !== 1 ? 's' : ''}.
+                Your {isPro ? "Pro" : "Basic"} account allows up to {locationLimit} location{locationLimit !== 1 ? 's' : ''}.
                 You currently have {usedLocations} location{usedLocations !== 1 ? 's' : ''}.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               <p className="text-sm text-muted-foreground text-center">
-                {planKey === "professional" 
-                  ? "Upgrade to Featured for up to 5 locations."
-                  : "Upgrade to Professional for up to 3 locations, or Featured for up to 5."}
+                Upgrade to Pro for up to 5 locations.
               </p>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => navigate(-1)}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Go Back
                 </Button>
-                <Button onClick={() => navigate("/provider/billing")}>
-                  Upgrade Plan
+                <Button onClick={() => navigate("/provider/pro-upgrade")}>
+                  Upgrade to Pro
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>

@@ -1,9 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, subMonths, format, startOfDay, endOfDay, isWithinInterval, subDays } from "date-fns";
+import { startOfMonth, subMonths, format, startOfDay, endOfDay, isWithinInterval } from "date-fns";
 import { useProviderFacilities } from "./useProviderFacilities";
-import { useSubscription, PLAN_DETAILS } from "./useSubscription";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { type DateRange } from "./useLeadAnalytics";
 
@@ -71,7 +70,6 @@ export interface CentralizedLeadAnalytics {
 export function useCentralizedLeadAnalytics(dateRange?: DateRange) {
   const queryClient = useQueryClient();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
-  const { data: subscription } = useSubscription();
   
   const facilityIds = facilities.map(f => f.id);
 
@@ -146,10 +144,8 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange) {
         });
       }
 
-      // Get plan details for lead cap
-      const plan = subscription?.plan || 'basic';
-      const planDetails = PLAN_DETAILS[plan] || PLAN_DETAILS.basic;
-      const leadCap = planDetails.lead_limit;
+      // No lead cap in the new credits system - set to a high number for backwards compat
+      const leadCap = 999999;
 
       return calculateCentralizedAnalytics(filteredLeads, leadsWithFacilityNames, facilityMap, facilityIds, leadCap);
     },

@@ -27,7 +27,7 @@ import {
   Building2,
 } from "lucide-react";
 import { useCentralizedLeadAnalytics } from "@/hooks/useCentralizedLeadAnalytics";
-import { useSubscription, PLAN_DETAILS } from "@/hooks/useSubscription";
+import { useProStatus } from "@/hooks/useProStatus";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -57,11 +57,9 @@ const STATUS_BG_COLORS: Record<string, string> = {
 
 export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLeadAnalyticsDashboardProps) {
   const { data: analytics, isLoading } = useCentralizedLeadAnalytics(dateRange);
-  const { data: subscription } = useSubscription();
+  const { data: proStatus } = useProStatus();
 
-  const plan = subscription?.plan || 'basic';
-  const planDetails = PLAN_DETAILS[plan] || PLAN_DETAILS.basic;
-  const isExclusivePlan = plan === 'featured';
+  const isPro = proStatus?.isPro || false;
 
   if (isLoading) {
     return <AnalyticsSkeleton />;
@@ -75,19 +73,17 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
     ? Math.round((analytics.conversionFunnel.converted / analytics.totalLeads) * 100)
     : 0;
 
-  const leadCapPercentage = Math.round(((analytics.leadCap - analytics.leadsRemaining) / analytics.leadCap) * 100);
-  const isAtCap = analytics.leadsRemaining === 0;
   const hasMultipleFacilities = analytics.facilityBreakdown.length > 1;
 
   return (
     <div className="space-y-6">
-      {/* Account Lead Cap & Plan Indicator */}
-      <Card className={isAtCap ? "border-red-300 bg-red-50/50" : "border-primary/20"}>
+      {/* Account Pro Status Indicator */}
+      <Card className={isPro ? "border-amber-200 bg-amber-50/30" : "border-primary/20"}>
         <CardContent className="py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-xl ${isExclusivePlan ? "bg-amber-500/10" : "bg-primary/10"} flex items-center justify-center`}>
-                {isExclusivePlan ? (
+              <div className={`h-10 w-10 rounded-xl ${isPro ? "bg-amber-500/10" : "bg-primary/10"} flex items-center justify-center`}>
+                {isPro ? (
                   <Star className="h-5 w-5 text-amber-600" />
                 ) : (
                   <Share2 className="h-5 w-5 text-primary" />
@@ -95,12 +91,12 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-foreground">{planDetails.name} Plan</span>
-                  <Badge variant="outline" className={isExclusivePlan ? "bg-amber-100 text-amber-700 border-amber-300" : "bg-blue-100 text-blue-700 border-blue-300"}>
-                    {isExclusivePlan ? (
-                      <><Lock className="h-3 w-3 mr-1" /> Exclusive Leads</>
+                  <span className="font-semibold text-foreground">{isPro ? "Pro" : "Basic"}</span>
+                  <Badge variant="outline" className={isPro ? "bg-amber-100 text-amber-700 border-amber-300" : "bg-muted text-muted-foreground border-border"}>
+                    {isPro ? (
+                      <><Star className="h-3 w-3 mr-1" /> Pro Member</>
                     ) : (
-                      <><Share2 className="h-3 w-3 mr-1" /> Shared Leads</>
+                      "Free Account"
                     )}
                   </Badge>
                   {hasMultipleFacilities && (
@@ -111,29 +107,20 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {isExclusivePlan 
-                    ? "All leads are delivered exclusively to you" 
-                    : "Leads may be shared with up to one other provider"}
+                  {isPro 
+                    ? "Unlock leads at 20% discount" 
+                    : "Pay per lead unlock"}
                 </p>
               </div>
             </div>
             <div className="sm:text-right">
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-bold text-foreground">
-                  {analytics.leadCap - analytics.leadsRemaining}
+                  {analytics.totalLeads}
                 </span>
-                <span className="text-muted-foreground">/ {analytics.leadCap}</span>
+                <span className="text-muted-foreground">total leads</span>
               </div>
-              <p className="text-xs text-muted-foreground">Account leads this billing cycle</p>
-              <div className="mt-2 w-full sm:w-40">
-                <Progress 
-                  value={leadCapPercentage} 
-                  className={`h-2 ${isAtCap ? "[&>div]:bg-red-500" : ""}`} 
-                />
-              </div>
-              {isAtCap && (
-                <p className="text-xs text-red-600 font-medium mt-1">Lead cap reached</p>
-              )}
+              <p className="text-xs text-muted-foreground">{analytics.thisMonthLeads} this month</p>
             </div>
           </div>
         </CardContent>
@@ -213,12 +200,12 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange }: CentralizedLead
           iconColor="text-purple-600"
         />
         <StatCard
-          title="Leads Remaining"
-          value={analytics.leadsRemaining}
+          title="Pro Status"
+          value={isPro ? "Active" : "Basic"}
           icon={Zap}
-          subtitle={isAtCap ? "Cap reached" : `${leadCapPercentage}% used this cycle`}
-          iconBg={isAtCap ? "bg-red-500/10" : "bg-amber-500/10"}
-          iconColor={isAtCap ? "text-red-600" : "text-amber-600"}
+          subtitle={isPro ? "20% unlock discount" : "Upgrade for savings"}
+          iconBg={isPro ? "bg-amber-500/10" : "bg-muted"}
+          iconColor={isPro ? "text-amber-600" : "text-muted-foreground"}
         />
       </div>
 
