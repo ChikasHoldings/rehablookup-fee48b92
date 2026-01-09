@@ -25,13 +25,13 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
-    const { email, intakeDraftKey } = await req.json();
+    const { email, intakeDraftKey, intakeData, isAuthenticated } = await req.json();
     
     if (!email) {
       throw new Error("Email is required");
     }
 
-    logStep("Processing checkout", { email, intakeDraftKey });
+    logStep("Processing checkout", { email, isAuthenticated: !!isAuthenticated });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
@@ -48,6 +48,15 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://rehablookup.com";
 
+    // Determine success URL based on whether user is authenticated
+    const successUrl = isAuthenticated 
+      ? `${origin}/account/concierge?session_id={CHECKOUT_SESSION_ID}&payment=success`
+      : `${origin}/concierge/intake?session_id={CHECKOUT_SESSION_ID}`;
+    
+    const cancelUrl = isAuthenticated
+      ? `${origin}/account/concierge?payment=canceled`
+      : `${origin}/concierge/intake?canceled=true`;
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : email,
@@ -58,12 +67,14 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/concierge/intake?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/concierge/intake?canceled=true`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         service: "concierge_placement",
         intake_draft_key: intakeDraftKey || "",
         idempotency_key: idempotencyKey,
+        is_authenticated: isAuthenticated ? "true" : "false",
+        has_intake_data: intakeData ? "true" : "false",
       },
       payment_intent_data: {
         metadata: {

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,12 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { 
   Clock, 
   Search, 
   Users, 
   Send, 
-  Phone, 
   CheckCircle, 
   XCircle,
   ArrowRight,
@@ -24,7 +24,9 @@ import {
   RefreshCw,
   MessageCircle,
   CalendarDays,
-  ThumbsDown
+  ThumbsDown,
+  Loader2,
+  Mail
 } from "lucide-react";
 import { format } from "date-fns";
 import { CaseStatusTimeline } from "@/components/seeker/CaseStatusTimeline";
@@ -34,6 +36,7 @@ import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 import { TourRequestModal } from "@/components/seeker/TourRequestModal";
 import { ConciergeToursList } from "@/components/seeker/ConciergeToursList";
 import { ConciergeMessaging } from "@/components/seeker/ConciergeMessaging";
+import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
 
 interface ConciergeInquiry {
   id: string;
@@ -74,7 +77,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof Clock; color: 
   reviewing: { label: "Reviewing", icon: Search, color: "bg-yellow-500" },
   matching: { label: "Finding Matches", icon: Users, color: "bg-purple-500" },
   introductions_sent: { label: "Introductions Sent", icon: Send, color: "bg-indigo-500" },
-  in_contact: { label: "In Contact", icon: Phone, color: "bg-teal-500" },
+  in_contact: { label: "In Contact", icon: MessageCircle, color: "bg-teal-500" },
   confirming: { label: "Awaiting Confirmation", icon: Clock, color: "bg-amber-500" },
   placed: { label: "Placed", icon: CheckCircle, color: "bg-green-500" },
   closed: { label: "Closed", icon: XCircle, color: "bg-muted-foreground" },
@@ -112,11 +115,30 @@ const HOW_IT_WORKS_STEPS = [
 
 export default function SeekerConcierge() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast: toastHook } = useToast();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tourModalFacility, setTourModalFacility] = useState<Facility | null>(null);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+
+  // Fetch current user
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
+
+  // Get user display name from metadata or email
+  const userName = currentUser?.user_metadata?.full_name || 
+                   currentUser?.user_metadata?.name || 
+                   currentUser?.email?.split("@")[0] || 
+                   "User";
+  const userEmail = currentUser?.email || "";
+  const userPhone = currentUser?.user_metadata?.phone || "";
 
   // Fetch user's concierge cases
   const { data: cases, isLoading: casesLoading, refetch } = useQuery({
@@ -135,6 +157,7 @@ export default function SeekerConcierge() {
           placement_confirmed_at, placed_facility_id, seeker_rating,
           seeker_feedback, user_name
         `)
+        .eq("user_id", user.id)
         .eq("payment_status", "paid")
         .order("created_at", { ascending: false });
 
@@ -142,6 +165,82 @@ export default function SeekerConcierge() {
       return (data || []) as ConciergeInquiry[];
     },
   });
+
+  // Handle payment verification from Stripe redirect
+  const verifyPaymentAndSubmit = useCallback(async (sessionId: string) => {
+    setIsVerifyingPayment(true);
+    try {
+      // Verify payment
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-concierge-payment", {
+        body: { sessionId }
+      });
+
+      if (verifyError) throw verifyError;
+
+      if (verifyData?.alreadySubmitted) {
+        toast.success("Your intake was already submitted!");
+        refetch();
+        return;
+      }
+
+      if (verifyData?.paid) {
+        // Get pending intake data from localStorage
+        const pendingIntake = localStorage.getItem("concierge_pending_intake");
+        if (pendingIntake) {
+          const { formData, userName, userEmail, userPhone } = JSON.parse(pendingIntake);
+          
+          // Submit the intake
+          const { error: submitError } = await supabase.functions.invoke("submit-concierge-intake", {
+            body: {
+              sessionId,
+              intakeData: {
+                ...formData,
+                decisionMakerName: userName,
+                email: userEmail,
+                phone: userPhone || "",
+              },
+            },
+          });
+
+          if (submitError) throw submitError;
+
+          // Clear pending data
+          localStorage.removeItem("concierge_pending_intake");
+          
+          toast.success("Your intake has been submitted! We'll be in touch soon.");
+          refetch();
+        } else {
+          toast.success("Payment verified! Please complete the intake form.");
+        }
+      }
+
+      // Clear URL params
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("session_id");
+      newParams.delete("payment");
+      setSearchParams(newParams, { replace: true });
+    } catch (err) {
+      console.error("Payment verification error:", err);
+      toast.error("Failed to verify payment. Please contact support.");
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  }, [refetch, searchParams, setSearchParams]);
+
+  // Check for payment return
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    const paymentStatus = searchParams.get("payment");
+    
+    if (sessionId && paymentStatus === "success" && !isVerifyingPayment) {
+      verifyPaymentAndSubmit(sessionId);
+    } else if (paymentStatus === "canceled") {
+      toast.error("Payment was canceled. Please try again.");
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("payment");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, isVerifyingPayment, verifyPaymentAndSubmit, setSearchParams]);
 
   const selectedCase = cases?.find(c => c.id === selectedCaseId) || cases?.[0];
 
@@ -194,18 +293,11 @@ export default function SeekerConcierge() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({
-        title: "Thank you!",
-        description: "Your feedback has been submitted.",
-      });
+      toast.success("Thank you! Your feedback has been submitted.");
       queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to submit feedback. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to submit feedback. Please try again.");
     },
   });
 
@@ -221,6 +313,16 @@ export default function SeekerConcierge() {
 
   // ========== STATE A: No concierge case yet ==========
   if (!cases?.length) {
+    // Show loading if verifying payment
+    if (isVerifyingPayment) {
+      return (
+        <div className="container max-w-4xl py-8 flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Verifying your payment...</p>
+        </div>
+      );
+    }
+
     return (
       <div className="container max-w-4xl py-8 space-y-8">
         {/* Hero Section */}
@@ -235,64 +337,75 @@ export default function SeekerConcierge() {
           </p>
         </div>
 
-        {/* How It Works */}
-        <Card>
-          <CardHeader>
-            <CardTitle>How It Works</CardTitle>
-            <CardDescription>
-              Our concierge service simplifies your treatment search in 5 simple steps
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {HOW_IT_WORKS_STEPS.map((step, index) => (
-                <div key={step.step} className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-bold text-sm">
-                      {step.step}
+        {/* Inline Intake Form */}
+        {currentUser ? (
+          <ConciergeInlineIntake 
+            userEmail={userEmail} 
+            userName={userName}
+            userPhone={userPhone}
+          />
+        ) : (
+          <>
+            {/* How It Works - for non-logged in users */}
+            <Card>
+              <CardHeader>
+                <CardTitle>How It Works</CardTitle>
+                <CardDescription>
+                  Our concierge service simplifies your treatment search in 5 simple steps
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {HOW_IT_WORKS_STEPS.map((step, index) => (
+                    <div key={step.step} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-bold text-sm">
+                          {step.step}
+                        </div>
+                        {index < HOW_IT_WORKS_STEPS.length - 1 && (
+                          <div className="w-0.5 h-full bg-border mt-2" />
+                        )}
+                      </div>
+                      <div className="pb-6">
+                        <h3 className="font-semibold">{step.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+                      </div>
                     </div>
-                    {index < HOW_IT_WORKS_STEPS.length - 1 && (
-                      <div className="w-0.5 h-full bg-border mt-2" />
-                    )}
-                  </div>
-                  <div className="pb-6">
-                    <h3 className="font-semibold">{step.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* CTA */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="py-8 text-center space-y-4">
-            <h2 className="text-xl font-semibold">Ready to Get Started?</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Complete our intake form and a placement specialist will be assigned to your case.
-            </p>
-            <Button size="lg" onClick={() => navigate("/concierge")} className="gap-2">
-              Start Placement Request
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
+            {/* CTA */}
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="py-8 text-center space-y-4">
+                <h2 className="text-xl font-semibold">Ready to Get Started?</h2>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Complete our intake form and a placement specialist will be assigned to your case.
+                </p>
+                <Button size="lg" onClick={() => navigate("/concierge")} className="gap-2">
+                  Start Placement Request
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </>
+        )}
 
-        {/* Contact Info */}
+        {/* Email Support Card - No Phone */}
         <Card className="bg-muted/30">
           <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Phone className="h-5 w-5 text-primary" />
+                <Mail className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="font-medium">Questions about concierge?</p>
-                <p className="text-sm text-muted-foreground">Call us anytime for help.</p>
+                <p className="text-sm text-muted-foreground">Our team is here to help.</p>
               </div>
             </div>
             <Button variant="outline" asChild>
-              <a href="tel:1-800-555-0199">1-800-555-0199</a>
+              <a href="mailto:placement@rehablookup.com">Email Support</a>
             </Button>
           </CardContent>
         </Card>
@@ -579,26 +692,21 @@ export default function SeekerConcierge() {
         </Card>
       )}
 
-      {/* Contact Card */}
+      {/* Email Support Card - No Phone */}
       <Card className="bg-muted/30">
         <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Phone className="h-5 w-5 text-primary" />
+              <Mail className="h-5 w-5 text-primary" />
             </div>
             <div>
               <p className="font-medium">Questions about your case?</p>
               <p className="text-sm text-muted-foreground">Our specialists are here to help.</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <a href="tel:1-800-555-0199">Call Us</a>
-            </Button>
-            <Button variant="outline" asChild>
-              <a href="mailto:concierge@rehabookup.com">Email Us</a>
-            </Button>
-          </div>
+          <Button variant="outline" asChild>
+            <a href="mailto:placement@rehablookup.com">Email Support</a>
+          </Button>
         </CardContent>
       </Card>
 
