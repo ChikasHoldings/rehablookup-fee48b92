@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +22,14 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Supabase configuration missing");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { sessionId } = await req.json();
     
@@ -55,6 +64,18 @@ serve(async (req) => {
       );
     }
 
+    // Check if already submitted (idempotency)
+    const { data: existingInquiry } = await supabase
+      .from('concierge_inquiries')
+      .select('id')
+      .eq('checkout_session_id', sessionId)
+      .maybeSingle();
+
+    logStep("Checked for existing inquiry", { 
+      alreadySubmitted: !!existingInquiry,
+      inquiryId: existingInquiry?.id 
+    });
+
     const paymentIntent = session.payment_intent as Stripe.PaymentIntent | null;
     const customer = session.customer as Stripe.Customer | null;
 
@@ -67,6 +88,8 @@ serve(async (req) => {
         paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : paymentIntent?.id,
         amountTotal: session.amount_total,
         metadata: session.metadata,
+        alreadySubmitted: !!existingInquiry,
+        inquiryId: existingInquiry?.id,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
