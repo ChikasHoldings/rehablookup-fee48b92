@@ -38,7 +38,6 @@ interface SearchResult {
 const navItems = [
   { to: "/account", icon: Home, label: "Home" },
   { to: "/account/requests", icon: Send, label: "My Requests" },
-  { to: "/account/saved", icon: Heart, label: "Saved" },
   { to: "/account/reviews", icon: Star, label: "My Reviews" },
 ];
 
@@ -260,6 +259,19 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
             <Search className="h-5 w-5" />
           </Button>
 
+          {/* Saved - Heart Icon Only */}
+          {isAuthenticated && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
+              aria-label="Saved"
+              onClick={() => navigate("/account/saved")}
+            >
+              <Heart className="h-5 w-5" />
+            </Button>
+          )}
+
           {/* Notifications */}
           {isAuthenticated && (
             <DropdownMenu>
@@ -396,6 +408,12 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                   <Link to="/account" className="flex items-center gap-2.5 py-2">
                     <Home className="h-4 w-4 text-muted-foreground" />
                     Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="rounded-lg">
+                  <Link to="/account/saved" className="flex items-center gap-2.5 py-2">
+                    <Heart className="h-4 w-4 text-muted-foreground" />
+                    Saved
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-lg">
