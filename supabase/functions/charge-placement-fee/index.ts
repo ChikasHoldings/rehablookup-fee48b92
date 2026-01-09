@@ -127,6 +127,8 @@ serve(async (req) => {
       // Create invoice instead of charging directly
       logStep("No payment method, creating invoice");
       
+      const dueAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+      
       const { data: invoice, error: invoiceError } = await supabase
         .from('placement_invoices')
         .insert({
@@ -137,7 +139,7 @@ serve(async (req) => {
           discount_percent: discountPercent,
           discount_reason: hasPro ? 'Pro subscriber discount' : null,
           status: 'pending',
-          due_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // Net 14
+          due_at: dueAt,
         })
         .select('id')
         .single();
@@ -153,8 +155,34 @@ serve(async (req) => {
           provider_fee_type: actualFeeType,
           provider_fee_cents: feeCents,
           provider_fee_status: 'invoiced',
+          provider_invoice_id: invoice.id,
         })
         .eq('id', inquiryId);
+
+      // Send invoice_issued notification
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            type: 'invoice_issued',
+            inquiryId,
+            facilityId,
+            invoiceId: invoice.id,
+            metadata: {
+              amount_cents: feeCents,
+              fee_type: actualFeeType,
+              due_at: dueAt,
+            },
+          }),
+        });
+        logStep("Invoice issued notification sent");
+      } catch (notifError) {
+        logStep("Warning: Failed to send invoice notification", { error: notifError });
+      }
 
       return new Response(
         JSON.stringify({
@@ -252,6 +280,32 @@ serve(async (req) => {
         provider_invoice_id: invoice?.id,
       })
       .eq('id', inquiryId);
+
+    // Send invoice_paid notification if successful
+    if (paymentIntent.status === 'succeeded') {
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            type: 'invoice_paid',
+            inquiryId,
+            facilityId,
+            invoiceId: invoice?.id,
+            metadata: {
+              amount_cents: feeCents,
+              payment_intent_id: paymentIntent.id,
+            },
+          }),
+        });
+        logStep("Invoice paid notification sent");
+      } catch (notifError) {
+        logStep("Warning: Failed to send payment notification", { error: notifError });
+      }
+    }
 
     return new Response(
       JSON.stringify({

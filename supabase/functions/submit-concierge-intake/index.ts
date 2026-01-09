@@ -230,6 +230,24 @@ serve(async (req) => {
 
     logStep("Inquiry created successfully", { inquiryId: inquiry.id });
 
+    // Send intake_received notification
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          type: 'intake_received',
+          inquiryId: inquiry.id,
+        }),
+      });
+      logStep("Intake received notification sent");
+    } catch (notifError) {
+      logStep("Warning: Failed to send notification", { error: notifError });
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 

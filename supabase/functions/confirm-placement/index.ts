@@ -122,8 +122,63 @@ serve(async (req) => {
       throw new Error(`Failed to update inquiry: ${updateError.message}`);
     }
 
-    // If fully confirmed, trigger fee charge
+    // Send confirmation notifications
+    try {
+      if (confirmationType === 'seeker') {
+        // Notify provider that seeker confirmed
+        await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            type: 'seeker_confirmed',
+            inquiryId,
+            facilityId,
+          }),
+        });
+      } else if (confirmationType === 'provider') {
+        // Notify seeker that provider confirmed
+        await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            type: 'provider_confirmed',
+            inquiryId,
+            facilityId,
+          }),
+        });
+      }
+      logStep("Confirmation notification sent");
+    } catch (notifError) {
+      logStep("Warning: Failed to send confirmation notification", { error: notifError });
+    }
+
+    // If fully confirmed, send placement complete and trigger fee charge
     if (willBeFullyConfirmed) {
+      logStep("Sending placement complete notifications");
+      
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            type: 'placement_complete',
+            inquiryId,
+            facilityId,
+          }),
+        });
+      } catch (notifError) {
+        logStep("Warning: Failed to send placement complete notification", { error: notifError });
+      }
+
       logStep("Triggering placement fee charge");
       
       // Call the charge function

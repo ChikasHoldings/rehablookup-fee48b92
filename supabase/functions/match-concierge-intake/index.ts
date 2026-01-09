@@ -372,6 +372,24 @@ serve(async (req) => {
       logStep("Warning: Failed to update inquiry", { error: updateError });
     }
 
+    // Send matches_found notification
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          type: 'matches_found',
+          inquiryId: inquiryId,
+        }),
+      });
+      logStep("Matches found notification sent");
+    } catch (notifError) {
+      logStep("Warning: Failed to send notification", { error: notifError });
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
