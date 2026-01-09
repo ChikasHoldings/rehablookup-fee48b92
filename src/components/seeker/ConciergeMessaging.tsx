@@ -112,7 +112,7 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Subscribe to realtime messages
+  // Subscribe to realtime messages with toast notifications
   useEffect(() => {
     if (!selectedThreadId) return;
 
@@ -126,8 +126,25 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
           table: "concierge_messages",
           filter: `thread_id=eq.${selectedThreadId}`,
         },
-        () => {
+        async (payload) => {
+          const newMessage = payload.new as Message;
+          
+          // Only show toast if message is from someone else (not the seeker)
+          if (newMessage.sender_type !== "seeker") {
+            const senderLabel = selectedThread?.thread_type === "advisor" 
+              ? "Placement Advisor" 
+              : selectedThread?.facility?.name || "Facility";
+            
+            toast({
+              title: `New message from ${senderLabel}`,
+              description: newMessage.content.length > 50 
+                ? newMessage.content.substring(0, 50) + "..." 
+                : newMessage.content,
+            });
+          }
+          
           queryClient.invalidateQueries({ queryKey: ["concierge-messages", selectedThreadId] });
+          queryClient.invalidateQueries({ queryKey: ["concierge-threads", inquiryId] });
         }
       )
       .subscribe();
@@ -135,7 +152,32 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedThreadId, queryClient]);
+  }, [selectedThreadId, queryClient, selectedThread, inquiryId, toast]);
+
+  // Subscribe to new threads being created
+  useEffect(() => {
+    if (!inquiryId) return;
+
+    const channel = supabase
+      .channel(`threads-${inquiryId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "concierge_threads",
+          filter: `inquiry_id=eq.${inquiryId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["concierge-threads", inquiryId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [inquiryId, queryClient]);
 
   // Create thread if needed
   const createThreadMutation = useMutation({
