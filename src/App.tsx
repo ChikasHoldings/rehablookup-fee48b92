@@ -49,6 +49,12 @@ import ProviderFAQ from "./pages/ProviderFAQ";
 import ProviderSignup from "./pages/ProviderSignup";
 import RequestHelp from "./pages/RequestHelp";
 import PlacementHelp from "./pages/PlacementHelp";
+
+// Concierge Placement (Paid Service)
+import ConciergeLanding from "./pages/concierge/ConciergeLanding";
+import ConciergeIntake from "./pages/concierge/ConciergeIntake";
+import ConciergeThankYou from "./pages/concierge/ConciergeThankYou";
+import ConciergeCreatePassword from "./pages/concierge/ConciergeCreatePassword";
 import AdLanding from "./pages/AdLanding";
 import SocialLanding from "./pages/SocialLanding";
 import Resources from "./pages/Resources";
