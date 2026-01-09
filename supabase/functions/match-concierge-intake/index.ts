@@ -11,18 +11,86 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[MATCH-CONCIERGE] ${step}${detailsStr}`);
 };
 
+interface MatchFactors {
+  location: number;
+  careType: number;
+  insurance: number;
+  availability: number;
+  gender: number;
+  age: number;
+  specializations: number;
+}
+
 interface FacilityMatch {
   facilityId: string;
   facilityName: string;
   matchScore: number;
-  matchFactors: {
-    location: number;
-    careType: number;
-    insurance: number;
-    availability: number;
-  };
+  matchFactors: MatchFactors;
   city: string;
   state: string;
+}
+
+// Scoring weights (total 100 points)
+const WEIGHTS = {
+  location: 35,      // max 35
+  careType: 25,      // max 25
+  insurance: 20,     // max 20
+  availability: 8,   // max 8
+  gender: 5,         // max 5
+  age: 4,            // max 4
+  specializations: 3 // max 3
+};
+
+// Score gender matching
+function scoreGender(inquiryGender: string | null, facilityGender: string | null): number {
+  if (!inquiryGender) return 3; // Unknown, partial credit
+  if (!facilityGender || facilityGender.toLowerCase() === 'all' || facilityGender.toLowerCase() === 'co-ed') return 5;
+  if (facilityGender.toLowerCase().includes(inquiryGender.toLowerCase())) return 5;
+  return 0; // Mismatch
+}
+
+// Score age matching
+function scoreAge(inquiryAgeRange: string | null, facilityAgeGroups: string[]): number {
+  if (!inquiryAgeRange) return 2; // Unknown
+  const ageGroupsLower = facilityAgeGroups.map(g => g.toLowerCase());
+  
+  // Check for "all ages" type matches
+  if (ageGroupsLower.some(g => g.includes('all') || g.includes('adult'))) return 4;
+  
+  const ageMap: Record<string, string[]> = {
+    '18-25': ['young adult', '18+', '18-25', 'adult'],
+    '26-35': ['adult', '18+', '26-35'],
+    '36-50': ['adult', '18+', '36-50'],
+    '51+': ['adult', 'senior', '50+', '51+', 'older adult'],
+    'under_18': ['adolescent', 'teen', 'minor', 'youth', 'under 18'],
+  };
+  
+  const acceptable = ageMap[inquiryAgeRange] || [];
+  const matches = acceptable.some(a => 
+    ageGroupsLower.some(g => g.includes(a))
+  );
+  return matches ? 4 : 0;
+}
+
+// Score specializations (detox, dual diagnosis, etc.)
+function scoreSpecializations(
+  detoxNeeded: string | null, 
+  coOccurring: unknown, 
+  services: string[]
+): number {
+  let score = 0;
+  const servicesLower = services.map(s => s.toLowerCase());
+  
+  if (detoxNeeded === 'yes' && servicesLower.some(s => s.includes('detox'))) {
+    score += 1.5;
+  }
+  
+  const hasCoOccurring = Array.isArray(coOccurring) && coOccurring.length > 0;
+  if (hasCoOccurring && servicesLower.some(s => s.includes('dual') || s.includes('co-occurring'))) {
+    score += 1.5;
+  }
+  
+  return Math.min(score, 3);
 }
 
 // Get nearby states for geographic matching
@@ -121,7 +189,7 @@ serve(async (req) => {
       paymentType: inquiry.payment_type 
     });
 
-    // Fetch all opted-in facilities with their services and insurance
+    // Fetch all opted-in facilities with their services, insurance, and age groups
     const { data: facilities, error: facilitiesError } = await supabase
       .from('facilities')
       .select(`
@@ -130,12 +198,14 @@ serve(async (req) => {
         city,
         state,
         facility_type,
+        gender_served,
         concierge_accepted_care_types,
         concierge_accepted_insurance,
         concierge_availability_status,
         concierge_network_opted_in,
         facility_services (service_name),
-        facility_insurance (insurance_name)
+        facility_insurance (insurance_name),
+        facility_age_groups (age_group)
       `)
       .eq('concierge_network_opted_in', true)
       .eq('status', 'approved')
@@ -164,11 +234,11 @@ serve(async (req) => {
       let availabilityScore = 0;
 
       // Location scoring (max 35 points)
-      const desiredState = inquiry.desired_location_state?.toUpperCase();
+      const desiredState = inquiry.desired_location_state?.toUpperCase() || inquiry.preferred_state?.toUpperCase();
       const facilityState = facility.state?.toUpperCase();
 
       if (desiredState === facilityState) {
-        locationScore = 35;
+        locationScore = WEIGHTS.location;
       } else if (desiredState && getNearbyStates(desiredState).includes(facilityState)) {
         locationScore = 25;
       } else if (inquiry.willing_to_travel) {
@@ -177,7 +247,7 @@ serve(async (req) => {
         locationScore = 5;
       }
 
-      // Care type matching (max 30 points)
+      // Care type matching (max 25 points)
       const acceptedCareTypes = (facility.concierge_accepted_care_types as string[]) || [];
       const levelOfCareMap: Record<string, string[]> = {
         'detox': ['detox'],
@@ -193,12 +263,12 @@ serve(async (req) => {
       const matchingCareTypes = levelOfCareMap[desiredCare] || [desiredCare];
       
       if (matchingCareTypes.some(ct => acceptedCareTypes.includes(ct))) {
-        careTypeScore = 30;
+        careTypeScore = WEIGHTS.careType;
       } else if (acceptedCareTypes.length > 0) {
-        careTypeScore = 10; // Has care types but not matching
+        careTypeScore = 8; // Has care types but not matching
       }
 
-      // Insurance matching (max 25 points)
+      // Insurance matching (max 20 points)
       const acceptedInsurance = (facility.concierge_accepted_insurance as string[]) || [];
       const facilityInsuranceNames = (facility.facility_insurance || []).map(
         (i: { insurance_name: string }) => i.insurance_name.toLowerCase()
@@ -206,28 +276,50 @@ serve(async (req) => {
       const allInsurance = [...acceptedInsurance, ...facilityInsuranceNames];
 
       if (inquiry.payment_type === 'self_pay' || inquiry.payment_type === 'self-pay') {
-        insuranceScore = 25; // Self-pay always accepted
+        insuranceScore = WEIGHTS.insurance; // Self-pay always accepted
       } else if (inquiry.insurance_carrier) {
         const carrierLower = inquiry.insurance_carrier.toLowerCase();
         if (allInsurance.some(i => i.toLowerCase().includes(carrierLower) || carrierLower.includes(i.toLowerCase()))) {
-          insuranceScore = 25;
+          insuranceScore = WEIGHTS.insurance;
         } else if (allInsurance.some(i => i.includes('most') || i.includes('major'))) {
-          insuranceScore = 18;
+          insuranceScore = 15;
         } else {
-          insuranceScore = 8;
+          insuranceScore = 6;
         }
       } else {
-        insuranceScore = 12; // Unknown insurance
+        insuranceScore = 10; // Unknown insurance
       }
 
-      // Availability scoring (max 10 points)
+      // Availability scoring (max 8 points)
       if (facility.concierge_availability_status === 'open') {
-        availabilityScore = 10;
+        availabilityScore = WEIGHTS.availability;
       } else if (facility.concierge_availability_status === 'limited') {
-        availabilityScore = 5;
+        availabilityScore = 4;
       }
 
-      const totalScore = locationScore + careTypeScore + insuranceScore + availabilityScore;
+      // Gender scoring (max 5 points)
+      const genderScore = scoreGender(inquiry.gender, facility.gender_served);
+
+      // Age scoring (max 4 points)
+      const facilityAgeGroups = (facility.facility_age_groups || []).map(
+        (a: { age_group: string }) => a.age_group
+      );
+      const ageScore = scoreAge(inquiry.age_range, facilityAgeGroups);
+
+      // Specializations scoring (max 3 points)
+      const facilityServices = (facility.facility_services || []).map(
+        (s: { service_name: string }) => s.service_name
+      );
+      const specializationsScore = scoreSpecializations(
+        inquiry.detox_needed,
+        inquiry.co_occurring_concerns,
+        facilityServices
+      );
+
+      const totalScore = Math.round(
+        locationScore + careTypeScore + insuranceScore + availabilityScore +
+        genderScore + ageScore + specializationsScore
+      );
 
       scoredFacilities.push({
         facilityId: facility.id,
@@ -238,6 +330,9 @@ serve(async (req) => {
           careType: careTypeScore,
           insurance: insuranceScore,
           availability: availabilityScore,
+          gender: genderScore,
+          age: ageScore,
+          specializations: specializationsScore,
         },
         city: facility.city,
         state: facility.state,

@@ -374,6 +374,7 @@ export type Database = {
       }
       concierge_inquiries: {
         Row: {
+          admin_matched_facility_ids: string[] | null
           admin_notes: string | null
           age_range: string | null
           alternative_contact_name: string | null
@@ -409,8 +410,11 @@ export type Database = {
           insurance_member_id: string | null
           intake_data: Json
           intake_submitted_at: string | null
+          introductions_sent_at: string | null
+          introductions_sent_count: number | null
           level_of_care: string | null
           match_count: number | null
+          match_scores: Json | null
           matched_at: string | null
           matched_facility_ids: string[] | null
           mobility_needs: string | null
@@ -452,6 +456,7 @@ export type Database = {
           willing_to_travel: boolean | null
         }
         Insert: {
+          admin_matched_facility_ids?: string[] | null
           admin_notes?: string | null
           age_range?: string | null
           alternative_contact_name?: string | null
@@ -487,8 +492,11 @@ export type Database = {
           insurance_member_id?: string | null
           intake_data?: Json
           intake_submitted_at?: string | null
+          introductions_sent_at?: string | null
+          introductions_sent_count?: number | null
           level_of_care?: string | null
           match_count?: number | null
+          match_scores?: Json | null
           matched_at?: string | null
           matched_facility_ids?: string[] | null
           mobility_needs?: string | null
@@ -530,6 +538,7 @@ export type Database = {
           willing_to_travel?: boolean | null
         }
         Update: {
+          admin_matched_facility_ids?: string[] | null
           admin_notes?: string | null
           age_range?: string | null
           alternative_contact_name?: string | null
@@ -565,8 +574,11 @@ export type Database = {
           insurance_member_id?: string | null
           intake_data?: Json
           intake_submitted_at?: string | null
+          introductions_sent_at?: string | null
+          introductions_sent_count?: number | null
           level_of_care?: string | null
           match_count?: number | null
+          match_scores?: Json | null
           matched_at?: string | null
           matched_facility_ids?: string[] | null
           mobility_needs?: string | null
@@ -620,6 +632,70 @@ export type Database = {
             columns: ["placed_facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concierge_introductions: {
+        Row: {
+          created_at: string | null
+          facility_id: string
+          id: string
+          inquiry_id: string
+          provider_notes: string | null
+          provider_responded_at: string | null
+          provider_response: string | null
+          seeker_contacted: boolean | null
+          seeker_contacted_at: string | null
+          sent_at: string | null
+          sent_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          facility_id: string
+          id?: string
+          inquiry_id: string
+          provider_notes?: string | null
+          provider_responded_at?: string | null
+          provider_response?: string | null
+          seeker_contacted?: boolean | null
+          seeker_contacted_at?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          facility_id?: string
+          id?: string
+          inquiry_id?: string
+          provider_notes?: string | null
+          provider_responded_at?: string | null
+          provider_response?: string | null
+          seeker_contacted?: boolean | null
+          seeker_contacted_at?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concierge_introductions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_introductions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_introductions_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
             referencedColumns: ["id"]
           },
         ]
