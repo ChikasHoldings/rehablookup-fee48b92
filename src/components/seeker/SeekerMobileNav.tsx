@@ -25,20 +25,20 @@ interface SeekerMobileNavProps extends React.HTMLAttributes<HTMLElement> {
 const navItems = [
   { href: "/account", label: "Home", icon: Home },
   { href: "/account/search", label: "Search", icon: Search },
+  { href: "/account/concierge", label: "Concierge", icon: HeartHandshake },
   { href: "/account/saved", label: "Saved", icon: Heart },
-  { href: "/account/reviews", label: "Reviews", icon: Star },
 ];
 
 export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMobileNavProps) {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const isMoreActive = ["/account/settings", "/account/requests", "/account/concierge", "/auth"].some(
+  const isMoreActive = ["/account/settings", "/account/requests", "/account/reviews", "/auth"].some(
     path => location.pathname.startsWith(path)
   );
 
   const moreItems = isAuthenticated ? [
-    { href: "/account/concierge", label: "Placement Tracker", icon: HeartHandshake },
+    { href: "/account/reviews", label: "My Reviews", icon: Star },
     { href: "/account/requests", label: "My Requests", icon: FileText },
     { href: "/account/settings", label: "Settings", icon: Settings },
     { href: "/account/help", label: "Help & Support", icon: HelpCircle },

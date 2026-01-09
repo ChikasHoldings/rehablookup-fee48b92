@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { 
   Home, Send, Heart, Star, Settings, LogOut, LogIn, 
-  Search, Bell, BellOff, X, MapPin, Building2, ChevronRight
+  Search, Bell, BellOff, X, MapPin, Building2, ChevronRight, HeartHandshake
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +37,7 @@ interface SearchResult {
 
 const navItems = [
   { to: "/account", icon: Home, label: "Home" },
+  { to: "/account/concierge", icon: HeartHandshake, label: "Concierge" },
   { to: "/account/requests", icon: Send, label: "My Requests" },
   { to: "/account/reviews", icon: Star, label: "My Reviews" },
 ];
@@ -408,6 +409,12 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                   <Link to="/account" className="flex items-center gap-2.5 py-2">
                     <Home className="h-4 w-4 text-muted-foreground" />
                     Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="rounded-lg">
+                  <Link to="/account/concierge" className="flex items-center gap-2.5 py-2">
+                    <HeartHandshake className="h-4 w-4 text-muted-foreground" />
+                    Concierge
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="rounded-lg">
