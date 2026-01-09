@@ -89,11 +89,16 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
 
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { error } = await supabase.from("concierge_introductions").insert({
-        inquiry_id: caseData.id,
-        facility_id: facilityId,
-        sent_by: user?.id,
-      });
+      // Create introduction record
+      const { data: introData, error } = await supabase
+        .from("concierge_introductions")
+        .insert({
+          inquiry_id: caseData.id,
+          facility_id: facilityId,
+          sent_by: user?.id,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -106,9 +111,28 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
           introductions_sent_count: (caseData.introductions_sent_count || 0) + 1,
         })
         .eq("id", caseData.id);
+
+      // Send email notification to facility
+      try {
+        const response = await supabase.functions.invoke("send-concierge-introduction", {
+          body: {
+            inquiryId: caseData.id,
+            facilityId: facilityId,
+            introductionId: introData.id,
+          },
+        });
+
+        if (response.error) {
+          console.error("Email notification failed:", response.error);
+          // Don't throw - introduction was created, email is secondary
+        }
+      } catch (emailError) {
+        console.error("Failed to send email:", emailError);
+        // Don't throw - introduction was created successfully
+      }
     },
     onSuccess: () => {
-      toast.success("Introduction sent successfully");
+      toast.success("Introduction sent and facility notified");
       refetchIntros();
       onRefresh();
       setSendingTo(null);
