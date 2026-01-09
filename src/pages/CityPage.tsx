@@ -203,9 +203,23 @@ const CityPage = () => {
       const stateMatch = centerState === stateNameLower || centerState === stateAbbrevLower;
       return cityMatch && stateMatch;
     }).sort((a, b) => {
-      const aFeatured = (a as any).hasFeaturedSubscription ? 1 : 0;
-      const bFeatured = (b as any).hasFeaturedSubscription ? 1 : 0;
-      if (bFeatured !== aFeatured) return bFeatured - aFeatured;
+      // Pro and Featured subscriptions first (same tier)
+      const aPro = (a as any).isPro ? 2 : 0;
+      const bPro = (b as any).isPro ? 2 : 0;
+      const aFeatured = (a as any).hasFeaturedSubscription ? 2 : 0;
+      const bFeatured = (b as any).hasFeaturedSubscription ? 2 : 0;
+      
+      const aTier = Math.max(aPro, aFeatured);
+      const bTier = Math.max(bPro, bFeatured);
+      
+      if (bTier !== aTier) return bTier - aTier;
+      
+      // Then by calculated ranking score
+      const aScore = (a as any).calculatedRankingScore || 0;
+      const bScore = (b as any).calculatedRankingScore || 0;
+      if (bScore !== aScore) return bScore - aScore;
+      
+      // Fallback to rating
       return b.rating - a.rating;
     });
   }, [allCenters, stateData, cityData]);

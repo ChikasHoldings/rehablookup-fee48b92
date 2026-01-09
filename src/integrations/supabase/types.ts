@@ -564,6 +564,7 @@ export type Database = {
           admin_notes: string | null
           bed_count: string | null
           bonus_leads: number | null
+          calculated_ranking_score: number | null
           city: string
           concierge_accepted_care_types: Json | null
           concierge_accepted_insurance: Json | null
@@ -585,9 +586,11 @@ export type Database = {
           gallery_urls: string[] | null
           gender_served: string | null
           id: string
+          last_activity_at: string | null
           last_featured_shown_at: string | null
           lead_limit_override: number | null
           leads_reset_at: string | null
+          listing_completeness_score: number | null
           logo_url: string | null
           name: string
           phone: string
@@ -597,6 +600,7 @@ export type Database = {
           reply_email: string | null
           reply_email_verified: boolean | null
           reply_email_verified_at: string | null
+          response_rate_score: number | null
           slug: string | null
           state: string
           status: string
@@ -613,6 +617,7 @@ export type Database = {
           admin_notes?: string | null
           bed_count?: string | null
           bonus_leads?: number | null
+          calculated_ranking_score?: number | null
           city: string
           concierge_accepted_care_types?: Json | null
           concierge_accepted_insurance?: Json | null
@@ -634,9 +639,11 @@ export type Database = {
           gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string
+          last_activity_at?: string | null
           last_featured_shown_at?: string | null
           lead_limit_override?: number | null
           leads_reset_at?: string | null
+          listing_completeness_score?: number | null
           logo_url?: string | null
           name: string
           phone: string
@@ -646,6 +653,7 @@ export type Database = {
           reply_email?: string | null
           reply_email_verified?: boolean | null
           reply_email_verified_at?: string | null
+          response_rate_score?: number | null
           slug?: string | null
           state: string
           status?: string
@@ -662,6 +670,7 @@ export type Database = {
           admin_notes?: string | null
           bed_count?: string | null
           bonus_leads?: number | null
+          calculated_ranking_score?: number | null
           city?: string
           concierge_accepted_care_types?: Json | null
           concierge_accepted_insurance?: Json | null
@@ -683,9 +692,11 @@ export type Database = {
           gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string
+          last_activity_at?: string | null
           last_featured_shown_at?: string | null
           lead_limit_override?: number | null
           leads_reset_at?: string | null
+          listing_completeness_score?: number | null
           logo_url?: string | null
           name?: string
           phone?: string
@@ -695,6 +706,7 @@ export type Database = {
           reply_email?: string | null
           reply_email_verified?: boolean | null
           reply_email_verified_at?: string | null
+          response_rate_score?: number | null
           slug?: string | null
           state?: string
           status?: string

@@ -274,11 +274,51 @@ serve(async (req) => {
       provider_email?: string;
       provider_name?: string;
       facility_name?: string;
-      plan_type?: 'featured' | 'professional';
+      plan_type?: 'featured' | 'professional' | 'pro';
     }
 
     const eligibleFacilities: EligibleFacility[] = [];
     const professionalFacilityIds: string[] = []; // Track professional plan facilities
+    const proFacilityIds: string[] = []; // Track Pro subscription facilities
+
+    // Fetch Pro subscriptions first
+    const { data: proSubs } = await supabaseClient
+      .from("pro_subscriptions")
+      .select("facility_id, provider_id")
+      .eq("status", "active")
+      .gt("current_period_end", new Date().toISOString());
+
+    logStep("Fetched Pro subscriptions", { count: proSubs?.length || 0 });
+
+    // Add Pro facilities to eligible list and track IDs
+    for (const proSub of proSubs || []) {
+      if (proSub.facility_id) {
+        proFacilityIds.push(proSub.facility_id);
+        
+        // Get facility and provider info
+        const facility = (facilities || []).find(f => f.id === proSub.facility_id);
+        if (facility) {
+          const { data: profile } = await supabaseClient
+            .from("profiles")
+            .select("email, first_name, last_name")
+            .eq("user_id", facility.user_id)
+            .maybeSingle();
+
+          eligibleFacilities.push({
+            id: facility.id,
+            user_id: facility.user_id,
+            featured_pinned: facility.featured_pinned || false,
+            last_featured_shown_at: facility.last_featured_shown_at,
+            featured_display_order: facility.featured_display_order,
+            provider_email: profile?.email,
+            provider_name: profile?.first_name || "",
+            facility_name: facility.name || "",
+            plan_type: 'pro',
+          });
+          logStep("Added Pro subscriber facility", { facilityId: facility.id });
+        }
+      }
+    }
 
     // Check each facility's owner for Featured subscription
     for (const facility of facilities || []) {
@@ -526,7 +566,8 @@ serve(async (req) => {
         homepageFeaturedIds, // Max 6 for homepage display
         allEligibleIds, // Alias for clarity
         professionalFacilityIds, // All facilities with Professional plan
-        paidFacilityIds: [...allEligibleIds, ...professionalFacilityIds], // All paid facilities combined
+        proFacilityIds, // All facilities with Pro subscription
+        paidFacilityIds: [...new Set([...allEligibleIds, ...professionalFacilityIds, ...proFacilityIds])], // All paid facilities combined (deduplicated)
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -542,6 +583,7 @@ serve(async (req) => {
       homepageFeaturedIds: [],
       allEligibleIds: [],
       professionalFacilityIds: [],
+      proFacilityIds: [],
       paidFacilityIds: [],
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
