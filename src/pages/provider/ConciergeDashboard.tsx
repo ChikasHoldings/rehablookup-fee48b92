@@ -10,13 +10,10 @@ import {
   DollarSign,
   MessageSquare,
   ArrowRight,
-  FileText,
   Building2,
   AlertCircle,
   TrendingUp,
-  Calendar,
   CreditCard,
-  UserCheck,
   CalendarCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -25,10 +22,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Link, useNavigate } from "react-router-dom";
-import { ProviderConfirmPlacementModal } from "@/components/provider/ProviderConfirmPlacementModal";
+import { Link } from "react-router-dom";
 import { ConciergeTourRequests } from "@/components/provider/ConciergeTourRequests";
 import { ConciergeMessages } from "@/components/provider/ConciergeMessages";
+import { ConciergeIntroductionCard } from "@/components/provider/ConciergeIntroductionCard";
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -38,10 +35,7 @@ function formatCurrency(cents: number): string {
 }
 
 export default function ProviderConciergeDashboard() {
-  const navigate = useNavigate();
   const { selectedFacility } = useSelectedFacility();
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [selectedIntroForConfirm, setSelectedIntroForConfirm] = useState<any>(null);
 
   // Fetch facility concierge status
   const { data: facilityData, isLoading: facilityLoading } = useQuery({
@@ -347,51 +341,14 @@ export default function ProviderConciergeDashboard() {
               </CardHeader>
               <CardContent>
                 {introductions && introductions.length > 0 ? (
-                  <ScrollArea className="h-[400px]">
-                    <div className="space-y-3">
+                  <ScrollArea className="h-[500px]">
+                    <div className="space-y-3 pr-4">
                       {introductions.map((intro: any) => (
-                        <div 
+                        <ConciergeIntroductionCard 
                           key={intro.id} 
-                          className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="space-y-1 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{intro.placement_cases?.seeker_name || "Unknown"}</span>
-                                <Badge variant={
-                                  intro.provider_response === "interested" ? "default" :
-                                  intro.provider_response === "declined" ? "secondary" :
-                                  "outline"
-                                }>
-                                  {intro.provider_response === "interested" ? "Accepted" :
-                                   intro.provider_response === "declined" ? "Declined" :
-                                   "Pending Response"}
-                                </Badge>
-                              </div>
-                              <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                                {intro.placement_cases?.level_of_care && (
-                                  <span>{intro.placement_cases.level_of_care}</span>
-                                )}
-                                {intro.placement_cases?.payment_type && (
-                                  <span>• {intro.placement_cases.payment_type}</span>
-                                )}
-                                {intro.placement_cases?.urgency && (
-                                  <span>• {intro.placement_cases.urgency} urgency</span>
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                Introduced {format(new Date(intro.created_at), "MMM d, yyyy")}
-                              </p>
-                            </div>
-                            {(!intro.provider_response || intro.provider_response === "pending") && (
-                              <Button size="sm" variant="outline" asChild>
-                                <Link to="/provider/placement-network?tab=introductions">
-                                  Respond
-                                </Link>
-                              </Button>
-                            )}
-                          </div>
-                        </div>
+                          introduction={intro}
+                          facilityId={selectedFacility?.id || ""}
+                        />
                       ))}
                     </div>
                   </ScrollArea>
@@ -519,7 +476,7 @@ export default function ProviderConciergeDashboard() {
                   </ScrollArea>
                 ) : (
                   <div className="text-center py-12">
-                    <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <CreditCard className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                     <p className="text-muted-foreground">No invoices yet</p>
                     <p className="text-sm text-muted-foreground mt-1">
                       Billing history will appear here after placements
