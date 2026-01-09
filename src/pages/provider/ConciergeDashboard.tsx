@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -15,6 +16,7 @@ import {
   TrendingUp,
   Calendar,
   CreditCard,
+  UserCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link, useNavigate } from "react-router-dom";
+import { ProviderConfirmPlacementModal } from "@/components/provider/ProviderConfirmPlacementModal";
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -34,6 +37,8 @@ function formatCurrency(cents: number): string {
 export default function ProviderConciergeDashboard() {
   const navigate = useNavigate();
   const { selectedFacility } = useSelectedFacility();
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [selectedIntroForConfirm, setSelectedIntroForConfirm] = useState<any>(null);
 
   // Fetch facility concierge status
   const { data: facilityData, isLoading: facilityLoading } = useQuery({
@@ -51,18 +56,19 @@ export default function ProviderConciergeDashboard() {
     enabled: !!selectedFacility?.id,
   });
 
-  // Fetch pending introductions
+  // Fetch pending introductions from concierge_introductions
   const { data: introductions, isLoading: introductionsLoading } = useQuery({
     queryKey: ["provider-introductions", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
-        .from("placement_case_providers")
+        .from("concierge_introductions")
         .select(`
           *,
-          placement_cases (
-            id, seeker_name, level_of_care, payment_type, urgency, 
-            preferred_states, status, primary_issue, gender, age_range
+          concierge_inquiries (
+            id, user_name, level_of_care, payment_type, timeline_urgency, 
+            preferred_state, status, primary_concern, gender, age_range,
+            seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at
           )
         `)
         .eq("facility_id", selectedFacility.id)
@@ -73,6 +79,24 @@ export default function ProviderConciergeDashboard() {
     },
     enabled: !!selectedFacility?.id,
   });
+
+  // Check for Pro subscription
+  const { data: proSubscription } = useQuery({
+    queryKey: ["pro-subscription", selectedFacility?.id],
+    queryFn: async () => {
+      if (!selectedFacility?.id) return null;
+      const { data } = await supabase
+        .from("pro_subscriptions")
+        .select("status")
+        .eq("facility_id", selectedFacility.id)
+        .eq("status", "active")
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!selectedFacility?.id,
+  });
+
+  const hasPro = !!proSubscription;
 
   // Fetch active placements (admitted cases)
   const { data: placements, isLoading: placementsLoading } = useQuery({
@@ -100,7 +124,7 @@ export default function ProviderConciergeDashboard() {
         .from("placement_invoices")
         .select(`
           *,
-          placement_cases(seeker_name)
+          concierge_inquiries(user_name)
         `)
         .eq("facility_id", selectedFacility.id)
         .order("created_at", { ascending: false })
@@ -114,11 +138,15 @@ export default function ProviderConciergeDashboard() {
   const isLoading = facilityLoading || introductionsLoading || placementsLoading || invoicesLoading;
   const isOptedIn = facilityData?.concierge_network_opted_in;
 
-  // Calculate stats
-  const pendingIntroductions = introductions?.filter(i => !i.provider_response || i.provider_response === "pending") || [];
-  const respondedIntroductions = introductions?.filter(i => i.provider_response && i.provider_response !== "pending") || [];
-  const acceptedIntroductions = introductions?.filter(i => i.provider_response === "interested") || [];
-  const activePlacements = placements?.filter(p => p.status === "admitted") || [];
+  // Calculate stats - updated for concierge_introductions
+  const pendingIntroductions = introductions?.filter((i: any) => !i.provider_response || i.provider_response === "pending") || [];
+  const respondedIntroductions = introductions?.filter((i: any) => i.provider_response && i.provider_response !== "pending") || [];
+  const acceptedIntroductions = introductions?.filter((i: any) => i.provider_response === "interested") || [];
+  // Cases where seeker confirmed but provider hasn't yet
+  const awaitingProviderConfirm = introductions?.filter((i: any) => 
+    i.concierge_inquiries?.seeker_confirmed && !i.concierge_inquiries?.placement_confirmed
+  ) || [];
+  const activePlacements = placements?.filter((p: any) => p.status === "admitted") || [];
   const pendingInvoices = invoices?.filter((i: any) => i.status === "pending" || i.status === "sent") || [];
   const totalRevenue = invoices?.filter((i: any) => i.status === "paid").reduce((sum: number, i: any) => sum + i.amount_cents, 0) || 0;
 

@@ -224,6 +224,24 @@ serve(async (req) => {
       logStep("Warning: Invoice record failed", { error: invoiceError });
     }
 
+    // Log to audit trail
+    await supabase.from('placement_fee_events').insert({
+      invoice_id: invoice?.id,
+      inquiry_id: inquiryId,
+      facility_id: facilityId,
+      event_type: paymentIntent.status === 'succeeded' ? 'charged' : 'created',
+      actor_type: 'system',
+      amount_cents: feeCents,
+      details: {
+        fee_type: actualFeeType,
+        has_pro: hasPro,
+        discount_percent: discountPercent,
+        payment_intent_id: paymentIntent.id,
+        payment_status: paymentIntent.status,
+      },
+    });
+    logStep("Audit event logged");
+
     // Update inquiry
     await supabase
       .from('concierge_inquiries')
