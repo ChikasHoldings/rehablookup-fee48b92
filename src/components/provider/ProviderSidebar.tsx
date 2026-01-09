@@ -28,7 +28,7 @@ const navItems = [
   { href: "/provider/inquiries", label: "Inquiries", icon: Users },
   { href: "/provider/credits", label: "Credits & Payments", icon: Wallet },
   { href: "/provider/pro-upgrade", label: "Pro Visibility", icon: Sparkles },
-  { href: "/provider/placement", label: "Placement Network", icon: Network },
+  { href: "/provider/concierge", label: "Concierge", icon: Network },
   { href: "/provider/reviews", label: "Reviews", icon: Star },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/provider/listing", label: "My Listing", icon: Building2 },

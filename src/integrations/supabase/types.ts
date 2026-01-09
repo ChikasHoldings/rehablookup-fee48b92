@@ -2489,12 +2489,15 @@ export type Database = {
           amount_cents: number
           case_id: string
           created_at: string
+          due_at: string | null
           facility_id: string
           id: string
           manual_payment: boolean | null
           notes: string | null
           paid_at: string | null
           receipt_url: string | null
+          reminder_count: number | null
+          reminder_sent_at: string | null
           sent_at: string | null
           status: string
           stripe_invoice_id: string | null
@@ -2506,12 +2509,15 @@ export type Database = {
           amount_cents: number
           case_id: string
           created_at?: string
+          due_at?: string | null
           facility_id: string
           id?: string
           manual_payment?: boolean | null
           notes?: string | null
           paid_at?: string | null
           receipt_url?: string | null
+          reminder_count?: number | null
+          reminder_sent_at?: string | null
           sent_at?: string | null
           status?: string
           stripe_invoice_id?: string | null
@@ -2523,12 +2529,15 @@ export type Database = {
           amount_cents?: number
           case_id?: string
           created_at?: string
+          due_at?: string | null
           facility_id?: string
           id?: string
           manual_payment?: boolean | null
           notes?: string | null
           paid_at?: string | null
           receipt_url?: string | null
+          reminder_count?: number | null
+          reminder_sent_at?: string | null
           sent_at?: string | null
           status?: string
           stripe_invoice_id?: string | null
