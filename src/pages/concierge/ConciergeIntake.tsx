@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Header as PublicHeader } from "@/components/layout/Header";
@@ -15,6 +15,7 @@ import { StepCareNeed } from "@/components/concierge/StepCareNeed";
 import { StepLogistics } from "@/components/concierge/StepLogistics";
 import { StepPaymentInfo } from "@/components/concierge/StepPaymentInfo";
 import { StepContact } from "@/components/concierge/StepContact";
+import { StepReviewSubmit } from "@/components/concierge/StepReviewSubmit";
 import { IntakeProgress } from "@/components/concierge/IntakeProgress";
 
 export interface ConciergeIntakeData {
@@ -77,7 +78,15 @@ export interface ConciergeIntakeData {
   hipaaConsent: boolean;
 }
 
+interface PaymentState {
+  sessionId: string | null;
+  paid: boolean;
+  verifiedAt: string | null;
+}
+
 const STORAGE_KEY = "concierge_intake_draft";
+const PAYMENT_STATE_KEY = "concierge_payment_state";
+const SUBMITTED_SESSIONS_KEY = "concierge_submitted_sessions";
 
 const initialData: ConciergeIntakeData = {
   ageRange: "",
@@ -156,25 +165,88 @@ const STEP_CONFIG = [
     description: "How we can reach you with matches",
     icon: "📞"
   },
+  { 
+    title: "Review & Submit", 
+    description: "Confirm your information and complete payment",
+    icon: "✅"
+  },
 ];
 
 export default function ConciergeIntake() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<ConciergeIntakeData>(initialData);
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [paymentState, setPaymentState] = useState<PaymentState>({
+    sessionId: null,
+    paid: false,
+    verifiedAt: null,
+  });
+
+  // Verify payment function
+  const verifyPayment = useCallback(async (sessionId: string) => {
+    setIsVerifyingPayment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-concierge-payment", {
+        body: { sessionId }
+      });
+
+      if (error) throw error;
+
+      if (data?.alreadySubmitted) {
+        // Already submitted, redirect to thank you
+        toast.success("Your intake was already submitted!");
+        navigate(`/concierge/thank-you?session_id=${sessionId}`);
+        return;
+      }
+
+      if (data?.paid) {
+        const newState: PaymentState = {
+          sessionId,
+          paid: true,
+          verifiedAt: new Date().toISOString(),
+        };
+        setPaymentState(newState);
+        localStorage.setItem(PAYMENT_STATE_KEY, JSON.stringify(newState));
+        setCurrentStep(6);
+        toast.success("Payment verified! Review and submit your intake.");
+        
+        // Clear session_id from URL without triggering re-render
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("session_id");
+        setSearchParams(newParams, { replace: true });
+      } else {
+        toast.error("Payment verification failed. Please try again.");
+      }
+    } catch (err) {
+      console.error("Payment verification error:", err);
+      toast.error("Failed to verify payment. Please try again.");
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  }, [navigate, searchParams, setSearchParams]);
+
+  // Handle return from Stripe with session_id
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    if (sessionId && !paymentState.paid && !isVerifyingPayment) {
+      verifyPayment(sessionId);
+    }
+  }, [searchParams, paymentState.paid, isVerifyingPayment, verifyPayment]);
 
   // Show canceled message if returned from checkout
   useEffect(() => {
     if (searchParams.get("canceled") === "true") {
-      toast.error("Payment was canceled. You can try again when ready.");
+      setCurrentStep(6); // Go to review step to show cancellation alert
     }
   }, [searchParams]);
 
-  // Load draft from localStorage
+  // Load draft and payment state from localStorage
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -188,6 +260,16 @@ export default function ConciergeIntake() {
         console.error("Failed to parse saved draft", e);
       }
     }
+
+    const savedPayment = localStorage.getItem(PAYMENT_STATE_KEY);
+    if (savedPayment) {
+      try {
+        const parsedPayment = JSON.parse(savedPayment);
+        setPaymentState(parsedPayment);
+      } catch (e) {
+        console.error("Failed to parse saved payment state", e);
+      }
+    }
   }, []);
 
   // Save draft to localStorage on every change
@@ -199,6 +281,18 @@ export default function ConciergeIntake() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     setLastSaved(new Date());
   }, [formData]);
+
+  // Block navigation during submission
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isSubmitting) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isSubmitting]);
 
   const updateFormData = (updates: Partial<ConciergeIntakeData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -264,7 +358,7 @@ export default function ConciergeIntake() {
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      if (currentStep < 5) {
+      if (currentStep < 6) {
         setCurrentStep(prev => prev + 1);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -280,13 +374,22 @@ export default function ConciergeIntake() {
     }
   };
 
+  const handleEditStep = (step: number) => {
+    setCurrentStep(step);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleProceedToPayment = async () => {
-    if (!validateStep(5)) {
-      toast.error("Please fill in all required fields");
-      return;
+    // Validate all previous steps before payment
+    for (let step = 1; step <= 5; step++) {
+      if (!validateStep(step)) {
+        setCurrentStep(step);
+        toast.error("Please complete all required fields before payment");
+        return;
+      }
     }
 
-    setIsSubmitting(true);
+    setIsProcessingPayment(true);
     
     try {
       const { data, error } = await supabase.functions.invoke("create-concierge-checkout", {
@@ -299,14 +402,63 @@ export default function ConciergeIntake() {
       if (error) throw error;
 
       if (data?.url) {
-        // Open checkout in new tab
-        window.open(data.url, "_blank");
+        // Redirect in same window (will return with session_id)
+        window.location.href = data.url;
       } else {
         throw new Error("No checkout URL returned");
       }
     } catch (err) {
       console.error("Checkout error:", err);
       toast.error("Failed to create checkout session. Please try again.");
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleSubmitIntake = async () => {
+    if (!paymentState.paid || !paymentState.sessionId) {
+      toast.error("Please complete payment first");
+      return;
+    }
+
+    // Check if already submitted (client-side)
+    const submittedSessions = JSON.parse(localStorage.getItem(SUBMITTED_SESSIONS_KEY) || "[]");
+    if (submittedSessions.includes(paymentState.sessionId)) {
+      toast.success("Your intake was already submitted!");
+      navigate(`/concierge/thank-you?session_id=${paymentState.sessionId}`);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("submit-concierge-intake", {
+        body: {
+          sessionId: paymentState.sessionId,
+          intakeData: formData,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.alreadySubmitted) {
+        toast.success("Your intake was already submitted!");
+      } else {
+        toast.success("Your intake has been submitted successfully!");
+      }
+
+      // Track submitted sessions
+      submittedSessions.push(paymentState.sessionId);
+      localStorage.setItem(SUBMITTED_SESSIONS_KEY, JSON.stringify(submittedSessions));
+
+      // Clear drafts
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(PAYMENT_STATE_KEY);
+
+      // Navigate to thank you page
+      navigate(`/concierge/thank-you?session_id=${paymentState.sessionId}`);
+    } catch (err) {
+      console.error("Submission error:", err);
+      toast.error("Failed to submit intake. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -354,10 +506,44 @@ export default function ConciergeIntake() {
             onChange={updateFormData}
           />
         );
+      case 6:
+        return (
+          <StepReviewSubmit
+            data={formData}
+            paymentState={paymentState}
+            onEdit={handleEditStep}
+            onPay={handleProceedToPayment}
+            onSubmit={handleSubmitIntake}
+            isSubmitting={isSubmitting}
+            isProcessingPayment={isProcessingPayment}
+          />
+        );
       default:
         return null;
     }
   };
+
+  // Show loading state while verifying payment
+  if (isVerifyingPayment) {
+    return (
+      <>
+        <Helmet>
+          <title>Verifying Payment | RehabLookup</title>
+        </Helmet>
+        <div className="min-h-screen flex flex-col bg-gradient-to-b from-muted/50 to-background">
+          <PublicHeader />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Verifying Payment</h2>
+              <p className="text-muted-foreground">Please wait while we confirm your payment...</p>
+            </div>
+          </main>
+          <PublicFooter />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -387,7 +573,7 @@ export default function ConciergeIntake() {
 
             {/* Progress Stepper */}
             <div className="mb-8">
-              <IntakeProgress currentStep={currentStep} totalSteps={5} />
+              <IntakeProgress currentStep={currentStep} totalSteps={6} />
             </div>
 
             {/* Step Info Card */}
@@ -410,44 +596,39 @@ export default function ConciergeIntake() {
               <CardContent className="pt-6 pb-8">
                 {renderStep()}
 
-                {/* Navigation Buttons */}
-                <div className="flex flex-col sm:flex-row justify-between gap-4 mt-10 pt-6 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={handlePrev}
-                    disabled={currentStep === 1}
-                    className="order-2 sm:order-1"
-                  >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Previous
-                  </Button>
+                {/* Navigation Buttons - Only show for steps 1-5 */}
+                {currentStep < 6 && (
+                  <div className="flex flex-col sm:flex-row justify-between gap-4 mt-10 pt-6 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={handlePrev}
+                      disabled={currentStep === 1}
+                      className="order-2 sm:order-1"
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Previous
+                    </Button>
 
-                  {currentStep < 5 ? (
                     <Button onClick={handleNext} size="lg" className="order-1 sm:order-2">
-                      Next Step
+                      {currentStep === 5 ? "Review & Submit" : "Next Step"}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
-                  ) : (
-                    <Button 
-                      onClick={handleProceedToPayment}
-                      disabled={isSubmitting}
-                      size="lg"
-                      className="order-1 sm:order-2 min-w-[200px] bg-gradient-to-r from-primary to-primary/80"
+                  </div>
+                )}
+
+                {/* Back button for Step 6 */}
+                {currentStep === 6 && (
+                  <div className="mt-6 pt-6 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={handlePrev}
+                      className="w-full sm:w-auto"
                     >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="mr-2 h-4 w-4" />
-                          Continue to Payment ($29)
-                        </>
-                      )}
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back to Edit
                     </Button>
-                  )}
-                </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

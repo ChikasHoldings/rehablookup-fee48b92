@@ -1,4 +1,4 @@
-import { Check, User, Heart, MapPin, CreditCard, Phone } from "lucide-react";
+import { Check, User, Heart, MapPin, CreditCard, Phone, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface IntakeProgressProps {
@@ -12,6 +12,7 @@ const STEPS = [
   { icon: MapPin, label: "Location" },
   { icon: CreditCard, label: "Payment" },
   { icon: Phone, label: "Contact" },
+  { icon: ClipboardCheck, label: "Review" },
 ];
 
 export function IntakeProgress({ currentStep, totalSteps }: IntakeProgressProps) {

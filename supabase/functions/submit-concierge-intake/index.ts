@@ -13,39 +13,63 @@ const logStep = (step: string, details?: unknown) => {
 };
 
 interface IntakeData {
-  // Step A: Who needs help
+  // Step 1: Who needs help
   ageRange: string;
+  gender: string;
+  preferredLanguage: string;
   state: string;
   city: string;
+  currentLivingSituation: string;
   relationship: string;
+  mobilityNeeds: string;
   
-  // Step B: Care need
+  // Step 2: Care need
   primaryConcern: string;
+  substanceUseFrequency: string;
+  substanceUseDuration: string;
+  detoxNeeded: string;
   levelOfCare: string;
-  priorTreatment: boolean;
-  priorTreatmentNotes?: string;
+  priorTreatment: boolean | null;
+  priorTreatmentNotes: string;
+  currentMedications: string;
   coOccurringConcerns: string[];
+  suicideHistory: string;
   
-  // Step C: Logistics
+  // Step 3: Logistics
   desiredState: string;
-  desiredCity?: string;
+  desiredCity: string;
   radiusMiles: number;
+  preferredEnvironment: string;
   timeline: string;
+  faithBasedPreference: string;
+  holisticInterest: boolean;
+  amenityPreferences: string[];
   needsTransport: boolean;
   assessmentPreference: string;
   
-  // Step D: Payment
+  // Step 4: Payment
   paymentType: string;
-  insuranceCarrier?: string;
-  budgetRange?: string;
+  insuranceCarrier: string;
+  insuranceMemberId: string;
+  insuranceGroupNumber: string;
+  employerName: string;
+  benefitsVerified: boolean;
+  budgetRange: string;
+  scholarshipInterest: boolean;
   willingToTravel: boolean;
   
-  // Step E: Contact
+  // Step 5: Contact
   decisionMakerName: string;
   phone: string;
   email: string;
   bestTimeToCall: string;
+  alternativeContactName: string;
+  alternativeContactPhone: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
   notes: string;
+  referralSource: string;
+  hipaaConsent: boolean;
 }
 
 serve(async (req) => {
@@ -138,28 +162,60 @@ serve(async (req) => {
         idempotency_key: idempotencyKey,
         intake_submitted_at: new Date().toISOString(),
         
-        // Enhanced intake fields
+        // Step 1: Who needs help
         age_range: intakeData.ageRange,
+        gender: intakeData.gender,
+        preferred_language: intakeData.preferredLanguage,
+        current_living_situation: intakeData.currentLivingSituation,
         relationship_to_decision_maker: intakeData.relationship,
+        mobility_needs: intakeData.mobilityNeeds,
+        
+        // Step 2: Care needs
         primary_concern: intakeData.primaryConcern,
+        substance_use_frequency: intakeData.substanceUseFrequency,
+        substance_use_duration: intakeData.substanceUseDuration,
+        detox_needed: intakeData.detoxNeeded,
         level_of_care: intakeData.levelOfCare,
         prior_treatment_history: intakeData.priorTreatment,
         prior_treatment_notes: intakeData.priorTreatmentNotes,
+        current_medications: intakeData.currentMedications,
         co_occurring_concerns: intakeData.coOccurringConcerns,
+        suicide_history: intakeData.suicideHistory,
+        
+        // Step 3: Logistics
         desired_location_state: intakeData.desiredState,
         desired_location_city: intakeData.desiredCity,
         desired_radius_miles: intakeData.radiusMiles,
+        preferred_environment: intakeData.preferredEnvironment,
         timeline_urgency: intakeData.timeline,
+        faith_based_preference: intakeData.faithBasedPreference,
+        holistic_interest: intakeData.holisticInterest,
+        amenity_preferences: intakeData.amenityPreferences,
         needs_transport_help: intakeData.needsTransport,
         assessment_preference: intakeData.assessmentPreference,
+        
+        // Step 4: Payment
         payment_type: intakeData.paymentType,
         insurance_carrier: intakeData.insuranceCarrier,
+        insurance_member_id: intakeData.insuranceMemberId,
+        insurance_group_number: intakeData.insuranceGroupNumber,
+        employer_name: intakeData.employerName,
+        benefits_verified: intakeData.benefitsVerified,
         budget_range: intakeData.budgetRange,
+        scholarship_interest: intakeData.scholarshipInterest,
         willing_to_travel: intakeData.willingToTravel,
+        
+        // Step 5: Contact
         decision_maker_name: intakeData.decisionMakerName,
         decision_maker_phone: intakeData.phone,
         best_time_to_call: intakeData.bestTimeToCall,
+        alternative_contact_name: intakeData.alternativeContactName,
+        alternative_contact_phone: intakeData.alternativeContactPhone,
+        emergency_contact_name: intakeData.emergencyContactName,
+        emergency_contact_phone: intakeData.emergencyContactPhone,
         notes: intakeData.notes,
+        referral_source: intakeData.referralSource,
+        hipaa_consent: intakeData.hipaaConsent,
         
         // Store full intake data as JSON backup
         intake_data: intakeData,
