@@ -90,6 +90,7 @@ import SeekerNotificationPreferences from "./pages/seeker/SeekerNotificationPref
 import SeekerFacilityProfile from "./pages/seeker/SeekerFacilityProfile";
 import SeekerSearch from "./pages/seeker/SeekerSearch";
 import SeekerHelp from "./pages/seeker/SeekerHelp";
+import SeekerConcierge from "./pages/seeker/SeekerConcierge";
 
 // Near Me SEO Pages
 import DrugRehabNearMe from "./pages/near-me/DrugRehabNearMe";
@@ -230,6 +231,7 @@ const App = () => (
               <Route path="facility/:slug" element={<SeekerFacilityProfile />} />
               <Route path="search" element={<SeekerSearch />} />
               <Route path="help" element={<SeekerHelp />} />
+              <Route path="concierge" element={<SeekerConcierge />} />
             </Route>
             <Route path="/my-account" element={<Navigate to="/account" replace />} />
             <Route path="/for-providers" element={<ForProviders />} />
