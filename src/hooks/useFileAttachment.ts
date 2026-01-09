@@ -68,11 +68,13 @@ export function useFileAttachment({ inquiryId }: UseFileAttachmentOptions) {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedUrlData, error: signedError } = await supabase.storage
         .from("concierge-attachments")
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
 
-      return { url: publicUrl, name: attachment.name };
+      if (signedError) throw signedError;
+
+      return { url: signedUrlData.signedUrl, name: attachment.name };
     } catch (error) {
       console.error("Upload error:", error);
       toast({

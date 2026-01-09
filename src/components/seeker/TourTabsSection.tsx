@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,6 +46,27 @@ export function TourTabsSection({
   setTourModalFacility 
 }: TourTabsSectionProps) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [dismissedFacilities, setDismissedFacilities] = useState<Set<string>>(() => {
+    const stored = localStorage.getItem(`dismissed-facilities-${selectedCase.id}`);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  });
+
+  const handleDismissFacility = (facilityId: string) => {
+    const newDismissed = new Set(dismissedFacilities);
+    newDismissed.add(facilityId);
+    setDismissedFacilities(newDismissed);
+    localStorage.setItem(
+      `dismissed-facilities-${selectedCase.id}`,
+      JSON.stringify([...newDismissed])
+    );
+    toast({
+      title: "Facility dismissed",
+      description: "This facility has been hidden from your matches.",
+    });
+  };
+
+  const visibleFacilities = matchedFacilities?.filter(f => !dismissedFacilities.has(f.id));
 
   // Fetch tour count for badge
   const { data: tourCount } = useQuery({
@@ -119,9 +141,9 @@ export function TourTabsSection({
         <TabsTrigger value="facilities" className="gap-2">
           <Users className="h-4 w-4" />
           Matches
-          {hasMatches && (
+          {hasMatches && visibleFacilities && visibleFacilities.length > 0 && (
             <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-              {matchedFacilities?.length || 0}
+              {visibleFacilities.length}
             </Badge>
           )}
         </TabsTrigger>
@@ -147,13 +169,13 @@ export function TourTabsSection({
 
       {/* Matched Facilities Tab */}
       <TabsContent value="facilities" className="space-y-4">
-        {hasMatches ? (
+        {hasMatches && visibleFacilities && visibleFacilities.length > 0 ? (
           <>
             <p className="text-sm text-muted-foreground">
               These treatment centers match your needs. Request tours or send messages to learn more.
             </p>
             <div className="grid gap-4 md:grid-cols-2">
-              {matchedFacilities?.map((facility) => (
+              {visibleFacilities.map((facility) => (
                 <Card key={facility.id}>
                   <CardContent className="p-4">
                     <MatchedFacilityCard facility={facility} />
@@ -171,6 +193,7 @@ export function TourTabsSection({
                         variant="ghost" 
                         size="sm"
                         className="text-destructive hover:text-destructive"
+                        onClick={() => handleDismissFacility(facility.id)}
                       >
                         <ThumbsDown className="h-3.5 w-3.5" />
                       </Button>

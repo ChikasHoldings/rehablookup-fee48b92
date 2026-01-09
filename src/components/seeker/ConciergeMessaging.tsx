@@ -266,6 +266,21 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
     );
   }
 
+  // Fetch matched facility names for thread creation
+  const { data: matchedFacilityDetails } = useQuery({
+    queryKey: ["matched-facilities-for-threads", matchedFacilityIds],
+    queryFn: async () => {
+      if (!matchedFacilityIds.length) return [];
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("id, name")
+        .in("id", matchedFacilityIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: matchedFacilityIds.length > 0,
+  });
+
   // No threads yet - show start buttons
   if (!threads?.length) {
     return (
@@ -290,6 +305,18 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
               <HeadphonesIcon className="h-4 w-4" />
               Message Advisor
             </Button>
+            {matchedFacilityDetails?.map((facility) => (
+              <Button
+                key={facility.id}
+                variant="outline"
+                onClick={() => createThreadMutation.mutate({ threadType: "facility", facilityId: facility.id })}
+                disabled={createThreadMutation.isPending}
+                className="gap-2"
+              >
+                <Building2 className="h-4 w-4" />
+                {facility.name}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>

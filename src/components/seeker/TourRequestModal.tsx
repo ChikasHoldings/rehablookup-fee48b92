@@ -75,7 +75,8 @@ export function TourRequestModal({
         title: "Tour requested",
         description: `Your tour request has been sent to ${facilityName}.`,
       });
-      queryClient.invalidateQueries({ queryKey: ["concierge-tours"] });
+      queryClient.invalidateQueries({ queryKey: ["concierge-tours", inquiryId] });
+      queryClient.invalidateQueries({ queryKey: ["tour-count", inquiryId] });
       onClose();
     },
     onError: (error) => {
