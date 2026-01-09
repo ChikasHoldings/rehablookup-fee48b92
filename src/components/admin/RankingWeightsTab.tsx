@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { RefreshCw, Save, Sparkles, FileText, MessageSquare, Clock, MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Json } from "@/integrations/supabase/types";
 
 interface RankingWeights {
   pro_boost: number;
@@ -58,7 +59,7 @@ export function RankingWeightsTab() {
     mutationFn: async (newWeights: RankingWeights) => {
       const { error } = await supabase
         .from("platform_settings")
-        .update({ setting_value: newWeights })
+        .update({ setting_value: newWeights as unknown as Json })
         .eq("setting_key", "ranking_weights");
 
       if (error) throw error;
