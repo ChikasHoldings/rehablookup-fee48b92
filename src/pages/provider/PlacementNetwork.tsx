@@ -11,13 +11,16 @@ import {
   Shield,
   Settings,
   Bell,
-  Phone,
-  Mail,
   Loader2,
   CheckCircle2,
   Clock,
   Building2,
   DollarSign,
+  CreditCard,
+  Landmark,
+  Plus,
+  FileText,
+  AlertCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +32,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -37,6 +41,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
+
+// Placement fee structure
+const PLACEMENT_FEES = {
+  flat_fee: { standard: 1200, pro: 960 },
+  commission: { standard: "8%", pro: "6.4%" },
+};
 
 const CARE_TYPES = [
   { value: "detox", label: "Detox" },
@@ -136,6 +146,60 @@ export default function ProviderPlacementNetworkPage() {
 
       if (error) throw error;
       return data || [];
+    },
+    enabled: !!selectedFacility?.id,
+  });
+
+  // Fetch payment methods - using type assertion since types may not be updated yet
+  const { data: paymentMethods, isLoading: paymentMethodsLoading } = useQuery({
+    queryKey: ["provider-payment-methods", selectedFacility?.id],
+    queryFn: async () => {
+      if (!selectedFacility?.id) return [];
+      // Use type assertion since table may not be in generated types yet
+      const { data, error } = await (supabase as any)
+        .from("provider_payment_methods")
+        .select("*")
+        .eq("facility_id", selectedFacility.id)
+        .order("is_default", { ascending: false });
+        
+      if (error) return [];
+      return data || [];
+    },
+    enabled: !!selectedFacility?.id,
+  });
+
+  // Fetch placement invoices
+  const { data: invoices } = useQuery({
+    queryKey: ["placement-invoices", selectedFacility?.id],
+    queryFn: async () => {
+      if (!selectedFacility?.id) return [];
+      // Use type assertion since table may not be in generated types yet
+      const { data, error } = await (supabase as any)
+        .from("placement_invoices")
+        .select("*")
+        .eq("facility_id", selectedFacility.id)
+        .order("created_at", { ascending: false });
+
+      if (error) return [];
+      return data || [];
+    },
+    enabled: !!selectedFacility?.id,
+  });
+
+  // Check for Pro subscription
+  const { data: proSubscription } = useQuery({
+    queryKey: ["pro-subscription", selectedFacility?.id],
+    queryFn: async () => {
+      if (!selectedFacility?.id) return null;
+      const { data, error } = await supabase
+        .from("pro_subscriptions")
+        .select("*")
+        .eq("facility_id", selectedFacility.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
     },
     enabled: !!selectedFacility?.id,
   });
@@ -372,23 +436,27 @@ export default function ProviderPlacementNetworkPage() {
         ) : (
           /* Opted-In View */
           <Tabs defaultValue="introductions" className="space-y-6">
-            <TabsList className="w-full grid grid-cols-3">
-              <TabsTrigger value="introductions" className="gap-2">
+            <TabsList className="w-full grid grid-cols-4">
+              <TabsTrigger value="introductions" className="gap-1 text-xs sm:text-sm">
                 <Bell className="h-4 w-4" />
-                Introductions
+                <span className="hidden sm:inline">Introductions</span>
                 {pendingIntroductions.length > 0 && (
                   <Badge variant="destructive" className="ml-1 h-5 px-1.5">
                     {pendingIntroductions.length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="profile" className="gap-2">
+              <TabsTrigger value="profile" className="gap-1 text-xs sm:text-sm">
                 <Settings className="h-4 w-4" />
-                Profile
+                <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-2">
+              <TabsTrigger value="billing" className="gap-1 text-xs sm:text-sm">
+                <CreditCard className="h-4 w-4" />
+                <span className="hidden sm:inline">Billing</span>
+              </TabsTrigger>
+              <TabsTrigger value="history" className="gap-1 text-xs sm:text-sm">
                 <Building2 className="h-4 w-4" />
-                Placements
+                <span className="hidden sm:inline">Placements</span>
               </TabsTrigger>
             </TabsList>
 
@@ -574,6 +642,123 @@ export default function ProviderPlacementNetworkPage() {
                     )}
                     Save Profile
                   </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Billing Tab */}
+            <TabsContent value="billing" className="space-y-6">
+              {/* Fee Structure */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <DollarSign className="h-5 w-5" />
+                    Placement Fee Structure
+                  </CardTitle>
+                  <CardDescription>
+                    You only pay when a placement is confirmed by both parties
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg border bg-muted/30">
+                      <p className="text-sm text-muted-foreground mb-1">Flat Fee</p>
+                      <p className="text-2xl font-bold">
+                        ${proSubscription ? PLACEMENT_FEES.flat_fee.pro : PLACEMENT_FEES.flat_fee.standard}
+                      </p>
+                      {proSubscription && (
+                        <Badge className="mt-2 bg-primary/10 text-primary">Pro: 20% off</Badge>
+                      )}
+                    </div>
+                    <div className="p-4 rounded-lg border bg-muted/30">
+                      <p className="text-sm text-muted-foreground mb-1">Commission</p>
+                      <p className="text-2xl font-bold">
+                        {proSubscription ? PLACEMENT_FEES.commission.pro : PLACEMENT_FEES.commission.standard}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">of first month</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payment Methods */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Payment Methods
+                  </CardTitle>
+                  <CardDescription>
+                    Add a payment method to receive placement referrals
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {paymentMethods && paymentMethods.length > 0 ? (
+                    paymentMethods.map((pm: any) => (
+                      <div key={pm.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {pm.type === 'ach' ? (
+                            <Landmark className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <CreditCard className="h-5 w-5 text-muted-foreground" />
+                          )}
+                          <div>
+                            <p className="font-medium">
+                              {pm.type === 'ach' ? pm.bank_name || 'Bank Account' : 'Card'} •••• {pm.last_four}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Added {format(new Date(pm.created_at), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                        </div>
+                        {pm.is_default && <Badge variant="secondary">Default</Badge>}
+                      </div>
+                    ))
+                  ) : (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Add a payment method to start receiving placement referrals. You'll only be charged on confirmed placements.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <Button variant="outline" className="w-full gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Payment Method
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Invoices */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Invoices
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {invoices && invoices.length > 0 ? (
+                    <div className="space-y-2">
+                      {invoices.map((inv: any) => (
+                        <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium">
+                              ${(inv.amount_cents / 100).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(inv.created_at), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                          <Badge variant={inv.status === 'paid' ? 'default' : 'secondary'} className="capitalize">
+                            {inv.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-6">No invoices yet</p>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
