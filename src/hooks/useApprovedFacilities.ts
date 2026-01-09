@@ -31,11 +31,13 @@ export interface ApprovedFacility extends TreatmentCenter {
   hasFeaturedSubscription?: boolean;
   hasProfessionalPlan?: boolean; // true for professional plan
   hasPaidPlan?: boolean; // true for professional or featured plans
+  isPro?: boolean; // true for Pro subscription
   verified?: boolean | null;
   year_established?: number | null;
   facilityType?: string | null;
   googleRating?: number | null;
   googleReviewCount?: number | null;
+  calculatedRankingScore?: number; // cached ranking score for sorting
   // Plan tier for sorting: 'featured' | 'professional' | 'free'
   planTier?: 'featured' | 'professional' | 'free';
 }
@@ -46,6 +48,7 @@ interface FeaturedFacilitiesResponse {
   allEligibleIds: string[];
   professionalFacilityIds?: string[]; // Facilities with Professional plan
   paidFacilityIds?: string[]; // All facilities with any paid subscription
+  proFacilityIds?: string[]; // Facilities with Pro subscription
 }
 
 // Get cached featured IDs for instant initial render
@@ -75,7 +78,7 @@ export const useFeaturedFacilityIds = () => {
         const { data, error } = await supabase.functions.invoke("get-featured-facilities");
         if (error) {
           console.error("Error fetching featured facilities:", error);
-          return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [], professionalFacilityIds: [], paidFacilityIds: [] };
+          return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [], professionalFacilityIds: [], paidFacilityIds: [], proFacilityIds: [] };
         }
         
         const result = {
@@ -84,6 +87,7 @@ export const useFeaturedFacilityIds = () => {
           allEligibleIds: data?.allEligibleIds || [],
           professionalFacilityIds: data?.professionalFacilityIds || [],
           paidFacilityIds: data?.paidFacilityIds || [],
+          proFacilityIds: data?.proFacilityIds || [],
         };
         
         // Cache the result for instant future loads
@@ -96,11 +100,11 @@ export const useFeaturedFacilityIds = () => {
           // Ignore storage errors
         }
         
-        console.log("[useFeaturedFacilityIds] Loaded", result.homepageFeaturedIds.length, "homepage featured");
+        console.log("[useFeaturedFacilityIds] Loaded", result.homepageFeaturedIds.length, "homepage featured,", result.proFacilityIds.length, "pro");
         return result;
       } catch (err) {
         console.error("Failed to fetch featured facility IDs:", err);
-        return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [], professionalFacilityIds: [], paidFacilityIds: [] };
+        return { featuredFacilityIds: [], homepageFeaturedIds: [], allEligibleIds: [], professionalFacilityIds: [], paidFacilityIds: [], proFacilityIds: [] };
       }
     },
     // Use cached data for instant initial render
@@ -133,6 +137,7 @@ export const useApprovedFacilities = () => {
   const featuredIds = featuredData?.featuredFacilityIds || [];
   const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
   const professionalIds = featuredData?.professionalFacilityIds || [];
+  const proIds = featuredData?.proFacilityIds || [];
 
   // Real-time subscription for approved facilities updates
   useEffect(() => {
@@ -264,13 +269,14 @@ export const useApprovedFacilities = () => {
       const hasFeaturedSubscription = featuredIds.includes(facility.id);
       const hasProfessionalPlan = professionalIds.includes(facility.id);
       const isHomepageFeatured = homepageFeaturedIds.includes(facility.id);
-      // Paid plan if featured or professional subscription
-      const hasPaidPlan = hasFeaturedSubscription || hasProfessionalPlan;
+      const isPro = proIds.includes(facility.id);
+      // Paid plan if featured, professional, or pro subscription
+      const hasPaidPlan = hasFeaturedSubscription || hasProfessionalPlan || isPro;
       
-      // Determine plan tier for sorting
+      // Determine plan tier for sorting - Pro gets same tier as Featured
       let planTier: 'featured' | 'professional' | 'free' = 'free';
-      if (hasFeaturedSubscription || facility.featured) {
-        planTier = 'featured';
+      if (hasFeaturedSubscription || facility.featured || isPro) {
+        planTier = 'featured'; // Pro gets same ranking priority as Featured
       } else if (hasProfessionalPlan) {
         planTier = 'professional';
       }
@@ -288,11 +294,12 @@ export const useApprovedFacilities = () => {
         insuranceAccepted: facility.facility_insurance.map((i) => i.insurance_name),
         description: facility.description || "Treatment center offering quality care and support.",
         programOverview: facility.description || "Comprehensive treatment programs tailored to individual needs.",
-        // Featured if they have Featured subscription OR legacy featured flag
-        featured: hasFeaturedSubscription || facility.featured,
+        // Featured if they have Featured subscription OR legacy featured flag OR Pro
+        featured: hasFeaturedSubscription || facility.featured || isPro,
         hasFeaturedSubscription,
         hasProfessionalPlan,
         hasPaidPlan,
+        isPro,
         isHomepageFeatured,
         planTier,
         verified: facility.verified,
@@ -307,9 +314,10 @@ export const useApprovedFacilities = () => {
         gallery_urls: facility.gallery_urls,
         googleRating: facility.reviewsConfig?.rating ?? null,
         googleReviewCount: facility.reviewsConfig?.count ?? null,
+        calculatedRankingScore: (facility as any).calculated_ranking_score ?? 0,
       };
     });
-  }, [facilitiesQuery.data, featuredIds, homepageFeaturedIds, professionalIds]);
+  }, [facilitiesQuery.data, featuredIds, homepageFeaturedIds, professionalIds, proIds]);
 
   // Cache facilities for instant future loads
   useEffect(() => {

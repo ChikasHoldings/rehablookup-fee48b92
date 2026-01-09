@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Heart } from "lucide-react";
+import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Heart, Sparkles } from "lucide-react";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ interface TreatmentCenterCardProps {
     logo_url?: string | null;
     gallery_urls?: string[] | null;
     hasFeaturedSubscription?: boolean;
+    isPro?: boolean;
     verified?: boolean | null;
     year_established?: number | null;
     facilityType?: string | null;
@@ -44,6 +45,7 @@ function arePropsEqual(
     prevCenter.logo_url === nextCenter.logo_url &&
     prevCenter.verified === nextCenter.verified &&
     prevCenter.hasFeaturedSubscription === nextCenter.hasFeaturedSubscription &&
+    prevCenter.isPro === nextCenter.isPro &&
     prevCenter.year_established === nextCenter.year_established &&
     prevCenter.city === nextCenter.city &&
     prevCenter.state === nextCenter.state &&
@@ -79,6 +81,7 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
   const initials = getInitials(center.name);
   const hasValidLogo = center.logo_url && !logoError;
   const showFeaturedBadge = center.hasFeaturedSubscription || featured;
+  const showProBadge = center.isPro && !showFeaturedBadge; // Show Pro badge only if not already showing Featured
   
   const heroImage = center.gallery_urls?.[0] || center.image;
   const hasValidHeroImage = heroImage && !heroImageError;
@@ -203,6 +206,15 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
               <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" aria-label="Featured treatment center">
                 <Crown className="h-2.5 w-2.5" aria-hidden="true" />
                 Featured
+              </Badge>
+            </div>
+          )}
+          {/* Pro badge overlay */}
+          {showProBadge && (
+            <div className="absolute right-2 top-2">
+              <Badge className="gap-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 shadow-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide" aria-label="Pro treatment center">
+                <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
+                Pro
               </Badge>
             </div>
           )}
@@ -358,6 +370,14 @@ export const TreatmentCenterCard = memo(function TreatmentCenterCard({ center, f
             <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 shadow-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" aria-label="Featured treatment center">
               <Crown className="h-3 w-3" aria-hidden="true" />
               Featured
+            </Badge>
+          </div>
+        )}
+        {showProBadge && (
+          <div className="absolute right-3 top-3">
+            <Badge className="gap-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0 shadow-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" aria-label="Pro treatment center">
+              <Sparkles className="h-3 w-3" aria-hidden="true" />
+              Pro
             </Badge>
           </div>
         )}

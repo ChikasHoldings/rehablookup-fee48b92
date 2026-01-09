@@ -318,12 +318,23 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
-    // Helper to get priority score (plan hierarchy: Featured > Professional > Free)
+    // Helper to get priority score (plan hierarchy: Featured/Pro > Professional > Free)
     const getPriorityScore = (center: any): number => {
-      if (center.hasFeaturedSubscription || center.planTier === 'featured') return 3; // Featured = highest priority
-      if (center.hasProfessionalPlan || center.planTier === 'professional') return 2; // Professional = second priority
-      if (center.featured) return 1; // Legacy featured = third priority
-      return 0; // Free/basic plan = lowest priority
+      let score = 0;
+      
+      // Base tier score (highest priority)
+      if (center.isPro || center.hasFeaturedSubscription || center.planTier === 'featured') {
+        score = 1000; // Pro/Featured tier - highest base priority
+      } else if (center.hasProfessionalPlan || center.planTier === 'professional') {
+        score = 500; // Professional tier
+      } else if (center.featured) {
+        score = 250; // Legacy featured
+      }
+      
+      // Add cached ranking score (0-100 points) for finer sorting within tiers
+      score += center.calculatedRankingScore || 0;
+      
+      return score;
     };
 
     // Apply sorting with paid/featured priority
