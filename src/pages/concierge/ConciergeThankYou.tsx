@@ -6,7 +6,7 @@ import { Footer as PublicFooter } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CheckCircle, Loader2, User, LogIn, Clock, Phone } from "lucide-react";
+import { CheckCircle, Loader2, User, LogIn, Clock, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ConciergeIntakeData } from "./ConciergeIntake";
 
@@ -214,9 +214,9 @@ export default function ConciergeThankYou() {
                       </span>
                     </li>
                     <li className="flex gap-3">
-                      <Phone className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <Mail className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-muted-foreground">
-                        Matched programs will reach out to you directly to discuss next steps
+                        Matched programs will reach out via email to discuss next steps
                       </span>
                     </li>
                   </ul>

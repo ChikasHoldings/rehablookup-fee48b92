@@ -12,65 +12,82 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[SUBMIT-CONCIERGE-INTAKE] ${step}${detailsStr}`);
 };
 
-interface IntakeData {
-  // Step 1: Who needs help
+// Full intake data structure (public flow - 5 steps)
+interface FullIntakeData {
   ageRange: string;
   gender: string;
-  preferredLanguage: string;
-  state: string;
-  city: string;
-  currentLivingSituation: string;
-  relationship: string;
-  mobilityNeeds: string;
-  
-  // Step 2: Care need
+  preferredLanguage?: string;
+  state?: string;
+  city?: string;
+  currentLivingSituation?: string;
+  relationship?: string;
+  mobilityNeeds?: string;
   primaryConcern: string;
-  substanceUseFrequency: string;
-  substanceUseDuration: string;
+  substanceUseFrequency?: string;
+  substanceUseDuration?: string;
   detoxNeeded: string;
   levelOfCare: string;
-  priorTreatment: boolean | null;
-  priorTreatmentNotes: string;
-  currentMedications: string;
-  coOccurringConcerns: string[];
-  suicideHistory: string;
-  
-  // Step 3: Logistics
+  priorTreatment?: boolean | null;
+  priorTreatmentNotes?: string;
+  currentMedications?: string;
+  coOccurringConcerns?: string[];
+  suicideHistory?: string;
   desiredState: string;
-  desiredCity: string;
-  radiusMiles: number;
-  preferredEnvironment: string;
+  desiredCity?: string;
+  radiusMiles?: number;
+  preferredEnvironment?: string;
   timeline: string;
-  faithBasedPreference: string;
-  holisticInterest: boolean;
-  amenityPreferences: string[];
-  needsTransport: boolean;
-  assessmentPreference: string;
-  
-  // Step 4: Payment
+  faithBasedPreference?: string;
+  holisticInterest?: boolean;
+  amenityPreferences?: string[];
+  needsTransport?: boolean;
+  assessmentPreference?: string;
   paymentType: string;
-  insuranceCarrier: string;
-  insuranceMemberId: string;
-  insuranceGroupNumber: string;
-  employerName: string;
-  benefitsVerified: boolean;
-  budgetRange: string;
-  scholarshipInterest: boolean;
-  willingToTravel: boolean;
-  
-  // Step 5: Contact
+  insuranceCarrier?: string;
+  insuranceMemberId?: string;
+  insuranceGroupNumber?: string;
+  employerName?: string;
+  benefitsVerified?: boolean;
+  budgetRange?: string;
+  scholarshipInterest?: boolean;
+  willingToTravel?: boolean;
   decisionMakerName: string;
   phone: string;
   email: string;
-  bestTimeToCall: string;
-  alternativeContactName: string;
-  alternativeContactPhone: string;
-  emergencyContactName: string;
-  emergencyContactPhone: string;
-  notes: string;
-  referralSource: string;
+  bestTimeToCall?: string;
+  alternativeContactName?: string;
+  alternativeContactPhone?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  notes?: string;
+  referralSource?: string;
   hipaaConsent: boolean;
 }
+
+// Simplified inline intake data (logged-in user flow - 4 steps)
+interface InlineIntakeData {
+  ageRange: string;
+  gender: string;
+  currentState: string;
+  currentCity: string;
+  relationship: string;
+  primaryConcern: string;
+  levelOfCare: string;
+  detoxNeeded: string;
+  priorTreatment?: boolean | null;
+  desiredState: string;
+  desiredCity?: string;
+  timeline: string;
+  paymentType: string;
+  insuranceCarrier?: string;
+  notes?: string;
+  hipaaConsent: boolean;
+  decisionMakerName: string;
+  email: string;
+  phone?: string;
+}
+
+type IntakeData = FullIntakeData | InlineIntakeData;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -85,15 +102,34 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Supabase configuration missing");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { sessionId, intakeData } = await req.json() as { 
+    // Try to get authenticated user from request
+    let authenticatedUserId: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader && supabaseAnonKey) {
+      try {
+        const anonClient = createClient(supabaseUrl, supabaseAnonKey);
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user } } = await anonClient.auth.getUser(token);
+        if (user) {
+          authenticatedUserId = user.id;
+          logStep("Authenticated user found", { userId: user.id });
+        }
+      } catch (authErr) {
+        logStep("Auth check failed, proceeding as anonymous", { error: authErr });
+      }
+    }
+
+    const { sessionId, intakeData, userId: passedUserId } = await req.json() as { 
       sessionId: string; 
       intakeData: IntakeData;
+      userId?: string;
     };
     
     if (!sessionId) {
@@ -103,7 +139,15 @@ serve(async (req) => {
       throw new Error("Intake data is required");
     }
 
-    logStep("Processing intake submission", { sessionId, email: intakeData.email });
+    // Use authenticated user ID first, then passed userId
+    const finalUserId = authenticatedUserId || passedUserId || null;
+
+    logStep("Processing intake submission", { 
+      sessionId, 
+      email: intakeData.email,
+      userId: finalUserId,
+      hasAuthHeader: !!authHeader
+    });
 
     // Verify payment with Stripe
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -113,7 +157,14 @@ serve(async (req) => {
       throw new Error("Payment not verified");
     }
 
-    logStep("Payment verified", { paymentStatus: session.payment_status });
+    // Get user_id from session metadata if not already set
+    const sessionUserId = session.metadata?.user_id || null;
+    const effectiveUserId = finalUserId || sessionUserId;
+
+    logStep("Payment verified", { 
+      paymentStatus: session.payment_status,
+      effectiveUserId 
+    });
 
     // Create idempotency key from session ID
     const idempotencyKey = `intake_${sessionId}`;
@@ -140,15 +191,24 @@ serve(async (req) => {
       );
     }
 
-    // Insert the concierge inquiry
+    // Normalize field names - handle both inline and full intake formats
+    // Inline format uses currentState/currentCity, full format uses state/city
+    const currentState = (intakeData as InlineIntakeData).currentState || (intakeData as FullIntakeData).state || '';
+    const currentCity = (intakeData as InlineIntakeData).currentCity || (intakeData as FullIntakeData).city || '';
+    
+    // Insert the concierge inquiry with normalized data
     const { data: inquiry, error: insertError } = await supabase
       .from('concierge_inquiries')
       .insert({
+        // Link to authenticated user if available
+        user_id: effectiveUserId,
+        
+        // Core required fields
         user_name: intakeData.decisionMakerName,
         user_email: intakeData.email,
-        user_phone: intakeData.phone,
+        user_phone: intakeData.phone || '',
         preferred_state: intakeData.desiredState,
-        preferred_city: intakeData.desiredCity || intakeData.city,
+        preferred_city: intakeData.desiredCity || currentCity,
         payment_status: 'paid',
         payment_amount_cents: 2900,
         status: 'pending',
@@ -165,56 +225,56 @@ serve(async (req) => {
         // Step 1: Who needs help
         age_range: intakeData.ageRange,
         gender: intakeData.gender,
-        preferred_language: intakeData.preferredLanguage,
-        current_living_situation: intakeData.currentLivingSituation,
-        relationship_to_decision_maker: intakeData.relationship,
-        mobility_needs: intakeData.mobilityNeeds,
+        preferred_language: (intakeData as FullIntakeData).preferredLanguage || null,
+        current_living_situation: (intakeData as FullIntakeData).currentLivingSituation || null,
+        relationship_to_decision_maker: intakeData.relationship || 'self',
+        mobility_needs: (intakeData as FullIntakeData).mobilityNeeds || null,
         
         // Step 2: Care needs
         primary_concern: intakeData.primaryConcern,
-        substance_use_frequency: intakeData.substanceUseFrequency,
-        substance_use_duration: intakeData.substanceUseDuration,
+        substance_use_frequency: (intakeData as FullIntakeData).substanceUseFrequency || null,
+        substance_use_duration: (intakeData as FullIntakeData).substanceUseDuration || null,
         detox_needed: intakeData.detoxNeeded,
         level_of_care: intakeData.levelOfCare,
-        prior_treatment_history: intakeData.priorTreatment,
-        prior_treatment_notes: intakeData.priorTreatmentNotes,
-        current_medications: intakeData.currentMedications,
-        co_occurring_concerns: intakeData.coOccurringConcerns,
-        suicide_history: intakeData.suicideHistory,
+        prior_treatment_history: intakeData.priorTreatment ?? null,
+        prior_treatment_notes: (intakeData as FullIntakeData).priorTreatmentNotes || null,
+        current_medications: (intakeData as FullIntakeData).currentMedications || null,
+        co_occurring_concerns: (intakeData as FullIntakeData).coOccurringConcerns || null,
+        suicide_history: (intakeData as FullIntakeData).suicideHistory || null,
         
         // Step 3: Logistics
         desired_location_state: intakeData.desiredState,
-        desired_location_city: intakeData.desiredCity,
-        desired_radius_miles: intakeData.radiusMiles,
-        preferred_environment: intakeData.preferredEnvironment,
+        desired_location_city: intakeData.desiredCity || null,
+        desired_radius_miles: (intakeData as FullIntakeData).radiusMiles || null,
+        preferred_environment: (intakeData as FullIntakeData).preferredEnvironment || null,
         timeline_urgency: intakeData.timeline,
-        faith_based_preference: intakeData.faithBasedPreference,
-        holistic_interest: intakeData.holisticInterest,
-        amenity_preferences: intakeData.amenityPreferences,
-        needs_transport_help: intakeData.needsTransport,
-        assessment_preference: intakeData.assessmentPreference,
+        faith_based_preference: (intakeData as FullIntakeData).faithBasedPreference || null,
+        holistic_interest: (intakeData as FullIntakeData).holisticInterest ?? null,
+        amenity_preferences: (intakeData as FullIntakeData).amenityPreferences || null,
+        needs_transport_help: (intakeData as FullIntakeData).needsTransport ?? null,
+        assessment_preference: (intakeData as FullIntakeData).assessmentPreference || 'phone',
         
         // Step 4: Payment
         payment_type: intakeData.paymentType,
-        insurance_carrier: intakeData.insuranceCarrier,
-        insurance_member_id: intakeData.insuranceMemberId,
-        insurance_group_number: intakeData.insuranceGroupNumber,
-        employer_name: intakeData.employerName,
-        benefits_verified: intakeData.benefitsVerified,
-        budget_range: intakeData.budgetRange,
-        scholarship_interest: intakeData.scholarshipInterest,
-        willing_to_travel: intakeData.willingToTravel,
+        insurance_carrier: intakeData.insuranceCarrier || null,
+        insurance_member_id: (intakeData as FullIntakeData).insuranceMemberId || null,
+        insurance_group_number: (intakeData as FullIntakeData).insuranceGroupNumber || null,
+        employer_name: (intakeData as FullIntakeData).employerName || null,
+        benefits_verified: (intakeData as FullIntakeData).benefitsVerified ?? null,
+        budget_range: (intakeData as FullIntakeData).budgetRange || null,
+        scholarship_interest: (intakeData as FullIntakeData).scholarshipInterest ?? null,
+        willing_to_travel: (intakeData as FullIntakeData).willingToTravel ?? null,
         
         // Step 5: Contact
         decision_maker_name: intakeData.decisionMakerName,
-        decision_maker_phone: intakeData.phone,
-        best_time_to_call: intakeData.bestTimeToCall,
-        alternative_contact_name: intakeData.alternativeContactName,
-        alternative_contact_phone: intakeData.alternativeContactPhone,
-        emergency_contact_name: intakeData.emergencyContactName,
-        emergency_contact_phone: intakeData.emergencyContactPhone,
-        notes: intakeData.notes,
-        referral_source: intakeData.referralSource,
+        decision_maker_phone: intakeData.phone || null,
+        best_time_to_call: (intakeData as FullIntakeData).bestTimeToCall || null,
+        alternative_contact_name: (intakeData as FullIntakeData).alternativeContactName || null,
+        alternative_contact_phone: (intakeData as FullIntakeData).alternativeContactPhone || null,
+        emergency_contact_name: (intakeData as FullIntakeData).emergencyContactName || null,
+        emergency_contact_phone: (intakeData as FullIntakeData).emergencyContactPhone || null,
+        notes: intakeData.notes || null,
+        referral_source: (intakeData as FullIntakeData).referralSource || (effectiveUserId ? 'account_concierge' : 'public_concierge'),
         hipaa_consent: intakeData.hipaaConsent,
         
         // Store full intake data as JSON backup
@@ -228,7 +288,7 @@ serve(async (req) => {
       throw new Error(`Failed to create inquiry: ${insertError.message}`);
     }
 
-    logStep("Inquiry created successfully", { inquiryId: inquiry.id });
+    logStep("Inquiry created successfully", { inquiryId: inquiry.id, userId: effectiveUserId });
 
     // Send intake_received notification
     try {

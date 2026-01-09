@@ -286,7 +286,7 @@ async function sendIntakeReceivedEmail(
           3. You'll receive personalized introductions within 24-48 hours`)}
         
         <p style="margin: 24px 0 0 0; font-size: 14px; color: #6b7280;">
-          Questions? Reply to this email or call us at <strong>1-800-XXX-XXXX</strong>
+          Questions? Reply to this email or contact us at <strong>placement@rehablookup.com</strong>
         </p>
       </td>
     </tr>

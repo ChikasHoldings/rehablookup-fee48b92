@@ -128,9 +128,10 @@ interface ConciergeInlineIntakeProps {
   userEmail: string;
   userName: string;
   userPhone?: string;
+  userId?: string;
 }
 
-export function ConciergeInlineIntake({ userEmail, userName, userPhone }: ConciergeInlineIntakeProps) {
+export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }: ConciergeInlineIntakeProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
@@ -215,6 +216,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone }: Concie
             phone: userPhone || "",
           },
           isAuthenticated: true,
+          userId: userId, // Pass user ID for linking
         },
       });
 

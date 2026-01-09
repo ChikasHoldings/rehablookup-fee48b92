@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Phone, ExternalLink, CheckCircle } from "lucide-react";
+import { MapPin, ExternalLink, CheckCircle } from "lucide-react";
 
 interface Facility {
   id: string;
@@ -66,15 +66,9 @@ export function MatchedFacilityCard({ facility, isPlaced }: MatchedFacilityCardP
         
         <div className="flex gap-2 mt-4">
           <Button variant="outline" size="sm" className="flex-1" asChild>
-            <a href={`tel:${facility.phone}`}>
-              <Phone className="h-3.5 w-3.5 mr-1.5" />
-              Call
-            </a>
-          </Button>
-          <Button variant="outline" size="sm" className="flex-1" asChild>
             <Link to={`/center/${facility.slug}`}>
               <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-              View
+              View Details
             </Link>
           </Button>
         </div>

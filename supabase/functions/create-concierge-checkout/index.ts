@@ -25,13 +25,40 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
-    const { email, intakeDraftKey, intakeData, isAuthenticated } = await req.json();
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+    // Try to get authenticated user from request
+    let authenticatedUserId: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader && supabaseUrl && supabaseAnonKey) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user } } = await supabase.auth.getUser(token);
+        if (user) {
+          authenticatedUserId = user.id;
+          logStep("Authenticated user found", { userId: user.id });
+        }
+      } catch (authErr) {
+        logStep("Auth check failed, proceeding as anonymous", { error: authErr });
+      }
+    }
+
+    const { email, intakeDraftKey, intakeData, isAuthenticated, userId: passedUserId } = await req.json();
     
     if (!email) {
       throw new Error("Email is required");
     }
 
-    logStep("Processing checkout", { email, isAuthenticated: !!isAuthenticated });
+    // Use authenticated user ID first, then passed userId
+    const effectiveUserId = authenticatedUserId || passedUserId || null;
+
+    logStep("Processing checkout", { 
+      email, 
+      isAuthenticated: !!isAuthenticated,
+      userId: effectiveUserId
+    });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
@@ -75,16 +102,22 @@ serve(async (req) => {
         idempotency_key: idempotencyKey,
         is_authenticated: isAuthenticated ? "true" : "false",
         has_intake_data: intakeData ? "true" : "false",
+        user_id: effectiveUserId || "",
       },
       payment_intent_data: {
         metadata: {
           service: "concierge_placement",
           email: email,
+          user_id: effectiveUserId || "",
         },
       },
     });
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    logStep("Checkout session created", { 
+      sessionId: session.id, 
+      url: session.url,
+      userId: effectiveUserId 
+    });
 
     return new Response(
       JSON.stringify({ 
