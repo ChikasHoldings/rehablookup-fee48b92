@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { Info, Phone, Users } from "lucide-react";
+import { Info, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type InquiryType = 'request_info' | 'request_callback' | 'placement_match';
+export type InquiryType = 'request_info' | 'request_callback';
 
 interface InquiryTypeBadgeProps {
   type: InquiryType | string | null | undefined;
@@ -24,11 +24,6 @@ const INQUIRY_CONFIG: Record<InquiryType, {
     label: "Request Callback",
     icon: Phone,
     className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 hover:bg-emerald-100",
-  },
-  placement_match: {
-    label: "Placement Match",
-    icon: Users,
-    className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 hover:bg-purple-100",
   },
 };
 

@@ -2,12 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProStatus } from "./useProStatus";
 
-export type InquiryType = 'request_info' | 'request_callback' | 'placement_match';
+export type InquiryType = 'request_info' | 'request_callback';
 
 interface UnlockPricing {
   request_info: { base: number; pro: number };
   request_callback: { base: number; pro: number };
-  placement_match: { base: number; pro: number };
   proDiscountPercent: number;
 }
 
@@ -15,7 +14,6 @@ interface UnlockPricing {
 const DEFAULT_PRICES = {
   request_info: 3900,      // $39.00
   request_callback: 4900,  // $49.00
-  placement_match: 9900,   // $99.00
 };
 const DEFAULT_PRO_DISCOUNT = 20;
 
@@ -31,7 +29,6 @@ export function useUnlockPricing(facilityId?: string) {
         .in("setting_key", [
           "unlock_price_request_info",
           "unlock_price_request_callback",
-          "unlock_price_placement_match",
           "pro_discount_percent"
         ]);
 
@@ -45,8 +42,6 @@ export function useUnlockPricing(facilityId?: string) {
             prices.request_info = value?.cents ?? DEFAULT_PRICES.request_info;
           } else if (setting.setting_key === "unlock_price_request_callback") {
             prices.request_callback = value?.cents ?? DEFAULT_PRICES.request_callback;
-          } else if (setting.setting_key === "unlock_price_placement_match") {
-            prices.placement_match = value?.cents ?? DEFAULT_PRICES.placement_match;
           } else if (setting.setting_key === "pro_discount_percent") {
             proDiscountPercent = value?.value ?? DEFAULT_PRO_DISCOUNT;
           }
@@ -75,10 +70,6 @@ export function useUnlockPricing(facilityId?: string) {
     request_callback: {
       base: prices.request_callback,
       pro: calculateProPrice(prices.request_callback),
-    },
-    placement_match: {
-      base: prices.placement_match,
-      pro: calculateProPrice(prices.placement_match),
     },
     proDiscountPercent,
   };
