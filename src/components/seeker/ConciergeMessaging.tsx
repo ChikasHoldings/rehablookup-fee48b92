@@ -157,25 +157,49 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const trimmedContent = messageContent.trim();
+
       const { error } = await supabase.from("concierge_messages").insert({
         thread_id: selectedThreadId,
         sender_id: user.id,
         sender_type: "seeker",
-        content: messageContent.trim(),
+        content: trimmedContent,
       });
 
       if (error) throw error;
 
-      // Update thread last_message_at
+      // Update thread last_message_at and user_last_read_at
       await supabase
         .from("concierge_threads")
-        .update({ last_message_at: new Date().toISOString() })
+        .update({ 
+          last_message_at: new Date().toISOString(),
+          user_last_read_at: new Date().toISOString(),
+        })
         .eq("id", selectedThreadId);
+
+      // Send notification to recipient
+      const notificationType = selectedThread?.thread_type === "advisor" 
+        ? "message_to_advisor" 
+        : "message_to_facility";
+
+      try {
+        await supabase.functions.invoke("send-message-notifications", {
+          body: {
+            notificationType,
+            threadId: selectedThreadId,
+            messageContent: trimmedContent,
+            senderType: "seeker",
+          },
+        });
+      } catch (notifError) {
+        console.error("Failed to send notification:", notifError);
+      }
     },
     onSuccess: () => {
       setMessageContent("");
       queryClient.invalidateQueries({ queryKey: ["concierge-messages", selectedThreadId] });
       queryClient.invalidateQueries({ queryKey: ["concierge-threads", inquiryId] });
+      queryClient.invalidateQueries({ queryKey: ["unread-message-count", inquiryId] });
     },
     onError: () => {
       toast({

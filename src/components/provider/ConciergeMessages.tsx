@@ -114,11 +114,28 @@ export function ConciergeMessages() {
       
       if (error) throw error;
 
-      // Update thread last_message_at
+      // Update thread last_message_at and facility_last_read_at
       await supabase
         .from("concierge_threads")
-        .update({ last_message_at: new Date().toISOString() })
+        .update({ 
+          last_message_at: new Date().toISOString(),
+          facility_last_read_at: new Date().toISOString(),
+        })
         .eq("id", selectedThread.id);
+
+      // Send notification to seeker
+      try {
+        await supabase.functions.invoke("send-message-notifications", {
+          body: {
+            notificationType: "message_to_seeker",
+            threadId: selectedThread.id,
+            messageContent: content,
+            senderType: "facility",
+          },
+        });
+      } catch (notifError) {
+        console.error("Failed to send notification:", notifError);
+      }
     },
     onSuccess: () => {
       setNewMessage("");
@@ -135,10 +152,11 @@ export function ConciergeMessages() {
     sendMessageMutation.mutate(newMessage.trim());
   };
 
-  // Check for unread messages
-  const getUnreadCount = (thread: any) => {
-    if (!thread.facility_last_read_at) return 1; // Assume unread if never read
-    return 0; // Simplified - would need actual count query
+  // Check for unread messages - compare timestamps
+  const hasUnreadMessages = (thread: any): boolean => {
+    if (!thread.last_message_at) return false;
+    if (!thread.facility_last_read_at) return true;
+    return new Date(thread.last_message_at) > new Date(thread.facility_last_read_at);
   };
 
   if (threadsLoading) {
@@ -181,9 +199,9 @@ export function ConciergeMessages() {
                           </p>
                         </div>
                       </div>
-                      {getUnreadCount(thread) > 0 && (
-                        <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center text-xs">
-                          !
+                      {hasUnreadMessages(thread) && (
+                        <Badge variant="destructive" className="h-5 min-w-5 px-1.5 flex items-center justify-center text-xs">
+                          New
                         </Badge>
                       )}
                     </div>
