@@ -205,6 +205,13 @@ const App = () => (
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/request-help" element={<RequestHelp />} />
             <Route path="/placement-help" element={<PlacementHelp />} />
+            
+            {/* Concierge Placement Routes (Paid Service) */}
+            <Route path="/concierge" element={<ConciergeLanding />} />
+            <Route path="/concierge/intake" element={<ConciergeIntake />} />
+            <Route path="/concierge/thank-you" element={<ConciergeThankYou />} />
+            <Route path="/concierge/create-password" element={<ConciergeCreatePassword />} />
+            
             <Route path="/lp/treatment" element={<AdLanding />} />
             <Route path="/lp/social" element={<SocialLanding />} />
             <Route path="/auth" element={<SeekerAuth />} />
