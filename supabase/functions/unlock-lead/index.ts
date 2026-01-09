@@ -11,7 +11,6 @@ const corsHeaders = {
 const DEFAULT_PRICES: Record<string, number> = {
   request_info: 3900,      // $39.00
   request_callback: 4900,  // $49.00
-  placement_match: 9900,   // $99.00
 };
 const DEFAULT_PRO_DISCOUNT_PERCENT = 20;
 
@@ -27,7 +26,6 @@ async function getUnlockPricing(supabase: any): Promise<{
     .in("setting_key", [
       "unlock_price_request_info",
       "unlock_price_request_callback", 
-      "unlock_price_placement_match",
       "pro_discount_percent"
     ]);
 
@@ -40,8 +38,6 @@ async function getUnlockPricing(supabase: any): Promise<{
         prices.request_info = (setting.setting_value as { cents: number })?.cents ?? DEFAULT_PRICES.request_info;
       } else if (setting.setting_key === "unlock_price_request_callback") {
         prices.request_callback = (setting.setting_value as { cents: number })?.cents ?? DEFAULT_PRICES.request_callback;
-      } else if (setting.setting_key === "unlock_price_placement_match") {
-        prices.placement_match = (setting.setting_value as { cents: number })?.cents ?? DEFAULT_PRICES.placement_match;
       } else if (setting.setting_key === "pro_discount_percent") {
         proDiscountPercent = (setting.setting_value as { value: number })?.value ?? DEFAULT_PRO_DISCOUNT_PERCENT;
       }
