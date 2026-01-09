@@ -433,6 +433,10 @@ export type Database = {
           primary_concern: string | null
           prior_treatment_history: boolean | null
           prior_treatment_notes: string | null
+          provider_fee_cents: number | null
+          provider_fee_status: string | null
+          provider_fee_type: string | null
+          provider_invoice_id: string | null
           referral_source: string | null
           relationship_to_decision_maker: string | null
           relationship_to_seeker: string | null
@@ -515,6 +519,10 @@ export type Database = {
           primary_concern?: string | null
           prior_treatment_history?: boolean | null
           prior_treatment_notes?: string | null
+          provider_fee_cents?: number | null
+          provider_fee_status?: string | null
+          provider_fee_type?: string | null
+          provider_invoice_id?: string | null
           referral_source?: string | null
           relationship_to_decision_maker?: string | null
           relationship_to_seeker?: string | null
@@ -597,6 +605,10 @@ export type Database = {
           primary_concern?: string | null
           prior_treatment_history?: boolean | null
           prior_treatment_notes?: string | null
+          provider_fee_cents?: number | null
+          provider_fee_status?: string | null
+          provider_fee_type?: string | null
+          provider_invoice_id?: string | null
           referral_source?: string | null
           relationship_to_decision_maker?: string | null
           relationship_to_seeker?: string | null
@@ -632,6 +644,13 @@ export type Database = {
             columns: ["placed_facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_inquiries_provider_invoice_id_fkey"
+            columns: ["provider_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "placement_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -2483,17 +2502,93 @@ export type Database = {
           },
         ]
       }
+      placement_fee_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string | null
+          amount_cents: number | null
+          created_at: string | null
+          details: Json | null
+          event_type: string
+          facility_id: string | null
+          id: string
+          inquiry_id: string | null
+          invoice_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string | null
+          amount_cents?: number | null
+          created_at?: string | null
+          details?: Json | null
+          event_type: string
+          facility_id?: string | null
+          id?: string
+          inquiry_id?: string | null
+          invoice_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string | null
+          amount_cents?: number | null
+          created_at?: string | null
+          details?: Json | null
+          event_type?: string
+          facility_id?: string | null
+          id?: string
+          inquiry_id?: string | null
+          invoice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_fee_events_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_fee_events_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_fee_events_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_fee_events_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "placement_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       placement_invoices: {
         Row: {
-          agreement_id: string
+          agreement_id: string | null
           amount_cents: number
           case_id: string
           created_at: string
+          discount_percent: number | null
+          discount_reason: string | null
           due_at: string | null
           facility_id: string
+          fee_type: string | null
           id: string
+          inquiry_id: string | null
           manual_payment: boolean | null
           notes: string | null
+          overridden_at: string | null
+          overridden_by: string | null
+          override_amount_cents: number | null
+          override_reason: string | null
           paid_at: string | null
           receipt_url: string | null
           reminder_count: number | null
@@ -2501,19 +2596,32 @@ export type Database = {
           sent_at: string | null
           status: string
           stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
           stripe_payment_link: string | null
           updated_at: string
+          waive_reason: string | null
+          waived: boolean | null
+          waived_at: string | null
+          waived_by: string | null
         }
         Insert: {
-          agreement_id: string
+          agreement_id?: string | null
           amount_cents: number
           case_id: string
           created_at?: string
+          discount_percent?: number | null
+          discount_reason?: string | null
           due_at?: string | null
           facility_id: string
+          fee_type?: string | null
           id?: string
+          inquiry_id?: string | null
           manual_payment?: boolean | null
           notes?: string | null
+          overridden_at?: string | null
+          overridden_by?: string | null
+          override_amount_cents?: number | null
+          override_reason?: string | null
           paid_at?: string | null
           receipt_url?: string | null
           reminder_count?: number | null
@@ -2521,19 +2629,32 @@ export type Database = {
           sent_at?: string | null
           status?: string
           stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_payment_link?: string | null
           updated_at?: string
+          waive_reason?: string | null
+          waived?: boolean | null
+          waived_at?: string | null
+          waived_by?: string | null
         }
         Update: {
-          agreement_id?: string
+          agreement_id?: string | null
           amount_cents?: number
           case_id?: string
           created_at?: string
+          discount_percent?: number | null
+          discount_reason?: string | null
           due_at?: string | null
           facility_id?: string
+          fee_type?: string | null
           id?: string
+          inquiry_id?: string | null
           manual_payment?: boolean | null
           notes?: string | null
+          overridden_at?: string | null
+          overridden_by?: string | null
+          override_amount_cents?: number | null
+          override_reason?: string | null
           paid_at?: string | null
           receipt_url?: string | null
           reminder_count?: number | null
@@ -2541,8 +2662,13 @@ export type Database = {
           sent_at?: string | null
           status?: string
           stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_payment_link?: string | null
           updated_at?: string
+          waive_reason?: string | null
+          waived?: boolean | null
+          waived_at?: string | null
+          waived_by?: string | null
         }
         Relationships: [
           {
@@ -2571,6 +2697,13 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_invoices_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
             referencedColumns: ["id"]
           },
         ]
