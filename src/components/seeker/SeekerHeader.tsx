@@ -82,7 +82,6 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
 
     searchTimeoutRef.current = setTimeout(async () => {
       setIsSearching(true);
-      console.log('[SeekerHeader] Searching for:', searchQuery);
       try {
         const { data, error } = await supabase
           .from('facilities')
@@ -92,11 +91,10 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
           .limit(6);
 
         if (!error && data) {
-          console.log('[SeekerHeader] Search found', data.length, 'results');
           setSearchResults(data);
         }
-      } catch (err) {
-        console.error('[SeekerHeader] Search error:', err);
+      } catch {
+        // Silent fail for search
       } finally {
         setIsSearching(false);
       }

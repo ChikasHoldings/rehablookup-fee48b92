@@ -216,8 +216,8 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
             senderType: "seeker",
           },
         });
-      } catch (notifError) {
-        console.error("Failed to send notification:", notifError);
+      } catch {
+        // Notification is best-effort, don't block message send
       }
     },
     onSuccess: () => {
