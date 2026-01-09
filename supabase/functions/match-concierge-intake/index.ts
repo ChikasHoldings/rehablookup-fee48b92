@@ -1,0 +1,302 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[MATCH-CONCIERGE] ${step}${detailsStr}`);
+};
+
+interface FacilityMatch {
+  facilityId: string;
+  facilityName: string;
+  matchScore: number;
+  matchFactors: {
+    location: number;
+    careType: number;
+    insurance: number;
+    availability: number;
+  };
+  city: string;
+  state: string;
+}
+
+// Get nearby states for geographic matching
+function getNearbyStates(state: string): string[] {
+  const adjacentStates: Record<string, string[]> = {
+    'AL': ['FL', 'GA', 'MS', 'TN'],
+    'AZ': ['CA', 'CO', 'NM', 'NV', 'UT'],
+    'AR': ['LA', 'MO', 'MS', 'OK', 'TN', 'TX'],
+    'CA': ['AZ', 'NV', 'OR'],
+    'CO': ['AZ', 'KS', 'NE', 'NM', 'OK', 'UT', 'WY'],
+    'CT': ['MA', 'NY', 'RI'],
+    'DE': ['MD', 'NJ', 'PA'],
+    'FL': ['AL', 'GA'],
+    'GA': ['AL', 'FL', 'NC', 'SC', 'TN'],
+    'ID': ['MT', 'NV', 'OR', 'UT', 'WA', 'WY'],
+    'IL': ['IN', 'IA', 'KY', 'MO', 'WI'],
+    'IN': ['IL', 'KY', 'MI', 'OH'],
+    'IA': ['IL', 'MN', 'MO', 'NE', 'SD', 'WI'],
+    'KS': ['CO', 'MO', 'NE', 'OK'],
+    'KY': ['IL', 'IN', 'MO', 'OH', 'TN', 'VA', 'WV'],
+    'LA': ['AR', 'MS', 'TX'],
+    'ME': ['NH'],
+    'MD': ['DE', 'PA', 'VA', 'WV'],
+    'MA': ['CT', 'NH', 'NY', 'RI', 'VT'],
+    'MI': ['IN', 'OH', 'WI'],
+    'MN': ['IA', 'ND', 'SD', 'WI'],
+    'MS': ['AL', 'AR', 'LA', 'TN'],
+    'MO': ['AR', 'IL', 'IA', 'KS', 'KY', 'NE', 'OK', 'TN'],
+    'MT': ['ID', 'ND', 'SD', 'WY'],
+    'NE': ['CO', 'IA', 'KS', 'MO', 'SD', 'WY'],
+    'NV': ['AZ', 'CA', 'ID', 'OR', 'UT'],
+    'NH': ['MA', 'ME', 'VT'],
+    'NJ': ['DE', 'NY', 'PA'],
+    'NM': ['AZ', 'CO', 'OK', 'TX', 'UT'],
+    'NY': ['CT', 'MA', 'NJ', 'PA', 'VT'],
+    'NC': ['GA', 'SC', 'TN', 'VA'],
+    'ND': ['MN', 'MT', 'SD'],
+    'OH': ['IN', 'KY', 'MI', 'PA', 'WV'],
+    'OK': ['AR', 'CO', 'KS', 'MO', 'NM', 'TX'],
+    'OR': ['CA', 'ID', 'NV', 'WA'],
+    'PA': ['DE', 'MD', 'NJ', 'NY', 'OH', 'WV'],
+    'RI': ['CT', 'MA'],
+    'SC': ['GA', 'NC'],
+    'SD': ['IA', 'MN', 'MT', 'ND', 'NE', 'WY'],
+    'TN': ['AL', 'AR', 'GA', 'KY', 'MO', 'MS', 'NC', 'VA'],
+    'TX': ['AR', 'LA', 'NM', 'OK'],
+    'UT': ['AZ', 'CO', 'ID', 'NM', 'NV', 'WY'],
+    'VT': ['MA', 'NH', 'NY'],
+    'VA': ['KY', 'MD', 'NC', 'TN', 'WV'],
+    'WA': ['ID', 'OR'],
+    'WV': ['KY', 'MD', 'OH', 'PA', 'VA'],
+    'WI': ['IA', 'IL', 'MI', 'MN'],
+    'WY': ['CO', 'ID', 'MT', 'NE', 'SD', 'UT'],
+  };
+  return adjacentStates[state.toUpperCase()] || [];
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Supabase configuration missing");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { inquiryId } = await req.json();
+    
+    if (!inquiryId) {
+      throw new Error("Inquiry ID is required");
+    }
+
+    logStep("Matching for inquiry", { inquiryId });
+
+    // Fetch the inquiry details
+    const { data: inquiry, error: inquiryError } = await supabase
+      .from('concierge_inquiries')
+      .select('*')
+      .eq('id', inquiryId)
+      .single();
+
+    if (inquiryError || !inquiry) {
+      throw new Error("Inquiry not found");
+    }
+
+    logStep("Inquiry found", { 
+      levelOfCare: inquiry.level_of_care,
+      state: inquiry.desired_location_state,
+      paymentType: inquiry.payment_type 
+    });
+
+    // Fetch all opted-in facilities with their services and insurance
+    const { data: facilities, error: facilitiesError } = await supabase
+      .from('facilities')
+      .select(`
+        id,
+        name,
+        city,
+        state,
+        facility_type,
+        concierge_accepted_care_types,
+        concierge_accepted_insurance,
+        concierge_availability_status,
+        concierge_network_opted_in,
+        facility_services (service_name),
+        facility_insurance (insurance_name)
+      `)
+      .eq('concierge_network_opted_in', true)
+      .eq('status', 'approved')
+      .neq('concierge_availability_status', 'full');
+
+    if (facilitiesError) {
+      throw new Error(`Failed to fetch facilities: ${facilitiesError.message}`);
+    }
+
+    logStep("Found opted-in facilities", { count: facilities?.length || 0 });
+
+    if (!facilities || facilities.length === 0) {
+      return new Response(
+        JSON.stringify({ matches: [], message: "No matching facilities available" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
+    // Score each facility
+    const scoredFacilities: FacilityMatch[] = [];
+
+    for (const facility of facilities) {
+      let locationScore = 0;
+      let careTypeScore = 0;
+      let insuranceScore = 0;
+      let availabilityScore = 0;
+
+      // Location scoring (max 35 points)
+      const desiredState = inquiry.desired_location_state?.toUpperCase();
+      const facilityState = facility.state?.toUpperCase();
+
+      if (desiredState === facilityState) {
+        locationScore = 35;
+      } else if (desiredState && getNearbyStates(desiredState).includes(facilityState)) {
+        locationScore = 25;
+      } else if (inquiry.willing_to_travel) {
+        locationScore = 15;
+      } else {
+        locationScore = 5;
+      }
+
+      // Care type matching (max 30 points)
+      const acceptedCareTypes = (facility.concierge_accepted_care_types as string[]) || [];
+      const levelOfCareMap: Record<string, string[]> = {
+        'detox': ['detox'],
+        'inpatient': ['inpatient', 'residential'],
+        'residential': ['inpatient', 'residential'],
+        'php': ['php'],
+        'iop': ['iop'],
+        'outpatient': ['outpatient', 'iop'],
+        'sober_living': ['sober_living'],
+      };
+
+      const desiredCare = inquiry.level_of_care?.toLowerCase();
+      const matchingCareTypes = levelOfCareMap[desiredCare] || [desiredCare];
+      
+      if (matchingCareTypes.some(ct => acceptedCareTypes.includes(ct))) {
+        careTypeScore = 30;
+      } else if (acceptedCareTypes.length > 0) {
+        careTypeScore = 10; // Has care types but not matching
+      }
+
+      // Insurance matching (max 25 points)
+      const acceptedInsurance = (facility.concierge_accepted_insurance as string[]) || [];
+      const facilityInsuranceNames = (facility.facility_insurance || []).map(
+        (i: { insurance_name: string }) => i.insurance_name.toLowerCase()
+      );
+      const allInsurance = [...acceptedInsurance, ...facilityInsuranceNames];
+
+      if (inquiry.payment_type === 'self_pay' || inquiry.payment_type === 'self-pay') {
+        insuranceScore = 25; // Self-pay always accepted
+      } else if (inquiry.insurance_carrier) {
+        const carrierLower = inquiry.insurance_carrier.toLowerCase();
+        if (allInsurance.some(i => i.toLowerCase().includes(carrierLower) || carrierLower.includes(i.toLowerCase()))) {
+          insuranceScore = 25;
+        } else if (allInsurance.some(i => i.includes('most') || i.includes('major'))) {
+          insuranceScore = 18;
+        } else {
+          insuranceScore = 8;
+        }
+      } else {
+        insuranceScore = 12; // Unknown insurance
+      }
+
+      // Availability scoring (max 10 points)
+      if (facility.concierge_availability_status === 'open') {
+        availabilityScore = 10;
+      } else if (facility.concierge_availability_status === 'limited') {
+        availabilityScore = 5;
+      }
+
+      const totalScore = locationScore + careTypeScore + insuranceScore + availabilityScore;
+
+      scoredFacilities.push({
+        facilityId: facility.id,
+        facilityName: facility.name,
+        matchScore: totalScore,
+        matchFactors: {
+          location: locationScore,
+          careType: careTypeScore,
+          insurance: insuranceScore,
+          availability: availabilityScore,
+        },
+        city: facility.city,
+        state: facility.state,
+      });
+    }
+
+    // Sort by score and take top 3
+    const topMatches = scoredFacilities
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 3);
+
+    logStep("Top matches found", { 
+      count: topMatches.length, 
+      topScore: topMatches[0]?.matchScore 
+    });
+
+    // Update the inquiry with matched facility IDs
+    const matchedIds = topMatches.map(m => m.facilityId);
+    const matchScores = topMatches.map(m => ({
+      facilityId: m.facilityId,
+      score: m.matchScore,
+      factors: m.matchFactors,
+    }));
+
+    const { error: updateError } = await supabase
+      .from('concierge_inquiries')
+      .update({
+        matched_facility_ids: matchedIds,
+        match_scores: matchScores,
+        matched_at: new Date().toISOString(),
+        match_count: topMatches.length,
+        status: 'matched',
+      })
+      .eq('id', inquiryId);
+
+    if (updateError) {
+      logStep("Warning: Failed to update inquiry", { error: updateError });
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        matches: topMatches,
+        matchCount: topMatches.length,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
+  }
+});

@@ -1,0 +1,142 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[SETUP-PROVIDER-PAYMENT] ${step}${detailsStr}`);
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Supabase configuration missing");
+    }
+
+    // Authenticate user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header");
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !userData.user) {
+      throw new Error("Authentication failed");
+    }
+
+    const { facilityId } = await req.json();
+    if (!facilityId) {
+      throw new Error("Facility ID is required");
+    }
+
+    logStep("Setting up payment for facility", { facilityId, userId: userData.user.id });
+
+    // Verify user owns this facility
+    const supabaseService = createClient(
+      supabaseUrl, 
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+    );
+
+    const { data: facility, error: facilityError } = await supabaseService
+      .from('facilities')
+      .select('id, name, email, user_id')
+      .eq('id', facilityId)
+      .eq('user_id', userData.user.id)
+      .single();
+
+    if (facilityError || !facility) {
+      throw new Error("Facility not found or access denied");
+    }
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+    // Check if customer already exists for this facility
+    const { data: existingMethods } = await supabaseService
+      .from('provider_payment_methods')
+      .select('stripe_payment_method_id')
+      .eq('facility_id', facilityId)
+      .limit(1);
+
+    let customerId: string;
+
+    if (existingMethods && existingMethods.length > 0) {
+      // Get customer from existing payment method
+      const pm = await stripe.paymentMethods.retrieve(existingMethods[0].stripe_payment_method_id);
+      customerId = pm.customer as string;
+      logStep("Found existing customer", { customerId });
+    } else {
+      // Create new customer
+      const email = facility.email || userData.user.email;
+      
+      // Check if Stripe customer exists
+      const customers = await stripe.customers.list({ email, limit: 1 });
+      
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Found existing Stripe customer", { customerId });
+      } else {
+        const customer = await stripe.customers.create({
+          email,
+          name: facility.name,
+          metadata: {
+            facility_id: facilityId,
+            user_id: userData.user.id,
+          },
+        });
+        customerId = customer.id;
+        logStep("Created new customer", { customerId });
+      }
+    }
+
+    // Create SetupIntent for saving payment method
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ['card', 'us_bank_account'],
+      metadata: {
+        facility_id: facilityId,
+        purpose: 'placement_billing',
+      },
+      usage: 'off_session',
+    });
+
+    logStep("SetupIntent created", { setupIntentId: setupIntent.id });
+
+    return new Response(
+      JSON.stringify({
+        clientSecret: setupIntent.client_secret,
+        customerId,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
+  }
+});
