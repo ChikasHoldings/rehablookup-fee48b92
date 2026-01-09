@@ -103,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Create in-app notification for provider
         if (tour.facility?.user_id) {
-          await supabase.from("admin_user_notifications").insert({
+          await supabase.from("provider_notifications").insert({
             user_id: tour.facility.user_id,
             type: "tour_request",
             title: "New Tour Request",
@@ -151,7 +151,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Create in-app notification for seeker
         if (tour.user_id) {
-          await supabase.from("admin_user_notifications").insert({
+          await supabase.from("seeker_notifications").insert({
             user_id: tour.user_id,
             type: "tour_proposed",
             title: "Tour Time Proposed",
@@ -188,7 +188,7 @@ const handler = async (req: Request): Promise<Response> => {
                 month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
               })
             : "confirmed";
-          await supabase.from("admin_user_notifications").insert({
+          await supabase.from("provider_notifications").insert({
             user_id: tour.facility.user_id,
             type: "tour_confirmed",
             title: "Tour Confirmed",
@@ -241,7 +241,7 @@ const handler = async (req: Request): Promise<Response> => {
 
           // In-app notification for provider
           if (tour.facility?.user_id) {
-            await supabase.from("admin_user_notifications").insert({
+            await supabase.from("provider_notifications").insert({
               user_id: tour.facility.user_id,
               type: "tour_cancelled",
               title: "Tour Cancelled",
@@ -268,7 +268,7 @@ const handler = async (req: Request): Promise<Response> => {
 
           // In-app notification for user
           if (tour.user_id) {
-            await supabase.from("admin_user_notifications").insert({
+            await supabase.from("seeker_notifications").insert({
               user_id: tour.user_id,
               type: "tour_cancelled",
               title: "Tour Update",

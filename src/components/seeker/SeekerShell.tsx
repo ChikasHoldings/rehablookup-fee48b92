@@ -29,7 +29,6 @@ export function SeekerShell() {
   const { data: profile } = useQuery({
     queryKey: ['seeker-profile', userId],
     queryFn: async () => {
-      console.log('[SeekerShell] Fetching profile for user:', userId);
       if (!userId) return null;
       const { data, error } = await supabase
         .from('seeker_profiles')
@@ -37,9 +36,7 @@ export function SeekerShell() {
         .eq('user_id', userId)
         .maybeSingle();
       if (error) {
-        console.error('[SeekerShell] Profile fetch error:', error);
-      } else {
-        console.log('[SeekerShell] Profile loaded:', data?.display_name || data?.first_name);
+        // Silent fail - profile may not exist yet
       }
       return data as SeekerProfile | null;
     },

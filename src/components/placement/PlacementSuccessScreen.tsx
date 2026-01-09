@@ -96,11 +96,7 @@ export function PlacementSuccessScreen({ caseId }: PlacementSuccessScreenProps) 
 
         {/* Contact Info */}
         <p className="text-xs text-muted-foreground pt-4">
-          Questions? Call us at{" "}
-          <a href="tel:1-800-XXX-XXXX" className="text-primary font-medium">
-            1-800-XXX-XXXX
-          </a>{" "}
-          or email{" "}
+          Questions? Email us at{" "}
           <a href="mailto:placement@rehablookup.com" className="text-primary font-medium">
             placement@rehablookup.com
           </a>

@@ -87,8 +87,6 @@ export function ConciergeToursList({ inquiryId }: ConciergeToursListProps) {
           filter: `inquiry_id=eq.${inquiryId}`,
         },
         (payload) => {
-          console.log("Tour update received:", payload);
-          // Invalidate and refetch tours
           queryClient.invalidateQueries({ queryKey: ["concierge-tours", inquiryId] });
           
           // Show toast for updates
