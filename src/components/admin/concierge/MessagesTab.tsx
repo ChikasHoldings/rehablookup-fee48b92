@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { MessageSquare, Send, ArrowLeft, Building2, User } from "lucide-react";
+import { MessageSquare, Send, ArrowLeft, Building2, User, Paperclip, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { MessageAttachment } from "@/components/shared/MessageAttachment";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
@@ -21,7 +22,10 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
   const queryClient = useQueryClient();
   const [selectedThread, setSelectedThread] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch all threads for this case
   const { data: threads, isLoading: threadsLoading } = useQuery({
@@ -96,16 +100,54 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
     }
   }, [selectedThread?.id]);
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large. Maximum size is 10MB");
+      return;
+    }
+    setAttachment(file);
+  };
+
+  const uploadFile = async (): Promise<{ url: string; name: string } | null> => {
+    if (!attachment) return null;
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const fileExt = attachment.name.split(".").pop();
+      const fileName = `${user.id}/${caseData.id}/${Date.now()}.${fileExt}`;
+      const { error } = await supabase.storage.from("concierge-attachments").upload(fileName, attachment);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("concierge-attachments").getPublicUrl(fileName);
+      return { url: publicUrl, name: attachment.name };
+    } catch (error) {
+      console.error("Upload error:", error);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!selectedThread?.id || !user) throw new Error("Missing data");
       
+      // Upload attachment if present
+      let attachmentData: { url: string; name: string } | null = null;
+      if (attachment) {
+        attachmentData = await uploadFile();
+      }
+      
       const { error } = await supabase.from("concierge_messages").insert({
         thread_id: selectedThread.id,
         sender_id: user.id,
         sender_type: "advisor",
-        content,
+        content: content || (attachmentData ? `Sent an attachment: ${attachmentData.name}` : ""),
+        attachment_url: attachmentData?.url || null,
+        attachment_name: attachmentData?.name || null,
       });
       
       if (error) throw error;
@@ -125,7 +167,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
           body: {
             notificationType: "message_to_seeker",
             threadId: selectedThread.id,
-            messageContent: content,
+            messageContent: content || `Sent an attachment: ${attachmentData?.name}`,
             senderType: "advisor",
           },
         });
@@ -135,6 +177,8 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
     },
     onSuccess: () => {
       setNewMessage("");
+      setAttachment(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       queryClient.invalidateQueries({ queryKey: ["admin-thread-messages", selectedThread?.id] });
       queryClient.invalidateQueries({ queryKey: ["admin-case-threads", caseData.id] });
     },
@@ -144,7 +188,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
   });
 
   const handleSend = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && !attachment) return;
     sendMessageMutation.mutate(newMessage.trim());
   };
 
@@ -233,59 +277,95 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
           <div className="text-center py-8 text-muted-foreground">Loading...</div>
         ) : messages && messages.length > 0 ? (
           <div className="space-y-3">
-            {messages.map((msg: any) => (
-              <div
-                key={msg.id}
-                className={`flex ${msg.sender_type === "advisor" ? "justify-end" : "justify-start"}`}
-              >
+              {messages.map((msg: any) => (
                 <div
-                  className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                    msg.sender_type === "advisor"
-                      ? "bg-primary text-primary-foreground"
-                      : msg.sender_type === "facility"
-                      ? "bg-blue-100 dark:bg-blue-900/30"
-                      : "bg-muted"
-                  }`}
+                  key={msg.id}
+                  className={`flex ${msg.sender_type === "advisor" ? "justify-end" : "justify-start"}`}
                 >
-                  <p className="text-xs font-medium mb-1 opacity-70 capitalize">
-                    {msg.sender_type}
-                  </p>
-                  <p className="text-sm">{msg.content}</p>
-                  <p className="text-xs mt-1 opacity-60">
-                    {format(new Date(msg.created_at), "h:mm a")}
-                  </p>
+                  <div
+                    className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                      msg.sender_type === "advisor"
+                        ? "bg-primary text-primary-foreground"
+                        : msg.sender_type === "facility"
+                        ? "bg-blue-100 dark:bg-blue-900/30"
+                        : "bg-muted"
+                    }`}
+                  >
+                    <p className="text-xs font-medium mb-1 opacity-70 capitalize">
+                      {msg.sender_type}
+                    </p>
+                    <p className="text-sm">{msg.content}</p>
+                    {msg.attachment_url && msg.attachment_name && (
+                      <MessageAttachment url={msg.attachment_url} name={msg.attachment_name} />
+                    )}
+                    <p className="text-xs mt-1 opacity-60">
+                      {format(new Date(msg.created_at), "h:mm a")}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            No messages in this thread
-          </div>
-        )}
-      </ScrollArea>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              No messages in this thread
+            </div>
+          )}
+        </ScrollArea>
       
-      <div className="flex gap-2 pt-3 border-t">
-        <Textarea
-          placeholder="Send as advisor..."
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          className="min-h-[44px] max-h-[80px]"
-        />
-        <Button 
-          onClick={handleSend} 
-          disabled={!newMessage.trim() || sendMessageMutation.isPending}
-          size="icon"
-        >
-          <Send className="h-4 w-4" />
-        </Button>
+      <div className="flex gap-2 pt-3 border-t flex-col">
+        {attachment && (
+          <MessageAttachment 
+            url="" 
+            name={attachment.name} 
+            isPreview 
+            onRemove={() => {
+              setAttachment(null);
+              if (fileInputRef.current) fileInputRef.current.value = "";
+            }} 
+          />
+        )}
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileSelect}
+            accept="image/*,.pdf,.doc,.docx,.txt"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sendMessageMutation.isPending || uploading}
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Textarea
+            placeholder="Send as advisor..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            className="min-h-[44px] max-h-[80px]"
+          />
+          <Button 
+            onClick={handleSend} 
+            disabled={(!newMessage.trim() && !attachment) || sendMessageMutation.isPending || uploading}
+            size="icon"
+          >
+            {sendMessageMutation.isPending || uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

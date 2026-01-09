@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { format } from "date-fns";
-import { MessageSquare, Send, User, ArrowLeft } from "lucide-react";
+import { MessageSquare, Send, User, ArrowLeft, Paperclip, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,13 +11,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { MessageAttachment } from "@/components/shared/MessageAttachment";
 
 export function ConciergeMessages() {
   const { selectedFacility } = useSelectedFacility();
   const queryClient = useQueryClient();
   const [selectedThread, setSelectedThread] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch threads for this facility
   const { data: threads, isLoading: threadsLoading } = useQuery({
@@ -100,16 +104,54 @@ export function ConciergeMessages() {
     }
   }, [selectedThread?.id, queryClient]);
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large. Maximum size is 10MB");
+      return;
+    }
+    setAttachment(file);
+  };
+
+  const uploadFile = async (inquiryId: string): Promise<{ url: string; name: string } | null> => {
+    if (!attachment) return null;
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const fileExt = attachment.name.split(".").pop();
+      const fileName = `${user.id}/${inquiryId}/${Date.now()}.${fileExt}`;
+      const { error } = await supabase.storage.from("concierge-attachments").upload(fileName, attachment);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("concierge-attachments").getPublicUrl(fileName);
+      return { url: publicUrl, name: attachment.name };
+    } catch (error) {
+      console.error("Upload error:", error);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!selectedThread?.id || !user) throw new Error("Missing data");
       
+      // Upload attachment if present
+      let attachmentData: { url: string; name: string } | null = null;
+      if (attachment) {
+        attachmentData = await uploadFile(selectedThread.inquiry_id);
+      }
+      
       const { error } = await supabase.from("concierge_messages").insert({
         thread_id: selectedThread.id,
         sender_id: user.id,
         sender_type: "facility",
-        content,
+        content: content || (attachmentData ? `Sent an attachment: ${attachmentData.name}` : ""),
+        attachment_url: attachmentData?.url || null,
+        attachment_name: attachmentData?.name || null,
       });
       
       if (error) throw error;
@@ -129,7 +171,7 @@ export function ConciergeMessages() {
           body: {
             notificationType: "message_to_seeker",
             threadId: selectedThread.id,
-            messageContent: content,
+            messageContent: content || `Sent an attachment: ${attachmentData?.name}`,
             senderType: "facility",
           },
         });
@@ -139,6 +181,8 @@ export function ConciergeMessages() {
     },
     onSuccess: () => {
       setNewMessage("");
+      setAttachment(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       queryClient.invalidateQueries({ queryKey: ["provider-thread-messages", selectedThread?.id] });
       queryClient.invalidateQueries({ queryKey: ["provider-concierge-threads"] });
     },
@@ -148,7 +192,7 @@ export function ConciergeMessages() {
   });
 
   const handleSend = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && !attachment) return;
     sendMessageMutation.mutate(newMessage.trim());
   };
 
@@ -257,6 +301,9 @@ export function ConciergeMessages() {
                     }`}
                   >
                     <p className="text-sm">{msg.content}</p>
+                    {msg.attachment_url && msg.attachment_name && (
+                      <MessageAttachment url={msg.attachment_url} name={msg.attachment_name} />
+                    )}
                     <p className={`text-xs mt-1 ${
                       msg.sender_type === "facility" ? "text-primary-foreground/70" : "text-muted-foreground"
                     }`}>
@@ -275,8 +322,35 @@ export function ConciergeMessages() {
         </ScrollArea>
       </CardContent>
       
-      <div className="flex-shrink-0 p-4 border-t">
+      <div className="flex-shrink-0 p-4 border-t space-y-2">
+        {attachment && (
+          <MessageAttachment 
+            url="" 
+            name={attachment.name} 
+            isPreview 
+            onRemove={() => {
+              setAttachment(null);
+              if (fileInputRef.current) fileInputRef.current.value = "";
+            }} 
+          />
+        )}
         <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileSelect}
+            accept="image/*,.pdf,.doc,.docx,.txt"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sendMessageMutation.isPending || uploading}
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
           <Textarea
             placeholder="Type a message..."
             value={newMessage}
@@ -291,11 +365,15 @@ export function ConciergeMessages() {
           />
           <Button 
             onClick={handleSend} 
-            disabled={!newMessage.trim() || sendMessageMutation.isPending}
+            disabled={(!newMessage.trim() && !attachment) || sendMessageMutation.isPending || uploading}
             size="icon"
             className="shrink-0"
           >
-            <Send className="h-4 w-4" />
+            {sendMessageMutation.isPending || uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
