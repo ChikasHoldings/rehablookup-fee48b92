@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "@/components/Layout";
+import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { PlacementIntakeForm } from "@/components/placement/PlacementIntakeForm";
 import { PlacementSuccessScreen } from "@/components/placement/PlacementSuccessScreen";
