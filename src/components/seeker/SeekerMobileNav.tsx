@@ -4,7 +4,8 @@ import {
   Search, 
   Heart, 
   Star, 
-  MoreHorizontal
+  MoreHorizontal,
+  HeartHandshake
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -32,11 +33,12 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const isMoreActive = ["/account/settings", "/account/requests", "/auth"].some(
+  const isMoreActive = ["/account/settings", "/account/requests", "/account/concierge", "/auth"].some(
     path => location.pathname.startsWith(path)
   );
 
   const moreItems = isAuthenticated ? [
+    { href: "/account/concierge", label: "Placement Tracker", icon: HeartHandshake },
     { href: "/account/requests", label: "My Requests", icon: FileText },
     { href: "/account/settings", label: "Settings", icon: Settings },
     { href: "/account/help", label: "Help & Support", icon: HelpCircle },

@@ -419,6 +419,9 @@ export type Database = {
           payment_amount_cents: number
           payment_status: string
           payment_type: string | null
+          placed_facility_id: string | null
+          placement_confirmed: boolean | null
+          placement_confirmed_at: string | null
           preferred_city: string | null
           preferred_environment: string | null
           preferred_language: string | null
@@ -430,6 +433,10 @@ export type Database = {
           relationship_to_decision_maker: string | null
           relationship_to_seeker: string | null
           scholarship_interest: boolean | null
+          seeker_confirmed: boolean | null
+          seeker_confirmed_at: string | null
+          seeker_feedback: string | null
+          seeker_rating: number | null
           status: string
           stripe_customer_id: string | null
           stripe_payment_intent_id: string | null
@@ -490,6 +497,9 @@ export type Database = {
           payment_amount_cents?: number
           payment_status?: string
           payment_type?: string | null
+          placed_facility_id?: string | null
+          placement_confirmed?: boolean | null
+          placement_confirmed_at?: string | null
           preferred_city?: string | null
           preferred_environment?: string | null
           preferred_language?: string | null
@@ -501,6 +511,10 @@ export type Database = {
           relationship_to_decision_maker?: string | null
           relationship_to_seeker?: string | null
           scholarship_interest?: boolean | null
+          seeker_confirmed?: boolean | null
+          seeker_confirmed_at?: string | null
+          seeker_feedback?: string | null
+          seeker_rating?: number | null
           status?: string
           stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -561,6 +575,9 @@ export type Database = {
           payment_amount_cents?: number
           payment_status?: string
           payment_type?: string | null
+          placed_facility_id?: string | null
+          placement_confirmed?: boolean | null
+          placement_confirmed_at?: string | null
           preferred_city?: string | null
           preferred_environment?: string | null
           preferred_language?: string | null
@@ -572,6 +589,10 @@ export type Database = {
           relationship_to_decision_maker?: string | null
           relationship_to_seeker?: string | null
           scholarship_interest?: boolean | null
+          seeker_confirmed?: boolean | null
+          seeker_confirmed_at?: string | null
+          seeker_feedback?: string | null
+          seeker_rating?: number | null
           status?: string
           stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -586,7 +607,22 @@ export type Database = {
           user_phone?: string
           willing_to_travel?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "concierge_inquiries_placed_facility_id_fkey"
+            columns: ["placed_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_inquiries_placed_facility_id_fkey"
+            columns: ["placed_facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       credit_transactions: {
         Row: {
