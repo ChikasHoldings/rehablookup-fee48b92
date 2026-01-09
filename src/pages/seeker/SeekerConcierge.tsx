@@ -171,6 +171,17 @@ export default function SeekerConcierge() {
   // Handle payment verification from Stripe redirect
   const verifyPaymentAndSubmit = useCallback(async (sessionId: string) => {
     setIsVerifyingPayment(true);
+    
+    // Helper to store failed submission for retry
+    const storeFailedSubmission = (data: any, error: string) => {
+      localStorage.setItem("concierge_failed_submission", JSON.stringify({
+        sessionId,
+        data,
+        error,
+        timestamp: Date.now(),
+      }));
+    };
+
     try {
       // Verify payment
       const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-concierge-payment", {
@@ -181,6 +192,8 @@ export default function SeekerConcierge() {
 
       if (verifyData?.alreadySubmitted) {
         toast.success("Your intake was already submitted!");
+        localStorage.removeItem("concierge_pending_intake");
+        localStorage.removeItem("concierge_failed_submission");
         refetch();
         return;
       }
@@ -191,28 +204,56 @@ export default function SeekerConcierge() {
         if (pendingIntake) {
           const { formData, userName, userEmail, userPhone } = JSON.parse(pendingIntake);
           
-          // Submit the intake
-          const { error: submitError } = await supabase.functions.invoke("submit-concierge-intake", {
-            body: {
-              sessionId,
-              intakeData: {
-                ...formData,
-                decisionMakerName: userName,
-                email: userEmail,
-                phone: userPhone || "",
-              },
+          const intakePayload = {
+            sessionId,
+            intakeData: {
+              ...formData,
+              decisionMakerName: userName,
+              email: userEmail,
+              phone: userPhone || "",
             },
+            userId: currentUser?.id, // Pass user ID for linking
+          };
+
+          // Submit the intake with retry logic
+          const { data: submitData, error: submitError } = await supabase.functions.invoke("submit-concierge-intake", {
+            body: intakePayload,
           });
 
-          if (submitError) throw submitError;
+          if (submitError) {
+            // Store for potential retry
+            storeFailedSubmission(intakePayload, submitError.message);
+            throw submitError;
+          }
 
-          // Clear pending data
+          // Clear pending data on success
           localStorage.removeItem("concierge_pending_intake");
+          localStorage.removeItem("concierge_failed_submission");
           
           toast.success("Your intake has been submitted! We'll be in touch soon.");
           refetch();
         } else {
-          toast.success("Payment verified! Please complete the intake form.");
+          // Check for failed submission to retry
+          const failedSubmission = localStorage.getItem("concierge_failed_submission");
+          if (failedSubmission) {
+            const { data: failedData } = JSON.parse(failedSubmission);
+            if (failedData?.sessionId === sessionId) {
+              // Retry failed submission
+              const { error: retryError } = await supabase.functions.invoke("submit-concierge-intake", {
+                body: failedData,
+              });
+
+              if (!retryError) {
+                localStorage.removeItem("concierge_failed_submission");
+                toast.success("Your intake has been submitted! We'll be in touch soon.");
+                refetch();
+              } else {
+                throw retryError;
+              }
+            }
+          } else {
+            toast.success("Payment verified! Please complete the intake form.");
+          }
         }
       }
 
@@ -223,11 +264,11 @@ export default function SeekerConcierge() {
       setSearchParams(newParams, { replace: true });
     } catch (err) {
       console.error("Payment verification error:", err);
-      toast.error("Failed to verify payment. Please contact support.");
+      toast.error("Failed to submit intake. Your payment was successful - please email placement@rehablookup.com for assistance.");
     } finally {
       setIsVerifyingPayment(false);
     }
-  }, [refetch, searchParams, setSearchParams]);
+  }, [refetch, searchParams, setSearchParams, currentUser?.id]);
 
   // Check for payment return
   useEffect(() => {
@@ -346,6 +387,7 @@ export default function SeekerConcierge() {
                 userEmail={userEmail} 
                 userName={userName}
                 userPhone={userPhone}
+                userId={currentUser?.id}
               />
             </>
           ) : (

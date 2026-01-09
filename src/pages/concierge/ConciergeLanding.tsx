@@ -8,7 +8,6 @@ import {
   CreditCard, 
   ClipboardList, 
   Users, 
-  Phone, 
   CheckCircle,
   Shield,
   Clock,
@@ -35,9 +34,9 @@ export default function ConciergeLanding() {
       description: "Our specialists review your intake and identify best-fit treatment programs",
     },
     {
-      icon: Phone,
-      title: "Get Contacted",
-      description: "Matched programs reach out directly to discuss next steps",
+      icon: Mail,
+      title: "Get Connected",
+      description: "Matched programs reach out via email to discuss next steps",
     },
     {
       icon: CheckCircle,
