@@ -565,6 +565,16 @@ export type Database = {
           bed_count: string | null
           bonus_leads: number | null
           city: string
+          concierge_accepted_care_types: Json | null
+          concierge_accepted_insurance: Json | null
+          concierge_admissions_contact: string | null
+          concierge_admissions_email: string | null
+          concierge_admissions_phone: string | null
+          concierge_agreement_preference: string | null
+          concierge_availability_status: string | null
+          concierge_network_opted_in: boolean | null
+          concierge_notes: string | null
+          concierge_opted_in_at: string | null
           created_at: string
           description: string | null
           email: string | null
@@ -604,6 +614,16 @@ export type Database = {
           bed_count?: string | null
           bonus_leads?: number | null
           city: string
+          concierge_accepted_care_types?: Json | null
+          concierge_accepted_insurance?: Json | null
+          concierge_admissions_contact?: string | null
+          concierge_admissions_email?: string | null
+          concierge_admissions_phone?: string | null
+          concierge_agreement_preference?: string | null
+          concierge_availability_status?: string | null
+          concierge_network_opted_in?: boolean | null
+          concierge_notes?: string | null
+          concierge_opted_in_at?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -643,6 +663,16 @@ export type Database = {
           bed_count?: string | null
           bonus_leads?: number | null
           city?: string
+          concierge_accepted_care_types?: Json | null
+          concierge_accepted_insurance?: Json | null
+          concierge_admissions_contact?: string | null
+          concierge_admissions_email?: string | null
+          concierge_admissions_phone?: string | null
+          concierge_agreement_preference?: string | null
+          concierge_availability_status?: string | null
+          concierge_network_opted_in?: boolean | null
+          concierge_notes?: string | null
+          concierge_opted_in_at?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -1815,6 +1845,440 @@ export type Database = {
           verified?: boolean | null
         }
         Relationships: []
+      }
+      placement_agreements: {
+        Row: {
+          agreement_type: string
+          case_id: string
+          commission_percent: number | null
+          created_at: string
+          document_url: string | null
+          facility_id: string
+          flat_fee_cents: number | null
+          id: string
+          provider_id: string
+          sent_at: string | null
+          signature_ip: string | null
+          signature_name: string | null
+          signed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agreement_type: string
+          case_id: string
+          commission_percent?: number | null
+          created_at?: string
+          document_url?: string | null
+          facility_id: string
+          flat_fee_cents?: number | null
+          id?: string
+          provider_id: string
+          sent_at?: string | null
+          signature_ip?: string | null
+          signature_name?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agreement_type?: string
+          case_id?: string
+          commission_percent?: number | null
+          created_at?: string
+          document_url?: string | null
+          facility_id?: string
+          flat_fee_cents?: number | null
+          id?: string
+          provider_id?: string
+          sent_at?: string | null
+          signature_ip?: string | null
+          signature_name?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_agreements_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "placement_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_agreements_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_agreements_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      placement_case_documents: {
+        Row: {
+          case_id: string
+          created_at: string
+          document_name: string | null
+          document_type: string
+          file_url: string | null
+          id: string
+          status: string
+          uploaded_at: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          document_name?: string | null
+          document_type: string
+          file_url?: string | null
+          id?: string
+          status?: string
+          uploaded_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          document_name?: string | null
+          document_type?: string
+          file_url?: string | null
+          id?: string
+          status?: string
+          uploaded_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_case_documents_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "placement_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      placement_case_messages: {
+        Row: {
+          case_id: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_internal: boolean | null
+          message_type: string
+        }
+        Insert: {
+          case_id: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message_type?: string
+        }
+        Update: {
+          case_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_case_messages_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "placement_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      placement_case_providers: {
+        Row: {
+          availability_notes: string | null
+          case_id: string
+          created_at: string
+          facility_id: string
+          id: string
+          introduced_at: string | null
+          provider_id: string
+          provider_response: string | null
+          responded_at: string | null
+          selected_for_placement: boolean | null
+        }
+        Insert: {
+          availability_notes?: string | null
+          case_id: string
+          created_at?: string
+          facility_id: string
+          id?: string
+          introduced_at?: string | null
+          provider_id: string
+          provider_response?: string | null
+          responded_at?: string | null
+          selected_for_placement?: boolean | null
+        }
+        Update: {
+          availability_notes?: string | null
+          case_id?: string
+          created_at?: string
+          facility_id?: string
+          id?: string
+          introduced_at?: string | null
+          provider_id?: string
+          provider_response?: string | null
+          responded_at?: string | null
+          selected_for_placement?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_case_providers_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "placement_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_case_providers_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_case_providers_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      placement_cases: {
+        Row: {
+          additional_notes: string | null
+          admitted_at: string | null
+          admitted_facility_id: string | null
+          age_range: string | null
+          assigned_to: string | null
+          best_time_to_contact: string | null
+          closed_reason: string | null
+          commission_percent: number | null
+          created_at: string
+          flat_fee_cents: number | null
+          gender: string | null
+          id: string
+          insurance_carrier: string | null
+          insurance_plan: string | null
+          level_of_care: string | null
+          monetization_type: string | null
+          payment_type: string | null
+          preferred_cities: string[] | null
+          preferred_contact_method: string | null
+          preferred_states: string[] | null
+          primary_issue: string[] | null
+          revenue_cents: number | null
+          revenue_collected_at: string | null
+          seeker_email: string
+          seeker_name: string
+          seeker_phone: string
+          seeker_user_id: string | null
+          self_pay_budget: string | null
+          special_considerations: Json | null
+          status: string
+          status_updated_at: string | null
+          terms_status: string | null
+          updated_at: string
+          urgency: string | null
+          who_seeking_help: string | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          admitted_at?: string | null
+          admitted_facility_id?: string | null
+          age_range?: string | null
+          assigned_to?: string | null
+          best_time_to_contact?: string | null
+          closed_reason?: string | null
+          commission_percent?: number | null
+          created_at?: string
+          flat_fee_cents?: number | null
+          gender?: string | null
+          id?: string
+          insurance_carrier?: string | null
+          insurance_plan?: string | null
+          level_of_care?: string | null
+          monetization_type?: string | null
+          payment_type?: string | null
+          preferred_cities?: string[] | null
+          preferred_contact_method?: string | null
+          preferred_states?: string[] | null
+          primary_issue?: string[] | null
+          revenue_cents?: number | null
+          revenue_collected_at?: string | null
+          seeker_email: string
+          seeker_name: string
+          seeker_phone: string
+          seeker_user_id?: string | null
+          self_pay_budget?: string | null
+          special_considerations?: Json | null
+          status?: string
+          status_updated_at?: string | null
+          terms_status?: string | null
+          updated_at?: string
+          urgency?: string | null
+          who_seeking_help?: string | null
+        }
+        Update: {
+          additional_notes?: string | null
+          admitted_at?: string | null
+          admitted_facility_id?: string | null
+          age_range?: string | null
+          assigned_to?: string | null
+          best_time_to_contact?: string | null
+          closed_reason?: string | null
+          commission_percent?: number | null
+          created_at?: string
+          flat_fee_cents?: number | null
+          gender?: string | null
+          id?: string
+          insurance_carrier?: string | null
+          insurance_plan?: string | null
+          level_of_care?: string | null
+          monetization_type?: string | null
+          payment_type?: string | null
+          preferred_cities?: string[] | null
+          preferred_contact_method?: string | null
+          preferred_states?: string[] | null
+          primary_issue?: string[] | null
+          revenue_cents?: number | null
+          revenue_collected_at?: string | null
+          seeker_email?: string
+          seeker_name?: string
+          seeker_phone?: string
+          seeker_user_id?: string | null
+          self_pay_budget?: string | null
+          special_considerations?: Json | null
+          status?: string
+          status_updated_at?: string | null
+          terms_status?: string | null
+          updated_at?: string
+          urgency?: string | null
+          who_seeking_help?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_cases_admitted_facility_id_fkey"
+            columns: ["admitted_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_cases_admitted_facility_id_fkey"
+            columns: ["admitted_facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      placement_invoices: {
+        Row: {
+          agreement_id: string
+          amount_cents: number
+          case_id: string
+          created_at: string
+          facility_id: string
+          id: string
+          manual_payment: boolean | null
+          notes: string | null
+          paid_at: string | null
+          receipt_url: string | null
+          sent_at: string | null
+          status: string
+          stripe_invoice_id: string | null
+          stripe_payment_link: string | null
+          updated_at: string
+        }
+        Insert: {
+          agreement_id: string
+          amount_cents: number
+          case_id: string
+          created_at?: string
+          facility_id: string
+          id?: string
+          manual_payment?: boolean | null
+          notes?: string | null
+          paid_at?: string | null
+          receipt_url?: string | null
+          sent_at?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_link?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agreement_id?: string
+          amount_cents?: number
+          case_id?: string
+          created_at?: string
+          facility_id?: string
+          id?: string
+          manual_payment?: boolean | null
+          notes?: string | null
+          paid_at?: string | null
+          receipt_url?: string | null
+          sent_at?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_link?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_invoices_agreement_id_fkey"
+            columns: ["agreement_id"]
+            isOneToOne: false
+            referencedRelation: "placement_agreements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_invoices_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "placement_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_invoices_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "placement_invoices_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_settings: {
         Row: {
