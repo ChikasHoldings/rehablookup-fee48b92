@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -30,6 +31,7 @@ interface TourRequest {
   confirmed_datetime: string | null;
   facility_response_notes: string | null;
   created_at: string;
+  updated_at: string | null;
   facility: {
     name: string;
     city: string;
@@ -61,7 +63,7 @@ export function ConciergeToursList({ inquiryId }: ConciergeToursListProps) {
         .select(`
           id, inquiry_id, facility_id, tour_type, preferred_dates, notes,
           contact_preference, status, proposed_datetime, confirmed_datetime,
-          facility_response_notes, created_at,
+          facility_response_notes, created_at, updated_at,
           facility:facilities(name, city, state)
         `)
         .eq("inquiry_id", inquiryId)
@@ -71,6 +73,42 @@ export function ConciergeToursList({ inquiryId }: ConciergeToursListProps) {
       return (data || []) as unknown as TourRequest[];
     },
   });
+
+  // Real-time subscription for tour updates
+  useEffect(() => {
+    const channel = supabase
+      .channel(`tours-${inquiryId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "concierge_tour_requests",
+          filter: `inquiry_id=eq.${inquiryId}`,
+        },
+        (payload) => {
+          console.log("Tour update received:", payload);
+          // Invalidate and refetch tours
+          queryClient.invalidateQueries({ queryKey: ["concierge-tours", inquiryId] });
+          
+          // Show toast for updates
+          if (payload.eventType === "UPDATE") {
+            const newStatus = (payload.new as TourRequest).status;
+            if (newStatus === "proposed") {
+              toast({
+                title: "Tour Time Proposed!",
+                description: "A facility has proposed a tour time. Check your tours below.",
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [inquiryId, queryClient, toast]);
 
   const updateTourMutation = useMutation({
     mutationFn: async ({ tourId, status, confirmedDatetime }: { 
