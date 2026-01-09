@@ -110,10 +110,28 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
       
       if (error) throw error;
 
+      // Update thread last_message_at and admin_last_read_at
       await supabase
         .from("concierge_threads")
-        .update({ last_message_at: new Date().toISOString() })
+        .update({ 
+          last_message_at: new Date().toISOString(),
+          admin_last_read_at: new Date().toISOString(),
+        })
         .eq("id", selectedThread.id);
+
+      // Send notification to seeker
+      try {
+        await supabase.functions.invoke("send-message-notifications", {
+          body: {
+            notificationType: "message_to_seeker",
+            threadId: selectedThread.id,
+            messageContent: content,
+            senderType: "advisor",
+          },
+        });
+      } catch (notifError) {
+        console.error("Failed to send notification:", notifError);
+      }
     },
     onSuccess: () => {
       setNewMessage("");

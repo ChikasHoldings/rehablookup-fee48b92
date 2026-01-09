@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,6 +44,8 @@ export function TourTabsSection({
   hasMatches,
   setTourModalFacility 
 }: TourTabsSectionProps) {
+  const queryClient = useQueryClient();
+
   // Fetch tour count for badge
   const { data: tourCount } = useQuery({
     queryKey: ["tour-count", selectedCase.id],
@@ -57,6 +60,58 @@ export function TourTabsSection({
     },
     enabled: !!selectedCase.id,
   });
+
+  // Fetch unread message count
+  const { data: unreadMessageCount } = useQuery({
+    queryKey: ["unread-message-count", selectedCase.id],
+    queryFn: async () => {
+      const { data: threads, error } = await supabase
+        .from("concierge_threads")
+        .select("id, last_message_at, user_last_read_at")
+        .eq("inquiry_id", selectedCase.id);
+      
+      if (error) throw error;
+      
+      // Count threads with unread messages
+      let count = 0;
+      for (const thread of threads || []) {
+        if (thread.last_message_at) {
+          const lastMessage = new Date(thread.last_message_at);
+          const lastRead = thread.user_last_read_at ? new Date(thread.user_last_read_at) : null;
+          if (!lastRead || lastMessage > lastRead) {
+            count++;
+          }
+        }
+      }
+      return count;
+    },
+    enabled: !!selectedCase.id,
+  });
+
+  // Subscribe to realtime thread updates
+  useEffect(() => {
+    if (!selectedCase.id) return;
+
+    const channel = supabase
+      .channel(`threads-${selectedCase.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "concierge_threads",
+          filter: `inquiry_id=eq.${selectedCase.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["unread-message-count", selectedCase.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedCase.id, queryClient]);
 
   return (
     <Tabs defaultValue="facilities" className="space-y-4">
@@ -82,6 +137,11 @@ export function TourTabsSection({
         <TabsTrigger value="messages" className="gap-2">
           <MessageCircle className="h-4 w-4" />
           Messages
+          {unreadMessageCount !== undefined && unreadMessageCount > 0 && (
+            <Badge variant="destructive" className="ml-1 h-5 px-1.5">
+              {unreadMessageCount}
+            </Badge>
+          )}
         </TabsTrigger>
       </TabsList>
 
