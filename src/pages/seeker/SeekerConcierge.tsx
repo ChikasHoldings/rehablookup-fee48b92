@@ -37,6 +37,7 @@ import { TourRequestModal } from "@/components/seeker/TourRequestModal";
 import { ConciergeToursList } from "@/components/seeker/ConciergeToursList";
 import { ConciergeMessaging } from "@/components/seeker/ConciergeMessaging";
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
+import { ConciergeLandingContent } from "@/components/seeker/ConciergeLandingContent";
 
 interface ConciergeInquiry {
   id: string;
@@ -122,6 +123,7 @@ export default function SeekerConcierge() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tourModalFacility, setTourModalFacility] = useState<Facility | null>(null);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [showIntakeFlow, setShowIntakeFlow] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -323,6 +325,58 @@ export default function SeekerConcierge() {
       );
     }
 
+    // Logged-in user: show landing page OR intake flow based on state
+    if (currentUser) {
+      return (
+        <div className="container max-w-4xl py-8 space-y-8">
+          {showIntakeFlow ? (
+            <>
+              {/* Back button */}
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowIntakeFlow(false)}
+                className="gap-2"
+              >
+                <ArrowRight className="h-4 w-4 rotate-180" />
+                Back to Overview
+              </Button>
+              
+              {/* Inline Intake Form */}
+              <ConciergeInlineIntake 
+                userEmail={userEmail} 
+                userName={userName}
+                userPhone={userPhone}
+              />
+            </>
+          ) : (
+            <>
+              {/* Landing Page Content */}
+              <ConciergeLandingContent onStartFlow={() => setShowIntakeFlow(true)} />
+              
+              {/* Email Support Card */}
+              <Card className="bg-muted/30">
+                <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Questions about concierge?</p>
+                      <p className="text-sm text-muted-foreground">Our team is here to help.</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" asChild>
+                    <a href="mailto:placement@rehablookup.com">Email Support</a>
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    // Non-logged in user: redirect to public concierge page
     return (
       <div className="container max-w-4xl py-8 space-y-8">
         {/* Hero Section */}
@@ -337,62 +391,51 @@ export default function SeekerConcierge() {
           </p>
         </div>
 
-        {/* Inline Intake Form */}
-        {currentUser ? (
-          <ConciergeInlineIntake 
-            userEmail={userEmail} 
-            userName={userName}
-            userPhone={userPhone}
-          />
-        ) : (
-          <>
-            {/* How It Works - for non-logged in users */}
-            <Card>
-              <CardHeader>
-                <CardTitle>How It Works</CardTitle>
-                <CardDescription>
-                  Our concierge service simplifies your treatment search in 5 simple steps
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {HOW_IT_WORKS_STEPS.map((step, index) => (
-                    <div key={step.step} className="flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-bold text-sm">
-                          {step.step}
-                        </div>
-                        {index < HOW_IT_WORKS_STEPS.length - 1 && (
-                          <div className="w-0.5 h-full bg-border mt-2" />
-                        )}
-                      </div>
-                      <div className="pb-6">
-                        <h3 className="font-semibold">{step.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
-                      </div>
+        {/* How It Works */}
+        <Card>
+          <CardHeader>
+            <CardTitle>How It Works</CardTitle>
+            <CardDescription>
+              Our concierge service simplifies your treatment search in 5 simple steps
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {HOW_IT_WORKS_STEPS.map((step, index) => (
+                <div key={step.step} className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-bold text-sm">
+                      {step.step}
                     </div>
-                  ))}
+                    {index < HOW_IT_WORKS_STEPS.length - 1 && (
+                      <div className="w-0.5 h-full bg-border mt-2" />
+                    )}
+                  </div>
+                  <div className="pb-6">
+                    <h3 className="font-semibold">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-            {/* CTA */}
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="py-8 text-center space-y-4">
-                <h2 className="text-xl font-semibold">Ready to Get Started?</h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Complete our intake form and a placement specialist will be assigned to your case.
-                </p>
-                <Button size="lg" onClick={() => navigate("/concierge")} className="gap-2">
-                  Start Placement Request
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          </>
-        )}
+        {/* CTA */}
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="py-8 text-center space-y-4">
+            <h2 className="text-xl font-semibold">Ready to Get Started?</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Complete our intake form and a placement specialist will be assigned to your case.
+            </p>
+            <Button size="lg" onClick={() => navigate("/concierge")} className="gap-2">
+              Start Placement Request
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
 
-        {/* Email Support Card - No Phone */}
+        {/* Email Support Card */}
         <Card className="bg-muted/30">
           <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
             <div className="flex items-center gap-4">
