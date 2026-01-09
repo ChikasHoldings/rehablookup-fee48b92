@@ -92,11 +92,20 @@ serve(async (req) => {
     let feeCents: number;
     const actualFeeType = feeType || 'flat_fee';
 
+    // Commission cap: $1,500 maximum
+    const COMMISSION_CAP_CENTS = 150000;
+
     if (actualFeeType === 'commission' && firstMonthCost) {
       const commissionRate = hasPro 
         ? PLACEMENT_FEES.commission.pro_percent 
         : PLACEMENT_FEES.commission.standard_percent;
       feeCents = Math.round(firstMonthCost * (commissionRate / 100));
+      
+      // Apply commission cap
+      if (feeCents > COMMISSION_CAP_CENTS) {
+        logStep("Commission capped", { originalFee: feeCents, cappedFee: COMMISSION_CAP_CENTS });
+        feeCents = COMMISSION_CAP_CENTS;
+      }
     } else {
       feeCents = PLACEMENT_FEES.flat_fee.standard;
       if (hasPro) {

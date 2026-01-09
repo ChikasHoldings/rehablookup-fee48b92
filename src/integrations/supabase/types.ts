@@ -841,6 +841,9 @@ export type Database = {
           concierge_network_opted_in: boolean | null
           concierge_notes: string | null
           concierge_opted_in_at: string | null
+          concierge_terms_accepted_at: string | null
+          concierge_terms_accepted_by: string | null
+          concierge_terms_version: string | null
           created_at: string
           description: string | null
           email: string | null
@@ -894,6 +897,9 @@ export type Database = {
           concierge_network_opted_in?: boolean | null
           concierge_notes?: string | null
           concierge_opted_in_at?: string | null
+          concierge_terms_accepted_at?: string | null
+          concierge_terms_accepted_by?: string | null
+          concierge_terms_version?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -947,6 +953,9 @@ export type Database = {
           concierge_network_opted_in?: boolean | null
           concierge_notes?: string | null
           concierge_opted_in_at?: string | null
+          concierge_terms_accepted_at?: string | null
+          concierge_terms_accepted_by?: string | null
+          concierge_terms_version?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -2823,6 +2832,72 @@ export type Database = {
           },
           {
             foreignKeyName: "provider_notifications_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_payment_methods: {
+        Row: {
+          bank_name: string | null
+          card_brand: string | null
+          created_at: string | null
+          exp_month: number | null
+          exp_year: number | null
+          facility_id: string
+          id: string
+          is_default: boolean | null
+          is_verified: boolean | null
+          last_four: string
+          stripe_customer_id: string | null
+          stripe_payment_method_id: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          bank_name?: string | null
+          card_brand?: string | null
+          created_at?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
+          facility_id: string
+          id?: string
+          is_default?: boolean | null
+          is_verified?: boolean | null
+          last_four: string
+          stripe_customer_id?: string | null
+          stripe_payment_method_id: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          bank_name?: string | null
+          card_brand?: string | null
+          created_at?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
+          facility_id?: string
+          id?: string
+          is_default?: boolean | null
+          is_verified?: boolean | null
+          last_four?: string
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_payment_methods_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_payment_methods_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
