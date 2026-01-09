@@ -38,6 +38,7 @@ import { ConciergeToursList } from "@/components/seeker/ConciergeToursList";
 import { ConciergeMessaging } from "@/components/seeker/ConciergeMessaging";
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
 import { ConciergeLandingContent } from "@/components/seeker/ConciergeLandingContent";
+import { ConciergePaymentRecovery } from "@/components/seeker/ConciergePaymentRecovery";
 
 interface ConciergeInquiry {
   id: string;
@@ -370,6 +371,12 @@ export default function SeekerConcierge() {
     if (currentUser) {
       return (
         <div className="container max-w-4xl py-8 space-y-8">
+          {/* Payment Recovery Component - shows only if there's a failed submission */}
+          <ConciergePaymentRecovery 
+            userId={currentUser.id} 
+            onRecoveryComplete={() => refetch()} 
+          />
+          
           {showIntakeFlow ? (
             <>
               {/* Back button */}
