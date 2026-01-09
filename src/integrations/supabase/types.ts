@@ -375,63 +375,141 @@ export type Database = {
       concierge_inquiries: {
         Row: {
           admin_notes: string | null
+          age_range: string | null
+          assessment_preference: string | null
+          best_time_to_call: string | null
+          budget_range: string | null
+          checkout_session_id: string | null
           closed_at: string | null
+          co_occurring_concerns: Json | null
           created_at: string
+          decision_maker_name: string | null
+          decision_maker_phone: string | null
+          desired_location_city: string | null
+          desired_location_state: string | null
+          desired_radius_miles: number | null
           id: string
+          idempotency_key: string | null
+          insurance_carrier: string | null
           intake_data: Json
+          intake_submitted_at: string | null
+          level_of_care: string | null
           match_count: number | null
           matched_at: string | null
           matched_facility_ids: string[] | null
+          needs_transport_help: boolean | null
+          notes: string | null
           payment_amount_cents: number
           payment_status: string
+          payment_type: string | null
           preferred_city: string | null
           preferred_state: string | null
+          primary_concern: string | null
+          prior_treatment_history: boolean | null
+          prior_treatment_notes: string | null
+          relationship_to_decision_maker: string | null
           status: string
+          stripe_customer_id: string | null
           stripe_payment_intent_id: string | null
+          timeline_urgency: string | null
           updated_at: string
           user_email: string
+          user_id: string | null
           user_name: string
           user_phone: string
+          willing_to_travel: boolean | null
         }
         Insert: {
           admin_notes?: string | null
+          age_range?: string | null
+          assessment_preference?: string | null
+          best_time_to_call?: string | null
+          budget_range?: string | null
+          checkout_session_id?: string | null
           closed_at?: string | null
+          co_occurring_concerns?: Json | null
           created_at?: string
+          decision_maker_name?: string | null
+          decision_maker_phone?: string | null
+          desired_location_city?: string | null
+          desired_location_state?: string | null
+          desired_radius_miles?: number | null
           id?: string
+          idempotency_key?: string | null
+          insurance_carrier?: string | null
           intake_data?: Json
+          intake_submitted_at?: string | null
+          level_of_care?: string | null
           match_count?: number | null
           matched_at?: string | null
           matched_facility_ids?: string[] | null
+          needs_transport_help?: boolean | null
+          notes?: string | null
           payment_amount_cents?: number
           payment_status?: string
+          payment_type?: string | null
           preferred_city?: string | null
           preferred_state?: string | null
+          primary_concern?: string | null
+          prior_treatment_history?: boolean | null
+          prior_treatment_notes?: string | null
+          relationship_to_decision_maker?: string | null
           status?: string
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
+          timeline_urgency?: string | null
           updated_at?: string
           user_email: string
+          user_id?: string | null
           user_name: string
           user_phone: string
+          willing_to_travel?: boolean | null
         }
         Update: {
           admin_notes?: string | null
+          age_range?: string | null
+          assessment_preference?: string | null
+          best_time_to_call?: string | null
+          budget_range?: string | null
+          checkout_session_id?: string | null
           closed_at?: string | null
+          co_occurring_concerns?: Json | null
           created_at?: string
+          decision_maker_name?: string | null
+          decision_maker_phone?: string | null
+          desired_location_city?: string | null
+          desired_location_state?: string | null
+          desired_radius_miles?: number | null
           id?: string
+          idempotency_key?: string | null
+          insurance_carrier?: string | null
           intake_data?: Json
+          intake_submitted_at?: string | null
+          level_of_care?: string | null
           match_count?: number | null
           matched_at?: string | null
           matched_facility_ids?: string[] | null
+          needs_transport_help?: boolean | null
+          notes?: string | null
           payment_amount_cents?: number
           payment_status?: string
+          payment_type?: string | null
           preferred_city?: string | null
           preferred_state?: string | null
+          primary_concern?: string | null
+          prior_treatment_history?: boolean | null
+          prior_treatment_notes?: string | null
+          relationship_to_decision_maker?: string | null
           status?: string
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
+          timeline_urgency?: string | null
           updated_at?: string
           user_email?: string
+          user_id?: string | null
           user_name?: string
           user_phone?: string
+          willing_to_travel?: boolean | null
         }
         Relationships: []
       }
