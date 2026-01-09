@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Clock, 
@@ -19,15 +20,20 @@ import {
   Calendar,
   MapPin,
   CreditCard,
-  AlertCircle,
   HeartHandshake,
-  RefreshCw
+  RefreshCw,
+  MessageCircle,
+  CalendarDays,
+  ThumbsDown
 } from "lucide-react";
 import { format } from "date-fns";
 import { CaseStatusTimeline } from "@/components/seeker/CaseStatusTimeline";
 import { MatchedFacilityCard } from "@/components/seeker/MatchedFacilityCard";
 import { ConfirmAdmissionModal } from "@/components/seeker/ConfirmAdmissionModal";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
+import { TourRequestModal } from "@/components/seeker/TourRequestModal";
+import { ConciergeToursList } from "@/components/seeker/ConciergeToursList";
+import { ConciergeMessaging } from "@/components/seeker/ConciergeMessaging";
 
 interface ConciergeInquiry {
   id: string;
@@ -76,12 +82,41 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof Clock; color: 
 
 const TIMELINE_STEPS = ["new", "reviewing", "matching", "introductions_sent", "in_contact", "placed"];
 
+const HOW_IT_WORKS_STEPS = [
+  {
+    step: 1,
+    title: "Tell Us About Your Needs",
+    description: "Complete a brief intake form about your situation, preferences, and treatment goals.",
+  },
+  {
+    step: 2,
+    title: "Our Specialists Review Your Case",
+    description: "A dedicated placement advisor reviews your information and identifies the best matches.",
+  },
+  {
+    step: 3,
+    title: "We Connect You With Facilities",
+    description: "We introduce you to matched treatment centers that fit your specific needs.",
+  },
+  {
+    step: 4,
+    title: "Coordinate Tours and Calls",
+    description: "Schedule tours, ask questions, and communicate directly with facilities.",
+  },
+  {
+    step: 5,
+    title: "Get Admitted With Support",
+    description: "We help coordinate your admission and ensure a smooth transition to treatment.",
+  },
+];
+
 export default function SeekerConcierge() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [tourModalFacility, setTourModalFacility] = useState<Facility | null>(null);
 
   // Fetch user's concierge cases
   const { data: cases, isLoading: casesLoading, refetch } = useQuery({
@@ -184,24 +219,80 @@ export default function SeekerConcierge() {
     );
   }
 
-  // Empty state
+  // ========== STATE A: No concierge case yet ==========
   if (!cases?.length) {
     return (
-      <div className="container max-w-4xl py-12">
-        <Card className="text-center py-12">
-          <CardContent className="space-y-6">
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <HeartHandshake className="h-8 w-8 text-primary" />
+      <div className="container max-w-4xl py-8 space-y-8">
+        {/* Hero Section */}
+        <div className="text-center space-y-4">
+          <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+            <HeartHandshake className="h-10 w-10 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold">Personalized Placement Assistance</h1>
+          <p className="text-muted-foreground max-w-xl mx-auto text-lg">
+            Let our specialists guide you to the right treatment center. We handle the research, 
+            introductions, and coordination so you can focus on recovery.
+          </p>
+        </div>
+
+        {/* How It Works */}
+        <Card>
+          <CardHeader>
+            <CardTitle>How It Works</CardTitle>
+            <CardDescription>
+              Our concierge service simplifies your treatment search in 5 simple steps
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {HOW_IT_WORKS_STEPS.map((step, index) => (
+                <div key={step.step} className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-bold text-sm">
+                      {step.step}
+                    </div>
+                    {index < HOW_IT_WORKS_STEPS.length - 1 && (
+                      <div className="w-0.5 h-full bg-border mt-2" />
+                    )}
+                  </div>
+                  <div className="pb-6">
+                    <h3 className="font-semibold">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold">No Placement Cases</h2>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                You haven't submitted a concierge request yet. Our specialists can help you find the right treatment center.
-              </p>
-            </div>
-            <Button onClick={() => navigate("/concierge")} className="gap-2">
-              Get Placement Help
+          </CardContent>
+        </Card>
+
+        {/* CTA */}
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="py-8 text-center space-y-4">
+            <h2 className="text-xl font-semibold">Ready to Get Started?</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Complete our intake form and a placement specialist will be assigned to your case.
+            </p>
+            <Button size="lg" onClick={() => navigate("/concierge")} className="gap-2">
+              Start Placement Request
               <ArrowRight className="h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Contact Info */}
+        <Card className="bg-muted/30">
+          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Phone className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">Questions about concierge?</p>
+                <p className="text-sm text-muted-foreground">Call us anytime for help.</p>
+              </div>
+            </div>
+            <Button variant="outline" asChild>
+              <a href="tel:1-800-555-0199">1-800-555-0199</a>
             </Button>
           </CardContent>
         </Card>
@@ -209,20 +300,22 @@ export default function SeekerConcierge() {
     );
   }
 
+  // ========== STATE B & C: Case exists ==========
   const currentStatusConfig = STATUS_CONFIG[selectedCase?.status || "new"];
   const showMatchedFacilities = selectedCase && 
     ["matching", "introductions_sent", "in_contact", "confirming", "placed"].includes(selectedCase.status);
   const showConfirmation = selectedCase?.status === "in_contact" && !selectedCase.seeker_confirmed;
   const showAwaitingProvider = selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed;
   const showFeedback = selectedCase?.status === "placed" && !selectedCase.seeker_feedback;
+  const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
   return (
     <div className="container max-w-4xl py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Placement Tracker</h1>
-          <p className="text-muted-foreground">Track your concierge placement progress</p>
+          <h1 className="text-2xl font-bold">Concierge Hub</h1>
+          <p className="text-muted-foreground">Track your placement progress and communicate with facilities</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
           <RefreshCw className="h-4 w-4" />
@@ -331,26 +424,90 @@ export default function SeekerConcierge() {
         </Card>
       )}
 
-      {/* Matched Facilities */}
-      {showMatchedFacilities && matchedFacilities && matchedFacilities.length > 0 && selectedCase?.status !== "placed" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              Matched Facilities
-            </CardTitle>
-            <CardDescription>
-              These treatment centers match your needs and have been notified about your case.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              {matchedFacilities.map((facility) => (
-                <MatchedFacilityCard key={facility.id} facility={facility} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Tabs for Matches, Tours, Messages - STATE C */}
+      {showMatchedFacilities && selectedCase?.status !== "placed" && (
+        <Tabs defaultValue="facilities" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="facilities" className="gap-2">
+              <Users className="h-4 w-4" />
+              Matches
+              {hasMatches && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                  {matchedFacilities.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="tours" className="gap-2">
+              <CalendarDays className="h-4 w-4" />
+              Tours
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Messages
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Matched Facilities Tab */}
+          <TabsContent value="facilities" className="space-y-4">
+            {hasMatches ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  These treatment centers match your needs. Request tours or send messages to learn more.
+                </p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {matchedFacilities.map((facility) => (
+                    <Card key={facility.id}>
+                      <CardContent className="p-4">
+                        <MatchedFacilityCard facility={facility} />
+                        <div className="flex gap-2 mt-4 pt-4 border-t">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 gap-1.5"
+                            onClick={() => setTourModalFacility(facility)}
+                          >
+                            <CalendarDays className="h-3.5 w-3.5" />
+                            Request Tour
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <ThumbsDown className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground">No matched facilities yet</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">
+                    Our team is reviewing your case and finding the best matches.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Tours Tab */}
+          <TabsContent value="tours">
+            <ConciergeToursList inquiryId={selectedCase.id} />
+          </TabsContent>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages">
+            <ConciergeMessaging 
+              inquiryId={selectedCase.id} 
+              matchedFacilityIds={selectedCase.matched_facility_ids || []}
+            />
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Awaiting Provider Confirmation */}
@@ -373,7 +530,7 @@ export default function SeekerConcierge() {
       )}
 
       {/* Confirmation Section */}
-      {showConfirmation && matchedFacilities && matchedFacilities.length > 0 && (
+      {showConfirmation && hasMatches && (
         <Card className="border-primary/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -444,6 +601,17 @@ export default function SeekerConcierge() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Tour Request Modal */}
+      {tourModalFacility && selectedCase && (
+        <TourRequestModal
+          open={!!tourModalFacility}
+          onClose={() => setTourModalFacility(null)}
+          inquiryId={selectedCase.id}
+          facilityId={tourModalFacility.id}
+          facilityName={tourModalFacility.name}
+        />
+      )}
 
       {/* Confirmation Modal */}
       {showConfirmModal && selectedCase && matchedFacilities && (
