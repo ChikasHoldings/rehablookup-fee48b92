@@ -21,6 +21,7 @@ import {
   Plus,
   FileText,
   AlertCircle,
+  FileSignature,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,11 +42,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
+import { PlacementTermsModal } from "@/components/provider/PlacementTermsModal";
+import { AddPaymentMethodModal } from "@/components/provider/AddPaymentMethodModal";
+import { PlacementReadinessChecklist } from "@/components/provider/PlacementReadinessChecklist";
 
 // Placement fee structure
 const PLACEMENT_FEES = {
   flat_fee: { standard: 1200, pro: 960 },
-  commission: { standard: "8%", pro: "6.4%" },
+  commission: { standard: "8%", pro: "6.4%", cap: 1500 },
 };
 
 const CARE_TYPES = [
@@ -101,7 +105,7 @@ export default function ProviderPlacementNetworkPage() {
       if (!selectedFacility?.id) return null;
       const { data, error } = await supabase
         .from("facilities")
-        .select("concierge_network_opted_in, concierge_opted_in_at, concierge_accepted_care_types, concierge_accepted_insurance, concierge_availability_status, concierge_admissions_contact, concierge_admissions_email, concierge_admissions_phone, concierge_agreement_preference")
+        .select("concierge_network_opted_in, concierge_opted_in_at, concierge_accepted_care_types, concierge_accepted_insurance, concierge_availability_status, concierge_admissions_contact, concierge_admissions_email, concierge_admissions_phone, concierge_agreement_preference, concierge_terms_accepted_at, concierge_terms_version, name, address, phone")
         .eq("id", selectedFacility.id)
         .single();
 
@@ -302,8 +306,55 @@ export default function ProviderPlacementNetworkPage() {
     }));
   };
 
+  // Modal states
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+
   const optedIn = facilityData?.concierge_network_opted_in || false;
   const pendingIntroductions = introductions?.filter((i) => i.provider_response === "pending") || [];
+
+  // Readiness checks for placement network
+  const hasCompleteProfile = !!(facilityData?.name && facilityData?.address && facilityData?.phone);
+  const hasTermsAccepted = !!facilityData?.concierge_terms_accepted_at;
+  const hasPaymentMethod = paymentMethods && paymentMethods.length > 0;
+  const hasCareTypes = profileForm.acceptedCareTypes.length > 0;
+  
+  const readinessChecks = [
+    {
+      key: "profile",
+      label: "Complete facility profile",
+      description: "Ensure your facility name, address, and phone are filled in",
+      complete: hasCompleteProfile,
+      required: true,
+    },
+    {
+      key: "terms",
+      label: "Accept placement terms",
+      description: "Review and sign the placement network agreement",
+      complete: hasTermsAccepted,
+      required: true,
+      action: () => setTermsModalOpen(true),
+      actionLabel: "Accept Terms",
+    },
+    {
+      key: "payment",
+      label: "Add payment method",
+      description: "Add a card to be charged only on confirmed placements",
+      complete: !!hasPaymentMethod,
+      required: true,
+      action: () => setPaymentModalOpen(true),
+      actionLabel: "Add Payment",
+    },
+    {
+      key: "care_types",
+      label: "Select accepted care types",
+      description: "Tell us what types of patients you can accept",
+      complete: hasCareTypes,
+      required: true,
+    },
+  ];
+
+  const isEligibleForNetwork = readinessChecks.filter((c) => c.required).every((c) => c.complete);
 
   if (isLoading) {
     return (
@@ -357,13 +408,40 @@ export default function ProviderPlacementNetworkPage() {
                 )}
                 <Switch
                   checked={optedIn}
-                  onCheckedChange={(checked) => optInMutation.mutate(checked)}
-                  disabled={optInMutation.isPending}
+                  onCheckedChange={(checked) => {
+                    if (checked && !isEligibleForNetwork) {
+                      toast.error("Please complete all setup steps first");
+                      return;
+                    }
+                    optInMutation.mutate(checked);
+                  }}
+                  disabled={optInMutation.isPending || (optedIn === false && !isEligibleForNetwork)}
                 />
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Readiness Checklist - Show when not opted in and not fully ready */}
+        {!optedIn && !isEligibleForNetwork && (
+          <PlacementReadinessChecklist
+            checks={readinessChecks}
+            onComplete={() => optInMutation.mutate(true)}
+          />
+        )}
+
+        {/* Modals */}
+        <PlacementTermsModal
+          open={termsModalOpen}
+          onOpenChange={setTermsModalOpen}
+          facilityId={selectedFacility?.id || ""}
+          facilityName={selectedFacility?.name || "Your Facility"}
+        />
+        <AddPaymentMethodModal
+          open={paymentModalOpen}
+          onOpenChange={setPaymentModalOpen}
+          facilityId={selectedFacility?.id || ""}
+        />
 
         {!optedIn ? (
           <>
@@ -412,26 +490,28 @@ export default function ProviderPlacementNetworkPage() {
               </CardContent>
             </Card>
 
-            {/* CTA */}
-            <div className="text-center">
-              <Button 
-                size="lg" 
-                className="gap-2"
-                onClick={() => optInMutation.mutate(true)}
-                disabled={optInMutation.isPending}
-              >
-                {optInMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Network className="h-4 w-4" />
-                )}
-                Join Placement Network
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-              <p className="text-xs text-muted-foreground mt-3">
-                Pay only on successful placement. No upfront costs.
-              </p>
-            </div>
+            {/* CTA - Only show when eligible */}
+            {isEligibleForNetwork && (
+              <div className="text-center">
+                <Button 
+                  size="lg" 
+                  className="gap-2"
+                  onClick={() => optInMutation.mutate(true)}
+                  disabled={optInMutation.isPending}
+                >
+                  {optInMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Network className="h-4 w-4" />
+                  )}
+                  Join Placement Network
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Pay only on successful placement. No upfront costs.
+                </p>
+              </div>
+            )}
           </>
         ) : (
           /* Opted-In View */
@@ -675,7 +755,7 @@ export default function ProviderPlacementNetworkPage() {
                       <p className="text-2xl font-bold">
                         {proSubscription ? PLACEMENT_FEES.commission.pro : PLACEMENT_FEES.commission.standard}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">of first month</p>
+                      <p className="text-xs text-muted-foreground mt-1">of first month (max ${PLACEMENT_FEES.commission.cap})</p>
                     </div>
                   </div>
                 </CardContent>
@@ -722,7 +802,11 @@ export default function ProviderPlacementNetworkPage() {
                       </AlertDescription>
                     </Alert>
                   )}
-                  <Button variant="outline" className="w-full gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2"
+                    onClick={() => setPaymentModalOpen(true)}
+                  >
                     <Plus className="h-4 w-4" />
                     Add Payment Method
                   </Button>
