@@ -105,7 +105,6 @@ export function StepLogistics({ data, errors, onChange }: Props) {
                 id="desiredCity"
                 value={data.desiredCity}
                 onChange={(e) => onChange({ desiredCity: e.target.value })}
-                placeholder="Enter city"
               />
             </div>
           </div>

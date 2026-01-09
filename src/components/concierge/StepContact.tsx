@@ -63,7 +63,6 @@ export function StepContact({ data, errors, onChange }: Props) {
               id="decisionMakerName"
               value={data.decisionMakerName}
               onChange={(e) => onChange({ decisionMakerName: e.target.value })}
-              placeholder="Enter your full name"
               className={errors.decisionMakerName ? "border-destructive ring-1 ring-destructive" : ""}
             />
             {errors.decisionMakerName && <p className="text-sm text-destructive">{errors.decisionMakerName}</p>}
@@ -80,9 +79,9 @@ export function StepContact({ data, errors, onChange }: Props) {
                 type="tel"
                 value={data.phone}
                 onChange={(e) => handlePhoneChange(e.target.value, 'phone')}
-                placeholder="(555) 123-4567"
                 className={errors.phone ? "border-destructive ring-1 ring-destructive" : ""}
               />
+              <p className="text-xs text-muted-foreground">(555) 123-4567</p>
               {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
             </div>
 
@@ -96,7 +95,6 @@ export function StepContact({ data, errors, onChange }: Props) {
                 type="email"
                 value={data.email}
                 onChange={(e) => onChange({ email: e.target.value })}
-                placeholder="your@email.com"
                 className={errors.email ? "border-destructive ring-1 ring-destructive" : ""}
               />
               {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
@@ -136,7 +134,6 @@ export function StepContact({ data, errors, onChange }: Props) {
                 id="alternativeContactName"
                 value={data.alternativeContactName || ""}
                 onChange={(e) => onChange({ alternativeContactName: e.target.value })}
-                placeholder="Backup contact name"
               />
             </div>
 
@@ -147,7 +144,6 @@ export function StepContact({ data, errors, onChange }: Props) {
                 type="tel"
                 value={data.alternativeContactPhone || ""}
                 onChange={(e) => handlePhoneChange(e.target.value, 'alternativeContactPhone')}
-                placeholder="(555) 123-4567"
               />
             </div>
           </div>
@@ -169,7 +165,6 @@ export function StepContact({ data, errors, onChange }: Props) {
                 id="emergencyContactName"
                 value={data.emergencyContactName || ""}
                 onChange={(e) => onChange({ emergencyContactName: e.target.value })}
-                placeholder="Emergency contact name"
               />
             </div>
 
@@ -180,7 +175,6 @@ export function StepContact({ data, errors, onChange }: Props) {
                 type="tel"
                 value={data.emergencyContactPhone || ""}
                 onChange={(e) => handlePhoneChange(e.target.value, 'emergencyContactPhone')}
-                placeholder="(555) 123-4567"
               />
             </div>
           </div>
@@ -203,7 +197,6 @@ export function StepContact({ data, errors, onChange }: Props) {
             id="notes"
             value={data.notes}
             onChange={(e) => onChange({ notes: e.target.value })}
-            placeholder="Share any additional information that would help us find the right program (minimum 10 characters)..."
             rows={4}
             className={errors.notes ? "border-destructive ring-1 ring-destructive" : ""}
           />

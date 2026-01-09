@@ -21,6 +21,7 @@ export interface ConciergeIntakeData {
   // Step 1: Who needs help
   ageRange: string;
   gender: string;
+  preferredLanguage: string;
   state: string;
   city: string;
   currentLivingSituation: string;
@@ -81,6 +82,7 @@ const STORAGE_KEY = "concierge_intake_draft";
 const initialData: ConciergeIntakeData = {
   ageRange: "",
   gender: "",
+  preferredLanguage: "english",
   state: "",
   city: "",
   currentLivingSituation: "",

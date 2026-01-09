@@ -376,41 +376,66 @@ export type Database = {
         Row: {
           admin_notes: string | null
           age_range: string | null
+          alternative_contact_name: string | null
+          alternative_contact_phone: string | null
+          amenity_preferences: Json | null
           assessment_preference: string | null
+          benefits_verified: boolean | null
           best_time_to_call: string | null
           budget_range: string | null
           checkout_session_id: string | null
           closed_at: string | null
           co_occurring_concerns: Json | null
           created_at: string
+          current_living_situation: string | null
+          current_medications: string | null
           decision_maker_name: string | null
           decision_maker_phone: string | null
           desired_location_city: string | null
           desired_location_state: string | null
           desired_radius_miles: number | null
+          detox_needed: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          employer_name: string | null
+          faith_based_preference: string | null
+          gender: string | null
+          hipaa_consent: boolean | null
+          holistic_interest: boolean | null
           id: string
           idempotency_key: string | null
           insurance_carrier: string | null
+          insurance_group_number: string | null
+          insurance_member_id: string | null
           intake_data: Json
           intake_submitted_at: string | null
           level_of_care: string | null
           match_count: number | null
           matched_at: string | null
           matched_facility_ids: string[] | null
+          mobility_needs: string | null
           needs_transport_help: boolean | null
           notes: string | null
           payment_amount_cents: number
           payment_status: string
           payment_type: string | null
           preferred_city: string | null
+          preferred_environment: string | null
+          preferred_language: string | null
           preferred_state: string | null
           primary_concern: string | null
           prior_treatment_history: boolean | null
           prior_treatment_notes: string | null
+          referral_source: string | null
           relationship_to_decision_maker: string | null
+          relationship_to_seeker: string | null
+          scholarship_interest: boolean | null
           status: string
           stripe_customer_id: string | null
           stripe_payment_intent_id: string | null
+          substance_use_duration: string | null
+          substance_use_frequency: string | null
+          suicide_history: string | null
           timeline_urgency: string | null
           updated_at: string
           user_email: string
@@ -422,41 +447,66 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           age_range?: string | null
+          alternative_contact_name?: string | null
+          alternative_contact_phone?: string | null
+          amenity_preferences?: Json | null
           assessment_preference?: string | null
+          benefits_verified?: boolean | null
           best_time_to_call?: string | null
           budget_range?: string | null
           checkout_session_id?: string | null
           closed_at?: string | null
           co_occurring_concerns?: Json | null
           created_at?: string
+          current_living_situation?: string | null
+          current_medications?: string | null
           decision_maker_name?: string | null
           decision_maker_phone?: string | null
           desired_location_city?: string | null
           desired_location_state?: string | null
           desired_radius_miles?: number | null
+          detox_needed?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employer_name?: string | null
+          faith_based_preference?: string | null
+          gender?: string | null
+          hipaa_consent?: boolean | null
+          holistic_interest?: boolean | null
           id?: string
           idempotency_key?: string | null
           insurance_carrier?: string | null
+          insurance_group_number?: string | null
+          insurance_member_id?: string | null
           intake_data?: Json
           intake_submitted_at?: string | null
           level_of_care?: string | null
           match_count?: number | null
           matched_at?: string | null
           matched_facility_ids?: string[] | null
+          mobility_needs?: string | null
           needs_transport_help?: boolean | null
           notes?: string | null
           payment_amount_cents?: number
           payment_status?: string
           payment_type?: string | null
           preferred_city?: string | null
+          preferred_environment?: string | null
+          preferred_language?: string | null
           preferred_state?: string | null
           primary_concern?: string | null
           prior_treatment_history?: boolean | null
           prior_treatment_notes?: string | null
+          referral_source?: string | null
           relationship_to_decision_maker?: string | null
+          relationship_to_seeker?: string | null
+          scholarship_interest?: boolean | null
           status?: string
           stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
+          substance_use_duration?: string | null
+          substance_use_frequency?: string | null
+          suicide_history?: string | null
           timeline_urgency?: string | null
           updated_at?: string
           user_email: string
@@ -468,41 +518,66 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           age_range?: string | null
+          alternative_contact_name?: string | null
+          alternative_contact_phone?: string | null
+          amenity_preferences?: Json | null
           assessment_preference?: string | null
+          benefits_verified?: boolean | null
           best_time_to_call?: string | null
           budget_range?: string | null
           checkout_session_id?: string | null
           closed_at?: string | null
           co_occurring_concerns?: Json | null
           created_at?: string
+          current_living_situation?: string | null
+          current_medications?: string | null
           decision_maker_name?: string | null
           decision_maker_phone?: string | null
           desired_location_city?: string | null
           desired_location_state?: string | null
           desired_radius_miles?: number | null
+          detox_needed?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employer_name?: string | null
+          faith_based_preference?: string | null
+          gender?: string | null
+          hipaa_consent?: boolean | null
+          holistic_interest?: boolean | null
           id?: string
           idempotency_key?: string | null
           insurance_carrier?: string | null
+          insurance_group_number?: string | null
+          insurance_member_id?: string | null
           intake_data?: Json
           intake_submitted_at?: string | null
           level_of_care?: string | null
           match_count?: number | null
           matched_at?: string | null
           matched_facility_ids?: string[] | null
+          mobility_needs?: string | null
           needs_transport_help?: boolean | null
           notes?: string | null
           payment_amount_cents?: number
           payment_status?: string
           payment_type?: string | null
           preferred_city?: string | null
+          preferred_environment?: string | null
+          preferred_language?: string | null
           preferred_state?: string | null
           primary_concern?: string | null
           prior_treatment_history?: boolean | null
           prior_treatment_notes?: string | null
+          referral_source?: string | null
           relationship_to_decision_maker?: string | null
+          relationship_to_seeker?: string | null
+          scholarship_interest?: boolean | null
           status?: string
           stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
+          substance_use_duration?: string | null
+          substance_use_frequency?: string | null
+          suicide_history?: string | null
           timeline_urgency?: string | null
           updated_at?: string
           user_email?: string

@@ -211,13 +211,14 @@ export function StepCareNeed({ data, errors, onChange }: Props) {
           {errors.priorTreatment && <p className="text-sm text-destructive">{errors.priorTreatment}</p>}
           
           {data.priorTreatment && (
-            <Textarea
-              placeholder="Brief description of prior treatment (what type, when, outcome)"
-              value={data.priorTreatmentNotes}
-              onChange={(e) => onChange({ priorTreatmentNotes: e.target.value })}
-              className="mt-2"
-              rows={3}
-            />
+            <div className="space-y-1 mt-2">
+              <Textarea
+                value={data.priorTreatmentNotes}
+                onChange={(e) => onChange({ priorTreatmentNotes: e.target.value })}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">Brief description of prior treatment (what type, when, outcome)</p>
+            </div>
           )}
         </div>
 
@@ -231,9 +232,8 @@ export function StepCareNeed({ data, errors, onChange }: Props) {
             id="currentMedications"
             value={data.currentMedications || ""}
             onChange={(e) => onChange({ currentMedications: e.target.value })}
-            placeholder="List any current medications"
           />
-          <p className="text-xs text-muted-foreground">Helps ensure program can accommodate medication needs</p>
+          <p className="text-xs text-muted-foreground">List any current medications to ensure program can accommodate them</p>
         </div>
 
         {/* Co-occurring Concerns */}

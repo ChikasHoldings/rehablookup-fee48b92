@@ -23,6 +23,20 @@ const GENDERS = [
   { value: "prefer_not_say", label: "Prefer not to say" },
 ];
 
+const LANGUAGES = [
+  { value: "english", label: "English" },
+  { value: "spanish", label: "Spanish" },
+  { value: "mandarin", label: "Mandarin" },
+  { value: "cantonese", label: "Cantonese" },
+  { value: "vietnamese", label: "Vietnamese" },
+  { value: "korean", label: "Korean" },
+  { value: "tagalog", label: "Tagalog" },
+  { value: "russian", label: "Russian" },
+  { value: "arabic", label: "Arabic" },
+  { value: "portuguese", label: "Portuguese" },
+  { value: "other", label: "Other" },
+];
+
 const RELATIONSHIPS = [
   { value: "self", label: "Myself" },
   { value: "parent", label: "Parent/Guardian" },
@@ -67,7 +81,7 @@ export function StepWhoNeedsHelp({ data, errors, onChange }: Props) {
           Help us understand who we're finding care for. This information ensures we match with programs that serve the right demographics.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Age Range */}
           <div className="space-y-2">
             <Label htmlFor="ageRange" className="flex items-center gap-2">
@@ -83,7 +97,7 @@ export function StepWhoNeedsHelp({ data, errors, onChange }: Props) {
             </Label>
             <Select value={data.ageRange} onValueChange={(v) => onChange({ ageRange: v })}>
               <SelectTrigger className={errors.ageRange ? "border-destructive ring-1 ring-destructive" : ""}>
-                <SelectValue placeholder="Select age range" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {AGE_RANGES.map((age) => (
@@ -109,7 +123,7 @@ export function StepWhoNeedsHelp({ data, errors, onChange }: Props) {
             </Label>
             <Select value={data.gender || ""} onValueChange={(v) => onChange({ gender: v })}>
               <SelectTrigger className={errors.gender ? "border-destructive ring-1 ring-destructive" : ""}>
-                <SelectValue placeholder="Select gender" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {GENDERS.map((g) => (
@@ -118,6 +132,23 @@ export function StepWhoNeedsHelp({ data, errors, onChange }: Props) {
               </SelectContent>
             </Select>
             {errors.gender && <p className="text-sm text-destructive">{errors.gender}</p>}
+          </div>
+
+          {/* Preferred Language */}
+          <div className="space-y-2">
+            <Label htmlFor="preferredLanguage" className="flex items-center gap-2">
+              Preferred Language
+            </Label>
+            <Select value={data.preferredLanguage || "english"} onValueChange={(v) => onChange({ preferredLanguage: v })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -146,7 +177,6 @@ export function StepWhoNeedsHelp({ data, errors, onChange }: Props) {
                 id="city"
                 value={data.city}
                 onChange={(e) => onChange({ city: e.target.value })}
-                placeholder="Enter city"
                 className={errors.city ? "border-destructive ring-1 ring-destructive" : ""}
               />
               {errors.city && <p className="text-sm text-destructive">{errors.city}</p>}
@@ -208,9 +238,8 @@ export function StepWhoNeedsHelp({ data, errors, onChange }: Props) {
             id="mobilityNeeds"
             value={data.mobilityNeeds || ""}
             onChange={(e) => onChange({ mobilityNeeds: e.target.value })}
-            placeholder="e.g., wheelchair accessible, ADA requirements"
           />
-          <p className="text-xs text-muted-foreground">Describe any physical limitations or accessibility requirements</p>
+          <p className="text-xs text-muted-foreground">Describe any physical limitations or accessibility requirements (wheelchair, ADA, etc.)</p>
         </div>
       </div>
     </TooltipProvider>

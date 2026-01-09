@@ -89,9 +89,9 @@ export function StepPaymentInfo({ data, errors, onChange }: Props) {
                   id="insuranceCarrier"
                   value={data.insuranceCarrier}
                   onChange={(e) => onChange({ insuranceCarrier: e.target.value })}
-                  placeholder="e.g., Blue Cross, Aetna, UnitedHealthcare"
                   className={errors.insuranceCarrier ? "border-destructive ring-1 ring-destructive" : ""}
                 />
+                <p className="text-xs text-muted-foreground">Blue Cross, Aetna, UnitedHealthcare, etc.</p>
                 {errors.insuranceCarrier && <p className="text-sm text-destructive">{errors.insuranceCarrier}</p>}
               </div>
 
@@ -101,7 +101,6 @@ export function StepPaymentInfo({ data, errors, onChange }: Props) {
                   id="employerName"
                   value={data.employerName || ""}
                   onChange={(e) => onChange({ employerName: e.target.value })}
-                  placeholder="Optional"
                 />
               </div>
             </div>
@@ -123,8 +122,8 @@ export function StepPaymentInfo({ data, errors, onChange }: Props) {
                   id="insuranceMemberId"
                   value={data.insuranceMemberId || ""}
                   onChange={(e) => onChange({ insuranceMemberId: e.target.value })}
-                  placeholder="Optional - from your insurance card"
                 />
+                <p className="text-xs text-muted-foreground">From your insurance card</p>
               </div>
 
               <div className="space-y-2">
@@ -133,8 +132,8 @@ export function StepPaymentInfo({ data, errors, onChange }: Props) {
                   id="insuranceGroupNumber"
                   value={data.insuranceGroupNumber || ""}
                   onChange={(e) => onChange({ insuranceGroupNumber: e.target.value })}
-                  placeholder="Optional - from your insurance card"
                 />
+                <p className="text-xs text-muted-foreground">From your insurance card</p>
               </div>
             </div>
 
