@@ -16,6 +16,7 @@ import {
   FileCheck,
   GitCompare,
   ChevronDown,
+  UserPlus,
   MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -78,6 +79,7 @@ const navEntries: NavEntry[] = [
       { to: "/admin/featured", icon: Star, label: "Featured Placement", permission: "featured" },
     ],
   },
+  { to: "/admin/concierge", icon: UserPlus, label: "Concierge", permission: "placements" },
   { to: "/admin/flagged-images", icon: Image, label: "Flagged Images", permission: "flagged_images" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews" },
   {
