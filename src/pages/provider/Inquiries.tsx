@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -16,6 +16,9 @@ import {
   Phone,
   Mail,
   MessageSquare,
+  CheckCircle,
+  PhoneCall,
+  XCircle,
 } from "lucide-react";
 import {
   Select,
@@ -46,6 +49,7 @@ import { useProStatus } from "@/hooks/useProStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
+import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
 
 interface DateRange {
   from: Date | undefined;
@@ -66,6 +70,9 @@ interface Lead {
   message: string | null;
   source: string | null;
   who_seeking_help: string | null;
+  inquiry_type: InquiryType | null;
+  provider_response_status: string | null;
+  provider_responded_at: string | null;
 }
 
 interface LeadWithFacility extends Lead {
@@ -73,6 +80,8 @@ interface LeadWithFacility extends Lead {
   facility_city?: string;
   facility_state?: string;
 }
+
+type ResponseStatus = 'pending' | 'contacted' | 'responded' | 'closed';
 
 // Unlock price in cents
 const UNLOCK_PRICE_CENTS = 2500; // $25
@@ -170,7 +179,17 @@ export default function ProviderInquiriesPage() {
         const careMatch = inquiry.level_of_care?.toLowerCase().includes(q);
         if (!locationMatch && !careMatch) return false;
       }
-      if (statusFilter !== "all" && inquiry.status !== statusFilter) return false;
+      
+      // Status filter based on unlock state and response status
+      if (statusFilter !== "all") {
+        const unlocked = isLeadUnlocked(inquiry.id);
+        if (statusFilter === "locked" && unlocked) return false;
+        if (statusFilter === "unlocked" && (!unlocked || inquiry.provider_response_status)) return false;
+        if (statusFilter === "contacted" && inquiry.provider_response_status !== "contacted") return false;
+        if (statusFilter === "responded" && inquiry.provider_response_status !== "responded") return false;
+        if (statusFilter === "closed" && inquiry.provider_response_status !== "closed") return false;
+      }
+      
       if (facilityFilter !== "all" && inquiry.facility_id !== facilityFilter) return false;
       if (dateRange.from || dateRange.to) {
         const d = new Date(inquiry.created_at);
@@ -180,7 +199,7 @@ export default function ProviderInquiriesPage() {
       }
       return true;
     });
-  }, [inquiries, searchQuery, statusFilter, facilityFilter, dateRange]);
+  }, [inquiries, searchQuery, statusFilter, facilityFilter, dateRange, isLeadUnlocked]);
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -198,12 +217,42 @@ export default function ProviderInquiriesPage() {
 
   const handleBackToList = () => setMobileView('list');
 
+  // Update response status mutation
+  const updateResponseStatus = useMutation({
+    mutationFn: async ({ leadId, status }: { leadId: string; status: ResponseStatus }) => {
+      const { error } = await supabase
+        .from("leads")
+        .update({
+          provider_response_status: status,
+          provider_responded_at: status !== 'pending' ? new Date().toISOString() : null,
+        })
+        .eq("id", leadId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+      toast.success("Status updated");
+    },
+    onError: () => {
+      toast.error("Failed to update status");
+    },
+  });
+
   const getStatusDisplay = (inquiry: LeadWithFacility) => {
     const unlocked = isLeadUnlocked(inquiry.id);
     if (!unlocked) return { label: "Locked", color: "bg-muted text-muted-foreground" };
-    if (inquiry.status === "new") return { label: "Unlocked", color: "bg-emerald-100 text-emerald-700" };
-    if (inquiry.status === "contacted") return { label: "Responded", color: "bg-blue-100 text-blue-700" };
-    return { label: inquiry.status, color: "bg-muted text-muted-foreground" };
+    
+    const responseStatus = inquiry.provider_response_status || 'pending';
+    switch (responseStatus) {
+      case 'contacted':
+        return { label: "Contacted", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" };
+      case 'responded':
+        return { label: "Responded", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" };
+      case 'closed':
+        return { label: "Closed", color: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" };
+      default:
+        return { label: "Unlocked", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" };
+    }
   };
 
   return (
@@ -249,10 +298,11 @@ export default function ProviderInquiriesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="locked">Locked</SelectItem>
+                <SelectItem value="unlocked">Unlocked</SelectItem>
                 <SelectItem value="contacted">Contacted</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="converted">Converted</SelectItem>
+                <SelectItem value="responded">Responded</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
               </SelectContent>
             </Select>
 
@@ -317,7 +367,8 @@ export default function ProviderInquiriesPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       {/* Header Row */}
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <InquiryTypeBadge type={inquiry.inquiry_type} />
                         {unlocked ? (
                           <Unlock className="h-4 w-4 text-emerald-600" />
                         ) : (
@@ -339,27 +390,77 @@ export default function ProviderInquiriesPage() {
                           <span className="font-medium">{inquiry.location_city_state || "Location not specified"}</span>
                         </div>
 
-                        {/* Care Type */}
-                        {inquiry.level_of_care && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            <span>{inquiry.level_of_care}</span>
-                          </div>
-                        )}
+                        {/* Care Type & Urgency (visible always) */}
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          {inquiry.level_of_care && (
+                            <span className="flex items-center gap-1">
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              {inquiry.level_of_care}
+                            </span>
+                          )}
+                          {inquiry.urgency && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              {inquiry.urgency}
+                            </Badge>
+                          )}
+                        </div>
 
                         {/* Contact Info - Only if unlocked */}
                         {unlocked ? (
-                          <div className="flex flex-wrap items-center gap-3 mt-2 pt-2 border-t">
-                            <span className="font-medium text-foreground">{inquiry.name}</span>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Phone className="h-3.5 w-3.5" />
-                              <span>{inquiry.phone}</span>
+                          <>
+                            <div className="flex flex-wrap items-center gap-3 mt-2 pt-2 border-t">
+                              <span className="font-medium text-foreground">{inquiry.name}</span>
+                              <a href={`tel:${inquiry.phone}`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+                                <Phone className="h-3.5 w-3.5" />
+                                <span>{inquiry.phone}</span>
+                              </a>
+                              <a href={`mailto:${inquiry.email}`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+                                <Mail className="h-3.5 w-3.5" />
+                                <span>{inquiry.email}</span>
+                              </a>
                             </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Mail className="h-3.5 w-3.5" />
-                              <span>{inquiry.email}</span>
+                            
+                            {/* Message preview if exists */}
+                            {inquiry.message && (
+                              <p className="text-sm text-muted-foreground line-clamp-2 mt-2 italic">
+                                "{inquiry.message}"
+                              </p>
+                            )}
+                            
+                            {/* Response Status Buttons */}
+                            <div className="flex items-center gap-2 mt-3 pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                variant={inquiry.provider_response_status === 'contacted' ? 'default' : 'outline'}
+                                size="sm"
+                                className="h-7 text-xs gap-1"
+                                onClick={() => updateResponseStatus.mutate({ leadId: inquiry.id, status: 'contacted' })}
+                                disabled={updateResponseStatus.isPending}
+                              >
+                                <PhoneCall className="h-3 w-3" />
+                                Contacted
+                              </Button>
+                              <Button
+                                variant={inquiry.provider_response_status === 'responded' ? 'default' : 'outline'}
+                                size="sm"
+                                className="h-7 text-xs gap-1"
+                                onClick={() => updateResponseStatus.mutate({ leadId: inquiry.id, status: 'responded' })}
+                                disabled={updateResponseStatus.isPending}
+                              >
+                                <CheckCircle className="h-3 w-3" />
+                                Responded
+                              </Button>
+                              <Button
+                                variant={inquiry.provider_response_status === 'closed' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="h-7 text-xs gap-1"
+                                onClick={() => updateResponseStatus.mutate({ leadId: inquiry.id, status: 'closed' })}
+                                disabled={updateResponseStatus.isPending}
+                              >
+                                <XCircle className="h-3 w-3" />
+                                Close
+                              </Button>
                             </div>
-                          </div>
+                          </>
                         ) : (
                           <div className="flex items-center gap-2 mt-2 pt-2 border-t">
                             <div className="flex-1 h-4 bg-muted/50 rounded blur-[2px]" />
@@ -375,6 +476,8 @@ export default function ProviderInquiriesPage() {
                         <UnlockLeadButton
                           leadId={inquiry.id}
                           facilityId={inquiry.facility_id}
+                          inquiryType={inquiry.inquiry_type}
+                          cityState={inquiry.location_city_state}
                           variant="compact"
                           onUnlockSuccess={() => {
                             refetchUnlocks();

@@ -461,25 +461,44 @@ export const SearchResultCard = memo(function SearchResultCard({ center, feature
           {/* Actions Footer */}
           <div className="flex items-center gap-2 mt-auto">
             <Link 
-              to={detailsUrl} 
-              state={{ fromSearch: true }}
+              to={`${detailsUrl}?inquiry=info`}
+              state={{ fromSearch: true, inquiryType: 'request_info' }}
               onClick={handleFeaturedClick}
               className="flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
               aria-label={`Request information from ${center.name}`}
             >
-                <Button 
-                  size="default"
-                  tabIndex={-1}
-                  className={cn(
-                    "w-full h-10 text-sm font-semibold gap-2 rounded-lg group/btn",
-                    showFeaturedBadge 
-                      ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/25"
-                      : "shadow-md hover:shadow-lg"
-                  )}
-                >
-                  Request Information
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
-                </Button>
+              <Button 
+                size="default"
+                tabIndex={-1}
+                className={cn(
+                  "w-full h-10 text-sm font-semibold gap-2 rounded-lg group/btn",
+                  showFeaturedBadge 
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/25"
+                    : "shadow-md hover:shadow-lg"
+                )}
+              >
+                Request Information
+                <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
+              </Button>
+            </Link>
+            <Link 
+              to={`${detailsUrl}?inquiry=callback`}
+              state={{ fromSearch: true, inquiryType: 'request_callback' }}
+              onClick={handleFeaturedClick}
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 rounded-lg"
+              aria-label={`Request callback from ${center.name}`}
+            >
+              <Button 
+                size="default"
+                variant="outline"
+                tabIndex={-1}
+                className={cn(
+                  "h-10 text-sm font-semibold gap-2 rounded-lg group/btn border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950",
+                )}
+              >
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                Callback
+              </Button>
             </Link>
           </div>
         </div>
