@@ -57,7 +57,7 @@ export function ConciergeTourRequests() {
       proposedDatetime?: string;
       notes?: string;
     }) => {
-      const updates: any = {
+      const updates: Record<string, unknown> = {
         facility_responded_at: new Date().toISOString(),
         facility_response_notes: notes,
       };
@@ -80,10 +80,24 @@ export function ConciergeTourRequests() {
         .eq("id", tourId);
       
       if (error) throw error;
+
+      // Send notification to user when proposing a time
+      if (action === "propose") {
+        try {
+          await supabase.functions.invoke("send-tour-notifications", {
+            body: { type: "tour_proposed", tourId }
+          });
+        } catch (notifyErr) {
+          console.error("Notification failed (non-blocking):", notifyErr);
+        }
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["provider-tour-requests"] });
-      toast.success("Tour request updated");
+      const message = variables.action === "propose" ? "Time proposed - seeker notified" :
+                      variables.action === "confirm" ? "Tour confirmed" :
+                      variables.action === "complete" ? "Tour marked complete" : "Tour request updated";
+      toast.success(message);
       setRespondingTo(null);
       setProposedDate("");
       setProposedTime("");

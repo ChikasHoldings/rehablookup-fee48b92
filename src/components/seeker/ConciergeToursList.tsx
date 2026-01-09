@@ -89,9 +89,28 @@ export function ConciergeToursList({ inquiryId }: ConciergeToursListProps) {
         .eq("id", tourId);
 
       if (error) throw error;
+
+      // Send notification based on status change
+      const notificationType = status === "confirmed" ? "tour_confirmed" : 
+                               status === "cancelled" ? "tour_cancelled" : null;
+      if (notificationType) {
+        try {
+          await supabase.functions.invoke("send-tour-notifications", {
+            body: { 
+              type: notificationType, 
+              tourId,
+              metadata: { cancelledBy: "user" }
+            }
+          });
+        } catch (notifyErr) {
+          console.error("Notification failed (non-blocking):", notifyErr);
+        }
+      }
     },
-    onSuccess: () => {
-      toast({ title: "Tour updated" });
+    onSuccess: (_, variables) => {
+      const message = variables.status === "confirmed" ? "Tour confirmed!" : 
+                      variables.status === "cancelled" ? "Tour cancelled" : "Tour updated";
+      toast({ title: message });
       queryClient.invalidateQueries({ queryKey: ["concierge-tours", inquiryId] });
     },
     onError: () => {
