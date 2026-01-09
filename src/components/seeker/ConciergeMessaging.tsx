@@ -9,7 +9,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, Send, User, Building2, HeadphonesIcon, Loader2 } from "lucide-react";
+import { useFileAttachment } from "@/hooks/useFileAttachment";
+import { MessageAttachment } from "@/components/shared/MessageAttachment";
+import { MessageCircle, Send, User, Building2, HeadphonesIcon, Loader2, Paperclip } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 
 interface Thread {
@@ -33,6 +35,8 @@ interface Message {
   sender_type: string;
   content: string;
   created_at: string;
+  attachment_url: string | null;
+  attachment_name: string | null;
 }
 
 interface ConciergeMessagingProps {
@@ -46,6 +50,16 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [messageContent, setMessageContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const {
+    attachment,
+    uploading,
+    fileInputRef,
+    handleFileSelect,
+    uploadFile,
+    clearAttachment,
+    openFilePicker,
+  } = useFileAttachment({ inquiryId });
 
   // Fetch threads
   const { data: threads, isLoading: threadsLoading } = useQuery({
@@ -83,7 +97,7 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
       
       const { data, error } = await supabase
         .from("concierge_messages")
-        .select("id, thread_id, sender_id, sender_type, content, created_at")
+        .select("id, thread_id, sender_id, sender_type, content, created_at, attachment_url, attachment_name")
         .eq("thread_id", selectedThreadId)
         .order("created_at", { ascending: true });
 
@@ -152,18 +166,29 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
   // Send message
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedThreadId || !messageContent.trim()) return;
+      if (!selectedThreadId || (!messageContent.trim() && !attachment)) return;
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const trimmedContent = messageContent.trim();
+      
+      // Upload attachment if present
+      let attachmentData: { url: string; name: string } | null = null;
+      if (attachment) {
+        attachmentData = await uploadFile();
+        if (!attachmentData && !trimmedContent) {
+          throw new Error("Failed to upload attachment");
+        }
+      }
 
       const { error } = await supabase.from("concierge_messages").insert({
         thread_id: selectedThreadId,
         sender_id: user.id,
         sender_type: "seeker",
-        content: trimmedContent,
+        content: trimmedContent || (attachmentData ? `Sent an attachment: ${attachmentData.name}` : ""),
+        attachment_url: attachmentData?.url || null,
+        attachment_name: attachmentData?.name || null,
       });
 
       if (error) throw error;
@@ -187,7 +212,7 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
           body: {
             notificationType,
             threadId: selectedThreadId,
-            messageContent: trimmedContent,
+            messageContent: trimmedContent || `Sent an attachment: ${attachmentData?.name}`,
             senderType: "seeker",
           },
         });
@@ -197,6 +222,7 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
     },
     onSuccess: () => {
       setMessageContent("");
+      clearAttachment();
       queryClient.invalidateQueries({ queryKey: ["concierge-messages", selectedThreadId] });
       queryClient.invalidateQueries({ queryKey: ["concierge-threads", inquiryId] });
       queryClient.invalidateQueries({ queryKey: ["unread-message-count", inquiryId] });
@@ -347,6 +373,12 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
                       }`}
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      {message.attachment_url && message.attachment_name && (
+                        <MessageAttachment 
+                          url={message.attachment_url} 
+                          name={message.attachment_name} 
+                        />
+                      )}
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-1">
                       {formatMessageDate(message.created_at)}
@@ -361,7 +393,15 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
       </ScrollArea>
 
       {/* Message Input */}
-      <div className="p-4 border-t">
+      <div className="p-4 border-t space-y-2">
+        {attachment && (
+          <MessageAttachment 
+            url="" 
+            name={attachment.name} 
+            isPreview 
+            onRemove={clearAttachment} 
+          />
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -369,18 +409,34 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
           }}
           className="flex gap-2"
         >
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileSelect}
+            accept="image/*,.pdf,.doc,.docx,.txt"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={openFilePicker}
+            disabled={sendMessageMutation.isPending || uploading}
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
           <Input
             placeholder="Type a message..."
             value={messageContent}
             onChange={(e) => setMessageContent(e.target.value)}
-            disabled={sendMessageMutation.isPending}
+            disabled={sendMessageMutation.isPending || uploading}
           />
           <Button
             type="submit"
             size="icon"
-            disabled={!messageContent.trim() || sendMessageMutation.isPending}
+            disabled={(!messageContent.trim() && !attachment) || sendMessageMutation.isPending || uploading}
           >
-            {sendMessageMutation.isPending ? (
+            {sendMessageMutation.isPending || uploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />
