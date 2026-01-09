@@ -48,6 +48,7 @@ import ProviderSupport from "./pages/ProviderSupport";
 import ProviderFAQ from "./pages/ProviderFAQ";
 import ProviderSignup from "./pages/ProviderSignup";
 import RequestHelp from "./pages/RequestHelp";
+import PlacementHelp from "./pages/PlacementHelp";
 import AdLanding from "./pages/AdLanding";
 import SocialLanding from "./pages/SocialLanding";
 import Resources from "./pages/Resources";
@@ -197,6 +198,7 @@ const App = () => (
             
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/request-help" element={<RequestHelp />} />
+            <Route path="/placement-help" element={<PlacementHelp />} />
             <Route path="/lp/treatment" element={<AdLanding />} />
             <Route path="/lp/social" element={<SocialLanding />} />
             <Route path="/auth" element={<SeekerAuth />} />

@@ -208,39 +208,35 @@ export function PlacementIntakeForm({ onSuccess }: PlacementIntakeFormProps) {
     
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
-        .from("placement_cases")
-        .insert({
-          seeker_name: formData.seekerName,
-          seeker_email: formData.seekerEmail,
-          seeker_phone: formData.seekerPhone,
-          who_seeking_help: formData.whoSeekingHelp,
-          primary_issue: formData.primaryIssues,
-          level_of_care: formData.levelOfCare,
-          payment_type: formData.paymentType,
-          insurance_carrier: formData.insuranceCarrier || null,
-          insurance_plan: formData.insurancePlan || null,
-          self_pay_budget: formData.selfPayBudget || null,
-          preferred_states: formData.preferredStates.length > 0 ? formData.preferredStates : null,
-          preferred_cities: formData.preferredCities ? formData.preferredCities.split(",").map(c => c.trim()) : null,
+      const { data, error } = await supabase.functions.invoke("submit-placement-case", {
+        body: {
+          seekerName: formData.seekerName,
+          seekerEmail: formData.seekerEmail,
+          seekerPhone: formData.seekerPhone,
+          whoSeekingHelp: formData.whoSeekingHelp,
+          primaryIssues: formData.primaryIssues,
+          levelOfCare: formData.levelOfCare,
+          paymentType: formData.paymentType,
+          insuranceCarrier: formData.insuranceCarrier || undefined,
+          insurancePlan: formData.insurancePlan || undefined,
+          selfPayBudget: formData.selfPayBudget || undefined,
+          preferredStates: formData.preferredStates,
+          preferredCities: formData.preferredCities || undefined,
           urgency: formData.urgency,
-          age_range: formData.ageRange,
-          gender: formData.gender || null,
-          special_considerations: formData.specialConsiderations.length > 0 
-            ? { needs: formData.specialConsiderations } 
-            : {},
-          additional_notes: formData.additionalNotes || null,
-          preferred_contact_method: formData.preferredContactMethod,
-          best_time_to_contact: formData.bestTimeToContact || null,
-          status: "new",
-        })
-        .select("id")
-        .single();
+          ageRange: formData.ageRange,
+          gender: formData.gender || undefined,
+          specialConsiderations: formData.specialConsiderations,
+          additionalNotes: formData.additionalNotes || undefined,
+          preferredContactMethod: formData.preferredContactMethod,
+          bestTimeToContact: formData.bestTimeToContact || undefined,
+        },
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast.success("Your request has been submitted!");
-      onSuccess(data.id);
+      onSuccess(data.caseId);
     } catch (error: any) {
       console.error("Submission error:", error);
       toast.error("Something went wrong. Please try again.");
