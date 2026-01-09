@@ -719,6 +719,187 @@ export type Database = {
           },
         ]
       }
+      concierge_messages: {
+        Row: {
+          attachment_name: string | null
+          attachment_url: string | null
+          content: string
+          created_at: string | null
+          id: string
+          read_at: string | null
+          sender_id: string
+          sender_type: string
+          thread_id: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_url?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          sender_id: string
+          sender_type: string
+          thread_id: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_url?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_type?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concierge_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concierge_threads: {
+        Row: {
+          admin_last_read_at: string | null
+          created_at: string | null
+          facility_id: string | null
+          facility_last_read_at: string | null
+          id: string
+          inquiry_id: string
+          last_message_at: string | null
+          thread_type: string
+          user_id: string
+          user_last_read_at: string | null
+        }
+        Insert: {
+          admin_last_read_at?: string | null
+          created_at?: string | null
+          facility_id?: string | null
+          facility_last_read_at?: string | null
+          id?: string
+          inquiry_id: string
+          last_message_at?: string | null
+          thread_type: string
+          user_id: string
+          user_last_read_at?: string | null
+        }
+        Update: {
+          admin_last_read_at?: string | null
+          created_at?: string | null
+          facility_id?: string | null
+          facility_last_read_at?: string | null
+          id?: string
+          inquiry_id?: string
+          last_message_at?: string | null
+          thread_type?: string
+          user_id?: string
+          user_last_read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concierge_threads_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_threads_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_threads_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concierge_tour_requests: {
+        Row: {
+          confirmed_datetime: string | null
+          contact_preference: string | null
+          created_at: string | null
+          facility_id: string
+          facility_responded_at: string | null
+          facility_response_notes: string | null
+          id: string
+          inquiry_id: string
+          notes: string | null
+          preferred_dates: Json | null
+          proposed_datetime: string | null
+          status: string
+          tour_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          confirmed_datetime?: string | null
+          contact_preference?: string | null
+          created_at?: string | null
+          facility_id: string
+          facility_responded_at?: string | null
+          facility_response_notes?: string | null
+          id?: string
+          inquiry_id: string
+          notes?: string | null
+          preferred_dates?: Json | null
+          proposed_datetime?: string | null
+          status?: string
+          tour_type?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          confirmed_datetime?: string | null
+          contact_preference?: string | null
+          created_at?: string | null
+          facility_id?: string
+          facility_responded_at?: string | null
+          facility_response_notes?: string | null
+          id?: string
+          inquiry_id?: string
+          notes?: string | null
+          preferred_dates?: Json | null
+          proposed_datetime?: string | null
+          status?: string
+          tour_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concierge_tour_requests_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_tour_requests_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_tour_requests_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transactions: {
         Row: {
           amount_cents: number
