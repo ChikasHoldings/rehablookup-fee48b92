@@ -117,6 +117,7 @@ import ProviderAddLocation from "./pages/provider/AddLocation";
 
 import ProviderProUpgradePage from "./pages/provider/ProUpgrade";
 import ProviderPlacementNetworkPage from "./pages/provider/PlacementNetwork";
+import ProviderConciergeDashboard from "./pages/provider/ConciergeDashboard";
 
 // Admin Panel - eagerly load shell, lazy load pages (shell handles its own Suspense)
 import { AdminShell } from "./components/admin/AdminShell";
@@ -255,7 +256,9 @@ const App = () => (
               <Route path="billing" element={<Navigate to="/provider/credits" replace />} />
               <Route path="unlock-history" element={<Navigate to="/provider/settings?tab=unlock-history" replace />} />
               <Route path="pro-upgrade" element={<ProviderProUpgradePage />} />
-              <Route path="placement" element={<ProviderPlacementNetworkPage />} />
+              <Route path="placement-network" element={<ProviderPlacementNetworkPage />} />
+              <Route path="placement" element={<Navigate to="/provider/concierge" replace />} />
+              <Route path="concierge" element={<ProviderConciergeDashboard />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
