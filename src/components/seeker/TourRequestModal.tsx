@@ -46,7 +46,7 @@ export function TourRequestModal({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("concierge_tour_requests").insert({
+      const { data: tourData, error } = await supabase.from("concierge_tour_requests").insert({
         inquiry_id: inquiryId,
         facility_id: facilityId,
         user_id: user.id,
@@ -55,9 +55,20 @@ export function TourRequestModal({
         notes: notes || null,
         contact_preference: contactPreference,
         status: "requested",
-      });
+      }).select("id").single();
 
       if (error) throw error;
+
+      // Send notifications to facility and admin
+      try {
+        await supabase.functions.invoke("send-tour-notifications", {
+          body: { type: "tour_requested", tourId: tourData.id }
+        });
+      } catch (notifyErr) {
+        console.error("Notification failed (non-blocking):", notifyErr);
+      }
+
+      return tourData;
     },
     onSuccess: () => {
       toast({
