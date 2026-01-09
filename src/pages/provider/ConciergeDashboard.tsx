@@ -17,6 +17,7 @@ import {
   Calendar,
   CreditCard,
   UserCheck,
+  CalendarCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link, useNavigate } from "react-router-dom";
 import { ProviderConfirmPlacementModal } from "@/components/provider/ProviderConfirmPlacementModal";
+import { ConciergeTourRequests } from "@/components/provider/ConciergeTourRequests";
+import { ConciergeMessages } from "@/components/provider/ConciergeMessages";
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -307,23 +310,31 @@ export default function ProviderConciergeDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="introductions" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="introductions" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
-              Introductions
+              <span className="hidden sm:inline">Intros</span>
               {pendingIntroductions.length > 0 && (
                 <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
                   {pendingIntroductions.length}
                 </Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Messages</span>
+            </TabsTrigger>
+            <TabsTrigger value="tours" className="flex items-center gap-2">
+              <CalendarCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Tours</span>
+            </TabsTrigger>
             <TabsTrigger value="placements" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Placements
+              <span className="hidden sm:inline">Placed</span>
             </TabsTrigger>
             <TabsTrigger value="billing" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
-              Billing
+              <span className="hidden sm:inline">Billing</span>
             </TabsTrigger>
           </TabsList>
 
@@ -395,6 +406,16 @@ export default function ProviderConciergeDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages">
+            <ConciergeMessages />
+          </TabsContent>
+
+          {/* Tours Tab */}
+          <TabsContent value="tours">
+            <ConciergeTourRequests />
           </TabsContent>
 
           {/* Placements Tab */}
