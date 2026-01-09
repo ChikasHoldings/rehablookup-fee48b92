@@ -2576,14 +2576,19 @@ export type Database = {
           amount_cents: number
           case_id: string
           created_at: string
+          delinquent: boolean | null
+          delinquent_at: string | null
           discount_percent: number | null
           discount_reason: string | null
           due_at: string | null
           facility_id: string
+          failure_reason: string | null
           fee_type: string | null
           id: string
           inquiry_id: string | null
+          last_retry_at: string | null
           manual_payment: boolean | null
+          next_retry_at: string | null
           notes: string | null
           overridden_at: string | null
           overridden_by: string | null
@@ -2593,6 +2598,7 @@ export type Database = {
           receipt_url: string | null
           reminder_count: number | null
           reminder_sent_at: string | null
+          retry_count: number | null
           sent_at: string | null
           status: string
           stripe_invoice_id: string | null
@@ -2609,14 +2615,19 @@ export type Database = {
           amount_cents: number
           case_id: string
           created_at?: string
+          delinquent?: boolean | null
+          delinquent_at?: string | null
           discount_percent?: number | null
           discount_reason?: string | null
           due_at?: string | null
           facility_id: string
+          failure_reason?: string | null
           fee_type?: string | null
           id?: string
           inquiry_id?: string | null
+          last_retry_at?: string | null
           manual_payment?: boolean | null
+          next_retry_at?: string | null
           notes?: string | null
           overridden_at?: string | null
           overridden_by?: string | null
@@ -2626,6 +2637,7 @@ export type Database = {
           receipt_url?: string | null
           reminder_count?: number | null
           reminder_sent_at?: string | null
+          retry_count?: number | null
           sent_at?: string | null
           status?: string
           stripe_invoice_id?: string | null
@@ -2642,14 +2654,19 @@ export type Database = {
           amount_cents?: number
           case_id?: string
           created_at?: string
+          delinquent?: boolean | null
+          delinquent_at?: string | null
           discount_percent?: number | null
           discount_reason?: string | null
           due_at?: string | null
           facility_id?: string
+          failure_reason?: string | null
           fee_type?: string | null
           id?: string
           inquiry_id?: string | null
+          last_retry_at?: string | null
           manual_payment?: boolean | null
+          next_retry_at?: string | null
           notes?: string | null
           overridden_at?: string | null
           overridden_by?: string | null
@@ -2659,6 +2676,7 @@ export type Database = {
           receipt_url?: string | null
           reminder_count?: number | null
           reminder_sent_at?: string | null
+          retry_count?: number | null
           sent_at?: string | null
           status?: string
           stripe_invoice_id?: string | null
