@@ -206,3 +206,21 @@ verify_jwt = true
 
 [functions.send-review-request]
 verify_jwt = true
+
+[functions.send-message-notifications]
+verify_jwt = false
+
+[functions.create-concierge-checkout]
+verify_jwt = false
+
+[functions.verify-concierge-payment]
+verify_jwt = false
+
+[functions.submit-concierge-intake]
+verify_jwt = false
+
+[functions.send-concierge-notifications]
+verify_jwt = false
+
+[functions.send-concierge-introduction]
+verify_jwt = false
