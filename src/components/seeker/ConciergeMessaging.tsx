@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useFileAttachment } from "@/hooks/useFileAttachment";
 import { MessageAttachment } from "@/components/shared/MessageAttachment";
+import { RefreshableAttachment } from "@/components/shared/RefreshableAttachment";
 import { MessageCircle, Send, User, Building2, HeadphonesIcon, Loader2, Paperclip } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 
@@ -425,7 +426,7 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       {message.attachment_url && message.attachment_name && (
-                        <MessageAttachment 
+                        <RefreshableAttachment 
                           url={message.attachment_url} 
                           name={message.attachment_name} 
                         />
