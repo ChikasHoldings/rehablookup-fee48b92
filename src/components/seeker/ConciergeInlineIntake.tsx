@@ -21,7 +21,8 @@ import {
   User,
   MapPin,
   Heart,
-  ClipboardList
+  ClipboardList,
+  Phone
 } from "lucide-react";
 
 // US States
@@ -84,6 +85,7 @@ interface IntakeFormData {
   currentState: string;
   currentCity: string;
   relationship: string;
+  phone: string;
   
   // Care needs
   primaryConcern: string;
@@ -111,6 +113,7 @@ const initialFormData: IntakeFormData = {
   currentState: "",
   currentCity: "",
   relationship: "self",
+  phone: "",
   primaryConcern: "",
   levelOfCare: "",
   detoxNeeded: "",
@@ -122,6 +125,20 @@ const initialFormData: IntakeFormData = {
   insuranceCarrier: "",
   notes: "",
   hipaaConsent: false,
+};
+
+// Format phone number as user types
+const formatPhoneNumber = (value: string): string => {
+  const numbers = value.replace(/\D/g, "");
+  if (numbers.length <= 3) return numbers;
+  if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`;
+  return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`;
+};
+
+// Validate phone number (10 digits)
+const isValidPhone = (phone: string): boolean => {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length === 10;
 };
 
 interface ConciergeInlineIntakeProps {
@@ -161,6 +178,11 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
         if (!formData.gender) newErrors.gender = "Required";
         if (!formData.currentState) newErrors.currentState = "Required";
         if (!formData.currentCity) newErrors.currentCity = "Required";
+        if (!formData.phone) {
+          newErrors.phone = "Phone number is required for SMS updates";
+        } else if (!isValidPhone(formData.phone)) {
+          newErrors.phone = "Please enter a valid 10-digit phone number";
+        }
         break;
       case 2:
         if (!formData.primaryConcern) newErrors.primaryConcern = "Required";
@@ -213,7 +235,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             ...formData,
             decisionMakerName: userName,
             email: userEmail,
-            phone: userPhone || "",
+            phone: formData.phone || userPhone || "",
           },
           isAuthenticated: true,
           userId: userId, // Pass user ID for linking
@@ -228,7 +250,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           formData,
           userName,
           userEmail,
-          userPhone,
+          userPhone: formData.phone || userPhone,
           sessionId: data.sessionId,
         }));
         
@@ -327,6 +349,27 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             className={errors.currentCity ? "border-destructive" : ""}
           />
         </div>
+      </div>
+
+      {/* Phone Number */}
+      <div className="space-y-2">
+        <Label htmlFor="phone" className="flex items-center gap-2">
+          <Phone className="h-3.5 w-3.5" />
+          Phone Number *
+        </Label>
+        <Input
+          id="phone"
+          type="tel"
+          value={formData.phone}
+          onChange={e => updateField("phone", formatPhoneNumber(e.target.value))}
+          placeholder="(555) 123-4567"
+          className={errors.phone ? "border-destructive" : ""}
+          maxLength={14}
+        />
+        {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+        <p className="text-xs text-muted-foreground">
+          We'll send SMS updates about your case and messages from matched facilities.
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -550,6 +593,10 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Contact</span>
                 <span>{userName} ({userEmail})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Phone</span>
+                <span>{formData.phone}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Age/Gender</span>
