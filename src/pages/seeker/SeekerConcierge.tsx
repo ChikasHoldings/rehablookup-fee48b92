@@ -835,6 +835,21 @@ export default function SeekerConcierge() {
           }}
         />
       )}
+
+      {/* Mobile Sticky CTA */}
+      {showConfirmation && hasMatches && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t md:hidden z-50">
+          <Button onClick={() => setShowConfirmModal(true)} className="w-full gap-2">
+            <CheckCircle className="h-4 w-4" />
+            Confirm My Admission
+          </Button>
+        </div>
+      )}
+
+      {/* Spacer for mobile sticky CTA */}
+      {showConfirmation && hasMatches && (
+        <div className="h-20 md:hidden" />
+      )}
     </div>
   );
 }
