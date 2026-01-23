@@ -61,30 +61,7 @@ export function ConciergeMessages() {
     enabled: !!selectedThread?.id,
   });
 
-  // Realtime subscription for messages
-  useEffect(() => {
-    if (!selectedThread?.id) return;
-
-    const channel = supabase
-      .channel(`thread-${selectedThread.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "concierge_messages",
-          filter: `thread_id=eq.${selectedThread.id}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["provider-thread-messages", selectedThread.id] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedThread?.id, queryClient]);
+  // Note: Real-time subscription removed - users are notified via email/SMS instead
 
   // Scroll to bottom on new messages
   useEffect(() => {

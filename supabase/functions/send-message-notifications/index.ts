@@ -20,6 +20,62 @@ interface NotificationPayload {
   senderType: "seeker" | "facility" | "advisor";
 }
 
+// Helper to send SMS via Twilio
+async function sendSMS(phone: string, message: string): Promise<boolean> {
+  const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+
+  if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+    console.log("Twilio not configured, skipping SMS");
+    return false;
+  }
+
+  // Format phone to E.164
+  let formattedPhone = phone.replace(/\D/g, "");
+  if (formattedPhone.length === 10) {
+    formattedPhone = `+1${formattedPhone}`;
+  } else if (formattedPhone.length === 11 && formattedPhone.startsWith("1")) {
+    formattedPhone = `+${formattedPhone}`;
+  } else {
+    formattedPhone = `+${formattedPhone}`;
+  }
+
+  try {
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+    const authHeader = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+
+    // Truncate message to SMS limit
+    const truncatedMessage = message.length > 160 ? message.substring(0, 157) + "..." : message;
+
+    const response = await fetch(twilioUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${authHeader}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        To: formattedPhone,
+        From: twilioPhoneNumber,
+        Body: truncatedMessage,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Twilio error:", errorText);
+      return false;
+    }
+
+    const result = await response.json();
+    console.log("SMS sent successfully:", result.sid);
+    return true;
+  } catch (error) {
+    console.error("SMS send error:", error);
+    return false;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -52,7 +108,8 @@ serve(async (req) => {
         concierge_inquiries (
           id,
           user_name,
-          user_email
+          user_email,
+          user_phone
         ),
         facilities (
           id,
@@ -83,6 +140,9 @@ serve(async (req) => {
     };
 
     const emails: Array<{ to: string; subject: string; html: string }> = [];
+    let smsRecipient: { phone: string; message: string } | null = null;
+
+    const portalLink = "https://rehablookup.lovable.app/account/concierge";
 
     switch (payload.notificationType) {
       case "message_to_seeker": {
@@ -100,6 +160,17 @@ serve(async (req) => {
               senderName: senderLabel,
             }),
           });
+
+          // Also send SMS if phone is available
+          if (inquiry?.user_phone) {
+            const preview = payload.messageContent.length > 80 
+              ? payload.messageContent.substring(0, 77) + "..." 
+              : payload.messageContent;
+            smsRecipient = {
+              phone: inquiry.user_phone,
+              message: `RehabLookup: New message from ${senderLabel}. "${preview}" View & reply: ${portalLink}`,
+            };
+          }
         }
         break;
       }
@@ -150,8 +221,14 @@ serve(async (req) => {
       }
     }
 
+    // Send SMS if applicable
+    let smsSent = false;
+    if (smsRecipient) {
+      smsSent = await sendSMS(smsRecipient.phone, smsRecipient.message);
+    }
+
     return new Response(
-      JSON.stringify({ success: true, emailsSent: emails.length }),
+      JSON.stringify({ success: true, emailsSent: emails.length, smsSent }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {

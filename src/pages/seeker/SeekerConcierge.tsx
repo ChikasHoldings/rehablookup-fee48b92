@@ -171,72 +171,7 @@ export default function SeekerConcierge() {
     },
   });
 
-  // Real-time subscription for inquiry status updates
-  useEffect(() => {
-    if (!currentUser?.id) return;
-
-    const channel = supabase
-      .channel(`concierge-inquiries-${currentUser.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "concierge_inquiries",
-          filter: `user_id=eq.${currentUser.id}`,
-        },
-        (payload) => {
-          const updated = payload.new as ConciergeInquiry;
-          const previousStatus = previousStatusRef.current[updated.id];
-          
-          // Only show toast if status actually changed
-          if (previousStatus && previousStatus !== updated.status) {
-            const statusConfig = STATUS_CONFIG[updated.status];
-            const StatusIcon = statusConfig?.icon;
-            
-            if (updated.status === "introductions_sent") {
-              toastHook({
-                title: "🎉 Matches Found!",
-                description: "We've found facilities that match your needs. Check your matches now!",
-              });
-            } else if (updated.status === "placed") {
-              toastHook({
-                title: "✅ Placement Confirmed!",
-                description: "Congratulations! Your placement has been confirmed.",
-              });
-            } else if (statusConfig) {
-              toastHook({
-                title: "Case Updated",
-                description: `Your case status is now: ${statusConfig.label}`,
-              });
-            }
-          }
-          
-          // Update previous status ref
-          previousStatusRef.current[updated.id] = updated.status;
-          
-          // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
-          queryClient.invalidateQueries({ queryKey: ["matched-facilities", updated.matched_facility_ids] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUser?.id, queryClient, toastHook]);
-
-  // Track previous statuses when cases load
-  useEffect(() => {
-    if (cases?.length) {
-      cases.forEach(c => {
-        if (!previousStatusRef.current[c.id]) {
-          previousStatusRef.current[c.id] = c.status;
-        }
-      });
-    }
-  }, [cases]);
+  // Note: Real-time subscription removed - users are notified via email/SMS instead
 
   // Handle payment verification from Stripe redirect
   const verifyPaymentAndSubmit = useCallback(async (sessionId: string) => {
