@@ -3,7 +3,8 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { 
   Home, Send, Heart, Star, Settings, LogOut, LogIn, 
-  Search, Bell, BellOff, X, MapPin, Building2, ChevronRight, HeartHandshake
+  Search, Bell, BellOff, X, MapPin, Building2, ChevronRight, HeartHandshake,
+  Calendar, CheckCircle, UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,11 +52,13 @@ const notificationTypeIcons: Record<string, React.ReactNode> = {
   // Concierge-specific notification types with distinct icons
   concierge_intake_received: <HeartHandshake className="h-4 w-4 text-primary" />,
   concierge_matches_found: <MapPin className="h-4 w-4 text-emerald-500" />,
-  concierge_provider_interested: <Building2 className="h-4 w-4 text-blue-500" />,
+  concierge_provider_interested: <UserCheck className="h-4 w-4 text-blue-500" />,
   concierge_provider_confirmed: <Building2 className="h-4 w-4 text-green-500" />,
-  concierge_placement_complete: <Star className="h-4 w-4 text-amber-500" />,
-  concierge_tour_proposed: <Bell className="h-4 w-4 text-purple-500" />,
-  concierge_tour_confirmed: <Bell className="h-4 w-4 text-green-500" />,
+  concierge_placement_complete: <CheckCircle className="h-4 w-4 text-green-600" />,
+  concierge_tour_proposed: <Calendar className="h-4 w-4 text-purple-500" />,
+  concierge_tour_confirmed: <Calendar className="h-4 w-4 text-green-500" />,
+  concierge_tour_cancelled: <Calendar className="h-4 w-4 text-destructive" />,
+  concierge_message_received: <Send className="h-4 w-4 text-blue-500" />,
 };
 
 export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = false }: SeekerHeaderProps) {
