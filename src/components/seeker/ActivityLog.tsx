@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect } from "react";
 import { History, LogIn, KeyRound, UserCog, Mail, Image, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,8 +29,7 @@ const eventColors: Record<string, string> = {
   avatar_update: "text-pink-500 bg-pink-500/10",
 };
 
-export const ActivityLog = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  function ActivityLog(props, ref) {
+export function ActivityLog(props: React.HTMLAttributes<HTMLDivElement>) {
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -96,7 +95,7 @@ export const ActivityLog = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
   
   if (isLoading || isAuthenticated === null) {
     return (
-      <Card ref={ref} {...props}>
+      <Card {...props}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <History className="h-5 w-5" />
@@ -111,7 +110,7 @@ export const ActivityLog = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
   }
 
   return (
-    <Card ref={ref} {...props}>
+    <Card {...props}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <History className="h-5 w-5" />
@@ -155,4 +154,4 @@ export const ActivityLog = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
       </CardContent>
     </Card>
   );
-});
+}
