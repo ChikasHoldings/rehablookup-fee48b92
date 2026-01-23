@@ -112,6 +112,15 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
         })
         .eq("id", caseData.id);
 
+      // Log event
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: caseData.id,
+        event_type: "introduction_sent",
+        event_data: { facility_id: facilityId },
+        actor_id: user?.id,
+        actor_type: "admin",
+      });
+
       // Send email notification to facility
       try {
         const response = await supabase.functions.invoke("send-concierge-introduction", {
@@ -124,11 +133,9 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
 
         if (response.error) {
           console.error("Email notification failed:", response.error);
-          // Don't throw - introduction was created, email is secondary
         }
       } catch (emailError) {
         console.error("Failed to send email:", emailError);
-        // Don't throw - introduction was created successfully
       }
     },
     onSuccess: () => {

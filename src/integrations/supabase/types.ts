@@ -302,6 +302,44 @@ export type Database = {
         }
         Relationships: []
       }
+      concierge_case_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string | null
+          created_at: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          inquiry_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          inquiry_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string | null
+          created_at?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          inquiry_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concierge_case_events_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concierge_engagements: {
         Row: {
           concierge_inquiry_id: string

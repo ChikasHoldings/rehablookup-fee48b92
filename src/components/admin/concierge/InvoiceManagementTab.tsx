@@ -51,6 +51,9 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
+
+type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -68,7 +71,11 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
   failed: { label: "Failed", variant: "destructive" },
 };
 
-export function InvoiceManagementTab() {
+interface InvoiceManagementTabProps {
+  caseData?: ConciergeInquiry;
+}
+
+export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
@@ -77,9 +84,9 @@ export function InvoiceManagementTab() {
   const [overrideAmount, setOverrideAmount] = useState("");
   const [overrideReason, setOverrideReason] = useState("");
 
-  // Fetch invoices
+  // Fetch invoices - scoped to case if provided
   const { data: invoices, isLoading } = useQuery({
-    queryKey: ["admin-placement-invoices", statusFilter],
+    queryKey: ["admin-placement-invoices", statusFilter, caseData?.id],
     queryFn: async () => {
       let query = (supabase as any)
         .from("placement_invoices")
@@ -90,6 +97,11 @@ export function InvoiceManagementTab() {
         `)
         .order("created_at", { ascending: false })
         .limit(50);
+
+      // If caseData is provided, scope to that inquiry
+      if (caseData?.id) {
+        query = query.eq("inquiry_id", caseData.id);
+      }
 
       if (statusFilter !== "all") {
         query = query.eq("status", statusFilter);
@@ -184,7 +196,7 @@ export function InvoiceManagementTab() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
-                Placement Invoices
+                {caseData ? "Case Invoices" : "Placement Invoices"}
               </CardTitle>
               <CardDescription>Manage billing for confirmed placements</CardDescription>
             </div>
@@ -337,7 +349,14 @@ export function InvoiceManagementTab() {
           ) : (
             <div className="text-center py-12">
               <DollarSign className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">No invoices found</p>
+              <p className="text-muted-foreground">
+                {caseData ? "No invoices for this case" : "No invoices found"}
+              </p>
+              {caseData && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Invoices are generated when placements are confirmed
+                </p>
+              )}
             </div>
           )}
         </CardContent>

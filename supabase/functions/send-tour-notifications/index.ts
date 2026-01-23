@@ -22,6 +22,59 @@ interface TourNotificationRequest {
   metadata?: Record<string, unknown>;
 }
 
+// SMS helper function
+async function sendSMS(phone: string, message: string): Promise<boolean> {
+  const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const twilioToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const twilioPhone = Deno.env.get("TWILIO_PHONE_NUMBER");
+
+  if (!twilioSid || !twilioToken || !twilioPhone) {
+    console.log("Twilio not configured, skipping SMS");
+    return false;
+  }
+
+  // Format phone to E.164
+  let formatted = phone.replace(/\D/g, "");
+  if (formatted.length === 10) {
+    formatted = `+1${formatted}`;
+  } else if (!formatted.startsWith("+")) {
+    formatted = `+${formatted}`;
+  }
+
+  // Truncate message to 160 chars
+  const smsMessage = message.length > 160 ? message.substring(0, 157) + "..." : message;
+
+  try {
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
+    const authHeader = btoa(`${twilioSid}:${twilioToken}`);
+    
+    const response = await fetch(twilioUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${authHeader}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        To: formatted,
+        From: twilioPhone,
+        Body: smsMessage,
+      }),
+    });
+
+    if (response.ok) {
+      console.log("SMS sent successfully to", formatted);
+      return true;
+    } else {
+      const errorText = await response.text();
+      console.error("SMS failed:", errorText);
+      return false;
+    }
+  } catch (error) {
+    console.error("SMS error:", error);
+    return false;
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -47,8 +100,8 @@ const handler = async (req: Request): Promise<Response> => {
       .from("concierge_tour_requests")
       .select(`
         *,
-        facility:facilities(id, name, city, state, concierge_admissions_email, user_id),
-        inquiry:concierge_inquiries(id, user_name, user_email, user_phone)
+        facility:facilities(id, name, city, state, concierge_admissions_email, concierge_admissions_phone, user_id),
+        inquiry:concierge_inquiries(id, user_name, user_email, user_phone, user_id)
       `)
       .eq("id", tourId)
       .single();
@@ -80,6 +133,15 @@ const handler = async (req: Request): Promise<Response> => {
       facilityNotes: tour.facility_response_notes || undefined,
     };
 
+    // Helper for formatted datetime
+    const formatDateTime = (dt: string | null | undefined): string => {
+      if (!dt) return "TBD";
+      return new Date(dt).toLocaleString("en-US", {
+        weekday: "short", month: "short", day: "numeric", 
+        hour: "numeric", minute: "2-digit"
+      });
+    };
+
     // Send notifications based on type
     switch (type) {
       case "tour_requested": {
@@ -101,6 +163,14 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
+        // SMS to facility
+        const facilityPhone = tour.facility?.concierge_admissions_phone;
+        if (facilityPhone) {
+          const smsMessage = `RehabLookup: New tour request from ${emailData.seekerName}. Type: ${tour.tour_type}. View in provider dashboard: https://rehablookup.lovable.app/provider/concierge`;
+          const smsSent = await sendSMS(facilityPhone, smsMessage);
+          results.facilitySMS = smsSent;
+        }
+
         // Create in-app notification for provider
         if (tour.facility?.user_id) {
           await supabase.from("provider_notifications").insert({
@@ -112,6 +182,14 @@ const handler = async (req: Request): Promise<Response> => {
           });
           results.providerNotification = true;
         }
+
+        // Log case event
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: tour.inquiry?.id,
+          event_type: "tour_requested",
+          event_data: { facility_id: tour.facility?.id, tour_type: tour.tour_type },
+          actor_type: "seeker",
+        });
 
         // Notify admin team
         if (resend) {
@@ -133,6 +211,7 @@ const handler = async (req: Request): Promise<Response> => {
       case "tour_proposed": {
         // Notify user that facility proposed a time
         const userEmail = tour.inquiry?.user_email;
+        const userPhone = tour.inquiry?.user_phone;
 
         if (resend && userEmail) {
           try {
@@ -149,22 +228,39 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
+        // SMS to seeker
+        if (userPhone) {
+          const proposedTime = formatDateTime(tour.proposed_datetime);
+          const smsMessage = `RehabLookup: ${emailData.facilityName} proposed tour for ${proposedTime}. Confirm here: https://rehablookup.lovable.app/account/concierge`;
+          const smsSent = await sendSMS(userPhone, smsMessage);
+          results.userSMS = smsSent;
+        }
+
         // Create in-app notification for seeker
-        if (tour.user_id) {
+        if (tour.inquiry?.user_id) {
           await supabase.from("seeker_notifications").insert({
-            user_id: tour.user_id,
+            user_id: tour.inquiry.user_id,
             type: "tour_proposed",
             title: "Tour Time Proposed",
-            message: `${emailData.facilityName} has proposed a tour time.`,
+            message: `${emailData.facilityName} has proposed a tour time: ${formatDateTime(tour.proposed_datetime)}.`,
             link: "/account/concierge",
           });
         }
+
+        // Log case event
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: tour.inquiry?.id,
+          event_type: "tour_proposed",
+          event_data: { facility_id: tour.facility?.id, proposed_datetime: tour.proposed_datetime },
+          actor_type: "provider",
+        });
         break;
       }
 
       case "tour_confirmed": {
         // Notify facility that user accepted
         const facilityEmail = tour.facility?.concierge_admissions_email;
+        const facilityPhone = tour.facility?.concierge_admissions_phone;
 
         if (resend && facilityEmail) {
           try {
@@ -181,13 +277,17 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
+        // SMS to facility
+        if (facilityPhone) {
+          const confirmedTime = formatDateTime(tour.confirmed_datetime);
+          const smsMessage = `RehabLookup: Tour CONFIRMED! ${emailData.seekerName} will tour on ${confirmedTime}. Contact: ${tour.inquiry?.user_phone}`;
+          const smsSent = await sendSMS(facilityPhone, smsMessage);
+          results.facilitySMS = smsSent;
+        }
+
         // In-app notification for provider
         if (tour.facility?.user_id) {
-          const confirmedTime = emailData.confirmedDateTime 
-            ? new Date(emailData.confirmedDateTime).toLocaleString("en-US", {
-                month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
-              })
-            : "confirmed";
+          const confirmedTime = formatDateTime(emailData.confirmedDateTime);
           await supabase.from("provider_notifications").insert({
             user_id: tour.facility.user_id,
             type: "tour_confirmed",
@@ -196,6 +296,14 @@ const handler = async (req: Request): Promise<Response> => {
             link: "/provider/concierge",
           });
         }
+
+        // Log case event
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: tour.inquiry?.id,
+          event_type: "tour_confirmed",
+          event_data: { facility_id: tour.facility?.id, confirmed_datetime: tour.confirmed_datetime },
+          actor_type: "seeker",
+        });
 
         // Notify admin
         if (resend) {
@@ -208,7 +316,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <h3>Tour Confirmed</h3>
                 <p><strong>Seeker:</strong> ${emailData.seekerName}</p>
                 <p><strong>Facility:</strong> ${emailData.facilityName}</p>
-                <p><strong>Time:</strong> ${emailData.confirmedDateTime || "See details"}</p>
+                <p><strong>Time:</strong> ${formatDateTime(emailData.confirmedDateTime)}</p>
               </div>`,
             });
             results.adminEmail = true;
@@ -225,6 +333,8 @@ const handler = async (req: Request): Promise<Response> => {
         if (cancelledBy === "user" && resend) {
           // User cancelled - notify facility
           const facilityEmail = tour.facility?.concierge_admissions_email;
+          const facilityPhone = tour.facility?.concierge_admissions_phone;
+
           if (facilityEmail) {
             try {
               await resend.emails.send({
@@ -237,6 +347,12 @@ const handler = async (req: Request): Promise<Response> => {
             } catch (e) {
               console.error("Cancel email failed:", e);
             }
+          }
+
+          // SMS to facility
+          if (facilityPhone) {
+            const smsMessage = `RehabLookup: Tour cancelled by ${emailData.seekerName}. We'll continue matching them with other facilities.`;
+            await sendSMS(facilityPhone, smsMessage);
           }
 
           // In-app notification for provider
@@ -252,6 +368,8 @@ const handler = async (req: Request): Promise<Response> => {
         } else if (cancelledBy === "facility" && resend) {
           // Facility cancelled - notify user
           const userEmail = tour.inquiry?.user_email;
+          const userPhone = tour.inquiry?.user_phone;
+
           if (userEmail) {
             try {
               await resend.emails.send({
@@ -266,10 +384,16 @@ const handler = async (req: Request): Promise<Response> => {
             }
           }
 
+          // SMS to seeker
+          if (userPhone) {
+            const smsMessage = `RehabLookup: Unfortunately, ${emailData.facilityName} had to reschedule. View other options: https://rehablookup.lovable.app/account/concierge`;
+            await sendSMS(userPhone, smsMessage);
+          }
+
           // In-app notification for user
-          if (tour.user_id) {
+          if (tour.inquiry?.user_id) {
             await supabase.from("seeker_notifications").insert({
-              user_id: tour.user_id,
+              user_id: tour.inquiry.user_id,
               type: "tour_cancelled",
               title: "Tour Update",
               message: `${emailData.facilityName} is unable to accommodate your tour.`,
@@ -277,6 +401,14 @@ const handler = async (req: Request): Promise<Response> => {
             });
           }
         }
+
+        // Log case event
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: tour.inquiry?.id,
+          event_type: "tour_cancelled",
+          event_data: { facility_id: tour.facility?.id, cancelled_by: cancelledBy },
+          actor_type: cancelledBy === "user" ? "seeker" : "provider",
+        });
 
         // Notify admin of all cancellations
         if (resend) {
