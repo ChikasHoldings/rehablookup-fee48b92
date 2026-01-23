@@ -37,24 +37,12 @@ export function ActivityLog(props: React.HTMLAttributes<HTMLDivElement>) {
   useEffect(() => {
     let isMounted = true;
     
-    const fetchActivities = async () => {
+    const fetchActivities = async (userId: string) => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!isMounted) return;
-        
-        if (!session) {
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          return;
-        }
-        
-        setIsAuthenticated(true);
-
         const { data, error } = await supabase
           .from("account_activity_log")
           .select("id, event_type, event_description, created_at, metadata")
-          .eq("user_id", session.user.id)
+          .eq("user_id", userId)
           .order("created_at", { ascending: false })
           .limit(20);
 
@@ -72,10 +60,43 @@ export function ActivityLog(props: React.HTMLAttributes<HTMLDivElement>) {
       }
     };
 
-    fetchActivities();
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!isMounted) return;
+        
+        if (session?.user) {
+          setIsAuthenticated(true);
+          // Defer data fetch to avoid deadlock
+          setTimeout(() => {
+            if (isMounted) {
+              fetchActivities(session.user.id);
+            }
+          }, 0);
+        } else {
+          setIsAuthenticated(false);
+          setActivities([]);
+          setIsLoading(false);
+        }
+      }
+    );
+
+    // Then check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
+      
+      if (session?.user) {
+        setIsAuthenticated(true);
+        fetchActivities(session.user.id);
+      } else {
+        setIsAuthenticated(false);
+        setIsLoading(false);
+      }
+    });
     
     return () => {
       isMounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
