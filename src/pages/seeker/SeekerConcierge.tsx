@@ -7,6 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { 
@@ -349,6 +360,39 @@ export default function SeekerConcierge() {
     },
   });
 
+  // Cancel case mutation
+  const cancelCaseMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedCase) throw new Error("No case selected");
+      
+      // Update case status to closed
+      const { error } = await supabase
+        .from("concierge_inquiries")
+        .update({
+          status: "closed",
+          closed_at: new Date().toISOString(),
+        })
+        .eq("id", selectedCase.id);
+      
+      if (error) throw error;
+
+      // Log the cancellation event
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: selectedCase.id,
+        event_type: "seeker_cancelled",
+        event_data: { reason: "Cancelled by seeker" },
+        actor_type: "seeker",
+      });
+    },
+    onSuccess: () => {
+      toast.success("Your request has been cancelled.");
+      queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
+    },
+    onError: () => {
+      toast.error("Failed to cancel request. Please try again.");
+    },
+  });
+
   if (casesLoading) {
     return (
       <div className="container max-w-4xl py-8 space-y-6">
@@ -564,6 +608,43 @@ export default function SeekerConcierge() {
                   Submitted {format(new Date(selectedCase.created_at), "MMMM d, yyyy")}
                 </CardDescription>
               </div>
+              {/* Cancel Request Button - only show for active cases */}
+              {selectedCase.status !== "closed" && selectedCase.status !== "placed" && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      disabled={cancelCaseMutation.isPending}
+                    >
+                      {cancelCaseMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mr-1" />
+                      )}
+                      Cancel Request
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Cancel your concierge request?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will close your case and stop the matching process. You won't receive any more facility introductions for this request. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep My Request</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => cancelCaseMutation.mutate()}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Yes, Cancel Request
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-6">

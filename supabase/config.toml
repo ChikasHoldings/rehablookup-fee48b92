@@ -224,3 +224,9 @@ verify_jwt = false
 
 [functions.send-concierge-introduction]
 verify_jwt = false
+
+[functions.auto-status-transition]
+verify_jwt = false
+
+[functions.send-tour-notifications]
+verify_jwt = false
