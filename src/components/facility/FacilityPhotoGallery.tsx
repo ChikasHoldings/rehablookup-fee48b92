@@ -34,8 +34,40 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
 
   return (
     <>
-      {/* Grid layout: 1 large + 4 small */}
-      <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[200px] sm:h-[240px] rounded-xl overflow-hidden">
+      {/* Mobile: Horizontal scroll gallery */}
+      <div className="sm:hidden">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide">
+          {images.slice(0, 8).map((img, idx) => (
+            <button
+              key={idx}
+              onClick={() => openLightbox(idx)}
+              className={cn(
+                "relative shrink-0 snap-start overflow-hidden rounded-lg bg-muted",
+                idx === 0 ? "w-[70vw] aspect-[4/3]" : "w-32 aspect-square"
+              )}
+            >
+              <img
+                src={img}
+                alt={`${facilityName} - Photo ${idx + 1}`}
+                className="w-full h-full object-cover"
+              />
+              {idx === 7 && images.length > 8 && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <span className="text-white font-bold text-base">
+                    +{images.length - 8}
+                  </span>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          Swipe to see more • Tap to enlarge
+        </p>
+      </div>
+
+      {/* Desktop: Grid layout (1 large + 4 small) */}
+      <div className="hidden sm:grid grid-cols-4 grid-rows-2 gap-2 h-[220px] md:h-[260px] rounded-xl overflow-hidden">
         {/* Main large image */}
         <button
           onClick={() => openLightbox(0)}
@@ -71,7 +103,7 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
                 {/* Show +X overlay on last visible image if there are more */}
                 {idx === 4 && remainingCount > 0 && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <span className="text-white font-bold text-lg sm:text-xl">
+                    <span className="text-white font-bold text-lg">
                       +{remainingCount}
                     </span>
                   </div>
@@ -88,12 +120,12 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
 
       {/* Lightbox Dialog */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-4xl w-[95vw] p-0 bg-black/95 border-none">
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-[90vw] p-0 bg-black/95 border-none">
           <VisuallyHidden>
             <DialogTitle>{facilityName} Photo Gallery</DialogTitle>
           </VisuallyHidden>
           
-          <div className="relative aspect-[16/10] w-full">
+          <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full">
             <img
               src={images[lightboxIndex]}
               alt={`${facilityName} - Photo ${lightboxIndex + 1}`}
@@ -138,9 +170,9 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
             </Button>
           </div>
 
-          {/* Thumbnail strip */}
+          {/* Thumbnail strip - hidden on mobile for cleaner UX */}
           {images.length > 1 && (
-            <div className="flex gap-1.5 p-3 overflow-x-auto bg-black/80">
+            <div className="hidden sm:flex gap-1.5 p-3 overflow-x-auto bg-black/80">
               {images.map((img, idx) => (
                 <button
                   key={idx}

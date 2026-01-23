@@ -106,13 +106,13 @@ function ReviewsSection({ facilityId, facilityName }: { facilityId: string; faci
 
   return (
     <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40 bg-muted/30">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
-          <MessageSquare className="h-4.5 w-4.5 text-amber-600" />
+      <div className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-border/40 bg-muted/30">
+        <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-amber-500/10">
+          <MessageSquare className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-amber-600" />
         </div>
-        <h2 className="font-semibold text-foreground">Reviews</h2>
+        <h2 className="font-semibold text-sm sm:text-base text-foreground">Reviews</h2>
       </div>
-      <div className="p-5 space-y-4">
+      <div className="p-4 sm:p-5 space-y-4">
         <ReviewForm
           facilityName={facilityName}
           userReview={userReview}
@@ -284,14 +284,37 @@ export default function SeekerFacilityProfile() {
   const displayedInsurance = showAllInsurance ? insuranceList : insuranceList.slice(0, 10);
 
   return (
-    <div className="flex-1 py-4 sm:py-6 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-muted/20">
-      <div className="max-w-5xl mx-auto">
+    <div className="flex-1 pb-24 lg:pb-6 bg-gradient-to-b from-background to-muted/20">
+      {/* Sticky Mobile CTA Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-border bg-card/95 backdrop-blur-sm shadow-lg safe-area-bottom">
+        <div className="flex gap-2 p-3">
+          <Button 
+            onClick={() => setRequestModalOpen(true)} 
+            className="flex-1 gap-2 shadow-sm"
+            size="default"
+          >
+            <Send className="h-4 w-4" />
+            Send Request
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setTourModalOpen(true)} 
+            className="flex-1 gap-2"
+            size="default"
+          >
+            <CalendarDays className="h-4 w-4" />
+            Request Tour
+          </Button>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Back button */}
         <Button
           variant="ghost"
           size="sm"
           onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/account")}
-          className="mb-4 gap-1.5 text-muted-foreground hover:text-foreground -ml-2"
+          className="mb-3 sm:mb-4 gap-1.5 text-muted-foreground hover:text-foreground -ml-2"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -305,11 +328,11 @@ export default function SeekerFacilityProfile() {
             <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm">
               <div className="h-1 bg-gradient-to-r from-primary via-primary/80 to-accent" />
               
-              <div className="p-5">
-                <div className="flex items-start gap-4">
+              <div className="p-4 sm:p-5">
+                <div className="flex items-start gap-3 sm:gap-4">
                   {/* Logo */}
                   <div className="relative shrink-0">
-                    <div className="h-16 w-16 sm:h-20 sm:w-20 overflow-hidden rounded-xl border-2 border-border/60 bg-muted shadow-sm">
+                    <div className="h-14 w-14 sm:h-20 sm:w-20 overflow-hidden rounded-xl border-2 border-border/60 bg-muted shadow-sm">
                       {hasValidLogo ? (
                         <img
                           src={facility.logo_url!}
@@ -319,7 +342,7 @@ export default function SeekerFacilityProfile() {
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
-                          <span className="font-display text-xl sm:text-2xl font-bold text-primary">
+                          <span className="font-display text-lg sm:text-2xl font-bold text-primary">
                             {initials}
                           </span>
                         </div>
@@ -328,13 +351,13 @@ export default function SeekerFacilityProfile() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground leading-tight">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h1 className="font-display text-lg sm:text-2xl font-bold text-foreground leading-tight line-clamp-2">
                           {facility.name}
                         </h1>
-                        <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-                          <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <p className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+                          <MapPin className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-primary shrink-0" />
                           {facility.city}, {facility.state}
                         </p>
                       </div>
@@ -343,32 +366,32 @@ export default function SeekerFacilityProfile() {
                       <button
                         onClick={handleFavoriteClick}
                         className={cn(
-                          "p-2 rounded-lg border transition-all shrink-0",
+                          "p-1.5 sm:p-2 rounded-lg border transition-all shrink-0",
                           isFavorite(facility.id)
                             ? "bg-rose-50 border-rose-200 text-rose-500"
                             : "bg-muted/50 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200"
                         )}
                       >
-                        <Heart className={cn("h-5 w-5", isFavorite(facility.id) && "fill-current")} />
+                        <Heart className={cn("h-4 sm:h-5 w-4 sm:w-5", isFavorite(facility.id) && "fill-current")} />
                       </button>
                     </div>
 
-                    {/* Badges */}
-                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                    {/* Badges - Stack on mobile */}
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3">
                       <RatingBadge 
                         rating={ratingData.averageRating} 
                         reviewCount={ratingData.reviewCount} 
                         size="sm" 
                       />
                       {facility.featured && (
-                        <Badge className="gap-1 px-2 py-0.5 text-xs bg-amber-50 text-amber-700 border-amber-200">
-                          <Sparkles className="h-3 w-3" />
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-amber-50 text-amber-700 border-amber-200">
+                          <Sparkles className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           Featured
                         </Badge>
                       )}
                       {facility.verified && (
-                        <Badge className="gap-1 px-2 py-0.5 text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                          <Shield className="h-3 w-3" />
+                        <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                          <Shield className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           Verified
                         </Badge>
                       )}
@@ -376,30 +399,30 @@ export default function SeekerFacilityProfile() {
                   </div>
                 </div>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5 pt-5 border-t border-border/40">
+                {/* Quick Stats - Horizontal scroll on mobile */}
+                <div className="flex sm:grid sm:grid-cols-4 gap-2 mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-border/40 overflow-x-auto pb-1 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
                   {facility.facility_type && (
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50">
-                      <Building2 className="h-4 w-4 text-primary shrink-0" />
-                      <span className="text-xs font-medium text-foreground truncate">{facility.facility_type}</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
+                      <Building2 className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-primary shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{facility.facility_type}</span>
                     </div>
                   )}
                   {yearsInBusiness && yearsInBusiness > 0 && (
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50">
-                      <Clock className="h-4 w-4 text-blue-600 shrink-0" />
-                      <span className="text-xs font-medium text-foreground">{yearsInBusiness}+ years</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
+                      <Clock className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-blue-600 shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{yearsInBusiness}+ years</span>
                     </div>
                   )}
                   {genderLabel && (
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50">
-                      <Users className="h-4 w-4 text-purple-600 shrink-0" />
-                      <span className="text-xs font-medium text-foreground truncate">{genderLabel}</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
+                      <Users className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-purple-600 shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{genderLabel}</span>
                     </div>
                   )}
                   {facility.bed_count && (
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50">
-                      <Bed className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span className="text-xs font-medium text-foreground">{facility.bed_count} beds</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-muted/50 shrink-0">
+                      <Bed className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-emerald-600 shrink-0" />
+                      <span className="text-[11px] sm:text-xs font-medium text-foreground whitespace-nowrap">{facility.bed_count} beds</span>
                     </div>
                   )}
                 </div>
@@ -409,7 +432,7 @@ export default function SeekerFacilityProfile() {
             {/* Photo Gallery */}
             {galleryImages.length > 0 && (
               <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
-                <div className="p-5">
+                <div className="p-4 sm:p-5">
                   <FacilityPhotoGallery images={galleryImages} facilityName={facility.name} />
                 </div>
               </section>
@@ -418,14 +441,14 @@ export default function SeekerFacilityProfile() {
             {/* About */}
             {facility.description && (
               <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
-                <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40 bg-muted/30">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                    <Building2 className="h-4.5 w-4.5 text-primary" />
+                <div className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-border/40 bg-muted/30">
+                  <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-primary/10">
+                    <Building2 className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-primary" />
                   </div>
-                  <h2 className="font-semibold text-foreground">About</h2>
+                  <h2 className="font-semibold text-sm sm:text-base text-foreground">About</h2>
                 </div>
-                <div className="p-5">
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                <div className="p-4 sm:p-5">
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
                     {facility.description}
                   </p>
                 </div>
@@ -435,22 +458,22 @@ export default function SeekerFacilityProfile() {
             {/* Treatment Services */}
             {services.length > 0 && (
               <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
-                <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40 bg-muted/30">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10">
-                    <Stethoscope className="h-4.5 w-4.5 text-emerald-600" />
+                <div className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-border/40 bg-muted/30">
+                  <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <Stethoscope className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-emerald-600" />
                   </div>
-                  <h2 className="font-semibold text-foreground">Treatment Services</h2>
-                  <span className="ml-auto text-xs text-muted-foreground">{services.length} services</span>
+                  <h2 className="font-semibold text-sm sm:text-base text-foreground">Treatment Services</h2>
+                  <span className="ml-auto text-[10px] sm:text-xs text-muted-foreground">{services.length} services</span>
                 </div>
-                <div className="p-5">
-                  <div className="grid gap-2 sm:grid-cols-2">
+                <div className="p-4 sm:p-5">
+                  <div className="grid gap-1.5 sm:gap-2 sm:grid-cols-2">
                     {displayedServices.map((service) => (
                       <div 
                         key={service} 
                         className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50/50 border border-emerald-100/60"
                       >
-                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                        <span className="text-sm text-foreground">{service}</span>
+                        <CheckCircle className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-emerald-500 shrink-0" />
+                        <span className="text-xs sm:text-sm text-foreground">{service}</span>
                       </div>
                     ))}
                   </div>
@@ -471,19 +494,19 @@ export default function SeekerFacilityProfile() {
             {/* Insurance */}
             {insuranceList.length > 0 && (
               <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
-                <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40 bg-muted/30">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
-                    <Shield className="h-4.5 w-4.5 text-blue-600" />
+                <div className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-border/40 bg-muted/30">
+                  <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-blue-500/10">
+                    <Shield className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-blue-600" />
                   </div>
-                  <h2 className="font-semibold text-foreground">Insurance Accepted</h2>
+                  <h2 className="font-semibold text-sm sm:text-base text-foreground">Insurance Accepted</h2>
                 </div>
-                <div className="p-5">
-                  <div className="flex flex-wrap gap-1.5">
+                <div className="p-4 sm:p-5">
+                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
                     {displayedInsurance.map((ins) => (
                       <Badge 
                         key={ins} 
                         variant="secondary" 
-                        className="px-2.5 py-1 text-xs bg-blue-50/80 text-blue-700 border border-blue-100"
+                        className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs bg-blue-50/80 text-blue-700 border border-blue-100"
                       >
                         {ins}
                       </Badge>
@@ -504,22 +527,22 @@ export default function SeekerFacilityProfile() {
             )}
 
             {/* Age Groups & Accreditations Row */}
-            <div className="grid sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
               {ageGroups.length > 0 && (
                 <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40 bg-muted/30">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/10">
-                      <Users className="h-4.5 w-4.5 text-purple-600" />
+                  <div className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-border/40 bg-muted/30">
+                    <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-purple-500/10">
+                      <Users className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-purple-600" />
                     </div>
-                    <h2 className="font-semibold text-foreground">Age Groups</h2>
+                    <h2 className="font-semibold text-sm sm:text-base text-foreground">Age Groups</h2>
                   </div>
-                  <div className="p-5">
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="p-4 sm:p-5">
+                    <div className="flex flex-wrap gap-1 sm:gap-1.5">
                       {ageGroups.map((group) => (
                         <Badge 
                           key={group} 
                           variant="secondary" 
-                          className="px-2.5 py-1 text-xs bg-purple-50/80 text-purple-700 border border-purple-100"
+                          className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs bg-purple-50/80 text-purple-700 border border-purple-100"
                         >
                           {group}
                         </Badge>
@@ -531,19 +554,19 @@ export default function SeekerFacilityProfile() {
 
               {accreditations.length > 0 && (
                 <section className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40 bg-muted/30">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
-                      <Award className="h-4.5 w-4.5 text-amber-600" />
+                  <div className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-border/40 bg-muted/30">
+                    <div className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg bg-amber-500/10">
+                      <Award className="h-4 sm:h-4.5 w-4 sm:w-4.5 text-amber-600" />
                     </div>
-                    <h2 className="font-semibold text-foreground">Accreditations</h2>
+                    <h2 className="font-semibold text-sm sm:text-base text-foreground">Accreditations</h2>
                   </div>
-                  <div className="p-5">
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="p-4 sm:p-5">
+                    <div className="flex flex-wrap gap-1 sm:gap-1.5">
                       {accreditations.map((acc) => (
                         <Badge 
                           key={acc.accreditation_type} 
                           variant="secondary" 
-                          className="px-2.5 py-1 text-xs bg-amber-50/80 text-amber-700 border border-amber-100"
+                          className="px-2 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs bg-amber-50/80 text-amber-700 border border-amber-100"
                         >
                           {acc.accreditation_type}
                         </Badge>
@@ -561,8 +584,8 @@ export default function SeekerFacilityProfile() {
             <ReviewsSection facilityId={facility.id} facilityName={facility.name} />
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-5">
+          {/* Right Column - Sidebar (Hidden on mobile, actions in sticky bar) */}
+          <div className="hidden lg:block space-y-5">
             {/* Sticky Action Card */}
             <div className="lg:sticky lg:top-6 space-y-5">
               {/* Primary Actions Card */}
