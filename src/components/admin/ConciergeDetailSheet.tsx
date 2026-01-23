@@ -102,7 +102,7 @@ export function ConciergeDetailSheet({ caseData, open, onClose, onRefresh }: Con
               <ToursTab caseData={caseData} />
             </TabsContent>
             <TabsContent value="billing" className="m-0">
-              <InvoiceManagementTab />
+              <InvoiceManagementTab caseData={caseData} />
             </TabsContent>
             <TabsContent value="actions" className="m-0">
               <ConciergeActionsTab caseData={caseData} onRefresh={onRefresh} onClose={onClose} />

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -25,8 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Save, XCircle, Loader2, History } from "lucide-react";
-import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { CaseTimelineEvents } from "./CaseTimelineEvents";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 
@@ -48,6 +49,7 @@ const STATUS_OPTIONS = [
 ];
 
 export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeActionsTabProps) {
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState(caseData.status);
   const [adminNotes, setAdminNotes] = useState(caseData.admin_notes || "");
   const [closeReason, setCloseReason] = useState("");
@@ -60,9 +62,20 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
         .eq("id", caseData.id);
 
       if (error) throw error;
+
+      // Log status change event
+      if (updates.status && updates.status !== caseData.status) {
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: caseData.id,
+          event_type: "status_changed",
+          event_data: { from: caseData.status, to: updates.status },
+          actor_type: "admin",
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Case updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
       onRefresh();
     },
     onError: (error) => {
@@ -148,7 +161,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
         </CardContent>
       </Card>
 
-      {/* Case Timeline */}
+      {/* Case Timeline - Now with real events */}
       <Card>
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -157,50 +170,9 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
           </CardTitle>
         </CardHeader>
         <CardContent className="py-2">
-          <div className="space-y-2 text-sm">
-            <TimelineItem
-              label="Created"
-              date={caseData.created_at}
-            />
-            {caseData.intake_submitted_at && (
-              <TimelineItem
-                label="Intake Submitted"
-                date={caseData.intake_submitted_at}
-              />
-            )}
-            {caseData.matched_at && (
-              <TimelineItem
-                label="Matched"
-                date={caseData.matched_at}
-                detail={`${caseData.match_count || 0} facilities`}
-              />
-            )}
-            {caseData.introductions_sent_at && (
-              <TimelineItem
-                label="Introductions Sent"
-                date={caseData.introductions_sent_at}
-                detail={`${caseData.introductions_sent_count || 0} sent`}
-              />
-            )}
-            {caseData.seeker_confirmed_at && (
-              <TimelineItem
-                label="Seeker Confirmed"
-                date={caseData.seeker_confirmed_at}
-              />
-            )}
-            {caseData.placement_confirmed_at && (
-              <TimelineItem
-                label="Placement Confirmed"
-                date={caseData.placement_confirmed_at}
-              />
-            )}
-            {caseData.closed_at && (
-              <TimelineItem
-                label="Closed"
-                date={caseData.closed_at}
-              />
-            )}
-          </div>
+          <ScrollArea className="h-[250px]">
+            <CaseTimelineEvents caseData={caseData} />
+          </ScrollArea>
         </CardContent>
       </Card>
 
@@ -273,20 +245,6 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose }: ConciergeA
           </CardContent>
         </Card>
       )}
-    </div>
-  );
-}
-
-function TimelineItem({ label, date, detail }: { label: string; date: string; detail?: string }) {
-  return (
-    <div className="flex items-center justify-between py-1 border-l-2 border-primary/30 pl-3 -ml-px">
-      <div>
-        <span className="font-medium">{label}</span>
-        {detail && <span className="text-muted-foreground ml-2">({detail})</span>}
-      </div>
-      <span className="text-muted-foreground text-xs">
-        {format(new Date(date), "MMM d, h:mm a")}
-      </span>
     </div>
   );
 }
