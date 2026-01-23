@@ -215,7 +215,8 @@ export const useApprovedFacilities = () => {
           verified,
           facility_type,
           logo_url,
-          gallery_urls
+          gallery_urls,
+          year_established
         `);
 
       if (facilitiesError) throw facilitiesError;
@@ -251,7 +252,6 @@ export const useApprovedFacilities = () => {
       
       return (facilitiesData || []).map(f => ({
         ...f,
-        year_established: null as number | null,
         facility_services: (servicesMap.get(f.id!) || []).map(name => ({ service_name: name })),
         facility_insurance: (insuranceMap.get(f.id!) || []).map(name => ({ insurance_name: name })),
         reviewsConfig: reviewsMap.get(f.id!) || null,
@@ -305,10 +305,10 @@ export const useApprovedFacilities = () => {
         verified: facility.verified,
         year_established: facility.year_established,
         facilityType: facility.facility_type,
-        rating: 4.5,
+        rating: null,
         reviewCount: 0,
         amenities: [],
-        image: "/placeholder.svg",
+        image: null,
         isFromDatabase: true,
         logo_url: facility.logo_url,
         gallery_urls: facility.gallery_urls,
