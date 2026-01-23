@@ -104,15 +104,10 @@ export function FacilityCard({ facility, onRemove, showRemoveButton = false }: F
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
               </>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-secondary via-background to-secondary">
-                <div className="text-center">
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-muted shadow-sm">
-                    <span className="font-display text-lg font-bold text-muted-foreground">
-                      {initials}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-medium text-muted-foreground">
-                    Photo coming soon
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-sm">
+                  <span className="font-display text-xl font-bold text-primary/70">
+                    {initials}
                   </span>
                 </div>
               </div>

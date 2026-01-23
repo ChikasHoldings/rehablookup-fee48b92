@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Search, 
   MapPin, 
@@ -34,6 +34,7 @@ import { useQuery } from "@tanstack/react-query";
 type SortOption = "name-asc" | "name-desc" | "state-asc" | "state-desc" | "years-desc" | "years-asc";
 
 export default function SeekerHome() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("all");
@@ -119,8 +120,9 @@ export default function SeekerHome() {
           const yearsB = b.year_established ? new Date().getFullYear() - b.year_established : 0;
           return yearsB - yearsA;
         case "years-asc":
-          const yearsA2 = a.year_established ? new Date().getFullYear() - a.year_established : Infinity;
-          const yearsB2 = b.year_established ? new Date().getFullYear() - b.year_established : Infinity;
+          // Unknown years go to end (treated as newest/0 years)
+          const yearsA2 = a.year_established ? new Date().getFullYear() - a.year_established : 0;
+          const yearsB2 = b.year_established ? new Date().getFullYear() - b.year_established : 0;
           return yearsA2 - yearsB2;
         default:
           return 0;
@@ -164,7 +166,7 @@ export default function SeekerHome() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/search-results?q=${encodeURIComponent(searchQuery)}`;
+      navigate(`/search-results?q=${encodeURIComponent(searchQuery)}`);
     }
   };
 
