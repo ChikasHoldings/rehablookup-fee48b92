@@ -102,24 +102,23 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
 
       if (error) throw error;
 
-      // Update the inquiry status and intro count
+      // Trigger auto-status transition for introduction sent
+      await supabase.functions.invoke("auto-status-transition", {
+        body: {
+          inquiryId: caseData.id,
+          trigger: "introduction_sent",
+          actorId: user?.id,
+          actorType: "admin",
+        },
+      });
+
+      // Update the intro count manually
       await supabase
         .from("concierge_inquiries")
         .update({
-          status: "introductions_sent",
-          introductions_sent_at: new Date().toISOString(),
           introductions_sent_count: (caseData.introductions_sent_count || 0) + 1,
         })
         .eq("id", caseData.id);
-
-      // Log event
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: caseData.id,
-        event_type: "introduction_sent",
-        event_data: { facility_id: facilityId },
-        actor_id: user?.id,
-        actor_type: "admin",
-      });
 
       // Send email notification to facility
       try {
@@ -172,12 +171,15 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
 
       if (error) throw error;
 
-      // If interested, update inquiry status
+      // If interested, trigger auto-status transition
       if (response === "interested") {
-        await supabase
-          .from("concierge_inquiries")
-          .update({ status: "in_contact" })
-          .eq("id", caseData.id);
+        await supabase.functions.invoke("auto-status-transition", {
+          body: {
+            inquiryId: caseData.id,
+            trigger: "provider_interested",
+            actorType: "admin",
+          },
+        });
       }
     },
     onSuccess: () => {

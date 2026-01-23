@@ -1,0 +1,185 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[AUTO-STATUS-TRANSITION] ${step}${detailsStr}`);
+};
+
+/**
+ * Automatic Status Transition Rules:
+ * 
+ * new → reviewing: Automatic when admin views case
+ * matching → matched: Automatic when match algorithm completes with results
+ * matched → introductions_sent: Automatic when first introduction is sent
+ * introductions_sent → in_contact: Automatic when any provider marks "interested"
+ * in_contact → placed: Automatic when both seeker and provider confirm
+ */
+
+interface TransitionRequest {
+  inquiryId: string;
+  trigger: 
+    | 'admin_viewed'         // new → reviewing
+    | 'matches_completed'    // matching → matched
+    | 'introduction_sent'    // matched → introductions_sent
+    | 'provider_interested'  // introductions_sent → in_contact
+    | 'seeker_confirmed'     // Check if both confirmed → placed
+    | 'provider_confirmed';  // Check if both confirmed → placed
+  actorId?: string;
+  actorType?: 'admin' | 'provider' | 'seeker' | 'system';
+}
+
+const VALID_TRANSITIONS: Record<string, { from: string[]; to: string }> = {
+  admin_viewed: { from: ['new'], to: 'reviewing' },
+  matches_completed: { from: ['reviewing', 'matching'], to: 'matched' },
+  introduction_sent: { from: ['matched'], to: 'introductions_sent' },
+  provider_interested: { from: ['introductions_sent'], to: 'in_contact' },
+  dual_confirmation: { from: ['in_contact'], to: 'placed' },
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { inquiryId, trigger, actorId, actorType = 'system' }: TransitionRequest = await req.json();
+
+    if (!inquiryId || !trigger) {
+      throw new Error("inquiryId and trigger are required");
+    }
+
+    logStep("Processing transition", { inquiryId, trigger });
+
+    // Fetch current inquiry state
+    const { data: inquiry, error: inquiryError } = await supabase
+      .from("concierge_inquiries")
+      .select("id, status, seeker_confirmed, placement_confirmed")
+      .eq("id", inquiryId)
+      .single();
+
+    if (inquiryError || !inquiry) {
+      throw new Error("Inquiry not found: " + inquiryError?.message);
+    }
+
+    let newStatus: string | null = null;
+    let transitionMade = false;
+
+    // Determine the new status based on trigger and current state
+    switch (trigger) {
+      case 'admin_viewed':
+        if (VALID_TRANSITIONS.admin_viewed.from.includes(inquiry.status)) {
+          newStatus = VALID_TRANSITIONS.admin_viewed.to;
+        }
+        break;
+
+      case 'matches_completed':
+        if (VALID_TRANSITIONS.matches_completed.from.includes(inquiry.status)) {
+          newStatus = VALID_TRANSITIONS.matches_completed.to;
+        }
+        break;
+
+      case 'introduction_sent':
+        if (VALID_TRANSITIONS.introduction_sent.from.includes(inquiry.status)) {
+          newStatus = VALID_TRANSITIONS.introduction_sent.to;
+        }
+        break;
+
+      case 'provider_interested':
+        if (VALID_TRANSITIONS.provider_interested.from.includes(inquiry.status)) {
+          newStatus = VALID_TRANSITIONS.provider_interested.to;
+        }
+        break;
+
+      case 'seeker_confirmed':
+      case 'provider_confirmed':
+        // Check if both parties have confirmed
+        if (VALID_TRANSITIONS.dual_confirmation.from.includes(inquiry.status)) {
+          // For seeker_confirmed, check if provider already confirmed
+          // For provider_confirmed, check if seeker already confirmed
+          const seekerConfirmed = trigger === 'seeker_confirmed' ? true : inquiry.seeker_confirmed;
+          const providerConfirmed = trigger === 'provider_confirmed' ? true : inquiry.placement_confirmed;
+          
+          if (seekerConfirmed && providerConfirmed) {
+            newStatus = VALID_TRANSITIONS.dual_confirmation.to;
+          }
+        }
+        break;
+    }
+
+    // Apply the status transition if valid
+    if (newStatus && newStatus !== inquiry.status) {
+      const updateData: Record<string, unknown> = { status: newStatus };
+      
+      // Add timestamp fields for specific statuses
+      if (newStatus === 'matched') {
+        updateData.matched_at = new Date().toISOString();
+      } else if (newStatus === 'introductions_sent' && !inquiry.status?.includes('introductions')) {
+        updateData.introductions_sent_at = new Date().toISOString();
+      } else if (newStatus === 'placed') {
+        updateData.placement_confirmed_at = new Date().toISOString();
+        updateData.closed_at = new Date().toISOString();
+      }
+
+      const { error: updateError } = await supabase
+        .from("concierge_inquiries")
+        .update(updateData)
+        .eq("id", inquiryId);
+
+      if (updateError) {
+        throw new Error("Failed to update status: " + updateError.message);
+      }
+
+      // Log the status change event
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: inquiryId,
+        event_type: "status_changed",
+        event_data: { 
+          from_status: inquiry.status, 
+          to_status: newStatus,
+          trigger,
+        },
+        actor_id: actorId || null,
+        actor_type: actorType,
+      });
+
+      transitionMade = true;
+      logStep("Status transitioned", { from: inquiry.status, to: newStatus, trigger });
+    } else {
+      logStep("No transition made", { 
+        currentStatus: inquiry.status, 
+        trigger,
+        reason: newStatus ? "already in target status" : "transition not valid for current status"
+      });
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      transitionMade,
+      previousStatus: inquiry.status,
+      newStatus: newStatus || inquiry.status,
+      trigger,
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

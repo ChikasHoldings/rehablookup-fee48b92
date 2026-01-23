@@ -97,11 +97,14 @@ export function ConciergeIntroductionCard({ introduction, facilityId, hasPro = f
 
       // If interested, trigger notifications and create messaging thread
       if (response === "interested" && inquiry) {
-        // Update inquiry status to in_contact
-        await supabase
-          .from("concierge_inquiries")
-          .update({ status: "in_contact" })
-          .eq("id", inquiry.id);
+        // Trigger auto-status transition
+        await supabase.functions.invoke("auto-status-transition", {
+          body: {
+            inquiryId: inquiry.id,
+            trigger: "provider_interested",
+            actorType: "provider",
+          },
+        });
 
         // Create messaging thread between seeker and facility
         if (inquiry.id) {
