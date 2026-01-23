@@ -232,6 +232,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("[SEND-CONCIERGE-INTRODUCTION] Email sent successfully to:", recipientEmail);
 
+    // Log case event for introduction sent
+    await supabase.from("concierge_case_events").insert({
+      inquiry_id: inquiryId,
+      event_type: "introduction_sent",
+      event_data: { facility_id: facilityId, facility_name: facility.name },
+      actor_type: "admin",
+    });
+
+    // Create provider notification
+    const { data: facilityFull } = await supabase
+      .from("facilities")
+      .select("user_id")
+      .eq("id", facilityId)
+      .single();
+
+    if (facilityFull?.user_id) {
+      await supabase.from("provider_notifications").insert({
+        user_id: facilityFull.user_id,
+        type: "concierge_introduction",
+        title: "New Concierge Introduction",
+        message: `A potential client (${levelOfCare}) has been matched to your facility. Review and respond in your Concierge Network.`,
+        link: "/provider/concierge",
+        metadata: { inquiry_id: inquiryId, introduction_id: introductionId },
+      });
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       emailId: emailData?.id,
