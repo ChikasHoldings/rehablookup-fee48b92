@@ -339,24 +339,45 @@ export default function SeekerConcierge() {
   });
 
   // Submit feedback mutation
+  // Track if feedback was just submitted (idempotency guard)
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
   const feedbackMutation = useMutation({
     mutationFn: async ({ rating, feedback }: { rating: number; feedback: string }) => {
-      const { error } = await supabase
+      // Idempotency check - prevent duplicate submissions
+      if (selectedCase?.seeker_feedback || feedbackSubmitted) {
+        throw new Error("Feedback already submitted");
+      }
+
+      // Use update with additional check to ensure we don't overwrite
+      const { data, error } = await supabase
         .from("concierge_inquiries")
         .update({
           seeker_rating: rating,
           seeker_feedback: feedback,
         })
-        .eq("id", selectedCase!.id);
+        .eq("id", selectedCase!.id)
+        .is("seeker_feedback", null) // Only update if not already set
+        .select("id")
+        .single();
       
       if (error) throw error;
+      if (!data) throw new Error("Feedback already submitted by another session");
+      
+      return data;
     },
     onSuccess: () => {
+      setFeedbackSubmitted(true);
       toast.success("Thank you! Your feedback has been submitted.");
       queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
     },
-    onError: () => {
-      toast.error("Failed to submit feedback. Please try again.");
+    onError: (error) => {
+      if (error.message.includes("already submitted")) {
+        toast.info("Your feedback was already recorded.");
+        queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
+      } else {
+        toast.error("Failed to submit feedback. Please try again.");
+      }
     },
   });
 
@@ -559,7 +580,7 @@ export default function SeekerConcierge() {
     ["matching", "introductions_sent", "in_contact", "confirming", "placed"].includes(selectedCase.status);
   const showConfirmation = selectedCase?.status === "in_contact" && !selectedCase.seeker_confirmed;
   const showAwaitingProvider = selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed;
-  const showFeedback = selectedCase?.status === "placed" && !selectedCase.seeker_feedback;
+  const showFeedback = selectedCase?.status === "placed" && !selectedCase.seeker_feedback && !feedbackSubmitted;
   const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
   return (
