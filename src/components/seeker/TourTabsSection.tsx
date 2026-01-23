@@ -176,7 +176,7 @@ export function TourTabsSection({
 
   return (
     <Tabs defaultValue="facilities" className="space-y-4">
-      <TabsList className="grid w-full grid-cols-3 h-auto">
+      <TabsList className="grid w-full grid-cols-3 h-auto overflow-x-auto">
         <TabsTrigger value="facilities" className="gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
           <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           <span className="hidden xs:inline">Matches</span>
