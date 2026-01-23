@@ -51,186 +51,188 @@ interface FacilityCardProps {
   showRemoveButton?: boolean;
 }
 
-export function FacilityCard({ facility, onRemove, showRemoveButton = false }: FacilityCardProps) {
-  const { toggleFavorite, isFavorite } = useFavorites();
-  const location = useLocation();
-  const [logoError, setLogoError] = useState(false);
-  const [heroError, setHeroError] = useState(false);
-  const { averageRating, reviewCount } = useFacilityRating(facility.id);
+export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
+  function FacilityCard({ facility, onRemove, showRemoveButton = false }, ref) {
+    const { toggleFavorite, isFavorite } = useFavorites();
+    const location = useLocation();
+    const [logoError, setLogoError] = useState(false);
+    const [heroError, setHeroError] = useState(false);
+    const { averageRating, reviewCount } = useFacilityRating(facility.id);
 
-  const initials = getInitials(facility.name);
-  const hasLogo = facility.logo_url && !logoError;
-  const heroImage = facility.gallery_urls?.[0];
-  const hasHeroImage = heroImage && !heroError;
-  const yearsInBusiness = facility.year_established 
-    ? new Date().getFullYear() - facility.year_established 
-    : null;
-  
-  // Determine plan tier for badge display
-  const isFeaturedPlan = facility.planTier === 'featured' || facility.hasFeaturedSubscription || facility.featured;
-  const isProfessionalPlan = facility.planTier === 'professional' || facility.hasProfessionalPlan;
+    const initials = getInitials(facility.name);
+    const hasLogo = facility.logo_url && !logoError;
+    const heroImage = facility.gallery_urls?.[0];
+    const hasHeroImage = heroImage && !heroError;
+    const yearsInBusiness = facility.year_established 
+      ? new Date().getFullYear() - facility.year_established 
+      : null;
+    
+    // Determine plan tier for badge display
+    const isFeaturedPlan = facility.planTier === 'featured' || facility.hasFeaturedSubscription || facility.featured;
+    const isProfessionalPlan = facility.planTier === 'professional' || facility.hasProfessionalPlan;
 
-  // Determine if we're in the seeker account area
-  const isInSeekerAccount = location.pathname.startsWith('/account');
-  const facilityLink = isInSeekerAccount 
-    ? `/account/facility/${facility.slug || facility.id}`
-    : facility.slug ? `/center/${facility.slug}` : `/center/${facility.id}`;
+    // Determine if we're in the seeker account area
+    const isInSeekerAccount = location.pathname.startsWith('/account');
+    const facilityLink = isInSeekerAccount 
+      ? `/account/facility/${facility.slug || facility.id}`
+      : facility.slug ? `/center/${facility.slug}` : `/center/${facility.id}`;
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (showRemoveButton && onRemove) {
-      onRemove(facility.id);
-    } else {
-      toggleFavorite(facility.id);
-    }
-  };
+    const handleFavoriteClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (showRemoveButton && onRemove) {
+        onRemove(facility.id);
+      } else {
+        toggleFavorite(facility.id);
+      }
+    };
 
-  return (
-    <article className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300">
-      <div className="flex flex-col sm:flex-row sm:min-h-[160px]">
-        {/* Image Section - Fixed dimensions for consistent card sizes */}
-        <div className="relative w-full sm:w-44 lg:w-52 shrink-0 overflow-hidden bg-muted">
-          <div className="h-32 sm:h-full w-full relative">
-            {hasHeroImage ? (
-              <>
-                <img 
-                  src={heroImage}
-                  alt={`${facility.name} facility`}
-                  className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                  onError={() => setHeroError(true)}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-              </>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-sm">
-                  <span className="font-display text-xl font-bold text-primary/70">
-                    {initials}
-                  </span>
-                </div>
-              </div>
-            )}
-            
-            {/* Logo overlay */}
-            <div className="absolute bottom-2 left-2 z-10">
-              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-card shadow-md">
-                {hasLogo ? (
+    return (
+      <article ref={ref} className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300">
+        <div className="flex flex-col sm:flex-row sm:min-h-[160px]">
+          {/* Image Section - Fixed dimensions for consistent card sizes */}
+          <div className="relative w-full sm:w-44 lg:w-52 shrink-0 overflow-hidden bg-muted">
+            <div className="h-32 sm:h-full w-full relative">
+              {hasHeroImage ? (
+                <>
                   <img 
-                    src={facility.logo_url!}
-                    alt={`${facility.name} logo`}
-                    className="h-full w-full object-cover object-center"
+                    src={heroImage}
+                    alt={`${facility.name} facility`}
+                    className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
-                    onError={() => setLogoError(true)}
+                    onError={() => setHeroError(true)}
                   />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                    <span className="font-display text-xs font-bold text-primary">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                </>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shadow-sm">
+                    <span className="font-display text-xl font-bold text-primary/70">
                       {initials}
                     </span>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Years badge */}
-            {yearsInBusiness && yearsInBusiness > 0 && (
-              <div className="absolute bottom-2 right-2 z-10">
-                <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-sm">
-                  <Clock className="h-2.5 w-2.5 text-blue-600" />
-                  <span className="text-[9px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
+                </div>
+              )}
+              
+              {/* Logo overlay */}
+              <div className="absolute bottom-2 left-2 z-10">
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-card shadow-md">
+                  {hasLogo ? (
+                    <img 
+                      src={facility.logo_url!}
+                      alt={`${facility.name} logo`}
+                      className="h-full w-full object-cover object-center"
+                      loading="lazy"
+                      onError={() => setLogoError(true)}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                      <span className="font-display text-xs font-bold text-primary">
+                        {initials}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Content Section */}
-        <div className="flex flex-1 flex-col p-3 sm:p-4 min-w-0">
-          {/* Header row */}
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <div className="flex-1 min-w-0">
-              <Link to={facilityLink}>
-                <h3 className="font-display text-sm sm:text-base font-bold leading-tight truncate mb-1 group-hover:text-primary transition-colors">
-                  {facility.name}
-                </h3>
-              </Link>
-              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
-                <MapPin className="h-3 w-3 shrink-0 text-primary" />
-                <span className="font-medium truncate">{facility.city}, {facility.state}</span>
+              {/* Years badge */}
+              {yearsInBusiness && yearsInBusiness > 0 && (
+                <div className="absolute bottom-2 right-2 z-10">
+                  <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-sm">
+                    <Clock className="h-2.5 w-2.5 text-blue-600" />
+                    <span className="text-[9px] font-semibold text-blue-700">{yearsInBusiness}+ yrs</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className="flex flex-1 flex-col p-3 sm:p-4 min-w-0">
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="flex-1 min-w-0">
+                <Link to={facilityLink}>
+                  <h3 className="font-display text-sm sm:text-base font-bold leading-tight truncate mb-1 group-hover:text-primary transition-colors">
+                    {facility.name}
+                  </h3>
+                </Link>
+                <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+                  <MapPin className="h-3 w-3 shrink-0 text-primary" />
+                  <span className="font-medium truncate">{facility.city}, {facility.state}</span>
+                </div>
               </div>
+
+              <button
+                onClick={handleFavoriteClick}
+                className={cn(
+                  "p-1.5 sm:p-2 rounded-lg border transition-all duration-200 shrink-0",
+                  showRemoveButton
+                    ? "bg-rose-50 border-rose-200 text-rose-500 hover:bg-rose-100"
+                    : isFavorite(facility.id)
+                      ? "bg-rose-50 border-rose-200 text-rose-500"
+                      : "bg-secondary/50 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50"
+                )}
+                aria-label={showRemoveButton ? "Remove from saved" : isFavorite(facility.id) ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Heart className={cn("h-4 w-4", (showRemoveButton || isFavorite(facility.id)) && "fill-current")} />
+              </button>
             </div>
 
-            <button
-              onClick={handleFavoriteClick}
-              className={cn(
-                "p-1.5 sm:p-2 rounded-lg border transition-all duration-200 shrink-0",
-                showRemoveButton
-                  ? "bg-rose-50 border-rose-200 text-rose-500 hover:bg-rose-100"
-                  : isFavorite(facility.id)
-                    ? "bg-rose-50 border-rose-200 text-rose-500"
-                    : "bg-secondary/50 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50"
+            {/* Badges */}
+            <div className="flex items-center gap-1.5 flex-wrap mb-2">
+              {/* Rating badge - prominent position */}
+              <RatingBadge rating={averageRating} reviewCount={reviewCount} size="sm" />
+              
+              {/* Plan tier badges */}
+              {isFeaturedPlan && (
+                <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  Featured
+                </Badge>
               )}
-              aria-label={showRemoveButton ? "Remove from saved" : isFavorite(facility.id) ? "Remove from favorites" : "Add to favorites"}
-            >
-              <Heart className={cn("h-4 w-4", (showRemoveButton || isFavorite(facility.id)) && "fill-current")} />
-            </button>
-          </div>
+              {!isFeaturedPlan && isProfessionalPlan && (
+                <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-200/60 shadow-sm">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  Professional
+                </Badge>
+              )}
+              {facility.verified && (
+                <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
+                  <Shield className="h-2.5 w-2.5" />
+                  Verified
+                </Badge>
+              )}
+              {facility.facility_type && (
+                <Badge variant="secondary" className="gap-1 px-1.5 py-0.5 text-[10px] font-semibold border border-border/60">
+                  <Building2 className="h-2.5 w-2.5" />
+                  <span className="truncate max-w-[100px]">{facility.facility_type}</span>
+                </Badge>
+              )}
+            </div>
 
-          {/* Badges */}
-          <div className="flex items-center gap-1.5 flex-wrap mb-2">
-            {/* Rating badge - prominent position */}
-            <RatingBadge rating={averageRating} reviewCount={reviewCount} size="sm" />
-            
-            {/* Plan tier badges */}
-            {isFeaturedPlan && (
-              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
-                <Sparkles className="h-2.5 w-2.5" />
-                Featured
-              </Badge>
+            {/* Description */}
+            {facility.description && (
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3 flex-1">
+                {facility.description}
+              </p>
             )}
-            {!isFeaturedPlan && isProfessionalPlan && (
-              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-200/60 shadow-sm">
-                <Sparkles className="h-2.5 w-2.5" />
-                Professional
-              </Badge>
-            )}
-            {facility.verified && (
-              <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-sm">
-                <Shield className="h-2.5 w-2.5" />
-                Verified
-              </Badge>
-            )}
-            {facility.facility_type && (
-              <Badge variant="secondary" className="gap-1 px-1.5 py-0.5 text-[10px] font-semibold border border-border/60">
-                <Building2 className="h-2.5 w-2.5" />
-                <span className="truncate max-w-[100px]">{facility.facility_type}</span>
-              </Badge>
-            )}
-          </div>
 
-          {/* Description */}
-          {facility.description && (
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3 flex-1">
-              {facility.description}
-            </p>
-          )}
-
-          {/* Action */}
-          <div className="mt-auto pt-1">
-            <Link to={facilityLink}>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1.5 text-xs group/btn">
-                View Details
-                <ArrowRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5" />
-              </Button>
-            </Link>
+            {/* Action */}
+            <div className="mt-auto pt-1">
+              <Link to={facilityLink}>
+                <Button variant="outline" size="sm" className="w-full sm:w-auto gap-1.5 text-xs group/btn">
+                  View Details
+                  <ArrowRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
-    </article>
-  );
-}
+      </article>
+    );
+  }
+);
 
 export const FacilityCardSkeleton = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   function FacilityCardSkeleton(props, ref) {
