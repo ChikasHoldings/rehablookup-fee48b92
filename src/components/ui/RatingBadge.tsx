@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -9,14 +10,15 @@ interface RatingBadgeProps {
   className?: string;
 }
 
-export function RatingBadge({ 
-  rating, 
-  reviewCount, 
-  size = "md", 
-  showCount = true,
-  className 
-}: RatingBadgeProps) {
-  if (!rating || reviewCount === 0) return null;
+export const RatingBadge = forwardRef<HTMLDivElement, RatingBadgeProps>(
+  function RatingBadge({ 
+    rating, 
+    reviewCount, 
+    size = "md", 
+    showCount = true,
+    className 
+  }, ref) {
+    if (!rating || reviewCount === 0) return null;
 
   const sizeClasses = {
     sm: {
@@ -41,26 +43,28 @@ export function RatingBadge({
 
   const styles = sizeClasses[size];
 
-  return (
-    <div
-      className={cn(
-        "inline-flex items-center rounded-full font-semibold",
-        "bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200/60",
-        "text-amber-700 shadow-sm",
-        styles.container,
-        className
-      )}
-    >
-      <Star className={cn(styles.star, "fill-amber-400 text-amber-400")} />
-      <span className={cn(styles.text, "font-bold")}>{rating.toFixed(1)}</span>
-      {showCount && (
-        <span className={cn(styles.count, "text-amber-600/80 font-medium")}>
-          ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
-        </span>
-      )}
-    </div>
-  );
-}
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "inline-flex items-center rounded-full font-semibold",
+          "bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200/60",
+          "text-amber-700 shadow-sm",
+          styles.container,
+          className
+        )}
+      >
+        <Star className={cn(styles.star, "fill-amber-400 text-amber-400")} />
+        <span className={cn(styles.text, "font-bold")}>{rating.toFixed(1)}</span>
+        {showCount && (
+          <span className={cn(styles.count, "text-amber-600/80 font-medium")}>
+            ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+          </span>
+        )}
+      </div>
+    );
+  }
+);
 
 interface RatingStarsProps {
   rating: number;
