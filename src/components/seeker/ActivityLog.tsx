@@ -33,29 +33,51 @@ export const ActivityLog = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
   function ActivityLog(props, ref) {
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchActivities = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setIsLoading(false);
-        return;
-      }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
+        if (!session) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
+        
+        setIsAuthenticated(true);
 
-      const { data, error } = await supabase
-        .from("account_activity_log")
-        .select("id, event_type, event_description, created_at, metadata")
-        .eq("user_id", session.user.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
+        const { data, error } = await supabase
+          .from("account_activity_log")
+          .select("id, event_type, event_description, created_at, metadata")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false })
+          .limit(20);
 
-      if (!error && data) {
-        setActivities(data);
+        if (!isMounted) return;
+        
+        if (!error && data) {
+          setActivities(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch activities:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
     };
 
     fetchActivities();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const getIcon = (eventType: string) => {
@@ -67,7 +89,12 @@ export const ActivityLog = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
     return eventColors[eventType] || "text-muted-foreground bg-muted";
   };
 
-  if (isLoading) {
+  // Don't render anything if not authenticated
+  if (isAuthenticated === false) {
+    return null;
+  }
+  
+  if (isLoading || isAuthenticated === null) {
     return (
       <Card ref={ref} {...props}>
         <CardHeader>

@@ -48,14 +48,14 @@ const notificationTypeIcons: Record<string, React.ReactNode> = {
   review_response: <Star className="h-4 w-4 text-amber-500" />,
   saved_facility: <Heart className="h-4 w-4 text-pink-500" />,
   request_update: <Send className="h-4 w-4 text-green-500" />,
-  // Concierge-specific notification types
+  // Concierge-specific notification types with distinct icons
   concierge_intake_received: <HeartHandshake className="h-4 w-4 text-primary" />,
-  concierge_matches_found: <HeartHandshake className="h-4 w-4 text-emerald-500" />,
-  concierge_provider_interested: <HeartHandshake className="h-4 w-4 text-blue-500" />,
-  concierge_provider_confirmed: <HeartHandshake className="h-4 w-4 text-green-500" />,
-  concierge_placement_complete: <HeartHandshake className="h-4 w-4 text-amber-500" />,
-  concierge_tour_proposed: <HeartHandshake className="h-4 w-4 text-purple-500" />,
-  concierge_tour_confirmed: <HeartHandshake className="h-4 w-4 text-green-500" />,
+  concierge_matches_found: <MapPin className="h-4 w-4 text-emerald-500" />,
+  concierge_provider_interested: <Building2 className="h-4 w-4 text-blue-500" />,
+  concierge_provider_confirmed: <Building2 className="h-4 w-4 text-green-500" />,
+  concierge_placement_complete: <Star className="h-4 w-4 text-amber-500" />,
+  concierge_tour_proposed: <Bell className="h-4 w-4 text-purple-500" />,
+  concierge_tour_confirmed: <Bell className="h-4 w-4 text-green-500" />,
 };
 
 export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = false }: SeekerHeaderProps) {

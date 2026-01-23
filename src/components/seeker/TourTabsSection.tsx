@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +10,8 @@ import {
   Users, 
   CalendarDays, 
   MessageCircle,
-  ThumbsDown
+  ThumbsDown,
+  Loader2
 } from "lucide-react";
 import { MatchedFacilityCard } from "@/components/seeker/MatchedFacilityCard";
 import { ConciergeToursList } from "@/components/seeker/ConciergeToursList";
@@ -47,26 +48,64 @@ export function TourTabsSection({
 }: TourTabsSectionProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [dismissedFacilities, setDismissedFacilities] = useState<Set<string>>(() => {
-    const stored = localStorage.getItem(`dismissed-facilities-${selectedCase.id}`);
-    return stored ? new Set(JSON.parse(stored)) : new Set();
+
+  // Fetch rejected facilities from database
+  const { data: rejectedFacilities, isLoading: rejectedLoading } = useQuery({
+    queryKey: ["rejected-facilities", selectedCase.id],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from("concierge_rejected_facilities")
+        .select("facility_id")
+        .eq("inquiry_id", selectedCase.id)
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      return data?.map(r => r.facility_id) || [];
+    },
+    enabled: !!selectedCase.id,
+  });
+
+  // Mutation to dismiss a facility
+  const dismissMutation = useMutation({
+    mutationFn: async (facilityId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("concierge_rejected_facilities")
+        .insert({
+          inquiry_id: selectedCase.id,
+          facility_id: facilityId,
+          user_id: user.id,
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Facility dismissed",
+        description: "This facility has been hidden from your matches.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["rejected-facilities", selectedCase.id] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to dismiss facility. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleDismissFacility = (facilityId: string) => {
-    const newDismissed = new Set(dismissedFacilities);
-    newDismissed.add(facilityId);
-    setDismissedFacilities(newDismissed);
-    localStorage.setItem(
-      `dismissed-facilities-${selectedCase.id}`,
-      JSON.stringify([...newDismissed])
-    );
-    toast({
-      title: "Facility dismissed",
-      description: "This facility has been hidden from your matches.",
-    });
+    dismissMutation.mutate(facilityId);
   };
 
-  const visibleFacilities = matchedFacilities?.filter(f => !dismissedFacilities.has(f.id));
+  const rejectedSet = new Set(rejectedFacilities || []);
+  const visibleFacilities = matchedFacilities?.filter(f => !rejectedSet.has(f.id));
 
   // Fetch tour count for badge
   const { data: tourCount } = useQuery({
@@ -137,30 +176,30 @@ export function TourTabsSection({
 
   return (
     <Tabs defaultValue="facilities" className="space-y-4">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="facilities" className="gap-2">
-          <Users className="h-4 w-4" />
-          Matches
+      <TabsList className="grid w-full grid-cols-3 h-auto">
+        <TabsTrigger value="facilities" className="gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
+          <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <span className="hidden xs:inline">Matches</span>
           {hasMatches && visibleFacilities && visibleFacilities.length > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+            <Badge variant="secondary" className="ml-0.5 sm:ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
               {visibleFacilities.length}
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="tours" className="gap-2">
-          <CalendarDays className="h-4 w-4" />
-          Tours
+        <TabsTrigger value="tours" className="gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
+          <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <span className="hidden xs:inline">Tours</span>
           {tourCount !== undefined && tourCount > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+            <Badge variant="secondary" className="ml-0.5 sm:ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
               {tourCount}
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="messages" className="gap-2">
-          <MessageCircle className="h-4 w-4" />
-          Messages
+        <TabsTrigger value="messages" className="gap-1 sm:gap-2 px-2 py-2 text-xs sm:text-sm">
+          <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <span className="hidden xs:inline">Messages</span>
           {unreadMessageCount !== undefined && unreadMessageCount > 0 && (
-            <Badge variant="destructive" className="ml-1 h-5 px-1.5">
+            <Badge variant="destructive" className="ml-0.5 sm:ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
               {unreadMessageCount}
             </Badge>
           )}
@@ -169,7 +208,11 @@ export function TourTabsSection({
 
       {/* Matched Facilities Tab */}
       <TabsContent value="facilities" className="space-y-4">
-        {hasMatches && visibleFacilities && visibleFacilities.length > 0 ? (
+        {rejectedLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : hasMatches && visibleFacilities && visibleFacilities.length > 0 ? (
           <>
             <p className="text-sm text-muted-foreground">
               These treatment centers match your needs. Request tours or send messages to learn more.
@@ -187,15 +230,21 @@ export function TourTabsSection({
                         onClick={() => setTourModalFacility(facility)}
                       >
                         <CalendarDays className="h-3.5 w-3.5" />
-                        Request Tour
+                        <span className="hidden sm:inline">Request Tour</span>
+                        <span className="sm:hidden">Tour</span>
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         onClick={() => handleDismissFacility(facility.id)}
+                        disabled={dismissMutation.isPending}
                       >
-                        <ThumbsDown className="h-3.5 w-3.5" />
+                        {dismissMutation.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <ThumbsDown className="h-3.5 w-3.5" />
+                        )}
                       </Button>
                     </div>
                   </CardContent>
