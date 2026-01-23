@@ -801,6 +801,52 @@ export type Database = {
           },
         ]
       }
+      concierge_rejected_facilities: {
+        Row: {
+          created_at: string
+          facility_id: string
+          id: string
+          inquiry_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          facility_id: string
+          id?: string
+          inquiry_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          facility_id?: string
+          id?: string
+          inquiry_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concierge_rejected_facilities_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_rejected_facilities_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_rejected_facilities_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concierge_threads: {
         Row: {
           admin_last_read_at: string | null
