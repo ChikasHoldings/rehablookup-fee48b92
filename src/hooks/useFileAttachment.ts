@@ -51,7 +51,7 @@ export function useFileAttachment({ inquiryId }: UseFileAttachmentOptions) {
     setAttachment(file);
   };
 
-  const uploadFile = async (): Promise<{ url: string; name: string } | null> => {
+  const uploadFile = async (): Promise<{ url: string; name: string; storagePath: string } | null> => {
     if (!attachment) return null;
 
     setUploading(true);
@@ -74,7 +74,7 @@ export function useFileAttachment({ inquiryId }: UseFileAttachmentOptions) {
 
       if (signedError) throw signedError;
 
-      return { url: signedUrlData.signedUrl, name: attachment.name };
+      return { url: signedUrlData.signedUrl, name: attachment.name, storagePath: fileName };
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -85,6 +85,21 @@ export function useFileAttachment({ inquiryId }: UseFileAttachmentOptions) {
       return null;
     } finally {
       setUploading(false);
+    }
+  };
+
+  // Refresh a signed URL for an existing attachment
+  const refreshSignedUrl = async (storagePath: string): Promise<string | null> => {
+    try {
+      const { data: signedUrlData, error } = await supabase.storage
+        .from("concierge-attachments")
+        .createSignedUrl(storagePath, 60 * 60 * 24 * 7); // 7 days
+
+      if (error) throw error;
+      return signedUrlData.signedUrl;
+    } catch (error) {
+      console.error("Failed to refresh signed URL:", error);
+      return null;
     }
   };
 
@@ -105,6 +120,7 @@ export function useFileAttachment({ inquiryId }: UseFileAttachmentOptions) {
     fileInputRef,
     handleFileSelect,
     uploadFile,
+    refreshSignedUrl,
     clearAttachment,
     openFilePicker,
   };

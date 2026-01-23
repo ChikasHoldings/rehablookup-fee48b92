@@ -112,8 +112,55 @@ export function ConciergeMessaging({ inquiryId, matchedFacilityIds = [] }: Conci
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Note: Real-time subscriptions removed - users are notified via email/SMS instead
+  // Subscribe to realtime message updates for the selected thread
+  useEffect(() => {
+    if (!selectedThreadId) return;
 
+    const channel = supabase
+      .channel(`messages-${selectedThreadId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "concierge_messages",
+          filter: `thread_id=eq.${selectedThreadId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["concierge-messages", selectedThreadId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedThreadId, queryClient]);
+
+  // Subscribe to new thread creation (from providers/admins)
+  useEffect(() => {
+    if (!inquiryId) return;
+
+    const channel = supabase
+      .channel(`threads-new-${inquiryId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "concierge_threads",
+          filter: `inquiry_id=eq.${inquiryId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["concierge-threads", inquiryId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [inquiryId, queryClient]);
   // Create thread if needed
   const createThreadMutation = useMutation({
     mutationFn: async ({ threadType, facilityId }: { threadType: string; facilityId?: string }) => {
