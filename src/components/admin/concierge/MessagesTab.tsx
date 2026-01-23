@@ -60,30 +60,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
     enabled: !!selectedThread?.id,
   });
 
-  // Realtime subscription
-  useEffect(() => {
-    if (!selectedThread?.id) return;
-
-    const channel = supabase
-      .channel(`admin-thread-${selectedThread.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "concierge_messages",
-          filter: `thread_id=eq.${selectedThread.id}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["admin-thread-messages", selectedThread.id] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedThread?.id, queryClient]);
+  // Note: Real-time subscription removed - admin is notified via email instead
 
   // Scroll to bottom
   useEffect(() => {
