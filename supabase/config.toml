@@ -230,3 +230,6 @@ verify_jwt = false
 
 [functions.send-tour-notifications]
 verify_jwt = false
+
+[functions.get-public-facilities]
+verify_jwt = false

@@ -4,7 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO, generateSearchResultsSchema } from "@/components/SEO";
 import { SearchResultCard } from "@/components/cards/SearchResultCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { 
   Heart, 
@@ -132,7 +132,7 @@ const SearchResults = () => {
   const selectedInsuranceTypes = insuranceTypesParam ? insuranceTypesParam.split(",") : [];
   const selectedDistance = distanceParam || "";
 
-  const { data: approvedFacilities = [], isLoading } = useApprovedFacilities();
+  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
   const allCenters = useMemo(() => {
     return [...treatmentCenters, ...approvedFacilities];
