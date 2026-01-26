@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
@@ -116,7 +116,7 @@ const faqs = [
 
 const ResidentialInpatient = () => {
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
-  const { data: approvedFacilities = [] } = useApprovedFacilities();
+  const { data: approvedFacilities = [] } = useStaticFacilities();
 
   const relatedCenters = useMemo(() => {
     const allCenters = [...treatmentCenters, ...approvedFacilities];

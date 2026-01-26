@@ -6,7 +6,7 @@ import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Button } from "@/components/ui/button";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { FeaturedCentersLoading } from "@/components/skeletons/FeaturedCenterSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { InternalLinkBlock } from "@/components/seo/InternalLinkBlock";
@@ -133,9 +133,9 @@ const treatmentOptions = [
 
 
 const Index = () => {
-  const { data: approvedFacilities = [], isLoading: isFacilitiesLoading, isFetching: isFacilitiesFetching } = useApprovedFacilities();
+  const { data: approvedFacilities = [], isLoading: isFacilitiesLoading } = useStaticFacilities();
   
-  // Show loading during initial load or when refetching featured data
+  // Show loading during initial load
   const isLoadingFeatured = isFacilitiesLoading;
   
   // Get homepage featured centers (max 6, with rotation from backend)

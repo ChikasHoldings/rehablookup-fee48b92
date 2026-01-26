@@ -5,7 +5,7 @@ import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { usStates } from "@/data/usStates";
 import { 
   Heart, 
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/accordion";
 
 const RehabCenters = () => {
-  const { data: approvedFacilities = [] } = useApprovedFacilities();
+  const { data: approvedFacilities = [] } = useStaticFacilities();
 
   // Combine static data with approved facilities from database
   const allCenters = useMemo(() => {
