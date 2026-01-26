@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFavorites } from "@/hooks/useFavorites";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { useFeaturedFacilityIds } from "@/hooks/useApprovedFacilities";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { sortByPlanHierarchyWithSecondary, getPlanPriority } from "@/lib/facilityPlanSort";
 import { useQuery } from "@tanstack/react-query";
 
@@ -43,62 +44,31 @@ export default function SeekerHome() {
   const { favoritesCount } = useFavorites();
   const { data: featuredData } = useFeaturedFacilityIds();
 
-  // Use React Query for facilities with caching for speed
-  const { data: nearbyFacilities = [], isLoading } = useQuery({
-    queryKey: ['seeker-home-facilities'],
-    queryFn: async () => {
-      console.log('[SeekerHome] Fetching facilities...');
-      const { data, error } = await supabase
-        .from('facilities')
-        .select('id, name, city, state, facility_type, slug, phone, description, logo_url, gallery_urls, verified, year_established')
-        .eq('status', 'approved')
-        .limit(50);
-      
-      if (error) {
-        console.error('[SeekerHome] Error fetching facilities:', error);
-        throw error;
-      }
-      
-      // Map data to FacilityCardData format
-      const mappedData: FacilityCardData[] = (data || []).map(f => ({
-        id: f.id,
-        name: f.name,
-        city: f.city,
-        state: f.state,
-        facility_type: f.facility_type,
-        slug: f.slug,
-        phone: f.phone,
-        description: f.description,
-        logo_url: f.logo_url,
-        gallery_urls: f.gallery_urls,
-        verified: f.verified,
-        year_established: f.year_established
-      }));
-      
-      console.log('[SeekerHome] Loaded', mappedData.length, 'facilities');
-      return mappedData;
-    },
-    staleTime: 30000, // Cache for 30 seconds for speed
-    refetchOnMount: true,
-    refetchOnWindowFocus: false, // Don't refetch on focus for speed
-  });
+  // Use static facilities hook for CDN-cached data
+  const { data: staticFacilities = [], isLoading } = useStaticFacilities();
 
-  // Get plan tier for a facility based on subscription data
-  const getPlanTier = (facilityId: string): 'featured' | 'professional' | 'free' => {
-    if (featuredData?.featuredFacilityIds?.includes(facilityId)) return 'featured';
-    if (featuredData?.professionalFacilityIds?.includes(facilityId)) return 'professional';
-    return 'free';
-  };
+  // Map static facilities to FacilityCardData format
+  const nearbyFacilities: FacilityCardData[] = useMemo(() => {
+    return staticFacilities.slice(0, 50).map(f => ({
+      id: f.id,
+      name: f.name,
+      city: f.city,
+      state: f.state,
+      facility_type: f.facilityType || null,
+      slug: f.slug,
+      phone: f.phone,
+      description: f.description,
+      logo_url: f.logo_url,
+      gallery_urls: f.gallery_urls,
+      verified: f.verified ?? null,
+      year_established: f.year_established ?? null,
+      planTier: f.planTier,
+    }));
+  }, [staticFacilities]);
 
   // Filter and sort facilities with plan hierarchy
   const filteredFacilities = useMemo(() => {
-    // Add plan tier to facilities
-    const facilitiesWithPlan = nearbyFacilities.map(f => ({
-      ...f,
-      planTier: getPlanTier(f.id),
-    }));
-
-    let result = facilitiesWithPlan.filter((facility) => {
+    let result = nearbyFacilities.filter((facility) => {
       const matchesType = selectedType === "all" || facility.facility_type === selectedType;
       const matchesState = selectedState === "all" || facility.state?.toLowerCase() === selectedState.toLowerCase();
       return matchesType && matchesState;
@@ -130,7 +100,7 @@ export default function SeekerHome() {
     });
 
     return result;
-  }, [nearbyFacilities, selectedType, selectedState, sortBy, featuredData]);
+  }, [nearbyFacilities, selectedType, selectedState, sortBy]);
 
   // Get unique states and types from data
   const availableStates = useMemo(() => {

@@ -3,7 +3,7 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
-import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { getStateBySlug, getCityBySlug } from "@/data/locationSeoData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
@@ -184,7 +184,7 @@ const CityPage = () => {
   const [showAllCities, setShowAllCities] = useState(false);
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
   
-  const { data: approvedFacilities = [], isLoading } = useApprovedFacilities();
+  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
   const allCenters = useMemo(() => {
     return [...treatmentCenters, ...approvedFacilities];

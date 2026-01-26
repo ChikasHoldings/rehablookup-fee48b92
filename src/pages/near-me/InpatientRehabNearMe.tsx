@@ -7,7 +7,7 @@ import { LocalSignalsSection } from "@/components/seo/LocalSignalsSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
-import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,7 @@ export default function InpatientRehabNearMe() {
   } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
-  const { data: approvedFacilities = [], isLoading } = useApprovedFacilities();
+  const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
   const stateData = useMemo(() => {
     if (stateSlug) {
