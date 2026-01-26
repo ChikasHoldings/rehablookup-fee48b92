@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useApprovedFacilities } from "@/hooks/useApprovedFacilities";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { 
   parseLocationInput, 
@@ -86,7 +86,7 @@ const facilityTypeFilters = [
 ];
 
 export default function SeekerSearch() {
-  const { data: facilities, isLoading: facilitiesLoading } = useApprovedFacilities();
+  const { data: facilities, isLoading: facilitiesLoading } = useStaticFacilities();
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
