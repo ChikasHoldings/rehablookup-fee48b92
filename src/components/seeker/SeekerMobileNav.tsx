@@ -2,10 +2,15 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   Home, 
   Search, 
-  Heart, 
-  Star, 
+  Heart,
+  Star,
   MoreHorizontal,
-  HeartHandshake
+  HeartHandshake,
+  FileText,
+  Settings,
+  LogIn,
+  User,
+  HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -15,7 +20,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Settings, LogIn, User, HelpCircle, FileText } from "lucide-react";
 import { useState } from "react";
 
 interface SeekerMobileNavProps extends React.HTMLAttributes<HTMLElement> {
@@ -26,20 +30,20 @@ const navItems = [
   { href: "/account", label: "Home", icon: Home },
   { href: "/account/search", label: "Search", icon: Search },
   { href: "/account/concierge", label: "Concierge", icon: HeartHandshake },
-  { href: "/account/saved", label: "Saved", icon: Heart },
+  { href: "/account/requests", label: "Requests", icon: FileText },
 ];
 
 export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMobileNavProps) {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const isMoreActive = ["/account/settings", "/account/requests", "/account/reviews", "/auth"].some(
+  const isMoreActive = ["/account/settings", "/account/saved", "/account/reviews", "/auth"].some(
     path => location.pathname.startsWith(path)
   );
 
   const moreItems = isAuthenticated ? [
+    { href: "/account/saved", label: "Saved Facilities", icon: Heart },
     { href: "/account/reviews", label: "My Reviews", icon: Star },
-    { href: "/account/requests", label: "My Requests", icon: FileText },
     { href: "/account/settings", label: "Settings", icon: Settings },
     { href: "/account/help", label: "Help & Support", icon: HelpCircle },
   ] : [
