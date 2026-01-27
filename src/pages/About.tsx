@@ -380,10 +380,10 @@ const About = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/request-help?source=about_cta">
+              <Link to="/account/concierge">
                 <Button variant="ghost" size="default" className="text-primary-foreground hover:bg-white/10 gap-2 font-semibold">
                   <Heart className="h-4 w-4" />
-                  Request Help
+                  Concierge Service
                 </Button>
               </Link>
             </div>

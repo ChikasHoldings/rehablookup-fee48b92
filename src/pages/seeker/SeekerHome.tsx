@@ -195,7 +195,7 @@ export default function SeekerHome() {
               <CardContent className="space-y-1">
                 {[
                   { to: "/rehab-centers", icon: Building2, label: "Find Rehab Centers" },
-                  { to: "/request-help", icon: HelpCircle, label: "Request Help" },
+                  { to: "/account/concierge", icon: HelpCircle, label: "Concierge Service" },
                   { to: "/how-it-works", icon: Star, label: "How It Works" },
                   { to: "/insurance", icon: Shield, label: "Insurance Coverage" },
                 ].map((link) => (

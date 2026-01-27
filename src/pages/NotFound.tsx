@@ -36,7 +36,7 @@ const NotFound = () => {
 
   const popularLinks = [
     { label: "Find Rehab Centers", href: "/rehab-centers", icon: Building2 },
-    { label: "Request Help", href: "/request-help", icon: HeartHandshake },
+    { label: "Concierge Service", href: "/account/concierge", icon: HeartHandshake },
     { label: "How It Works", href: "/how-it-works", icon: HelpCircle },
     { label: "Insurance Coverage", href: "/insurance", icon: Shield },
   ];

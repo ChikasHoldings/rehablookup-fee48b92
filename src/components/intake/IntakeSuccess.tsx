@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Phone, Building2, ArrowRight, Heart, Sparkles } from "lucide-react";
+import { CheckCircle2, Phone, Building2, ArrowRight, HeartHandshake, Sparkles } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useEffect } from "react";
 
@@ -93,6 +93,14 @@ export function IntakeSuccess({ firstName, facilityName }: IntakeSuccessProps) {
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
         <Button
+          size="lg"
+          className="flex-1 gap-2"
+          onClick={() => navigate("/account/concierge")}
+        >
+          <HeartHandshake className="h-4 w-4" />
+          Try Concierge Service
+        </Button>
+        <Button
           variant="outline"
           size="lg"
           className="flex-1 gap-2"
@@ -100,14 +108,6 @@ export function IntakeSuccess({ firstName, facilityName }: IntakeSuccessProps) {
         >
           <Building2 className="h-4 w-4" />
           Browse Treatment Centers
-        </Button>
-        <Button
-          size="lg"
-          className="flex-1 gap-2"
-          onClick={() => navigate("/")}
-        >
-          <Heart className="h-4 w-4" />
-          Return Home
         </Button>
       </div>
     </div>

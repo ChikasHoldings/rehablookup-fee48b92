@@ -990,7 +990,7 @@ const Index = () => {
                 { name: "All Locations", href: "/locations" },
                 { name: "Cost Estimator", href: "/cost-estimator" },
                 { name: "Provider Resources", href: "/provider-resources" },
-                { name: "Request Help", href: "/request-help" },
+                { name: "Concierge Service", href: "/account/concierge" },
                 { name: "Search Centers", href: "/search-results" },
               ].map((link) => (
                 <Link
