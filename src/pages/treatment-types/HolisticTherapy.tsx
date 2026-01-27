@@ -342,48 +342,50 @@ const HolisticTherapy = () => {
         </div>
       </section>
 
-      {/* Featured Centers */}
-      <section className="section-padding">
-        <div className="container">
-          <div className="mb-12 text-center">
-            <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
-              Treatment Centers with Holistic Programs
-            </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
-              Find treatment facilities that offer comprehensive holistic therapy options.
-            </p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            {featuredCenters.map((center, index) => (
-              <Link
-                key={center.id}
-                to={`/center/${center.id}`}
-                className="group rounded-xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <h3 className="mb-2 font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                  {center.name}
-                </h3>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  {center.city}, {center.state}
-                </p>
-                <div className="flex items-center gap-2 text-sm text-accent">
-                  View Details
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </div>
+      {/* Featured Centers - Only show when centers available */}
+      {featuredCenters.length > 0 && (
+        <section className="section-padding">
+          <div className="container">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 font-display text-2xl font-bold text-foreground md:text-3xl">
+                Treatment Centers with Holistic Programs
+              </h2>
+              <p className="mx-auto max-w-2xl text-muted-foreground">
+                Find treatment facilities that offer comprehensive holistic therapy options.
+              </p>
+            </div>
+            <div className="grid gap-6 md:grid-cols-3">
+              {featuredCenters.map((center, index) => (
+                <Link
+                  key={center.id}
+                  to={`/center/${center.id}`}
+                  className="group rounded-xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <h3 className="mb-2 font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {center.name}
+                  </h3>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    {center.city}, {center.state}
+                  </p>
+                  <div className="flex items-center gap-2 text-sm text-accent">
+                    View Details
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div className="mt-8 text-center">
+              <Link to="/search-results?type=holistic">
+                <Button variant="outline" className="gap-2">
+                  View All Holistic Centers
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               </Link>
-            ))}
+            </div>
           </div>
-          <div className="mt-8 text-center">
-            <Link to="/search-results?type=holistic">
-              <Button variant="outline" className="gap-2">
-                View All Holistic Centers
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FAQs */}
       <section className="bg-muted/30 section-padding">
