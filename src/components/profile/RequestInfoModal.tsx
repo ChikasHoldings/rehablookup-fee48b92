@@ -134,10 +134,10 @@ function CapacityWarning({
   const handleFindAvailable = () => {
     trackCapacityEvent("capacity_find_available_clicked", facility.id, {
       facilityName: facility.name,
-      destination: "/request-help",
+      destination: "/account/concierge",
     });
     onOpenChange(false);
-    navigate("/request-help");
+    navigate("/account/concierge");
   };
 
   const handleBrowseOther = () => {
@@ -173,7 +173,7 @@ function CapacityWarning({
             onClick={handleFindAvailable}
           >
             <Heart className="h-4 w-4 mr-2" />
-            Find Available Providers
+            Use Concierge Service
           </Button>
           <Button
             type="button"
@@ -477,20 +477,12 @@ export function RequestInfoModal({
   };
 
   const handleRequestHelp = () => {
-    trackAnalyticsEvent("request_help_conversion", facility.id, {
+    trackAnalyticsEvent("concierge_conversion", facility.id, {
       fromFacilityName: facility.name,
       hasPrefillData: !!submittedData,
     });
     
-    const params = new URLSearchParams();
-    if (submittedData) {
-      params.set("firstName", submittedData.firstName);
-      params.set("lastName", submittedData.lastName);
-      params.set("email", submittedData.email);
-      params.set("phone", submittedData.phone);
-    }
-    params.set("source", "provider_profile_thankyou");
-    navigate(`/request-help?${params.toString()}`);
+    navigate("/account/concierge");
     onOpenChange(false);
   };
 
@@ -957,23 +949,23 @@ export function RequestInfoModal({
               </div>
             )}
 
-            {/* Request Help CTA */}
+            {/* Concierge Service CTA */}
             <div className="border-t border-border pt-5 mt-5">
               <div className="rounded-lg bg-primary/5 border border-primary/10 p-4">
                 <h4 className="font-medium text-foreground text-sm mb-2">
-                  Want help finding the right fit?
+                  Want personalized help finding the right fit?
                 </h4>
                 <p className="text-xs text-muted-foreground mb-3">
-                  <span className="font-bold text-foreground">Need help urgently?</span>
+                  <span className="font-bold text-foreground">Try our Concierge Service</span>
                   <br />
-                  Complete this request and we'll prioritize connecting you based on your needs.
+                  Get matched with providers who meet your specific needs.
                 </p>
                 <Button
                   variant="outline"
                   className="w-full gap-2"
                   onClick={handleRequestHelp}
                 >
-                  Request Help
+                  Get Concierge Help
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Phone, ArrowRight, Heart, Shield, Clock } from "lucide-react";
+import { CheckCircle2, Phone, ArrowRight, Heart, Shield, Clock, HeartHandshake } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface LeadIntakeSuccessProps {
@@ -128,15 +128,16 @@ export function LeadIntakeSuccess({ facilityName, firstName }: LeadIntakeSuccess
 
         {/* Actions - Enhanced */}
         <div className="space-y-3">
-          <Link to="/rehab-centers">
+          <Link to="/account/concierge">
             <Button className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 group">
-              Browse Treatment Centers
+              <HeartHandshake className="mr-2 h-4 w-4" />
+              Try Concierge Service
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
-          <Link to="/">
-            <Button variant="ghost" className="w-full text-muted-foreground hover:text-foreground">
-              Return to Home
+          <Link to="/rehab-centers">
+            <Button variant="outline" className="w-full text-muted-foreground hover:text-foreground">
+              Browse Treatment Centers
             </Button>
           </Link>
         </div>
