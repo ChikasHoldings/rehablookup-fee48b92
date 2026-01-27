@@ -459,40 +459,36 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Centers - Horizontal Carousel */}
-      <section className="py-8 md:py-10 lg:py-14 overflow-hidden">
-        <div className="container">
-          {/* Section Header - Sleek inline design */}
-          <div className="mb-4 md:mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20">
-                <Star className="h-3.5 w-3.5 text-accent fill-accent" />
+      {/* Featured Centers - Horizontal Carousel - Only show when centers available */}
+      {!isLoadingFeatured && featuredCenters.length > 0 && (
+        <section className="py-8 md:py-10 lg:py-14 overflow-hidden">
+          <div className="container">
+            {/* Section Header - Sleek inline design */}
+            <div className="mb-4 md:mb-5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20">
+                  <Star className="h-3.5 w-3.5 text-accent fill-accent" />
+                </div>
+                <div>
+                  <h2 className="font-display text-base md:text-lg font-semibold text-foreground leading-tight">
+                    Featured Centers
+                  </h2>
+                  <p className="text-[11px] md:text-xs text-muted-foreground leading-tight">
+                    Top-rated facilities
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-display text-base md:text-lg font-semibold text-foreground leading-tight">
-                  Featured Centers
-                </h2>
-                <p className="text-[11px] md:text-xs text-muted-foreground leading-tight">
-                  Top-rated facilities
-                </p>
-              </div>
+              <Link 
+                to="/rehab-centers" 
+                className="inline-flex items-center gap-1 text-xs md:text-sm font-medium text-primary hover:text-primary/80 transition-colors group"
+              >
+                <span className="hidden sm:inline">View all</span>
+                <span className="sm:hidden">All</span>
+                <ArrowRight className="h-3 w-3 md:h-3.5 md:w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </Link>
             </div>
-            <Link 
-              to="/rehab-centers" 
-              className="inline-flex items-center gap-1 text-xs md:text-sm font-medium text-primary hover:text-primary/80 transition-colors group"
-            >
-              <span className="hidden sm:inline">View all</span>
-              <span className="sm:hidden">All</span>
-              <ArrowRight className="h-3 w-3 md:h-3.5 md:w-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </div>
 
-          {/* Carousel */}
-          {isLoadingFeatured ? (
-            <FeaturedCentersLoading />
-          ) : featuredCenters.length === 0 ? (
-            <FeaturedCentersLoading />
-          ) : (
+            {/* Carousel */}
             <div className="relative -mx-4 px-4 md:mx-0 md:px-0">
               <Carousel
                 opts={{
@@ -529,9 +525,9 @@ const Index = () => {
                 <span className="text-[10px] text-muted-foreground/70">← Swipe →</span>
               </div>
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* Treatment Options */}
       <section className="py-10 md:py-12 lg:py-20 bg-muted/40 border-y border-border/50">

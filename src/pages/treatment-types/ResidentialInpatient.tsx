@@ -329,33 +329,35 @@ const ResidentialInpatient = () => {
         </div>
       </section>
 
-      {/* Related Centers */}
-      <section className="bg-secondary/30 section-padding">
-        <div className="container">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">
-                Residential Treatment Centers
-              </h2>
-              <p className="mt-1 text-muted-foreground">
-                Verified inpatient facilities offering 24/7 care
-              </p>
+      {/* Related Centers - Only show when centers available */}
+      {relatedCenters.length > 0 && (
+        <section className="bg-secondary/30 section-padding">
+          <div className="container">
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">
+                  Residential Treatment Centers
+                </h2>
+                <p className="mt-1 text-muted-foreground">
+                  Verified inpatient facilities offering 24/7 care
+                </p>
+              </div>
+              <Link to="/rehab-centers">
+                <Button variant="outline" className="gap-2">
+                  View All
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
-            <Link to="/rehab-centers">
-              <Button variant="outline" className="gap-2">
-                View All
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {relatedCenters.map((center) => (
-              <TreatmentCenterCard key={center.id} center={center} />
-            ))}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {relatedCenters.map((center) => (
+                <TreatmentCenterCard key={center.id} center={center} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FAQ Section */}
       <section className="border-t bg-card section-padding">
