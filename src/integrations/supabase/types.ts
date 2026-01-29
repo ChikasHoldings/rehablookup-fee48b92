@@ -2215,22 +2215,28 @@ export type Database = {
       }
       leads: {
         Row: {
+          age_range: string | null
           assigned_at: string | null
           assignment_reason: string | null
           assignment_status: string | null
+          best_time_to_call: string | null
           budget_preference: string | null
+          co_occurring_conditions: string[] | null
           created_at: string
           dual_diagnosis: string | null
           email: string
           email_verified: boolean | null
+          employment_status: string | null
           exclusivity: string | null
           facility_id: string | null
           follow_up_reminder_sent_at: string | null
+          gender: string | null
           id: string
           inquiry_type: string | null
           insurance_provider: string | null
           insurance_type: string | null
           ip_hash: string | null
+          legal_involvement: string | null
           level_of_care: string | null
           location_city_state: string | null
           location_zip: string | null
@@ -2238,12 +2244,16 @@ export type Database = {
           name: string
           phone: string
           preferred_contact: string
+          previous_treatment: string | null
+          previous_treatment_details: string | null
           primary_substance: string[] | null
           provider_responded_at: string | null
           provider_response_status: string | null
           qualification_reason: string | null
           qualified: boolean | null
           quality_flag: string | null
+          readiness_level: string | null
+          relationship_to_patient: string | null
           routing_order: number | null
           shared_with: string[] | null
           snooze_until: string | null
@@ -2252,25 +2262,32 @@ export type Database = {
           status: string
           urgency: string | null
           validation_status: string | null
+          veteran_status: string | null
           who_seeking_help: string | null
         }
         Insert: {
+          age_range?: string | null
           assigned_at?: string | null
           assignment_reason?: string | null
           assignment_status?: string | null
+          best_time_to_call?: string | null
           budget_preference?: string | null
+          co_occurring_conditions?: string[] | null
           created_at?: string
           dual_diagnosis?: string | null
           email: string
           email_verified?: boolean | null
+          employment_status?: string | null
           exclusivity?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
+          gender?: string | null
           id?: string
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
           ip_hash?: string | null
+          legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null
           location_zip?: string | null
@@ -2278,12 +2295,16 @@ export type Database = {
           name: string
           phone: string
           preferred_contact?: string
+          previous_treatment?: string | null
+          previous_treatment_details?: string | null
           primary_substance?: string[] | null
           provider_responded_at?: string | null
           provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
           quality_flag?: string | null
+          readiness_level?: string | null
+          relationship_to_patient?: string | null
           routing_order?: number | null
           shared_with?: string[] | null
           snooze_until?: string | null
@@ -2292,25 +2313,32 @@ export type Database = {
           status?: string
           urgency?: string | null
           validation_status?: string | null
+          veteran_status?: string | null
           who_seeking_help?: string | null
         }
         Update: {
+          age_range?: string | null
           assigned_at?: string | null
           assignment_reason?: string | null
           assignment_status?: string | null
+          best_time_to_call?: string | null
           budget_preference?: string | null
+          co_occurring_conditions?: string[] | null
           created_at?: string
           dual_diagnosis?: string | null
           email?: string
           email_verified?: boolean | null
+          employment_status?: string | null
           exclusivity?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
+          gender?: string | null
           id?: string
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
           ip_hash?: string | null
+          legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null
           location_zip?: string | null
@@ -2318,12 +2346,16 @@ export type Database = {
           name?: string
           phone?: string
           preferred_contact?: string
+          previous_treatment?: string | null
+          previous_treatment_details?: string | null
           primary_substance?: string[] | null
           provider_responded_at?: string | null
           provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
           quality_flag?: string | null
+          readiness_level?: string | null
+          relationship_to_patient?: string | null
           routing_order?: number | null
           shared_with?: string[] | null
           snooze_until?: string | null
@@ -2332,6 +2364,7 @@ export type Database = {
           status?: string
           urgency?: string | null
           validation_status?: string | null
+          veteran_status?: string | null
           who_seeking_help?: string | null
         }
         Relationships: [
@@ -4014,96 +4047,159 @@ export type Database = {
     Views: {
       leads_provider_view: {
         Row: {
+          age_range: string | null
+          assigned_at: string | null
+          assignment_reason: string | null
           assignment_status: string | null
+          best_time_to_call: string | null
           budget_preference: string | null
+          co_occurring_conditions: string[] | null
           created_at: string | null
           dual_diagnosis: string | null
           email: string | null
           email_verified: boolean | null
+          employment_status: string | null
+          exclusivity: string | null
           facility_id: string | null
           follow_up_reminder_sent_at: string | null
+          gender: string | null
           id: string | null
           inquiry_type: string | null
           insurance_provider: string | null
           insurance_type: string | null
+          ip_hash: string | null
           is_unlocked: boolean | null
+          legal_involvement: string | null
           level_of_care: string | null
           location_city_state: string | null
           location_zip: string | null
           message: string | null
           name: string | null
           phone: string | null
+          preferred_contact: string | null
+          previous_treatment: string | null
+          previous_treatment_details: string | null
           primary_substance: string[] | null
           provider_responded_at: string | null
           provider_response_status: string | null
           qualification_reason: string | null
           qualified: boolean | null
+          quality_flag: string | null
+          readiness_level: string | null
+          relationship_to_patient: string | null
+          routing_order: number | null
+          shared_with: string[] | null
           snooze_until: string | null
           source: string | null
+          special_needs: string[] | null
           status: string | null
           urgency: string | null
+          validation_status: string | null
+          veteran_status: string | null
           who_seeking_help: string | null
         }
         Insert: {
+          age_range?: string | null
+          assigned_at?: string | null
+          assignment_reason?: string | null
           assignment_status?: string | null
+          best_time_to_call?: string | null
           budget_preference?: string | null
+          co_occurring_conditions?: string[] | null
           created_at?: string | null
           dual_diagnosis?: string | null
           email?: never
           email_verified?: boolean | null
+          employment_status?: string | null
+          exclusivity?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
+          gender?: string | null
           id?: string | null
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
+          ip_hash?: string | null
           is_unlocked?: never
+          legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null
           location_zip?: string | null
           message?: string | null
           name?: never
           phone?: never
+          preferred_contact?: string | null
+          previous_treatment?: string | null
+          previous_treatment_details?: string | null
           primary_substance?: string[] | null
           provider_responded_at?: string | null
           provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
+          quality_flag?: string | null
+          readiness_level?: string | null
+          relationship_to_patient?: string | null
+          routing_order?: number | null
+          shared_with?: string[] | null
           snooze_until?: string | null
           source?: string | null
+          special_needs?: string[] | null
           status?: string | null
           urgency?: string | null
+          validation_status?: string | null
+          veteran_status?: string | null
           who_seeking_help?: string | null
         }
         Update: {
+          age_range?: string | null
+          assigned_at?: string | null
+          assignment_reason?: string | null
           assignment_status?: string | null
+          best_time_to_call?: string | null
           budget_preference?: string | null
+          co_occurring_conditions?: string[] | null
           created_at?: string | null
           dual_diagnosis?: string | null
           email?: never
           email_verified?: boolean | null
+          employment_status?: string | null
+          exclusivity?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
+          gender?: string | null
           id?: string | null
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
+          ip_hash?: string | null
           is_unlocked?: never
+          legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null
           location_zip?: string | null
           message?: string | null
           name?: never
           phone?: never
+          preferred_contact?: string | null
+          previous_treatment?: string | null
+          previous_treatment_details?: string | null
           primary_substance?: string[] | null
           provider_responded_at?: string | null
           provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
+          quality_flag?: string | null
+          readiness_level?: string | null
+          relationship_to_patient?: string | null
+          routing_order?: number | null
+          shared_with?: string[] | null
           snooze_until?: string | null
           source?: string | null
+          special_needs?: string[] | null
           status?: string | null
           urgency?: string | null
+          validation_status?: string | null
+          veteran_status?: string | null
           who_seeking_help?: string | null
         }
         Relationships: [

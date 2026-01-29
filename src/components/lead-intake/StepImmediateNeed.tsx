@@ -4,8 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, User, Users, MapPin, Loader2, CheckCircle2 } from "lucide-react";
-import { LeadIntakeFormData, URGENCY_OPTIONS } from "./types";
+import { ArrowRight, User, Users, MapPin, Loader2, CheckCircle2, Calendar, UserCircle } from "lucide-react";
+import { 
+  LeadIntakeFormData, 
+  URGENCY_OPTIONS, 
+  AGE_RANGE_OPTIONS, 
+  GENDER_OPTIONS,
+  RELATIONSHIP_OPTIONS 
+} from "./types";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +86,13 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
       }
     };
   }, [lookupTimeout]);
+
+  // Auto-set relationship when "self" is selected
+  useEffect(() => {
+    if (formData.whoSeekingHelp === "self" && formData.relationshipToPatient !== "self") {
+      updateFormData({ relationshipToPatient: "self" });
+    }
+  }, [formData.whoSeekingHelp, formData.relationshipToPatient, updateFormData]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -166,6 +179,31 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
         )}
       </div>
 
+      {/* Relationship to Patient - Show only when helping loved one */}
+      {formData.whoSeekingHelp === "loved-one" && (
+        <div className="space-y-3 animate-fade-in">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            Your relationship to the patient
+          </Label>
+          <Select
+            value={formData.relationshipToPatient}
+            onValueChange={(value) => updateFormData({ relationshipToPatient: value })}
+          >
+            <SelectTrigger className="h-12 text-sm">
+              <SelectValue placeholder="Select relationship" />
+            </SelectTrigger>
+            <SelectContent>
+              {RELATIONSHIP_OPTIONS.filter(o => o.value !== "self").map((option) => (
+                <SelectItem key={option.value} value={option.value} className="py-3">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* Location Input - Streamlined */}
       <div className="space-y-3">
         <Label htmlFor="locationZip" className="text-sm font-medium flex items-center gap-2">
@@ -231,6 +269,53 @@ export function StepImmediateNeed({ formData, updateFormData, onNext }: StepImme
             Location detected
           </p>
         )}
+      </div>
+
+      {/* Age Range & Gender - Side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-primary" />
+            Patient's Age Range
+          </Label>
+          <Select
+            value={formData.ageRange}
+            onValueChange={(value) => updateFormData({ ageRange: value })}
+          >
+            <SelectTrigger className="h-12 text-sm">
+              <SelectValue placeholder="Select age range" />
+            </SelectTrigger>
+            <SelectContent>
+              {AGE_RANGE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="py-3">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-3">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <UserCircle className="h-4 w-4 text-primary" />
+            Patient's Gender
+          </Label>
+          <Select
+            value={formData.gender}
+            onValueChange={(value) => updateFormData({ gender: value })}
+          >
+            <SelectTrigger className="h-12 text-sm">
+              <SelectValue placeholder="Select gender" />
+            </SelectTrigger>
+            <SelectContent>
+              {GENDER_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="py-3">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Urgency - Enhanced */}
