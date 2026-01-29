@@ -13,19 +13,22 @@ interface AtRiskProvider {
   facilityName: string;
   email: string;
   contactName: string;
-  plan: string;
+  plan: "free" | "pro";
   riskScore: number;
   riskFactors: string[];
   daysInactive: number;
-  leadsUsed: number;
-  leadLimit: number;
+  leadsUnlocked: number;
   unrespondedLeads: number;
 }
 
-const PLAN_CONFIG: Record<string, { lead_limit: number; name: string }> = {
-  prod_TbyzJVNOQL71NN: { lead_limit: 75, name: "Featured" },
-  prod_Tbyz1bf6iYyzYd: { lead_limit: 25, name: "Professional" },
-};
+// Pro product IDs - includes legacy IDs for backward compatibility
+const PRO_PRODUCT_IDS = [
+  "prod_pro_monthly",
+  "prod_TbalLOPujTIoUe", 
+  "prod_Tbyz1bf6iYyzYd",
+  "prod_TbalOeJZA2ZoJl", 
+  "prod_TbyzJVNOQL71NN",
+];
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -35,6 +38,7 @@ const logStep = (step: string, details?: unknown) => {
 // Generate personalized email based on risk factors
 function generateRetentionEmail(provider: AtRiskProvider): { subject: string; html: string } {
   const primaryRiskFactor = provider.riskFactors[0] || "inactivity";
+  const planLabel = provider.plan === "pro" ? "Pro" : "Free";
   
   // Determine primary concern and personalize message
   let headline = "";
@@ -46,14 +50,14 @@ function generateRetentionEmail(provider: AtRiskProvider): { subject: string; ht
     headline = "We've missed you!";
     mainMessage = `
       <p>Hi ${provider.contactName || "there"},</p>
-      <p>We noticed you haven't logged into your RehabLookup dashboard in a while. Your ${provider.plan} plan is still active, and there may be opportunities waiting for you.</p>
+      <p>We noticed you haven't logged into your RehabLookup dashboard in a while. Your ${planLabel} account is still active, and there may be opportunities waiting for you.</p>
       <p>Here's what's been happening while you were away:</p>
       <ul style="color: #4b5563; padding-left: 20px;">
         <li>Your facility profile continues to be visible to those seeking treatment</li>
-        <li>You have <strong>${provider.leadLimit - provider.leadsUsed}</strong> qualified leads remaining this month</li>
+        <li>You have unlocked <strong>${provider.leadsUnlocked}</strong> leads this month</li>
         ${provider.unrespondedLeads > 0 ? `<li><strong>${provider.unrespondedLeads} lead(s)</strong> are waiting for your response</li>` : ''}
       </ul>
-      <p>Log back in today to see what's new and make the most of your subscription.</p>
+      <p>Log back in today to see what's new and make the most of your account.</p>
     `;
     ctaText = "Log In to Your Dashboard";
     ctaUrl = "https://rehablookup.com/provider/login";
@@ -72,11 +76,11 @@ function generateRetentionEmail(provider: AtRiskProvider): { subject: string; ht
     `;
     ctaText = "View Your Leads";
     ctaUrl = "https://rehablookup.com/provider/leads";
-  } else if (primaryRiskFactor.includes("Low lead utilization")) {
-    headline = "Make the most of your plan";
+  } else if (primaryRiskFactor.includes("Low lead")) {
+    headline = "Make the most of your account";
     mainMessage = `
       <p>Hi ${provider.contactName || "there"},</p>
-      <p>We noticed your ${provider.plan} plan includes up to <strong>${provider.leadLimit} qualified leads per month</strong>, but you've only received ${provider.leadsUsed} so far.</p>
+      <p>We noticed you haven't unlocked many leads recently. ${provider.plan === "pro" ? "As a Pro member, you get 20% off all lead unlocks!" : ""}</p>
       <p><strong>Here are some tips to attract more leads:</strong></p>
       <ul style="color: #4b5563; padding-left: 20px;">
         <li>Complete your facility profile with photos and detailed descriptions</li>
@@ -92,10 +96,10 @@ function generateRetentionEmail(provider: AtRiskProvider): { subject: string; ht
     headline = "Your subscription is renewing soon";
     mainMessage = `
       <p>Hi ${provider.contactName || "there"},</p>
-      <p>Your ${provider.plan} subscription will renew soon. We want to make sure you're getting the most value from your plan.</p>
+      <p>Your ${planLabel} subscription will renew soon. We want to make sure you're getting the most value from your account.</p>
       <p><strong>This month's summary:</strong></p>
       <ul style="color: #4b5563; padding-left: 20px;">
-        <li>Leads received: <strong>${provider.leadsUsed}</strong> of ${provider.leadLimit}</li>
+        <li>Leads unlocked: <strong>${provider.leadsUnlocked}</strong></li>
         <li>Your facility remains visible to treatment seekers</li>
       </ul>
       <p>If you have any questions about your subscription or need assistance, our team is here to help.</p>
@@ -106,13 +110,13 @@ function generateRetentionEmail(provider: AtRiskProvider): { subject: string; ht
     headline = "Let's reconnect";
     mainMessage = `
       <p>Hi ${provider.contactName || "there"},</p>
-      <p>We wanted to check in and see how things are going with your RehabLookup ${provider.plan} subscription.</p>
+      <p>We wanted to check in and see how things are going with your RehabLookup ${planLabel} account.</p>
       <p>Your facility, <strong>${provider.facilityName}</strong>, continues to be visible to people seeking treatment options. We're committed to helping you connect with those in need.</p>
       <p>Is there anything we can help you with? Our support team is available to assist with:</p>
       <ul style="color: #4b5563; padding-left: 20px;">
         <li>Profile optimization tips</li>
         <li>Lead management best practices</li>
-        <li>Questions about your subscription</li>
+        <li>Questions about your account</li>
       </ul>
     `;
     ctaText = "Contact Support";
@@ -154,11 +158,11 @@ function generateRetentionEmail(provider: AtRiskProvider): { subject: string; ht
             <div class="stats-card">
               <div class="stat-row">
                 <span class="stat-label">Your Plan</span>
-                <span class="stat-value">${provider.plan}</span>
+                <span class="stat-value">${planLabel}</span>
               </div>
               <div class="stat-row">
-                <span class="stat-label">Leads This Month</span>
-                <span class="stat-value">${provider.leadsUsed} / ${provider.leadLimit}</span>
+                <span class="stat-label">Leads Unlocked This Month</span>
+                <span class="stat-value">${provider.leadsUnlocked}</span>
               </div>
               <div class="stat-row">
                 <span class="stat-label">Facility</span>
@@ -172,7 +176,7 @@ function generateRetentionEmail(provider: AtRiskProvider): { subject: string; ht
           </div>
           <div class="footer">
             <p class="footer-text">Need help? <a href="https://rehablookup.com/provider/help" class="help-link">Contact our support team</a></p>
-            <p class="footer-text">You're receiving this because you have an active subscription with RehabLookup.</p>
+            <p class="footer-text">You're receiving this because you have an account with RehabLookup.</p>
             <p class="footer-text">RehabLookup • Connecting people with treatment options</p>
           </div>
         </div>
@@ -257,18 +261,17 @@ serve(async (req) => {
 
       if (!facility) continue;
 
-      // Determine plan
+      // Determine plan - simplified to Free/Pro
       const productId = subscription.items.data[0]?.price?.product as string;
-      const planConfig = PLAN_CONFIG[productId] || { lead_limit: 25, name: "Professional" };
+      const plan: "free" | "pro" = PRO_PRODUCT_IDS.includes(productId) ? "pro" : "free";
 
-      // Get lead count this month
+      // Get unlocked leads count this month
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const { count: leadsThisMonth } = await supabaseClient
-        .from("leads")
+      const { count: leadsUnlocked } = await supabaseClient
+        .from("lead_unlocks")
         .select("id", { count: "exact", head: true })
         .eq("facility_id", facility.id)
-        .eq("qualified", true)
-        .gte("created_at", startOfMonth.toISOString());
+        .gte("unlocked_at", startOfMonth.toISOString());
 
       // Get last login activity
       const { data: lastActivity } = await supabaseClient
@@ -310,13 +313,10 @@ serve(async (req) => {
         riskFactors.push(`${unrespondedLeads} unresponded leads`);
       }
 
-      const leadUsagePercent = planConfig.lead_limit > 0 
-        ? ((leadsThisMonth || 0) / planConfig.lead_limit) * 100 
-        : 0;
-      
-      if (leadUsagePercent < 10 && (leadsThisMonth || 0) < 3) {
+      // Low lead unlock activity
+      if ((leadsUnlocked || 0) < 2) {
         riskScore += 20;
-        riskFactors.push(`Low lead utilization (${leadUsagePercent.toFixed(0)}%)`);
+        riskFactors.push(`Low lead activity (${leadsUnlocked || 0} unlocked)`);
       }
 
       const subscriptionEnd = new Date(subscription.current_period_end * 1000);
@@ -334,12 +334,11 @@ serve(async (req) => {
           facilityName: facility.name,
           email,
           contactName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Provider',
-          plan: planConfig.name,
+          plan,
           riskScore,
           riskFactors,
           daysInactive,
-          leadsUsed: leadsThisMonth || 0,
-          leadLimit: planConfig.lead_limit,
+          leadsUnlocked: leadsUnlocked || 0,
           unrespondedLeads: unrespondedLeads || 0,
         });
       }

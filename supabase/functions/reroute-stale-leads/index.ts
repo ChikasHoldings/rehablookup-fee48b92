@@ -10,42 +10,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ============ PLAN CONFIGURATION (Aligned with submit-qualified-lead) ============
-// Basic = 0 leads (excluded from routing)
-// Professional = 100 shared leads/month (max 2 providers per lead)
-// Featured = 100 exclusive leads/month (1 provider per lead)
-const PLAN_CONFIG: Record<string, { 
-  product_ids: string[]; 
-  lead_limit: number; 
-  priority_score: number;
-  exclusivity: 'shared' | 'exclusive';
-}> = {
-  basic: { 
-    product_ids: [], 
-    lead_limit: 0, 
-    priority_score: 0,
-    exclusivity: 'exclusive'
-  },
-  professional: { 
-    product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], 
-    lead_limit: 100, // 100 shared leads/month
-    priority_score: 15,
-    exclusivity: 'shared'
-  },
-  featured: { 
-    product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], 
-    lead_limit: 100, // 100 exclusive leads/month
-    priority_score: 30,
-    exclusivity: 'exclusive'
-  },
-};
-
-const PAID_PLANS = ["professional", "featured"];
+// ============ PLAN CONFIGURATION - Simplified to Free/Pro ============
+// Free = No routed leads (pay-per-unlock model)
+// Pro = 20% off unlocks, featured placement (still pay-per-unlock)
+const PRO_PRODUCT_IDS = [
+  "prod_pro_monthly",
+  "prod_TbalLOPujTIoUe", 
+  "prod_Tbyz1bf6iYyzYd",
+  "prod_TbalOeJZA2ZoJl", 
+  "prod_TbyzJVNOQL71NN",
+];
 
 // ============ SCORING WEIGHTS ============
 const SCORING_WEIGHTS = {
-  PLAN_FEATURED: 30,
-  PLAN_PROFESSIONAL: 15,
+  PLAN_PRO: 30,
+  PLAN_FREE: 0,
   // Tiered location matching: zip > city > state > nationwide
   LOCATION_ZIP_MATCH: 40,      // Exact zip code match - highest priority
   LOCATION_CITY_MATCH: 25,     // Same city
@@ -93,18 +72,15 @@ interface ProviderCapacity {
   providerEmail: string | null;
   city: string;
   state: string;
-  zipCode: string;  // Added for zip code matching
-  planName: string;
-  leadLimit: number;
-  usedLeads: number;
-  availableCapacity: number;
+  zipCode: string;
+  planName: "free" | "pro";
   lastAssignedAt: string | null;
   serviceTypes: string[];
   insuranceTypes: string[];
-  leadsThisCycle: number;
+  leadsUnlockedThisMonth: number;
   nonResponseCount: number;
   reassignedCount: number;
-  locationTier: 'zip' | 'city' | 'state' | 'nationwide';  // Track match tier
+  locationTier: 'zip' | 'city' | 'state' | 'nationwide';
 }
 
 interface ProviderScore {
@@ -199,9 +175,8 @@ async function getEligibleProviders(
 
     if (!profile?.email) continue;
 
-    // Check subscription
-    let planName = "basic";
-    let leadLimit = 0;
+    // Check subscription - simplified to Free/Pro
+    let planName: "free" | "pro" = "free";
 
     try {
       const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
@@ -214,12 +189,8 @@ async function getEligibleProviders(
 
         if (subscriptions.data.length > 0) {
           const productId = subscriptions.data[0].items.data[0].price.product as string;
-          if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-            planName = "featured";
-            leadLimit = PLAN_CONFIG.featured.lead_limit;
-          } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-            planName = "professional";
-            leadLimit = PLAN_CONFIG.professional.lead_limit;
+          if (PRO_PRODUCT_IDS.includes(productId)) {
+            planName = "pro";
           }
         }
       }
@@ -227,9 +198,6 @@ async function getEligibleProviders(
       log(requestId, "WARN", "Stripe error", { email: profile.email, error: String(e) });
       continue;
     }
-
-    // Skip non-paid plans
-    if (!PAID_PLANS.includes(planName)) continue;
 
     // ============ TIERED LOCATION MATCHING (NO hard filter - nationwide fallback) ============
     const providerState = normalizeState(facility.state || "");
@@ -245,17 +213,13 @@ async function getEligibleProviders(
     } else if (leadState && providerState && providerState === leadState) {
       locationTier = 'state';
     }
-    // No continue here - nationwide providers are still eligible!
-    // Count leads this month
-    const { count: monthlyLeadCount } = await supabase
-      .from("leads")
+
+    // Count unlocked leads this month
+    const { count: unlockedLeadsCount } = await supabase
+      .from("lead_unlocks")
       .select("*", { count: "exact", head: true })
       .eq("facility_id", facility.id)
-      .gte("created_at", startOfMonth.toISOString())
-      .eq("qualified", true);
-
-    const usedLeads = monthlyLeadCount || 0;
-    if (usedLeads >= leadLimit) continue;
+      .gte("unlocked_at", startOfMonth.toISOString());
 
     // Get last assigned and quality metrics
     const { data: lastLead } = await supabase
@@ -292,13 +256,10 @@ async function getEligibleProviders(
       state: facility.state,
       zipCode: facility.zip_code || "",
       planName,
-      leadLimit,
-      usedLeads,
-      availableCapacity: leadLimit - usedLeads,
       lastAssignedAt: lastLead?.assigned_at || null,
       serviceTypes: (facility.facility_services || []).map((s: { service_name: string }) => s.service_name.toLowerCase()),
       insuranceTypes: (facility.facility_insurance || []).map((i: { insurance_name: string }) => i.insurance_name.toLowerCase()),
-      leadsThisCycle: usedLeads,
+      leadsUnlockedThisMonth: unlockedLeadsCount || 0,
       nonResponseCount: nonResponseCount || 0,
       reassignedCount: reassignedCount || 0,
       locationTier,
@@ -307,6 +268,10 @@ async function getEligibleProviders(
 
   log(requestId, "INFO", "Alternative providers found", { 
     count: providers.length,
+    byPlan: {
+      pro: providers.filter(p => p.planName === 'pro').length,
+      free: providers.filter(p => p.planName === 'free').length,
+    },
     byTier: {
       zip: providers.filter(p => p.locationTier === 'zip').length,
       city: providers.filter(p => p.locationTier === 'city').length,
@@ -331,11 +296,11 @@ function calculateProviderScore(
     qualityPenalty: 0,
   };
 
-  // Plan priority
-  if (provider.planName === "featured") {
-    breakdown.planPriority = SCORING_WEIGHTS.PLAN_FEATURED;
-  } else if (provider.planName === "professional") {
-    breakdown.planPriority = SCORING_WEIGHTS.PLAN_PROFESSIONAL;
+  // Plan priority - Pro gets higher score
+  if (provider.planName === "pro") {
+    breakdown.planPriority = SCORING_WEIGHTS.PLAN_PRO;
+  } else {
+    breakdown.planPriority = SCORING_WEIGHTS.PLAN_FREE;
   }
 
   // Location relevance - use pre-computed location tier
@@ -375,13 +340,13 @@ function calculateProviderScore(
   }
 
   // Fairness bonuses
-  const sameTierProviders = allProviders.filter(p => p.planName === provider.planName);
-  if (sameTierProviders.length > 1) {
-    const avgLeads = sameTierProviders.reduce((sum, p) => sum + p.leadsThisCycle, 0) / sameTierProviders.length;
-    if (provider.leadsThisCycle < avgLeads) {
-      breakdown.fairnessBonus += Math.min(SCORING_WEIGHTS.FAIRNESS_FEW_LEADS, (avgLeads - provider.leadsThisCycle) * 3);
+  const samePlanProviders = allProviders.filter(p => p.planName === provider.planName);
+  if (samePlanProviders.length > 1) {
+    const avgLeads = samePlanProviders.reduce((sum, p) => sum + p.leadsUnlockedThisMonth, 0) / samePlanProviders.length;
+    if (provider.leadsUnlockedThisMonth < avgLeads) {
+      breakdown.fairnessBonus += Math.min(SCORING_WEIGHTS.FAIRNESS_FEW_LEADS, (avgLeads - provider.leadsUnlockedThisMonth) * 3);
     }
-    if (provider.leadsThisCycle === 0) {
+    if (provider.leadsUnlockedThisMonth === 0) {
       breakdown.fairnessBonus += SCORING_WEIGHTS.FAIRNESS_ZERO_LEADS_BOOST;
     }
   }
@@ -404,11 +369,11 @@ function calculateProviderScore(
   }
 
   // Fairness dampener
-  if (sameTierProviders.length > 1) {
-    const maxLeads = Math.max(...sameTierProviders.map(p => p.leadsThisCycle));
-    const minLeads = Math.min(...sameTierProviders.map(p => p.leadsThisCycle));
-    if (maxLeads > 0 && provider.leadsThisCycle === maxLeads && maxLeads > minLeads + 3) {
-      breakdown.fairnessBonus -= Math.min(20, (provider.leadsThisCycle - minLeads) * 2);
+  if (samePlanProviders.length > 1) {
+    const maxLeads = Math.max(...samePlanProviders.map(p => p.leadsUnlockedThisMonth));
+    const minLeads = Math.min(...samePlanProviders.map(p => p.leadsUnlockedThisMonth));
+    if (maxLeads > 0 && provider.leadsUnlockedThisMonth === maxLeads && maxLeads > minLeads + 3) {
+      breakdown.fairnessBonus -= Math.min(20, (provider.leadsUnlockedThisMonth - minLeads) * 2);
     }
   }
 
@@ -443,7 +408,7 @@ async function sendReassignmentNotification(
           </div>
           <div style="background: #ffffff; padding: 24px; border: 1px solid #e5e7eb; border-top: none;">
             <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-              Great news! A new lead is waiting for you. Respond quickly to maximize your chances of connecting with them.
+              Great news! A new lead is waiting for you. Unlock their contact details to connect with them.
             </p>
             <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
               <p style="margin: 0 0 8px 0;"><strong>Name:</strong> ${lead.name}</p>
@@ -615,10 +580,6 @@ serve(async (req) => {
         continue;
       }
 
-      // Determine exclusivity based on plan
-      const exclusivity = PLAN_CONFIG[bestProvider.provider.planName as keyof typeof PLAN_CONFIG]?.exclusivity || 'exclusive';
-      const leadDeductedAt = new Date().toISOString();
-
       // Log routing decision with full details
       await supabase.from("lead_routing_logs").insert({
         lead_id: lead.id,
@@ -627,31 +588,19 @@ serve(async (req) => {
         assignment_reason: `Re-routed from non-responsive provider after 24h (score: ${bestProvider.totalScore})`,
         routing_source: "reroute_stale",
         plan_tier: bestProvider.provider.planName,
-        lead_limit: bestProvider.provider.leadLimit,
-        used_leads: bestProvider.provider.usedLeads,
-        exclusivity: exclusivity,
-        provider_routing_order: 1,
-        lead_deducted_at: leadDeductedAt,
         eligibility_check_result: {
           request_id: requestId,
           stale_hours: 24,
           original_provider: lead.facility_id,
           scoring_breakdown: bestProvider.breakdown,
-          exclusivity: exclusivity,
           new_provider: {
             id: bestProvider.provider.facilityId,
             name: bestProvider.provider.facilityName,
             plan: bestProvider.provider.planName,
-            capacity: `${bestProvider.provider.usedLeads}/${bestProvider.provider.leadLimit}`,
+            leadsUnlocked: bestProvider.provider.leadsUnlockedThisMonth,
           },
         },
       });
-      
-      // Update the lead with exclusivity
-      await supabase
-        .from("leads")
-        .update({ exclusivity: exclusivity })
-        .eq("id", lead.id);
 
       // Create notifications
       await supabase.from("provider_notifications").insert({
@@ -659,7 +608,7 @@ serve(async (req) => {
         facility_id: bestProvider.provider.facilityId,
         type: "lead_received",
         title: `🎉 You have a new lead!`,
-        message: `${lead.name} is interested in your facility. Contact them quickly for the best results!`,
+        message: `${lead.name} is interested in your facility. Unlock their contact info to connect!`,
         metadata: {
           lead_id: lead.id,
           lead_name: lead.name,

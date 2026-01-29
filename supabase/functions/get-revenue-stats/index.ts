@@ -11,11 +11,14 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[GET-REVENUE-STATS] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-// Product IDs from useSubscription.ts - both new and legacy IDs
-const PRODUCT_IDS = {
-  professional: ["prod_Tbyz1bf6iYyzYd", "prod_TbalLOPujTIoUe"],
-  featured: ["prod_TbyzJVNOQL71NN", "prod_TbalOeJZA2ZoJl"],
-};
+// Pro product IDs - includes legacy IDs for backward compatibility
+const PRO_PRODUCT_IDS = [
+  "prod_pro_monthly",
+  "prod_TbalLOPujTIoUe", 
+  "prod_Tbyz1bf6iYyzYd",
+  "prod_TbalOeJZA2ZoJl", 
+  "prod_TbyzJVNOQL71NN",
+];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -60,9 +63,8 @@ serve(async (req) => {
         JSON.stringify({ 
           total_subscriptions: 0,
           active_subscriptions: 0,
-          professional_count: 0,
-          featured_count: 0,
-          basic_count: 0,
+          pro_count: 0,
+          free_count: 0,
           mrr: 0,
           mrr_growth: 0,
           new_last_30_days: 0,
@@ -105,8 +107,7 @@ serve(async (req) => {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     let activeCount = 0;
-    let professionalCount = 0;
-    let featuredCount = 0;
+    let proCount = 0;
     let canceledLast30Days = 0;
     let newLast30Days = 0;
     let mrr = 0;
@@ -115,7 +116,7 @@ serve(async (req) => {
       customer_id: string;
       customer_email: string;
       customer_name: string;
-      plan: string;
+      plan: "free" | "pro";
       status: string;
       current_period_end: string;
       created: string;
@@ -139,12 +140,8 @@ serve(async (req) => {
       const interval = sub.items.data[0]?.price?.recurring?.interval;
       const monthlyAmount = interval === "year" ? amount / 12 : amount;
 
-      let plan = "basic";
-      if (PRODUCT_IDS.professional.includes(productId)) {
-        plan = "professional";
-      } else if (PRODUCT_IDS.featured.includes(productId)) {
-        plan = "featured";
-      }
+      // Simplified to Free/Pro model
+      const plan: "free" | "pro" = PRO_PRODUCT_IDS.includes(productId) ? "pro" : "free";
 
       // Safely parse dates - handle null/undefined/invalid timestamps
       const createdTimestamp = sub.created;
@@ -166,10 +163,8 @@ serve(async (req) => {
         activeCount++;
         mrr += monthlyAmount / 100;
 
-        if (PRODUCT_IDS.professional.includes(productId)) {
-          professionalCount++;
-        } else if (PRODUCT_IDS.featured.includes(productId)) {
-          featuredCount++;
+        if (plan === "pro") {
+          proCount++;
         }
 
         // New subscription in last 30 days
@@ -254,14 +249,14 @@ serve(async (req) => {
       ? Math.round(((currentRevenue - previousRevenue) / previousRevenue) * 100 * 10) / 10
       : currentRevenue > 0 ? 100 : 0;
 
-    const basicCount = activeCount - professionalCount - featuredCount;
+    // Free count = active subscriptions without Pro product (for display purposes, not actual Free tier)
+    const freeCount = activeCount - proCount;
 
     const stats = {
       total_subscriptions: allSubscriptions.length,
       active_subscriptions: activeCount,
-      professional_count: professionalCount,
-      featured_count: featuredCount,
-      basic_count: basicCount > 0 ? basicCount : 0,
+      pro_count: proCount,
+      free_count: freeCount > 0 ? freeCount : 0,
       mrr: Math.round(mrr * 100) / 100,
       mrr_growth: mrrGrowth,
       new_last_30_days: newLast30Days,
@@ -283,9 +278,8 @@ serve(async (req) => {
       upgrades: recentEvents.filter(e => e.type === "upgrade").length,
       downgrades: recentEvents.filter(e => e.type === "downgrade").length,
       subscriptionsByPlan: {
-        basic: basicCount > 0 ? basicCount : 0,
-        professional: professionalCount,
-        featured: featuredCount,
+        free: freeCount > 0 ? freeCount : 0,
+        pro: proCount,
       },
       totalCustomers: providerSubscriptions.length,
     };
