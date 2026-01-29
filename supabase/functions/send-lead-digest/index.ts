@@ -4,7 +4,6 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import {
   getProviderPlan,
-  getPlanStyles,
   emailStart,
   emailEnd,
   emailHeader,
@@ -13,8 +12,7 @@ import {
   emailFooter,
   emailGreeting,
   emailParagraph,
-  featuredInsightsBox,
-  usageBox,
+  proInsightsBox,
   tipBox,
   ctaButton,
   maskLeadName,
@@ -48,14 +46,10 @@ function generateDigestEmail(
   periodText: string,
   leads: Lead[],
   facilityNameMap: Record<string, string>,
-  usedLeads: number,
-  leadLimit: number,
+  unlockedLeadsCount: number,
   plan: PlanType
 ): string {
-  const isFeatured = plan === 'featured';
-  const isProfessional = plan === 'professional';
-  const isPaidPlan = isFeatured || isProfessional;
-  getPlanStyles(plan);
+  const isPro = plan === 'pro';
   
   // SECURITY: Mask lead contact info - providers must unlock leads to see full details
   const leadsHtml = leads.slice(0, 5).map((lead: Lead) => {
@@ -75,17 +69,14 @@ function generateDigestEmail(
     </tr>
   `}).join("");
 
-  // Featured provider insights
-  const featuredInsights = isFeatured 
-    ? featuredInsightsBox('As a Featured provider, your listings appear at the top of search results. You\'re receiving exclusive, high-intent leads.')
+  // Pro provider insights
+  const proInsights = isPro 
+    ? proInsightsBox('As a Pro member, you save 20% on every lead unlock. Your listings also get priority visibility in search results.')
     : '';
 
-  // Usage section
-  const usageSection = leadLimit > 0 ? usageBox(usedLeads, leadLimit, plan) : '';
-
-  // Tips section - only show upgrade prompts for Basic plan
-  const tipsSection = !isPaidPlan 
-    ? tipBox('Professional and Featured plans include exclusive leads delivered directly to you.', plan, { showUpgradePrompt: true })
+  // Tips section - only show upgrade prompts for Free plan
+  const tipsSection = !isPro 
+    ? tipBox('Upgrade to Pro for 20% off lead unlocks and priority search placement.', plan, { showUpgradePrompt: true })
     : '';
 
   return `
@@ -95,8 +86,7 @@ ${emailBodyStart()}
               ${emailGreeting(firstName)}
               ${emailParagraph(`You received <strong>${leads.length} new lead${leads.length === 1 ? "" : "s"}</strong> in the past ${periodText}. Unlock each lead to view their full contact details.`)}
               
-              ${featuredInsights}
-              ${usageSection}
+              ${proInsights}
               
               <!-- Leads List -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -231,17 +221,18 @@ const handler = async (req: Request): Promise<Response> => {
         continue;
       }
 
+      // Count unlocked leads this month
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
       
-      const { count: monthlyLeadCount } = await supabase
-        .from("leads")
+      const { count: unlockedCount } = await supabase
+        .from("lead_unlocks")
         .select("*", { count: "exact", head: true })
         .in("facility_id", facilityIds)
-        .gte("created_at", startOfMonth.toISOString());
+        .gte("unlocked_at", startOfMonth.toISOString());
       
-      const usedLeads = monthlyLeadCount || 0;
+      const unlockedLeadsCount = unlockedCount || 0;
 
       logStep(`Sending digest with ${leads.length} leads to ${profile.email}`);
 
@@ -254,13 +245,12 @@ const handler = async (req: Request): Promise<Response> => {
         periodText,
         leads,
         facilityNameMap,
-        usedLeads,
-        planInfo.leadLimit,
+        unlockedLeadsCount,
         planInfo.plan
       );
 
       try {
-        const subjectPrefix = planInfo.plan === "featured" ? "⭐ " : "";
+        const subjectPrefix = planInfo.plan === "pro" ? "⭐ " : "";
         
         await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",

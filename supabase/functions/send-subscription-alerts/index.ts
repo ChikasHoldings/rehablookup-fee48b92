@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import {
   PLAN_CONFIG,
-  PRODUCT_TO_PLAN,
+  PRO_PRODUCT_IDS,
   getPlanStyles,
   emailStart,
   emailEnd,
@@ -13,7 +13,7 @@ import {
   emailBodyEnd,
   emailGreeting,
   emailParagraph,
-  featuredInsightsBox,
+  proInsightsBox,
   ctaButton,
   type PlanType,
 } from "../_shared/email-templates.ts";
@@ -34,11 +34,11 @@ function generateRenewalEmail(
   days: number,
   renewalDate: string
 ): string {
-  const planConfig = PLAN_CONFIG[plan];
-  const isFeatured = plan === 'featured';
+  const isPro = plan === 'pro';
+  const planName = isPro ? "Pro" : "Free";
   
-  const featuredBenefits = isFeatured 
-    ? featuredInsightsBox('Priority placement, exclusive leads, and premium visibility will continue after renewal.')
+  const proInsights = isPro 
+    ? proInsightsBox('Your 20% discount on lead unlocks and priority search visibility will continue after renewal.')
     : '';
 
   return `
@@ -46,84 +46,13 @@ ${emailStart()}
 ${emailHeader('Subscription Renewal', plan)}
 ${emailBodyStart()}
               ${emailGreeting(firstName)}
-              ${emailParagraph(`Your <strong>${planConfig.name}</strong> plan renews in <strong>${days} day${days > 1 ? "s" : ""}</strong> on ${renewalDate}.`)}
+              ${emailParagraph(`Your <strong>${planName}</strong> subscription renews in <strong>${days} day${days > 1 ? "s" : ""}</strong> on ${renewalDate}.`)}
               
-              ${featuredBenefits}
+              ${proInsights}
               
-              ${emailParagraph('No action needed if you want to continue. To update your payment method or change plans, visit your billing settings.')}
+              ${emailParagraph('No action needed if you want to continue. To update your payment method or cancel, visit your billing settings.')}
               
               ${ctaButton('Manage Subscription', 'https://rehablookup.com/provider/billing', plan)}
-${emailBodyEnd()}
-              <tr>
-                <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
-                  <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                    RehabLookup | <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Notification settings</a>
-                  </p>
-                </td>
-              </tr>
-${emailEnd()}
-  `;
-}
-
-function generateLeadLimitEmail(
-  firstName: string,
-  plan: PlanType,
-  threshold: { percent: number; key: string; subject: string; isUrgent: boolean },
-  leadCount: number
-): string {
-  const planConfig = PLAN_CONFIG[plan];
-  const isFeatured = plan === 'featured';
-  const isProfessional = plan === 'professional';
-  const styles = getPlanStyles(plan, { isUrgent: threshold.isUrgent });
-
-  // For Featured providers at limit, show different messaging
-  let limitMessage = '';
-  if (threshold.isUrgent) {
-    if (isFeatured) {
-      limitMessage = `<p style="margin: 0 0 24px 0; color: #7c3aed; font-size: 14px; line-height: 1.6;">
-        You've maximized your lead allocation for this month! Your leads will reset at the start of next month.
-      </p>`;
-    } else if (isProfessional) {
-      limitMessage = `<p style="margin: 0 0 24px 0; color: #1B365D; font-size: 14px; line-height: 1.6;">
-        You've used all your leads for this month. Consider upgrading to Featured for priority placement and exclusive leads.
-      </p>`;
-    } else {
-      limitMessage = `<p style="margin: 0 0 24px 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
-        New qualified leads will not be delivered until your limit resets next month or you upgrade your plan.
-      </p>`;
-    }
-  } else {
-    limitMessage = emailParagraph(isFeatured || isProfessional 
-      ? "You're making great progress this month!" 
-      : "Consider upgrading to receive more leads and grow your business.");
-  }
-
-  // CTA button - don't show upgrade for Featured
-  const ctaText = isFeatured 
-    ? 'View Your Leads'
-    : (threshold.isUrgent && !isProfessional ? 'Upgrade Now' : 'View Plans');
-  const ctaUrl = isFeatured 
-    ? 'https://rehablookup.com/provider/leads'
-    : 'https://rehablookup.com/provider/billing';
-
-  return `
-${emailStart()}
-${emailHeader(threshold.subject, plan, { isUrgent: threshold.isUrgent })}
-${emailBodyStart()}
-              ${emailGreeting(firstName)}
-              
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 6px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 20px; text-align: center;">
-                    <p style="margin: 0 0 4px 0; font-size: 28px; font-weight: 600; color: ${isFeatured ? '#7c3aed' : '#1B365D'};">${leadCount} / ${planConfig.lead_limit}</p>
-                    <p style="margin: 0; font-size: 14px; color: #6b7280;">leads used this month</p>
-                  </td>
-                </tr>
-              </table>
-              
-              ${limitMessage}
-              
-              ${ctaButton(ctaText, ctaUrl, plan)}
 ${emailBodyEnd()}
               <tr>
                 <td style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb; border-top: none;">
@@ -195,8 +124,10 @@ serve(async (req) => {
         const subscriptionEnd = new Date(subscription.current_period_end * 1000);
         const daysUntilExpiry = Math.ceil((subscriptionEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         const productId = subscription.items.data[0].price.product as string;
-        const plan = (PRODUCT_TO_PLAN[productId] || "basic") as PlanType;
-        const planConfig = PLAN_CONFIG[plan];
+        
+        // Determine plan - any subscription is now "Pro"
+        const isPro = PRO_PRODUCT_IDS.includes(productId) || true; // Any active subscription = Pro
+        const plan: PlanType = isPro ? 'pro' : 'free';
 
         logStep("Checking user", { email: profile.email, plan, daysUntilExpiry });
 
@@ -223,12 +154,13 @@ serve(async (req) => {
                 renewalDate
               );
 
-              const subjectPrefix = plan === "featured" ? "⭐ " : "";
+              const subjectPrefix = plan === "pro" ? "⭐ " : "";
+              const planName = plan === "pro" ? "Pro" : "Free";
               
               const { error: emailError } = await resend.emails.send({
                 from: "RehabLookup <no-reply@rehablookup.com>",
                 to: [profile.email],
-                subject: `${subjectPrefix}Your ${planConfig.name} plan renews in ${days} day${days > 1 ? "s" : ""}`,
+                subject: `${subjectPrefix}Your ${planName} subscription renews in ${days} day${days > 1 ? "s" : ""}`,
                 html: emailHtml,
               });
 
@@ -247,79 +179,6 @@ serve(async (req) => {
           }
         }
 
-        // Lead limit alerts
-        if (planConfig.lead_limit > 0) {
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-          
-          const { data: facilities } = await supabaseClient
-            .from("facilities")
-            .select("id")
-            .eq("user_id", profile.user_id);
-
-          if (facilities && facilities.length > 0) {
-            const facilityIds = facilities.map(f => f.id);
-            
-            const { count: leadCount } = await supabaseClient
-              .from("leads")
-              .select("*", { count: "exact", head: true })
-              .in("facility_id", facilityIds)
-              .gte("created_at", startOfMonth);
-
-            const usagePercent = ((leadCount || 0) / planConfig.lead_limit) * 100;
-
-            logStep("Checking lead usage", { email: profile.email, leadCount, limit: planConfig.lead_limit });
-
-            const thresholds = [
-              { percent: 100, key: "reached", subject: "Lead limit reached", isUrgent: true },
-              { percent: 90, key: "90percent", subject: "90% of leads used", isUrgent: false },
-              { percent: 80, key: "80percent", subject: "80% of leads used", isUrgent: false },
-            ];
-
-            for (const threshold of thresholds) {
-              if (usagePercent >= threshold.percent) {
-                const alertKey = `lead_limit_${threshold.key}_${currentMonth}`;
-                
-                const { data: existingAlert } = await supabaseClient
-                  .from("subscription_alerts")
-                  .select("id")
-                  .eq("user_id", profile.user_id)
-                  .eq("alert_key", alertKey)
-                  .single();
-
-                if (!existingAlert) {
-                  const emailHtml = generateLeadLimitEmail(
-                    profile.first_name || "there",
-                    plan,
-                    threshold,
-                    leadCount || 0
-                  );
-
-                  const subjectPrefix = plan === "featured" ? "⭐ " : "";
-
-                  const { error: emailError } = await resend.emails.send({
-                    from: "RehabLookup <no-reply@rehablookup.com>",
-                    to: [profile.email],
-                    subject: `${subjectPrefix}${threshold.subject}`,
-                    html: emailHtml,
-                  });
-
-                  if (!emailError) {
-                    await supabaseClient.from("subscription_alerts").insert({
-                      user_id: profile.user_id,
-                      alert_type: "lead_limit",
-                      alert_key: alertKey,
-                    });
-                    alertsSent.push({ type: threshold.key, email: profile.email });
-                    logStep("Sent lead limit alert", { email: profile.email, threshold: threshold.key });
-                  } else {
-                    logStep("Failed to send lead limit email", { email: profile.email, error: emailError });
-                  }
-                }
-                break;
-              }
-            }
-          }
-        }
       } catch (userError) {
         logStep("Error processing user", { email: profile.email, error: userError });
       }

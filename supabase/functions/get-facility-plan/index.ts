@@ -7,9 +7,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Product IDs for plans - support both old and new IDs for backward compatibility
-const PROFESSIONAL_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"];
-const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"];
+// Pro product IDs - includes legacy IDs for backward compatibility
+const PRO_PRODUCT_IDS = [
+  "prod_pro_monthly",
+  // Legacy product IDs (old Professional and Featured plans now map to Pro)
+  "prod_TbalLOPujTIoUe", 
+  "prod_Tbyz1bf6iYyzYd",
+  "prod_TbalOeJZA2ZoJl", 
+  "prod_TbyzJVNOQL71NN",
+];
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -25,8 +31,8 @@ serve(async (req) => {
     const { facilityId } = await req.json();
     
     if (!facilityId) {
-      logStep("No facility ID provided, returning basic");
-      return new Response(JSON.stringify({ plan: "basic" }), {
+      logStep("No facility ID provided, returning free");
+      return new Response(JSON.stringify({ plan: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -36,8 +42,8 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
-      logStep("No Stripe key, returning basic");
-      return new Response(JSON.stringify({ plan: "basic" }), {
+      logStep("No Stripe key, returning free");
+      return new Response(JSON.stringify({ plan: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -51,7 +57,24 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Get facility owner
+    // Check pro_subscriptions table first (new model)
+    const { data: proSub } = await supabaseClient
+      .from("pro_subscriptions")
+      .select("id, status, current_period_end")
+      .eq("facility_id", facilityId)
+      .eq("status", "active")
+      .gt("current_period_end", new Date().toISOString())
+      .maybeSingle();
+
+    if (proSub) {
+      logStep("Found active Pro subscription in database", { facilityId });
+      return new Response(JSON.stringify({ plan: "pro" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Fallback: Check Stripe subscription by provider email
     const { data: facility, error: facilityError } = await supabaseClient
       .from("facilities")
       .select("user_id")
@@ -60,7 +83,7 @@ serve(async (req) => {
 
     if (facilityError || !facility) {
       logStep("Facility not found", { facilityId, error: facilityError?.message });
-      return new Response(JSON.stringify({ plan: "basic" }), {
+      return new Response(JSON.stringify({ plan: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -77,7 +100,7 @@ serve(async (req) => {
 
     if (!providerEmail) {
       logStep("No provider email found");
-      return new Response(JSON.stringify({ plan: "basic" }), {
+      return new Response(JSON.stringify({ plan: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -89,7 +112,7 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: providerEmail, limit: 1 });
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
-      return new Response(JSON.stringify({ plan: "basic" }), {
+      return new Response(JSON.stringify({ plan: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -107,7 +130,7 @@ serve(async (req) => {
 
     if (subscriptions.data.length === 0) {
       logStep("No active subscription");
-      return new Response(JSON.stringify({ plan: "basic" }), {
+      return new Response(JSON.stringify({ plan: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -116,13 +139,8 @@ serve(async (req) => {
     const subscription = subscriptions.data[0];
     const productId = subscription.items.data[0].price.product as string;
 
-    // Determine plan based on product ID (supports both old and new IDs)
-    let plan = "basic";
-    if (FEATURED_PRODUCT_IDS.includes(productId)) {
-      plan = "featured";
-    } else if (PROFESSIONAL_PRODUCT_IDS.includes(productId)) {
-      plan = "professional";
-    }
+    // Any subscription with a known product ID is now "Pro"
+    const plan = PRO_PRODUCT_IDS.includes(productId) ? "pro" : "free";
 
     logStep("Determined plan", { plan, productId });
 
@@ -133,7 +151,7 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ plan: "basic", error: errorMessage }), {
+    return new Response(JSON.stringify({ plan: "free", error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

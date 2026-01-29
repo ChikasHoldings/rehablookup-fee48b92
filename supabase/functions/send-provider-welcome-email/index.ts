@@ -8,8 +8,7 @@ import {
   emailBodyEnd,
   emailGreeting,
   emailParagraph,
-  featuredInsightsBox,
-  professionalInfoBox,
+  proInsightsBox,
   ctaButton,
   emailFooter,
   emailEnd,
@@ -38,11 +37,10 @@ function generateWelcomeEmail(
   facilityName: string,
   selectedPlan: string
 ): string {
-  const plan = selectedPlan as PlanType;
-  const isFeatured = plan === "featured";
-  const isProfessional = plan === "professional";
-  const isPaidPlan = isFeatured || isProfessional;
-  const planDisplayName = plan === "basic" ? "Basic" : plan === "professional" ? "Professional" : "Featured";
+  // Map legacy plan names to new Free/Pro model
+  const isPro = selectedPlan === "pro" || selectedPlan === "professional" || selectedPlan === "featured";
+  const plan: PlanType = isPro ? "pro" : "free";
+  const planDisplayName = isPro ? "Pro" : "Free";
 
   let email = emailStart('#f4f6f9');
   email += emailHeader(`Welcome to RehabLookup!`, plan, { 
@@ -52,11 +50,9 @@ function generateWelcomeEmail(
   email += emailGreeting(providerFirstName);
   email += emailParagraph(`Thank you for registering <strong style="color: #1B365D;">${facilityName}</strong> on RehabLookup. We're excited to help you connect with families seeking treatment.`);
 
-  // Plan-specific welcome messages
-  if (isFeatured) {
-    email += featuredInsightsBox("You've chosen our premium tier. Once approved, you'll enjoy priority placement, exclusive leads, and maximum visibility.");
-  } else if (isProfessional) {
-    email += professionalInfoBox("✓ <strong>Professional Plan Selected:</strong> Once approved, you'll start receiving qualified leads directly.");
+  // Pro welcome message
+  if (isPro) {
+    email += proInsightsBox("As a Pro member, you get 20% off lead unlocks, up to 5 facility listings, and priority visibility in search results.");
   }
 
   // Pending review notice
@@ -83,11 +79,11 @@ function generateWelcomeEmail(
                     <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
                       Your Plan
                     </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: ${isFeatured ? '#7c3aed' : '#1B365D'};">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: ${isPro ? '#7c3aed' : '#1B365D'};">
                       ${planDisplayName}
                     </p>
-                    <p style="margin: 8px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: ${isPaidPlan ? '#10b981' : '#64748b'};">
-                      ${isPaidPlan ? '✓ Subscription active' : 'Upgrade anytime to receive exclusive qualified leads'}
+                    <p style="margin: 8px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: ${isPro ? '#10b981' : '#64748b'};">
+                      ${isPro ? '✓ Pro subscription active - 20% off unlocks' : 'Free listing - Pay per lead unlock'}
                     </p>
                   </td>
                 </tr>
@@ -95,8 +91,8 @@ function generateWelcomeEmail(
   `;
 
   // What's next
-  const accentColor = isFeatured ? '#7c3aed' : '#1B365D';
-  const bgColor = isFeatured ? '#ede9fe' : '#dbeafe';
+  const accentColor = isPro ? '#7c3aed' : '#1B365D';
+  const bgColor = isPro ? '#ede9fe' : '#dbeafe';
   email += `
               <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #1B365D;">
                 What's Next?
@@ -140,8 +136,8 @@ function generateWelcomeEmail(
                           <span style="display: inline-block; width: 24px; height: 24px; background: ${bgColor}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${accentColor};">3</span>
                         </td>
                         <td style="padding-left: 12px;">
-                          <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 500; color: #1B365D;">Start receiving leads</p>
-                          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">${isPaidPlan ? 'Qualified leads will be delivered directly to your dashboard' : 'Connect with families actively seeking treatment'}</p>
+                          <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 500; color: #1B365D;">Unlock leads to connect</p>
+                          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">${isPro ? 'Pay per lead with your 20% Pro discount' : 'Pay per lead to view contact details'}</p>
                         </td>
                       </tr>
                     </table>
@@ -182,8 +178,8 @@ serve(async (req) => {
 
     const emailHtml = generateWelcomeEmail(providerFirstName, facilityName, selectedPlan);
 
-    const isFeatured = selectedPlan === "featured";
-    const subjectPrefix = isFeatured ? "⭐ " : "";
+    const isPro = selectedPlan === "pro" || selectedPlan === "professional" || selectedPlan === "featured";
+    const subjectPrefix = isPro ? "⭐ " : "";
 
     const { error: emailError } = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
