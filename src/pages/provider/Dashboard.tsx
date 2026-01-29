@@ -40,6 +40,7 @@ import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
 import { FeaturedAnalyticsWidget } from "@/components/provider/FeaturedAnalyticsWidget";
 import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
+import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 
 // Compact Metric Card
@@ -630,6 +631,9 @@ export default function ProviderDashboardPage() {
                 </Card>
               )}
             </div>
+
+            {/* Pro Benefits Widget */}
+            <ProBenefitsWidget />
 
             {/* Platform News */}
             <Card>
