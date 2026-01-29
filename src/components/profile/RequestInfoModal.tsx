@@ -87,7 +87,7 @@ interface RequestInfoModalProps {
     logo_url: string | null;
     featured?: boolean;
   };
-  facilityPlan?: "basic" | "professional" | "featured";
+  facilityPlan?: "free" | "pro";
   prefillData?: {
     firstName?: string;
     lastName?: string;
@@ -226,7 +226,7 @@ export function RequestInfoModal({
   open,
   onOpenChange,
   facility,
-  facilityPlan = "basic",
+  facilityPlan = "free",
   prefillData,
 }: RequestInfoModalProps) {
   const navigate = useNavigate();
@@ -260,13 +260,13 @@ export function RequestInfoModal({
   const isStep1Valid = formData.urgency && formData.seekingFor;
   const isStep2Valid = validation.firstName && validation.lastName && validation.email && validation.phone;
 
-  // Determine lead type based on plan
-  const leadType = facilityPlan === "featured" ? "exclusive" : "shared";
-  const isPaidPlan = facilityPlan === "featured" || facilityPlan === "professional";
+  // In pay-per-unlock model, all leads are exclusive
+  const leadType = "exclusive";
+  const isPro = facilityPlan === "pro";
 
-  // Fetch lead usage when modal opens for paid plans
+  // No lead limits in pay-per-unlock model - skip usage fetch
   useEffect(() => {
-    if (open && isPaidPlan) {
+    if (open) {
       const fetchLeadUsage = async () => {
         try {
           // Fetch lead count for this facility this month
@@ -292,7 +292,7 @@ export function RequestInfoModal({
       };
       fetchLeadUsage();
     }
-  }, [open, facility.id, isPaidPlan]);
+  }, [open, facility.id]);
 
   // Track modal open
   useEffect(() => {
@@ -339,10 +339,10 @@ export function RequestInfoModal({
     }
   }, [open, prefillData]);
 
-  // Fetch nearby facilities when submitted
+  // Fetch nearby facilities when submitted (for free tier only)
   const fetchNearbyFacilities = async () => {
-    if (facilityPlan === "featured") {
-      // Don't show competitors for Featured plans
+    if (isPro) {
+      // Don't show competitors for Pro plans
       return;
     }
     
@@ -506,7 +506,7 @@ export function RequestInfoModal({
             {/* Header */}
             <div className={cn(
               "px-6 pt-6 pb-4 border-b border-border",
-              facilityPlan === "featured" && "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20"
+              isPro && "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20"
             )}>
               <DialogHeader>
                 <div className="flex items-center gap-3">
@@ -530,10 +530,10 @@ export function RequestInfoModal({
                       {facility.city}, {facility.state}
                     </DialogDescription>
                   </div>
-                  {facilityPlan === "featured" && (
+                  {isPro && (
                     <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 gap-1 shrink-0">
                       <Crown className="h-3 w-3" />
-                      Featured
+                      Pro
                     </Badge>
                   )}
                 </div>
@@ -550,7 +550,7 @@ export function RequestInfoModal({
                     <Clock className="h-3.5 w-3.5 text-primary" />
                     <span>Response within 24h</span>
                   </div>
-                  {facilityPlan === "featured" && (
+                  {isPro && (
                     <div className="flex items-center gap-1">
                       <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                       <span>Priority response</span>
@@ -564,7 +564,7 @@ export function RequestInfoModal({
             </div>
 
             {/* Capacity Warning - Show when provider is at capacity */}
-            {isPaidPlan && leadUsage && leadUsage.remaining <= 0 ? (
+            {isPro && leadUsage && leadUsage.remaining <= 0 ? (
               <CapacityWarning 
                 facility={facility} 
                 onOpenChange={onOpenChange} 
@@ -774,8 +774,7 @@ export function RequestInfoModal({
                     <Shield className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
                     <p className="text-xs text-muted-foreground">
                       Your information is confidential and will only be shared with{" "}
-                      <strong>{facility.name}</strong>
-                      {facilityPlan === "professional" && " and may be shared with one additional trusted provider"} to help connect you with treatment options.
+                      <strong>{facility.name}</strong> to help connect you with treatment options.
                     </p>
                   </div>
 
@@ -818,13 +817,13 @@ export function RequestInfoModal({
             <div className="text-center mb-6">
               <div className={cn(
                 "mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full",
-                facilityPlan === "featured" 
+                isPro 
                   ? "bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30" 
                   : "bg-success/10"
               )}>
                 <CheckCircle className={cn(
                   "h-8 w-8",
-                  facilityPlan === "featured" ? "text-amber-600" : "text-success"
+                  isPro ? "text-amber-600" : "text-success"
                 )} />
               </div>
               <h2 className="text-xl font-semibold text-foreground mb-2">
@@ -833,14 +832,14 @@ export function RequestInfoModal({
               <p className="text-muted-foreground text-sm">
                 {submittedData?.firstName}, your request has been sent to{" "}
                 <strong>{facility.name}</strong>. 
-                {facilityPlan === "featured" 
-                  ? " As a Featured provider, they prioritize quick responses." 
+                {isPro 
+                  ? " As a Pro provider, they prioritize quick responses." 
                   : " They may contact you within 24 hours."}
               </p>
             </div>
 
-            {/* Featured provider exclusive badge */}
-            {facilityPlan === "featured" && (
+            {/* Pro provider exclusive badge */}
+            {isPro && (
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6 text-center">
                 <div className="flex items-center justify-center gap-2 text-amber-700 dark:text-amber-300">
                   <Crown className="h-4 w-4" />
@@ -852,21 +851,8 @@ export function RequestInfoModal({
               </div>
             )}
 
-            {/* Shared lead notice for Professional */}
-            {facilityPlan === "professional" && (
-              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-                  <Users className="h-4 w-4" />
-                  <span className="text-sm font-semibold">Matched with trusted providers</span>
-                </div>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  To help you faster, your request may also be shared with one additional qualified provider in your area
-                </p>
-              </div>
-            )}
-
             {/* Nearby Facilities Section (only for non-featured) */}
-            {facilityPlan !== "featured" && (loadingNearby || nearbyFacilities.length > 0) && (
+            {!isPro && (loadingNearby || nearbyFacilities.length > 0) && (
               <div className="border-t border-border pt-5 mt-5">
                 <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-primary" />

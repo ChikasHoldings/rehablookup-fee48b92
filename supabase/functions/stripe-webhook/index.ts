@@ -276,9 +276,14 @@ serve(async (req) => {
               const product = priceItem?.price?.product as Stripe.Product;
               planName = product?.name || "Subscription";
               
-              // Determine tier from product
-              if (product?.id === "prod_Tbyz1bf6iYyzYd") planTier = "professional";
-              else if (product?.id === "prod_TbyzJVNOQL71NN") planTier = "featured";
+              // Map all paid products to 'pro' tier (Free/Pro model)
+              const proProductIds = [
+                "prod_TbalLOPujTIoUe", // legacy professional
+                "prod_Tbyz1bf6iYyzYd", // professional
+                "prod_TbalOeJZA2ZoJl", // legacy featured
+                "prod_TbyzJVNOQL71NN", // featured
+              ];
+              if (product?.id && proProductIds.includes(product.id)) planTier = "pro";
             } catch (e) {
               logStep("Failed to get subscription details", { error: e });
             }
@@ -337,9 +342,12 @@ serve(async (req) => {
             amount = priceItem?.price?.unit_amount || 0;
             currency = (priceItem?.price?.currency || "usd").toUpperCase();
             
-            // Determine tier
-            if (productId === "prod_Tbyz1bf6iYyzYd") planTier = "professional";
-            else if (productId === "prod_TbyzJVNOQL71NN") planTier = "featured";
+            // Map all paid products to 'pro' tier (Free/Pro model)
+            const proProductIds = [
+              "prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd",
+              "prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"
+            ];
+            if (productId && proProductIds.includes(productId)) planTier = "pro";
           }
         }
       } else {
@@ -354,9 +362,12 @@ serve(async (req) => {
           planName = product.name;
           productId = product.id;
           
-          // Determine tier
-          if (productId === "prod_Tbyz1bf6iYyzYd") planTier = "professional";
-          else if (productId === "prod_TbyzJVNOQL71NN") planTier = "featured";
+          // Map all paid products to 'pro' tier (Free/Pro model)
+          const proProductIds = [
+            "prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd",
+            "prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"
+          ];
+          if (productId && proProductIds.includes(productId)) planTier = "pro";
         }
         amount = priceItem?.price?.unit_amount || 0;
         currency = (priceItem?.price?.currency || "usd").toUpperCase();
