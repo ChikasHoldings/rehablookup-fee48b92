@@ -203,8 +203,6 @@ export default function SeekerSearch() {
       year_established: f.year_established ?? null,
       planTier: f.planTier,
       featured: f.featured,
-      hasFeaturedSubscription: f.hasFeaturedSubscription,
-      hasProfessionalPlan: f.hasProfessionalPlan,
     }));
   }, [filteredFacilities]);
   

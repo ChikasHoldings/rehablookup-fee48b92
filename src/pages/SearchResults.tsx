@@ -323,10 +323,9 @@ const SearchResults = () => {
       let score = 0;
       
       // Base tier score (highest priority)
-      if (center.isPro || center.hasFeaturedSubscription || center.planTier === 'featured') {
-        score = 1000; // Pro/Featured tier - highest base priority
-      } else if (center.hasProfessionalPlan || center.planTier === 'professional') {
-        score = 500; // Professional tier
+      // Pro subscribers get highest priority
+      if (center.isPro || center.planTier === 'pro') {
+        score = 1000; // Pro tier - highest base priority
       } else if (center.featured) {
         score = 250; // Legacy featured
       }

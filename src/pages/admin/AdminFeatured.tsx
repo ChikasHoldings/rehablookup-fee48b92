@@ -169,7 +169,7 @@ export default function AdminFeatured() {
       const { data, error } = await supabase.functions.invoke("get-featured-facilities");
       if (error) throw error;
       return {
-        featuredFacilityIds: data?.featuredFacilityIds || [],
+        proFacilityIds: data?.proFacilityIds || [],
         homepageFeaturedIds: data?.homepageFeaturedIds || [],
       };
     },
@@ -185,24 +185,29 @@ export default function AdminFeatured() {
     if (featuredError) logError("fetch_featured_ids", featuredError, { queryKey: "admin-auto-featured-ids" });
   }, [featuredError, logError]);
 
-  const autoFeaturedIds = featuredData?.featuredFacilityIds || [];
+  const proFacilityIds = featuredData?.proFacilityIds || [];
   const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
 
-  // Auto-featured facilities (from Featured plan subscription)
-  const autoFeaturedFacilities = allFacilities?.filter(f => autoFeaturedIds.includes(f.id)) || [];
+  // Pro subscriber facilities
+  const proFacilities = allFacilities?.filter(f => proFacilityIds.includes(f.id)) || [];
+  
+  // Backward compatibility aliases for existing code
+  const autoFeaturedIds = proFacilityIds;
+  const autoFeaturedFacilities = proFacilities;
   
   // Legacy featured (manually set, not from subscription)
   const legacyFeaturedFacilities = allFacilities?.filter(
-    f => f.featured && !autoFeaturedIds.includes(f.id)
+    f => f.featured && !proFacilityIds.includes(f.id)
   ) || [];
 
   // Eligible for legacy featuring (approved, not suspended, not already featured)
   const eligibleFacilities = allFacilities?.filter(
-    f => !f.featured && !autoFeaturedIds.includes(f.id) && !f.suspended
+    f => !f.featured && !proFacilityIds.includes(f.id) && !f.suspended
   ) || [];
   
-  // Combined featured facilities for ordering (auto + legacy)
-  const allFeaturedFacilities = [...(autoFeaturedFacilities || []), ...(legacyFeaturedFacilities || [])];
+  // Combined featured facilities for ordering (pro + legacy)
+  const allFeaturedFacilities = [...(proFacilities || []), ...(legacyFeaturedFacilities || [])];
+
 
   // Fetch facility stats (views and leads) - MUST be before totalFeaturedLeads calculation
   const { data: facilityStats } = useQuery({

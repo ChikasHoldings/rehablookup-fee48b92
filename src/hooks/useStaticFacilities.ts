@@ -37,11 +37,6 @@ export interface PublicFacility extends TreatmentCenter {
   googleRating?: number | null;
   googleReviewCount?: number | null;
   planTier?: "pro" | "free";
-  // Legacy compatibility
-  hasFeaturedSubscription?: boolean;
-  hasProfessionalPlan?: boolean;
-  hasPaidPlan?: boolean;
-  isHomepageFeatured?: boolean;
 }
 
 interface StaticFacilitiesResponse {
@@ -146,10 +141,6 @@ export const useStaticFacilities = () => {
       gallery_urls: facility.galleryUrls,
       googleRating: facility.googleRating,
       googleReviewCount: facility.googleReviewCount,
-      // Legacy compatibility
-      hasFeaturedSubscription: isPro,
-      hasProfessionalPlan: false,
-      hasPaidPlan: isPro,
     };
   });
 

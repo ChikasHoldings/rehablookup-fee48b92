@@ -37,21 +37,11 @@ export interface ApprovedFacility extends TreatmentCenter {
   calculatedRankingScore?: number; // cached ranking score for sorting
   // Plan tier for sorting
   planTier?: 'pro' | 'free';
-  // Legacy compatibility - kept for backward compat during transition
-  hasFeaturedSubscription?: boolean;
-  hasProfessionalPlan?: boolean;
-  hasPaidPlan?: boolean;
-  isHomepageFeatured?: boolean;
 }
 
 interface FeaturedFacilitiesResponse {
-  proFacilityIds: string[]; // Facilities with Pro subscription (main field now)
+  proFacilityIds: string[]; // Facilities with Pro subscription
   homepageFeaturedIds: string[]; // For homepage featured rotation
-  // Legacy compatibility fields
-  featuredFacilityIds?: string[];
-  allEligibleIds?: string[];
-  professionalFacilityIds?: string[];
-  paidFacilityIds?: string[];
 }
 
 // Get cached featured IDs for instant initial render
@@ -300,10 +290,6 @@ export const useApprovedFacilities = () => {
         googleRating: facility.reviewsConfig?.rating ?? null,
         googleReviewCount: facility.reviewsConfig?.count ?? null,
         calculatedRankingScore: (facility as any).calculated_ranking_score ?? 0,
-        // Legacy compatibility fields
-        hasFeaturedSubscription: isPro,
-        hasProfessionalPlan: false,
-        hasPaidPlan: isPro,
       };
     });
   }, [facilitiesQuery.data, homepageFeaturedIds, proIds]);
