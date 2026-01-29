@@ -4226,7 +4226,6 @@ export type Database = {
           city: string | null
           created_at: string | null
           description: string | null
-          email: string | null
           facility_type: string | null
           featured: boolean | null
           featured_pinned: boolean | null
@@ -4242,7 +4241,6 @@ export type Database = {
           status: string | null
           updated_at: string | null
           verified: boolean | null
-          website: string | null
           year_established: number | null
           zip_code: string | null
         }
@@ -4252,7 +4250,6 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           description?: string | null
-          email?: string | null
           facility_type?: string | null
           featured?: boolean | null
           featured_pinned?: boolean | null
@@ -4268,7 +4265,6 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           verified?: boolean | null
-          website?: string | null
           year_established?: number | null
           zip_code?: string | null
         }
@@ -4278,7 +4274,6 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           description?: string | null
-          email?: string | null
           facility_type?: string | null
           featured?: boolean | null
           featured_pinned?: boolean | null
@@ -4294,7 +4289,6 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           verified?: boolean | null
-          website?: string | null
           year_established?: number | null
           zip_code?: string | null
         }

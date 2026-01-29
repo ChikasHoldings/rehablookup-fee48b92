@@ -272,7 +272,8 @@ export default function SeekerFacilityProfile() {
   const initials = getInitials(facility.name);
   const hasValidLogo = facility.logo_url && !logoError;
   const yearsInBusiness = getYearsInBusiness(facility.year_established);
-  const showContactDetails = facilityPlan !== "free";
+  // Pro members only: show phone and website on facility page
+  const showContactDetails = facilityPlan === "pro" || facilityPlan === "professional" || facilityPlan === "featured";
   const accreditations = facility.facility_accreditations.filter(a => a.verified);
 
   const genderLabel = facility.gender_served === "male" ? "Men Only" 
@@ -610,7 +611,8 @@ export default function SeekerFacilityProfile() {
                     Request Tour
                   </Button>
 
-                  {facility.website && (
+                  {/* Website only visible for Pro members */}
+                  {showContactDetails && facility.website && (
                     <a 
                       href={facility.website} 
                       target="_blank" 
@@ -643,21 +645,16 @@ export default function SeekerFacilityProfile() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <a href={`tel:${facility.phone}`} className="text-sm font-medium text-primary hover:underline">
-                        {formatPhoneNumber(facility.phone)}
-                      </a>
-                    </div>
-                    
-                    {facility.email && (
+                    {showContactDetails && (
                       <div className="flex items-center gap-3">
-                        <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <a href={`mailto:${facility.email}`} className="text-sm font-medium text-primary hover:underline truncate">
-                          {facility.email}
+                        <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <a href={`tel:${facility.phone}`} className="text-sm font-medium text-primary hover:underline">
+                          {formatPhoneNumber(facility.phone)}
                         </a>
                       </div>
                     )}
+                    
+                    {/* Email removed - provider emails are completely private */}
                   </div>
                 </div>
               )}
@@ -694,7 +691,6 @@ export default function SeekerFacilityProfile() {
           city: facility.city,
           state: facility.state,
           slug: facility.slug,
-          email: facility.email,
           logo_url: facility.logo_url,
           featured: facility.featured,
         }}
