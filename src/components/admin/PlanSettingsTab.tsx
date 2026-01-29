@@ -323,42 +323,30 @@ export function PlanSettingsTab() {
           <CardDescription>Current plan pricing and features (managed via Stripe)</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            {/* Basic Plan */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Free Plan */}
             <div className="rounded-lg border p-4 bg-slate-50/50">
               <div className="flex items-center justify-between mb-3">
-                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">Basic</Badge>
+                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">Free</Badge>
                 <span className="text-2xl font-bold">Free</span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• {PLAN_DETAILS.basic.lead_limit} qualified lead (lifetime)</li>
-                <li>• Basic profile listing</li>
-                <li>• Hidden phone/website</li>
+                <li>• {PLAN_DETAILS.free.location_limit} facility listing</li>
+                <li>• Receive locked leads</li>
+                <li>• Pay per unlock ($25-39)</li>
               </ul>
             </div>
 
-            {/* Professional Plan */}
-            <div className="rounded-lg border p-4 bg-blue-50/50 border-blue-200">
-              <div className="flex items-center justify-between mb-3">
-                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">Professional</Badge>
-                <span className="text-2xl font-bold">${getPriceNumber(PLAN_DETAILS.professional.price)}<span className="text-sm font-normal">/mo</span></span>
-              </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• {PLAN_DETAILS.professional.lead_limit} shared qualified leads/month</li>
-                <li>• Full contact visibility</li>
-                <li>• Standard search placement</li>
-              </ul>
-            </div>
-
-            {/* Featured Plan */}
+            {/* Pro Plan */}
             <div className="rounded-lg border p-4 bg-amber-50/50 border-amber-200">
               <div className="flex items-center justify-between mb-3">
-                <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">Featured</Badge>
-                <span className="text-2xl font-bold">${getPriceNumber(PLAN_DETAILS.featured.price)}<span className="text-sm font-normal">/mo</span></span>
+                <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">Pro</Badge>
+                <span className="text-2xl font-bold">{PLAN_DETAILS.pro.price}<span className="text-sm font-normal">{PLAN_DETAILS.pro.period}</span></span>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• {PLAN_DETAILS.featured.lead_limit} exclusive qualified leads/month</li>
-                <li>• Homepage featured placement</li>
+                <li>• Up to {PLAN_DETAILS.pro.location_limit} facility listings</li>
+                <li>• {PLAN_DETAILS.pro.unlock_discount}% off lead unlocks</li>
+                <li>• Featured homepage placement</li>
                 <li>• Priority search ranking</li>
               </ul>
             </div>

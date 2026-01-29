@@ -110,9 +110,8 @@ type Profile = {
 // Plan badge component
 function PlanBadge({ plan }: { plan: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    basic: { label: "Basic", className: "bg-slate-100 text-slate-700 border-slate-200" },
-    professional: { label: "Professional", className: "bg-blue-100 text-blue-700 border-blue-200" },
-    featured: { label: "Featured", className: "bg-amber-100 text-amber-700 border-amber-200" },
+    free: { label: "Free", className: "bg-slate-100 text-slate-700 border-slate-200" },
+    pro: { label: "Pro", className: "bg-amber-100 text-amber-700 border-amber-200" },
   };
 
   const { label, className } = config[plan] || { label: plan, className: "bg-muted text-muted-foreground" };
@@ -184,7 +183,7 @@ type EnrichedSubscription = {
   facility_city?: string;
   facility_state?: string;
   leads_used: number;
-  lead_limit: number;
+  location_limit: number;
 };
 
 export default function AdminSubscriptions() {
@@ -383,7 +382,7 @@ export default function AdminSubscriptions() {
         facility_city: facility?.city,
         facility_state: facility?.state,
         leads_used: leadsUsed,
-        lead_limit: planDetails?.lead_limit || 100,
+        location_limit: planDetails?.location_limit || 1,
       };
     });
   }, [stripeStats?.subscriptions, emailToProfile, userToFacility, leadCounts]);
@@ -824,22 +823,13 @@ export default function AdminSubscriptions() {
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <div className="flex items-center gap-2 cursor-default" onClick={(e) => e.stopPropagation()}>
-                                      <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                        <div 
-                                          className={`h-full rounded-full transition-all ${
-                                            sub.leads_used >= sub.lead_limit ? "bg-red-500" : 
-                                            sub.leads_used >= sub.lead_limit * 0.8 ? "bg-amber-500" : "bg-green-500"
-                                          }`}
-                                          style={{ width: `${Math.min((sub.leads_used / sub.lead_limit) * 100, 100)}%` }}
-                                        />
-                                      </div>
                                       <span className="text-sm text-muted-foreground">
-                                        {sub.leads_used}/{sub.lead_limit}
+                                        {sub.leads_used} unlocked
                                       </span>
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>{sub.leads_used} of {sub.lead_limit} leads used this month</p>
+                                    <p>{sub.leads_used} leads unlocked total</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TableCell>
