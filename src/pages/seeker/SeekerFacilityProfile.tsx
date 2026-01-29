@@ -203,14 +203,14 @@ export default function SeekerFacilityProfile() {
     enabled: !!slug,
   });
 
-  const { data: facilityPlan = "basic" } = useQuery({
+  const { data: facilityPlan = "free" } = useQuery({
     queryKey: ["facility-plan", facility?.id],
     queryFn: async (): Promise<string> => {
-      if (!facility?.id) return "basic";
+      if (!facility?.id) return "free";
       const { data } = await supabase.functions.invoke("get-facility-plan", {
         body: { facilityId: facility.id },
       });
-      return data?.plan || "basic";
+      return data?.plan || "free";
     },
     enabled: !!facility?.id,
     staleTime: 1000 * 60 * 5,
@@ -272,7 +272,7 @@ export default function SeekerFacilityProfile() {
   const initials = getInitials(facility.name);
   const hasValidLogo = facility.logo_url && !logoError;
   const yearsInBusiness = getYearsInBusiness(facility.year_established);
-  const showContactDetails = facilityPlan !== "basic";
+  const showContactDetails = facilityPlan !== "free";
   const accreditations = facility.facility_accreditations.filter(a => a.verified);
 
   const genderLabel = facility.gender_served === "male" ? "Men Only" 

@@ -176,7 +176,7 @@ export function GoogleReviewsSection({ facilityId, expanded, onToggle }: GoogleR
               <div className="text-center py-6 px-4 rounded-lg bg-muted/50 border border-dashed border-border">
                 <Lock className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
                 <p className="text-sm text-muted-foreground mb-4">
-                  Upgrade to Professional or Featured to display your Google Reviews on your profile.
+                  Upgrade to Pro to display your Google Reviews on your profile.
                 </p>
                 <Button asChild size="sm">
                   <Link to="/provider/pro-upgrade">Upgrade to Pro</Link>

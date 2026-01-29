@@ -288,7 +288,7 @@ export function FeaturedAnalyticsDashboard() {
       <Alert className="bg-emerald-50 border-emerald-200">
         <Info className="h-4 w-4 text-emerald-600" />
         <AlertDescription className="text-emerald-800">
-          Analytics tracks impressions, clicks, and conversions for Featured plan subscribers. 
+          Analytics tracks impressions, clicks, and conversions for Pro subscribers. 
           Data updates in real-time as users interact with featured listings.
         </AlertDescription>
       </Alert>
@@ -302,7 +302,7 @@ export function FeaturedAnalyticsDashboard() {
           <div>
             <h3 className="font-semibold text-lg">Featured Placement Analytics</h3>
             <p className="text-sm text-muted-foreground">
-              Track performance metrics for {data.subscriberCount} Featured plan subscriber{data.subscriberCount !== 1 ? "s" : ""}
+              Track performance metrics for {data.subscriberCount} Pro subscriber{data.subscriberCount !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
@@ -484,7 +484,7 @@ export function FeaturedAnalyticsDashboard() {
                 <p className="text-2xl font-bold text-emerald-900">
                   ${data.estimatedRevenue.toLocaleString()}
                 </p>
-                <p className="text-xs text-emerald-600 mt-1">From Featured plans</p>
+                <p className="text-xs text-emerald-600 mt-1">From Pro subscriptions</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-emerald-200 flex items-center justify-center">
                 <DollarSign className="h-5 w-5 text-emerald-700" />
@@ -500,15 +500,15 @@ export function FeaturedAnalyticsDashboard() {
         <CardHeader>
           <CardTitle>Provider Performance Breakdown</CardTitle>
           <CardDescription>
-            Individual metrics for each Featured plan subscriber
+            Individual metrics for each Pro subscriber
           </CardDescription>
         </CardHeader>
         <CardContent>
           {data.facilityMetrics.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>No Featured plan subscribers to display</p>
-              <p className="text-sm mt-1">Analytics will appear when providers subscribe to the Featured plan</p>
+              <p>No Pro subscribers to display</p>
+              <p className="text-sm mt-1">Analytics will appear when providers upgrade to Pro</p>
             </div>
           ) : (
             <Table>

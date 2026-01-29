@@ -412,7 +412,7 @@ export default function AdminSubscriptions() {
 
   // Sort subscriptions
   const sortedSubscriptions = useMemo(() => {
-    const planOrder = { basic: 0, professional: 1, featured: 2 };
+    const planOrder = { free: 0, pro: 1 };
     const statusOrder = { active: 0, trialing: 1, past_due: 2, incomplete: 3, canceled: 4 };
 
     return [...filteredSubscriptions].sort((a, b) => {
@@ -691,9 +691,8 @@ export default function AdminSubscriptions() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Plans</SelectItem>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="professional">Professional</SelectItem>
-                    <SelectItem value="featured">Featured</SelectItem>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="pro">Pro</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>

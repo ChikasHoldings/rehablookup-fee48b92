@@ -124,8 +124,8 @@ const faqs = [
     answer: "Yes, all leads are forwarded to your registered email immediately. You can also manage and track them through your provider dashboard, including setting follow-up reminders.",
   },
   {
-    question: "How do I upgrade to a featured listing?",
-    answer: "Visit your provider dashboard and click on 'Upgrade Plan' to see available options. Featured listings appear at the top of search results and on our homepage.",
+    question: "How do I upgrade to Pro?",
+    answer: "Visit your provider dashboard and click on 'Upgrade to Pro' to subscribe. Pro members get 20% off lead unlocks, up to 5 facility listings, and priority placement in search results.",
   },
   {
     question: "What analytics are available?",

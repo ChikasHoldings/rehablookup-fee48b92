@@ -7,9 +7,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Support both old and new Stripe product IDs
-const PROFESSIONAL_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_SHmIFMgcVkqixh", "prod_Tbyz1bf6iYyzYd"];
-const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_SHmJIiVALcuWdF", "prod_TbyzJVNOQL71NN"];
+// PRO SUBSCRIPTION CONFIGURATION
+// All paid subscriptions map to "pro" tier in the Free/Pro model
+const PRO_PRODUCT_IDS = [
+  "prod_pro_monthly", // New Pro product ID
+  // Legacy product IDs for backward compatibility
+  "prod_TbalLOPujTIoUe", 
+  "prod_SHmIFMgcVkqixh", 
+  "prod_Tbyz1bf6iYyzYd",
+  "prod_TbalOeJZA2ZoJl", 
+  "prod_SHmJIiVALcuWdF", 
+  "prod_TbyzJVNOQL71NN",
+];
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[GET-PROVIDER-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
@@ -77,8 +86,8 @@ serve(async (req) => {
     if (!email) {
       return new Response(
         JSON.stringify({
-          plan: "basic",
-          plan_name: "Basic Listing",
+          plan: "free",
+          plan_name: "Free",
           subscribed: false,
           subscription: null,
           customer: null,
@@ -104,8 +113,8 @@ serve(async (req) => {
       logStep("No Stripe customer found");
       return new Response(
         JSON.stringify({
-          plan: "basic",
-          plan_name: "Basic Listing",
+          plan: "free",
+          plan_name: "Free",
           subscribed: false,
           subscription: null,
           customer: null,
@@ -143,8 +152,8 @@ serve(async (req) => {
 
     // Determine current plan from active subscription
     const activeSubscription = subscriptions.data.find((s: { status: string }) => s.status === "active");
-    let plan = "basic";
-    let planName = "Basic Listing";
+    let plan = "free";
+    let planName = "Free";
     let monthlyAmount = 0;
 
     if (activeSubscription) {
@@ -152,12 +161,10 @@ serve(async (req) => {
       const productId = priceData?.product as string;
       monthlyAmount = (priceData?.unit_amount || 0) / 100;
       
-      if (PROFESSIONAL_PRODUCT_IDS.includes(productId)) {
-        plan = "professional";
-        planName = "Professional";
-      } else if (FEATURED_PRODUCT_IDS.includes(productId)) {
-        plan = "featured";
-        planName = "Featured";
+      // All paid subscriptions are now "Pro"
+      if (PRO_PRODUCT_IDS.includes(productId) || productId) {
+        plan = "pro";
+        planName = "Pro";
       }
     }
 
@@ -284,8 +291,8 @@ serve(async (req) => {
 function getPlanFromSubscription(sub: any): string {
   const productId = sub.items?.data?.[0]?.price?.product;
   if (typeof productId === "string") {
-    if (PROFESSIONAL_PRODUCT_IDS.includes(productId)) return "Professional";
-    if (FEATURED_PRODUCT_IDS.includes(productId)) return "Featured";
+    if (PRO_PRODUCT_IDS.includes(productId)) return "Pro";
   }
-  return "Basic";
+  // Any active subscription is Pro
+  return sub.status === "active" ? "Pro" : "Free";
 }
