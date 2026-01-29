@@ -2003,6 +2003,13 @@ export type Database = {
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_emails_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lead_notes: {
@@ -2033,6 +2040,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
             referencedColumns: ["id"]
           },
         ]
@@ -2112,6 +2126,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lead_routing_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lead_routing_logs_requested_facility_id_fkey"
             columns: ["requested_facility_id"]
             isOneToOne: false
@@ -2181,6 +2202,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_unlocks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
             referencedColumns: ["id"]
           },
         ]
@@ -3984,6 +4012,117 @@ export type Database = {
       }
     }
     Views: {
+      leads_provider_view: {
+        Row: {
+          assignment_status: string | null
+          budget_preference: string | null
+          created_at: string | null
+          dual_diagnosis: string | null
+          email: string | null
+          email_verified: boolean | null
+          facility_id: string | null
+          follow_up_reminder_sent_at: string | null
+          id: string | null
+          inquiry_type: string | null
+          insurance_provider: string | null
+          insurance_type: string | null
+          is_unlocked: boolean | null
+          level_of_care: string | null
+          location_city_state: string | null
+          location_zip: string | null
+          message: string | null
+          name: string | null
+          phone: string | null
+          primary_substance: string[] | null
+          provider_responded_at: string | null
+          provider_response_status: string | null
+          qualification_reason: string | null
+          qualified: boolean | null
+          snooze_until: string | null
+          source: string | null
+          status: string | null
+          urgency: string | null
+          who_seeking_help: string | null
+        }
+        Insert: {
+          assignment_status?: string | null
+          budget_preference?: string | null
+          created_at?: string | null
+          dual_diagnosis?: string | null
+          email?: never
+          email_verified?: boolean | null
+          facility_id?: string | null
+          follow_up_reminder_sent_at?: string | null
+          id?: string | null
+          inquiry_type?: string | null
+          insurance_provider?: string | null
+          insurance_type?: string | null
+          is_unlocked?: never
+          level_of_care?: string | null
+          location_city_state?: string | null
+          location_zip?: string | null
+          message?: string | null
+          name?: never
+          phone?: never
+          primary_substance?: string[] | null
+          provider_responded_at?: string | null
+          provider_response_status?: string | null
+          qualification_reason?: string | null
+          qualified?: boolean | null
+          snooze_until?: string | null
+          source?: string | null
+          status?: string | null
+          urgency?: string | null
+          who_seeking_help?: string | null
+        }
+        Update: {
+          assignment_status?: string | null
+          budget_preference?: string | null
+          created_at?: string | null
+          dual_diagnosis?: string | null
+          email?: never
+          email_verified?: boolean | null
+          facility_id?: string | null
+          follow_up_reminder_sent_at?: string | null
+          id?: string | null
+          inquiry_type?: string | null
+          insurance_provider?: string | null
+          insurance_type?: string | null
+          is_unlocked?: never
+          level_of_care?: string | null
+          location_city_state?: string | null
+          location_zip?: string | null
+          message?: string | null
+          name?: never
+          phone?: never
+          primary_substance?: string[] | null
+          provider_responded_at?: string | null
+          provider_response_status?: string | null
+          qualification_reason?: string | null
+          qualified?: boolean | null
+          snooze_until?: string | null
+          source?: string | null
+          status?: string | null
+          urgency?: string | null
+          who_seeking_help?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_facilities: {
         Row: {
           address: string | null
@@ -4153,6 +4292,26 @@ export type Database = {
           verified: boolean
           website: string
           zip_code: string
+        }[]
+      }
+      get_unlocked_lead_data: {
+        Args: { p_facility_id: string; p_lead_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          facility_id: string
+          id: string
+          insurance_type: string
+          level_of_care: string
+          location_city_state: string
+          location_zip: string
+          message: string
+          name: string
+          phone: string
+          primary_substance: string[]
+          source: string
+          status: string
+          urgency: string
         }[]
       }
       get_user_sessions_safe: {
