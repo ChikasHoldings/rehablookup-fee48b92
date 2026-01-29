@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { PlacementIntakeForm } from "@/components/placement/PlacementIntakeForm";
 import { PlacementSuccessScreen } from "@/components/placement/PlacementSuccessScreen";
 import { Heart, Shield, Users, Clock, CheckCircle2 } from "lucide-react";
+import { fadeInUp, staggerContainer, heroStaggerContainer, viewportOnce } from "@/lib/animations";
 
 const TRUST_POINTS = [
   {
@@ -61,36 +63,63 @@ export default function PlacementHelp() {
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-primary/5 via-primary/10 to-transparent">
-          <div className="max-w-4xl mx-auto px-4 py-12 sm:py-16 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+          <motion.div 
+            className="max-w-4xl mx-auto px-4 py-12 sm:py-16 text-center"
+            variants={heroStaggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div 
+              variants={fadeInUp}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6"
+            >
               <Heart className="h-4 w-4" />
               Free Placement Service
-            </div>
+            </motion.div>
             
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+            <motion.h1 
+              variants={fadeInUp}
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4"
+            >
               Let Us Help You Find the Right Treatment Center
-            </h1>
+            </motion.h1>
             
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+            <motion.p 
+              variants={fadeInUp}
+              className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8"
+            >
               Our placement specialists work directly with you to understand your unique situation 
               and connect you with treatment centers that match your needs, insurance, and preferences.
-            </p>
+            </motion.p>
 
             {/* Trust Points */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            <motion.div 
+              className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto"
+              variants={staggerContainer}
+            >
               {TRUST_POINTS.map((point) => (
-                <div key={point.title} className="flex flex-col items-center p-3 rounded-xl bg-background/50">
+                <motion.div 
+                  key={point.title} 
+                  variants={fadeInUp}
+                  className="flex flex-col items-center p-3 rounded-xl bg-background/50"
+                >
                   <point.icon className="h-5 w-5 text-primary mb-2" />
                   <span className="font-medium text-sm text-foreground">{point.title}</span>
                   <span className="text-xs text-muted-foreground">{point.description}</span>
-                </div>
+                </motion.div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* Form Section */}
-        <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+        <motion.div 
+          className="max-w-3xl mx-auto px-4 py-8 sm:py-12"
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
           <div className="bg-card rounded-2xl border shadow-sm p-6 sm:p-8">
             <div className="text-center mb-8">
               <h2 className="text-xl font-semibold text-foreground mb-2">
@@ -121,7 +150,7 @@ export default function PlacementHelp() {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </Layout>
   );

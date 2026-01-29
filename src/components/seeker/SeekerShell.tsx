@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SeekerHeader } from "./SeekerHeader";
 import { SeekerMobileNav } from "./SeekerMobileNav";
@@ -158,7 +159,17 @@ export function SeekerShell() {
         ref={mainContentRef} 
         className="flex-1 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
       >
-        <Outlet context={{ isAuthenticated, userName: displayName }} />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            <Outlet context={{ isAuthenticated, userName: displayName }} />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Mobile Bottom Navigation */}
