@@ -285,30 +285,7 @@ export default function SeekerFacilityProfile() {
   const displayedInsurance = showAllInsurance ? insuranceList : insuranceList.slice(0, 10);
 
   return (
-    <div className="flex-1 pb-24 lg:pb-6 bg-gradient-to-b from-background to-muted/20">
-      {/* Sticky Mobile CTA Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-border bg-card/95 backdrop-blur-sm shadow-lg safe-area-bottom">
-        <div className="flex gap-2 p-3">
-          <Button 
-            onClick={() => setRequestModalOpen(true)} 
-            className="flex-1 gap-2 shadow-sm"
-            size="default"
-          >
-            <Send className="h-4 w-4" />
-            Send Request
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setTourModalOpen(true)} 
-            className="flex-1 gap-2"
-            size="default"
-          >
-            <CalendarDays className="h-4 w-4" />
-            Request Tour
-          </Button>
-        </div>
-      </div>
-
+    <div className="flex-1 pb-6 bg-gradient-to-b from-background to-muted/20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Back button */}
         <Button
@@ -398,6 +375,27 @@ export default function SeekerFacilityProfile() {
                       )}
                     </div>
                   </div>
+              </div>
+
+                {/* Mobile Action Buttons - Visible below header on mobile */}
+                <div className="flex gap-2 mt-4 lg:hidden">
+                  <Button 
+                    onClick={() => setRequestModalOpen(true)} 
+                    className="flex-1 gap-2"
+                    size="default"
+                  >
+                    <Send className="h-4 w-4" />
+                    Send Request
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setTourModalOpen(true)} 
+                    className="flex-1 gap-2"
+                    size="default"
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                    Request Tour
+                  </Button>
                 </div>
 
                 {/* Quick Stats - Horizontal scroll on mobile */}

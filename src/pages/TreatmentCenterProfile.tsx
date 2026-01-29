@@ -137,21 +137,8 @@ const TreatmentCenterProfile = () => {
           { name: center.name, url: `/rehab-centers/${center.id}` },
         ]}
       />
-      {/* Sticky Mobile CTA - no direct call for static profiles */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card p-3 shadow-lg md:hidden">
-        <div className="flex gap-2">
-          <Button size="sm" className="flex-1 gap-2">
-            <Phone className="h-4 w-4" />
-            Request Call
-          </Button>
-          <Button variant="outline" size="sm" className="flex-1">
-            Contact
-          </Button>
-        </div>
-      </div>
-
       {/* Main Content - Contained Layout */}
-      <div className="bg-muted/30 min-h-screen pb-24 md:pb-0">
+      <div className="bg-muted/30 min-h-screen pb-6">
         <div className="container max-w-5xl py-6 md:py-8">
           {/* Back Link */}
           <Link
@@ -163,46 +150,46 @@ const TreatmentCenterProfile = () => {
           </Link>
 
           {/* Header Card */}
-          <div className="mb-6 rounded-xl border border-border bg-card p-5 shadow-sm md:p-6">
-            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-              <div className="flex items-start gap-4">
+          <div className="mb-6 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 md:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex items-start gap-3 sm:gap-4">
                 {/* Logo Placeholder with Initials */}
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-border bg-muted md:h-20 md:w-20">
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-muted sm:h-16 sm:w-16 md:h-20 md:w-20">
                   <div className="flex h-full w-full items-center justify-center">
-                    <span className="font-display text-xl font-bold text-primary md:text-2xl">
+                    <span className="font-display text-lg font-bold text-primary sm:text-xl md:text-2xl">
                       {initials}
                     </span>
                   </div>
                 </div>
                 
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   {/* Badges */}
                   <div className="flex flex-wrap items-center gap-1.5 mb-2">
                     {center.featured && (
-                      <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-xs px-2 py-0.5">
-                        <Star className="h-3 w-3 fill-current" />
+                      <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5">
+                        <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-current" />
                         Featured
                       </Badge>
                     )}
-                    <Badge variant="secondary" className="gap-1 text-xs px-2 py-0.5">
-                      <BadgeCheck className="h-3 w-3" />
+                    <Badge variant="secondary" className="gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5">
+                      <BadgeCheck className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       Verified
                     </Badge>
                   </div>
                   
-                  <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                  <h1 className="font-display text-lg font-bold text-foreground leading-tight sm:text-xl md:text-2xl line-clamp-2">
                     {center.name}
                   </h1>
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 shrink-0" />
+                  <p className="mt-1 flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                     {center.city}, {center.state}
                   </p>
                   
                   {/* Rating */}
                   <div className="mt-2 flex items-center gap-2">
-                    <Star className="h-4 w-4 fill-accent text-accent" />
-                    <span className="text-sm font-semibold">{center.rating}</span>
-                    <span className="text-xs text-muted-foreground">({center.reviewCount} reviews)</span>
+                    <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-accent text-accent" />
+                    <span className="text-xs sm:text-sm font-semibold">{center.rating}</span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">({center.reviewCount} reviews)</span>
                   </div>
                 </div>
               </div>
@@ -218,6 +205,18 @@ const TreatmentCenterProfile = () => {
                   Request Info
                 </Button>
               </div>
+            </div>
+
+            {/* Mobile Action Buttons */}
+            <div className="flex gap-2 mt-4 md:hidden">
+              <Button size="sm" className="flex-1 gap-2">
+                <Phone className="h-4 w-4" />
+                Request Call
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 gap-1.5">
+                <Globe className="h-4 w-4" />
+                Request Info
+              </Button>
             </div>
 
             {/* Treatment Tags */}

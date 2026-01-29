@@ -505,42 +505,8 @@ const CenterProfile = () => {
         modifiedTime={facility.updated_at}
       />
 
-      {/* Sticky Mobile CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md px-4 py-4 shadow-2xl md:hidden safe-area-bottom">
-        <div className="flex gap-3">
-          {showContactDetails ? (
-            <a 
-              href={`tel:${facility.phone}`} 
-              className="flex-1"
-              onClick={() => trackInteraction("call")}
-            >
-              <Button className="w-full h-13 gap-2 text-base font-semibold shadow-lg">
-                <Phone className="h-5 w-5" />
-                Call Now
-              </Button>
-            </a>
-          ) : (
-            <Button 
-              className="flex-1 h-13 gap-2 text-base font-semibold shadow-lg"
-              onClick={() => setRequestModalOpen(true)}
-            >
-              <Phone className="h-5 w-5" />
-              Request Call
-            </Button>
-          )}
-          <Button 
-            variant="outline" 
-            className="flex-1 h-13 gap-2 text-base font-semibold border-2"
-            onClick={() => setRequestModalOpen(true)}
-          >
-            <MessageSquare className="h-5 w-5" />
-            Contact
-          </Button>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <div className="bg-gradient-to-b from-muted/40 via-background to-background min-h-screen pb-32 md:pb-12">
+      <div className="bg-gradient-to-b from-muted/40 via-background to-background min-h-screen pb-8">
         <div className="container max-w-7xl px-4 py-6 md:px-6 md:py-10">
           {/* Pending Status Banner */}
           {isOwner && isPending && (
@@ -689,8 +655,8 @@ const CenterProfile = () => {
               </div>
             </div>
 
-            {/* Desktop Actions */}
-            <div className="hidden md:flex items-center gap-3 border-t border-border/50 px-6 py-4 bg-card">
+            {/* Action Buttons - Responsive for all screens */}
+            <div className="flex flex-col sm:flex-row items-stretch gap-3 border-t border-border/50 px-4 py-4 md:px-6 bg-card">
               {showContactDetails ? (
                 <a 
                   href={`tel:${facility.phone}`}
@@ -727,8 +693,9 @@ const CenterProfile = () => {
                   target="_blank" 
                   rel="noopener noreferrer"
                   onClick={() => trackInteraction("website")}
+                  className="flex-1 sm:flex-none"
                 >
-                  <Button variant="outline" size="lg" className="gap-2 h-12 border-2">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 h-12 border-2">
                     <Globe className="h-4 w-4" />
                     Website
                     <ExternalLink className="h-3.5 w-3.5" />
