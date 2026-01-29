@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CreditCard, Landmark, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { loadStripe, Stripe, StripeElements } from "@stripe/stripe-js";
 import {
   Elements,
@@ -130,10 +131,10 @@ function PaymentForm({
             <CreditCard className="h-4 w-4" />
             Credit Card
           </TabsTrigger>
-          <TabsTrigger value="ach" className="gap-2" disabled>
+          <TabsTrigger value="ach" className="gap-2 opacity-50 cursor-not-allowed" disabled>
             <Landmark className="h-4 w-4" />
-            Bank Account
-            <span className="text-xs text-muted-foreground">(Soon)</span>
+            Bank (ACH)
+            <Badge variant="outline" className="text-[10px] px-1 py-0 ml-1 border-muted-foreground/30 text-muted-foreground">Coming Soon</Badge>
           </TabsTrigger>
         </TabsList>
 

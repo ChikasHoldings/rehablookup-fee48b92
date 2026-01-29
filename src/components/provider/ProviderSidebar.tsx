@@ -30,6 +30,7 @@ const navItems = [
   { href: "/provider/credits", label: "Credits & Payments", icon: Wallet },
   { href: "/provider/pro-upgrade", label: "Pro Visibility", icon: Sparkles },
   { href: "/provider/concierge", label: "Concierge", icon: Network },
+  { href: "/provider/placement-network", label: "Placement Network", icon: Network },
   { href: "/provider/billing-history", label: "Billing History", icon: Receipt },
   { href: "/provider/reviews", label: "Reviews", icon: Star },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
