@@ -15,6 +15,7 @@ import {
   ctaButton,
   emailFooter,
   emailEnd,
+  maskLeadName,
   type PlanType,
 } from "../_shared/email-templates.ts";
 
@@ -90,22 +91,25 @@ function generateFollowupEmail(
   const isUrgent = highestTier.level >= 2;
   const isFeatured = plan === 'featured';
 
+  // SECURITY: Mask lead contact info - providers must unlock leads to see full details
   const leadsHtml = providerData.leads.slice(0, 4).map(({ lead, tier }) => {
     const badge = tier.level === 3 ? "72h+" : tier.level === 2 ? "48h+" : "24h+";
     const badgeColor = tier.level === 3 ? "#991b1b" : tier.level === 2 ? "#dc2626" : "#f59e0b";
+    const maskedName = maskLeadName(lead.name);
+    
     return `
     <tr>
       <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td>
-              <span style="font-weight: 600; color: #1B365D;">${lead.name}</span>
+              <span style="font-weight: 600; color: #1B365D;">🔒 ${maskedName}</span>
               <span style="background: ${badgeColor}; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-left: 8px;">${badge}</span>
             </td>
           </tr>
           <tr>
             <td style="padding-top: 4px;">
-              <span style="font-size: 13px; color: #6b7280;">${lead.phone} | ${lead.email}</span>
+              <span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Unlock to view contact details</span>
             </td>
           </tr>
         </table>
@@ -117,7 +121,7 @@ function generateFollowupEmail(
   email += emailHeader(isUrgent ? "Leads Need Attention" : "Follow-Up Reminder", plan, { isUrgent });
   email += emailBodyStart();
   email += emailGreeting(providerData.providerName);
-  email += emailParagraph(`You have <strong>${totalLeads} lead${totalLeads === 1 ? "" : "s"}</strong> waiting for a response at ${providerData.facilityName}.`);
+  email += emailParagraph(`You have <strong>${totalLeads} lead${totalLeads === 1 ? "" : "s"}</strong> waiting for a response at ${providerData.facilityName}. Unlock each lead to view their contact details.`);
 
   // Featured insights
   if (isFeatured) {
@@ -140,7 +144,7 @@ function generateFollowupEmail(
     email += `<p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">+ ${totalLeads - 4} more</p>`;
   }
 
-  email += ctaButton("Contact Leads Now", "https://rehablookup.com/provider/leads", plan);
+  email += ctaButton("View & Unlock Leads", "https://rehablookup.com/provider/leads", plan);
   email += emailBodyEnd();
   email += emailFooter();
   email += emailEnd();
@@ -289,14 +293,16 @@ const handler = async (req: Request): Promise<Response> => {
         await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [providerData.providerEmail],
-          subject: `${subjectPrefix} ${totalLeads} lead${totalLeads > 1 ? "s" : ""} waiting for follow-up`,
+          subject: `${subjectPrefix} ${totalLeads} lead${totalLeads > 1 ? "s" : ""} waiting - Unlock to view`,
           html: emailHtml,
         });
 
         emailsSent++;
         console.log(`[FOLLOWUP-REMINDERS] Email sent to ${providerData.providerEmail}`);
 
-        const notificationMessage = `${totalLeads} lead${totalLeads > 1 ? "s have" : " has"} been waiting for a response.`;
+        // SECURITY: Use masked name in notification, don't include contact details
+        const maskedLeadName = maskLeadName(providerData.leads[0]?.lead.name || "Lead");
+        const notificationMessage = `${totalLeads} lead${totalLeads > 1 ? "s have" : " has"} been waiting for a response. Unlock to view contact details.`;
 
         await supabase
           .from("provider_notifications")
@@ -309,6 +315,8 @@ const handler = async (req: Request): Promise<Response> => {
               lead_count: totalLeads,
               tier: highestTier.level,
               lead_ids: providerData.leads.map(l => l.lead.id),
+              // SECURITY: Only masked name, no contact details
+              sample_lead_name: maskedLeadName,
             },
           });
 
