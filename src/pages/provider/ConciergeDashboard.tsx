@@ -26,6 +26,7 @@ import { Link } from "react-router-dom";
 import { ConciergeTourRequests } from "@/components/provider/ConciergeTourRequests";
 import { ConciergeMessages } from "@/components/provider/ConciergeMessages";
 import { ConciergeIntroductionCard } from "@/components/provider/ConciergeIntroductionCard";
+import { ConciergeIntroductionsHistory } from "@/components/provider/ConciergeIntroductionsHistory";
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -304,7 +305,7 @@ export default function ProviderConciergeDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="introductions" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="introductions" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Intros</span>
@@ -313,6 +314,10 @@ export default function ProviderConciergeDashboard() {
                   {pendingIntroductions.length}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">History</span>
             </TabsTrigger>
             <TabsTrigger value="messages" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
@@ -363,6 +368,11 @@ export default function ProviderConciergeDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history">
+            <ConciergeIntroductionsHistory />
           </TabsContent>
 
           {/* Messages Tab */}
