@@ -27,7 +27,7 @@ import {
   AlertCircle,
   ChevronRight,
 } from "lucide-react";
-import { useProStatus } from "@/hooks/useProStatus";
+import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,16 +72,13 @@ const notificationIcons: Record<string, React.ReactNode> = {
   system: <Settings className="h-4 w-4 text-muted-foreground" />,
 };
 
-const getLocationLimit = (isPro: boolean): number => {
-  return isPro ? 5 : 1;
-};
+// Facility limits now handled by useFacilityLimits hook
 
 export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilityLogo, userName, onLogout }: ProviderHeaderProps) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   
   const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading } = useProviderNotifications();
-  const { data: proStatus } = useProStatus();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
   const { 
     selectedFacility, 
@@ -90,11 +87,10 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     confirmFacilitySwitch, 
     cancelFacilitySwitch 
   } = useSelectedFacility();
+  const { canAddMore, planTier, limit: locationLimit } = useFacilityLimits();
   
   const recentNotifications = notifications.slice(0, 5);
-  const isPro = proStatus?.isPro || false;
-  const locationLimit = getLocationLimit(isPro);
-  const canAddMore = facilities.length < locationLimit;
+  const isPro = planTier === "pro";
   const approvedFacilities = facilities.filter(f => f.status === "approved");
   const pendingFacilities = facilities.filter(f => f.status === "pending");
 

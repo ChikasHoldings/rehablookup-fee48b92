@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useProStatus } from "@/hooks/useProStatus";
+import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
@@ -86,8 +86,9 @@ export default function AddLocationPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: proStatus } = useProStatus();
   const { facilities } = useProviderFacilities();
+  const { limit: locationLimit, used: usedLocations, canAddMore, planTier } = useFacilityLimits();
+  const isPro = planTier === "pro";
   
   const [formData, setFormData] = useState<FacilityFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,12 +98,6 @@ export default function AddLocationPage() {
   const { data: zipcodeData, isLoading: isLookingUp, error: lookupError, lookup } = useZipcodeLookup();
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
   const [lookupTimeout, setLookupTimeout] = useState<NodeJS.Timeout | null>(null);
-
-  // Get location limit based on Pro status (Pro gets 5, Basic gets 1)
-  const isPro = proStatus?.isPro || false;
-  const locationLimit = isPro ? 5 : 1;
-  const usedLocations = facilities?.length ?? 0;
-  const canAddMore = usedLocations < locationLimit;
 
   const handleInputChange = (field: keyof FacilityFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
