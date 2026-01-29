@@ -1,5 +1,4 @@
-import { ReactNode, forwardRef } from "react";
-import { motion } from "framer-motion";
+import { useRef, useEffect, useState, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface AnimatedCardProps {
@@ -8,23 +7,41 @@ interface AnimatedCardProps {
   delay?: number;
 }
 
-export const AnimatedCard = forwardRef<HTMLDivElement, AnimatedCardProps>(
-  function AnimatedCard({ children, className, delay = 0 }, ref) {
-    return (
-      <motion.div
-        ref={ref}
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
-        transition={{ 
-          duration: 0.5, 
-          delay: delay / 1000, // Convert ms to seconds
-          ease: [0.25, 0.46, 0.45, 0.94] 
-        }}
-        className={cn(className)}
-      >
-        {children}
-      </motion.div>
+export function AnimatedCard({ children, className, delay = 0 }: AnimatedCardProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: "50px" }
     );
-  }
-);
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "transition-all duration-700 ease-out",
+        isVisible
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-8",
+        className
+      )}
+      style={{ transitionDelay: isVisible ? `${delay}ms` : "0ms" }}
+    >
+      {children}
+    </div>
+  );
+}
