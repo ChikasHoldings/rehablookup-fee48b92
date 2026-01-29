@@ -1,144 +1,266 @@
-# Provider Panel Audit & Hardening Plan
+
+# Provider Panel Placement Network Audit & Hardening Plan
 
 ## Executive Summary
 
-This audit covers the Provider panel updates, facility limit enforcement, lead locking/unlocking mechanics, and data leak prevention across the frontend, backend, and database layers. Several areas require attention to ensure full compliance with the new Free/Pro monetization model.
+This audit covers the Provider panel's **Placement Network** feature, including the onboarding flow, fee explanation, payment method setup (ACH/card), e-signature for terms acceptance, and UI/UX consistency with the overall Provider panel design.
 
 ---
 
-## ✅ COMPLETED PHASES
-
-### Phase 1: Frontend Leak Prevention ✅ DONE
-
-**Task 1.1: Secure LeadDetailPanel** ✅
-- Added `useLeadUnlocks` hook integration
-- Contact info (phone, email) now masked for locked leads
-- Shows `UnlockLeadButton` for locked leads
-- Uses `getLeadDisplayInfo()` from `src/lib/leadMasking.ts`
-
-**Task 1.2: Secure LeadDetailDrawer** ✅
-- Same pattern as LeadDetailPanel
-- Contact section shows locked state UI with masked data
-- Includes `UnlockLeadButton` component
-
-**Task 1.3: Secure Inquiries Page** ✅
-- Uses `getLeadDisplayInfo()` for proper masking
-- Displays masked names for locked leads in cards
-- Correctly integrates with `useLeadUnlocks` hook
-
-**Task 1.4: Audit MobileLeadCard** ✅
-- Updated to use masking utilities from `leadMasking.ts`
-- Properly masks phone and email for locked leads
-
-### Phase 2: Database Security Hardening ✅ DONE
-
-**Task 2.1: Created Masked Leads View** ✅
-- `leads_provider_view` created with `security_invoker = on`
-- Automatically masks name, email, phone for locked leads
-- Uses existing `is_lead_unlocked()` function for checks
-- Exposes `is_unlocked` boolean field
-
-**Task 2.2: Security Definer Function** ✅
-- `get_unlocked_lead_data()` function created
-- Only returns full data if lead is unlocked
-- Raises exception if attempting to access locked lead
-
-### Phase 3: Frontend Integration Updates ✅ DONE
-
-**Task 3.1: Masking Utility Created** ✅
-File: `src/lib/leadMasking.ts`
-
-Functions implemented:
-- `maskLeadName(name)` - "John Smith" → "John S."
-- `maskEmail(email)` - "john@example.com" → "j●●●@●●●.com"
-- `maskPhone(phone)` - Always returns "(●●●) ●●●-●●●●"
-- `getMaskedInitials(name, isLocked)` - Returns "??" for locked
-- `getLeadDisplayInfo(lead, isUnlocked)` - Returns complete masked/unmasked display object
-
-### Phase 4: Edge Function Verification ✅ DONE
-
-**Audited Functions:**
-- `send-lead-confirmation` ✅ - Sends to seeker, not provider (no PII leak)
-- `send-lead-email` ✅ - Uses unlock check before showing contact
-- `send-sms-notification` ✅ - Params come from verified sources
-- `submit-qualified-lead` ✅ - Only assigns leads, doesn't expose PII in emails
-- `_shared/email-templates.ts` ✅ - Has `maskLeadName()` utility already
-
----
-
-## Current State Summary
+## Current State Analysis
 
 ### What's Working Well
 
-1. **Facility Limits Hook** (`useFacilityLimits.ts`)
-   - Centralized limit enforcement: Free = 1 facility, Pro = 5 facilities
-   - Properly integrated into `Dashboard.tsx`, `AddLocation.tsx`, `ProviderHeader.tsx`
+1. **Placement Network Page** (`/provider/placement-network`)
+   - Full opt-in/opt-out toggle with readiness checklist
+   - "How it Works" 4-step explanation
+   - Network benefits section
+   - Tab-based navigation (Introductions, Profile, Billing, Placements)
 
-2. **Lead Unlock System**
-   - `useLeadUnlocks.ts` - Tracks which leads are unlocked
-   - `useUnlockPricing.ts` - Dynamic pricing with Pro 20% discount
-   - `unlock-lead` edge function - Secure credit deduction and unlock record creation
-   - `UnlockLeadButton.tsx` - UI component with proper pricing display
+2. **Fee Structure Display**
+   - Clear fee breakdown showing:
+     - Flat Fee: $1,200 (Pro: $960 with 20% discount)
+     - Commission: 8% of first month (Pro: 6.4%, capped at $1,500)
+   - Pro discount visually highlighted
 
-3. **Email Masking in Edge Functions**
-   - `send-lead-digest`, `send-followup-reminders`, `send-weekly-digest` all use `maskLeadName()` from shared templates
-   - Contact details hidden with "Unlock to view" messaging
-   - Notification metadata excludes full contact info
+3. **E-Signature System** (`PlacementTermsModal.tsx`)
+   - Scrollable terms agreement (TERMS_VERSION: "1.0")
+   - Checkbox for acknowledgment
+   - Digital signature input field (typed full name)
+   - Legal disclaimer about electronic signature
+   - Saves `concierge_terms_accepted_at`, `concierge_terms_version`, `concierge_terms_accepted_by`
 
-4. **Pro Status Detection**
-   - `useProStatus.ts` - Queries `pro_subscriptions` table correctly
-   - `_shared/email-templates.ts` - `getProviderPlan()` maps legacy Stripe IDs to Pro
+4. **Payment Methods** (`AddPaymentMethodModal.tsx`)
+   - Stripe Elements integration for card capture
+   - SetupIntent flow for saving payment methods
+   - Database table `provider_payment_methods` with proper RLS
 
-5. **Frontend Masking** ✅ NEW
-   - All lead detail components mask contact info for locked leads
-   - Utility functions in `src/lib/leadMasking.ts`
-   - Consistent "●" pattern for masked data
+5. **Backend Edge Functions**
+   - `setup-provider-payment-method` - Creates Stripe SetupIntent
+   - `save-provider-payment-method` - Persists payment method to DB
+   - `charge-placement-fee` - Charges on confirmed placement
 
-6. **Database-Level Protection** ✅ NEW
-   - `leads_provider_view` automatically masks sensitive columns
-   - `get_unlocked_lead_data()` function for secure full data access
+6. **Opt-in Readiness Checklist**
+   - Complete facility profile check
+   - Terms acceptance check
+   - Payment method check
+   - Care types selection check
 
 ---
 
-## Testing Checklist
+## Issues Identified
 
+### Issue 1: ACH/Bank Account Not Functional
+**File:** `AddPaymentMethodModal.tsx` (line 133)
+**Status:** UI shows "Bank Account (Soon)" but is disabled
+
+The ACH tab is disabled with a "(Soon)" label. The Stripe SetupIntent in `setup-provider-payment-method` already supports `us_bank_account`, but the frontend doesn't implement it.
+
+**Fix Required:** Either fully implement ACH or update messaging to clearly indicate card-only for now.
+
+### Issue 2: Placement Network Not in Sidebar Navigation
+**File:** `ProviderSidebar.tsx`
+**Status:** MISSING
+
+The Placement Network page exists at `/provider/placement-network` but is not in the sidebar `navItems` array. Users can only access it via:
+- Direct URL
+- Links from ConciergeDashboard
+- "Get Started" prompts
+
+**Fix Required:** Add "Placement Network" to sidebar navigation.
+
+### Issue 3: Missing Stripe Publishable Key Environment Variable
+**File:** `AddPaymentMethodModal.tsx` (line 26)
+**Current:** `loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "")`
+
+The `VITE_STRIPE_PUBLISHABLE_KEY` is not in the verified secrets list. If not set, Stripe Elements will fail silently.
+
+**Fix Required:** Verify the publishable key is in `.env` or add it.
+
+### Issue 4: Inconsistent Font Styling in Fee Cards
+**File:** `PlacementNetwork.tsx` (lines 744-762)
+**Status:** Minor styling inconsistency
+
+The fee structure cards use `text-2xl font-bold` but other dashboard metric cards use `text-xl font-bold`. Should align with Provider panel patterns.
+
+### Issue 5: No Visual Confirmation of Terms Signature
+**Status:** After signing, there's no way to view the signed agreement or signature
+
+**Recommendation:** Add a "View Agreement" section in Billing tab showing:
+- Signature name
+- Date signed
+- Terms version
+
+### Issue 6: Missing "Pro Discount" Explanation Before Signup
+**File:** `PlacementNetwork.tsx`
+**Status:** Pro discount shown in fee card, but not explained in initial "Benefits" section
+
+Providers may not know they can get 20% off placement fees with Pro before they sign up.
+
+---
+
+## Implementation Plan
+
+### Phase 1: Navigation & Discoverability
+
+**Task 1.1: Add Placement Network to Sidebar**
 ```text
-Test Scenarios:
-[x] Free user can only add 1 facility
-[x] Pro user can add up to 5 facilities  
-[x] AddLocation shows upgrade prompt at limit
-[x] New leads display as "Locked" in UI
-[x] Locked leads show masked name, email, phone
-[x] Click on locked lead shows masked contact info
-[x] Unlock button shows correct price (Pro discount applied)
-[x] After unlock, full contact info visible
-[x] Email notifications mask contact info
-[x] Database view masks data for locked leads
-[ ] Dashboard metrics work correctly (manual test)
-[x] Pro badge displays correctly
+File: src/components/provider/ProviderSidebar.tsx
+
+Changes:
+1. Add to navItems array:
+   { href: "/provider/placement-network", label: "Placement Network", icon: Network }
+2. Position after "Concierge" item
+3. Add badge for pending introductions count (optional)
+```
+
+### Phase 2: Payment Method Improvements
+
+**Task 2.1: Improve ACH Messaging**
+```text
+File: src/components/provider/AddPaymentMethodModal.tsx
+
+Option A - Remove ACH tab entirely (cleaner UI)
+Option B - Update "(Soon)" to "Coming Q2 2026" with better styling
+```
+
+**Task 2.2: Verify Stripe Publishable Key**
+```text
+Check if VITE_STRIPE_PUBLISHABLE_KEY exists in .env
+If missing, add the publishable key (safe for client-side)
+```
+
+### Phase 3: UI/UX Alignment with Provider Panel
+
+**Task 3.1: Standardize Typography**
+```text
+File: src/pages/provider/PlacementNetwork.tsx
+
+Changes:
+1. Fee cards: text-xl instead of text-2xl
+2. Section headings: Match Dashboard h2 styling
+3. Card padding: Align with other provider pages
+```
+
+**Task 3.2: Add Pro Discount Callout in Benefits**
+```text
+Location: PLACEMENT_BENEFITS array or separate callout card
+
+Add:
+- "Pro subscribers save 20% on every placement fee"
+- Link to Pro Upgrade page
+```
+
+**Task 3.3: Improve Header Gradient**
+```text
+The purple/violet gradient works but could use the same treatment as Dashboard.
+Consider: Adding a subtle border-bottom or shadow for visual separation.
+```
+
+### Phase 4: Terms & Signature Enhancements
+
+**Task 4.1: Add Signed Agreement Display**
+```text
+File: src/pages/provider/PlacementNetwork.tsx (Billing tab)
+
+Add section showing:
+- "Agreement Status: Signed on [date]"
+- "Signed by: [name]"
+- "Version: [terms version]"
+- Button: "View Terms" to open read-only modal
+```
+
+**Task 4.2: E-Signature Validation Enhancement**
+```text
+File: src/components/provider/PlacementTermsModal.tsx
+
+Improvements:
+1. Add confirmation modal before final submission
+2. Show "Please type your full name exactly" helper text
+3. Add timestamp to signature record
+```
+
+### Phase 5: Fee Structure Clarity
+
+**Task 5.1: Add Inline Fee Comparison**
+```text
+File: src/pages/provider/PlacementNetwork.tsx
+
+Before opt-in, show side-by-side comparison:
+| Fee Type    | Standard | Pro (20% off) |
+|-------------|----------|---------------|
+| Flat Fee    | $1,200   | $960          |
+| Commission  | 8%       | 6.4%          |
+```
+
+**Task 5.2: Add "When Will I Be Charged?" FAQ**
+```text
+Location: Below fee structure cards or in expandable accordion
+
+Content:
+- "Fees are only charged after confirmed placement"
+- "Both you and the family must confirm admission"
+- "Invoices are due within 14 days"
 ```
 
 ---
 
-## Files Changed
+## Files Requiring Changes
 
-| File | Status | Change Type |
-|------|--------|-------------|
-| `src/lib/leadMasking.ts` | ✅ CREATED | Masking utilities |
-| `LeadDetailPanel.tsx` | ✅ UPDATED | Add unlock check |
-| `LeadDetailDrawer.tsx` | ✅ UPDATED | Add unlock check |
-| `Inquiries.tsx` | ✅ UPDATED | Verify unlock check |
-| `MobileLeadCard.tsx` | ✅ UPDATED | Use masking utilities |
-| `leads_provider_view` | ✅ CREATED | Database view |
-| `get_unlocked_lead_data()` | ✅ CREATED | Database function |
+| File | Priority | Change Type |
+|------|----------|-------------|
+| `ProviderSidebar.tsx` | HIGH | Add navigation item |
+| `AddPaymentMethodModal.tsx` | MEDIUM | ACH messaging update |
+| `PlacementNetwork.tsx` | MEDIUM | Typography alignment, Pro callout |
+| `PlacementTermsModal.tsx` | LOW | Signature confirmation |
+| `.env` | HIGH | Verify Stripe key |
 
 ---
 
-## Risk Assessment (Updated)
+## Technical Details
 
-| Risk | Likelihood | Impact | Status |
-|------|------------|--------|--------|
-| Contact info leaked | Low ✅ | High | MITIGATED - Frontend masking + DB view |
-| Pro discount not applied | Low | Medium | Working in unlock-lead |
-| Facility limit bypassed | Low | Low | useFacilityLimits enforces on submit |
-| Credits deducted without unlock | Low | High | Transaction in unlock-lead function |
+### Database Schema (Already Complete)
+
+**`provider_payment_methods`** table:
+- `id`, `facility_id`, `type`, `stripe_payment_method_id`
+- `last_four`, `bank_name`, `card_brand`, `exp_month`, `exp_year`
+- `is_default`, `is_verified`, timestamps
+- RLS policies properly configured
+
+**`facilities`** concierge columns:
+- `concierge_network_opted_in`, `concierge_opted_in_at`
+- `concierge_terms_accepted_at`, `concierge_terms_version`, `concierge_terms_accepted_by`
+- Network profile fields (care types, insurance, availability, etc.)
+
+### Edge Functions (Verified Working)
+- `setup-provider-payment-method` - Creates SetupIntent
+- `save-provider-payment-method` - Saves to DB
+- `charge-placement-fee` - Processes payment on placement
+
+---
+
+## Summary of What's Already Built vs. What Needs Work
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Placement Network page | Done | Full functionality |
+| E-signature (terms acceptance) | Done | Digital signature with typed name |
+| Credit card payment setup | Done | Stripe Elements working |
+| ACH bank account setup | Partial | UI exists but disabled |
+| Fee structure display | Done | Clear pricing with Pro discount |
+| Opt-in checklist | Done | 4 requirement checks |
+| Sidebar navigation | Missing | Not in sidebar nav |
+| Pro discount promotion | Partial | Not prominently featured |
+| Signed agreement viewing | Missing | No way to review after signing |
+
+---
+
+## Estimated Effort
+
+- Phase 1 (Navigation): 30 minutes
+- Phase 2 (Payment improvements): 1 hour
+- Phase 3 (UI alignment): 1-2 hours
+- Phase 4 (Terms enhancements): 1 hour
+- Phase 5 (Fee clarity): 30 minutes
+
+**Total: 4-5 hours**
