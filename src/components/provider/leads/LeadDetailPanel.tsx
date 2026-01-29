@@ -23,6 +23,7 @@ import {
   X,
   Share2,
   Star,
+  Lock,
 } from "lucide-react";
 import {
   Select,
@@ -54,6 +55,9 @@ import { EmailLeadDialog } from "./EmailLeadDialog";
 
 import { cn } from "@/lib/utils";
 import { calculateLeadScore } from "@/lib/leadScoring";
+import { getLeadDisplayInfo, maskLeadName } from "@/lib/leadMasking";
+import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
+import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 
 export interface Lead {
   id: string;
@@ -127,6 +131,13 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
   const [pendingStatus, setPendingStatus] = useState<LeadStatus | null>(null);
   const [lostReason, setLostReason] = useState("");
   const queryClient = useQueryClient();
+  
+  // Lead unlock status
+  const { isLeadUnlocked } = useLeadUnlocks(lead?.facility_id);
+  const isUnlocked = lead ? isLeadUnlocked(lead.id) : false;
+  
+  // Get masked or unmasked display info based on unlock status
+  const displayInfo = lead ? getLeadDisplayInfo(lead, isUnlocked) : null;
 
   const { data: notes = [] } = useQuery({
     queryKey: ["lead-notes", lead?.id],
@@ -245,13 +256,26 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
       <div className={cn("flex-shrink-0 border-b border-l-4", gradeAccentColor)}>
         {/* Top row: Avatar, Name, Actions */}
         <div className="p-4 pb-3 flex items-center gap-3">
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <span className="text-base font-semibold text-primary">
-              {lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+          <div className={cn(
+            "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0",
+            displayInfo?.isLocked ? "bg-muted" : "bg-primary/10"
+          )}>
+            <span className={cn(
+              "text-base font-semibold",
+              displayInfo?.isLocked ? "text-muted-foreground" : "text-primary"
+            )}>
+              {displayInfo?.initials || "??"}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-semibold text-foreground truncate leading-tight">{lead.name}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-foreground truncate leading-tight">
+                {displayInfo?.name || "Unknown Lead"}
+              </h2>
+              {displayInfo?.isLocked && (
+                <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              )}
+            </div>
             <div className="flex items-center gap-1.5 mt-0.5 text-sm text-muted-foreground">
               {lead.location_city_state && (
                 <>
@@ -267,9 +291,16 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
           </div>
           <div className="flex items-start gap-2 flex-shrink-0">
             <div className="flex flex-col gap-1.5">
-              <Button size="sm" variant="outline" className="gap-1.5 h-8 px-3 w-full justify-start" onClick={() => setShowEmailDialog(true)}>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="gap-1.5 h-8 px-3 w-full justify-start" 
+                onClick={() => setShowEmailDialog(true)}
+                disabled={displayInfo?.isLocked}
+                title={displayInfo?.isLocked ? "Unlock lead to send email" : "Send email"}
+              >
                 <Mail className="h-3.5 w-3.5" />
-                Send email
+                {displayInfo?.isLocked ? "Locked" : "Send email"}
               </Button>
               <Select 
                 value={lead.status} 
@@ -501,71 +532,112 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Phone className="h-4 w-4 text-primary" />
                   Contact Information
+                  {displayInfo?.isLocked && (
+                    <Badge variant="outline" className="ml-2 gap-1 text-xs">
+                      <Lock className="h-3 w-3" />
+                      Locked
+                    </Badge>
+                  )}
                 </h3>
               </div>
-              <div className="p-4 space-y-3">
-                {/* Phone */}
-                <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Phone className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-base font-semibold text-foreground">{lead.phone}</p>
-                      <p className="text-xs text-muted-foreground">{lead.preferred_contact === "call" ? "✓ Preferred" : "Phone"}</p>
+              
+              {displayInfo?.isLocked ? (
+                /* Locked State - Show unlock prompt */
+                <div className="p-6 text-center space-y-4">
+                  <div className="h-16 w-16 rounded-full bg-muted mx-auto flex items-center justify-center">
+                    <Lock className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">Contact Details Locked</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Unlock this lead to view phone, email, and take action
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Phone className="h-4 w-4" />
+                        {displayInfo.phone}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Mail className="h-4 w-4" />
+                        {displayInfo.email}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.phone, "phone")}>
-                      {copiedField === "phone" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8" asChild>
-                      <a href={`tel:${lead.phone}`}><ExternalLink className="h-4 w-4" /></a>
-                    </Button>
-                  </div>
+                  <UnlockLeadButton 
+                    leadId={lead.id} 
+                    facilityId={lead.facility_id}
+                    inquiryType={(lead as any).inquiry_type || 'request_info'}
+                    className="w-full max-w-xs mx-auto"
+                  />
                 </div>
-                {/* Email */}
-                <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <Mail className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-base font-semibold text-foreground truncate">{lead.email}</p>
-                      <p className="text-xs text-muted-foreground">{lead.preferred_contact === "email" ? "✓ Preferred" : "Email"}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.email, "email")}>
-                      {copiedField === "email" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                    <Button variant="outline" size="icon" className="h-8 w-8" asChild>
-                      <a href={`mailto:${lead.email}`}><ExternalLink className="h-4 w-4" /></a>
-                    </Button>
-                  </div>
-                </div>
-                {/* Location - Prominent display in Contact section */}
-                {(lead.location_city_state || lead.location_zip) && (
+              ) : (
+                /* Unlocked State - Show full contact info */
+                <div className="p-4 space-y-3">
+                  {/* Phone */}
                   <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                        <MapPin className="h-5 w-5 text-amber-600" />
+                      <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <Phone className="h-5 w-5 text-green-600" />
                       </div>
                       <div>
-                        <p className="text-base font-semibold text-foreground">
-                          {lead.location_city_state || lead.location_zip}
-                        </p>
-                        {lead.location_city_state && lead.location_zip && (
-                          <p className="text-xs text-muted-foreground">ZIP: {lead.location_zip}</p>
-                        )}
-                        {!lead.location_city_state && lead.location_zip && (
-                          <p className="text-xs text-muted-foreground">ZIP Code</p>
-                        )}
+                        <p className="text-base font-semibold text-foreground">{displayInfo.phone}</p>
+                        <p className="text-xs text-muted-foreground">{lead.preferred_contact === "call" ? "✓ Preferred" : "Phone"}</p>
                       </div>
                     </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.phone, "phone")}>
+                        {copiedField === "phone" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                        <a href={`tel:${lead.phone}`}><ExternalLink className="h-4 w-4" /></a>
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </div>
+                  {/* Email */}
+                  <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <Mail className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-base font-semibold text-foreground truncate">{displayInfo.email}</p>
+                        <p className="text-xs text-muted-foreground">{lead.preferred_contact === "email" ? "✓ Preferred" : "Email"}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.email, "email")}>
+                        {copiedField === "email" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                        <a href={`mailto:${lead.email}`}><ExternalLink className="h-4 w-4" /></a>
+                      </Button>
+                    </div>
+                  </div>
+                  {/* Location - Prominent display in Contact section */}
+                  {(lead.location_city_state || lead.location_zip) && (
+                    <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                          <MapPin className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="text-base font-semibold text-foreground">
+                            {lead.location_city_state || lead.location_zip}
+                          </p>
+                          {lead.location_city_state && lead.location_zip && (
+                            <p className="text-xs text-muted-foreground">ZIP: {lead.location_zip}</p>
+                          )}
+                          {!lead.location_city_state && lead.location_zip && (
+                            <p className="text-xs text-muted-foreground">ZIP Code</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
 
             {/* Treatment Details - Card style */}

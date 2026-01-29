@@ -23,7 +23,8 @@ import {
   CreditCard,
   Sparkles,
   BellOff,
-  Bell
+  Bell,
+  Lock,
 } from "lucide-react";
 import {
   Dialog,
@@ -49,8 +50,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
 import { LeadScoreBadge } from "./LeadScoreBadge";
-
-// Import Lead type from LeadDetailPanel to avoid duplication
+import { getLeadDisplayInfo } from "@/lib/leadMasking";
+import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
+import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { Lead } from "./LeadDetailPanel";
 
 interface LeadNote {
@@ -83,6 +85,13 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Lead unlock status
+  const { isLeadUnlocked } = useLeadUnlocks(lead?.facility_id);
+  const isUnlocked = lead ? isLeadUnlocked(lead.id) : false;
+  
+  // Get masked or unmasked display info based on unlock status
+  const displayInfo = lead ? getLeadDisplayInfo(lead, isUnlocked) : null;
 
   // Fetch notes for this lead
   const { data: notes = [], isLoading: notesLoading } = useQuery({
@@ -221,15 +230,20 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
         <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <DialogTitle className="text-xl">{lead.name}</DialogTitle>
-                <DialogDescription className="flex items-center gap-2 mt-1">
-                  <Calendar className="h-3.5 w-3.5" />
-                  {format(new Date(lead.created_at), "MMMM d, yyyy 'at' h:mm a")}
-                </DialogDescription>
+              <div className="flex items-center gap-2">
+                <DialogTitle className="text-xl">
+                  {displayInfo?.name || "Unknown Lead"}
+                </DialogTitle>
+                {displayInfo?.isLocked && (
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                )}
               </div>
-              <LeadStatusBadge status={lead.status as LeadStatus} />
+              <DialogDescription className="flex items-center gap-2 mt-1">
+                <Calendar className="h-3.5 w-3.5" />
+                {format(new Date(lead.created_at), "MMMM d, yyyy 'at' h:mm a")}
+              </DialogDescription>
             </div>
+            <LeadStatusBadge status={lead.status as LeadStatus} />
           </DialogHeader>
 
           <ScrollArea className="max-h-[calc(90vh-120px)]">
@@ -334,97 +348,138 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
 
               {/* Contact Info */}
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                        <Phone className="h-4 w-4 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{lead.phone}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {lead.preferred_contact === "call" ? "Preferred contact" : "Phone"}
-                        </p>
-                      </div>
+                <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  Contact Information
+                  {displayInfo?.isLocked && (
+                    <Badge variant="outline" className="gap-1 text-xs">
+                      <Lock className="h-3 w-3" />
+                      Locked
+                    </Badge>
+                  )}
+                </h3>
+                
+                {displayInfo?.isLocked ? (
+                  /* Locked State - Show unlock prompt */
+                  <div className="p-6 rounded-lg bg-muted/30 text-center space-y-4">
+                    <div className="h-12 w-12 rounded-full bg-muted mx-auto flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleCopy(lead.phone, "phone")}
-                      >
-                        {copiedField === "phone" ? (
-                          <Check className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        asChild
-                      >
-                        <a href={`tel:${lead.phone}`}>
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </Button>
+                    <div>
+                      <p className="font-medium text-foreground">Contact Details Locked</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Unlock to view phone and email
+                      </p>
                     </div>
+                    <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Phone className="h-4 w-4" />
+                        {displayInfo.phone}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Mail className="h-4 w-4" />
+                        {displayInfo.email}
+                      </span>
+                    </div>
+                    <UnlockLeadButton 
+                      leadId={lead.id} 
+                      facilityId={lead.facility_id}
+                      inquiryType={(lead as any).inquiry_type || 'request_info'}
+                      className="w-full max-w-xs mx-auto"
+                    />
                   </div>
-
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                        <Mail className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium">{lead.email}</p>
-                          {lead.email_verified ? (
-                            <Badge variant="secondary" className="gap-1 text-xs bg-green-100 text-green-700 border-0">
-                              <ShieldCheck className="h-3 w-3" />
-                              Verified
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
-                              <ShieldX className="h-3 w-3" />
-                              Unverified
-                            </Badge>
-                          )}
+                ) : (
+                  /* Unlocked State - Show full contact info */
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                          <Phone className="h-4 w-4 text-green-600" />
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {lead.preferred_contact === "email" ? "Preferred contact" : "Email"}
-                        </p>
+                        <div>
+                          <p className="text-sm font-medium">{displayInfo.phone}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {lead.preferred_contact === "call" ? "Preferred contact" : "Phone"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleCopy(lead.phone, "phone")}
+                        >
+                          {copiedField === "phone" ? (
+                            <Check className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          asChild
+                        >
+                          <a href={`tel:${lead.phone}`}>
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleCopy(lead.email, "email")}
-                      >
-                        {copiedField === "email" ? (
-                          <Check className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        asChild
-                      >
-                        <a href={`mailto:${lead.email}`}>
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </Button>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                          <Mail className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">{displayInfo.email}</p>
+                            {lead.email_verified ? (
+                              <Badge variant="secondary" className="gap-1 text-xs bg-green-100 text-green-700 border-0">
+                                <ShieldCheck className="h-3 w-3" />
+                                Verified
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
+                                <ShieldX className="h-3 w-3" />
+                                Unverified
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {lead.preferred_contact === "email" ? "Preferred contact" : "Email"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleCopy(lead.email, "email")}
+                        >
+                          {copiedField === "email" ? (
+                            <Check className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          asChild
+                        >
+                          <a href={`mailto:${lead.email}`}>
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Message */}

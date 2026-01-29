@@ -50,6 +50,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
+import { maskLeadName, maskEmail, maskPhone } from "@/lib/leadMasking";
 
 interface DateRange {
   from: Date | undefined;
@@ -462,9 +463,16 @@ export default function ProviderInquiriesPage() {
                             </div>
                           </>
                         ) : (
-                          <div className="flex items-center gap-2 mt-2 pt-2 border-t">
-                            <div className="flex-1 h-4 bg-muted/50 rounded blur-[2px]" />
-                            <div className="flex-1 h-4 bg-muted/50 rounded blur-[2px]" />
+                          <div className="flex flex-wrap items-center gap-3 mt-2 pt-2 border-t text-sm text-muted-foreground">
+                            <span className="font-medium">{maskLeadName(inquiry.name)}</span>
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3.5 w-3.5" />
+                              {maskPhone(inquiry.phone)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Mail className="h-3.5 w-3.5" />
+                              {maskEmail(inquiry.email)}
+                            </span>
                           </div>
                         )}
                       </div>

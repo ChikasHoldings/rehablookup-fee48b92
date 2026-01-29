@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { LeadStatusBadge, type LeadStatus } from "./LeadStatusBadge";
 import { LeadScoreBadge } from "./LeadScoreBadge";
+import { maskLeadName } from "@/lib/leadMasking";
 import type { Lead } from "./LeadDetailPanel";
 
 interface MobileLeadCardProps {
@@ -212,18 +213,20 @@ export const MobileLeadCard = memo(function MobileLeadCard({
                 "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold shadow-sm",
                 isSelected 
                   ? "bg-primary text-primary-foreground" 
-                  : isQualified
-                    ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"
-                    : "bg-gradient-to-br from-slate-400 to-slate-500 text-white"
+                  : isLocked
+                    ? "bg-muted text-muted-foreground"
+                    : isQualified
+                      ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"
+                      : "bg-gradient-to-br from-slate-400 to-slate-500 text-white"
               )}>
-                {isLocked ? "?" : lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                {isLocked ? "??" : lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className={cn(
                   "font-semibold text-base truncate leading-tight",
                   isSelected ? "text-primary" : "text-foreground"
                 )}>
-                  {isLocked ? "Hidden Lead" : lead.name}
+                  {isLocked ? maskLeadName(lead.name) : lead.name}
                 </h4>
                 {location && !isLocked && (
                   <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
