@@ -69,9 +69,10 @@ export default function AlcoholRehabNearMe() {
         f.state.toLowerCase() === stateData.abbr.toLowerCase()
       )
       .sort((a, b) => {
-        const aFeatured = (a as any).hasFeaturedSubscription ? 1 : 0;
-        const bFeatured = (b as any).hasFeaturedSubscription ? 1 : 0;
-        if (bFeatured !== aFeatured) return bFeatured - aFeatured;
+        // Sort Pro subscribers first, then by rating
+        const aIsPro = (a as any).hasProSubscription ? 1 : 0;
+        const bIsPro = (b as any).hasProSubscription ? 1 : 0;
+        if (bIsPro !== aIsPro) return bIsPro - aIsPro;
         return b.rating - a.rating;
       });
   }, [approvedFacilities, stateData]);
