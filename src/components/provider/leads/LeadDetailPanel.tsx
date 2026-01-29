@@ -24,6 +24,13 @@ import {
   Share2,
   Star,
   Lock,
+  Smartphone,
+  Briefcase,
+  Scale,
+  Medal,
+  History,
+  Brain,
+  Target,
 } from "lucide-react";
 import {
   Select,
@@ -96,6 +103,18 @@ export interface Lead {
   follow_up_reminder_sent_at: string | null;
   ip_hash: string | null;
   qualification_reason: string | null;
+  // NEW: Industry-standard fields
+  age_range: string | null;
+  gender: string | null;
+  relationship_to_patient: string | null;
+  previous_treatment: string | null;
+  previous_treatment_details: string | null;
+  co_occurring_conditions: string[] | null;
+  employment_status: string | null;
+  veteran_status: string | null;
+  legal_involvement: string | null;
+  readiness_level: string | null;
+  best_time_to_call: string | null;
 }
 
 interface LeadNote {
@@ -573,69 +592,104 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                   />
                 </div>
               ) : (
-                /* Unlocked State - Show full contact info */
-                <div className="p-4 space-y-3">
-                  {/* Phone */}
-                  <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <Phone className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-base font-semibold text-foreground">{displayInfo.phone}</p>
-                        <p className="text-xs text-muted-foreground">{lead.preferred_contact === "call" ? "✓ Preferred" : "Phone"}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.phone, "phone")}>
-                        {copiedField === "phone" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                      </Button>
-                      <Button variant="outline" size="icon" className="h-8 w-8" asChild>
-                        <a href={`tel:${lead.phone}`}><ExternalLink className="h-4 w-4" /></a>
-                      </Button>
-                    </div>
+                /* Unlocked State - Show full contact info with prominent CTAs */
+                <div className="p-4 space-y-4">
+                  {/* Quick Action Buttons - Prominent CTAs */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button 
+                      className="h-14 flex-col gap-1 bg-green-600 hover:bg-green-700 text-white"
+                      asChild
+                    >
+                      <a href={`tel:${lead.phone}`}>
+                        <Phone className="h-5 w-5" />
+                        <span className="text-xs font-medium">Call Now</span>
+                      </a>
+                    </Button>
+                    <Button 
+                      className="h-14 flex-col gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      asChild
+                    >
+                      <a href={`sms:${lead.phone}`}>
+                        <Smartphone className="h-5 w-5" />
+                        <span className="text-xs font-medium">Send SMS</span>
+                      </a>
+                    </Button>
+                    <Button 
+                      className="h-14 flex-col gap-1"
+                      variant="outline"
+                      onClick={() => setShowEmailDialog(true)}
+                    >
+                      <Mail className="h-5 w-5" />
+                      <span className="text-xs font-medium">Email</span>
+                    </Button>
                   </div>
-                  {/* Email */}
-                  <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                        <Mail className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-base font-semibold text-foreground truncate">{displayInfo.email}</p>
-                        <p className="text-xs text-muted-foreground">{lead.preferred_contact === "email" ? "✓ Preferred" : "Email"}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.email, "email")}>
-                        {copiedField === "email" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                      </Button>
-                      <Button variant="outline" size="icon" className="h-8 w-8" asChild>
-                        <a href={`mailto:${lead.email}`}><ExternalLink className="h-4 w-4" /></a>
-                      </Button>
-                    </div>
-                  </div>
-                  {/* Location - Prominent display in Contact section */}
-                  {(lead.location_city_state || lead.location_zip) && (
-                    <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                          <MapPin className="h-5 w-5 text-amber-600" />
-                        </div>
-                        <div>
-                          <p className="text-base font-semibold text-foreground">
-                            {lead.location_city_state || lead.location_zip}
-                          </p>
-                          {lead.location_city_state && lead.location_zip && (
-                            <p className="text-xs text-muted-foreground">ZIP: {lead.location_zip}</p>
-                          )}
-                          {!lead.location_city_state && lead.location_zip && (
-                            <p className="text-xs text-muted-foreground">ZIP Code</p>
-                          )}
-                        </div>
-                      </div>
+
+                  {/* Best Time to Call - Prominent if available */}
+                  {lead.best_time_to_call && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+                      <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="text-muted-foreground">Best time to call:</span>
+                      <span className="font-semibold text-foreground capitalize">
+                        {lead.best_time_to_call.replace(/-/g, ' ')}
+                      </span>
                     </div>
                   )}
+                  
+                  {/* Contact Details */}
+                  <div className="space-y-2">
+                    {/* Phone */}
+                    <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                          <Phone className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <p className="text-base font-semibold text-foreground">{displayInfo.phone}</p>
+                          <p className="text-xs text-muted-foreground">{lead.preferred_contact === "call" ? "✓ Preferred" : "Phone"}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.phone, "phone")}>
+                          {copiedField === "phone" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                    {/* Email */}
+                    <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                          <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-base font-semibold text-foreground truncate">{displayInfo.email}</p>
+                          <p className="text-xs text-muted-foreground">{lead.preferred_contact === "email" ? "✓ Preferred" : "Email"}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopy(lead.email, "email")}>
+                          {copiedField === "email" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                    {/* Location */}
+                    {(lead.location_city_state || lead.location_zip) && (
+                      <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                            <MapPin className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                          </div>
+                          <div>
+                            <p className="text-base font-semibold text-foreground">
+                              {lead.location_city_state || lead.location_zip}
+                            </p>
+                            {lead.location_city_state && lead.location_zip && (
+                              <p className="text-xs text-muted-foreground">ZIP: {lead.location_zip}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </section>
@@ -747,6 +801,134 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                           </Badge>
                         ))}
                       </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* NEW: Clinical & Background Section - Industry-standard fields */}
+            {(lead.age_range || lead.gender || lead.relationship_to_patient || 
+              lead.previous_treatment || lead.readiness_level || lead.legal_involvement ||
+              lead.veteran_status || lead.employment_status ||
+              (lead.co_occurring_conditions && lead.co_occurring_conditions.length > 0)) && (
+              <section className="bg-card border rounded-xl overflow-hidden">
+                <div className="px-4 py-3 bg-muted/30 border-b">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Brain className="h-4 w-4 text-primary" />
+                    Clinical & Background
+                  </h3>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Demographics */}
+                    {lead.age_range && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <User className="h-3 w-3" /> Age Range
+                        </p>
+                        <p className="text-sm font-semibold text-foreground">{lead.age_range}</p>
+                      </div>
+                    )}
+                    {lead.gender && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1">Gender</p>
+                        <p className="text-sm font-semibold text-foreground capitalize">{lead.gender.replace(/-/g, ' ')}</p>
+                      </div>
+                    )}
+                    {lead.relationship_to_patient && lead.relationship_to_patient !== "self" && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1">Relationship</p>
+                        <p className="text-sm font-semibold text-foreground capitalize">{lead.relationship_to_patient.replace(/-/g, ' ')}</p>
+                      </div>
+                    )}
+                    
+                    {/* Readiness - Important for conversion */}
+                    {lead.readiness_level && (
+                      <div className={cn(
+                        "p-3 rounded-lg",
+                        lead.readiness_level === "ready-now" 
+                          ? "bg-green-50 border border-green-200 dark:bg-green-950/30 dark:border-green-800"
+                          : "bg-muted/40"
+                      )}>
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <Target className="h-3 w-3" /> Readiness
+                        </p>
+                        <p className={cn(
+                          "text-sm font-semibold capitalize",
+                          lead.readiness_level === "ready-now" ? "text-green-700 dark:text-green-400" : "text-foreground"
+                        )}>
+                          {lead.readiness_level.replace(/-/g, ' ')}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Previous Treatment */}
+                    {lead.previous_treatment && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <History className="h-3 w-3" /> Previous Treatment
+                        </p>
+                        <p className="text-sm font-semibold text-foreground capitalize">{lead.previous_treatment.replace(/-/g, ' ')}</p>
+                      </div>
+                    )}
+                    
+                    {/* Employment */}
+                    {lead.employment_status && (
+                      <div className="p-3 rounded-lg bg-muted/40">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <Briefcase className="h-3 w-3" /> Employment
+                        </p>
+                        <p className="text-sm font-semibold text-foreground capitalize">{lead.employment_status.replace(/-/g, ' ')}</p>
+                      </div>
+                    )}
+                    
+                    {/* Legal Involvement - Important for compliance */}
+                    {lead.legal_involvement && lead.legal_involvement !== "none" && (
+                      <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <Scale className="h-3 w-3" /> Legal Status
+                        </p>
+                        <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 capitalize">
+                          {lead.legal_involvement.replace(/-/g, ' ')}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Veteran Status */}
+                    {lead.veteran_status && lead.veteran_status !== "none" && (
+                      <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 dark:bg-blue-950/30 dark:border-blue-800">
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <Medal className="h-3 w-3" /> Military Status
+                        </p>
+                        <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 capitalize">
+                          {lead.veteran_status.replace(/-/g, ' ')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Co-occurring Conditions */}
+                  {lead.co_occurring_conditions && lead.co_occurring_conditions.length > 0 && (
+                    <div className="p-3 rounded-lg bg-purple-50 border border-purple-200 dark:bg-purple-950/30 dark:border-purple-800 mt-3">
+                      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <Brain className="h-3 w-3" /> Co-occurring Conditions
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {lead.co_occurring_conditions.map((condition, i) => (
+                          <Badge key={i} variant="outline" className="capitalize text-xs h-6 px-2 font-medium border-purple-300 text-purple-700 dark:text-purple-300">
+                            {condition.replace(/-/g, ' ')}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Previous Treatment Details */}
+                  {lead.previous_treatment_details && (
+                    <div className="p-3 rounded-lg bg-muted/40 mt-3">
+                      <p className="text-xs text-muted-foreground mb-1">Treatment History Details</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{lead.previous_treatment_details}</p>
                     </div>
                   )}
                 </div>

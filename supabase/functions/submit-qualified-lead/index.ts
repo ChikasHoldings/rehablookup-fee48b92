@@ -87,6 +87,18 @@ interface QualifiedLeadRequest {
   preferredContact: string;
   message?: string;
   source?: string;
+  // NEW: Industry-standard fields for provider decision-making
+  ageRange?: string;
+  gender?: string;
+  relationshipToPatient?: string;
+  previousTreatment?: string;
+  previousTreatmentDetails?: string;
+  coOccurringConditions?: string[];
+  employmentStatus?: string;
+  veteranStatus?: string;
+  legalInvolvement?: string;
+  readinessLevel?: string;
+  bestTimeToCall?: string;
 }
 
 interface ProviderCapacity {
@@ -1652,6 +1664,19 @@ const handler = async (req: Request): Promise<Response> => {
         insurance_provider: leadData.insuranceProvider || null,
         budget_preference: leadData.budgetPreference || null,
         special_needs: leadData.specialNeeds || [],
+        // NEW: Industry-standard fields
+        age_range: leadData.ageRange || null,
+        gender: leadData.gender || null,
+        relationship_to_patient: leadData.relationshipToPatient || null,
+        previous_treatment: leadData.previousTreatment || null,
+        previous_treatment_details: leadData.previousTreatmentDetails || null,
+        co_occurring_conditions: leadData.coOccurringConditions || [],
+        employment_status: leadData.employmentStatus || null,
+        veteran_status: leadData.veteranStatus || null,
+        legal_involvement: leadData.legalInvolvement || null,
+        readiness_level: leadData.readinessLevel || null,
+        best_time_to_call: leadData.bestTimeToCall || null,
+        // Standard fields
         status: "new",
         quality_flag: isQualified ? "qualified" : "unqualified",
         validation_status: "valid",
