@@ -134,6 +134,21 @@ export function useLeadIntakeForm() {
     }
   }, [currentStep]);
   
+  // Check if email is already verified (within 24h)
+  const checkEmailAlreadyVerified = async (email: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("check-email-verified", {
+        body: { email: email.toLowerCase().trim() },
+      });
+      
+      if (error) throw error;
+      return data?.verified === true;
+    } catch (error) {
+      console.error("Error checking email verification:", error);
+      return false;
+    }
+  };
+  
   // Email verification functions
   const sendVerificationCode = async () => {
     if (resendCount >= 3) {
@@ -337,11 +352,13 @@ export function useLeadIntakeForm() {
     setVerificationCode,
     isVerifying,
     isEmailVerified,
+    setIsEmailVerified,
     resendCount,
     resendCooldown,
     sendVerificationCode,
     verifyCode,
     resetEmailVerification,
+    checkEmailAlreadyVerified,
     
     // Analytics
     trackAnalytics,

@@ -27,11 +27,13 @@ export function LeadIntakeForm({ className, renderSuccess }: LeadIntakeFormProps
     setVerificationCode,
     isVerifying,
     isEmailVerified,
+    setIsEmailVerified,
     resendCount,
     resendCooldown,
     sendVerificationCode,
     verifyCode,
     resetEmailVerification,
+    checkEmailAlreadyVerified,
   } = useLeadIntakeForm();
 
   if (isSubmitted) {
@@ -55,11 +57,13 @@ export function LeadIntakeForm({ className, renderSuccess }: LeadIntakeFormProps
           setVerificationCode={setVerificationCode}
           isVerifying={isVerifying}
           isEmailVerified={isEmailVerified}
+          setIsEmailVerified={setIsEmailVerified}
           resendCount={resendCount}
           resendCooldown={resendCooldown}
           sendVerificationCode={sendVerificationCode}
           verifyCode={verifyCode}
           resetEmailVerification={resetEmailVerification}
+          checkEmailAlreadyVerified={checkEmailAlreadyVerified}
           isSubmitting={isSubmitting}
           facilityName={facilityName}
         />

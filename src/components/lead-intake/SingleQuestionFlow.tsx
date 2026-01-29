@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Loader2, Mail, RefreshCw, AlertCircle, MapPin, User, Users, Clock, Heart, Shield, Calendar, UserCircle, Briefcase, Scale, Target, Stethoscope } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Mail, RefreshCw, AlertCircle, MapPin, User, Users, Clock, Heart, Shield, Calendar, UserCircle, Stethoscope, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,6 @@ import {
   INSURANCE_TYPE_OPTIONS,
   PREVIOUS_TREATMENT_OPTIONS,
   BEST_TIME_OPTIONS,
-  READINESS_OPTIONS,
 } from "./types";
 
 // Question types
@@ -136,13 +135,13 @@ const QUESTIONS: Question[] = [
     options: PREVIOUS_TREATMENT_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
-    id: "readiness",
+    id: "bestTime",
     type: "choice",
-    title: "How ready are you to start?",
-    subtitle: "Be honest — there's no wrong answer",
-    icon: <Target className="h-6 w-6" />,
-    field: "readinessLevel",
-    options: READINESS_OPTIONS.map(o => ({ value: o.value, label: o.label })),
+    title: "When's the best time to reach you?",
+    subtitle: "We'll call at a convenient time",
+    icon: <Clock className="h-6 w-6" />,
+    field: "bestTimeToCall",
+    options: BEST_TIME_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
     id: "bestTime",
@@ -157,7 +156,7 @@ const QUESTIONS: Question[] = [
     id: "contact",
     type: "contact",
     title: "How can we reach you?",
-    subtitle: "We'll verify your email to protect your privacy",
+    subtitle: "Your information is kept confidential",
     icon: <Mail className="h-6 w-6" />,
     field: "contact",
     required: true,
@@ -184,11 +183,13 @@ interface SingleQuestionFlowProps {
   setVerificationCode: (code: string) => void;
   isVerifying: boolean;
   isEmailVerified: boolean;
+  setIsEmailVerified: (verified: boolean) => void;
   resendCount: number;
   resendCooldown: number;
   sendVerificationCode: () => Promise<boolean>;
   verifyCode: (code: string) => Promise<boolean>;
   resetEmailVerification: () => void;
+  checkEmailAlreadyVerified: (email: string) => Promise<boolean>;
   isSubmitting: boolean;
   facilityName?: string | null;
 }
@@ -203,11 +204,13 @@ export function SingleQuestionFlow({
   setVerificationCode,
   isVerifying,
   isEmailVerified,
+  setIsEmailVerified,
   resendCount,
   resendCooldown,
   sendVerificationCode,
   verifyCode,
   resetEmailVerification,
+  checkEmailAlreadyVerified,
   isSubmitting,
   facilityName,
 }: SingleQuestionFlowProps) {
@@ -276,7 +279,7 @@ export function SingleQuestionFlow({
     }
   };
   
-  // Handle contact submission
+  // Handle contact submission - checks if email already verified, if so submits directly
   const handleContactSubmit = async () => {
     const newErrors: Record<string, string> = {};
     
@@ -290,7 +293,17 @@ export function SingleQuestionFlow({
       return;
     }
     
-    // Send verification code
+    // Check if email is already verified (within 24h)
+    const alreadyVerified = await checkEmailAlreadyVerified(formData.email);
+    
+    if (alreadyVerified) {
+      // Email already verified - submit directly
+      setIsEmailVerified(true);
+      await onSubmit();
+      return;
+    }
+    
+    // Send verification code and move to verification step
     const success = await sendVerificationCode();
     if (success) {
       goNext();
@@ -515,12 +528,12 @@ export function SingleQuestionFlow({
               {isSendingCode ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Sending Code...
+                  Submitting...
                 </>
               ) : (
                 <>
-                  <Mail className="mr-2 h-5 w-5" />
-                  Send Verification Code
+                  <Send className="mr-2 h-5 w-5" />
+                  Submit
                 </>
               )}
             </Button>
