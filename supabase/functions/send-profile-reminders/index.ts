@@ -9,8 +9,7 @@ import {
   emailBodyEnd,
   emailGreeting,
   emailParagraph,
-  featuredInsightsBox,
-  professionalInfoBox,
+  proInsightsBox,
   tipBox,
   ctaButton,
   emailFooter,
@@ -83,8 +82,7 @@ function generateReminderEmail(
   dashboardUrl: string,
   plan: PlanType
 ): string {
-  const isFeatured = plan === 'featured';
-  const isProfessional = plan === 'professional';
+  const isPro = plan === 'pro';
   const styles = getPlanStyles(plan);
 
   const missingItemsHtml = completion.missingItems
@@ -99,10 +97,8 @@ function generateReminderEmail(
   email += emailParagraph(`Your listing for <strong>${facilityName}</strong> is ${completion.percentage}% complete. Finishing your profile helps families find and trust your facility.`);
 
   // Plan-specific insights
-  if (isFeatured) {
-    email += featuredInsightsBox("Complete profiles receive priority placement in search results. Your featured status is amplified with a complete profile.");
-  } else if (isProfessional) {
-    email += professionalInfoBox("✓ <strong>Professional Profile Tip:</strong> Complete profiles build trust with families and improve your visibility in our provider directory.");
+  if (isPro) {
+    email += proInsightsBox("Complete profiles receive priority placement in search results. Your Pro status is amplified with a complete profile.");
   }
 
   // Progress section
@@ -135,8 +131,8 @@ function generateReminderEmail(
   `;
 
   // Tip
-  const tipContent = isFeatured 
-    ? "Your featured status combined with a complete profile maximizes your lead conversion potential." 
+  const tipContent = isPro 
+    ? "Your Pro status combined with a complete profile maximizes your visibility and lead conversion potential." 
     : "Complete profiles receive up to 3x more leads from families seeking treatment.";
   email += tipBox(tipContent, plan);
 

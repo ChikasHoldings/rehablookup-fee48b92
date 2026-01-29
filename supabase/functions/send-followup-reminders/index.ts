@@ -10,7 +10,7 @@ import {
   emailBodyEnd,
   emailGreeting,
   emailParagraph,
-  featuredInsightsBox,
+  proInsightsBox,
   alertBox,
   ctaButton,
   emailFooter,
@@ -89,7 +89,7 @@ function generateFollowupEmail(
 ): string {
   const totalLeads = providerData.leads.length;
   const isUrgent = highestTier.level >= 2;
-  const isFeatured = plan === 'featured';
+  const isPro = plan === 'pro';
 
   // SECURITY: Mask lead contact info - providers must unlock leads to see full details
   const leadsHtml = providerData.leads.slice(0, 4).map(({ lead, tier }) => {
@@ -123,9 +123,9 @@ function generateFollowupEmail(
   email += emailGreeting(providerData.providerName);
   email += emailParagraph(`You have <strong>${totalLeads} lead${totalLeads === 1 ? "" : "s"}</strong> waiting for a response at ${providerData.facilityName}. Unlock each lead to view their contact details.`);
 
-  // Featured insights
-  if (isFeatured) {
-    email += featuredInsightsBox("Your featured status gives you priority lead matching. These families specifically requested premium providers.");
+  // Pro insights
+  if (isPro) {
+    email += proInsightsBox("As a Pro member, you save 20% on every lead unlock. Quick responses help families in need.");
   }
 
   // Urgent alert

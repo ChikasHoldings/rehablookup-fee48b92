@@ -4,7 +4,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import {
   getProviderPlan,
-  getPlanStyles,
   emailStart,
   emailEnd,
   emailHeader,
@@ -13,7 +12,7 @@ import {
   emailFooter,
   emailGreeting,
   emailParagraph,
-  featuredInsightsBox,
+  proInsightsBox,
   ctaButton,
   type PlanType,
 } from "../_shared/email-templates.ts";
@@ -125,7 +124,7 @@ serve(async (req) => {
     const providerEmail = facility.reply_email || facility.email || providerProfile?.email;
     
     // Get provider plan for styling
-    const planInfo = providerEmail ? await getProviderPlan(providerEmail, stripe) : { plan: 'basic' as PlanType, planName: 'Basic', leadLimit: 0 };
+    const planInfo = providerEmail ? await getProviderPlan(providerEmail, stripe) : { plan: 'free' as PlanType, planName: 'Free', locationLimit: 1, unlockDiscount: 0 };
 
     // Fetch admin emails for notifications
     const { data: adminProfiles } = await supabase
@@ -245,7 +244,7 @@ async function handleReviewSubmitted(
   if (resend && adminEmails.length > 0) {
     const emailHtml = `
 ${emailStart()}
-${emailHeader('New Review Pending', 'basic')}
+${emailHeader('New Review Pending', 'free')}
 ${emailBodyStart()}
               ${emailParagraph(`A new ${review.rating}-star review has been submitted for <strong>${facility.name}</strong> and is awaiting moderation.`)}
               
@@ -259,7 +258,7 @@ ${emailBodyStart()}
                 </tr>
               </table>
               
-              ${ctaButton('Review in Admin', 'https://rehablookup.com/admin/reviews', 'basic')}
+              ${ctaButton('Review in Admin', 'https://rehablookup.com/admin/reviews', 'free')}
 ${emailBodyEnd()}
 ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
@@ -308,9 +307,9 @@ async function handleReviewApproved(
 
   // Send email to provider with plan-aware styling
   if (resend && providerEmail) {
-    const isFeatured = providerPlan === 'featured';
-    const featuredTip = isFeatured 
-      ? featuredInsightsBox('As a Featured provider, responding to reviews helps maintain your premium visibility and builds trust with potential patients.')
+    const isPro = providerPlan === 'pro';
+    const proTip = isPro 
+      ? proInsightsBox('As a Pro member, responding to reviews helps maintain your premium visibility and builds trust with potential patients.')
       : '';
 
     const emailHtml = `
@@ -320,9 +319,9 @@ ${emailBodyStart()}
               ${emailGreeting(providerProfile?.first_name || 'there')}
               ${emailParagraph(`Great news! A new <strong>${review.rating}-star review</strong> has been published for <strong>${facility.name}</strong>.`)}
               
-              ${featuredTip}
+              ${proTip}
               
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f9fafb; border-left: 4px solid ${isFeatured ? '#7c3aed' : '#1B365D'}; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f9fafb; border-left: 4px solid ${isPro ? '#7c3aed' : '#1B365D'}; border-radius: 0 8px 8px 0; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
                     <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280;">Rating: ${'⭐'.repeat(review.rating)}</p>
@@ -337,7 +336,7 @@ ${emailFooter()}
 ${emailEnd()}
     `;
 
-    const subjectPrefix = providerPlan === 'featured' ? '⭐ ' : '';
+    const subjectPrefix = providerPlan === 'pro' ? '⭐ ' : '';
     await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
@@ -351,12 +350,12 @@ ${emailEnd()}
   if (resend && seekerEmail) {
     const emailHtml = `
 ${emailStart()}
-${emailHeader('Your Review is Live!', 'basic', { icon: '✅' })}
+${emailHeader('Your Review is Live!', 'free', { icon: '✅' })}
 ${emailBodyStart()}
               ${emailGreeting(seekerProfile?.first_name || seekerProfile?.display_name || 'there')}
               ${emailParagraph(`Thank you for sharing your experience! Your review for <strong>${facility.name}</strong> has been approved and is now visible to others.`)}
               ${emailParagraph('Your feedback helps others make informed decisions about their treatment options.')}
-              ${ctaButton('View Your Review', facility.slug ? `https://rehablookup.com/center/${facility.slug}` : 'https://rehablookup.com/account/reviews', 'basic')}
+              ${ctaButton('View Your Review', facility.slug ? `https://rehablookup.com/center/${facility.slug}` : 'https://rehablookup.com/account/reviews', 'free')}
 ${emailBodyEnd()}
 ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
@@ -396,7 +395,7 @@ async function handleReviewRejected(
   if (resend && seekerEmail) {
     const emailHtml = `
 ${emailStart()}
-${emailHeader('Update on Your Review', 'basic')}
+${emailHeader('Update on Your Review', 'free')}
 ${emailBodyStart()}
               ${emailGreeting(seekerProfile?.first_name || seekerProfile?.display_name || 'there')}
               ${emailParagraph(`We were unable to publish your review for <strong>${facility.name}</strong>.`)}
@@ -414,7 +413,7 @@ ${emailBodyStart()}
               ` : ''}
               
               ${emailParagraph('If you have questions, please contact our support team.')}
-              ${ctaButton('Contact Support', 'mailto:support@rehablookup.com', 'basic')}
+              ${ctaButton('Contact Support', 'mailto:support@rehablookup.com', 'free')}
 ${emailBodyEnd()}
 ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
@@ -455,7 +454,7 @@ async function handleReviewResponse(
   if (resend && seekerEmail) {
     const emailHtml = `
 ${emailStart()}
-${emailHeader(`${facility.name} Responded`, 'basic', { icon: '💬' })}
+${emailHeader(`${facility.name} Responded`, 'free', { icon: '💬' })}
 ${emailBodyStart()}
               ${emailGreeting(seekerProfile?.first_name || seekerProfile?.display_name || 'there')}
               ${emailParagraph(`<strong>${facility.name}</strong> has responded to your review.`)}
@@ -470,7 +469,7 @@ ${emailBodyStart()}
               </table>
               ` : ''}
               
-              ${ctaButton('View Response', facility.slug ? `https://rehablookup.com/center/${facility.slug}` : 'https://rehablookup.com/account/reviews', 'basic')}
+              ${ctaButton('View Response', facility.slug ? `https://rehablookup.com/center/${facility.slug}` : 'https://rehablookup.com/account/reviews', 'free')}
 ${emailBodyEnd()}
 ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}
@@ -482,7 +481,7 @@ ${emailEnd()}
       subject: `${facility.name} Responded to Your Review`,
       html: emailHtml,
     });
-    logStep("Response email sent");
+    logStep("Seeker response notification email sent");
   }
 }
 
@@ -500,29 +499,29 @@ async function handleReviewDisputed(
     type: "review_disputed",
     title: "Review Dispute Filed",
     message: `${facility.name} has disputed a ${review.rating}-star review`,
-    metadata: { review_id: review.id, facility_id: facility.id, facility_name: facility.name, reason: disputeReason },
+    metadata: { review_id: review.id, facility_id: facility.id, facility_name: facility.name, rating: review.rating, reason: disputeReason },
   });
 
   // Send email to admins
   if (resend && adminEmails.length > 0) {
     const emailHtml = `
 ${emailStart()}
-${emailHeader('Review Dispute Filed', 'basic', { isUrgent: true })}
+${emailHeader('Review Dispute Filed', 'free', { isUrgent: true })}
 ${emailBodyStart()}
-              ${emailParagraph(`<strong>${facility.name}</strong> has filed a dispute for a ${review.rating}-star review.`)}
+              ${emailParagraph(`<strong>${facility.name}</strong> has disputed a ${review.rating}-star review.`)}
               
               ${disputeReason ? `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 16px;">
                     <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #991b1b;">Dispute Reason:</p>
-                    <p style="margin: 0; font-size: 14px; color: #7f1d1d;">${disputeReason}</p>
+                    <p style="margin: 0; font-size: 14px; color: #991b1b;">${disputeReason}</p>
                   </td>
                 </tr>
               </table>
               ` : ''}
               
-              ${ctaButton('Review Dispute', 'https://rehablookup.com/admin/reviews', 'basic')}
+              ${ctaButton('Review Dispute', 'https://rehablookup.com/admin/reviews', 'free')}
 ${emailBodyEnd()}
 ${emailFooter({ includeNotificationSettings: false })}
 ${emailEnd()}

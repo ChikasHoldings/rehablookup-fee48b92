@@ -3,6 +3,8 @@
  * 
  * This module provides reusable email template components with plan-aware styling.
  * All provider-facing emails should use these components for consistency.
+ * 
+ * NEW MODEL: Free (no subscription) vs Pro ($99/mo)
  */
 
 import Stripe from "https://esm.sh/stripe@14.21.0";
@@ -56,47 +58,66 @@ export async function isLeadUnlocked(
 }
 
 // ============================================================================
-// TYPES
+// TYPES - Updated to Free/Pro model
 // ============================================================================
 
-export type PlanType = 'basic' | 'professional' | 'featured';
+export type PlanType = 'free' | 'pro';
 
 export interface PlanInfo {
   plan: PlanType;
   planName: string;
-  leadLimit: number;
+  locationLimit: number;
+  unlockDiscount: number;
 }
 
 // ============================================================================
-// PLAN CONFIGURATION
+// PLAN CONFIGURATION - Updated to Free/Pro model
 // ============================================================================
 
-export const PLAN_CONFIG: Record<string, { product_ids: string[]; lead_limit: number; name: string; exclusivity: string }> = {
-  basic: { product_ids: [], lead_limit: 0, name: "Basic", exclusivity: "none" },
-  professional: { product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], lead_limit: 100, name: "Professional", exclusivity: "shared" },
-  featured: { product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], lead_limit: 100, name: "Featured", exclusivity: "exclusive" },
-};
+// Pro product IDs - includes legacy IDs for backward compatibility
+export const PRO_PRODUCT_IDS = [
+  "prod_pro_monthly",
+  // Legacy product IDs (old Professional and Featured plans now map to Pro)
+  "prod_TbalLOPujTIoUe", 
+  "prod_Tbyz1bf6iYyzYd",
+  "prod_TbalOeJZA2ZoJl", 
+  "prod_TbyzJVNOQL71NN",
+];
 
-export const PRODUCT_TO_PLAN: Record<string, PlanType> = {
-  "prod_TbalLOPujTIoUe": "professional",
-  "prod_Tbyz1bf6iYyzYd": "professional",
-  "prod_TbalOeJZA2ZoJl": "featured",
-  "prod_TbyzJVNOQL71NN": "featured",
+export const PLAN_CONFIG = {
+  free: { 
+    name: "Free", 
+    locationLimit: 1, 
+    unlockDiscount: 0,
+  },
+  pro: { 
+    name: "Pro", 
+    locationLimit: 5, 
+    unlockDiscount: 20,
+    product_ids: PRO_PRODUCT_IDS,
+  },
 };
 
 // ============================================================================
-// PLAN DETECTION
+// PLAN DETECTION - Simplified to Free/Pro
 // ============================================================================
 
 export async function getProviderPlan(email: string, stripe: Stripe | null): Promise<PlanInfo> {
+  const freeDefault: PlanInfo = { 
+    plan: 'free', 
+    planName: 'Free', 
+    locationLimit: PLAN_CONFIG.free.locationLimit,
+    unlockDiscount: 0,
+  };
+
   if (!stripe) {
-    return { plan: 'basic', planName: 'Basic', leadLimit: 0 };
+    return freeDefault;
   }
 
   try {
     const customers = await stripe.customers.list({ email, limit: 1 });
     if (customers.data.length === 0) {
-      return { plan: 'basic', planName: 'Basic', leadLimit: 0 };
+      return freeDefault;
     }
 
     const subscriptions = await stripe.subscriptions.list({
@@ -106,44 +127,47 @@ export async function getProviderPlan(email: string, stripe: Stripe | null): Pro
     });
 
     if (subscriptions.data.length === 0) {
-      return { plan: 'basic', planName: 'Basic', leadLimit: 0 };
+      return freeDefault;
     }
 
+    // Any active subscription means Pro (legacy tiers now map to Pro)
     for (const sub of subscriptions.data) {
-      const priceId = sub.items.data[0]?.price?.id;
-      if (!priceId) continue;
-
-      const price = await stripe.prices.retrieve(priceId, { expand: ['product'] });
-      const product = price.product as Stripe.Product;
-      const productName = product.name?.toLowerCase() || '';
-
-      if (productName.includes('featured') || productName.includes('premium')) {
-        return { plan: 'featured', planName: 'Featured', leadLimit: PLAN_CONFIG.featured.lead_limit };
-      }
-      if (productName.includes('professional') || productName.includes('pro')) {
-        return { plan: 'professional', planName: 'Professional', leadLimit: PLAN_CONFIG.professional.lead_limit };
+      const productId = sub.items.data[0]?.price?.product as string;
+      if (productId && PRO_PRODUCT_IDS.includes(productId)) {
+        return { 
+          plan: 'pro', 
+          planName: 'Pro', 
+          locationLimit: PLAN_CONFIG.pro.locationLimit,
+          unlockDiscount: PLAN_CONFIG.pro.unlockDiscount,
+        };
       }
     }
 
-    // Default to professional if they have a subscription but we can't identify the tier
-    return { plan: 'professional', planName: 'Professional', leadLimit: PLAN_CONFIG.professional.lead_limit };
+    // Any subscription = Pro (fallback for any other paid product)
+    return { 
+      plan: 'pro', 
+      planName: 'Pro', 
+      locationLimit: PLAN_CONFIG.pro.locationLimit,
+      unlockDiscount: PLAN_CONFIG.pro.unlockDiscount,
+    };
   } catch (error) {
     console.error('[EMAIL-TEMPLATES] Error checking plan:', error);
-    return { plan: 'basic', planName: 'Basic', leadLimit: 0 };
+    return freeDefault;
   }
 }
 
 export function getPlanFromProductId(productId: string): PlanInfo {
-  const plan = PRODUCT_TO_PLAN[productId] || 'basic';
+  const isPro = PRO_PRODUCT_IDS.includes(productId);
   return {
-    plan,
-    planName: PLAN_CONFIG[plan].name,
-    leadLimit: PLAN_CONFIG[plan].lead_limit,
+    plan: isPro ? 'pro' : 'free',
+    planName: isPro ? 'Pro' : 'Free',
+    locationLimit: isPro ? PLAN_CONFIG.pro.locationLimit : PLAN_CONFIG.free.locationLimit,
+    unlockDiscount: isPro ? PLAN_CONFIG.pro.unlockDiscount : 0,
   };
 }
 
 // ============================================================================
-// STYLE HELPERS
+// STYLE HELPERS - Updated to Free/Pro
 // ============================================================================
 
 export interface PlanStyles {
@@ -154,31 +178,26 @@ export interface PlanStyles {
 }
 
 export function getPlanStyles(plan: PlanType, options?: { isUrgent?: boolean }): PlanStyles {
-  const isFeatured = plan === 'featured';
-  const isProfessional = plan === 'professional';
+  const isPro = plan === 'pro';
   const isUrgent = options?.isUrgent || false;
 
   let headerGradient: string;
-  if (isFeatured) {
+  if (isPro) {
+    // Pro gets premium purple styling
     headerGradient = 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)';
-  } else if (isProfessional) {
-    headerGradient = isUrgent 
-      ? 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)' 
-      : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
   } else {
+    // Free plan
     headerGradient = isUrgent 
       ? 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)' 
       : 'linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)';
   }
 
-  const planBadge = isFeatured 
-    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ FEATURED</span>`
-    : isProfessional 
-    ? `<span style="display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-left: 8px;">Professional</span>`
+  const planBadge = isPro 
+    ? `<span style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px;">⭐ PRO</span>`
     : '';
 
-  const accentColor = isFeatured ? '#7c3aed' : isProfessional ? '#2563eb' : '#1B365D';
-  const buttonBackground = isFeatured ? '#7c3aed' : '#1B365D';
+  const accentColor = isPro ? '#7c3aed' : '#1B365D';
+  const buttonBackground = isPro ? '#7c3aed' : '#1B365D';
 
   return { headerGradient, accentColor, planBadge, buttonBackground };
 }
@@ -292,14 +311,14 @@ export function emailParagraph(content: string): string {
 }
 
 /**
- * Featured provider insights box
+ * Pro provider insights box (replaces featuredInsightsBox)
  */
-export function featuredInsightsBox(content: string): string {
+export function proInsightsBox(content: string): string {
   return `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #92400e;">⭐ Featured Provider Insights</p>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #92400e;">⭐ Pro Member Insights</p>
                     <p style="margin: 0; font-size: 14px; color: #78350f; line-height: 1.5;">
                       ${content}
                     </p>
@@ -310,20 +329,17 @@ export function featuredInsightsBox(content: string): string {
 }
 
 /**
- * Professional provider info box
+ * @deprecated Use proInsightsBox instead - kept for backward compatibility
+ */
+export function featuredInsightsBox(content: string): string {
+  return proInsightsBox(content);
+}
+
+/**
+ * @deprecated Use proInsightsBox instead - kept for backward compatibility
  */
 export function professionalInfoBox(content: string): string {
-  return `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 0 12px 12px 0; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 16px 20px;">
-                    <p style="margin: 0; font-size: 14px; color: #0369a1;">
-                      ${content}
-                    </p>
-                  </td>
-                </tr>
-              </table>
-`;
+  return proInsightsBox(content);
 }
 
 /**
@@ -334,15 +350,13 @@ export function alertBox(
   plan: PlanType,
   options?: { isUrgent?: boolean }
 ): string {
-  const isFeatured = plan === 'featured';
-  const isProfessional = plan === 'professional';
-  const isPaidPlan = isFeatured || isProfessional;
+  const isPro = plan === 'pro';
   const isUrgent = options?.isUrgent || false;
 
-  if (isPaidPlan) {
-    const bgColor = isFeatured ? '#f5f3ff' : '#eff6ff';
-    const borderColor = isFeatured ? '#c4b5fd' : '#bfdbfe';
-    const textColor = isFeatured ? '#5b21b6' : '#1e40af';
+  if (isPro) {
+    const bgColor = '#f5f3ff';
+    const borderColor = '#c4b5fd';
+    const textColor = '#5b21b6';
     
     return `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 8px; margin-bottom: 24px;">
@@ -357,7 +371,7 @@ export function alertBox(
 `;
   }
 
-  // Basic plan uses red/orange for urgent alerts
+  // Free plan uses red/orange for urgent alerts
   const bgColor = isUrgent ? '#fef2f2' : '#fef3c7';
   const borderColor = isUrgent ? '#fecaca' : '#fcd34d';
   const textColor = isUrgent ? '#991b1b' : '#92400e';
@@ -376,25 +390,23 @@ export function alertBox(
 }
 
 /**
- * Tip box - shows upgrade prompts only for basic plan
+ * Tip box - shows upgrade prompts only for free plan
  */
 export function tipBox(
   tipContent: string,
   plan: PlanType,
   options?: { showUpgradePrompt?: boolean }
 ): string {
-  const isFeatured = plan === 'featured';
-  const isProfessional = plan === 'professional';
-  const isPaidPlan = isFeatured || isProfessional;
-  const showUpgrade = options?.showUpgradePrompt && !isPaidPlan;
+  const isPro = plan === 'pro';
+  const showUpgrade = options?.showUpgradePrompt && !isPro;
 
-  const bgColor = isFeatured ? '#f5f3ff' : isProfessional ? '#eff6ff' : '#f0f9ff';
-  const borderColor = isFeatured ? '#c4b5fd' : '#bfdbfe';
-  const textColor = isFeatured ? '#5b21b6' : '#1e40af';
+  const bgColor = isPro ? '#f5f3ff' : '#f0f9ff';
+  const borderColor = isPro ? '#c4b5fd' : '#bfdbfe';
+  const textColor = isPro ? '#5b21b6' : '#1e40af';
 
   let upgradeLink = '';
   if (showUpgrade) {
-    upgradeLink = ` <a href="https://rehablookup.com/provider/billing" style="color: #1B365D; text-decoration: underline;">View plans</a>`;
+    upgradeLink = ` <a href="https://rehablookup.com/provider/billing" style="color: #1B365D; text-decoration: underline;">Upgrade to Pro</a>`;
   }
 
   return `
@@ -411,38 +423,25 @@ export function tipBox(
 }
 
 /**
- * Usage stats box
+ * Usage stats box - simplified for pay-per-unlock model
+ * Shows leads unlocked count instead of lead quota
  */
 export function usageBox(
-  usedLeads: number,
-  leadLimit: number,
+  unlockedLeads: number,
+  _unused: number,
   plan: PlanType
 ): string {
-  if (leadLimit <= 0) return '';
-
-  const isFeatured = plan === 'featured';
-  const usagePercent = Math.round((usedLeads / leadLimit) * 100);
-  const remainingLeads = leadLimit - usedLeads;
-  const accentColor = isFeatured ? '#7c3aed' : '#1B365D';
-  const progressColor = usagePercent >= 80 ? '#dc2626' : isFeatured ? '#7c3aed' : '#16a34a';
+  const isPro = plan === 'pro';
+  const accentColor = isPro ? '#7c3aed' : '#1B365D';
+  const discountText = isPro ? ' (20% Pro discount applied)' : '';
 
   return `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f9fafb; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                      <p style="margin: 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Lead Usage</p>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                      <span style="font-size: 14px; color: #4b5563;">${usedLeads} of ${leadLimit} leads used</span>
-                      <span style="font-size: 14px; font-weight: 600; color: ${usagePercent >= 80 ? '#dc2626' : '#16a34a'};">${usagePercent}%</span>
-                    </div>
-                    <div style="background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden;">
-                      <div style="background: ${progressColor}; height: 100%; width: ${Math.min(usagePercent, 100)}%;"></div>
-                    </div>
-                    <p style="margin: 12px 0 0 0; font-size: 13px; color: #6b7280;">
-                      ${remainingLeads} leads remaining this month
-                    </p>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Leads Unlocked This Month</p>
+                    <p style="margin: 0; font-size: 24px; font-weight: 600; color: ${accentColor};">${unlockedLeads}</p>
+                    ${isPro ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #16a34a;">${discountText}</p>` : ''}
                   </td>
                 </tr>
               </table>
@@ -483,25 +482,23 @@ export function emailFooter(options?: {
   const showSettings = options?.includeNotificationSettings !== false;
   
   const settingsLink = showSettings 
-    ? `<a href="${settingsUrl}" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Notification Settings</a>
-       <span style="color: rgba(255,255,255,0.4); margin: 0 8px;">|</span>`
+    ? `<a href="${settingsUrl}" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Notification Settings</a>`
     : '';
 
   return `
           <tr>
-            <td style="background: #1B365D; padding: 32px; border-radius: 0 0 12px 12px;">
+            <td style="background: #1B365D; padding: 24px 32px; border-radius: 0 0 12px 12px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center">
-                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">RehabLookup</p>
-                    <p style="margin: 0 0 16px 0; font-size: 13px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Connecting families with trusted treatment providers</p>
-                    <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                      ${settingsLink}
-                      <a href="https://rehablookup.com" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Website</a>
-                      <span style="color: rgba(255,255,255,0.4); margin: 0 8px;">|</span>
-                      <a href="mailto:support@rehablookup.com" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Support</a>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 12px 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600;">
+                      RehabLookup
                     </p>
-                    <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
+                      Connecting families with quality care
+                    </p>
+                    ${settingsLink}
+                    <p style="margin: 16px 0 0 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
                       © ${new Date().getFullYear()} RehabLookup. All rights reserved.
                     </p>
                   </td>
@@ -513,58 +510,45 @@ export function emailFooter(options?: {
 }
 
 /**
- * Basic plan upgrade prompt section
+ * Simple divider
  */
-export function upgradePromptBox(): string {
+export function emailDivider(): string {
   return `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 20px;">
-                    <p style="margin: 0 0 12px 0; color: #92400e; font-size: 14px;">
-                      <strong>You're on the Basic plan</strong> - Upgrade to start receiving leads and grow your patient base.
-                    </p>
-                    <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px;">
-                      View Plans →
-                    </a>
-                  </td>
-                </tr>
-              </table>
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
 `;
 }
 
-// ============================================================================
-// COMPLETE EMAIL BUILDERS
-// ============================================================================
+/**
+ * Info list item
+ */
+export function infoListItem(label: string, value: string): string {
+  return `
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+                  <span style="color: #6b7280; font-size: 14px;">${label}:</span>
+                  <span style="color: #1f2937; font-size: 14px; font-weight: 500; float: right;">${value}</span>
+                </td>
+              </tr>
+`;
+}
 
 /**
- * Build a complete simple email with standard structure
+ * Stats card for dashboard-style emails
  */
-export function buildSimpleEmail(options: {
-  title: string;
-  plan: PlanType;
-  firstName: string;
-  bodyContent: string;
-  ctaText?: string;
-  ctaUrl?: string;
-  subtitle?: string;
-  icon?: string;
-  isUrgent?: boolean;
-}): string {
-  const { title, plan, firstName, bodyContent, ctaText, ctaUrl, subtitle, icon, isUrgent } = options;
+export function statsCard(
+  label: string,
+  value: string | number,
+  subtext?: string,
+  plan?: PlanType
+): string {
+  const isPro = plan === 'pro';
+  const accentColor = isPro ? '#7c3aed' : '#1B365D';
 
-  let email = emailStart();
-  email += emailHeader(title, plan, { subtitle, icon, isUrgent });
-  email += emailBodyStart();
-  email += emailGreeting(firstName);
-  email += bodyContent;
-  
-  if (ctaText && ctaUrl) {
-    email += ctaButton(ctaText, ctaUrl, plan);
-  }
-  
-  email += emailBodyEnd();
-  email += emailFooter();
-  email += emailEnd();
-
-  return email;
+  return `
+              <td style="background: #f9fafb; padding: 16px; border-radius: 8px; text-align: center; width: 33%;">
+                <p style="margin: 0 0 4px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">${label}</p>
+                <p style="margin: 0; font-size: 24px; font-weight: 700; color: ${accentColor};">${value}</p>
+                ${subtext ? `<p style="margin: 4px 0 0 0; font-size: 11px; color: #9ca3af;">${subtext}</p>` : ''}
+              </td>
+`;
 }
