@@ -1,207 +1,212 @@
 
-# Provider Panel Placement Network Audit & Hardening Plan
+
+# Provider Panel Cleanup & Missing Features Audit Plan
 
 ## Executive Summary
 
-This audit covers the Provider panel's **Placement Network** feature, including the onboarding flow, fee explanation, payment method setup (ACH/card), e-signature for terms acceptance, and UI/UX consistency with the overall Provider panel design.
+This audit identifies legacy tier subscription remnants (Basic/Professional/Featured) that need cleanup for the new Free/Pro monetization model, and missing features in the current subscription and concierge service.
 
 ---
 
-## Current State Analysis
+## Part 1: Legacy Tier Subscription Cleanup
+
+### Critical Issues Found
+
+#### Issue 1: Edge Function Legacy Email Content - `submit-qualified-lead`
+**File:** `supabase/functions/submit-qualified-lead/index.ts`
+**Lines:** 883-937
+**Severity:** HIGH
+
+The `sendBasicProviderUpgradeNotification` function contains outdated tier references:
+- "But you're on the Basic plan..." (line 902)
+- "as a Basic plan member" (line 911)
+- "Professional Plan: 100 shared leads/month" (line 918)
+- "Featured Plan: 100 exclusive leads/month" (line 919)
+
+**Required Changes:**
+- Replace "Basic plan" with "Free plan"
+- Replace tier mentions with Free/Pro terminology
+- Remove lead limit references (pay-per-unlock model has no monthly caps)
+
+#### Issue 2: Edge Function Legacy References - `get-featured-facilities`
+**File:** `supabase/functions/get-featured-facilities/index.ts`
+**Lines:** 11-14, 122-138, 281, 568
+**Severity:** MEDIUM
+
+Contains legacy product ID arrays and email content:
+- `PROFESSIONAL_PRODUCT_IDS` array with old naming
+- Email content mentioning "Featured plan subscription"
+- Variable names like `professionalFacilityIds`
+
+**Required Changes:**
+- Rename to `PRO_PRODUCT_IDS` consistently
+- Update email templates to use "Pro" terminology
+- Rename variables for consistency
+
+#### Issue 3: Admin Panel Legacy References
+**Files:** Multiple admin components
+**Severity:** MEDIUM
+
+| File | Issue |
+|------|-------|
+| `AdminFeatured.tsx` | Lines 1140-1165: "Featured Plan subscribers", "Professional plan limit" |
+| `AdminAnalytics.tsx` | Lines 683-684: `PLAN_LIMITS.professional` reference |
+| `LeadCapMonitorWidget.tsx` | Lines 103-104: Skip "basic plan" logic, lead limit monitoring |
+| `PlanSettingsTab.tsx` | References legacy tier structure in UI |
+
+**Required Changes:**
+- Update all UI text to Free/Pro terminology
+- Remove or update lead limit monitoring (no longer relevant for pay-per-unlock)
+- Update admin analytics to reflect new model
+
+#### Issue 4: Dashboard Comment Referencing "Basic plan"
+**File:** `src/pages/provider/Dashboard.tsx`
+**Line:** 200
+**Severity:** LOW
+
+Comment says "Fetch total leads count for Basic plan" - should reference "Free plan"
+
+#### Issue 5: Provider Notifications Legacy Type
+**File:** `src/pages/provider/Notifications.tsx`
+**Lines:** 54-66, 104-107
+**Severity:** LOW
+
+Contains `lead_limit_warning` notification type which is no longer relevant in pay-per-unlock model.
+
+**Required Changes:**
+- Replace with `low_credits_warning` or similar credit-based alert
+- Update notification handling logic
+
+---
+
+## Part 2: Missing Features in Current Subscription Model
+
+### Pro Subscription Gaps
+
+#### Gap 1: No Active Pro Subscription Indicator on Dashboard
+**Current State:** Dashboard shows "Pro Member" in subtitle but no prominent badge/indicator
+**Recommendation:** Add a visible "Pro" badge next to facility name when Pro is active
+
+#### Gap 2: Missing Pro Benefits Summary Widget
+**Current State:** Pro benefits only explained on `/provider/pro-upgrade` page
+**Recommendation:** Add a small "Your Pro Benefits" card on Dashboard showing:
+- 20% unlock discount applied
+- Featured placement status
+- Up to 5 facilities allowed
+
+#### Gap 3: No Pro Discount Display on Unlock Confirmations
+**Current State:** UnlockLeadButton shows discounted price but no "You saved X" messaging
+**Recommendation:** After unlock, show toast: "Lead unlocked! Pro discount saved you $X"
+
+### Credit System Gaps
+
+#### Gap 4: No Low Credit Warning
+**Current State:** No notification when credits run low
+**Recommendation:** Add warning when credits fall below $50 (configurable threshold)
+
+#### Gap 5: Auto-Reload Credits Option Missing
+**Current State:** Manual credit purchase only
+**Recommendation:** Add option to auto-reload credits when balance drops below threshold
+
+---
+
+## Part 3: Concierge Service Completeness Check
 
 ### What's Working Well
 
-1. **Placement Network Page** (`/provider/placement-network`)
-   - Full opt-in/opt-out toggle with readiness checklist
-   - "How it Works" 4-step explanation
-   - Network benefits section
-   - Tab-based navigation (Introductions, Profile, Billing, Placements)
+1. **Concierge Dashboard** (`/provider/concierge`) - Full functionality
+2. **Placement Network** (`/provider/placement-network`) - Complete opt-in flow
+3. **E-Signature Terms** (`PlacementTermsModal.tsx`) - Digital signature with typed name
+4. **Payment Method Setup** (`AddPaymentMethodModal.tsx`) - Stripe card integration
+5. **Introduction Cards** (`ConciergeIntroductionCard.tsx`) - Full respond/accept/decline flow
+6. **Messaging System** (`ConciergeMessages.tsx`) - Thread-based messaging
+7. **Tour Requests** (`ConciergeTourRequests.tsx`) - Tour coordination
+8. **Placement Confirmation** (`ProviderConfirmPlacementModal.tsx`) - Dual confirmation
 
-2. **Fee Structure Display**
-   - Clear fee breakdown showing:
-     - Flat Fee: $1,200 (Pro: $960 with 20% discount)
-     - Commission: 8% of first month (Pro: 6.4%, capped at $1,500)
-   - Pro discount visually highlighted
+### Concierge Service Gaps
 
-3. **E-Signature System** (`PlacementTermsModal.tsx`)
-   - Scrollable terms agreement (TERMS_VERSION: "1.0")
-   - Checkbox for acknowledgment
-   - Digital signature input field (typed full name)
-   - Legal disclaimer about electronic signature
-   - Saves `concierge_terms_accepted_at`, `concierge_terms_version`, `concierge_terms_accepted_by`
+#### Gap 6: Duplicate Icon in Sidebar
+**File:** `src/components/provider/ProviderSidebar.tsx`
+**Lines:** 32-33
+**Issue:** Both "Concierge" and "Placement Network" use `Network` icon
 
-4. **Payment Methods** (`AddPaymentMethodModal.tsx`)
-   - Stripe Elements integration for card capture
-   - SetupIntent flow for saving payment methods
-   - Database table `provider_payment_methods` with proper RLS
+**Recommendation:** Use different icons:
+- Concierge: `Users` or `Headset` icon
+- Placement Network: `Network` icon (keep)
 
-5. **Backend Edge Functions**
-   - `setup-provider-payment-method` - Creates Stripe SetupIntent
-   - `save-provider-payment-method` - Persists payment method to DB
-   - `charge-placement-fee` - Charges on confirmed placement
+#### Gap 7: No Pending Introduction Badge on Sidebar
+**Current State:** No badge showing pending introduction count on Concierge nav item
+**Recommendation:** Add badge similar to Inquiries showing pending intro count
 
-6. **Opt-in Readiness Checklist**
-   - Complete facility profile check
-   - Terms acceptance check
-   - Payment method check
-   - Care types selection check
+#### Gap 8: Missing Concierge Case History View
+**Current State:** Only shows recent introductions (limit 20)
+**Recommendation:** Add "View All History" link with pagination
 
----
-
-## Issues Identified
-
-### Issue 1: ACH/Bank Account Not Functional
-**File:** `AddPaymentMethodModal.tsx` (line 133)
-**Status:** UI shows "Bank Account (Soon)" but is disabled
-
-The ACH tab is disabled with a "(Soon)" label. The Stripe SetupIntent in `setup-provider-payment-method` already supports `us_bank_account`, but the frontend doesn't implement it.
-
-**Fix Required:** Either fully implement ACH or update messaging to clearly indicate card-only for now.
-
-### Issue 2: Placement Network Not in Sidebar Navigation
-**File:** `ProviderSidebar.tsx`
-**Status:** MISSING
-
-The Placement Network page exists at `/provider/placement-network` but is not in the sidebar `navItems` array. Users can only access it via:
-- Direct URL
-- Links from ConciergeDashboard
-- "Get Started" prompts
-
-**Fix Required:** Add "Placement Network" to sidebar navigation.
-
-### Issue 3: Missing Stripe Publishable Key Environment Variable
-**File:** `AddPaymentMethodModal.tsx` (line 26)
-**Current:** `loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "")`
-
-The `VITE_STRIPE_PUBLISHABLE_KEY` is not in the verified secrets list. If not set, Stripe Elements will fail silently.
-
-**Fix Required:** Verify the publishable key is in `.env` or add it.
-
-### Issue 4: Inconsistent Font Styling in Fee Cards
-**File:** `PlacementNetwork.tsx` (lines 744-762)
-**Status:** Minor styling inconsistency
-
-The fee structure cards use `text-2xl font-bold` but other dashboard metric cards use `text-xl font-bold`. Should align with Provider panel patterns.
-
-### Issue 5: No Visual Confirmation of Terms Signature
-**Status:** After signing, there's no way to view the signed agreement or signature
-
-**Recommendation:** Add a "View Agreement" section in Billing tab showing:
-- Signature name
-- Date signed
-- Terms version
-
-### Issue 6: Missing "Pro Discount" Explanation Before Signup
-**File:** `PlacementNetwork.tsx`
-**Status:** Pro discount shown in fee card, but not explained in initial "Benefits" section
-
-Providers may not know they can get 20% off placement fees with Pro before they sign up.
+#### Gap 9: No Invoice Preview Before Charge
+**Current State:** Placement invoices are created automatically
+**Recommendation:** Show provider estimated fee before confirming placement
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: Navigation & Discoverability
+### Phase 1: Critical Cleanup (Edge Functions)
 
-**Task 1.1: Add Placement Network to Sidebar**
+**Task 1.1: Update submit-qualified-lead Email**
 ```text
-File: src/components/provider/ProviderSidebar.tsx
+File: supabase/functions/submit-qualified-lead/index.ts
 
 Changes:
-1. Add to navItems array:
-   { href: "/provider/placement-network", label: "Placement Network", icon: Network }
-2. Position after "Concierge" item
-3. Add badge for pending introductions count (optional)
+1. Line 902: "But you're on the Basic plan..." → "But you're on the Free plan..."
+2. Line 911: "as a Basic plan member" → "as a Free plan member"
+3. Lines 917-920: Replace tier list with Free/Pro explanation
+4. Line 924: Update CTA link to /provider/pro-upgrade
 ```
 
-### Phase 2: Payment Method Improvements
-
-**Task 2.1: Improve ACH Messaging**
+**Task 1.2: Update get-featured-facilities**
 ```text
-File: src/components/provider/AddPaymentMethodModal.tsx
-
-Option A - Remove ACH tab entirely (cleaner UI)
-Option B - Update "(Soon)" to "Coming Q2 2026" with better styling
-```
-
-**Task 2.2: Verify Stripe Publishable Key**
-```text
-Check if VITE_STRIPE_PUBLISHABLE_KEY exists in .env
-If missing, add the publishable key (safe for client-side)
-```
-
-### Phase 3: UI/UX Alignment with Provider Panel
-
-**Task 3.1: Standardize Typography**
-```text
-File: src/pages/provider/PlacementNetwork.tsx
+File: supabase/functions/get-featured-facilities/index.ts
 
 Changes:
-1. Fee cards: text-xl instead of text-2xl
-2. Section headings: Match Dashboard h2 styling
-3. Card padding: Align with other provider pages
+1. Rename PROFESSIONAL_PRODUCT_IDS → PRO_PRODUCT_IDS (consolidate)
+2. Update email templates to use "Pro subscription" terminology
+3. Rename professionalFacilityIds → proFacilityIds
 ```
 
-**Task 3.2: Add Pro Discount Callout in Benefits**
-```text
-Location: PLACEMENT_BENEFITS array or separate callout card
+### Phase 2: Admin Panel Updates
 
-Add:
-- "Pro subscribers save 20% on every placement fee"
-- Link to Pro Upgrade page
-```
+**Task 2.1: Update AdminFeatured.tsx**
+- Replace "Featured Plan" with "Pro subscription"
+- Update help text and descriptions
 
-**Task 3.3: Improve Header Gradient**
-```text
-The purple/violet gradient works but could use the same treatment as Dashboard.
-Consider: Adding a subtle border-bottom or shadow for visual separation.
-```
+**Task 2.2: Update AdminAnalytics.tsx**
+- Remove PLAN_LIMITS.professional references
+- Update plan distribution chart labels
 
-### Phase 4: Terms & Signature Enhancements
+**Task 2.3: Deprecate LeadCapMonitorWidget**
+- Widget monitors lead caps which no longer exist
+- Either remove or repurpose for credit balance monitoring
 
-**Task 4.1: Add Signed Agreement Display**
-```text
-File: src/pages/provider/PlacementNetwork.tsx (Billing tab)
+### Phase 3: Provider Panel Polish
 
-Add section showing:
-- "Agreement Status: Signed on [date]"
-- "Signed by: [name]"
-- "Version: [terms version]"
-- Button: "View Terms" to open read-only modal
-```
+**Task 3.1: Update Dashboard Comment**
+- Line 200 comment cleanup
 
-**Task 4.2: E-Signature Validation Enhancement**
-```text
-File: src/components/provider/PlacementTermsModal.tsx
+**Task 3.2: Update Notifications Types**
+- Replace lead_limit_warning with low_credits_warning
 
-Improvements:
-1. Add confirmation modal before final submission
-2. Show "Please type your full name exactly" helper text
-3. Add timestamp to signature record
-```
+**Task 3.3: Fix Sidebar Icon Duplication**
+- Change Concierge icon to Users or Headset
 
-### Phase 5: Fee Structure Clarity
+**Task 3.4: Add Concierge Pending Badge**
+- Show pending intro count on sidebar
 
-**Task 5.1: Add Inline Fee Comparison**
-```text
-File: src/pages/provider/PlacementNetwork.tsx
+### Phase 4: Feature Enhancements (Optional)
 
-Before opt-in, show side-by-side comparison:
-| Fee Type    | Standard | Pro (20% off) |
-|-------------|----------|---------------|
-| Flat Fee    | $1,200   | $960          |
-| Commission  | 8%       | 6.4%          |
-```
-
-**Task 5.2: Add "When Will I Be Charged?" FAQ**
-```text
-Location: Below fee structure cards or in expandable accordion
-
-Content:
-- "Fees are only charged after confirmed placement"
-- "Both you and the family must confirm admission"
-- "Invoices are due within 14 days"
-```
+**Task 4.1: Pro Benefits Widget on Dashboard**
+**Task 4.2: Pro Discount Savings Toast**
+**Task 4.3: Low Credits Warning System**
+**Task 4.4: Concierge History View**
 
 ---
 
@@ -209,58 +214,45 @@ Content:
 
 | File | Priority | Change Type |
 |------|----------|-------------|
-| `ProviderSidebar.tsx` | HIGH | Add navigation item |
-| `AddPaymentMethodModal.tsx` | MEDIUM | ACH messaging update |
-| `PlacementNetwork.tsx` | MEDIUM | Typography alignment, Pro callout |
-| `PlacementTermsModal.tsx` | LOW | Signature confirmation |
-| `.env` | HIGH | Verify Stripe key |
+| `submit-qualified-lead/index.ts` | CRITICAL | Email content update |
+| `get-featured-facilities/index.ts` | HIGH | Naming consistency |
+| `AdminFeatured.tsx` | MEDIUM | UI text update |
+| `AdminAnalytics.tsx` | MEDIUM | Remove legacy references |
+| `LeadCapMonitorWidget.tsx` | MEDIUM | Deprecate or repurpose |
+| `Dashboard.tsx` | LOW | Comment cleanup |
+| `Notifications.tsx` | LOW | Type update |
+| `ProviderSidebar.tsx` | LOW | Icon fix + badge |
 
 ---
 
-## Technical Details
+## Summary
 
-### Database Schema (Already Complete)
+### Cleanup Required
+- **4 edge function files** with legacy tier email content
+- **5 admin components** with old plan terminology
+- **2 provider components** with outdated references
 
-**`provider_payment_methods`** table:
-- `id`, `facility_id`, `type`, `stripe_payment_method_id`
-- `last_four`, `bank_name`, `card_brand`, `exp_month`, `exp_year`
-- `is_default`, `is_verified`, timestamps
-- RLS policies properly configured
+### Missing Features (Priority)
+1. Low credits warning system
+2. Concierge pending badge on sidebar
+3. Pro benefits visibility on dashboard
+4. Sidebar icon differentiation
 
-**`facilities`** concierge columns:
-- `concierge_network_opted_in`, `concierge_opted_in_at`
-- `concierge_terms_accepted_at`, `concierge_terms_version`, `concierge_terms_accepted_by`
-- Network profile fields (care types, insurance, availability, etc.)
-
-### Edge Functions (Verified Working)
-- `setup-provider-payment-method` - Creates SetupIntent
-- `save-provider-payment-method` - Saves to DB
-- `charge-placement-fee` - Processes payment on placement
-
----
-
-## Summary of What's Already Built vs. What Needs Work
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Placement Network page | Done | Full functionality |
-| E-signature (terms acceptance) | Done | Digital signature with typed name |
-| Credit card payment setup | Done | Stripe Elements working |
-| ACH bank account setup | Partial | UI exists but disabled |
-| Fee structure display | Done | Clear pricing with Pro discount |
-| Opt-in checklist | Done | 4 requirement checks |
-| Sidebar navigation | Missing | Not in sidebar nav |
-| Pro discount promotion | Partial | Not prominently featured |
-| Signed agreement viewing | Missing | No way to review after signing |
+### What's Complete
+- Free/Pro subscription detection (`check-subscription`, `useProStatus`)
+- Lead unlock with Pro discount
+- Facility limits enforcement (1 Free, 5 Pro)
+- Concierge placement network (full flow)
+- Payment method setup and billing
 
 ---
 
 ## Estimated Effort
 
-- Phase 1 (Navigation): 30 minutes
-- Phase 2 (Payment improvements): 1 hour
-- Phase 3 (UI alignment): 1-2 hours
-- Phase 4 (Terms enhancements): 1 hour
-- Phase 5 (Fee clarity): 30 minutes
+- Phase 1 (Critical Cleanup): 2 hours
+- Phase 2 (Admin Updates): 2 hours
+- Phase 3 (Provider Polish): 1 hour
+- Phase 4 (Enhancements): 3-4 hours (optional)
 
-**Total: 4-5 hours**
+**Total: 5-9 hours**
+
