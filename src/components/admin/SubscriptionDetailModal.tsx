@@ -72,7 +72,7 @@ type EnrichedSubscription = {
   facility_city?: string;
   facility_state?: string;
   leads_used: number;
-  lead_limit: number;
+  location_limit: number;
   subscription_id?: string;
   pause_collection?: { behavior: string } | null;
 };
@@ -140,9 +140,8 @@ interface SubscriptionDetailModalProps {
 
 function PlanBadge({ plan }: { plan: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    basic: { label: "Basic", className: "bg-slate-100 text-slate-700 border-slate-200" },
-    professional: { label: "Professional", className: "bg-blue-100 text-blue-700 border-blue-200" },
-    featured: { label: "Featured", className: "bg-amber-100 text-amber-700 border-amber-200" },
+    free: { label: "Free", className: "bg-slate-100 text-slate-700 border-slate-200" },
+    pro: { label: "Pro", className: "bg-amber-100 text-amber-700 border-amber-200" },
   };
   const { label, className } = config[plan] || { label: plan, className: "bg-muted text-muted-foreground" };
   return <Badge variant="outline" className={className}>{label}</Badge>;
@@ -456,17 +455,11 @@ export function SubscriptionDetailModal({
                               <User className="h-5 w-5 text-amber-600" />
                             </div>
                             <div>
-                              <p className="text-sm text-muted-foreground">Lead Usage</p>
-                              <p className="font-medium">{subscription.leads_used} / {subscription.lead_limit} this month</p>
-                              <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden mt-1">
-                                <div 
-                                  className={`h-full rounded-full ${
-                                    subscription.leads_used >= subscription.lead_limit ? "bg-red-500" : 
-                                    subscription.leads_used >= subscription.lead_limit * 0.8 ? "bg-amber-500" : "bg-green-500"
-                                  }`}
-                                  style={{ width: `${Math.min((subscription.leads_used / subscription.lead_limit) * 100, 100)}%` }}
-                                />
-                              </div>
+                              <p className="text-sm text-muted-foreground">Leads Unlocked</p>
+                              <p className="font-medium">{subscription.leads_used} total</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Up to {subscription.location_limit} facilities
+                              </p>
                             </div>
                           </div>
                         </div>
