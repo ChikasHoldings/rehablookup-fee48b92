@@ -403,6 +403,7 @@ async function sendConversionSMS(
 }
 
 // Special email template for Basic plan providers - prompts to upgrade to view leads
+// SECURITY: Lead name is masked to prevent info leakage
 function getBasicPlanUpgradeEmail(
   facilityName: string,
   totalLeadsCount: number,
@@ -411,7 +412,13 @@ function getBasicPlanUpgradeEmail(
   const billingUrl = "https://rehablookup.com/provider/billing";
   const dashboardUrl = "https://rehablookup.com/provider/leads";
   
-  const subject = `🔒 ${leadName} Just Inquired - Upgrade to Receive Leads`;
+  // SECURITY: Mask lead name - "John Smith" → "John S."
+  const nameParts = leadName.trim().split(/\s+/);
+  const maskedName = nameParts.length > 1 
+    ? `${nameParts[0]} ${nameParts[nameParts.length - 1].charAt(0).toUpperCase()}.`
+    : nameParts[0];
+  
+  const subject = `🔒 ${maskedName} Just Inquired - Unlock to View Details`;
   
   const html = `
 <!DOCTYPE html>
@@ -422,8 +429,8 @@ function getBasicPlanUpgradeEmail(
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
   <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">🔒 Someone Is Looking for Help</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${leadName} just inquired about ${facilityName}</p>
+    <h1 style="color: #fff; margin: 0; font-size: 24px;">🔒 New Lead Received!</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">${maskedName} just inquired about ${facilityName}</p>
   </div>
   
   <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
@@ -437,43 +444,43 @@ function getBasicPlanUpgradeEmail(
         <p style="margin: 0; font-size: 16px; color: #374151;">Message: ████████ ████████ ████████...</p>
       </div>
       <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(27, 54, 93, 0.95); padding: 16px 24px; border-radius: 8px; text-align: center;">
-        <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">🔒 Upgrade to view leads</p>
+        <p style="margin: 0; color: #fff; font-size: 14px; font-weight: 600;">🔒 Unlock to view details</p>
       </div>
     </div>
     
     <!-- Leads Counter -->
     <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #C9A227; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
       <p style="margin: 0 0 8px 0; font-size: 48px; font-weight: bold; color: #92400e;">${totalLeadsCount}</p>
-      <p style="margin: 0; color: #92400e; font-size: 16px; font-weight: 600;">Lead${totalLeadsCount > 1 ? 's' : ''} You've Missed</p>
+      <p style="margin: 0; color: #92400e; font-size: 16px; font-weight: 600;">Lead${totalLeadsCount > 1 ? 's' : ''} Waiting to Unlock</p>
     </div>
     
-    <!-- Upgrade Message -->
+    <!-- Unlock Message -->
     <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h3 style="margin: 0 0 12px 0; color: #166534; font-size: 16px;">🚀 Upgrade to Professional to:</h3>
+      <h3 style="margin: 0 0 12px 0; color: #166534; font-size: 16px;">🔓 Unlock leads to:</h3>
       <ul style="margin: 0; padding-left: 20px; color: #166534;">
-        <li style="margin-bottom: 8px;">Receive qualified leads directly</li>
         <li style="margin-bottom: 8px;">View complete contact details</li>
-        <li style="margin-bottom: 8px;">Get up to 100 qualified leads per month</li>
-        <li>Priority placement in search results</li>
+        <li style="margin-bottom: 8px;">Reach out directly to potential clients</li>
+        <li style="margin-bottom: 8px;">Grow your patient base</li>
+        <li>Pro subscribers get 20% off all unlocks!</li>
       </ul>
     </div>
     
     <!-- CTA Buttons -->
     <div style="text-align: center; margin-top: 28px;">
-      <a href="${billingUrl}" style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
-        🔓 Upgrade & Get Leads
+      <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
+        🔓 View & Unlock Leads
       </a>
     </div>
     
     <div style="text-align: center; margin-top: 16px;">
-      <a href="${dashboardUrl}" style="display: inline-block; color: #6b7280; padding: 12px 32px; text-decoration: none; font-size: 14px;">
-        View Dashboard →
+      <a href="${billingUrl}" style="display: inline-block; color: #6b7280; padding: 12px 32px; text-decoration: none; font-size: 14px;">
+        Learn about Pro →
       </a>
     </div>
     
     <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin-top: 24px; text-align: center;">
       <p style="margin: 0; color: #4b5563; font-size: 13px;">
-        <strong>Professional plan:</strong> $399/month · Up to 100 leads · Priority support
+        <strong>Pro subscription:</strong> $99/month · 20% off all lead unlocks · Featured placement
       </p>
     </div>
     
@@ -490,17 +497,17 @@ function getBasicPlanUpgradeEmail(
   return { subject, html };
 }
 
-// Email template for paying providers
+// Email template for providers - SECURITY: Lead contact info is masked until unlocked
 function getLeadEmailTemplate(
-  planName: string,
+  _planName: string,
   facilityName: string,
   leadName: string,
-  leadPhone: string,
-  leadEmail: string,
+  _leadPhone: string,
+  _leadEmail: string,
   preferredContact: string,
-  message: string | null,
-  usedLeads: number,
-  leadLimit: number
+  _message: string | null,
+  _usedLeads: number,
+  _leadLimit: number
 ): { subject: string; html: string } {
   const currentDate = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -513,47 +520,13 @@ function getLeadEmailTemplate(
   
   const dashboardUrl = "https://rehablookup.com/provider/leads";
   
-  const planConfig = {
-    professional: {
-      headerGradient: "linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%)",
-      headerEmoji: "🎯",
-      headerTitle: "New Qualified Lead",
-      tipColor: "#dcfce7",
-      tipBorderColor: "#bbf7d0",
-      tipTextColor: "#166534",
-      ctaGradient: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-      leadCounterBg: "#dbeafe",
-      leadCounterBorder: "#93c5fd",
-      leadCounterText: "#1e40af",
-    },
-    featured: {
-      headerGradient: "linear-gradient(135deg, #C9A227 0%, #b8860b 100%)",
-      headerEmoji: "⭐",
-      headerTitle: "Priority Lead Alert",
-      tipColor: "#fef3c7",
-      tipBorderColor: "#fcd34d",
-      tipTextColor: "#92400e",
-      ctaGradient: "linear-gradient(135deg, #C9A227 0%, #b8860b 100%)",
-      leadCounterBg: "#fef3c7",
-      leadCounterBorder: "#fcd34d",
-      leadCounterText: "#92400e",
-    }
-  };
+  // SECURITY: Mask lead name - "John Smith" → "John S."
+  const nameParts = leadName.trim().split(/\s+/);
+  const maskedName = nameParts.length > 1 
+    ? `${nameParts[0]} ${nameParts[nameParts.length - 1].charAt(0).toUpperCase()}.`
+    : nameParts[0];
   
-  const config = planConfig[planName as keyof typeof planConfig] || planConfig.professional;
-  const remainingLeads = leadLimit - usedLeads;
-  
-  const subject = `${config.headerEmoji} New Lead: ${leadName} is interested in ${facilityName}`;
-  
-  const leadUsageSection = leadLimit > 0 ? `
-    <div style="background: ${config.leadCounterBg}; border: 1px solid ${config.leadCounterBorder}; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
-      <p style="margin: 0 0 4px 0; font-size: 12px; color: ${config.leadCounterText}; text-transform: uppercase; letter-spacing: 0.5px;">Monthly Lead Usage</p>
-      <p style="margin: 0; font-size: 24px; font-weight: bold; color: ${config.leadCounterText};">${usedLeads} / ${leadLimit}</p>
-      <p style="margin: 4px 0 0 0; font-size: 13px; color: ${config.leadCounterText};">
-        ${remainingLeads} leads remaining
-      </p>
-    </div>
-  ` : '';
+  const subject = `🔒 New Lead: ${maskedName} is interested in ${facilityName}`;
   
   const html = `
 <!DOCTYPE html>
@@ -563,8 +536,8 @@ function getLeadEmailTemplate(
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-  <div style="background: ${config.headerGradient}; padding: 30px; border-radius: 12px 12px 0 0;">
-    <h1 style="color: #fff; margin: 0; font-size: 24px;">${config.headerEmoji} ${config.headerTitle}!</h1>
+  <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
+    <h1 style="color: #fff; margin: 0; font-size: 24px;">🔒 New Lead Received!</h1>
     <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">Someone is interested in ${facilityName}</p>
   </div>
   
@@ -573,50 +546,48 @@ function getLeadEmailTemplate(
       Received on ${currentDate}
     </p>
     
-    <div style="background: ${config.tipColor}; border: 1px solid ${config.tipBorderColor}; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-      <p style="margin: 0; color: ${config.tipTextColor}; font-weight: 600; font-size: 14px;">
+    <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <p style="margin: 0; color: #166534; font-weight: 600; font-size: 14px;">
         ⚡ Quick tip: Respond within 5 minutes to increase your conversion rate by 400%!
       </p>
     </div>
     
-    ${leadUsageSection}
-    
     <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #1B365D;">Contact Details</h2>
+      <h2 style="margin: 0 0 16px 0; font-size: 18px; color: #1B365D;">🔒 Lead Details</h2>
       
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
           <td style="padding: 10px 0; color: #6b7280; width: 140px; vertical-align: top;">Name:</td>
-          <td style="padding: 10px 0; font-weight: 600; font-size: 16px;">${leadName}</td>
+          <td style="padding: 10px 0; font-weight: 600; font-size: 16px;">${maskedName}</td>
         </tr>
         <tr>
           <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Phone:</td>
           <td style="padding: 10px 0;">
-            <a href="tel:${leadPhone}" style="color: #1B365D; text-decoration: none; font-weight: 600; font-size: 16px;">${leadPhone}</a>
+            <span style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 4px; font-size: 14px;">🔒 Unlock to view</span>
           </td>
         </tr>
         <tr>
           <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Email:</td>
           <td style="padding: 10px 0;">
-            <a href="mailto:${leadEmail}" style="color: #1B365D; text-decoration: none;">${leadEmail}</a>
+            <span style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 4px; font-size: 14px;">🔒 Unlock to view</span>
           </td>
         </tr>
         <tr>
-          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Preferred:</td>
+          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Prefers:</td>
           <td style="padding: 10px 0; text-transform: capitalize;">${preferredContact}</td>
         </tr>
-        ${message ? `
-        <tr>
-          <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Message:</td>
-          <td style="padding: 10px 0;">${message}</td>
-        </tr>
-        ` : ''}
       </table>
     </div>
     
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <p style="margin: 0; color: #1e40af; font-size: 14px;">
+        💡 <strong>Unlock this lead</strong> to view full contact details and message. Pro subscribers get 20% off all lead unlocks!
+      </p>
+    </div>
+    
     <div style="text-align: center; margin-top: 28px;">
-      <a href="${dashboardUrl}" style="display: inline-block; background: ${config.ctaGradient}; color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
-        View in Dashboard
+      <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
+        View & Unlock Lead
       </a>
     </div>
     
@@ -1114,8 +1085,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // ============ IN-APP NOTIFICATION ============
+    // SECURITY: Do not expose full contact details in notifications - leads must be unlocked to view
     if (assignedUserId) {
       try {
+        // Mask lead name: "John Smith" → "John S."
+        const nameParts = sanitizedName.trim().split(/\s+/);
+        const maskedName = nameParts.length > 1 
+          ? `${nameParts[0]} ${nameParts[nameParts.length - 1].charAt(0).toUpperCase()}.`
+          : nameParts[0];
+        
         await supabase
           .from("provider_notifications")
           .insert({
@@ -1123,13 +1101,12 @@ const handler = async (req: Request): Promise<Response> => {
             facility_id: assignedFacilityId,
             type: "lead_received",
             title: `🎉 You have a new lead!`,
-            message: `${sanitizedName} is interested in ${assignedFacilityName}. Contact them quickly for the best results!`,
+            message: `${maskedName} is interested in ${assignedFacilityName}. Unlock to view contact details.`,
             metadata: {
               lead_id: lead.id,
-              lead_name: sanitizedName,
-              lead_email: sanitizedEmail,
-              lead_phone: sanitizedPhone,
-              preferred_contact: body.preferredContact,
+              lead_name: maskedName,
+              // SECURITY: Do NOT include lead_email or lead_phone here
+              // Provider must unlock the lead to see contact info
             },
           });
         console.log("In-app notification created for user:", assignedUserId);

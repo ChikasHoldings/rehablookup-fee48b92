@@ -17,6 +17,7 @@ import {
   usageBox,
   tipBox,
   ctaButton,
+  maskLeadName,
   type PlanType,
 } from "../_shared/email-templates.ts";
 
@@ -36,7 +37,7 @@ interface Lead {
   facility_id: string;
 }
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[LEAD-DIGEST] ${step}${detailsStr}`);
 };
@@ -54,21 +55,25 @@ function generateDigestEmail(
   const isFeatured = plan === 'featured';
   const isProfessional = plan === 'professional';
   const isPaidPlan = isFeatured || isProfessional;
-  const styles = getPlanStyles(plan);
+  getPlanStyles(plan);
   
-  const leadsHtml = leads.slice(0, 5).map((lead: Lead) => `
+  // SECURITY: Mask lead contact info - providers must unlock leads to see full details
+  const leadsHtml = leads.slice(0, 5).map((lead: Lead) => {
+    const maskedName = maskLeadName(lead.name);
+    
+    return `
     <tr>
       <td style="padding: 16px 0; border-bottom: 1px solid #e5e7eb;">
-        <p style="margin: 0 0 6px 0; font-weight: 600; color: #1B365D; font-size: 15px;">${lead.name}</p>
-        <p style="margin: 0 0 6px 0; font-size: 14px; color: #4b5563;">
-          ${lead.phone} • ${lead.email}
+        <p style="margin: 0 0 6px 0; font-weight: 600; color: #1B365D; font-size: 15px;">🔒 ${maskedName}</p>
+        <p style="margin: 0 0 6px 0; font-size: 14px; color: #6b7280;">
+          <span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Unlock to view contact details</span>
         </p>
         <p style="margin: 0; font-size: 13px; color: #6b7280;">
           ${facilityNameMap[lead.facility_id] || "Facility"} • ${lead.preferred_contact === "call" ? "Prefers call" : "Prefers email"}
         </p>
       </td>
     </tr>
-  `).join("");
+  `}).join("");
 
   // Featured provider insights
   const featuredInsights = isFeatured 
@@ -88,7 +93,7 @@ ${emailStart()}
 ${emailHeader(`${digestType} Lead Digest`, plan)}
 ${emailBodyStart()}
               ${emailGreeting(firstName)}
-              ${emailParagraph(`You received <strong>${leads.length} new lead${leads.length === 1 ? "" : "s"}</strong> in the past ${periodText}.`)}
+              ${emailParagraph(`You received <strong>${leads.length} new lead${leads.length === 1 ? "" : "s"}</strong> in the past ${periodText}. Unlock each lead to view their full contact details.`)}
               
               ${featuredInsights}
               ${usageSection}
@@ -104,7 +109,7 @@ ${emailBodyStart()}
               </p>
               ` : ""}
               
-              ${ctaButton('View All Leads', 'https://rehablookup.com/provider/leads', plan)}
+              ${ctaButton('View & Unlock Leads', 'https://rehablookup.com/provider/leads', plan)}
               ${tipsSection}
 ${emailBodyEnd()}
 ${emailFooter()}
@@ -260,7 +265,7 @@ const handler = async (req: Request): Promise<Response> => {
         await resend.emails.send({
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [profile.email],
-          subject: `${subjectPrefix}${digestType} Digest: ${leads.length} New Lead${leads.length === 1 ? "" : "s"}`,
+          subject: `${subjectPrefix}${digestType} Digest: ${leads.length} New Lead${leads.length === 1 ? "" : "s"} - Unlock to View`,
           html: emailHtml,
         });
 

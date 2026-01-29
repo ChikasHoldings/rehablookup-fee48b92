@@ -8,6 +8,54 @@
 import Stripe from "https://esm.sh/stripe@14.21.0";
 
 // ============================================================================
+// LEAD MASKING UTILITIES
+// ============================================================================
+
+/**
+ * Mask a lead name to show only first name and first letter of last name
+ * e.g., "John Smith" → "John S."
+ * e.g., "Mary Jane Watson" → "Mary J."
+ */
+export function maskLeadName(fullName: string): string {
+  if (!fullName || fullName.trim().length === 0) return "Lead";
+  
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0]; // Just first name, no masking needed
+  }
+  
+  const firstName = parts[0];
+  const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+  return `${firstName} ${lastInitial}.`;
+}
+
+/**
+ * Get placeholder text for hidden contact info
+ */
+export function getHiddenContactText(): string {
+  return "Unlock to view";
+}
+
+/**
+ * Check if lead is unlocked for a facility
+ */
+export async function isLeadUnlocked(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  leadId: string,
+  facilityId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("lead_unlocks")
+    .select("id")
+    .eq("lead_id", leadId)
+    .eq("facility_id", facilityId)
+    .maybeSingle();
+  
+  return !!data;
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
