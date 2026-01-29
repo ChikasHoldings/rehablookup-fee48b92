@@ -28,6 +28,14 @@ interface DirectLeadRequest {
   message?: string | null;
   urgency?: string;
   seekingFor?: string;
+  // NEW: Industry-standard fields
+  ageRange?: string;
+  gender?: string;
+  levelOfCare?: string;
+  insuranceType?: string;
+  primarySubstance?: string[];
+  previousTreatment?: string;
+  bestTimeToCall?: string;
 }
 
 serve(async (req: Request) => {
@@ -120,6 +128,15 @@ serve(async (req: Request) => {
         exclusivity: "exclusive",
         urgency: body.urgency || "exploring",
         who_seeking_help: body.seekingFor || "self",
+        // NEW: Industry-standard fields
+        age_range: body.ageRange || null,
+        gender: body.gender || null,
+        level_of_care: body.levelOfCare || null,
+        insurance_type: body.insuranceType || null,
+        primary_substance: body.primarySubstance || [],
+        previous_treatment: body.previousTreatment || null,
+        best_time_to_call: body.bestTimeToCall || null,
+        // Standard fields
         assigned_at: now,
         assignment_status: "assigned",
         assignment_reason: `Direct submission - ${planName} plan`,

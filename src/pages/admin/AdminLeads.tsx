@@ -158,6 +158,18 @@ type Lead = {
   routing_order: number | null;
   follow_up_reminder_sent_at: string | null;
   ip_hash: string | null;
+  // NEW: Industry-standard fields
+  age_range: string | null;
+  gender: string | null;
+  relationship_to_patient: string | null;
+  previous_treatment: string | null;
+  previous_treatment_details: string | null;
+  co_occurring_conditions: string[] | null;
+  employment_status: string | null;
+  veteran_status: string | null;
+  legal_involvement: string | null;
+  readiness_level: string | null;
+  best_time_to_call: string | null;
 };
 
 type Facility = {
