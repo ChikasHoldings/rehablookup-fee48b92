@@ -488,7 +488,7 @@ const CenterProfile = () => {
           services: services,
           insurance: insuranceList,
           slug: facility.slug || undefined,
-          email: facility.email || undefined,
+          // email removed - provider emails are completely private
           website: facility.website || undefined,
           facilityType: facility.facility_type,
           yearEstablished: facility.year_established || undefined,
@@ -1219,7 +1219,6 @@ const CenterProfile = () => {
           city: facility.city,
           state: facility.state,
           slug: facility.slug,
-          email: facility.email,
           logo_url: facility.logo_url,
           featured: facility.featured,
         }}

@@ -83,7 +83,7 @@ interface RequestInfoModalProps {
     city: string;
     state: string;
     slug: string;
-    email: string | null;
+    // email removed - provider emails are completely private
     logo_url: string | null;
     featured?: boolean;
   };
@@ -411,7 +411,7 @@ export function RequestInfoModal({
         body: {
           facilityId: facility.id,
           facilityName: facility.name,
-          facilityEmail: facility.email,
+          // facilityEmail removed - provider emails are completely private
           facilityPlan,
           firstName: formData.firstName.trim(),
           lastName: formData.lastName.trim(),

@@ -21,7 +21,6 @@ import {
   Heart,
   BadgeCheck,
   Globe,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
@@ -138,15 +137,13 @@ const TreatmentCenterProfile = () => {
           { name: center.name, url: `/rehab-centers/${center.id}` },
         ]}
       />
-      {/* Sticky Mobile CTA */}
+      {/* Sticky Mobile CTA - no direct call for static profiles */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card p-3 shadow-lg md:hidden">
         <div className="flex gap-2">
-          <a href={`tel:${center.phone}`} className="flex-1">
-            <Button size="sm" className="w-full gap-2">
-              <Phone className="h-4 w-4" />
-              Call Now
-            </Button>
-          </a>
+          <Button size="sm" className="flex-1 gap-2">
+            <Phone className="h-4 w-4" />
+            Request Call
+          </Button>
           <Button variant="outline" size="sm" className="flex-1">
             Contact
           </Button>
@@ -210,18 +207,15 @@ const TreatmentCenterProfile = () => {
                 </div>
               </div>
 
-              {/* Desktop Actions */}
+              {/* Desktop Actions - Request-based for static profiles */}
               <div className="hidden md:flex flex-col gap-2 shrink-0">
-                <a href={`tel:${center.phone}`}>
-                  <Button size="sm" className="w-full gap-2">
-                    <Phone className="h-4 w-4" />
-                    Call Now
-                  </Button>
-                </a>
+                <Button size="sm" className="w-full gap-2">
+                  <Phone className="h-4 w-4" />
+                  Request Call
+                </Button>
                 <Button variant="outline" size="sm" className="gap-1.5">
                   <Globe className="h-4 w-4" />
-                  Website
-                  <ExternalLink className="h-3 w-3" />
+                  Request Info
                 </Button>
               </div>
             </div>

@@ -304,7 +304,7 @@ export function generateLocalBusinessSchema(facility: {
     description: facility.description,
     image: facility.image ? [facility.image] : undefined,
     telephone: facility.phone,
-    email: facility.email,
+    // email removed - provider emails are completely private
     address: {
       "@type": "PostalAddress",
       streetAddress: facility.address,
