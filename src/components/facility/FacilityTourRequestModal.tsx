@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -33,13 +33,14 @@ interface FacilityTourRequestModalProps {
   };
 }
 
-export function FacilityTourRequestModal({
-  open,
-  onClose,
-  facilityId,
-  facilityName,
-  prefillData,
-}: FacilityTourRequestModalProps) {
+export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourRequestModalProps>(
+  function FacilityTourRequestModal({
+    open,
+    onClose,
+    facilityId,
+    facilityName,
+    prefillData,
+  }, ref) {
   const { toast } = useToast();
   const [step, setStep] = useState<"form" | "success">("form");
   const [tourType, setTourType] = useState<"in_person" | "virtual">("in_person");
@@ -128,7 +129,7 @@ export function FacilityTourRequestModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent ref={ref} className="max-w-md">
         {step === "success" ? (
           <div className="py-8 text-center">
             <div className="mx-auto w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
@@ -304,4 +305,4 @@ export function FacilityTourRequestModal({
       </DialogContent>
     </Dialog>
   );
-}
+});
