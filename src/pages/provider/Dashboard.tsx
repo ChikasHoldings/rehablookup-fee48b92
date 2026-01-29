@@ -197,7 +197,7 @@ export default function ProviderDashboardPage() {
     console.error("[Dashboard] Error fetching recent leads:", recentLeadsError);
   }
 
-  // Fetch total leads count for Basic plan
+  // Fetch total leads count for facility
   const { data: totalLeadsCount = 0 } = useQuery({
     queryKey: ["total-leads-count", facilityId],
     queryFn: async (): Promise<number> => {

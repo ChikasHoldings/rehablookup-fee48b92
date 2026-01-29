@@ -50,10 +50,12 @@ const US_STATES = [
 
 const PLAN_OPTIONS = ["All", "Free", "Pro"];
 
-// No lead limits in pay-per-unlock model
+// Note: Legacy PLAN_LIMITS constant kept for backward compatibility
+// In pay-per-unlock model, there are no monthly lead limits
+// Providers pay per unlock instead of having a monthly cap
 const PLAN_LIMITS: Record<string, number> = {
-  free: 0,
-  pro: 0, // Unlimited
+  free: 0,  // Free tier: pay-per-unlock, no monthly limit
+  pro: 0,   // Pro tier: pay-per-unlock with 20% discount, no monthly limit
 };
 
 const CHART_COLORS = {
@@ -680,8 +682,8 @@ export default function AdminAnalytics() {
           new Date(l.created_at) >= monthStart
         ).length;
 
-        // Use facility's lead_limit_override if set, otherwise default to Professional plan limit
-        const leadLimit = (facility as any).lead_limit_override || PLAN_LIMITS.professional;
+        // Use facility's lead_limit_override if set (legacy), otherwise no limit in pay-per-unlock model
+        const leadLimit = (facility as any).lead_limit_override || 0;
         const usagePercentage = leadLimit > 0 ? (monthlyLeads / leadLimit) * 100 : 0;
 
         return {

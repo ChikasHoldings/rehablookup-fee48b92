@@ -53,7 +53,8 @@ const notificationTypeIcons: Record<string, React.ReactNode> = {
   lead_status_changed: <MessageSquare className="h-5 w-5 text-blue-500" />,
   listing_approved: <Shield className="h-5 w-5 text-green-500" />,
   subscription_updated: <CreditCard className="h-5 w-5 text-purple-500" />,
-  lead_limit_warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+  low_credits_warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+  lead_limit_warning: <AlertTriangle className="h-5 w-5 text-amber-500" />, // Legacy support
   system: <Settings className="h-5 w-5 text-muted-foreground" />,
 };
 
@@ -62,7 +63,8 @@ const notificationTypeLabels: Record<string, string> = {
   lead_status_changed: "Inquiry Update",
   listing_approved: "Listing",
   subscription_updated: "Credits",
-  lead_limit_warning: "Low Credits",
+  low_credits_warning: "Low Credits",
+  lead_limit_warning: "Low Credits", // Legacy support
   system: "System",
 };
 
@@ -71,7 +73,7 @@ type NotificationTypeFilter = "all" | "leads" | "billing" | "system";
 const typeFilterCategories: Record<NotificationTypeFilter, string[]> = {
   all: [],
   leads: ["lead_received", "lead_status_changed"],
-  billing: ["subscription_updated", "lead_limit_warning"],
+  billing: ["subscription_updated", "low_credits_warning", "lead_limit_warning"],
   system: ["listing_approved", "system"],
 };
 
@@ -103,7 +105,7 @@ function NotificationItem({
     // Type-based routing
     if (notification.type === "lead_received" || notification.type === "lead_status_changed") {
       navigate("/provider/inquiries");
-    } else if (notification.type === "subscription_updated" || notification.type === "lead_limit_warning") {
+    } else if (notification.type === "subscription_updated" || notification.type === "low_credits_warning" || notification.type === "lead_limit_warning") {
       navigate("/provider/credits");
     } else if (notification.type === "listing_approved") {
       navigate("/provider/listing");

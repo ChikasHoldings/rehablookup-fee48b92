@@ -1137,11 +1137,11 @@ export default function AdminFeatured() {
                   </p>
                 </div>
               ) : (
-                <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed">
+              <div className="text-center py-12 bg-muted/30 rounded-xl border-2 border-dashed">
                   <Zap className="h-12 w-12 mx-auto mb-3 text-amber-300" />
-                  <p className="font-medium text-foreground">No Featured Plan subscribers</p>
+                  <p className="font-medium text-foreground">No Pro subscribers</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Providers on the Featured plan will appear here automatically
+                    Providers with Pro subscription will appear here automatically
                   </p>
                 </div>
               )}
@@ -1160,9 +1160,9 @@ export default function AdminFeatured() {
           <Alert className="border-slate-200 bg-slate-50">
             <Info className="h-4 w-4 text-slate-600" />
             <AlertDescription className="text-slate-700">
-              <strong>Legacy Featured</strong> providers are manually featured by admins, separate from the automatic Featured plan subscription system. 
+              <strong>Legacy Featured</strong> providers are manually featured by admins, separate from the automatic Pro subscription system. 
               Legacy featured providers appear in search results with a featured badge but do not participate in homepage rotation. 
-              Consider encouraging providers to upgrade to the Featured plan for full benefits.
+              Consider encouraging providers to upgrade to Pro for full benefits.
             </AlertDescription>
           </Alert>
 

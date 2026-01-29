@@ -880,8 +880,8 @@ async function sendLeadNotificationEmail(
   }
 }
 
-// ============ BASIC PROVIDER UPGRADE NOTIFICATION ============
-async function sendBasicProviderUpgradeNotification(
+// ============ FREE PROVIDER UPGRADE NOTIFICATION ============
+async function sendFreeProviderUpgradeNotification(
   providerEmail: string,
   facilityName: string,
   leadLocation: string,
@@ -891,7 +891,7 @@ async function sendBasicProviderUpgradeNotification(
     await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
-      subject: `You missed a lead from your profile - Upgrade to receive leads`,
+      subject: `You missed a lead from your profile - Add credits to unlock leads`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -899,7 +899,7 @@ async function sendBasicProviderUpgradeNotification(
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
   <div style="background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); padding: 30px; border-radius: 12px 12px 0 0;">
     <h1 style="color: #fff; margin: 0; font-size: 24px;">A Lead Just Submitted From Your Profile</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">But you're on the Basic plan...</p>
+    <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0;">You need credits to unlock this lead</p>
   </div>
   
   <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 30px; border-radius: 0 0 12px 12px;">
@@ -908,20 +908,20 @@ async function sendBasicProviderUpgradeNotification(
       <p style="margin: 0; color: #92400e; font-size: 14px;">This lead was submitted directly from your facility profile at <strong>${facilityName}</strong>.</p>
     </div>
     
-    <p style="margin: 0 0 16px 0; font-size: 15px; color: #4b5563;">Someone looking for treatment reached out through your profile, but as a Basic plan member, you're not able to receive leads.</p>
+    <p style="margin: 0 0 16px 0; font-size: 15px; color: #4b5563;">Someone looking for treatment reached out through your profile, but you don't have enough credits to unlock their contact information.</p>
     
-    <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563;">This lead has been routed to a paid provider. <strong>Don't miss the next one!</strong></p>
+    <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563;">Add credits now to unlock this lead and connect with potential clients. <strong>Don't miss the next one!</strong></p>
     
     <div style="background: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #166534;">Upgrade to Start Receiving Leads</p>
+      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #166534;">Start Unlocking Leads Today</p>
       <ul style="margin: 0 0 16px 0; padding-left: 20px; color: #166534; font-size: 14px;">
-        <li style="margin-bottom: 8px;"><strong>Professional Plan:</strong> 100 shared leads/month</li>
-        <li style="margin-bottom: 0;"><strong>Featured Plan:</strong> 100 exclusive leads/month + premium placement</li>
+        <li style="margin-bottom: 8px;"><strong>Pay-per-unlock:</strong> Only pay for leads you want ($25-39 per lead)</li>
+        <li style="margin-bottom: 0;"><strong>Pro subscription:</strong> Get 20% off all lead unlocks + featured placement</li>
       </ul>
     </div>
     
     <div style="text-align: center;">
-      <a href="https://rehablookup.com/provider/billing" style="display: inline-block; background: #1B365D; color: #fff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Upgrade Your Plan</a>
+      <a href="https://rehablookup.com/provider/credits" style="display: inline-block; background: #1B365D; color: #fff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Add Credits Now</a>
     </div>
     
     <p style="margin: 24px 0 0 0; font-size: 13px; color: #9ca3af; text-align: center;">Questions? Contact us at <a href="mailto:support@rehablookup.com" style="color: #1B365D;">support@rehablookup.com</a></p>
@@ -930,9 +930,9 @@ async function sendBasicProviderUpgradeNotification(
 </html>
       `,
     });
-    log(requestId, "INFO", "Basic provider upgrade notification sent", { to: providerEmail, facilityName });
+    log(requestId, "INFO", "Free provider upgrade notification sent", { to: providerEmail, facilityName });
   } catch (error) {
-    log(requestId, "ERROR", "Failed to send basic provider upgrade notification", { error: String(error) });
+    log(requestId, "ERROR", "Failed to send free provider upgrade notification", { error: String(error) });
   }
 }
 
@@ -1414,8 +1414,8 @@ const handler = async (req: Request): Promise<Response> => {
                 facilityName: facility.name 
               });
               
-              // Notify the Free provider about the missed lead (encourage upgrade)
-              await sendBasicProviderUpgradeNotification(
+              // Notify the Free provider about the missed lead (encourage credits or Pro upgrade)
+              await sendFreeProviderUpgradeNotification(
                 profile.email,
                 facility.name,
                 leadData.locationCityState || leadData.locationZip,

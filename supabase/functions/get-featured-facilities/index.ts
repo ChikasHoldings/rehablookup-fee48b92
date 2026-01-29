@@ -8,9 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plan product IDs - support both old and new IDs
-const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"];
-const PROFESSIONAL_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"]; // Professional plan (both old and new IDs)
+// Plan product IDs - support both old (legacy) and new Pro IDs
+const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"]; // Legacy Featured
+const PRO_PRODUCT_IDS = ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"]; // Pro plan (includes legacy Professional)
 const DEFAULT_MAX_HOMEPAGE_FEATURED = 6;
 
 const logStep = (step: string, details?: unknown) => {
@@ -119,7 +119,7 @@ async function sendFeaturedEmail(
                   </div>
                   
                   <p style="color: #5E6B7A; font-size: 14px; line-height: 1.6; margin: 24px 0 0;">
-                    Featured facilities rotate daily to ensure fair exposure for all providers on our Featured plan. Keep your profile updated to maximize the impact of your featured placement!
+                    Featured facilities rotate daily to ensure fair exposure for all Pro subscribers. Keep your profile updated to maximize the impact of your featured placement!
                   </p>
                   
                   <!-- CTA Button -->
@@ -135,7 +135,7 @@ async function sendFeaturedEmail(
               <tr>
                 <td style="background-color: #f6f8fb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
                   <p style="color: #9CA3AF; font-size: 12px; line-height: 1.6; margin: 0;">
-                    This email was sent because you have an active Featured plan subscription.<br>
+                    This email was sent because you have an active Pro subscription.<br>
                     <a href="https://rehablookup.com/provider/settings" style="color: #1B365D; text-decoration: underline;">Manage notification preferences</a>
                   </p>
                   <p style="color: #9CA3AF; font-size: 12px; margin: 16px 0 0;">
@@ -373,10 +373,10 @@ serve(async (req) => {
             });
             logStep("Found Featured subscriber", { facilityId: facility.id, email: providerEmail });
           } 
-          // Check for Professional subscription
-          else if (PROFESSIONAL_PRODUCT_IDS.includes(productId)) {
+          // Check for Pro (legacy Professional) subscription
+          else if (PRO_PRODUCT_IDS.includes(productId)) {
             professionalFacilityIds.push(facility.id);
-            logStep("Found Professional subscriber", { facilityId: facility.id, email: providerEmail });
+            logStep("Found Pro subscriber (legacy Professional)", { facilityId: facility.id, email: providerEmail });
           }
         }
       } catch (stripeError) {

@@ -29,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityWidget";
-import LeadCapMonitorWidget from "@/components/admin/LeadCapMonitorWidget";
+import LowCreditMonitorWidget from "@/components/admin/LowCreditMonitorWidget";
 import { LeadDeliveryHealthCheck } from "@/components/admin/LeadDeliveryHealthCheck";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 
@@ -913,7 +913,7 @@ export default function AdminDashboard() {
       {/* Subscription Activity */}
       <div className="grid gap-6 lg:grid-cols-2">
         <SubscriptionActivityWidget />
-        <LeadCapMonitorWidget />
+        <LowCreditMonitorWidget />
       </div>
 
       {/* Recent Leads */}
