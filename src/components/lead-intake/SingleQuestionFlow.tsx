@@ -4,7 +4,7 @@ import { ArrowLeft, CheckCircle2, Loader2, Mail, RefreshCw, AlertCircle, MapPin,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { EmailInput } from "@/components/ui/email-input";
@@ -617,14 +617,6 @@ export function SingleQuestionFlow({
   
   return (
     <div className="w-full max-w-lg mx-auto">
-      {/* Progress bar */}
-      <div className="mb-6">
-        <Progress value={progress} className="h-1.5" />
-        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-          <span>Step {currentIndex + 1} of {totalQuestions}</span>
-          <span>{Math.round(progress)}% complete</span>
-        </div>
-      </div>
       
       {/* Facility badge */}
       {facilityName && currentIndex === 0 && (
