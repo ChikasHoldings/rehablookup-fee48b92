@@ -59,10 +59,14 @@ export function UnlockLeadButton({
       return;
     }
 
+    // Calculate discount saved for Pro toast message
+    const discountSaved = isPro ? (basePrice - finalPrice) : 0;
+
     await unlockLead.mutateAsync({
       leadId,
       facilityId,
       paymentMethod: 'credits',
+      discountSaved,
     });
     setShowConfirmDialog(false);
     onUnlockSuccess?.();

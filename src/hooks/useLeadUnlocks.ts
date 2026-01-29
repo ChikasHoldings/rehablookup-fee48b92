@@ -57,24 +57,32 @@ export function useLeadUnlocks(facilityId?: string) {
     mutationFn: async ({ 
       leadId, 
       facilityId: fId,
-      paymentMethod = 'credits'
+      paymentMethod = 'credits',
+      discountSaved = 0,
     }: { 
       leadId: string; 
       facilityId: string;
       paymentMethod?: 'credits' | 'stripe';
+      discountSaved?: number;
     }) => {
       const { data, error } = await supabase.functions.invoke("unlock-lead", {
         body: { leadId, facilityId: fId, paymentMethod },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data;
+      return { ...data, discountSaved };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["lead-unlocks"] });
       queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
       queryClient.invalidateQueries({ queryKey: ["provider-leads-all"] });
-      toast.success("Lead unlocked! You can now view contact details.");
+      
+      // Show savings toast for Pro members
+      if (data.discountSaved && data.discountSaved > 0) {
+        toast.success(`Lead unlocked! Pro discount saved you $${(data.discountSaved / 100).toFixed(2)}`);
+      } else {
+        toast.success("Lead unlocked! You can now view contact details.");
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to unlock lead");
