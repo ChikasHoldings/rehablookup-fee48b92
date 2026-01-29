@@ -67,9 +67,10 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
       ? new Date().getFullYear() - facility.year_established 
       : null;
     
-    // Determine plan tier for badge display
-    const isFeaturedPlan = facility.planTier === 'featured' || facility.hasFeaturedSubscription || facility.featured;
-    const isProfessionalPlan = facility.planTier === 'professional' || facility.hasProfessionalPlan;
+    // Determine plan tier for badge display (supports both new and legacy values)
+    const isPro = facility.planTier === 'pro' || facility.planTier === 'featured' || 
+                  facility.planTier === 'professional' || facility.hasFeaturedSubscription || 
+                  facility.hasProfessionalPlan || facility.featured;
 
     // Determine if we're in the seeker account area
     const isInSeekerAccount = location.pathname.startsWith('/account');
@@ -184,17 +185,11 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
               {/* Rating badge - prominent position */}
               <RatingBadge rating={averageRating} reviewCount={reviewCount} size="sm" />
               
-              {/* Plan tier badges */}
-              {isFeaturedPlan && (
+              {/* Pro badge (replaces old Featured/Professional badges) */}
+              {isPro && (
                 <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border border-amber-200/60 shadow-sm">
                   <Sparkles className="h-2.5 w-2.5" />
-                  Featured
-                </Badge>
-              )}
-              {!isFeaturedPlan && isProfessionalPlan && (
-                <Badge className="gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-200/60 shadow-sm">
-                  <Sparkles className="h-2.5 w-2.5" />
-                  Professional
+                  Pro
                 </Badge>
               )}
               {facility.verified && (
