@@ -10,47 +10,37 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ============ PLAN CONFIGURATION - STRICT ENFORCEMENT ============
-// Basic = 0 leads (excluded from routing)
-// Professional = 100 shared leads/month (max 2 providers per lead, NO exclusive leads)
-// Featured = 100 exclusive leads/month (1 provider per lead, NO shared leads)
+// ============ PLAN CONFIGURATION - FREE/PRO MODEL ============
+// Free = cannot receive routed leads (pay-per-unlock only)
+// Pro = priority routing, 20% unlock discount, featured placement
+const PRO_PRODUCT_IDS = [
+  "prod_pro_monthly",
+  "prod_TbalLOPujTIoUe", // legacy professional
+  "prod_Tbyz1bf6iYyzYd", // professional
+  "prod_TbalOeJZA2ZoJl", // legacy featured
+  "prod_TbyzJVNOQL71NN", // featured
+];
+
 const PLAN_CONFIG: Record<string, { 
   product_ids: string[]; 
-  lead_limit: number; 
   priority_score: number;
-  exclusivity: 'shared' | 'exclusive';
-  max_providers_per_lead: number;
+  can_receive_routed_leads: boolean;
 }> = {
-  basic: { 
+  free: { 
     product_ids: [], 
-    lead_limit: 0, // No qualified leads for basic
     priority_score: 0,
-    exclusivity: 'exclusive',
-    max_providers_per_lead: 0
+    can_receive_routed_leads: false,
   },
-  professional: { 
-    product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], 
-    lead_limit: 100, // 100 shared leads/month
-    priority_score: 15,
-    exclusivity: 'shared', // ALL leads must be shared
-    max_providers_per_lead: 2
-  },
-  featured: { 
-    product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], 
-    lead_limit: 100, // 100 exclusive leads/month
+  pro: { 
+    product_ids: PRO_PRODUCT_IDS, 
     priority_score: 30,
-    exclusivity: 'exclusive', // ALL leads must be exclusive
-    max_providers_per_lead: 1
+    can_receive_routed_leads: true,
   },
 };
 
-// CRITICAL: Only these plans can receive routed qualified leads
-const PAID_PLANS = ["professional", "featured"];
-
 // ============ SCORING WEIGHTS (Internal Only - Never Exposed to Providers) ============
 const SCORING_WEIGHTS = {
-  PLAN_FEATURED: 30,
-  PLAN_PROFESSIONAL: 15,
+  PLAN_PRO: 30,
   // Tiered location matching: zip > city > state > nationwide
   LOCATION_ZIP_MATCH: 40,      // Exact zip code match - highest priority
   LOCATION_CITY_MATCH: 25,     // Same city
@@ -250,20 +240,19 @@ async function checkProviderEligibility(
     };
   }
 
-  let planName = "basic";
-  let leadLimit = PLAN_CONFIG.basic.lead_limit;
+  let planName = "free";
   let subscriptionStatus = "none";
   
   if (!stripeKey) {
-    log(requestId, "ERROR", "STRIPE_SECRET_KEY not set - defaulting to basic");
+    log(requestId, "ERROR", "STRIPE_SECRET_KEY not set - defaulting to free");
     return {
       isEligible: false,
-      planName: "basic",
+      planName: "free",
       subscriptionStatus: "none",
       leadLimit: 0,
       usedLeads: 0,
       isSuspended: false,
-      reason: "No active subscription (Basic plan)"
+      reason: "No active subscription (Free plan)"
     };
   }
 
@@ -284,12 +273,9 @@ async function checkProviderEligibility(
         const subscription = subscriptions.data[0];
         const productId = subscription.items.data[0].price.product as string;
         
-        if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-          planName = "featured";
-          leadLimit = PLAN_CONFIG.featured.lead_limit;
-        } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-          planName = "professional";
-          leadLimit = PLAN_CONFIG.professional.lead_limit;
+        // Check if this is a Pro subscription
+        if (PRO_PRODUCT_IDS.includes(productId)) {
+          planName = "pro";
         }
         
         log(requestId, "INFO", "Subscription found", { planName, productId, subscriptionId: subscription.id });
@@ -300,9 +286,9 @@ async function checkProviderEligibility(
       log(requestId, "INFO", "No Stripe customer found for email", { providerEmail });
     }
     
-    // CRITICAL: Basic plan providers cannot receive routed leads
-    if (!PAID_PLANS.includes(planName)) {
-      log(requestId, "WARN", "Provider on Basic plan - NOT eligible for routed leads", { planName });
+    // CRITICAL: Free plan providers cannot receive routed leads
+    if (planName !== "pro") {
+      log(requestId, "WARN", "Provider on Free plan - NOT eligible for routed leads", { planName });
       return {
         isEligible: false,
         planName,
@@ -310,11 +296,11 @@ async function checkProviderEligibility(
         leadLimit: 0,
         usedLeads: 0,
         isSuspended: false,
-        reason: "Basic plan providers do not receive qualified leads"
+        reason: "Free plan providers do not receive qualified leads"
       };
     }
-    
-    // Count leads this month across ALL provider's facilities
+    // Pro providers are always eligible (no lead limits in pay-per-unlock model)
+    // Count leads this month for tracking purposes only
     const startOfMonth = getStartOfMonth();
     
     const { data: userFacilities } = await supabase
@@ -340,25 +326,12 @@ async function checkProviderEligibility(
       usedLeads = monthlyLeadCount || 0;
     }
     
-    if (usedLeads >= leadLimit) {
-      log(requestId, "WARN", "Provider at capacity", { usedLeads, leadLimit });
-      return {
-        isEligible: false,
-        planName,
-        subscriptionStatus,
-        leadLimit,
-        usedLeads,
-        isSuspended: false,
-        reason: `Provider has reached monthly lead limit (${usedLeads}/${leadLimit})`
-      };
-    }
-    
-    log(requestId, "INFO", "Provider ELIGIBLE", { planName, usedLeads, leadLimit, available: leadLimit - usedLeads });
+    log(requestId, "INFO", "Pro Provider ELIGIBLE", { planName, usedLeads });
     return {
       isEligible: true,
       planName,
       subscriptionStatus,
-      leadLimit,
+      leadLimit: 0, // No limit in pay-per-unlock model
       usedLeads,
       isSuspended: false
     };
@@ -449,8 +422,7 @@ async function getEligibleProviders(
       }
       
       // Get subscription plan from Stripe
-      let planName = "basic";
-      let leadLimit = PLAN_CONFIG.basic.lead_limit;
+      let planName = "free";
       let subscriptionStatus = "none";
       
       try {
@@ -465,12 +437,8 @@ async function getEligibleProviders(
           if (subscriptions.data.length > 0) {
             subscriptionStatus = "active";
             const productId = subscriptions.data[0].items.data[0].price.product as string;
-            if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-              planName = "featured";
-              leadLimit = PLAN_CONFIG.featured.lead_limit;
-            } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-              planName = "professional";
-              leadLimit = PLAN_CONFIG.professional.lead_limit;
+            if (PRO_PRODUCT_IDS.includes(productId)) {
+              planName = "pro";
             }
           }
         }
@@ -479,8 +447,8 @@ async function getEligibleProviders(
         continue;
       }
       
-      // CRITICAL: Skip basic plan providers
-      if (!PAID_PLANS.includes(planName)) {
+      // CRITICAL: Skip free plan providers
+      if (planName !== "pro") {
         skippedBasic++;
         continue;
       }
@@ -501,8 +469,7 @@ async function getEligibleProviders(
         locationTier = 'state';
       }
       // No continue here - nationwide providers are still eligible!
-      
-      // Count qualified leads this month for this facility
+      // Count qualified leads this month for tracking purposes
       const { count: monthlyLeadCount } = await supabase
         .from("leads")
         .select("*", { count: "exact", head: true })
@@ -511,12 +478,8 @@ async function getEligibleProviders(
         .eq("qualified", true);
       
       const usedLeads = monthlyLeadCount || 0;
-      const availableCapacity = leadLimit - usedLeads;
-      
-      if (availableCapacity <= 0) {
-        skippedAtCapacity++;
-        continue;
-      }
+      // No lead limits in pay-per-unlock model - all Pro providers are eligible
+      const availableCapacity = 999; // Always available
       
       // Get last assigned lead timestamp for fairness calculation
       const { data: lastLead } = await supabase
@@ -558,7 +521,7 @@ async function getEligibleProviders(
         state: facility.state,
         zipCode: facility.zip_code || "",
         planName,
-        leadLimit,
+        leadLimit: 0, // No limit in pay-per-unlock model
         usedLeads,
         availableCapacity,
         lastAssignedAt: lastLead?.assigned_at || null,
@@ -605,11 +568,9 @@ function calculateProviderScore(
     qualityPenalty: 0,
   };
 
-  // 1. Plan Priority
-  if (provider.planName === "featured") {
-    breakdown.planPriority = SCORING_WEIGHTS.PLAN_FEATURED;
-  } else if (provider.planName === "professional") {
-    breakdown.planPriority = SCORING_WEIGHTS.PLAN_PROFESSIONAL;
+  // 1. Plan Priority - Pro gets boost
+  if (provider.planName === "pro") {
+    breakdown.planPriority = SCORING_WEIGHTS.PLAN_PRO;
   }
 
   // 2. Location Relevance - use pre-computed location tier
@@ -719,7 +680,8 @@ function findBestProviders(
   exclusivity: 'exclusive' | 'shared';
   reason: string;
 } {
-  const available = providers.filter(p => p.availableCapacity > 0 && PAID_PLANS.includes(p.planName));
+  // Only Pro subscribers can receive routed leads
+  const available = providers.filter(p => p.availableCapacity > 0 && p.planName === "pro");
   
   if (available.length === 0) {
     return { 
@@ -1446,13 +1408,13 @@ const handler = async (req: Request): Promise<Response> => {
               planName: eligibilityResult.planName 
             });
             
-            // Basic plan providers cannot receive leads - notify and route to paid providers
-            if (!PAID_PLANS.includes(eligibilityResult.planName)) {
-              log(requestId, "INFO", "Basic plan profile submission - notifying provider and routing to paid providers", { 
+            // Free plan providers cannot receive leads - notify and route to Pro providers
+            if (eligibilityResult.planName !== "pro") {
+              log(requestId, "INFO", "Free plan profile submission - notifying provider and routing to Pro providers", { 
                 facilityName: facility.name 
               });
               
-              // Notify the Basic provider about the missed lead (encourage upgrade)
+              // Notify the Free provider about the missed lead (encourage upgrade)
               await sendBasicProviderUpgradeNotification(
                 profile.email,
                 facility.name,
@@ -1746,7 +1708,7 @@ const handler = async (req: Request): Promise<Response> => {
             assignment_reason: assignmentReason,
             plan_tier: primaryPlanName,
             subscription_status: primaryFacilityId ? "active" : null,
-            lead_limit: primaryPlanName ? PLAN_CONFIG[primaryPlanName as keyof typeof PLAN_CONFIG]?.lead_limit : null,
+            lead_limit: null, // No limits in pay-per-unlock model
             used_leads: eligibilityResult?.usedLeads ?? null,
             routing_source: leadData.facilityId ? "direct" : "system",
             requested_facility_id: leadData.facilityId || null,
@@ -1826,18 +1788,18 @@ const handler = async (req: Request): Promise<Response> => {
             lead_id: lead.id,
             assigned_provider_id: secondaryFacilityId,
             assignment_reason: `Shared lead - secondary assignment`,
-            plan_tier: "professional",
+            plan_tier: "pro",
             subscription_status: "active",
-            lead_limit: PLAN_CONFIG.professional.lead_limit,
+            lead_limit: null, // No limits in pay-per-unlock model
             routing_source: "system",
-            exclusivity: 'shared',
+            exclusivity: 'exclusive', // All leads exclusive in new model
             provider_routing_order: 2,
             lead_deducted_at: secondaryDeductedAt,
             eligibility_check_result: {
               request_id: requestId,
               provider_id: secondaryFacilityId,
-              plan_type: "professional",
-              exclusivity: 'shared',
+              plan_type: "pro",
+              exclusivity: 'exclusive',
               routing_order: 2,
               is_secondary: true,
               primary_provider: primaryFacilityName,
@@ -1847,8 +1809,8 @@ const handler = async (req: Request): Promise<Response> => {
           log(requestId, "INFO", "Secondary routing logged", {
             leadId: lead.id,
             providerId: secondaryFacilityId,
-            planType: "professional",
-            exclusivity: 'shared',
+            planType: "pro",
+            exclusivity: 'exclusive',
             routingOrder: 2,
             leadDeductedAt: secondaryDeductedAt,
           });
@@ -1865,7 +1827,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Email primary provider
-    if (primaryFacilityEmail && primaryFacilityName && primaryPlanName && PAID_PLANS.includes(primaryPlanName)) {
+    if (primaryFacilityEmail && primaryFacilityName && primaryPlanName === "pro") {
       await sendLeadNotificationEmail(
         primaryFacilityEmail,
         primaryFacilityName,
@@ -1983,8 +1945,8 @@ const handler = async (req: Request): Promise<Response> => {
             level_of_care: leadData.levelOfCare,
             urgency: leadData.urgency,
             quality_flag: isQualified ? "qualified" : "unqualified",
-            plan_name: "professional",
-            exclusivity: 'shared',
+            plan_name: "pro",
+            exclusivity: 'exclusive',
             is_secondary: true,
           },
         });
@@ -1993,37 +1955,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // ============ LEAD LIMIT WARNING ============
-    if (primaryProviderEmail && primaryFacilityName && isQualified && primaryPlanName && PAID_PLANS.includes(primaryPlanName) && primaryFacilityUserId && primaryFacilityId) {
-      const freshEligibility = await checkProviderEligibility(supabase, primaryFacilityUserId, primaryProviderEmail, primaryFacilityId, requestId);
-      const newUsedLeads = freshEligibility.usedLeads + 1;
-      const usagePercentage = (newUsedLeads / freshEligibility.leadLimit) * 100;
-      
-      if (usagePercentage >= 80) {
-        await sendLeadLimitWarningEmail(
-          primaryProviderEmail,
-          primaryFacilityName,
-          newUsedLeads,
-          freshEligibility.leadLimit,
-          freshEligibility.planName,
-          requestId
-        );
-        
-        await supabase.from("provider_notifications").insert({
-          user_id: primaryFacilityUserId,
-          facility_id: primaryFacilityId,
-          type: "lead_limit_warning",
-          title: `${Math.round(usagePercentage)}% of monthly leads used`,
-          message: `You've used ${newUsedLeads} of ${freshEligibility.leadLimit} leads this month.`,
-          metadata: {
-            used_leads: newUsedLeads,
-            lead_limit: freshEligibility.leadLimit,
-            plan_name: freshEligibility.planName,
-            percentage: usagePercentage,
-          },
-        });
-      }
-    }
+    // Pay-per-unlock model: No lead limits, no limit warnings needed
 
     log(requestId, "INFO", "Request completed successfully");
 

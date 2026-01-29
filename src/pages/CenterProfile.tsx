@@ -356,14 +356,18 @@ const CenterProfile = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: facilityPlan = "basic" } = useQuery({
+  const { data: facilityPlan = "free" } = useQuery({
     queryKey: ["facility-plan", facility?.id],
     queryFn: async (): Promise<string> => {
-      if (!facility?.id) return "basic";
+      if (!facility?.id) return "free";
       const { data } = await supabase.functions.invoke("get-facility-plan", {
         body: { facilityId: facility.id },
       });
-      return data?.plan || "basic";
+      // Map legacy tiers to Free/Pro
+      const plan = data?.plan || "free";
+      if (plan === "professional" || plan === "featured") return "pro";
+      if (plan === "basic") return "free";
+      return plan;
     },
     enabled: !!facility?.id,
     staleTime: 1000 * 60 * 5,
@@ -445,7 +449,7 @@ const CenterProfile = () => {
   const hasValidLogo = facility.logo_url && !logoError;
   const isOwner = currentUserId === facility.user_id;
   const isPending = facility.status === "pending";
-  const showContactDetails = facilityPlan !== "basic" || isOwner;
+  const showContactDetails = facilityPlan === "pro" || isOwner;
   const yearsInBusiness = getYearsInBusiness(facility.year_established);
 
   // Map gender_served to display label

@@ -804,13 +804,12 @@ export default function AdminProviders() {
   };
 
   const getPlanBadge = (plan: string) => {
-    if (plan === "featured") {
-      return <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white gap-1"><Crown className="h-3 w-3" />Featured</Badge>;
+    // Map legacy tier names to Pro
+    const normalizedPlan = plan?.toLowerCase() || '';
+    if (normalizedPlan === "pro" || normalizedPlan === "featured" || normalizedPlan === "professional") {
+      return <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white gap-1"><Crown className="h-3 w-3" />Pro</Badge>;
     }
-    if (plan === "professional") {
-      return <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white gap-1"><Star className="h-3 w-3" />Professional</Badge>;
-    }
-    return <Badge variant="secondary" className="gap-1">Basic</Badge>;
+    return <Badge variant="secondary" className="gap-1">Free</Badge>;
   };
 
   const getLeadStatusBadge = (status: string) => {

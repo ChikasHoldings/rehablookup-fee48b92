@@ -48,13 +48,12 @@ const US_STATES = [
   "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
 ];
 
-const PLAN_OPTIONS = ["All", "Basic", "Professional", "Featured"];
+const PLAN_OPTIONS = ["All", "Free", "Pro"];
 
-// Plan lead limits
+// No lead limits in pay-per-unlock model
 const PLAN_LIMITS: Record<string, number> = {
-  basic: 4,
-  professional: 25,
-  featured: 75,
+  free: 0,
+  pro: 0, // Unlimited
 };
 
 const CHART_COLORS = {
@@ -835,13 +834,15 @@ export default function AdminAnalytics() {
 
   // Plan distribution data for pie chart
   const planDistributionData = useMemo(() => {
-    const basic = subscriptionData?.subscriptionsByPlan?.basic || 0;
-    const professional = subscriptionData?.subscriptionsByPlan?.professional || 0;
-    const featured = subscriptionData?.subscriptionsByPlan?.featured || 0;
+    // Map legacy tiers to Free/Pro
+    const free = (subscriptionData?.subscriptionsByPlan?.basic || 0) + 
+                 (subscriptionData?.subscriptionsByPlan?.free || 0);
+    const pro = (subscriptionData?.subscriptionsByPlan?.professional || 0) + 
+                (subscriptionData?.subscriptionsByPlan?.featured || 0) +
+                (subscriptionData?.subscriptionsByPlan?.pro || 0);
     return [
-      { name: "Basic", value: basic, color: CHART_COLORS.secondary },
-      { name: "Professional", value: professional, color: CHART_COLORS.purple },
-      { name: "Featured", value: featured, color: CHART_COLORS.warning },
+      { name: "Free", value: free, color: CHART_COLORS.secondary },
+      { name: "Pro", value: pro, color: CHART_COLORS.warning },
     ].filter(d => d.value > 0);
   }, [subscriptionData]);
 
