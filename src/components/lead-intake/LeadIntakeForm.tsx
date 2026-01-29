@@ -44,17 +44,6 @@ export function LeadIntakeForm({ className, renderSuccess }: LeadIntakeFormProps
   return (
     <LeadFormErrorBoundary>
       <div className={className} ref={formSectionRef}>
-        {/* Header Badge */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
-            </span>
-            Free & Confidential
-          </div>
-        </div>
-
         {/* Single Question Flow */}
         <SingleQuestionFlow
           formData={formData}
