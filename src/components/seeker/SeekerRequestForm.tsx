@@ -2,14 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
-  MapPin,
-  Shield,
   CheckCircle,
-  ArrowRight,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadIntakeForm } from "@/components/lead-intake";
 
@@ -107,26 +104,19 @@ export function SeekerRequestForm({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Facility Header */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-primary/10">
-              <Building2 className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground truncate">{facilityName}</h3>
-              {facilityCity && facilityState && (
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>{facilityCity}, {facilityState}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-3">
+      {/* Compact Facility Header */}
+      <div className="flex items-center gap-2.5 px-1">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <Building2 className="h-4 w-4 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-foreground text-sm truncate">{facilityName}</h3>
+          {facilityCity && facilityState && (
+            <p className="text-xs text-muted-foreground">{facilityCity}, {facilityState}</p>
+          )}
+        </div>
+      </div>
       
       {/* Lead Intake Form with unified animated flow */}
       <LeadIntakeForm renderSuccess={renderSuccess} />
