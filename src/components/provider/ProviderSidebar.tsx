@@ -20,6 +20,7 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { useProStatus } from "@/hooks/useProStatus";
+import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
 
 interface ProviderSidebarProps {
   onNavigate?: () => void;
@@ -46,6 +47,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const queryClient = useQueryClient();
   const { balanceFormatted } = useProviderCredits(selectedFacility?.id);
   const { data: proStatus } = useProStatus();
+  const { count: pendingConciergeCount } = usePendingConciergeCount(selectedFacility?.id);
 
   // Fetch new inquiries count
   const { data: newInquiriesCount = 0 } = useQuery({
@@ -87,7 +89,12 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;
             const isInquiriesItem = item.href === "/provider/inquiries";
-            const showBadge = isInquiriesItem && newInquiriesCount > 0;
+            const isConciergeItem = item.href === "/provider/concierge";
+            const showInquiriesBadge = isInquiriesItem && newInquiriesCount > 0;
+            const showConciergeBadge = isConciergeItem && pendingConciergeCount > 0;
+            const showBadge = showInquiriesBadge || showConciergeBadge;
+            const badgeCount = isInquiriesItem ? newInquiriesCount : pendingConciergeCount;
+            const badgeLabel = isInquiriesItem ? "new" : "pending";
             
             return (
               <li key={item.href}>
@@ -110,7 +117,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                     <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {showBadge && (
                       <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 sm:h-4 sm:min-w-4 px-0.5 sm:px-1 flex items-center justify-center rounded-full bg-destructive text-[9px] sm:text-[10px] font-bold text-white">
-                        {newInquiriesCount > 99 ? "99+" : newInquiriesCount}
+                        {badgeCount > 99 ? "99+" : badgeCount}
                       </span>
                     )}
                   </div>
@@ -125,7 +132,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                           : "bg-primary/10 text-primary"
                       )}
                     >
-                      {newInquiriesCount > 99 ? "99+" : newInquiriesCount} new
+                      {badgeCount > 99 ? "99+" : badgeCount} {badgeLabel}
                     </Badge>
                   )}
                 </Link>

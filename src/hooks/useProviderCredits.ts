@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 export interface CreditBalance {
   balance_cents: number;
@@ -24,6 +26,9 @@ const DEFAULT_CREDITS: ProviderCreditsData = {
   balance_cents: 0,
   transactions: [],
 };
+
+// Threshold for low credits warning (in cents) - $50
+const LOW_CREDITS_THRESHOLD = 5000;
 
 export function useProviderCredits(facilityId?: string) {
   const queryClient = useQueryClient();
@@ -67,6 +72,45 @@ export function useProviderCredits(facilityId?: string) {
     refetchOnWindowFocus: true,
   });
 
+  // Track previous balance to detect when it drops below threshold
+  const prevBalanceRef = useRef<number | null>(null);
+  const hasWarnedRef = useRef(false);
+
+  useEffect(() => {
+    const currentBalance = query.data?.balance_cents ?? 0;
+    const prevBalance = prevBalanceRef.current;
+
+    // Only warn if:
+    // 1. Balance dropped below threshold
+    // 2. Previous balance was above threshold (or first load)
+    // 3. Haven't warned in this session yet
+    if (
+      currentBalance > 0 && 
+      currentBalance < LOW_CREDITS_THRESHOLD &&
+      (prevBalance === null || prevBalance >= LOW_CREDITS_THRESHOLD) &&
+      !hasWarnedRef.current
+    ) {
+      toast.warning(
+        `Your credit balance is running low ($${(currentBalance / 100).toFixed(2)}). Consider adding more credits to continue unlocking leads.`,
+        { 
+          duration: 8000,
+          action: {
+            label: "Add Credits",
+            onClick: () => window.location.href = "/provider/credits?purchase_credits=true",
+          },
+        }
+      );
+      hasWarnedRef.current = true;
+    }
+
+    // Reset warning flag if balance goes back above threshold
+    if (currentBalance >= LOW_CREDITS_THRESHOLD) {
+      hasWarnedRef.current = false;
+    }
+
+    prevBalanceRef.current = currentBalance;
+  }, [query.data?.balance_cents]);
+
   // Mutation to purchase credits
   const purchaseCredits = useMutation({
     mutationFn: async ({ amountCents, facilityId: fId }: { amountCents: number; facilityId: string }) => {
@@ -81,11 +125,15 @@ export function useProviderCredits(facilityId?: string) {
     },
   });
 
+  const isLowCredits = (query.data?.balance_cents ?? 0) > 0 && 
+                       (query.data?.balance_cents ?? 0) < LOW_CREDITS_THRESHOLD;
+
   return {
     ...query,
     balance: query.data?.balance_cents ?? 0,
     balanceFormatted: `$${((query.data?.balance_cents ?? 0) / 100).toFixed(2)}`,
     transactions: query.data?.transactions ?? [],
     purchaseCredits,
+    isLowCredits,
   };
 }
