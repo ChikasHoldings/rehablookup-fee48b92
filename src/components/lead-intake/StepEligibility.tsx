@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Shield, Scale, Heart, Briefcase, Target } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { 
@@ -14,7 +15,12 @@ import {
   DUAL_DIAGNOSIS_OPTIONS,
   INSURANCE_TYPE_OPTIONS,
   BUDGET_OPTIONS,
-  SPECIAL_NEEDS_OPTIONS 
+  SPECIAL_NEEDS_OPTIONS,
+  PREVIOUS_TREATMENT_OPTIONS,
+  READINESS_OPTIONS,
+  VETERAN_STATUS_OPTIONS,
+  LEGAL_OPTIONS,
+  CO_OCCURRING_OPTIONS,
 } from "./types";
 
 interface StepEligibilityProps {
@@ -56,6 +62,14 @@ export function StepEligibility({ formData, updateFormData, onNext, onBack, isUr
       ? current.filter(n => n !== need)
       : [...current, need];
     updateFormData({ specialNeeds: updated });
+  };
+
+  const toggleCoOccurring = (condition: string) => {
+    const current = formData.coOccurringConditions || [];
+    const updated = current.includes(condition)
+      ? current.filter(c => c !== condition)
+      : [...current, condition];
+    updateFormData({ coOccurringConditions: updated });
   };
 
   return (
@@ -128,6 +142,29 @@ export function StepEligibility({ formData, updateFormData, onNext, onBack, isUr
           )}
         </div>
 
+        {/* Readiness Level - NEW */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Target className="h-4 w-4 text-primary" />
+            Readiness to start treatment
+          </Label>
+          <Select
+            value={formData.readinessLevel}
+            onValueChange={(value) => updateFormData({ readinessLevel: value })}
+          >
+            <SelectTrigger className="h-12 text-sm">
+              <SelectValue placeholder="How ready are you/they to start?" />
+            </SelectTrigger>
+            <SelectContent>
+              {READINESS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="py-2.5">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Mental Health - Inline Pills */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Do you also need mental health support?</Label>
@@ -152,6 +189,73 @@ export function StepEligibility({ formData, updateFormData, onNext, onBack, isUr
             ))}
           </RadioGroup>
         </div>
+
+        {/* Co-Occurring Conditions - Show when yes or not-sure */}
+        {(formData.dualDiagnosis === "yes" || formData.dualDiagnosis === "not-sure") && (
+          <div className="space-y-3 animate-fade-in p-4 bg-muted/30 rounded-xl border">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Heart className="h-4 w-4 text-primary" />
+              Which mental health conditions apply?
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {CO_OCCURRING_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => toggleCoOccurring(option.value)}
+                  className={cn(
+                    "px-3 py-2 border-2 rounded-lg cursor-pointer transition-all text-xs font-medium",
+                    formData.coOccurringConditions?.includes(option.value)
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50 text-foreground"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Previous Treatment - NEW */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Shield className="h-4 w-4 text-primary" />
+            Previous treatment history
+          </Label>
+          <Select
+            value={formData.previousTreatment}
+            onValueChange={(value) => updateFormData({ previousTreatment: value })}
+          >
+            <SelectTrigger className="h-12 text-sm">
+              <SelectValue placeholder="Any prior treatment experience?" />
+            </SelectTrigger>
+            <SelectContent>
+              {PREVIOUS_TREATMENT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="py-2.5">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Previous Treatment Details - Show when there's history */}
+        {formData.previousTreatment && formData.previousTreatment !== "none" && (
+          <div className="space-y-2 animate-fade-in">
+            <Label htmlFor="previousTreatmentDetails" className="text-sm font-medium">
+              Any details about previous treatment? <span className="text-muted-foreground text-xs">(optional)</span>
+            </Label>
+            <Textarea
+              id="previousTreatmentDetails"
+              placeholder="e.g., Type of program, what worked or didn't work..."
+              value={formData.previousTreatmentDetails}
+              onChange={(e) => updateFormData({ previousTreatmentDetails: e.target.value })}
+              className="min-h-[80px] text-sm resize-none"
+              maxLength={500}
+            />
+          </div>
+        )}
       </div>
 
       {/* Collapsible Advanced Options */}
@@ -190,6 +294,52 @@ export function StepEligibility({ formData, updateFormData, onNext, onBack, isUr
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Legal Involvement - NEW */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Scale className="h-4 w-4 text-primary" />
+              Legal or court involvement
+            </Label>
+            <Select
+              value={formData.legalInvolvement}
+              onValueChange={(value) => updateFormData({ legalInvolvement: value })}
+            >
+              <SelectTrigger className="h-12 text-sm">
+                <SelectValue placeholder="Any legal requirements?" />
+              </SelectTrigger>
+              <SelectContent>
+                {LEGAL_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="py-2.5">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Veteran Status - NEW */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary" />
+              Military/Veteran status
+            </Label>
+            <Select
+              value={formData.veteranStatus}
+              onValueChange={(value) => updateFormData({ veteranStatus: value })}
+            >
+              <SelectTrigger className="h-12 text-sm">
+                <SelectValue placeholder="Select if applicable" />
+              </SelectTrigger>
+              <SelectContent>
+                {VETERAN_STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="py-2.5">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Budget */}

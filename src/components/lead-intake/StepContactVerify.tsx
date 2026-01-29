@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Mail, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Loader2, Mail, CheckCircle2, AlertCircle, RefreshCw, Clock, Briefcase } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { LeadIntakeFormData } from "./types";
+import { LeadIntakeFormData, BEST_TIME_OPTIONS, EMPLOYMENT_OPTIONS } from "./types";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { isValidPhoneNumber } from "@/lib/phoneUtils";
 import { EmailInput } from "@/components/ui/email-input";
@@ -106,9 +107,6 @@ export function StepContactVerify({
     }
     await onSubmit();
   };
-
-  // Phone validation using shared utility
-
 
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-in">
@@ -334,6 +332,53 @@ export function StepContactVerify({
           </div>
         </div>
       )}
+
+      {/* Best Time to Call & Employment - NEW */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Clock className="h-4 w-4 text-primary" />
+            Best time to reach you
+          </Label>
+          <Select
+            value={formData.bestTimeToCall}
+            onValueChange={(value) => updateFormData({ bestTimeToCall: value })}
+          >
+            <SelectTrigger className="h-12 text-sm">
+              <SelectValue placeholder="Select preferred time" />
+            </SelectTrigger>
+            <SelectContent>
+              {BEST_TIME_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="py-2.5">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-3">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-primary" />
+            Employment status <span className="text-muted-foreground text-xs">(optional)</span>
+          </Label>
+          <Select
+            value={formData.employmentStatus}
+            onValueChange={(value) => updateFormData({ employmentStatus: value })}
+          >
+            <SelectTrigger className="h-12 text-sm">
+              <SelectValue placeholder="Select if applicable" />
+            </SelectTrigger>
+            <SelectContent>
+              {EMPLOYMENT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value} className="py-2.5">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       {/* Preferred Contact */}
       <div className="space-y-4">

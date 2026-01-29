@@ -273,6 +273,18 @@ export function useLeadIntakeForm() {
           message: formData.message || undefined,
           source,
           specialNeeds: formData.specialNeeds,
+          // NEW enhanced intake fields
+          ageRange: formData.ageRange || undefined,
+          gender: formData.gender || undefined,
+          relationshipToPatient: formData.relationshipToPatient || undefined,
+          previousTreatment: formData.previousTreatment || undefined,
+          previousTreatmentDetails: formData.previousTreatmentDetails || undefined,
+          coOccurringConditions: formData.coOccurringConditions?.length ? formData.coOccurringConditions : undefined,
+          employmentStatus: formData.employmentStatus || undefined,
+          veteranStatus: formData.veteranStatus || undefined,
+          legalInvolvement: formData.legalInvolvement || undefined,
+          readinessLevel: formData.readinessLevel || undefined,
+          bestTimeToCall: formData.bestTimeToCall || undefined,
         },
       });
       
