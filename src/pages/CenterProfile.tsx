@@ -1219,7 +1219,7 @@ const CenterProfile = () => {
           logo_url: facility.logo_url,
           featured: facility.featured,
         }}
-        facilityPlan={facilityPlan as "basic" | "professional" | "featured"}
+        facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
         prefillData={prefillDataFromNav}
       />
 

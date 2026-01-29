@@ -7,21 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PLAN_CONFIG: Record<string, { 
-  product_ids: string[]; 
-  lead_limit: number; 
-  exclusivity: 'shared' | 'exclusive';
-}> = {
-  basic: { product_ids: [], lead_limit: 0, exclusivity: 'exclusive' },
-  professional: { 
-    product_ids: ["prod_TbalLOPujTIoUe", "prod_Tbyz1bf6iYyzYd"], 
-    lead_limit: 100, exclusivity: 'shared' 
-  },
-  featured: { 
-    product_ids: ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"], 
-    lead_limit: 100, exclusivity: 'exclusive' 
-  },
-};
+// NEW MODEL: Free / Pro (pay-per-unlock)
+// Pro product IDs (includes legacy professional + featured)
+const PRO_PRODUCT_IDS = [
+  "prod_TbalLOPujTIoUe", // legacy professional
+  "prod_Tbyz1bf6iYyzYd", // professional
+  "prod_TbalOeJZA2ZoJl", // legacy featured
+  "prod_TbyzJVNOQL71NN", // featured
+];
 
 interface DirectLeadRequest {
   facilityId: string;
@@ -65,7 +58,7 @@ serve(async (req: Request) => {
     // Get facility info
     const { data: facility } = await supabase
       .from("facilities")
-      .select("id, name, email, city, state, user_id, suspended, status, lead_limit_override, bonus_leads")
+      .select("id, name, email, city, state, user_id, suspended, status")
       .eq("id", body.facilityId)
       .maybeSingle();
 
@@ -76,10 +69,8 @@ serve(async (req: Request) => {
       );
     }
 
-    // Determine plan from Stripe
-    let planName = "basic";
-    let leadLimit = 0;
-    let exclusivity: 'shared' | 'exclusive' = "exclusive";
+    // Determine plan from Stripe: free or pro
+    let planName: "free" | "pro" = "free";
 
     if (stripeKey && facility.user_id) {
       const { data: profile } = await supabase
@@ -97,14 +88,8 @@ serve(async (req: Request) => {
             const subs = await stripe.subscriptions.list({ customer: customers.data[0].id, status: "active", limit: 1 });
             if (subs.data.length > 0) {
               const productId = subs.data[0].items.data[0].price.product as string;
-              if (PLAN_CONFIG.featured.product_ids.includes(productId)) {
-                planName = "featured";
-                leadLimit = PLAN_CONFIG.featured.lead_limit;
-                exclusivity = PLAN_CONFIG.featured.exclusivity;
-              } else if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-                planName = "professional";
-                leadLimit = PLAN_CONFIG.professional.lead_limit;
-                exclusivity = PLAN_CONFIG.professional.exclusivity;
+              if (PRO_PRODUCT_IDS.includes(productId)) {
+                planName = "pro";
               }
             }
           }
@@ -114,35 +99,12 @@ serve(async (req: Request) => {
       }
     }
 
-    // Apply overrides
-    if (facility.lead_limit_override > 0) leadLimit = facility.lead_limit_override;
-    if (facility.bonus_leads > 0) leadLimit += facility.bonus_leads;
-
-    // Count used leads
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    
-    const { count: usedLeads } = await supabase
-      .from("leads")
-      .select("*", { count: "exact", head: true })
-      .eq("facility_id", body.facilityId)
-      .gte("created_at", startOfMonth.toISOString());
-
-    console.log(`[${requestId}] Plan: ${planName}, Used: ${usedLeads}/${leadLimit}, Exclusivity: ${exclusivity}`);
-
-    // Check capacity
-    if (planName !== "basic" && (usedLeads || 0) >= leadLimit) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Provider at capacity", code: "CAPACITY_REACHED" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    console.log(`[${requestId}] Plan: ${planName}`);
 
     const fullName = `${body.firstName} ${body.lastName}`.trim();
     const now = new Date().toISOString();
 
-    // Create lead
+    // Create lead - leads are created as "locked" until provider unlocks them
     const { data: lead, error: leadError } = await supabase
       .from("leads")
       .insert({
@@ -155,7 +117,7 @@ serve(async (req: Request) => {
         status: "new",
         source: "direct_profile",
         qualified: true,
-        exclusivity,
+        exclusivity: "exclusive",
         urgency: body.urgency || "exploring",
         who_seeking_help: body.seekingFor || "self",
         assigned_at: now,
@@ -176,160 +138,23 @@ serve(async (req: Request) => {
 
     console.log(`[${requestId}] Lead created: ${lead.id}`);
 
-    // Log routing for primary facility
+    // Log routing
     await supabase.from("lead_routing_logs").insert({
       lead_id: lead.id,
       requested_facility_id: body.facilityId,
       assigned_provider_id: body.facilityId,
-      assignment_reason: `Direct profile submission (${planName} - ${exclusivity})`,
+      assignment_reason: `Direct profile submission (${planName})`,
       routing_source: "direct_profile",
       plan_tier: planName,
-      exclusivity,
-      lead_limit: leadLimit,
-      used_leads: (usedLeads || 0) + 1,
-      subscription_status: planName === "basic" ? "none" : "active",
+      exclusivity: "exclusive",
+      lead_limit: 0, // No limits in pay-per-unlock model
+      used_leads: 0,
+      subscription_status: planName === "free" ? "none" : "active",
       lead_deducted_at: now,
       provider_routing_order: 1,
     });
 
-    // Share lead with second eligible Professional provider if on Professional plan
-    let sharedWithFacilityId: string | null = null;
-    
-    if (planName === "professional" && exclusivity === "shared" && stripeKey) {
-      console.log(`[${requestId}] Finding second eligible Professional provider in ${facility.state}`);
-      
-      // Find other approved facilities in the same state
-      const { data: candidates } = await supabase
-        .from("facilities")
-        .select("id, user_id, lead_limit_override, bonus_leads")
-        .eq("state", facility.state)
-        .eq("status", "approved")
-        .eq("suspended", false)
-        .neq("id", body.facilityId)
-        .limit(20);
-
-      if (candidates && candidates.length > 0) {
-        const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-        
-        for (const candidate of candidates) {
-          // Get candidate's profile email
-          const { data: candidateProfile } = await supabase
-            .from("profiles")
-            .select("email")
-            .eq("user_id", candidate.user_id)
-            .maybeSingle();
-
-          if (!candidateProfile?.email) continue;
-
-          // Check if candidate has Professional or Featured plan
-          let candidatePlan = "basic";
-          let candidateLeadLimit = 0;
-          
-          try {
-            const customers = await stripe.customers.list({ email: candidateProfile.email, limit: 1 });
-            if (customers.data.length > 0) {
-              const subs = await stripe.subscriptions.list({ customer: customers.data[0].id, status: "active", limit: 1 });
-              if (subs.data.length > 0) {
-                const productId = subs.data[0].items.data[0].price.product as string;
-                if (PLAN_CONFIG.professional.product_ids.includes(productId)) {
-                  candidatePlan = "professional";
-                  candidateLeadLimit = PLAN_CONFIG.professional.lead_limit;
-                }
-                // Featured providers get exclusive leads, don't share with them
-              }
-            }
-          } catch (e) {
-            console.log(`[${requestId}] Stripe check failed for candidate ${candidate.id}:`, e);
-            continue;
-          }
-
-          // Only share with Professional plan providers
-          if (candidatePlan !== "professional") continue;
-
-          // Apply overrides
-          if (candidate.lead_limit_override > 0) candidateLeadLimit = candidate.lead_limit_override;
-          if (candidate.bonus_leads > 0) candidateLeadLimit += candidate.bonus_leads;
-
-          // Check capacity
-          const { count: candidateUsedLeads } = await supabase
-            .from("leads")
-            .select("*", { count: "exact", head: true })
-            .or(`facility_id.eq.${candidate.id},shared_with.cs.{${candidate.id}}`)
-            .gte("created_at", startOfMonth.toISOString());
-
-          if ((candidateUsedLeads || 0) >= candidateLeadLimit) {
-            console.log(`[${requestId}] Candidate ${candidate.id} at capacity (${candidateUsedLeads}/${candidateLeadLimit})`);
-            continue;
-          }
-
-          // Found eligible provider - share the lead
-          sharedWithFacilityId = candidate.id;
-          console.log(`[${requestId}] Sharing lead with ${candidate.id}`);
-
-          // Update lead with shared_with array
-          await supabase
-            .from("leads")
-            .update({ shared_with: [candidate.id] })
-            .eq("id", lead.id);
-
-          // Log routing for shared provider
-          await supabase.from("lead_routing_logs").insert({
-            lead_id: lead.id,
-            requested_facility_id: body.facilityId,
-            assigned_provider_id: candidate.id,
-            assignment_reason: `Shared from Professional plan provider (${facility.name})`,
-            routing_source: "professional_share",
-            plan_tier: "professional",
-            exclusivity: "shared",
-            lead_limit: candidateLeadLimit,
-            used_leads: (candidateUsedLeads || 0) + 1,
-            subscription_status: "active",
-            lead_deducted_at: now,
-            provider_routing_order: 2,
-          });
-
-          // Send notification email to shared provider
-          const { data: sharedFacility } = await supabase
-            .from("facilities")
-            .select("name, email, city, state")
-            .eq("id", candidate.id)
-            .maybeSingle();
-
-          if (sharedFacility) {
-            fetch(`${supabaseUrl}/functions/v1/submit-qualified-lead`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${supabaseAnonKey}`,
-              },
-              body: JSON.stringify({
-                facilityId: candidate.id,
-                name: fullName,
-                email: body.email,
-                phone: body.phone,
-                message: body.message || "",
-                preferredContact: "phone",
-                whoSeekingHelp: body.seekingFor || "self",
-                locationCityState: `${facility.city}, ${facility.state}`,
-                urgency: body.urgency || "exploring",
-                source: "professional_share",
-                skipLeadCreation: true,
-                existingLeadId: lead.id,
-                isSharedLead: true,
-              }),
-            }).catch(err => console.warn(`[${requestId}] Shared provider email error:`, err));
-          }
-
-          break; // Only share with one additional provider
-        }
-
-        if (!sharedWithFacilityId) {
-          console.log(`[${requestId}] No eligible Professional provider found for sharing`);
-        }
-      }
-    }
-
-    // Forward to submit-qualified-lead for email notifications to primary facility
+    // Forward to submit-qualified-lead for email notifications
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     fetch(`${supabaseUrl}/functions/v1/submit-qualified-lead`, {
       method: "POST",
@@ -355,7 +180,7 @@ serve(async (req: Request) => {
     }).catch(err => console.warn(`[${requestId}] Email notification error:`, err));
 
     return new Response(
-      JSON.stringify({ success: true, leadId: lead.id, exclusivity, planName }),
+      JSON.stringify({ success: true, leadId: lead.id, planName }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

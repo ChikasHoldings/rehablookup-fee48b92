@@ -6,9 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Coupon IDs that are restricted to Featured plan only
-const FEATURED_ONLY_COUPON_IDS = ["RvvEQtFW"];
-
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[VALIDATE-PROMO] ${step}${detailsStr}`);
@@ -58,19 +55,6 @@ serve(async (req) => {
     const coupon = promoCodeObj.coupon;
     logStep("Promo code found", { promoCodeId: promoCodeObj.id, couponId: coupon.id });
 
-    // Check if this coupon is restricted to Featured plan only
-    if (FEATURED_ONLY_COUPON_IDS.includes(coupon.id) && plan && plan !== "featured") {
-      logStep("Coupon restricted to Featured plan", { couponId: coupon.id, requestedPlan: plan });
-      return new Response(
-        JSON.stringify({ 
-          valid: false, 
-          message: "This promo code is only valid for the Featured plan",
-          restrictedToPlan: "featured"
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
-
     // Check if coupon has redemption limits
     if (promoCodeObj.max_redemptions && promoCodeObj.times_redeemed >= promoCodeObj.max_redemptions) {
       logStep("Promo code max redemptions reached");
@@ -108,18 +92,14 @@ serve(async (req) => {
       discountDescription += " (forever)";
     }
 
-    // Add plan restriction note if applicable
-    const isFeaturedOnly = FEATURED_ONLY_COUPON_IDS.includes(coupon.id);
-
-    logStep("Promo code valid", { discount: discountDescription, isFeaturedOnly });
+    logStep("Promo code valid", { discount: discountDescription });
 
     return new Response(
       JSON.stringify({
         valid: true,
-        message: isFeaturedOnly ? "Promo code applied! (Featured plan only)" : "Promo code applied!",
+        message: "Promo code applied!",
         discount: discountDescription,
         couponName: coupon.name || code,
-        restrictedToPlan: isFeaturedOnly ? "featured" : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
