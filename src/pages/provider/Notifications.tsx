@@ -70,8 +70,8 @@ type NotificationTypeFilter = "all" | "leads" | "billing" | "system";
 
 const typeFilterCategories: Record<NotificationTypeFilter, string[]> = {
   all: [],
-  leads: ["lead_received", "lead_status_changed", "lead_limit_warning"],
-  billing: ["subscription_updated"],
+  leads: ["lead_received", "lead_status_changed"],
+  billing: ["subscription_updated", "lead_limit_warning"],
   system: ["listing_approved", "system"],
 };
 

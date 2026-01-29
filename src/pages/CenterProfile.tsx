@@ -348,9 +348,9 @@ const CenterProfile = () => {
     queryFn: async (): Promise<boolean> => {
       if (!facility?.id) return false;
       const { data } = await supabase.functions.invoke("get-featured-facilities");
-      // Use correct property names from edge function response
-      const featuredIds: string[] = data?.featuredFacilityIds || data?.allEligibleIds || [];
-      return featuredIds.includes(facility.id);
+      // Check Pro subscription status
+      const proIds: string[] = data?.proFacilityIds || [];
+      return proIds.includes(facility.id);
     },
     enabled: !!facility?.id,
     staleTime: 1000 * 60 * 5,

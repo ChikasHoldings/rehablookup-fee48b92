@@ -113,9 +113,9 @@ export function FeaturedAnalyticsDashboard() {
       startDate.setDate(startDate.getDate() - days);
       const startDateStr = startDate.toISOString().split("T")[0];
 
-      // Fetch featured facilities
+      // Fetch Pro subscriber facilities
       const { data: featuredResponse } = await supabase.functions.invoke("get-featured-facilities");
-      const featuredIds = featuredResponse?.featuredFacilityIds || [];
+      const featuredIds = featuredResponse?.proFacilityIds || [];
 
       if (featuredIds.length === 0) {
         return {

@@ -14,8 +14,6 @@ interface FacilityWithPlan {
   planTier?: PlanTier;
   featured?: boolean;
   isPro?: boolean;
-  hasFeaturedSubscription?: boolean;
-  hasProfessionalPlan?: boolean;
   name?: string;
 }
 
@@ -30,8 +28,8 @@ export function getPlanPriority(facility: FacilityWithPlan): number {
   // Check planTier (support both new and legacy)
   if (facility.planTier === 'pro' || facility.planTier === 'featured' || facility.planTier === 'professional') return 0;
   
-  // Fallback to individual flags (legacy)
-  if (facility.hasFeaturedSubscription || facility.hasProfessionalPlan || facility.featured) return 0;
+  // Fallback to individual flags 
+  if (facility.featured) return 0;
   
   return 1; // Free plan
 }

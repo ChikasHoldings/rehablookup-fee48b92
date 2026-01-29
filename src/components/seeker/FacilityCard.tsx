@@ -33,8 +33,6 @@ export interface FacilityCardData {
   // Plan tier for display
   planTier?: PlanTier;
   featured?: boolean;
-  hasFeaturedSubscription?: boolean;
-  hasProfessionalPlan?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -68,9 +66,8 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
       : null;
     
     // Determine plan tier for badge display (supports both new and legacy values)
-    const isPro = facility.planTier === 'pro' || facility.planTier === 'featured' || 
-                  facility.planTier === 'professional' || facility.hasFeaturedSubscription || 
-                  facility.hasProfessionalPlan || facility.featured;
+    // Pro check - simplified to Pro/Free model
+    const isPro = facility.planTier === 'pro' || facility.featured;
 
     // Determine if we're in the seeker account area
     const isInSeekerAccount = location.pathname.startsWith('/account');
