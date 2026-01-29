@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Star, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -9,17 +10,18 @@ interface GoogleReviewsCardProps {
   className?: string;
 }
 
-export function GoogleReviewsCard({
-  rating,
-  reviewCount,
-  googleUrl,
-  className,
-}: GoogleReviewsCardProps) {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
+export const GoogleReviewsCard = forwardRef<HTMLDivElement, GoogleReviewsCardProps>(
+  function GoogleReviewsCard({
+    rating,
+    reviewCount,
+    googleUrl,
+    className,
+  }, ref) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
 
-  return (
-    <div className={cn("rounded-xl border border-border/50 bg-card shadow-sm", className)}>
+    return (
+      <div ref={ref} className={cn("rounded-xl border border-border/50 bg-card shadow-sm", className)}>
       <div className="flex items-center justify-between p-4 md:p-5 border-b border-border/40">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100">
@@ -97,6 +99,7 @@ export function GoogleReviewsCard({
           )}
         </div>
       </div>
-    </div>
-  );
-}
+      </div>
+    );
+  }
+);
