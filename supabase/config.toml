@@ -245,3 +245,36 @@ verify_jwt = true
 
 [functions.charge-placement-fee]
 verify_jwt = false
+
+[functions.unlock-lead]
+verify_jwt = true
+
+[functions.purchase-credits]
+verify_jwt = true
+
+[functions.subscribe-pro]
+verify_jwt = true
+
+[functions.match-concierge-intake]
+verify_jwt = false
+
+[functions.submit-placement-case]
+verify_jwt = false
+
+[functions.calculate-ranking-scores]
+verify_jwt = false
+
+[functions.admin-manage-invoice]
+verify_jwt = true
+
+[functions.retry-failed-payments]
+verify_jwt = false
+
+[functions.send-payment-reminder]
+verify_jwt = false
+
+[functions.sitemap-facilities]
+verify_jwt = false
+
+[functions.submit-indexnow]
+verify_jwt = false
