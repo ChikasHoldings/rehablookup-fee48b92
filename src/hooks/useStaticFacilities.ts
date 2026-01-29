@@ -30,16 +30,18 @@ export interface PublicFacility extends TreatmentCenter {
   isFromDatabase: boolean;
   logo_url: string | null;
   gallery_urls: string[] | null;
-  hasFeaturedSubscription?: boolean;
-  hasProfessionalPlan?: boolean;
-  hasPaidPlan?: boolean;
   isPro?: boolean;
   verified?: boolean | null;
   year_established?: number | null;
   facilityType?: string | null;
   googleRating?: number | null;
   googleReviewCount?: number | null;
-  planTier?: "featured" | "professional" | "free";
+  planTier?: "pro" | "free";
+  // Legacy compatibility
+  hasFeaturedSubscription?: boolean;
+  hasProfessionalPlan?: boolean;
+  hasPaidPlan?: boolean;
+  isHomepageFeatured?: boolean;
 }
 
 interface StaticFacilitiesResponse {
@@ -72,10 +74,8 @@ const getCachedStaticFacilities = (): StaticFacility[] | undefined => {
  */
 export const useStaticFacilities = () => {
   const { data: featuredData, isLoading: isFeaturedLoading } = useFeaturedFacilityIds();
-  const featuredIds = featuredData?.featuredFacilityIds || [];
-  const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
-  const professionalIds = featuredData?.professionalFacilityIds || [];
   const proIds = featuredData?.proFacilityIds || [];
+  const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
 
   const query = useQuery({
     queryKey: ["static-public-facilities"],
@@ -111,20 +111,11 @@ export const useStaticFacilities = () => {
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 
-  // Transform static facilities to PublicFacility format with plan data
+  // Transform static facilities to PublicFacility format with Pro data
   const publicFacilities: PublicFacility[] = (query.data || []).map((facility) => {
-    const hasFeaturedSubscription = featuredIds.includes(facility.id);
-    const hasProfessionalPlan = professionalIds.includes(facility.id);
     const isPro = proIds.includes(facility.id);
-    const hasPaidPlan = hasFeaturedSubscription || hasProfessionalPlan || isPro;
     const isHomepageFeatured = homepageFeaturedIds.includes(facility.id);
-
-    let planTier: "featured" | "professional" | "free" = "free";
-    if (hasFeaturedSubscription || facility.featured || isPro) {
-      planTier = "featured";
-    } else if (hasProfessionalPlan) {
-      planTier = "professional";
-    }
+    const planTier: "pro" | "free" = isPro ? "pro" : "free";
 
     return {
       id: facility.id,
@@ -139,10 +130,7 @@ export const useStaticFacilities = () => {
       insuranceAccepted: facility.insuranceAccepted,
       description: facility.description || "Treatment center offering quality care and support.",
       programOverview: facility.description || "Comprehensive treatment programs tailored to individual needs.",
-      featured: hasFeaturedSubscription || facility.featured || isPro,
-      hasFeaturedSubscription,
-      hasProfessionalPlan,
-      hasPaidPlan,
+      featured: isPro,
       isPro,
       isHomepageFeatured,
       planTier,
@@ -158,6 +146,10 @@ export const useStaticFacilities = () => {
       gallery_urls: facility.galleryUrls,
       googleRating: facility.googleRating,
       googleReviewCount: facility.googleReviewCount,
+      // Legacy compatibility
+      hasFeaturedSubscription: isPro,
+      hasProfessionalPlan: false,
+      hasPaidPlan: isPro,
     };
   });
 

@@ -10,11 +10,11 @@ export interface TreatmentCenter {
   insuranceAccepted: string[];
   description: string;
   programOverview: string;
-  featured: boolean;
-  rating: number;
+  featured?: boolean;
+  rating: number | null;
   reviewCount: number;
   amenities: string[];
-  image: string;
+  image: string | null;
 }
 
 // Production: No static mock data - all facilities come from the database

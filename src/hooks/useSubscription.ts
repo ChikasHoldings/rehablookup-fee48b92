@@ -3,23 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface SubscriptionData {
   subscribed: boolean;
-  plan: "basic" | "professional" | "featured";
+  isPro: boolean;
+  plan: "free" | "pro";
   plan_name: string;
-  lead_limit: number;
   subscription_end: string | null;
   current_period_start: string | null;
   product_id?: string;
-  is_featured?: boolean;
-  exclusivity?: 'shared' | 'exclusive';
   status?: 'active' | 'past_due' | 'trialing' | 'canceled' | 'incomplete' | null;
   cancel_at_period_end?: boolean;
 }
 
 const DEFAULT_SUBSCRIPTION: SubscriptionData = {
   subscribed: false,
-  plan: "basic",
-  plan_name: "Basic Listing",
-  lead_limit: 0,
+  isPro: false,
+  plan: "free",
+  plan_name: "Free Listing",
   subscription_end: null,
   current_period_start: null,
   status: null,
@@ -103,108 +101,47 @@ export function useSubscription() {
   });
 }
 
-// UNIFIED LEAD SYSTEM: Plan definitions
-// - Professional: 100 shared leads/month (max 2 providers per lead)
-// - Featured: 100 exclusive leads/month (1 provider per lead)
+// NEW MONETIZATION MODEL: Plan definitions
+// - Free: List 1 facility, receive locked leads, pay per unlock
+// - Pro ($99/mo): Up to 5 facilities, 20% off unlocks, 20% off placement fees, featured placement
 export const PLAN_DETAILS = {
-  basic: {
-    name: "Basic Listing",
+  free: {
+    name: "Free Listing",
     price: "Free",
     period: "",
-    description: "Get listed and be discoverable",
-    lead_limit: 0, // Basic plan: no qualified leads (direct only with upgrade prompt)
+    description: "Get listed and receive inquiries",
     location_limit: 1,
-    gallery_limit: 5, // Basic: up to 5 gallery images
-    featured: false,
-    exclusivity: 'exclusive' as const,
+    unlock_discount: 0,
     features: [
-      "Public provider profile",
-      "Listed in search results",
-      "Facility name, location & services",
-      "Basic dashboard (views & clicks)",
-    ],
-    notIncludedDetails: [
-      "Phone number hidden on profile",
-      "Website link hidden on profile",
+      "1 facility listing",
+      "Receive locked inquiries",
+      "Pay per unlock ($25-39)",
+      "Basic dashboard",
     ],
     notIncluded: [
-      "Qualified leads",
-      "Lead routing",
-      "Priority placement",
-      "Homepage features",
-      "Email lead notifications",
+      "20% off lead unlocks",
+      "20% off placement fees",
+      "Featured homepage placement",
+      "Priority search ranking",
     ],
-    upgradeMicrocopy: "Upgrade to receive qualified leads delivered directly to you.",
   },
-  professional: {
-    name: "Professional",
-    price: "$399",
+  pro: {
+    name: "Pro",
+    price: "$99",
     period: "/month",
-    description: "Shared leads + steady visibility",
-    lead_limit: 100, // 100 shared qualified leads/month
-    location_limit: 3,
-    gallery_limit: 10, // Professional: up to 10 gallery images
-    featured: false,
-    exclusivity: 'shared' as const,
-    features: [
-      "100 qualified leads/month (shared)",
-      "Unlimited calls from profile",
-      "Unlimited website visits from profile",
-      "Up to 3 facility locations",
-      "Up to 10 gallery photos",
-      "Standard search placement",
-      "Email lead notifications",
-      "Lead management dashboard",
-      "Performance analytics & insights",
-    ],
-    microcopy: "Each lead may be shared with up to one other Professional provider.",
-    price_id: "price_1Sel1C9fxdThyiakWLfgbl9K",
-    product_id: "prod_Tbyz1bf6iYyzYd",
-  },
-  featured: {
-    name: "Featured",
-    price: "$1,099",
-    period: "/month",
-    description: "Exclusive leads & maximum visibility",
-    lead_limit: 100, // 100 exclusive qualified leads/month
+    description: "Enhanced visibility + discounts",
     location_limit: 5,
-    gallery_limit: 10, // Featured: up to 10 gallery images
-    featured: true,
-    exclusivity: 'exclusive' as const,
+    unlock_discount: 20,
     features: [
-      "100 exclusive qualified leads/month",
-      "Unlimited calls from profile",
-      "Unlimited website visits from profile",
-      "Up to 5 facility locations",
-      "Up to 10 gallery photos",
-      "Homepage featured placement",
-      "Priority search placement",
-      "Gold Featured badge",
-      "Priority email support",
-      "Advanced analytics",
-      "All Professional features included",
+      "Up to 5 facility listings",
+      "20% off lead unlocks",
+      "20% off Concierge placement fees",
+      "Featured homepage placement",
+      "Priority search ranking",
+      "Pro badge on profile",
     ],
-    microcopy: "Every lead is exclusively yours — never shared with other providers.",
-    price_id: "price_1Sel1P9fxdThyiakj5MaAvOE",
-    product_id: "prod_TbyzJVNOQL71NN",
+    price_id: "price_pro_monthly",
+    product_id: "prod_pro_monthly",
   },
 };
 
-// Plan enforcement rules
-export const PLAN_RULES = {
-  professional: {
-    monthly_cap: 100,
-    exclusivity: 'shared' as const,
-    max_providers_per_lead: 2,
-    allows_exclusive: false,
-  },
-  featured: {
-    monthly_cap: 100,
-    exclusivity: 'exclusive' as const,
-    max_providers_per_lead: 1,
-    allows_shared: false,
-  },
-};
-
-// Marketing messaging
-export const EXCLUSIVITY_MESSAGE = "Professional leads are shared with max 1 other provider. Featured leads are 100% exclusive.";

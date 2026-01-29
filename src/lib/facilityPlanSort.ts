@@ -1,17 +1,19 @@
 /**
- * Utility for sorting facilities by plan hierarchy.
+ * Utility for sorting facilities by Pro status.
  * 
- * Order: Featured > Professional > Free
+ * Order: Pro (featured/paid) > Free
  * 
- * This ensures paid providers always appear before free listings
+ * This ensures Pro providers appear before free listings
  * across all pages in the platform.
  */
 
-export type PlanTier = 'featured' | 'professional' | 'free';
+// Support both new model (pro/free) and legacy values (featured/professional) for backward compatibility
+export type PlanTier = 'pro' | 'free' | 'featured' | 'professional';
 
 interface FacilityWithPlan {
   planTier?: PlanTier;
   featured?: boolean;
+  isPro?: boolean;
   hasFeaturedSubscription?: boolean;
   hasProfessionalPlan?: boolean;
   name?: string;
@@ -22,21 +24,21 @@ interface FacilityWithPlan {
  * Lower number = higher priority (shows first)
  */
 export function getPlanPriority(facility: FacilityWithPlan): number {
-  // Check planTier first (preferred)
-  if (facility.planTier === 'featured') return 0;
-  if (facility.planTier === 'professional') return 1;
-  if (facility.planTier === 'free') return 2;
+  // Check isPro first (new model)
+  if (facility.isPro) return 0;
   
-  // Fallback to individual flags
-  if (facility.hasFeaturedSubscription || facility.featured) return 0;
-  if (facility.hasProfessionalPlan) return 1;
+  // Check planTier (support both new and legacy)
+  if (facility.planTier === 'pro' || facility.planTier === 'featured' || facility.planTier === 'professional') return 0;
   
-  return 2; // Free/basic plan
+  // Fallback to individual flags (legacy)
+  if (facility.hasFeaturedSubscription || facility.hasProfessionalPlan || facility.featured) return 0;
+  
+  return 1; // Free plan
 }
 
 /**
- * Sort facilities by plan hierarchy: Featured → Professional → Free
- * Within each tier, maintains original order (stable sort)
+ * Sort facilities by plan hierarchy: Pro → Free
+ * Within each tier, maintains alphabetical order
  */
 export function sortByPlanHierarchy<T extends FacilityWithPlan>(facilities: T[]): T[] {
   return [...facilities].sort((a, b) => {
@@ -79,14 +81,14 @@ export function sortByPlanHierarchyWithSecondary<T extends FacilityWithPlan>(
 /**
  * Get a human-readable label for the plan tier
  */
-export function getPlanLabel(tier: PlanTier | undefined): string {
+export function getPlanLabel(tier: PlanTier | 'featured' | 'professional' | undefined): string {
   switch (tier) {
+    case 'pro':
     case 'featured':
-      return 'Featured Provider';
     case 'professional':
-      return 'Professional Provider';
+      return 'Pro Provider';
     case 'free':
     default:
-      return 'Basic Listing';
+      return 'Free Listing';
   }
 }
