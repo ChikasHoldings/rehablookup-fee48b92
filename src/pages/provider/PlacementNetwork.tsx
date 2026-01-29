@@ -116,17 +116,18 @@ export default function ProviderPlacementNetworkPage() {
     enabled: !!selectedFacility?.id,
   });
 
-  // Fetch pending introductions
+  // Fetch pending introductions from concierge system
   const { data: introductions } = useQuery({
     queryKey: ["placement-introductions", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
-        .from("placement_case_providers")
+        .from("concierge_introductions")
         .select(`
           *,
-          placement_cases (
-            id, seeker_name, level_of_care, payment_type, urgency, preferred_states, status
+          concierge_inquiries (
+            id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state, status,
+            seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id
           )
         `)
         .eq("facility_id", selectedFacility.id)
@@ -138,16 +139,17 @@ export default function ProviderPlacementNetworkPage() {
     enabled: !!selectedFacility?.id,
   });
 
-  // Fetch past placements
+  // Fetch past placements (confirmed cases from concierge system)
   const { data: placements } = useQuery({
     queryKey: ["facility-placements", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
-        .from("placement_cases")
+        .from("concierge_inquiries")
         .select("*")
-        .eq("admitted_facility_id", selectedFacility.id)
-        .order("admitted_at", { ascending: false });
+        .eq("placed_facility_id", selectedFacility.id)
+        .eq("status", "placed")
+        .order("placement_confirmed_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -279,11 +281,11 @@ export default function ProviderPlacementNetworkPage() {
   const respondMutation = useMutation({
     mutationFn: async ({ id, response, notes }: { id: string; response: string; notes?: string }) => {
       const { error } = await supabase
-        .from("placement_case_providers")
+        .from("concierge_introductions")
         .update({
           provider_response: response,
-          responded_at: new Date().toISOString(),
-          availability_notes: notes || null,
+          provider_responded_at: new Date().toISOString(),
+          provider_notes: notes || null,
         })
         .eq("id", id);
 
@@ -312,7 +314,16 @@ export default function ProviderPlacementNetworkPage() {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const optedIn = facilityData?.concierge_network_opted_in || false;
-  const pendingIntroductions = introductions?.filter((i) => i.provider_response === "pending") || [];
+  const pendingIntroductions = introductions?.filter((i) => 
+    !i.provider_response || i.provider_response === "pending"
+  ) || [];
+  
+  // Introductions where seeker confirmed but provider hasn't yet
+  const awaitingProviderConfirm = introductions?.filter((i) =>
+    i.concierge_inquiries?.seeker_confirmed && 
+    !i.concierge_inquiries?.placement_confirmed &&
+    i.concierge_inquiries?.placed_facility_id === selectedFacility?.id
+  ) || [];
 
   // Readiness checks for placement network
   const hasCompleteProfile = !!(facilityData?.name && facilityData?.address && facilityData?.phone);
@@ -578,10 +589,10 @@ export default function ProviderPlacementNetworkPage() {
                         <CardContent className="p-4 flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium">
-                              Case #{intro.placement_cases?.id.slice(0, 8).toUpperCase()}
+                              Case #{intro.concierge_inquiries?.id?.slice(0, 8).toUpperCase() || intro.id.slice(0, 8).toUpperCase()}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Responded {intro.responded_at && format(new Date(intro.responded_at), "MMM d")}
+                              Responded {intro.provider_responded_at && format(new Date(intro.provider_responded_at), "MMM d")}
                             </p>
                           </div>
                           <Badge variant="secondary" className="capitalize">
@@ -922,18 +933,20 @@ export default function ProviderPlacementNetworkPage() {
                       </div>
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Admitted:</span>
+                          <span className="text-muted-foreground">Placed:</span>
                           <p className="font-medium">
-                            {p.admitted_at && format(new Date(p.admitted_at), "MMM d, yyyy")}
+                            {p.placement_confirmed_at && format(new Date(p.placement_confirmed_at), "MMM d, yyyy")}
                           </p>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Type:</span>
-                          <p className="font-medium capitalize">{p.monetization_type || "—"}</p>
+                          <p className="font-medium capitalize">{p.provider_fee_type || "flat_fee"}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Status:</span>
-                          <p className="font-medium capitalize">{p.terms_status || "—"}</p>
+                          <span className="text-muted-foreground">Fee:</span>
+                          <p className="font-medium">
+                            {p.provider_fee_cents ? `$${(p.provider_fee_cents / 100).toFixed(0)}` : "—"}
+                          </p>
                         </div>
                       </div>
                     </CardContent>
@@ -965,7 +978,7 @@ interface IntroductionCardProps {
 function IntroductionCard({ introduction, onRespond, isResponding }: IntroductionCardProps) {
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
-  const caseData = introduction.placement_cases;
+  const inquiry = introduction.concierge_inquiries;
 
   return (
     <Card className="border-primary/30 bg-primary/5">
@@ -976,7 +989,9 @@ function IntroductionCard({ introduction, onRespond, isResponding }: Introductio
               <Clock className="h-3 w-3 mr-1" />
               New Introduction
             </Badge>
-            <h3 className="font-semibold">Case #{caseData?.id?.slice(0, 8).toUpperCase()}</h3>
+            <h3 className="font-semibold">
+              {inquiry?.user_name || `Case #${inquiry?.id?.slice(0, 8).toUpperCase()}`}
+            </h3>
             <p className="text-sm text-muted-foreground">
               Received {format(new Date(introduction.created_at), "MMM d 'at' h:mm a")}
             </p>
@@ -987,20 +1002,20 @@ function IntroductionCard({ introduction, onRespond, isResponding }: Introductio
         <div className="grid sm:grid-cols-2 gap-3 text-sm">
           <div className="space-y-1">
             <span className="text-muted-foreground">Level of Care:</span>
-            <p className="font-medium capitalize">{caseData?.level_of_care?.replace(/_/g, " ") || "—"}</p>
+            <p className="font-medium capitalize">{inquiry?.level_of_care?.replace(/_/g, " ") || "—"}</p>
           </div>
           <div className="space-y-1">
             <span className="text-muted-foreground">Payment:</span>
-            <p className="font-medium capitalize">{caseData?.payment_type?.replace(/_/g, " ") || "—"}</p>
+            <p className="font-medium capitalize">{inquiry?.payment_type?.replace(/_/g, " ") || "—"}</p>
           </div>
           <div className="space-y-1">
             <span className="text-muted-foreground">Urgency:</span>
-            <p className="font-medium capitalize">{caseData?.urgency?.replace(/_/g, " ") || "—"}</p>
+            <p className="font-medium capitalize">{inquiry?.timeline_urgency?.replace(/_/g, " ") || "—"}</p>
           </div>
           <div className="space-y-1">
             <span className="text-muted-foreground">Location:</span>
             <p className="font-medium">
-              {caseData?.preferred_states?.join(", ") || "Flexible"}
+              {inquiry?.preferred_state || "Flexible"}
             </p>
           </div>
         </div>
