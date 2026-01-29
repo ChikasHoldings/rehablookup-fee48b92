@@ -7,19 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Price IDs for subscription plans
-const PRICE_IDS = {
-  professional: "price_1Sel1C9fxdThyiakWLfgbl9K", // $399/mo - 100 shared leads
-  featured: "price_1Sel1P9fxdThyiakj5MaAvOE", // $1,099/mo - 100 exclusive leads
-};
-
-const PLAN_NAMES = {
-  professional: "Professional",
-  featured: "Featured",
-};
-
-// Coupon IDs that are restricted to Featured plan only
-const FEATURED_ONLY_COUPON_IDS = ["RvvEQtFW"];
+// Pro subscription price ID
+const PRO_PRICE_ID = "price_pro_monthly"; // $99/mo Pro subscription
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -39,17 +28,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { plan, promoCode, action } = await req.json();
-    logStep("Request received", { plan, action, promoCode: promoCode ? "provided" : "none" });
-
-    // Validate plan
-    if (!plan || !PRICE_IDS[plan as keyof typeof PRICE_IDS]) {
-      throw new Error("Invalid plan selected. Available plans: professional, featured");
-    }
-
-    const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
-    const planName = PLAN_NAMES[plan as keyof typeof PLAN_NAMES];
-    logStep("Using price ID", { priceId, planName });
+    const { promoCode, action } = await req.json();
+    logStep("Request received", { action, promoCode: promoCode ? "provided" : "none" });
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
@@ -95,48 +75,50 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://rehablookup.com";
 
-    // If upgrading existing subscription, use Stripe's billing portal or update directly
-    if (existingSubscription && action === "upgrade") {
+    // If already has Pro subscription
+    if (existingSubscription) {
       const currentPriceId = existingSubscription.items.data[0]?.price.id;
       
-      // If same plan, no change needed
-      if (currentPriceId === priceId) {
+      // Already on Pro
+      if (currentPriceId === PRO_PRICE_ID) {
         return new Response(
-          JSON.stringify({ error: "You are already on this plan", alreadySubscribed: true }),
+          JSON.stringify({ error: "You are already on the Pro plan", alreadySubscribed: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
         );
       }
 
-      // Update subscription with proration
-      logStep("Updating existing subscription", { 
-        subscriptionId: existingSubscription.id,
-        fromPrice: currentPriceId,
-        toPrice: priceId
-      });
+      // Upgrading from legacy plan to Pro
+      if (action === "upgrade") {
+        logStep("Updating existing subscription to Pro", { 
+          subscriptionId: existingSubscription.id,
+          fromPrice: currentPriceId,
+          toPrice: PRO_PRICE_ID
+        });
 
-      await stripe.subscriptions.update(existingSubscription.id, {
-        items: [{
-          id: existingSubscription.items.data[0].id,
-          price: priceId,
-        }],
-        proration_behavior: 'create_prorations',
-        metadata: {
-          user_id: user.id,
-          plan: plan,
-          upgraded_at: new Date().toISOString(),
-        },
-      });
+        await stripe.subscriptions.update(existingSubscription.id, {
+          items: [{
+            id: existingSubscription.items.data[0].id,
+            price: PRO_PRICE_ID,
+          }],
+          proration_behavior: 'create_prorations',
+          metadata: {
+            user_id: user.id,
+            plan: "pro",
+            upgraded_at: new Date().toISOString(),
+          },
+        });
 
-      logStep("Subscription upgraded successfully");
+        logStep("Subscription upgraded to Pro successfully");
 
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: `Upgraded to ${planName} successfully`,
-          upgraded: true 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: "Upgraded to Pro successfully",
+            upgraded: true 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
     }
 
     // Look up promo code if provided
@@ -150,16 +132,8 @@ serve(async (req) => {
         });
         if (promoCodes.data.length > 0) {
           const promoCodeObj = promoCodes.data[0];
-          const couponId = promoCodeObj.coupon.id;
-          
-          // Check if this coupon is restricted to Featured plan only
-          if (FEATURED_ONLY_COUPON_IDS.includes(couponId) && plan !== "featured") {
-            logStep("Promo code rejected - Featured only", { couponId, requestedPlan: plan });
-            // Don't apply the discount, but continue with checkout
-          } else {
-            discounts = [{ promotion_code: promoCodeObj.id }];
-            logStep("Promo code applied", { promoCodeId: promoCodeObj.id, couponId });
-          }
+          discounts = [{ promotion_code: promoCodeObj.id }];
+          logStep("Promo code applied", { promoCodeId: promoCodeObj.id });
         } else {
           logStep("Promo code not found or inactive", { promoCode });
         }
@@ -168,7 +142,7 @@ serve(async (req) => {
       }
     }
 
-    // Build checkout session config
+    // Build checkout session config for Pro subscription
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -181,7 +155,7 @@ serve(async (req) => {
       payment_method_types: ["card"],
       line_items: [
         {
-          price: priceId,
+          price: PRO_PRICE_ID,
           quantity: 1,
         },
       ],
@@ -190,21 +164,21 @@ serve(async (req) => {
       cancel_url: `${origin}/provider/billing?canceled=true`,
       metadata: {
         user_id: user.id,
-        plan: plan,
-        plan_name: planName,
+        plan: "pro",
+        plan_name: "Pro",
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
-          plan: plan,
-          plan_name: planName,
+          plan: "pro",
+          plan_name: "Pro",
           created_via: "checkout",
         },
       },
       // Custom text for the checkout page
       custom_text: {
         submit: {
-          message: `Start receiving ${plan === 'featured' ? 'exclusive' : 'qualified'} leads immediately after checkout.`,
+          message: "Get 20% off all lead unlocks and featured placement immediately after checkout.",
         },
       },
       // Allow tax ID collection for business customers
@@ -229,7 +203,6 @@ serve(async (req) => {
     logStep("Checkout session created", { 
       sessionId: session.id, 
       hasDiscount: !!discounts,
-      planName 
     });
 
     return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {

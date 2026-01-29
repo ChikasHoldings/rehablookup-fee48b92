@@ -366,21 +366,24 @@ export default function AdminLeadRouting() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
-              {Object.entries(stats.byPlan).map(([plan, count]) => (
-                <div key={plan} className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      plan === "featured" && "border-amber-500 bg-amber-50 text-amber-700",
-                      plan === "professional" && "border-blue-500 bg-blue-50 text-blue-700",
-                      plan === "basic" && "border-slate-400 bg-slate-50 text-slate-600"
-                    )}
-                  >
-                    {plan.charAt(0).toUpperCase() + plan.slice(1)}
-                  </Badge>
-                  <span className="font-semibold text-slate-900">{count as number}</span>
-                </div>
-              ))}
+              {Object.entries(stats.byPlan).map(([plan, count]) => {
+                // Map legacy plan names to new Free/Pro model for display
+                const displayPlan = plan === "featured" || plan === "professional" ? "pro" : plan === "basic" ? "free" : plan;
+                return (
+                  <div key={plan} className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        (plan === "pro" || plan === "featured" || plan === "professional") && "border-amber-500 bg-amber-50 text-amber-700",
+                        (plan === "free" || plan === "basic") && "border-slate-400 bg-slate-50 text-slate-600"
+                      )}
+                    >
+                      {displayPlan === "pro" ? "Pro" : displayPlan === "free" ? "Free" : displayPlan.charAt(0).toUpperCase() + displayPlan.slice(1)}
+                    </Badge>
+                    <span className="font-semibold text-slate-900">{count as number}</span>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -715,11 +718,11 @@ function RoutingLogRow({ log }: { log: RoutingLog }) {
               variant="secondary"
               className={cn(
                 "text-xs",
-                log.plan_tier === "featured" && "bg-amber-100 text-amber-800",
-                log.plan_tier === "professional" && "bg-blue-100 text-blue-800"
+                (log.plan_tier === "pro" || log.plan_tier === "featured" || log.plan_tier === "professional") && "bg-amber-100 text-amber-800",
+                (log.plan_tier === "free" || log.plan_tier === "basic") && "bg-slate-100 text-slate-700"
               )}
             >
-              {log.plan_tier}
+              {log.plan_tier === "featured" || log.plan_tier === "professional" ? "Pro" : log.plan_tier === "basic" ? "Free" : log.plan_tier.charAt(0).toUpperCase() + log.plan_tier.slice(1)}
             </Badge>
           ) : (
             <span className="text-slate-400">—</span>

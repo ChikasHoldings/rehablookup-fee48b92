@@ -2,11 +2,14 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-// Product IDs for plan identification
-const PRODUCT_IDS = {
-  professional: "prod_Tbyz1bf6iYyzYd",
-  featured: "prod_TbyzJVNOQL71NN",
-};
+// Pro product IDs - includes legacy IDs for backward compatibility
+const PRO_PRODUCT_IDS = [
+  "prod_pro_monthly",
+  "prod_TbalLOPujTIoUe", 
+  "prod_Tbyz1bf6iYyzYd",
+  "prod_TbalOeJZA2ZoJl", 
+  "prod_TbyzJVNOQL71NN",
+];
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -74,14 +77,12 @@ serve(async (req) => {
       (sub: any) => sub.status === "active" || sub.status === "past_due" || sub.status === "trialing"
     );
 
-    // Determine plan from product ID
-    let planName = null;
+    // Determine plan from product ID - simplified to Free/Pro model
+    let planName: "free" | "pro" = "free";
     if (activeSubscription) {
       const productId = activeSubscription.items.data[0]?.price?.product as string;
-      if (productId === PRODUCT_IDS.featured) {
-        planName = "featured";
-      } else if (productId === PRODUCT_IDS.professional) {
-        planName = "professional";
+      if (PRO_PRODUCT_IDS.includes(productId)) {
+        planName = "pro";
       }
     }
 
@@ -114,7 +115,8 @@ serve(async (req) => {
 
     logStep("Returning billing history", { 
       hasSubscription: !!activeSubscription, 
-      invoiceCount: invoicesList.length 
+      invoiceCount: invoicesList.length,
+      plan: planName
     });
 
     return new Response(
