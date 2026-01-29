@@ -706,9 +706,9 @@ const CenterProfile = () => {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid gap-8 lg:grid-cols-[1fr,380px]">
+          <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr,380px]">
             {/* Left Column - Main Content */}
-            <div className="space-y-8 min-w-0">
+            <div className="space-y-6 lg:space-y-8 min-w-0">
               {/* Gallery */}
               {galleryImages.length > 0 && (
                 <ProfileSection 
@@ -1093,37 +1093,39 @@ const CenterProfile = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
           {/* Mobile Sidebar Content - Shows below main content on mobile */}
-          <div className="lg:hidden mt-8 space-y-6">
+          <div className="lg:hidden mt-6 space-y-5">
             {/* Contact CTA Card - Mobile */}
-            <div className="rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-6 shadow-xl">
-              <div className="text-center mb-6">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-4">
+            <div className="rounded-xl border border-border/60 bg-gradient-to-b from-card to-muted/30 p-5 shadow-lg">
+              <div className="text-center mb-5">
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg mb-3">
                   <MessageSquare className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                <h3 className="font-display text-lg font-bold text-foreground mb-1.5">
                   Request Information
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Take the first step towards recovery. Our team is here to help.
+                  Take the first step towards recovery.
                 </p>
               </div>
 
-              <div className="flex flex-col items-center space-y-3">
+              <div className="space-y-3">
                 <Button 
                   size="lg" 
-                  className="px-8 gap-2 h-14 text-base font-semibold shadow-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary/85 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                  className="w-full gap-2 h-12 text-base font-semibold shadow-md"
                   onClick={() => setRequestModalOpen(true)}
                 >
-                  <Sparkles className="h-4 w-4 animate-pulse" />
+                  <Sparkles className="h-4 w-4" />
                   Get Started
                 </Button>
 
                 {showContactDetails && (
-                  <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")}>
-                    <Button variant="outline" size="lg" className="w-full gap-2 h-13 text-base font-semibold border-2">
-                      <Phone className="h-5 w-5" />
+                  <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")} className="block">
+                    <Button variant="outline" size="lg" className="w-full gap-2 h-11 text-sm font-semibold border-2">
+                      <Phone className="h-4 w-4" />
                       {formatPhoneNumber(facility.phone)}
                     </Button>
                   </a>
@@ -1132,45 +1134,43 @@ const CenterProfile = () => {
             </div>
 
             {/* Facility Overview Card - Mobile */}
-            <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-              <h3 className="font-display text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-primary" />
-                Facility Overview
+            <div className="rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+              <h3 className="font-display text-base font-bold text-foreground mb-4 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" />
+                Quick Facts
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <span className="text-xs text-muted-foreground block">Type</span>
-                  <span className="text-sm font-semibold text-foreground">{facility.facility_type}</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-2.5 rounded-lg bg-muted/50">
+                  <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Type</span>
+                  <span className="text-xs font-semibold text-foreground">{facility.facility_type}</span>
                 </div>
                 {genderLabel && (
-                  <div className="p-3 rounded-lg bg-muted/50">
-                    <span className="text-xs text-muted-foreground block">Gender</span>
-                    <span className="text-sm font-semibold text-foreground">{genderLabel}</span>
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Gender</span>
+                    <span className="text-xs font-semibold text-foreground">{genderLabel}</span>
                   </div>
                 )}
                 {facility.bed_count && (
-                  <div className="p-3 rounded-lg bg-muted/50">
-                    <span className="text-xs text-muted-foreground block">Capacity</span>
-                    <span className="text-sm font-semibold text-foreground">{facility.bed_count} beds</span>
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Capacity</span>
+                    <span className="text-xs font-semibold text-foreground">{facility.bed_count} beds</span>
                   </div>
                 )}
                 {facility.year_established && (
-                  <div className="p-3 rounded-lg bg-muted/50">
-                    <span className="text-xs text-muted-foreground block">Established</span>
-                    <span className="text-sm font-semibold text-foreground">{facility.year_established}</span>
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Established</span>
+                    <span className="text-xs font-semibold text-foreground">{facility.year_established}</span>
                   </div>
                 )}
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <span className="text-xs text-muted-foreground block">Services</span>
-                  <span className="text-sm font-semibold text-foreground">{services.length} programs</span>
+                <div className="p-2.5 rounded-lg bg-muted/50">
+                  <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Services</span>
+                  <span className="text-xs font-semibold text-foreground">{services.length} programs</span>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <span className="text-xs text-muted-foreground block">Insurance</span>
-                  <span className="text-sm font-semibold text-foreground">{insuranceList.length} accepted</span>
+                <div className="p-2.5 rounded-lg bg-muted/50">
+                  <span className="text-[10px] text-muted-foreground block uppercase tracking-wide">Insurance</span>
+                  <span className="text-xs font-semibold text-foreground">{insuranceList.length} accepted</span>
                 </div>
               </div>
-            </div>
-          </div>
             </div>
           </div>
         </div>

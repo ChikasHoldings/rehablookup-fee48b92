@@ -232,9 +232,9 @@ const TreatmentCenterProfile = () => {
           </div>
 
           {/* Two Column Layout */}
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-5 lg:gap-6 lg:grid-cols-3">
             {/* Left Column */}
-            <div className="lg:col-span-2 space-y-5">
+            <div className="lg:col-span-2 space-y-4 lg:space-y-5">
               {/* Gallery */}
               <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
@@ -345,26 +345,53 @@ const TreatmentCenterProfile = () => {
               </div>
 
               {/* Amenities */}
-              <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="rounded-xl border border-border bg-card p-4 lg:p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-3 lg:mb-4">
                   <BadgeCheck className="h-4 w-4 text-accent" />
-                  <h2 className="font-display text-base font-semibold text-foreground">
+                  <h2 className="font-display text-sm lg:text-base font-semibold text-foreground">
                     Facility Amenities
                   </h2>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+                <div className="grid gap-1.5 lg:gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {center.amenities.map((amenity) => (
-                    <div key={amenity} className="flex items-center gap-2 text-sm text-foreground">
-                      <CheckCircle className="h-4 w-4 shrink-0 text-accent" />
+                    <div key={amenity} className="flex items-center gap-2 text-xs lg:text-sm text-foreground">
+                      <CheckCircle className="h-3.5 lg:h-4 w-3.5 lg:w-4 shrink-0 text-accent" />
                       <span>{amenity}</span>
                     </div>
                   ))}
                 </div>
               </div>
+
+              {/* Mobile Contact Form */}
+              <div className="lg:hidden rounded-xl border border-border bg-card p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                    <Phone className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-sm font-semibold text-foreground">
+                      Request Information
+                    </h2>
+                    <p className="text-xs text-muted-foreground">Get help today</p>
+                  </div>
+                </div>
+                
+                <div className="mb-3 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <Clock className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium text-foreground">Quick Response</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    A specialist will contact you within 24 hours.
+                  </p>
+                </div>
+
+                <ContactRequestForm centerName={center.name} />
+              </div>
             </div>
 
-            {/* Right Column - Contact Form */}
-            <div className="lg:col-span-1">
+            {/* Right Column - Contact Form (Hidden on mobile, shown inline above) */}
+            <div className="hidden lg:block lg:col-span-1">
               <div className="sticky top-20 rounded-xl border border-border bg-card p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
