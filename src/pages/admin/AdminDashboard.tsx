@@ -35,9 +35,8 @@ import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 
 // Subscription plan colors
 const PLAN_COLORS = {
-  basic: "hsl(215, 16%, 47%)", // slate
-  professional: "hsl(217, 91%, 60%)", // blue
-  featured: "hsl(45, 93%, 47%)", // amber/gold
+  free: "hsl(215, 16%, 47%)", // slate
+  pro: "hsl(45, 93%, 47%)", // amber/gold
 };
 
 interface SubscriptionBreakdown {
@@ -194,17 +193,15 @@ export default function AdminDashboard() {
       
       if (error || !data?.subscriptionsByPlan) {
         return [
-          { name: "Basic", value: 0, color: PLAN_COLORS.basic },
-          { name: "Professional", value: 0, color: PLAN_COLORS.professional },
-          { name: "Featured", value: 0, color: PLAN_COLORS.featured },
+          { name: "Free", value: 0, color: PLAN_COLORS.free },
+          { name: "Pro", value: 0, color: PLAN_COLORS.pro },
         ];
       }
       
       console.log('[AdminDashboard] Subscription breakdown loaded');
       return [
-        { name: "Basic", value: data.subscriptionsByPlan.basic || 0, color: PLAN_COLORS.basic },
-        { name: "Professional", value: data.subscriptionsByPlan.professional || 0, color: PLAN_COLORS.professional },
-        { name: "Featured", value: data.subscriptionsByPlan.featured || 0, color: PLAN_COLORS.featured },
+        { name: "Free", value: data.subscriptionsByPlan.free || 0, color: PLAN_COLORS.free },
+        { name: "Pro", value: data.subscriptionsByPlan.pro || 0, color: PLAN_COLORS.pro },
       ];
     },
     staleTime: 5 * 60 * 1000,

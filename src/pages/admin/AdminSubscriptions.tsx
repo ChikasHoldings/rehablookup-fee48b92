@@ -60,9 +60,8 @@ import { PlanSettingsTab } from "@/components/admin/PlanSettingsTab";
 type SubscriptionStats = {
   total_subscriptions: number;
   active_subscriptions: number;
-  professional_count: number;
-  featured_count: number;
-  basic_count: number;
+  pro_count: number;
+  free_count: number;
   mrr: number;
   mrr_growth: number;
   new_last_30_days: number;
@@ -469,12 +468,11 @@ export default function AdminSubscriptions() {
 
   // Calculate plan distribution for visual indicator
   const planDistribution = useMemo(() => {
-    if (!stripeStats) return { basic: 0, professional: 0, featured: 0 };
+    if (!stripeStats) return { free: 0, pro: 0 };
     const total = stripeStats.active_subscriptions || 1;
     return {
-      basic: Math.round(((stripeStats.basic_count || 0) / total) * 100),
-      professional: Math.round(((stripeStats.professional_count || 0) / total) * 100),
-      featured: Math.round(((stripeStats.featured_count || 0) / total) * 100),
+      free: Math.round(((stripeStats.free_count || 0) / total) * 100),
+      pro: Math.round(((stripeStats.pro_count || 0) / total) * 100),
     };
   }, [stripeStats]);
 
@@ -585,40 +583,28 @@ export default function AdminSubscriptions() {
               <CardTitle className="text-sm font-medium">Plan Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Basic</span>
-                    <span className="text-sm text-muted-foreground">{stripeStats?.basic_count || 0}</span>
+                    <span className="text-sm font-medium">Free</span>
+                    <span className="text-sm text-muted-foreground">{stripeStats?.free_count || 0}</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-slate-400 rounded-full transition-all duration-500"
-                      style={{ width: `${planDistribution.basic}%` }}
+                      style={{ width: `${planDistribution.free}%` }}
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Professional</span>
-                    <span className="text-sm text-muted-foreground">{stripeStats?.professional_count || 0}</span>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                      style={{ width: `${planDistribution.professional}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Featured</span>
-                    <span className="text-sm text-muted-foreground">{stripeStats?.featured_count || 0}</span>
+                    <span className="text-sm font-medium">Pro</span>
+                    <span className="text-sm text-muted-foreground">{stripeStats?.pro_count || 0}</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                      style={{ width: `${planDistribution.featured}%` }}
+                      style={{ width: `${planDistribution.pro}%` }}
                     />
                   </div>
                 </div>
