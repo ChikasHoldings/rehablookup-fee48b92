@@ -1,5 +1,6 @@
 // Lead Intake Engine - Unified form components for lead capture
 export { LeadIntakeForm } from "./LeadIntakeForm";
+export { SingleQuestionFlow } from "./SingleQuestionFlow";
 export { LeadIntakeStepper } from "./LeadIntakeStepper";
 export { LeadIntakeSuccess } from "./LeadIntakeSuccess";
 export { StepImmediateNeed } from "./StepImmediateNeed";

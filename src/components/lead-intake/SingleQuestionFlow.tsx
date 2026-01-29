@@ -1,0 +1,720 @@
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, CheckCircle2, Loader2, Mail, RefreshCw, AlertCircle, MapPin, User, Users, Clock, Heart, Shield, Calendar, UserCircle, Briefcase, Scale, Target, Stethoscope } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { EmailInput } from "@/components/ui/email-input";
+import { isValidPhoneNumber } from "@/lib/phoneUtils";
+import { isValidEmail } from "@/lib/emailUtils";
+import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
+import { cn } from "@/lib/utils";
+import {
+  LeadIntakeFormData,
+  URGENCY_OPTIONS,
+  AGE_RANGE_OPTIONS,
+  GENDER_OPTIONS,
+  RELATIONSHIP_OPTIONS,
+  LEVEL_OF_CARE_OPTIONS,
+  INSURANCE_TYPE_OPTIONS,
+  PREVIOUS_TREATMENT_OPTIONS,
+  BEST_TIME_OPTIONS,
+  READINESS_OPTIONS,
+} from "./types";
+
+// Question types
+type QuestionType = "choice" | "multi-choice" | "text" | "location" | "contact" | "verify";
+
+interface Question {
+  id: string;
+  type: QuestionType;
+  title: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  field: keyof LeadIntakeFormData | "contact" | "verify";
+  options?: { value: string; label: string; description?: string; icon?: React.ReactNode }[];
+  required?: boolean;
+  skipIf?: (formData: LeadIntakeFormData) => boolean;
+}
+
+// Define the question flow - prioritized for provider value
+const QUESTIONS: Question[] = [
+  {
+    id: "who",
+    type: "choice",
+    title: "Who needs help?",
+    subtitle: "We'll tailor the experience based on your situation",
+    icon: <User className="h-6 w-6" />,
+    field: "whoSeekingHelp",
+    required: true,
+    options: [
+      { value: "self", label: "Myself", description: "I'm looking for treatment", icon: <User className="h-5 w-5" /> },
+      { value: "loved-one", label: "A Loved One", description: "I'm helping someone else", icon: <Users className="h-5 w-5" /> },
+    ],
+  },
+  {
+    id: "relationship",
+    type: "choice",
+    title: "What's your relationship to them?",
+    subtitle: "This helps us communicate effectively",
+    icon: <Users className="h-6 w-6" />,
+    field: "relationshipToPatient",
+    skipIf: (data) => data.whoSeekingHelp !== "loved-one",
+    options: RELATIONSHIP_OPTIONS.filter(o => o.value !== "self").map(o => ({ value: o.value, label: o.label })),
+  },
+  {
+    id: "urgency",
+    type: "choice",
+    title: "How urgent is your situation?",
+    subtitle: "This helps us prioritize your request",
+    icon: <Clock className="h-6 w-6" />,
+    field: "urgency",
+    required: true,
+    options: URGENCY_OPTIONS.map(o => ({
+      value: o.value,
+      label: o.label,
+      icon: o.value === "immediate" ? <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" /> :
+            o.value === "within-week" ? <span className="h-2 w-2 rounded-full bg-amber-500" /> :
+            <span className="h-2 w-2 rounded-full bg-blue-500" />,
+    })),
+  },
+  {
+    id: "location",
+    type: "location",
+    title: "Where are you located?",
+    subtitle: "We'll find treatment centers near you",
+    icon: <MapPin className="h-6 w-6" />,
+    field: "locationZip",
+    required: true,
+  },
+  {
+    id: "levelOfCare",
+    type: "choice",
+    title: "What level of care are you looking for?",
+    subtitle: "Don't worry if you're unsure — we can help guide you",
+    icon: <Stethoscope className="h-6 w-6" />,
+    field: "levelOfCare",
+    options: LEVEL_OF_CARE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
+  },
+  {
+    id: "insurance",
+    type: "choice",
+    title: "How will you pay for treatment?",
+    subtitle: "This helps us find facilities that accept your coverage",
+    icon: <Shield className="h-6 w-6" />,
+    field: "insuranceType",
+    options: INSURANCE_TYPE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
+  },
+  {
+    id: "ageRange",
+    type: "choice",
+    title: "What is the patient's age range?",
+    subtitle: "Age-appropriate care makes a difference",
+    icon: <Calendar className="h-6 w-6" />,
+    field: "ageRange",
+    options: AGE_RANGE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
+  },
+  {
+    id: "gender",
+    type: "choice",
+    title: "What is the patient's gender?",
+    subtitle: "Some programs are gender-specific",
+    icon: <UserCircle className="h-6 w-6" />,
+    field: "gender",
+    options: GENDER_OPTIONS.map(o => ({ value: o.value, label: o.label })),
+  },
+  {
+    id: "previousTreatment",
+    type: "choice",
+    title: "Any previous treatment experience?",
+    subtitle: "This helps match you with the right approach",
+    icon: <Heart className="h-6 w-6" />,
+    field: "previousTreatment",
+    options: PREVIOUS_TREATMENT_OPTIONS.map(o => ({ value: o.value, label: o.label })),
+  },
+  {
+    id: "readiness",
+    type: "choice",
+    title: "How ready are you to start?",
+    subtitle: "Be honest — there's no wrong answer",
+    icon: <Target className="h-6 w-6" />,
+    field: "readinessLevel",
+    options: READINESS_OPTIONS.map(o => ({ value: o.value, label: o.label })),
+  },
+  {
+    id: "bestTime",
+    type: "choice",
+    title: "When's the best time to reach you?",
+    subtitle: "We'll call at a convenient time",
+    icon: <Clock className="h-6 w-6" />,
+    field: "bestTimeToCall",
+    options: BEST_TIME_OPTIONS.map(o => ({ value: o.value, label: o.label })),
+  },
+  {
+    id: "contact",
+    type: "contact",
+    title: "How can we reach you?",
+    subtitle: "We'll verify your email to protect your privacy",
+    icon: <Mail className="h-6 w-6" />,
+    field: "contact",
+    required: true,
+  },
+  {
+    id: "verify",
+    type: "verify",
+    title: "Verify your email",
+    subtitle: "Enter the 6-digit code we sent you",
+    icon: <CheckCircle2 className="h-6 w-6" />,
+    field: "verify",
+    required: true,
+  },
+];
+
+interface SingleQuestionFlowProps {
+  formData: LeadIntakeFormData;
+  updateFormData: (updates: Partial<LeadIntakeFormData>) => void;
+  onSubmit: () => Promise<void>;
+  // Email verification
+  codeSent: boolean;
+  isSendingCode: boolean;
+  verificationCode: string;
+  setVerificationCode: (code: string) => void;
+  isVerifying: boolean;
+  isEmailVerified: boolean;
+  resendCount: number;
+  resendCooldown: number;
+  sendVerificationCode: () => Promise<boolean>;
+  verifyCode: (code: string) => Promise<boolean>;
+  resetEmailVerification: () => void;
+  isSubmitting: boolean;
+  facilityName?: string | null;
+}
+
+export function SingleQuestionFlow({
+  formData,
+  updateFormData,
+  onSubmit,
+  codeSent,
+  isSendingCode,
+  verificationCode,
+  setVerificationCode,
+  isVerifying,
+  isEmailVerified,
+  resendCount,
+  resendCooldown,
+  sendVerificationCode,
+  verifyCode,
+  resetEmailVerification,
+  isSubmitting,
+  facilityName,
+}: SingleQuestionFlowProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Filter questions based on skip conditions
+  const activeQuestions = QUESTIONS.filter(q => !q.skipIf || !q.skipIf(formData));
+  const totalQuestions = activeQuestions.length;
+  const currentQuestion = activeQuestions[currentIndex];
+  const progress = ((currentIndex + 1) / totalQuestions) * 100;
+  
+  // Location lookup
+  const { data: zipcodeData, isLoading: isLookingUp, lookup } = useZipcodeLookup();
+  
+  // Auto-fill city/state when zipcode data is available
+  useEffect(() => {
+    if (zipcodeData) {
+      updateFormData({ locationCityState: `${zipcodeData.city}, ${zipcodeData.stateAbbr}` });
+    }
+  }, [zipcodeData, updateFormData]);
+  
+  const goNext = useCallback(() => {
+    if (currentIndex < activeQuestions.length - 1) {
+      setDirection(1);
+      setCurrentIndex(prev => prev + 1);
+    }
+  }, [currentIndex, activeQuestions.length]);
+  
+  const goBack = useCallback(() => {
+    if (currentIndex > 0) {
+      setDirection(-1);
+      setCurrentIndex(prev => prev - 1);
+    }
+  }, [currentIndex]);
+  
+  // Handle choice selection with auto-advance
+  const handleChoiceSelect = useCallback((field: keyof LeadIntakeFormData, value: string) => {
+    updateFormData({ [field]: value });
+    setErrors({});
+    
+    // Auto-advance after a brief delay for visual feedback
+    setTimeout(() => {
+      goNext();
+    }, 300);
+  }, [updateFormData, goNext]);
+  
+  // Handle location submission
+  const handleLocationSubmit = () => {
+    if (!formData.locationZip || !/^\d{5}$/.test(formData.locationZip)) {
+      setErrors({ locationZip: "Please enter a valid 5-digit ZIP code" });
+      return;
+    }
+    goNext();
+  };
+  
+  // Handle zipcode change with lookup
+  const handleZipcodeChange = (value: string) => {
+    const cleanValue = value.replace(/\D/g, "").slice(0, 5);
+    updateFormData({ locationZip: cleanValue });
+    setErrors({});
+    
+    if (cleanValue.length === 5) {
+      lookup(cleanValue);
+    }
+  };
+  
+  // Handle contact submission
+  const handleContactSubmit = async () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!isValidPhoneNumber(formData.phone)) newErrors.phone = "Valid phone number is required";
+    if (!isValidEmail(formData.email)) newErrors.email = "Valid email is required";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
+    // Send verification code
+    const success = await sendVerificationCode();
+    if (success) {
+      goNext();
+    }
+  };
+  
+  // Handle verification
+  const handleVerifyCode = async () => {
+    if (verificationCode.length === 6) {
+      const success = await verifyCode(verificationCode);
+      if (success) {
+        // Submit the form
+        await onSubmit();
+      } else {
+        setErrors({ code: "Invalid or expired code" });
+      }
+    }
+  };
+  
+  // Animation variants
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 100 : -100,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? 100 : -100,
+      opacity: 0,
+    }),
+  };
+  
+  // Render question content based on type
+  const renderQuestionContent = () => {
+    if (!currentQuestion) return null;
+    
+    switch (currentQuestion.type) {
+      case "choice":
+        return (
+          <div className="space-y-3">
+            {currentQuestion.options?.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleChoiceSelect(currentQuestion.field as keyof LeadIntakeFormData, option.value)}
+                className={cn(
+                  "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left",
+                  "hover:border-primary hover:bg-primary/5 hover:shadow-sm",
+                  "active:scale-[0.98]",
+                  formData[currentQuestion.field as keyof LeadIntakeFormData] === option.value
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-border bg-card"
+                )}
+              >
+                {option.icon && (
+                  <div className={cn(
+                    "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                    formData[currentQuestion.field as keyof LeadIntakeFormData] === option.value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {option.icon}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className={cn(
+                    "font-semibold",
+                    formData[currentQuestion.field as keyof LeadIntakeFormData] === option.value
+                      ? "text-primary"
+                      : "text-foreground"
+                  )}>
+                    {option.label}
+                  </div>
+                  {option.description && (
+                    <div className="text-sm text-muted-foreground mt-0.5">{option.description}</div>
+                  )}
+                </div>
+                <div className={cn(
+                  "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all",
+                  formData[currentQuestion.field as keyof LeadIntakeFormData] === option.value
+                    ? "border-primary bg-primary"
+                    : "border-muted-foreground/30"
+                )}>
+                  {formData[currentQuestion.field as keyof LeadIntakeFormData] === option.value && (
+                    <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        );
+        
+      case "location":
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-5 gap-3">
+              <div className="col-span-2 relative">
+                <Input
+                  placeholder="ZIP Code"
+                  value={formData.locationZip}
+                  onChange={(e) => handleZipcodeChange(e.target.value)}
+                  className={cn(
+                    "h-14 text-lg font-medium text-center",
+                    errors.locationZip && "border-destructive",
+                    zipcodeData && "border-green-400 bg-green-50/50"
+                  )}
+                  inputMode="numeric"
+                  maxLength={5}
+                  autoFocus
+                />
+                {isLookingUp && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  </div>
+                )}
+              </div>
+              <div className="col-span-3">
+                <Input
+                  placeholder={isLookingUp ? "Detecting..." : "City, State"}
+                  value={formData.locationCityState}
+                  onChange={(e) => updateFormData({ locationCityState: e.target.value })}
+                  className={cn(
+                    "h-14 text-lg",
+                    zipcodeData && "bg-green-50/50 border-green-400"
+                  )}
+                  disabled={isLookingUp}
+                />
+              </div>
+            </div>
+            {errors.locationZip && (
+              <p className="text-sm text-destructive">{errors.locationZip}</p>
+            )}
+            {zipcodeData && (
+              <p className="text-sm text-green-600 flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4" />
+                Location detected
+              </p>
+            )}
+            <Button 
+              onClick={handleLocationSubmit}
+              className="w-full h-14 text-lg font-semibold rounded-xl"
+              size="lg"
+            >
+              Continue
+            </Button>
+          </div>
+        );
+        
+      case "contact":
+        return (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">First Name *</Label>
+                <Input
+                  placeholder="John"
+                  value={formData.firstName}
+                  onChange={(e) => {
+                    updateFormData({ firstName: e.target.value });
+                    setErrors(prev => ({ ...prev, firstName: "" }));
+                  }}
+                  className={cn("h-12", errors.firstName && "border-destructive")}
+                  autoComplete="given-name"
+                />
+                {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Last Name *</Label>
+                <Input
+                  placeholder="Doe"
+                  value={formData.lastName}
+                  onChange={(e) => {
+                    updateFormData({ lastName: e.target.value });
+                    setErrors(prev => ({ ...prev, lastName: "" }));
+                  }}
+                  className={cn("h-12", errors.lastName && "border-destructive")}
+                  autoComplete="family-name"
+                />
+                {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Phone Number *</Label>
+              <PhoneInput
+                value={formData.phone}
+                onChange={(value) => {
+                  updateFormData({ phone: value });
+                  setErrors(prev => ({ ...prev, phone: "" }));
+                }}
+                className={cn("h-12", errors.phone && "border-destructive")}
+              />
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Email Address *</Label>
+              <EmailInput
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={(value) => {
+                  updateFormData({ email: value });
+                  setErrors(prev => ({ ...prev, email: "" }));
+                  if (codeSent || isEmailVerified) {
+                    resetEmailVerification();
+                  }
+                }}
+                className={cn("h-12", errors.email && "border-destructive")}
+              />
+              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+            </div>
+            
+            <Button 
+              onClick={handleContactSubmit}
+              disabled={isSendingCode}
+              className="w-full h-14 text-lg font-semibold rounded-xl"
+              size="lg"
+            >
+              {isSendingCode ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Sending Code...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-5 w-5" />
+                  Send Verification Code
+                </>
+              )}
+            </Button>
+            
+            <p className="text-xs text-muted-foreground text-center">
+              🔒 Your information is confidential and protected
+            </p>
+          </div>
+        );
+        
+      case "verify":
+        return (
+          <div className="space-y-6">
+            <p className="text-sm text-muted-foreground text-center">
+              We sent a 6-digit code to <span className="font-medium text-foreground">{formData.email}</span>
+            </p>
+            
+            <div className="flex flex-col items-center gap-4">
+              <InputOTP
+                value={verificationCode}
+                onChange={(value) => {
+                  setVerificationCode(value);
+                  setErrors({});
+                }}
+                maxLength={6}
+              >
+                <InputOTPGroup className="gap-2">
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <InputOTPSlot key={i} index={i} className="h-14 w-12 text-xl rounded-xl" />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
+              
+              {errors.code && (
+                <p className="text-sm text-destructive flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.code}
+                </p>
+              )}
+            </div>
+            
+            <Button 
+              onClick={handleVerifyCode}
+              disabled={isVerifying || verificationCode.length !== 6 || isSubmitting}
+              className="w-full h-14 text-lg font-semibold rounded-xl"
+              size="lg"
+            >
+              {isVerifying || isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  {isSubmitting ? "Submitting..." : "Verifying..."}
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-5 w-5" />
+                  Verify & Submit
+                </>
+              )}
+            </Button>
+            
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <span className="text-muted-foreground">Didn't receive it?</span>
+              <Button
+                variant="link"
+                size="sm"
+                onClick={sendVerificationCode}
+                disabled={resendCooldown > 0 || resendCount >= 3}
+                className="p-0 h-auto"
+              >
+                {resendCooldown > 0 ? (
+                  `Resend in ${resendCooldown}s`
+                ) : (
+                  <>
+                    <RefreshCw className="mr-1 h-3 w-3" />
+                    Resend Code
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            {resendCount >= 3 && (
+              <p className="text-sm text-amber-600 text-center flex items-center justify-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Maximum attempts reached. Please wait 10 minutes.
+              </p>
+            )}
+          </div>
+        );
+        
+      default:
+        return null;
+    }
+  };
+  
+  return (
+    <div className="w-full max-w-lg mx-auto">
+      {/* Progress bar */}
+      <div className="mb-6">
+        <Progress value={progress} className="h-1.5" />
+        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+          <span>Step {currentIndex + 1} of {totalQuestions}</span>
+          <span>{Math.round(progress)}% complete</span>
+        </div>
+      </div>
+      
+      {/* Facility badge */}
+      {facilityName && currentIndex === 0 && (
+        <div className="mb-4 text-center">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-sm">
+            Requesting info from <span className="font-semibold">{facilityName}</span>
+          </span>
+        </div>
+      )}
+      
+      {/* Question content */}
+      <div className="relative min-h-[400px]">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentQuestion?.id}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="w-full"
+          >
+            {/* Question header */}
+            <div className="text-center mb-8">
+              {currentQuestion?.icon && (
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary mb-4">
+                  {currentQuestion.icon}
+                </div>
+              )}
+              <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
+                {currentQuestion?.title}
+              </h2>
+              {currentQuestion?.subtitle && (
+                <p className="text-muted-foreground">
+                  {currentQuestion.subtitle}
+                </p>
+              )}
+            </div>
+            
+            {/* Question content */}
+            {renderQuestionContent()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      
+      {/* Navigation */}
+      <div className="mt-6 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          onClick={goBack}
+          disabled={currentIndex === 0}
+          className={cn(
+            "gap-2",
+            currentIndex === 0 && "invisible"
+          )}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+        
+        {/* Skip button for optional questions */}
+        {!currentQuestion?.required && currentQuestion?.type === "choice" && (
+          <Button
+            variant="ghost"
+            onClick={goNext}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Skip
+          </Button>
+        )}
+      </div>
+      
+      {/* Trust indicators */}
+      <div className="mt-8 pt-6 border-t flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <Shield className="h-3.5 w-3.5 text-primary" />
+          <span>HIPAA Compliant</span>
+        </div>
+        <span className="text-border">•</span>
+        <div className="flex items-center gap-1.5">
+          <span>🔒</span>
+          <span>256-bit Encryption</span>
+        </div>
+        <span className="text-border">•</span>
+        <div className="flex items-center gap-1.5">
+          <span>✓</span>
+          <span>100% Free</span>
+        </div>
+      </div>
+    </div>
+  );
+}
