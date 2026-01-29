@@ -101,7 +101,7 @@ export function RoutingLogsTable() {
   // Determine result type from assignment_reason
   const getResultType = (reason: string): string => {
     if (reason.includes("Auto-assigned") || reason.includes("assigned")) return "assigned";
-    if (reason.includes("ineligible") || reason.includes("Basic")) return "ineligible";
+    if (reason.includes("ineligible") || reason.includes("Free")) return "ineligible";
     if (reason.includes("Unassigned") || reason.includes("No eligible")) return "unassigned";
     return "other";
   };
@@ -206,7 +206,7 @@ export function RoutingLogsTable() {
         </Badge>
       );
     }
-    if (reason.includes("ineligible") || reason.includes("Basic")) {
+    if (reason.includes("ineligible") || reason.includes("Free")) {
       return (
         <Badge className="bg-red-50 text-red-700 border-red-200">
           <XCircle className="h-3 w-3 mr-1" />
@@ -232,15 +232,23 @@ export function RoutingLogsTable() {
   const getPlanBadge = (plan: string | null) => {
     if (!plan) return <span className="text-muted-foreground">—</span>;
     
+    // Map legacy tier names to new Free/Pro model
+    const displayPlan = (plan === "featured" || plan === "professional" || plan === "Featured" || plan === "Professional") 
+      ? "Pro" 
+      : (plan === "basic" || plan === "Basic") 
+        ? "Free" 
+        : plan;
+    
     const colors: Record<string, string> = {
-      Featured: "bg-amber-50 text-amber-700 border-amber-200",
-      Professional: "bg-blue-50 text-blue-700 border-blue-200",
-      Basic: "bg-slate-50 text-slate-600 border-slate-200",
+      Pro: "bg-amber-50 text-amber-700 border-amber-200",
+      pro: "bg-amber-50 text-amber-700 border-amber-200",
+      Free: "bg-slate-50 text-slate-600 border-slate-200",
+      free: "bg-slate-50 text-slate-600 border-slate-200",
     };
     
     return (
-      <Badge variant="outline" className={colors[plan] || ""}>
-        {plan}
+      <Badge variant="outline" className={colors[displayPlan] || ""}>
+        {displayPlan}
       </Badge>
     );
   };
@@ -360,9 +368,8 @@ export function RoutingLogsTable() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Plans</SelectItem>
-                  <SelectItem value="Featured">Featured</SelectItem>
-                  <SelectItem value="Professional">Professional</SelectItem>
-                  <SelectItem value="Basic">Basic</SelectItem>
+                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
                 </SelectContent>
               </Select>
 

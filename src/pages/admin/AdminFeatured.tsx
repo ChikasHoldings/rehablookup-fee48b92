@@ -676,7 +676,7 @@ export default function AdminFeatured() {
           <Alert className="border-blue-200 bg-blue-50">
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              <strong>Auto-Featured System:</strong> Providers on the Featured plan ($1,099/mo) are automatically 
+              <strong>Auto-Featured System:</strong> Pro subscribers are automatically 
               featured and rotated daily. Homepage shows max 6 at a time. Pinned providers always appear.
             </AlertDescription>
           </Alert>
@@ -689,7 +689,7 @@ export default function AdminFeatured() {
                   <div>
                     <p className="text-sm font-medium text-amber-700">Auto-Featured</p>
                     <p className="text-3xl font-bold text-amber-900">{autoFeaturedFacilities.length}</p>
-                    <p className="text-xs text-amber-600 mt-1">Featured Plan subscribers</p>
+                    <p className="text-xs text-amber-600 mt-1">Pro subscribers</p>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-amber-200 flex items-center justify-center">
                     <Zap className="h-6 w-6 text-amber-700" />
@@ -978,8 +978,8 @@ export default function AdminFeatured() {
           <Alert className="border-amber-200 bg-amber-50">
             <Zap className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
-              <strong>How Auto-Featured Works:</strong> Providers with active Featured plan subscriptions ($1,099/mo) 
-              are automatically added here. Up to 6 rotate daily on the homepage. Pinned providers always appear first.
+              <strong>How Auto-Featured Works:</strong> Pro subscribers are automatically 
+              added here. Up to 6 rotate daily on the homepage. Pinned providers always appear first.
             </AlertDescription>
           </Alert>
 
@@ -1096,12 +1096,12 @@ export default function AdminFeatured() {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       {autoFeaturedFacilities.filter(f => f.featured_pinned).length > 0 ? "Rotating Providers" : "Auto-Featured Providers"}
-                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">Featured Plan</Badge>
+                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">Pro</Badge>
                     </CardTitle>
                     <CardDescription>
                       {autoFeaturedFacilities.filter(f => f.featured_pinned).length > 0 
                         ? "Rotate daily on homepage alongside pinned providers" 
-                        : "Automatically featured based on active Featured plan subscription"}
+                        : "Automatically featured based on active Pro subscription"}
                     </CardDescription>
                   </div>
                 </div>
