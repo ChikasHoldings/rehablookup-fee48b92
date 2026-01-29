@@ -82,6 +82,7 @@ const PLACEMENT_BENEFITS = [
   "Higher conversion rates from qualified referrals",
   "Commission or flat fee arrangements",
   "No upfront cost—pay only on successful placement",
+  "Pro subscribers save 20% on every placement fee",
 ];
 
 export default function ProviderPlacementNetworkPage() {
@@ -728,6 +729,43 @@ export default function ProviderPlacementNetworkPage() {
 
             {/* Billing Tab */}
             <TabsContent value="billing" className="space-y-6">
+              {/* Signed Agreement Status */}
+              {facilityData?.concierge_terms_accepted_at && (
+                <Card className="border-emerald-500/30 bg-emerald-500/5">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileSignature className="h-5 w-5 text-emerald-600" />
+                      Agreement Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      <span className="text-sm font-medium text-emerald-700">Terms Accepted</span>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Signed on</p>
+                        <p className="font-medium">{format(new Date(facilityData.concierge_terms_accepted_at), "MMM d, yyyy 'at' h:mm a")}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Terms Version</p>
+                        <p className="font-medium">{facilityData.concierge_terms_version || "1.0"}</p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2 mt-2"
+                      onClick={() => setTermsModalOpen(true)}
+                    >
+                      <FileText className="h-4 w-4" />
+                      View Agreement
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Fee Structure */}
               <Card>
                 <CardHeader>
@@ -739,24 +777,46 @@ export default function ProviderPlacementNetworkPage() {
                     You only pay when a placement is confirmed by both parties
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="p-4 rounded-lg border bg-muted/30">
                       <p className="text-sm text-muted-foreground mb-1">Flat Fee</p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-xl font-bold">
                         ${proSubscription ? PLACEMENT_FEES.flat_fee.pro : PLACEMENT_FEES.flat_fee.standard}
                       </p>
-                      {proSubscription && (
-                        <Badge className="mt-2 bg-primary/10 text-primary">Pro: 20% off</Badge>
+                      {proSubscription ? (
+                        <Badge className="mt-2 bg-emerald-100 text-emerald-700">Pro: 20% off</Badge>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Pro: ${PLACEMENT_FEES.flat_fee.pro} <span className="text-primary">(save $240)</span>
+                        </p>
                       )}
                     </div>
                     <div className="p-4 rounded-lg border bg-muted/30">
                       <p className="text-sm text-muted-foreground mb-1">Commission</p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-xl font-bold">
                         {proSubscription ? PLACEMENT_FEES.commission.pro : PLACEMENT_FEES.commission.standard}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">of first month (max ${PLACEMENT_FEES.commission.cap})</p>
+                      {!proSubscription && (
+                        <p className="text-xs text-muted-foreground">
+                          Pro: {PLACEMENT_FEES.commission.pro} <span className="text-primary">(20% off)</span>
+                        </p>
+                      )}
                     </div>
+                  </div>
+                  
+                  {/* When charged FAQ */}
+                  <div className="p-3 rounded-lg bg-muted/50 border border-dashed">
+                    <p className="text-sm font-medium flex items-center gap-2 mb-2">
+                      <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                      When will I be charged?
+                    </p>
+                    <ul className="text-xs text-muted-foreground space-y-1 ml-6">
+                      <li>• Fees are charged only after confirmed placement</li>
+                      <li>• Both you and the family must confirm admission</li>
+                      <li>• Invoices are due within 14 days</li>
+                    </ul>
                   </div>
                 </CardContent>
               </Card>
