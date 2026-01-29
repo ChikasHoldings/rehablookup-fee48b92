@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useProviderCredits } from "@/hooks/useProviderCredits";
-import { useProStatus } from "@/hooks/useProStatus";
+import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInHours, isPast, format } from "date-fns";
@@ -148,16 +148,13 @@ export default function ProviderDashboardPage() {
   const { data: providerData, isLoading } = useProviderData(facilityId);
   const { facilities } = useProviderFacilities();
   const { data: creditsData, isLoading: creditsLoading } = useProviderCredits(facilityId);
-  const { data: proStatus, isLoading: proLoading } = useProStatus(facilityId);
+  const { limit: locationLimit, used: usedLocations, planTier, isLoading: proLoading } = useFacilityLimits();
+  const proStatus = { isPro: planTier === "pro" };
   
   const facility = selectedFacility || providerData?.facility;
   const profile = providerData?.profile;
   const viewsCount = providerData?.viewsCount ?? 0;
   const userName = profile?.first_name || "";
-  
-  // Pro users get 5 locations, free users get 1
-  const locationLimit = proStatus?.isPro ? 5 : 1;
-  const usedLocations = facilities?.length ?? 0;
   const facilityIds = facilities?.map(f => f.id) ?? [];
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
