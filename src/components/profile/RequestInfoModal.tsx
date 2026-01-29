@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
-import { z } from "zod";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -9,57 +8,23 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Phone,
-  Send,
-  CheckCircle,
-  CheckCircle2,
-  MapPin,
-  Loader2,
-  ArrowRight,
   Building2,
   Shield,
   Crown,
-  Clock,
-  Heart,
-  Sparkles,
   Users,
-  Zap,
+  Heart,
+  MapPin,
+  CheckCircle,
+  Loader2,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { isValidPhoneNumber, formatPhoneNumber } from "@/lib/phoneUtils";
-import { EmailInput } from "@/components/ui/email-input";
-import { isValidEmail } from "@/lib/emailUtils";
-
-// Validation schema
-const requestSchema = z.object({
-  firstName: z.string().trim().min(1, "First name is required").max(50),
-  lastName: z.string().trim().min(1, "Last name is required").max(50),
-  email: z.string().trim().email("Please enter a valid email").max(255),
-  phone: z.string().trim().min(10, "Phone number is required").max(20).refine((val) => {
-    const digits = val.replace(/[\s\-\(\)\+\.]/g, "");
-    return /^\d{10,15}$/.test(digits);
-  }, "Please enter a valid phone number"),
-  urgency: z.enum(["immediate", "this_week", "exploring"]),
-  seekingFor: z.enum(["self", "loved_one", "professional"]),
-  message: z.string().trim().max(1000).optional(),
-});
-
-type FormData = z.infer<typeof requestSchema>;
+import { LeadIntakeForm } from "@/components/lead-intake";
 
 interface NearbyFacility {
   id: string;
@@ -83,7 +48,6 @@ interface RequestInfoModalProps {
     city: string;
     state: string;
     slug: string;
-    // email removed - provider emails are completely private
     logo_url: string | null;
     featured?: boolean;
   };
@@ -222,6 +186,117 @@ const trackAnalyticsEvent = async (
   }
 };
 
+// Custom success component for modal context
+function ModalSuccessView({ 
+  firstName, 
+  facilityName,
+  facility,
+  nearbyFacilities,
+  loadingNearby,
+  onClose,
+  onNearbyRequest,
+  onConcierge,
+  isPro,
+}: { 
+  firstName: string;
+  facilityName?: string | null;
+  facility: { id: string; name: string; city: string; state: string; slug: string; logo_url: string | null };
+  nearbyFacilities: NearbyFacility[];
+  loadingNearby: boolean;
+  onClose: () => void;
+  onNearbyRequest: (facility: NearbyFacility) => void;
+  onConcierge: () => void;
+  isPro: boolean;
+}) {
+  return (
+    <div className="py-4 text-center space-y-6">
+      <div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+        <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+      </div>
+      
+      <div>
+        <h3 className="text-xl font-semibold text-foreground mb-2">
+          Request Sent, {firstName}!
+        </h3>
+        <p className="text-muted-foreground">
+          {facilityName || facility.name} will be in touch with you soon.
+        </p>
+      </div>
+      
+      {/* Nearby Facilities - Only for Free tier */}
+      {!isPro && nearbyFacilities.length > 0 && (
+        <div className="pt-4 border-t">
+          <p className="text-sm font-medium text-foreground mb-3">
+            Consider reaching out to these nearby centers too:
+          </p>
+          <div className="space-y-2">
+            {nearbyFacilities.map((nearby) => (
+              <button
+                key={nearby.id}
+                onClick={() => onNearbyRequest(nearby)}
+                className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left group"
+              >
+                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                  {nearby.logo_url ? (
+                    <img src={nearby.logo_url} alt="" className="h-full w-full object-contain p-1" />
+                  ) : (
+                    <span className="font-semibold text-sm text-muted-foreground">
+                      {getInitials(nearby.name)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                    {nearby.name}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {nearby.city}, {nearby.state}
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {loadingNearby && (
+        <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Finding more options...
+        </div>
+      )}
+      
+      {/* Concierge CTA */}
+      <div className="pt-4 border-t">
+        <button
+          onClick={onConcierge}
+          className="w-full p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition-all text-left group"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <div className="font-semibold text-foreground mb-1">
+                Want help finding the best fit?
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Our free Concierge service matches you with verified treatment centers based on your unique needs.
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity mt-2" />
+          </div>
+        </button>
+      </div>
+      
+      <Button variant="outline" onClick={onClose} className="w-full">
+        Done
+      </Button>
+    </div>
+  );
+}
+
 export function RequestInfoModal({
   open,
   onOpenChange,
@@ -230,46 +305,18 @@ export function RequestInfoModal({
   prefillData,
 }: RequestInfoModalProps) {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [nearbyFacilities, setNearbyFacilities] = useState<NearbyFacility[]>([]);
   const [loadingNearby, setLoadingNearby] = useState(false);
-  const [submittedData, setSubmittedData] = useState<FormData | null>(null);
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   const [leadUsage, setLeadUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
-  
-  const [formData, setFormData] = useState<FormData>({
-    firstName: prefillData?.firstName || "",
-    lastName: prefillData?.lastName || "",
-    email: prefillData?.email || "",
-    phone: prefillData?.phone || "",
-    urgency: "exploring",
-    seekingFor: "self",
-    message: "",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submittedFirstName, setSubmittedFirstName] = useState("");
 
-  // Real-time validation
-  const validation = useMemo(() => ({
-    firstName: formData.firstName.trim().length >= 1,
-    lastName: formData.lastName.trim().length >= 1,
-    email: isValidEmail(formData.email),
-    phone: isValidPhoneNumber(formData.phone),
-  }), [formData]);
-
-  const isStep1Valid = formData.urgency && formData.seekingFor;
-  const isStep2Valid = validation.firstName && validation.lastName && validation.email && validation.phone;
-
-  // In pay-per-unlock model, all leads are exclusive
-  const leadType = "exclusive";
   const isPro = facilityPlan === "pro";
 
-  // No lead limits in pay-per-unlock model - skip usage fetch
+  // Fetch lead usage to check capacity
   useEffect(() => {
     if (open) {
       const fetchLeadUsage = async () => {
         try {
-          // Fetch lead count for this facility this month
           const startOfMonth = new Date();
           startOfMonth.setDate(1);
           startOfMonth.setHours(0, 0, 0, 0);
@@ -282,7 +329,6 @@ export function RequestInfoModal({
 
           if (error) throw error;
 
-          // Get plan limit (100 for both professional and featured)
           const limit = 100;
           const used = count || 0;
           setLeadUsage({ used, limit, remaining: Math.max(0, limit - used) });
@@ -305,46 +351,9 @@ export function RequestInfoModal({
     }
   }, [open, facility.id, facility.name, prefillData, facilityPlan]);
 
-  // Update form when prefill data changes
-  useEffect(() => {
-    if (prefillData) {
-      setFormData((prev) => ({
-        ...prev,
-        firstName: prefillData.firstName || prev.firstName,
-        lastName: prefillData.lastName || prev.lastName,
-        email: prefillData.email || prev.email,
-        phone: prefillData.phone || prev.phone,
-      }));
-    }
-  }, [prefillData]);
-
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!open) {
-      setIsSubmitted(false);
-      setNearbyFacilities([]);
-      setCurrentStep(1);
-      if (!prefillData) {
-        setFormData({
-          firstName: "",
-          lastName: "",
-          email: "",
-          phone: "",
-          urgency: "exploring",
-          seekingFor: "self",
-          message: "",
-        });
-      }
-      setErrors({});
-    }
-  }, [open, prefillData]);
-
-  // Fetch nearby facilities when submitted (for free tier only)
+  // Fetch nearby facilities for success screen
   const fetchNearbyFacilities = async () => {
-    if (isPro) {
-      // Don't show competitors for Pro plans
-      return;
-    }
+    if (isPro) return; // Don't show competitors for Pro
     
     setLoadingNearby(true);
     try {
@@ -371,7 +380,6 @@ export function RequestInfoModal({
 
       if (error) throw error;
 
-      // Sort: same city first, then featured, limit to 3
       const sorted = (data || []).sort((a, b) => {
         if (a.city === facility.city && b.city !== facility.city) return -1;
         if (b.city === facility.city && a.city !== facility.city) return 1;
@@ -388,70 +396,6 @@ export function RequestInfoModal({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-
-    const result = requestSchema.safeParse(formData);
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
-      result.error.errors.forEach((err) => {
-        if (err.path[0]) {
-          fieldErrors[err.path[0] as string] = err.message;
-        }
-      });
-      setErrors(fieldErrors);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase.functions.invoke("submit-direct-lead", {
-        body: {
-          facilityId: facility.id,
-          facilityName: facility.name,
-          // facilityEmail removed - provider emails are completely private
-          facilityPlan,
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-          message: formData.message?.trim() || null,
-          urgency: formData.urgency,
-          seekingFor: formData.seekingFor,
-        },
-      });
-
-      if (error) throw error;
-
-      setSubmittedData(formData);
-      setIsSubmitted(true);
-      fetchNearbyFacilities();
-      
-      // Track form submission
-      trackAnalyticsEvent("form_submission", facility.id, {
-        facilityName: facility.name,
-        hasMessage: !!formData.message?.trim(),
-        urgency: formData.urgency,
-        seekingFor: formData.seekingFor,
-        leadType,
-        facilityPlan,
-      });
-      
-      toast.success("Request sent!", {
-        description: `${facility.name} will contact you soon.`,
-      });
-    } catch (err) {
-      console.error("Submission error:", err);
-      toast.error("Failed to send request", {
-        description: "Please try again or call the center directly.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleNearbyRequest = (nearbyFacility: NearbyFacility) => {
     trackAnalyticsEvent("nearby_facility_click", nearbyFacility.id, {
       fromFacilityId: facility.id,
@@ -463,510 +407,106 @@ export function RequestInfoModal({
     navigate(`/center/${nearbyFacility.slug}`, {
       state: {
         openRequestModal: true,
-        prefillData: submittedData
-          ? {
-              firstName: submittedData.firstName,
-              lastName: submittedData.lastName,
-              email: submittedData.email,
-              phone: submittedData.phone,
-            }
-          : undefined,
+        prefillData,
       },
     });
     onOpenChange(false);
   };
 
-  const handleRequestHelp = () => {
+  const handleConcierge = () => {
     trackAnalyticsEvent("concierge_conversion", facility.id, {
       fromFacilityName: facility.name,
-      hasPrefillData: !!submittedData,
     });
-    
     navigate("/account/concierge");
     onOpenChange(false);
   };
 
-  const urgencyOptions = [
-    { value: "immediate", label: "Immediate - Need help today", icon: Clock, color: "text-red-500" },
-    { value: "this_week", label: "This week", icon: Clock, color: "text-amber-500" },
-    { value: "exploring", label: "Just exploring options", icon: Heart, color: "text-blue-500" },
-  ];
+  // Check if at capacity (for free tier providers)
+  const isAtCapacity = leadUsage && leadUsage.remaining === 0 && !isPro;
 
-  const seekingOptions = [
-    { value: "self", label: "For myself" },
-    { value: "loved_one", label: "For a loved one" },
-    { value: "professional", label: "I'm a healthcare professional" },
-  ];
+  // Custom success handler for the form
+  const renderSuccess = ({ firstName }: { firstName: string; facilityName?: string | null }) => {
+    // Trigger nearby fetch when success renders
+    if (nearbyFacilities.length === 0 && !loadingNearby) {
+      fetchNearbyFacilities();
+    }
+    
+    return (
+      <ModalSuccessView
+        firstName={firstName}
+        facilityName={facility.name}
+        facility={facility}
+        nearbyFacilities={nearbyFacilities}
+        loadingNearby={loadingNearby}
+        onClose={() => onOpenChange(false)}
+        onNearbyRequest={handleNearbyRequest}
+        onConcierge={handleConcierge}
+        isPro={isPro}
+      />
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto p-0">
-        {!isSubmitted ? (
-          <>
-            {/* Header */}
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Request Information from {facility.name}</DialogTitle>
+          <DialogDescription>
+            Fill out the form to connect with this treatment center
+          </DialogDescription>
+        </DialogHeader>
+        
+        {/* Facility Header */}
+        <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
+          <div className="flex items-center gap-3">
             <div className={cn(
-              "px-6 pt-6 pb-4 border-b border-border",
-              isPro && "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20"
+              "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden",
+              isPro ? "bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-200/50" : "bg-muted"
             )}>
-              <DialogHeader>
-                <div className="flex items-center gap-3">
-                  {facility.logo_url ? (
-                    <img 
-                      src={facility.logo_url} 
-                      alt={facility.name} 
-                      className="h-12 w-12 rounded-lg object-contain border border-border bg-white"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <span className="font-display font-bold text-primary">{getInitials(facility.name)}</span>
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <DialogTitle className="text-lg font-semibold truncate">
-                      {facility.name}
-                    </DialogTitle>
-                    <DialogDescription className="text-sm flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {facility.city}, {facility.state}
-                    </DialogDescription>
-                  </div>
-                  {isPro && (
-                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 gap-1 shrink-0">
-                      <Crown className="h-3 w-3" />
-                      Pro
-                    </Badge>
-                  )}
-                </div>
-              </DialogHeader>
-
-              {/* Trust indicators and Lead Counter */}
-              <div className="flex items-center justify-between gap-4 mt-4">
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Shield className="h-3.5 w-3.5 text-green-600" />
-                    <span>Confidential</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5 text-primary" />
-                    <span>Response within 24h</span>
-                  </div>
-                  {isPro && (
-                    <div className="flex items-center gap-1">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                      <span>Priority response</span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Lead Counter Badge */}
-                {/* Lead usage badge hidden from public view - internal metric only */}
-            </div>
-            </div>
-
-            {/* Capacity Warning - Show when provider is at capacity */}
-            {isPro && leadUsage && leadUsage.remaining <= 0 ? (
-              <CapacityWarning 
-                facility={facility} 
-                onOpenChange={onOpenChange} 
-                navigate={navigate} 
-              />
-            
-            ) : (
-              /* Form Content */
-              <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                {/* Step Indicator */}
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={cn(
-                    "flex items-center justify-center h-7 w-7 rounded-full text-sm font-semibold transition-colors",
-                    currentStep >= 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  )}>
-                    1
-                  </div>
-                  <div className={cn(
-                    "flex-1 h-1 rounded-full transition-colors",
-                    currentStep >= 2 ? "bg-primary" : "bg-muted"
-                  )} />
-                  <div className={cn(
-                    "flex items-center justify-center h-7 w-7 rounded-full text-sm font-semibold transition-colors",
-                    currentStep >= 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  )}>
-                    2
-                  </div>
-              </div>
-
-              {currentStep === 1 ? (
-                <>
-                  {/* Step 1: Qualification */}
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">How urgent is your need?</Label>
-                      <div className="space-y-2">
-                        {urgencyOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, urgency: option.value as FormData["urgency"] })}
-                            className={cn(
-                              "w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
-                              formData.urgency === option.value
-                                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                                : "border-border hover:border-primary/50 hover:bg-muted/50"
-                            )}
-                          >
-                            <option.icon className={cn("h-5 w-5", option.color)} />
-                            <span className="text-sm font-medium">{option.label}</span>
-                            {formData.urgency === option.value && (
-                              <CheckCircle2 className="h-4 w-4 text-primary ml-auto" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-semibold mb-2 block">Who is seeking help?</Label>
-                      <Select
-                        value={formData.seekingFor}
-                        onValueChange={(value) => setFormData({ ...formData, seekingFor: value as FormData["seekingFor"] })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select one..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {seekingOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    className="w-full gap-2"
-                    size="lg"
-                    disabled={!isStep1Valid}
-                    onClick={() => setCurrentStep(2)}
-                  >
-                    Continue
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </>
+              {facility.logo_url ? (
+                <img src={facility.logo_url} alt="" className="h-full w-full object-contain p-1" />
               ) : (
-                <>
-                  {/* Step 2: Contact Details */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label htmlFor="firstName" className="text-sm">First Name *</Label>
-                        <div className="relative mt-1">
-                          <Input
-                            id="firstName"
-                            value={formData.firstName}
-                            onChange={(e) =>
-                              setFormData({ ...formData, firstName: e.target.value })
-                            }
-                            placeholder="John"
-                            className={cn(
-                              errors.firstName && "border-destructive",
-                              validation.firstName && formData.firstName && "pr-10"
-                            )}
-                          />
-                          {validation.firstName && formData.firstName && !errors.firstName && (
-                            <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                          )}
-                        </div>
-                        {errors.firstName && (
-                          <p className="text-xs text-destructive mt-1">{errors.firstName}</p>
-                        )}
-                      </div>
-                      <div>
-                        <Label htmlFor="lastName" className="text-sm">Last Name *</Label>
-                        <div className="relative mt-1">
-                          <Input
-                            id="lastName"
-                            value={formData.lastName}
-                            onChange={(e) =>
-                              setFormData({ ...formData, lastName: e.target.value })
-                            }
-                            placeholder="Doe"
-                            className={cn(
-                              errors.lastName && "border-destructive",
-                              validation.lastName && formData.lastName && "pr-10"
-                            )}
-                          />
-                          {validation.lastName && formData.lastName && !errors.lastName && (
-                            <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                          )}
-                        </div>
-                        {errors.lastName && (
-                          <p className="text-xs text-destructive mt-1">{errors.lastName}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="phone" className="text-sm">Phone Number *</Label>
-                      <div className="relative mt-1">
-                        <PhoneInput
-                          id="phone"
-                          value={formData.phone}
-                          onChange={(value) =>
-                            setFormData({ ...formData, phone: value })
-                          }
-                          className={cn(
-                            errors.phone && "border-destructive",
-                            validation.phone && "pr-10"
-                          )}
-                        />
-                        {validation.phone && !errors.phone && (
-                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                        )}
-                      </div>
-                      {errors.phone && (
-                        <p className="text-xs text-destructive mt-1">{errors.phone}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label htmlFor="email" className="text-sm">Email *</Label>
-                      <div className="relative mt-1">
-                        <EmailInput
-                          id="email"
-                          value={formData.email}
-                          onChange={(value) =>
-                            setFormData({ ...formData, email: value })
-                          }
-                          placeholder="john@example.com"
-                          className={cn(
-                            errors.email && "border-destructive",
-                            validation.email && formData.email && "pr-10"
-                          )}
-                        />
-                        {validation.email && formData.email && !errors.email && (
-                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                        )}
-                      </div>
-                      {errors.email && (
-                        <p className="text-xs text-destructive mt-1">{errors.email}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label htmlFor="message" className="text-sm">Additional Details (Optional)</Label>
-                      <Textarea
-                        id="message"
-                        value={formData.message}
-                        onChange={(e) =>
-                          setFormData({ ...formData, message: e.target.value })
-                        }
-                        placeholder="Tell us about your situation or any questions you have..."
-                        rows={3}
-                        className="resize-none mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Privacy notice */}
-                  <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/50 p-3">
-                    <Shield className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
-                    <p className="text-xs text-muted-foreground">
-                      Your information is confidential and will only be shared with{" "}
-                      <strong>{facility.name}</strong> to help connect you with treatment options.
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => setCurrentStep(1)}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="flex-[2] gap-2"
-                      size="lg"
-                      disabled={isSubmitting || !isStep2Valid}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4" />
-                          Request Call Back
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </>
+                <Building2 className={cn("h-5 w-5", isPro ? "text-amber-600" : "text-muted-foreground")} />
               )}
-              </form>
-            )}
-          </>
-        ) : (
-          <div className="p-6">
-            {/* Success Header */}
-            <div className="text-center mb-6">
-              <div className={cn(
-                "mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full",
-                isPro 
-                  ? "bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30" 
-                  : "bg-success/10"
-              )}>
-                <CheckCircle className={cn(
-                  "h-8 w-8",
-                  isPro ? "text-amber-600" : "text-success"
-                )} />
-              </div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
-                Request Sent Successfully!
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                {submittedData?.firstName}, your request has been sent to{" "}
-                <strong>{facility.name}</strong>. 
-                {isPro 
-                  ? " As a Pro provider, they prioritize quick responses." 
-                  : " They may contact you within 24 hours."}
-              </p>
             </div>
-
-            {/* Pro provider exclusive badge */}
-            {isPro && (
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6 text-center">
-                <div className="flex items-center justify-center gap-2 text-amber-700 dark:text-amber-300">
-                  <Crown className="h-4 w-4" />
-                  <span className="text-sm font-semibold">Your request is exclusive to this provider</span>
-                </div>
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                  Your information will only be shared with {facility.name}
-                </p>
-              </div>
-            )}
-
-            {/* Nearby Facilities Section (only for non-featured) */}
-            {!isPro && (loadingNearby || nearbyFacilities.length > 0) && (
-              <div className="border-t border-border pt-5 mt-5">
-                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  Nearby facilities you may also consider
-                </h3>
-
-                {loadingNearby ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {nearbyFacilities.map((nearbyFacility) => (
-                      <div
-                        key={nearbyFacility.id}
-                        className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
-                      >
-                        {/* Logo */}
-                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
-                          {nearbyFacility.logo_url ? (
-                            <img
-                              src={nearbyFacility.logo_url}
-                              alt={nearbyFacility.name}
-                              className="h-full w-full object-contain"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <span className="font-semibold text-primary text-sm">
-                                {getInitials(nearbyFacility.name)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-foreground text-sm truncate">
-                              {nearbyFacility.name}
-                            </h4>
-                            {nearbyFacility.featured && (
-                              <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0 gap-0.5">
-                                <Crown className="h-2.5 w-2.5" />
-                                Featured
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {nearbyFacility.city}, {nearbyFacility.state}
-                          </p>
-                          {nearbyFacility.facility_services?.slice(0, 2).length > 0 && (
-                            <div className="flex gap-1 mt-1">
-                              {nearbyFacility.facility_services.slice(0, 2).map((s) => (
-                                <Badge
-                                  key={s.service_name}
-                                  variant="secondary"
-                                  className="text-[10px] px-1.5 py-0"
-                                >
-                                  {s.service_name}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* CTA */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="shrink-0 text-xs"
-                          onClick={() => handleNearbyRequest(nearbyFacility)}
-                        >
-                          Request Call
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-foreground truncate">{facility.name}</h3>
+                {isPro && (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 shrink-0">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Pro
+                  </Badge>
                 )}
               </div>
-            )}
-
-            {/* Concierge Service CTA */}
-            <div className="border-t border-border pt-5 mt-5">
-              <div className="rounded-lg bg-primary/5 border border-primary/10 p-4">
-                <h4 className="font-medium text-foreground text-sm mb-2">
-                  Want personalized help finding the right fit?
-                </h4>
-                <p className="text-xs text-muted-foreground mb-3">
-                  <span className="font-bold text-foreground">Try our Concierge Service</span>
-                  <br />
-                  Get matched with providers who meet your specific needs.
-                </p>
-                <Button
-                  variant="outline"
-                  className="w-full gap-2"
-                  onClick={handleRequestHelp}
-                >
-                  Get Concierge Help
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5" />
+                {facility.city}, {facility.state}
               </div>
             </div>
-
-            {/* Close Button */}
-            <Button
-              variant="ghost"
-              className="w-full mt-4"
-              onClick={() => onOpenChange(false)}
-            >
-              Close
-            </Button>
           </div>
-        )}
+          
+          {/* Trust badge */}
+          <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+            <Shield className="h-3.5 w-3.5 text-primary" />
+            <span>100% confidential • Your info is only shared with this facility</span>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div className="px-6 py-4">
+          {isAtCapacity ? (
+            <CapacityWarning 
+              facility={facility} 
+              onOpenChange={onOpenChange} 
+              navigate={navigate} 
+            />
+          ) : (
+            <LeadIntakeForm 
+              renderSuccess={renderSuccess}
+            />
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
