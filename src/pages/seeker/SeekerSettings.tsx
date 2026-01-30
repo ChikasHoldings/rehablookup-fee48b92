@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings, Video } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -601,8 +602,13 @@ export default function SeekerSettings() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-display font-bold mb-6">Settings</h1>
+    <>
+      <Helmet>
+        <title>Settings | RehabLookup</title>
+        <meta name="description" content="Manage your account settings, profile information, notification preferences, and security options." />
+      </Helmet>
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <h1 className="text-2xl font-display font-bold mb-6">Settings</h1>
 
       <div className="space-y-6">
         {/* Profile Settings */}
@@ -1110,5 +1116,6 @@ export default function SeekerSettings() {
         <ActivityLog />
       </div>
     </div>
+    </>
   );
 }

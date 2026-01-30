@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Bell, Mail, MessageSquare, Heart, FileText, Loader2, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -148,8 +149,13 @@ export default function SeekerNotificationPreferences() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
+    <>
+      <Helmet>
+        <title>Notification Preferences | RehabLookup</title>
+        <meta name="description" content="Customize your email, in-app, and review notification settings to control how we communicate with you." />
+      </Helmet>
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="icon" asChild className="shrink-0">
           <Link to="/account/settings">
             <ArrowLeft className="h-5 w-5" />
@@ -303,5 +309,6 @@ export default function SeekerNotificationPreferences() {
         </div>
       )}
     </div>
+    </>
   );
 }
