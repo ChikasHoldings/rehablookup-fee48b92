@@ -1,7 +1,6 @@
-import { Check, Circle, AlertCircle } from "lucide-react";
+import { Check, Circle, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 interface ReadinessCheck {
@@ -26,66 +25,69 @@ export function PlacementReadinessChecklist({
   const requiredChecks = checks.filter((c) => c.required);
   const completedRequired = requiredChecks.filter((c) => c.complete).length;
   const allRequiredComplete = completedRequired === requiredChecks.length;
-  const progress = requiredChecks.length > 0 ? (completedRequired / requiredChecks.length) * 100 : 0;
 
   return (
-    <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+    <Card className="mb-8 border-border">
+      <CardHeader className="pb-4">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-950 flex items-center justify-center shrink-0">
+            <ListChecks className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          </div>
           <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-600" />
-              Complete Setup to Receive Placements
-            </CardTitle>
-            <CardDescription className="mt-1">
-              {allRequiredComplete
-                ? "All requirements met! You're ready to receive placements."
-                : `Complete the following steps to join the placement network`}
+            <CardTitle className="text-base">Setup Checklist</CardTitle>
+            <CardDescription className="mt-0.5">
+              Complete these steps to join the network
             </CardDescription>
           </div>
         </div>
-        <div className="pt-2">
-          <div className="flex items-center justify-between text-sm mb-1">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-medium">
-              {completedRequired} of {requiredChecks.length} complete
-            </span>
-          </div>
-          <Progress value={progress} className="h-2" />
+        
+        {/* Progress indicator */}
+        <div className="flex items-center gap-2 mt-4">
+          {requiredChecks.map((check, i) => (
+            <div
+              key={check.key}
+              className={cn(
+                "h-1.5 flex-1 rounded-full transition-colors",
+                check.complete ? "bg-emerald-500" : "bg-muted"
+              )}
+            />
+          ))}
         </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          {completedRequired} of {requiredChecks.length} complete
+        </p>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {checks.map((check) => (
+      
+      <CardContent className="pt-0 space-y-2">
+        {checks.map((check, index) => (
           <div
             key={check.key}
             className={cn(
               "flex items-center justify-between p-3 rounded-lg border transition-colors",
               check.complete
                 ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900"
-                : "bg-card border-border"
+                : "bg-card border-border hover:bg-muted/50"
             )}
           >
             <div className="flex items-center gap-3">
-              {check.complete ? (
-                <div className="h-6 w-6 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center">
-                  <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                </div>
-              ) : (
-                <div className="h-6 w-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center">
-                  <Circle className="h-3 w-3 text-muted-foreground/30" />
-                </div>
-              )}
+              <div className={cn(
+                "h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-medium",
+                check.complete 
+                  ? "bg-emerald-500 text-white" 
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {check.complete ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  index + 1
+                )}
+              </div>
               <div>
-                <p
-                  className={cn(
-                    "font-medium text-sm",
-                    check.complete && "text-emerald-700 dark:text-emerald-400"
-                  )}
-                >
+                <p className={cn(
+                  "font-medium text-sm",
+                  check.complete ? "text-emerald-700 dark:text-emerald-400" : "text-foreground"
+                )}>
                   {check.label}
-                  {check.required && !check.complete && (
-                    <span className="text-destructive ml-1">*</span>
-                  )}
                 </p>
                 <p className="text-xs text-muted-foreground">{check.description}</p>
               </div>
@@ -99,7 +101,7 @@ export function PlacementReadinessChecklist({
         ))}
 
         {allRequiredComplete && onComplete && (
-          <div className="pt-4">
+          <div className="pt-3">
             <Button onClick={onComplete} className="w-full">
               <Check className="h-4 w-4 mr-2" />
               Enable Placement Network
