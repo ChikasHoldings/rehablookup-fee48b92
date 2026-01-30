@@ -134,15 +134,14 @@ serve(async (req) => {
     }
 
     // Create SetupIntent with Financial Connections for ACH
-    // Using specific configuration for instant bank verification
+    // Only requesting payment_method permission (balances requires separate activation)
     const setupIntent = await stripe.setupIntents.create({
       customer: customerId,
       payment_method_types: ['us_bank_account', 'card'],
       payment_method_options: {
         us_bank_account: {
           financial_connections: {
-            permissions: ['payment_method', 'balances'],
-            prefetch: ['balances'],
+            permissions: ['payment_method'],
           },
           verification_method: 'instant',
         },
