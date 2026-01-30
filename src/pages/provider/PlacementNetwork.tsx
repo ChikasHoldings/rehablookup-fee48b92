@@ -39,6 +39,7 @@ import {
 import { format } from "date-fns";
 import { PlacementTermsModal } from "@/components/provider/PlacementTermsModal";
 import { AddPaymentMethodModal } from "@/components/provider/AddPaymentMethodModal";
+import { CareTypesModal } from "@/components/provider/CareTypesModal";
 import { PlacementReadinessChecklist } from "@/components/provider/PlacementReadinessChecklist";
 import {
   PlacementLandingHeader,
@@ -308,6 +309,7 @@ export default function ProviderPlacementNetworkPage() {
   // Modal states
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [careTypesModalOpen, setCareTypesModalOpen] = useState(false);
 
   const optedIn = facilityData?.concierge_network_opted_in || false;
   const pendingIntroductions =
@@ -360,6 +362,8 @@ export default function ProviderPlacementNetworkPage() {
       description: "Tell us what types of patients you can accept",
       complete: hasCareTypes,
       required: true,
+      action: () => setCareTypesModalOpen(true),
+      actionLabel: "Select Types",
     },
   ];
 
@@ -413,6 +417,12 @@ export default function ProviderPlacementNetworkPage() {
           open={paymentModalOpen}
           onOpenChange={setPaymentModalOpen}
           facilityId={selectedFacility?.id || ""}
+        />
+        <CareTypesModal
+          open={careTypesModalOpen}
+          onOpenChange={setCareTypesModalOpen}
+          facilityId={selectedFacility?.id || ""}
+          initialCareTypes={profileForm.acceptedCareTypes}
         />
 
         {/* Readiness Checklist - Show when not opted in and not fully ready */}
