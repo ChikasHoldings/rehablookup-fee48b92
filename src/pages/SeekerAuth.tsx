@@ -190,16 +190,16 @@ export default function SeekerAuth() {
 
               {/* Auth Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/40 rounded-lg">
+                <TabsList className="grid w-full grid-cols-2 h-12 p-1.5 bg-muted/60 rounded-xl border border-border/50">
                   <TabsTrigger 
                     value="login" 
-                    className="text-sm font-medium rounded-md transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground/80"
+                    className="text-sm font-semibold rounded-lg transition-all duration-300 ease-out data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-muted/80"
                   >
                     Sign In
                   </TabsTrigger>
                   <TabsTrigger 
                     value="signup" 
-                    className="text-sm font-medium rounded-md transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground/80"
+                    className="text-sm font-semibold rounded-lg transition-all duration-300 ease-out data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-muted/80"
                   >
                     Create Account
                   </TabsTrigger>
