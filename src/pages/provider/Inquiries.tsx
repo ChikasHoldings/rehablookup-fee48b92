@@ -19,7 +19,7 @@ import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
-import { InquiriesStatsHeader } from "@/components/provider/inquiries/InquiriesStatsHeader";
+
 import { InquiryListItem } from "@/components/provider/inquiries/InquiryListItem";
 import { InquiryDetailPanel } from "@/components/provider/inquiries/InquiryDetailPanel";
 import type { InquiryType } from "@/components/provider/InquiryTypeBadge";
@@ -156,26 +156,6 @@ export default function ProviderInquiriesPage() {
     });
   }, [inquiries, searchQuery, statusFilter, facilityFilter, dateRange, isLeadUnlocked]);
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const total = inquiries.length;
-    let locked = 0, unlocked = 0, contacted = 0, responded = 0;
-    
-    inquiries.forEach(inquiry => {
-      const isUnlocked = isLeadUnlocked(inquiry.id);
-      if (!isUnlocked) {
-        locked++;
-      } else if (inquiry.provider_response_status === 'contacted') {
-        contacted++;
-      } else if (inquiry.provider_response_status === 'responded') {
-        responded++;
-      } else {
-        unlocked++;
-      }
-    });
-    
-    return { total, locked, unlocked, contacted, responded };
-  }, [inquiries, isLeadUnlocked]);
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -240,11 +220,6 @@ export default function ProviderInquiriesPage() {
             </div>
           </div>
         </div>
-
-        {/* Stats */}
-        {(!isMobile || mobileView === 'list') && (
-          <InquiriesStatsHeader {...stats} />
-        )}
       </div>
 
       {/* Filters */}
