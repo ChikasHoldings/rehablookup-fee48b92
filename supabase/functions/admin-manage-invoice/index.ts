@@ -250,10 +250,10 @@ serve(async (req) => {
         const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
         if (!stripeKey) throw new Error("Stripe not configured");
 
-        // Get payment method
+        // Get payment method with stored customer ID
         const { data: paymentMethod } = await supabaseService
           .from('provider_payment_methods')
-          .select('stripe_payment_method_id')
+          .select('stripe_payment_method_id, stripe_customer_id')
           .eq('facility_id', invoice.facility_id)
           .eq('is_default', true)
           .maybeSingle();
@@ -264,9 +264,14 @@ serve(async (req) => {
 
         const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-        // Get customer ID from payment method
-        const pm = await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id);
-        const customerId = pm.customer as string;
+        // Use stored customer ID for efficiency, fallback to retrieving from Stripe
+        let customerId = paymentMethod.stripe_customer_id;
+        
+        if (!customerId) {
+          logStep("Customer ID not stored, retrieving from Stripe");
+          const pm = await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id);
+          customerId = pm.customer as string;
+        }
 
         if (!customerId) {
           throw new Error("Payment method not attached to customer");
