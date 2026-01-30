@@ -254,9 +254,9 @@ export default function SeekerHome() {
                 Our support team is available 24/7 to connect you with treatment
               </h3>
               <Button asChild size="lg" className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/25">
-                <Link to="/request-help">
+                <Link to="/account/concierge">
                   <Phone className="h-4 w-4 mr-2" />
-                  Request a Call Back
+                  Get Matched
                 </Link>
               </Button>
             </CardContent>
@@ -525,7 +525,7 @@ export default function SeekerHome() {
                 {[
                   { to: "/rehab-centers", icon: Building2, label: "Browse All Centers" },
                   { to: "/insurance", icon: Shield, label: "Insurance Guide" },
-                  { to: "/request-help", icon: Phone, label: "Get Help Now" },
+                  { to: "/account/concierge", icon: Phone, label: "Get Matched" },
                 ].map((link) => (
                   <Link 
                     key={link.to}

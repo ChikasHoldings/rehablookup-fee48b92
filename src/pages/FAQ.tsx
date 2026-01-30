@@ -547,10 +547,10 @@ const FAQ = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3 ml-8 md:ml-0">
-                <Link to="/request-help?source=faq_cta">
+                <Link to="/account/concierge">
                   <Button size="sm" className="h-9 gap-2 text-sm font-semibold px-4">
                     <Heart className="h-4 w-4" />
-                    Request Help
+                    Get Matched
                   </Button>
                 </Link>
                 <Link to="/contact">

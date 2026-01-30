@@ -134,10 +134,10 @@ const StateDetoxPrograms = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
-                  Find Detox in {abbreviation}
+                  Get Matched in {abbreviation}
                 </Button>
               </Link>
               <Link to={`/rehab-centers/${stateSlug}`}>
@@ -354,10 +354,10 @@ const StateDetoxPrograms = () => {
               and can help verify your insurance coverage.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
-                  Get Help Now
+                  Get Matched
                 </Button>
               </Link>
               <Link to={`/rehab-centers/${stateSlug}`}>
