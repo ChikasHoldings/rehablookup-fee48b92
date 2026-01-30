@@ -27,11 +27,11 @@ interface ProviderSidebarProps {
 const navItems = [
   { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/provider/inquiries", label: "Inquiries", icon: Users },
-  { href: "/provider/billing", label: "Billing", icon: Wallet },
   { href: "/provider/placement-network", label: "Placement Network", icon: Network },
-  { href: "/provider/reviews", label: "Reviews", icon: Star },
-  { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/provider/listing", label: "My Listing", icon: Building2 },
+  { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/provider/reviews", label: "Reviews", icon: Star },
+  { href: "/provider/billing", label: "Billing", icon: Wallet },
   { href: "/provider/settings", label: "Settings", icon: Settings },
 ];
 
