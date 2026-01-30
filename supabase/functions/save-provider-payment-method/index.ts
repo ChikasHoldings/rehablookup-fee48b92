@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const logStep = (step: string, details?: unknown) => {
@@ -70,18 +70,42 @@ serve(async (req) => {
     
     let lastFour = '';
     let type = 'card';
-    let bankName = null;
+    let bankName: string | null = null;
+    let cardBrand: string | null = null;
+    let expMonth: number | null = null;
+    let expYear: number | null = null;
+    let isVerified = true;
 
     if (paymentMethod.type === 'card' && paymentMethod.card) {
       lastFour = paymentMethod.card.last4;
       type = 'card';
+      cardBrand = paymentMethod.card.brand;
+      expMonth = paymentMethod.card.exp_month;
+      expYear = paymentMethod.card.exp_year;
+      logStep("Processing card payment method", { brand: cardBrand, lastFour });
     } else if (paymentMethod.type === 'us_bank_account' && paymentMethod.us_bank_account) {
       lastFour = paymentMethod.us_bank_account.last4;
       type = 'ach';
       bankName = paymentMethod.us_bank_account.bank_name;
+      
+      // Check verification status for ACH
+      // Financial Connections provides instant verification
+      // Micro-deposits may still be pending
+      const accountStatus = paymentMethod.us_bank_account.status_details;
+      if (accountStatus && accountStatus.blocked) {
+        isVerified = false;
+      }
+      
+      logStep("Processing ACH payment method", { 
+        bankName, 
+        lastFour,
+        accountType: paymentMethod.us_bank_account.account_type,
+        accountHolderType: paymentMethod.us_bank_account.account_holder_type
+      });
     }
 
-    logStep("Payment method details", { type, lastFour });
+    // Get customer ID from payment method
+    const stripeCustomerId = paymentMethod.customer as string | null;
 
     // If setting as default, unset other defaults first
     if (setAsDefault) {
@@ -89,6 +113,8 @@ serve(async (req) => {
         .from('provider_payment_methods')
         .update({ is_default: false })
         .eq('facility_id', facilityId);
+      
+      logStep("Unset previous default payment methods");
     }
 
     // Check if this payment method already exists
@@ -98,39 +124,74 @@ serve(async (req) => {
       .eq('stripe_payment_method_id', paymentMethodId)
       .maybeSingle();
 
+    const paymentMethodData = {
+      facility_id: facilityId,
+      type,
+      stripe_payment_method_id: paymentMethodId,
+      stripe_customer_id: stripeCustomerId,
+      last_four: lastFour,
+      bank_name: bankName,
+      card_brand: cardBrand,
+      exp_month: expMonth,
+      exp_year: expYear,
+      is_default: setAsDefault ?? true,
+      is_verified: isVerified,
+      updated_at: new Date().toISOString(),
+    };
+
     if (existing) {
       // Update existing
-      await supabaseService
+      const { error: updateError } = await supabaseService
         .from('provider_payment_methods')
-        .update({
-          is_default: setAsDefault ?? true,
-          updated_at: new Date().toISOString(),
-        })
+        .update(paymentMethodData)
         .eq('id', existing.id);
       
-      logStep("Updated existing payment method");
+      if (updateError) {
+        throw new Error(`Failed to update payment method: ${updateError.message}`);
+      }
+      
+      logStep("Updated existing payment method", { id: existing.id });
     } else {
       // Insert new payment method
       const { error: insertError } = await supabaseService
         .from('provider_payment_methods')
         .insert({
-          facility_id: facilityId,
-          type,
-          stripe_payment_method_id: paymentMethodId,
-          last_four: lastFour,
-          bank_name: bankName,
-          is_default: setAsDefault ?? true,
+          ...paymentMethodData,
+          created_at: new Date().toISOString(),
         });
 
       if (insertError) {
         throw new Error(`Failed to save payment method: ${insertError.message}`);
       }
 
-      logStep("Saved new payment method");
+      logStep("Saved new payment method", { type, lastFour });
+    }
+
+    // Set the default payment method on the Stripe customer for off-session charges
+    if (stripeCustomerId && (setAsDefault ?? true)) {
+      try {
+        await stripe.customers.update(stripeCustomerId, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId,
+          },
+        });
+        logStep("Updated Stripe customer default payment method");
+      } catch (stripeErr) {
+        // Non-fatal - continue even if this fails
+        logStep("Warning: Could not set default on Stripe customer", { 
+          error: stripeErr instanceof Error ? stripeErr.message : String(stripeErr) 
+        });
+      }
     }
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ 
+        success: true,
+        type,
+        lastFour,
+        bankName,
+        isVerified,
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

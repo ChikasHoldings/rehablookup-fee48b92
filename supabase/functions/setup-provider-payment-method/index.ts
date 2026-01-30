@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const logStep = (step: string, details?: unknown) => {
@@ -70,19 +70,22 @@ serve(async (req) => {
     // Check if customer already exists for this facility
     const { data: existingMethods } = await supabaseService
       .from('provider_payment_methods')
-      .select('stripe_payment_method_id')
+      .select('stripe_payment_method_id, stripe_customer_id')
       .eq('facility_id', facilityId)
       .limit(1);
 
     let customerId: string;
 
-    if (existingMethods && existingMethods.length > 0) {
+    if (existingMethods && existingMethods.length > 0 && existingMethods[0].stripe_customer_id) {
+      customerId = existingMethods[0].stripe_customer_id;
+      logStep("Found existing customer from database", { customerId });
+    } else if (existingMethods && existingMethods.length > 0) {
       // Get customer from existing payment method
       const pm = await stripe.paymentMethods.retrieve(existingMethods[0].stripe_payment_method_id);
       customerId = pm.customer as string;
-      logStep("Found existing customer", { customerId });
+      logStep("Found existing customer from payment method", { customerId });
     } else {
-      // Create new customer
+      // Create new customer or find existing by email
       const email = facility.email || userData.user.email;
       
       // Check if Stripe customer exists
@@ -90,7 +93,7 @@ serve(async (req) => {
       
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
-        logStep("Found existing Stripe customer", { customerId });
+        logStep("Found existing Stripe customer by email", { customerId });
       } else {
         const customer = await stripe.customers.create({
           email,
@@ -98,6 +101,7 @@ serve(async (req) => {
           metadata: {
             facility_id: facilityId,
             user_id: userData.user.id,
+            source: 'placement_network',
           },
         });
         customerId = customer.id;
@@ -105,10 +109,20 @@ serve(async (req) => {
       }
     }
 
-    // Create SetupIntent for saving payment method
+    // Create SetupIntent with Financial Connections for ACH
+    // This enables instant bank account verification through Stripe
     const setupIntent = await stripe.setupIntents.create({
       customer: customerId,
-      payment_method_types: ['card', 'us_bank_account'],
+      payment_method_types: ['us_bank_account', 'card'],
+      payment_method_options: {
+        us_bank_account: {
+          financial_connections: {
+            permissions: ['payment_method', 'balances'],
+            prefetch: ['balances'],
+          },
+          verification_method: 'instant',
+        },
+      },
       metadata: {
         facility_id: facilityId,
         purpose: 'placement_billing',
@@ -116,7 +130,10 @@ serve(async (req) => {
       usage: 'off_session',
     });
 
-    logStep("SetupIntent created", { setupIntentId: setupIntent.id });
+    logStep("SetupIntent created with Financial Connections", { 
+      setupIntentId: setupIntent.id,
+      paymentMethodTypes: setupIntent.payment_method_types 
+    });
 
     return new Response(
       JSON.stringify({
