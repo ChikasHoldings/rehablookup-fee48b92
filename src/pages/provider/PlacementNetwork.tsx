@@ -464,27 +464,27 @@ export default function ProviderPlacementNetworkPage() {
           </>
         ) : (
           /* Opted-In View */
-          <Tabs defaultValue="introductions" className="space-y-6">
-            <TabsList className="w-full grid grid-cols-4 h-11">
-              <TabsTrigger value="introductions" className="gap-1.5 text-xs sm:text-sm">
-                <Bell className="h-4 w-4" />
+          <Tabs defaultValue="introductions" className="space-y-4 sm:space-y-6">
+            <TabsList className="w-full grid grid-cols-4 h-10 sm:h-11">
+              <TabsTrigger value="introductions" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-3 relative">
+                <Bell className="h-4 w-4 shrink-0" />
                 <span className="hidden sm:inline">Introductions</span>
                 {pendingIntroductions.length > 0 && (
-                  <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-[10px]">
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 sm:relative sm:top-0 sm:right-0 sm:ml-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 sm:px-1.5 text-[9px] sm:text-[10px]">
                     {pendingIntroductions.length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm">
-                <Settings className="h-4 w-4" />
+              <TabsTrigger value="profile" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-3">
+                <Settings className="h-4 w-4 shrink-0" />
                 <span className="hidden sm:inline">Profile</span>
               </TabsTrigger>
-              <TabsTrigger value="billing" className="gap-1.5 text-xs sm:text-sm">
-                <CreditCard className="h-4 w-4" />
+              <TabsTrigger value="billing" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-3">
+                <CreditCard className="h-4 w-4 shrink-0" />
                 <span className="hidden sm:inline">Billing</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-1.5 text-xs sm:text-sm">
-                <Building2 className="h-4 w-4" />
+              <TabsTrigger value="history" className="gap-1 sm:gap-1.5 text-xs sm:text-sm px-1 sm:px-3">
+                <Building2 className="h-4 w-4 shrink-0" />
                 <span className="hidden sm:inline">Placements</span>
               </TabsTrigger>
             </TabsList>
@@ -572,15 +572,15 @@ export default function ProviderPlacementNetworkPage() {
                   <CardTitle className="text-lg">Network Profile</CardTitle>
                   <CardDescription>Tell us what types of patients you can accept</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-5 sm:space-y-6">
                   {/* Care Types */}
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     <Label className="text-sm font-medium">Accepted Care Types</Label>
-                    <div className="grid sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {CARE_TYPES.map((type) => (
                         <Label
                           key={type.value}
-                          className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors"
+                          className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border cursor-pointer hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors"
                         >
                           <Checkbox
                             checked={profileForm.acceptedCareTypes.includes(type.value)}
@@ -593,19 +593,19 @@ export default function ProviderPlacementNetworkPage() {
                   </div>
 
                   {/* Insurance */}
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     <Label className="text-sm font-medium">Accepted Insurance</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
                       {INSURANCE_OPTIONS.map((ins) => (
                         <Label
                           key={ins}
-                          className="flex items-center gap-2.5 p-2.5 rounded-lg border cursor-pointer hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors"
+                          className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg border cursor-pointer hover:bg-muted/50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors"
                         >
                           <Checkbox
                             checked={profileForm.acceptedInsurance.includes(ins.toLowerCase().replace(/\s/g, "_"))}
                             onCheckedChange={() => toggleArrayValue("acceptedInsurance", ins.toLowerCase().replace(/\s/g, "_"))}
                           />
-                          <span className="text-xs">{ins}</span>
+                          <span className="text-[11px] sm:text-xs leading-tight">{ins}</span>
                         </Label>
                       ))}
                     </div>
@@ -630,10 +630,10 @@ export default function ProviderPlacementNetworkPage() {
                   </div>
 
                   {/* Admissions Contact */}
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <Label className="text-sm font-medium">Admissions Contact (for placement cases)</Label>
-                    <div className="grid sm:grid-cols-3 gap-4">
-                      <div className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                      <div className="space-y-1.5 sm:space-y-2">
                         <Label className="text-xs text-muted-foreground">Contact Name</Label>
                         <Input
                           placeholder="Admissions Director"
@@ -641,7 +641,7 @@ export default function ProviderPlacementNetworkPage() {
                           onChange={(e) => setProfileForm((p) => ({ ...p, admissionsContact: e.target.value }))}
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-1.5 sm:space-y-2">
                         <Label className="text-xs text-muted-foreground">Email</Label>
                         <Input
                           type="email"
@@ -650,7 +650,7 @@ export default function ProviderPlacementNetworkPage() {
                           onChange={(e) => setProfileForm((p) => ({ ...p, admissionsEmail: e.target.value }))}
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-1.5 sm:space-y-2">
                         <Label className="text-xs text-muted-foreground">Phone</Label>
                         <Input
                           type="tel"
@@ -697,34 +697,34 @@ export default function ProviderPlacementNetworkPage() {
             </TabsContent>
 
             {/* Billing Tab */}
-            <TabsContent value="billing" className="space-y-6">
+            <TabsContent value="billing" className="space-y-4 sm:space-y-6">
               {/* Signed Agreement Status */}
               {facilityData?.concierge_terms_accepted_at && (
                 <Card className="border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <FileSignature className="h-5 w-5 text-emerald-600" />
+                  <CardHeader className="pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <FileSignature className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 shrink-0" />
                       Agreement Status
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                       <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Terms Accepted</span>
                     </div>
-                    <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Signed on</p>
-                        <p className="font-medium">
-                          {format(new Date(facilityData.concierge_terms_accepted_at), "MMM d, yyyy 'at' h:mm a")}
+                        <p className="text-xs sm:text-sm text-muted-foreground">Signed on</p>
+                        <p className="text-sm font-medium">
+                          {format(new Date(facilityData.concierge_terms_accepted_at), "MMM d, yyyy")}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Terms Version</p>
-                        <p className="font-medium">{facilityData.concierge_terms_version || "1.0"}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Terms Version</p>
+                        <p className="text-sm font-medium">{facilityData.concierge_terms_version || "1.0"}</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="gap-2 mt-2" onClick={() => setTermsModalOpen(true)}>
+                    <Button variant="outline" size="sm" className="gap-2 mt-2 w-full sm:w-auto" onClick={() => setTermsModalOpen(true)}>
                       <FileText className="h-4 w-4" />
                       View Agreement
                     </Button>
@@ -734,38 +734,38 @@ export default function ProviderPlacementNetworkPage() {
 
               {/* Fee Structure */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-muted-foreground" />
+                <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-2 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
                     Placement Fee Structure
                   </CardTitle>
-                  <CardDescription>You only pay when a placement is confirmed by both parties</CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">You only pay when a placement is confirmed by both parties</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl border bg-muted/30">
-                      <p className="text-sm text-muted-foreground mb-1">Flat Fee</p>
-                      <p className="text-2xl font-bold">
+                <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="p-3 sm:p-4 rounded-xl border bg-muted/30">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Flat Fee</p>
+                      <p className="text-xl sm:text-2xl font-bold">
                         ${proSubscription ? PLACEMENT_FEES.flat_fee.pro : PLACEMENT_FEES.flat_fee.standard}
                       </p>
                       {proSubscription ? (
-                        <Badge variant="outline" className="mt-2 border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30">
+                        <Badge variant="outline" className="mt-2 border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 text-[10px] sm:text-xs">
                           Pro: 20% off
                         </Badge>
                       ) : (
-                        <p className="text-xs text-muted-foreground mt-2">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
                           Pro: ${PLACEMENT_FEES.flat_fee.pro} <span className="text-primary">(save $240)</span>
                         </p>
                       )}
                     </div>
-                    <div className="p-4 rounded-xl border bg-muted/30">
-                      <p className="text-sm text-muted-foreground mb-1">Commission</p>
-                      <p className="text-2xl font-bold">
+                    <div className="p-3 sm:p-4 rounded-xl border bg-muted/30">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Commission</p>
+                      <p className="text-xl sm:text-2xl font-bold">
                         {proSubscription ? PLACEMENT_FEES.commission.pro : PLACEMENT_FEES.commission.standard}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">of first month (max ${PLACEMENT_FEES.commission.cap})</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">of 1st mo. (max ${PLACEMENT_FEES.commission.cap})</p>
                       {!proSubscription && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                           Pro: {PLACEMENT_FEES.commission.pro} <span className="text-primary">(20% off)</span>
                         </p>
                       )}
@@ -773,12 +773,12 @@ export default function ProviderPlacementNetworkPage() {
                   </div>
 
                   {/* When charged FAQ */}
-                  <div className="p-4 rounded-lg bg-muted/50 border border-dashed">
-                    <p className="text-sm font-medium flex items-center gap-2 mb-2">
-                      <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  <div className="p-3 sm:p-4 rounded-lg bg-muted/50 border border-dashed">
+                    <p className="text-xs sm:text-sm font-medium flex items-center gap-2 mb-2">
+                      <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
                       When will I be charged?
                     </p>
-                    <ul className="text-xs text-muted-foreground space-y-1.5 ml-6">
+                    <ul className="text-[11px] sm:text-xs text-muted-foreground space-y-1 sm:space-y-1.5 ml-5 sm:ml-6">
                       <li>• Fees are charged only after confirmed placement</li>
                       <li>• Both you and the family must confirm admission</li>
                       <li>• Invoices are due within 14 days</li>
@@ -789,36 +789,36 @@ export default function ProviderPlacementNetworkPage() {
 
               {/* Payment Methods */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-muted-foreground" />
+                <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-2 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
                     Payment Methods
                   </CardTitle>
-                  <CardDescription>Add a payment method to receive placement referrals</CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">Add a payment method to receive placement referrals</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
                   {paymentMethods && paymentMethods.length > 0 ? (
                     paymentMethods.map((pm: any) => (
-                      <div key={pm.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center gap-3">
+                      <div key={pm.id} className="flex items-center justify-between p-2.5 sm:p-3 border rounded-lg gap-2">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                           {pm.type === "ach" ? (
-                            <Landmark className="h-5 w-5 text-muted-foreground" />
+                            <Landmark className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
                           ) : (
-                            <CreditCard className="h-5 w-5 text-muted-foreground" />
+                            <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
                           )}
-                          <div>
-                            <p className="font-medium">
-                              {pm.type === "ach" ? pm.bank_name || "Bank Account" : "Card"} •••• {pm.last_four}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {pm.type === "ach" ? pm.bank_name || "Bank" : "Card"} •••• {pm.last_four}
                             </p>
-                            <p className="text-xs text-muted-foreground">Added {format(new Date(pm.created_at), "MMM d, yyyy")}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Added {format(new Date(pm.created_at), "MMM d, yyyy")}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {pm.is_default && <Badge variant="secondary">Default</Badge>}
+                        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                          {pm.is_default && <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 sm:px-2">Default</Badge>}
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive"
                             onClick={() => {
                               if (confirm("Remove this payment method?")) {
                                 deletePaymentMethodMutation.mutate(pm.id);
@@ -826,16 +826,16 @@ export default function ProviderPlacementNetworkPage() {
                             }}
                             disabled={deletePaymentMethodMutation.isPending}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           </Button>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <Alert>
+                    <Alert className="py-3">
                       <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        Add a payment method to start receiving placement referrals. You'll only be charged on confirmed placements.
+                      <AlertDescription className="text-xs sm:text-sm">
+                        Add a payment method to start receiving placement referrals.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -848,34 +848,34 @@ export default function ProviderPlacementNetworkPage() {
 
               {/* Invoices */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
+                <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-2 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
                     Invoices
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                   {invoices && invoices.length > 0 ? (
                     <div className="space-y-2">
                       {invoices.map((inv: any) => (
-                        <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div>
-                            <p className="font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
-                            <p className="text-xs text-muted-foreground">{format(new Date(inv.created_at), "MMM d, yyyy")}</p>
+                        <div key={inv.id} className="flex items-center justify-between p-2.5 sm:p-3 border rounded-lg gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">{format(new Date(inv.created_at), "MMM d, yyyy")}</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize">
+                          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                            <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize text-[10px] sm:text-xs px-1.5 sm:px-2">
                               {inv.status}
                             </Badge>
                             {inv.status === "paid" && inv.receipt_url && (
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
+                                className="h-7 w-7 sm:h-8 sm:w-8"
                                 asChild
                               >
                                 <a href={inv.receipt_url} target="_blank" rel="noopener noreferrer" title="View Receipt">
-                                  <ExternalLink className="h-4 w-4" />
+                                  <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                 </a>
                               </Button>
                             )}
@@ -884,8 +884,8 @@ export default function ProviderPlacementNetworkPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">No invoices yet</p>
+                    <div className="text-center py-6 sm:py-8">
+                      <p className="text-sm text-muted-foreground">No invoices yet</p>
                     </div>
                   )}
                 </CardContent>
@@ -893,31 +893,31 @@ export default function ProviderPlacementNetworkPage() {
             </TabsContent>
 
             {/* Placements Tab */}
-            <TabsContent value="history" className="space-y-4">
+            <TabsContent value="history" className="space-y-3 sm:space-y-4">
               {placements && placements.length > 0 ? (
                 placements.map((p) => (
                   <Card key={p.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="font-medium">Case #{p.id.slice(0, 8).toUpperCase()}</p>
-                        <Badge variant="outline" className="border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30">
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex items-center justify-between mb-2 sm:mb-3 gap-2">
+                        <p className="text-sm font-medium truncate">Case #{p.id.slice(0, 8).toUpperCase()}</p>
+                        <Badge variant="outline" className="border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 shrink-0 text-[10px] sm:text-xs">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Admitted
                         </Badge>
                       </div>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
                         <div>
-                          <span className="text-muted-foreground block text-xs mb-0.5">Placed</span>
+                          <span className="text-muted-foreground block text-[10px] sm:text-xs mb-0.5">Placed</span>
                           <p className="font-medium">
                             {p.placement_confirmed_at && format(new Date(p.placement_confirmed_at), "MMM d, yyyy")}
                           </p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground block text-xs mb-0.5">Type</span>
-                          <p className="font-medium capitalize">{p.provider_fee_type || "flat_fee"}</p>
+                          <span className="text-muted-foreground block text-[10px] sm:text-xs mb-0.5">Type</span>
+                          <p className="font-medium capitalize">{p.provider_fee_type === "flat_fee" ? "Flat" : p.provider_fee_type || "Flat"}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground block text-xs mb-0.5">Fee</span>
+                          <span className="text-muted-foreground block text-[10px] sm:text-xs mb-0.5">Fee</span>
                           <p className="font-medium">{p.provider_fee_cents ? `$${(p.provider_fee_cents / 100).toFixed(0)}` : "—"}</p>
                         </div>
                       </div>
@@ -926,12 +926,12 @@ export default function ProviderPlacementNetworkPage() {
                 ))
               ) : (
                 <Card className="border-dashed">
-                  <CardContent className="py-16 text-center">
-                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                      <Building2 className="h-6 w-6 text-muted-foreground" />
+                  <CardContent className="py-10 sm:py-16 text-center">
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                     </div>
-                    <p className="font-medium text-foreground mb-1">No placements yet</p>
-                    <p className="text-sm text-muted-foreground">Successful placements will appear here</p>
+                    <p className="text-sm font-medium text-foreground mb-1">No placements yet</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Successful placements will appear here</p>
                   </CardContent>
                 </Card>
               )}
