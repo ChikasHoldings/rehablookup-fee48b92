@@ -391,75 +391,54 @@ function PaymentFormContent({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as "ach" | "card")}>
         <TabsList className="grid w-full grid-cols-2 h-auto p-1">
           <TabsTrigger 
             value="ach" 
             className={cn(
-              "gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
+              "gap-1.5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
               "flex-col h-auto"
             )}
           >
-            <Landmark className="h-5 w-5" />
-            <div className="flex flex-col items-center">
-              <span className="font-medium">Bank Account (ACH)</span>
-              <span className="text-[10px] opacity-80">Recommended • Lower fees</span>
-            </div>
+            <Landmark className="h-4 w-4" />
+            <span className="font-medium text-sm">Bank Account</span>
           </TabsTrigger>
           <TabsTrigger 
             value="card" 
             className={cn(
-              "gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
+              "gap-1.5 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
               "flex-col h-auto"
             )}
           >
-            <CreditCard className="h-5 w-5" />
-            <div className="flex flex-col items-center">
-              <span className="font-medium">Credit/Debit Card</span>
-              <span className="text-[10px] opacity-80">Backup option</span>
-            </div>
+            <CreditCard className="h-4 w-4" />
+            <span className="font-medium text-sm">Card</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="ach" className="mt-6 space-y-4">
-          <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-medium text-sm">Connect Your Bank Account</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Securely link your business bank account using Stripe Financial Connections. 
-                  This enables ACH direct debit for placement fees with lower processing costs.
-                </p>
-              </div>
-            </div>
-
+        <TabsContent value="ach" className="mt-4 space-y-3">
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
             {/* Account Holder Name Input */}
-            <div className="space-y-2">
-              <Label htmlFor="accountHolderName">Account Holder Name</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="accountHolderName" className="text-sm">Account Holder Name</Label>
               <Input
                 id="accountHolderName"
                 type="text"
-                placeholder="Business or account holder name"
+                placeholder="Name on bank account"
                 value={accountHolderName}
                 onChange={(e) => setAccountHolderName(e.target.value)}
                 disabled={isConnectingBank}
+                className="h-9"
               />
-              <p className="text-xs text-muted-foreground">
-                Enter the name as it appears on your bank account.
-              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Shield className="h-4 w-4 text-emerald-600" />
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5 text-emerald-600" />
                 <span>Bank-level security</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                 <span>Instant verification</span>
               </div>
             </div>
@@ -468,7 +447,6 @@ function PaymentFormContent({
               onClick={handleACHSubmit}
               disabled={!stripe || !clientSecret || isConnectingBank || !accountHolderName.trim()}
               className="w-full"
-              size="lg"
             >
               {isConnectingBank ? (
                 <>
@@ -486,41 +464,38 @@ function PaymentFormContent({
 
           {/* Verification Status Feedback */}
           {verificationStatus?.status === 'pending_microdeposits' && (
-            <Alert className="bg-amber-500/10 border-amber-500/20">
+            <Alert className="bg-amber-500/10 border-amber-500/20 py-2">
               <Clock className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-sm">
-                <strong>Micro-deposit verification required.</strong> Two small deposits (under $1) will appear in your bank account within 1-2 business days. You'll receive an email with instructions to verify the amounts.
+              <AlertDescription className="text-xs">
+                <strong>Micro-deposits required.</strong> Check your email in 1-2 days for verification.
               </AlertDescription>
             </Alert>
           )}
 
           {verificationStatus?.status === 'processing' && (
-            <Alert className="bg-blue-500/10 border-blue-500/20">
+            <Alert className="bg-blue-500/10 border-blue-500/20 py-2">
               <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-sm">
+              <AlertDescription className="text-xs">
                 {verificationStatus.message}
               </AlertDescription>
             </Alert>
           )}
 
-          <Alert className="bg-emerald-500/10 border-emerald-500/20">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            <AlertDescription className="text-sm">
-              <strong>No upfront costs.</strong> Your account will only be debited when a placement is confirmed and both parties agree.
-            </AlertDescription>
-          </Alert>
+          <p className="text-xs text-muted-foreground text-center">
+            You'll only be charged when a placement is confirmed.
+          </p>
         </TabsContent>
 
-        <TabsContent value="card" className="mt-6 space-y-4">
-          <form onSubmit={handleCardSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Card Information</Label>
-              <div className="p-4 border rounded-lg bg-background">
+        <TabsContent value="card" className="mt-4 space-y-3">
+          <form onSubmit={handleCardSubmit} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-sm">Card Details</Label>
+              <div className="p-3 border rounded-lg bg-background">
                 <CardElement
                   options={{
                     style: {
                       base: {
-                        fontSize: "16px",
+                        fontSize: "15px",
                         color: "#1a1a1a",
                         fontFamily: "system-ui, sans-serif",
                         "::placeholder": {
@@ -536,18 +511,10 @@ function PaymentFormContent({
               </div>
             </div>
 
-            <Alert className="bg-muted/50 border-muted">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                Cards may have higher processing fees than ACH. Consider using a bank account for lower costs.
-              </AlertDescription>
-            </Alert>
-
             <Button
               type="submit"
               disabled={!stripe || !clientSecret || isSubmitting}
               className="w-full"
-              size="lg"
             >
               {isSubmitting ? (
                 <>
@@ -561,19 +528,23 @@ function PaymentFormContent({
                 </>
               )}
             </Button>
+
+            <p className="text-xs text-muted-foreground text-center">
+              Cards may have higher fees than bank accounts.
+            </p>
           </form>
         </TabsContent>
       </Tabs>
 
       {error && clientSecret && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="py-2">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="text-xs">{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="flex justify-end pt-2">
-        <Button type="button" variant="ghost" onClick={onCancel}>
+      <div className="flex justify-end">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
           Cancel
         </Button>
       </div>
@@ -649,14 +620,14 @@ export function AddPaymentMethodModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Landmark className="h-5 w-5" />
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Landmark className="h-4 w-4" />
             Add Payment Method
           </DialogTitle>
-          <DialogDescription>
-            Add a payment method for placement network billing. You'll only be charged when a placement is confirmed.
+          <DialogDescription className="text-xs">
+            For placement network billing. Charged only on confirmed placements.
           </DialogDescription>
         </DialogHeader>
 
