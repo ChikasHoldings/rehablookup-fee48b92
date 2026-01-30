@@ -1,0 +1,269 @@
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  Users, 
+  CalendarDays, 
+  MessageCircle,
+  Loader2,
+  Inbox
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { PlacementMatchCard } from "./PlacementMatchCard";
+import { ConciergeToursList } from "@/components/seeker/ConciergeToursList";
+import { ConciergeMessaging } from "@/components/seeker/ConciergeMessaging";
+
+interface Facility {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  phone: string;
+  slug: string;
+  logo_url: string | null;
+  facility_type: string;
+}
+
+interface PlacementTabsProps {
+  inquiryId: string;
+  matchedFacilityIds: string[] | null;
+  matchedFacilities: Facility[] | undefined;
+  onRequestTour: (facility: Facility) => void;
+}
+
+export function PlacementTabs({ 
+  inquiryId, 
+  matchedFacilityIds,
+  matchedFacilities,
+  onRequestTour 
+}: PlacementTabsProps) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("facilities");
+
+  // Fetch rejected facilities
+  const { data: rejectedFacilities, isLoading: rejectedLoading } = useQuery({
+    queryKey: ["rejected-facilities", inquiryId],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from("concierge_rejected_facilities")
+        .select("facility_id")
+        .eq("inquiry_id", inquiryId)
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      return data?.map(r => r.facility_id) || [];
+    },
+    enabled: !!inquiryId,
+  });
+
+  // Dismiss mutation
+  const dismissMutation = useMutation({
+    mutationFn: async (facilityId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("concierge_rejected_facilities")
+        .insert({
+          inquiry_id: inquiryId,
+          facility_id: facilityId,
+          user_id: user.id,
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Facility dismissed" });
+      queryClient.invalidateQueries({ queryKey: ["rejected-facilities", inquiryId] });
+    },
+    onError: () => {
+      toast({ title: "Failed to dismiss", variant: "destructive" });
+    },
+  });
+
+  // Tour count
+  const { data: tourCount } = useQuery({
+    queryKey: ["tour-count", inquiryId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("concierge_tour_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("inquiry_id", inquiryId);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!inquiryId,
+  });
+
+  // Unread message count
+  const { data: unreadCount } = useQuery({
+    queryKey: ["unread-message-count", inquiryId],
+    queryFn: async () => {
+      const { data: threads, error } = await supabase
+        .from("concierge_threads")
+        .select("id, last_message_at, user_last_read_at")
+        .eq("inquiry_id", inquiryId);
+      
+      if (error) throw error;
+      
+      let count = 0;
+      for (const thread of threads || []) {
+        if (thread.last_message_at) {
+          const lastMessage = new Date(thread.last_message_at);
+          const lastRead = thread.user_last_read_at ? new Date(thread.user_last_read_at) : null;
+          if (!lastRead || lastMessage > lastRead) count++;
+        }
+      }
+      return count;
+    },
+    enabled: !!inquiryId,
+  });
+
+  // Realtime subscription for threads
+  useEffect(() => {
+    if (!inquiryId) return;
+
+    const channel = supabase
+      .channel(`threads-${inquiryId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "concierge_threads", filter: `inquiry_id=eq.${inquiryId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["unread-message-count", inquiryId] });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [inquiryId, queryClient]);
+
+  const rejectedSet = new Set(rejectedFacilities || []);
+  const visibleFacilities = matchedFacilities?.filter(f => !rejectedSet.has(f.id));
+  const hasMatches = visibleFacilities && visibleFacilities.length > 0;
+
+  return (
+    <Card className="border-0 shadow-lg">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <CardHeader className="pb-0 border-b">
+          <TabsList className="w-full justify-start gap-1 h-auto p-1 bg-transparent">
+            <TabsTrigger 
+              value="facilities" 
+              className="gap-2 px-4 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg"
+            >
+              <Users className="h-4 w-4" />
+              <span>Matches</span>
+              {hasMatches && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-background">
+                  {visibleFacilities?.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="tours" 
+              className="gap-2 px-4 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg"
+            >
+              <CalendarDays className="h-4 w-4" />
+              <span>Tours</span>
+              {tourCount !== undefined && tourCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs bg-background">
+                  {tourCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="messages" 
+              className="gap-2 px-4 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>Messages</span>
+              {unreadCount !== undefined && unreadCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </CardHeader>
+
+        <CardContent className="p-6">
+          <AnimatePresence mode="wait">
+            {/* Matches Tab */}
+            <TabsContent value="facilities" className="m-0">
+              {rejectedLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : hasMatches ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  <p className="text-sm text-muted-foreground">
+                    These treatment centers match your needs. View profiles, request tours, or message them directly.
+                  </p>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {visibleFacilities?.map((facility) => (
+                      <PlacementMatchCard
+                        key={facility.id}
+                        facility={facility}
+                        onRequestTour={() => onRequestTour(facility)}
+                        onDismiss={() => dismissMutation.mutate(facility.id)}
+                        isDismissing={dismissMutation.isPending}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              ) : (
+                <EmptyState 
+                  icon={<Users className="h-12 w-12" />}
+                  title="No matches yet"
+                  description="Our team is reviewing your case and finding the best treatment centers for you."
+                />
+              )}
+            </TabsContent>
+
+            {/* Tours Tab */}
+            <TabsContent value="tours" className="m-0">
+              <ConciergeToursList inquiryId={inquiryId} />
+            </TabsContent>
+
+            {/* Messages Tab */}
+            <TabsContent value="messages" className="m-0">
+              <ConciergeMessaging 
+                inquiryId={inquiryId} 
+                matchedFacilityIds={matchedFacilityIds || []}
+              />
+            </TabsContent>
+          </AnimatePresence>
+        </CardContent>
+      </Tabs>
+    </Card>
+  );
+}
+
+function EmptyState({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col items-center justify-center py-12 text-center"
+    >
+      <div className="text-muted-foreground/30 mb-4">
+        {icon}
+      </div>
+      <h3 className="font-medium text-muted-foreground">{title}</h3>
+      <p className="text-sm text-muted-foreground/70 mt-1 max-w-sm">{description}</p>
+    </motion.div>
+  );
+}

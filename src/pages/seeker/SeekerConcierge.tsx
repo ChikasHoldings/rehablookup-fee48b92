@@ -2,12 +2,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,39 +18,27 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { 
-  Clock, 
-  Search, 
-  Users, 
-  Send, 
-  CheckCircle, 
-  XCircle,
-  ArrowRight,
-  Calendar,
-  MapPin,
-  CreditCard,
-  HeartHandshake,
   RefreshCw,
-  MessageCircle,
-  CalendarDays,
-  ThumbsDown,
+  XCircle,
   Loader2,
-  Mail
+  ArrowLeft,
+  HeartHandshake
 } from "lucide-react";
-import { format } from "date-fns";
-import { CaseStatusTimeline } from "@/components/seeker/CaseStatusTimeline";
-import { MatchedFacilityCard } from "@/components/seeker/MatchedFacilityCard";
+import { 
+  PlacementStatusCard, 
+  PlacementHero, 
+  PlacementTabs,
+  PlacementConfirmationCard,
+  PlacementMatchCard,
+  PlacementSupportCard 
+} from "@/components/seeker/placement";
 import { ConfirmAdmissionModal } from "@/components/seeker/ConfirmAdmissionModal";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 import { TourRequestModal } from "@/components/seeker/TourRequestModal";
-import { ConciergeToursList } from "@/components/seeker/ConciergeToursList";
-import { ConciergeMessaging } from "@/components/seeker/ConciergeMessaging";
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
-import { ConciergeLandingContent } from "@/components/seeker/ConciergeLandingContent";
 import { ConciergePaymentRecovery } from "@/components/seeker/ConciergePaymentRecovery";
-import { TourTabsSection } from "@/components/seeker/TourTabsSection";
 
 interface ConciergeInquiry {
   id: string;
@@ -87,58 +74,16 @@ interface Facility {
   facility_type: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; icon: typeof Clock; color: string }> = {
-  new: { label: "Submitted", icon: Clock, color: "bg-blue-500" },
-  reviewing: { label: "Reviewing", icon: Search, color: "bg-yellow-500" },
-  matching: { label: "Finding Matches", icon: Users, color: "bg-purple-500" },
-  introductions_sent: { label: "Introductions Sent", icon: Send, color: "bg-indigo-500" },
-  in_contact: { label: "In Contact", icon: MessageCircle, color: "bg-teal-500" },
-  confirming: { label: "Awaiting Confirmation", icon: Clock, color: "bg-amber-500" },
-  placed: { label: "Placed", icon: CheckCircle, color: "bg-green-500" },
-  closed: { label: "Closed", icon: XCircle, color: "bg-muted-foreground" },
-};
-
-const TIMELINE_STEPS = ["new", "reviewing", "matching", "introductions_sent", "in_contact", "placed"];
-
-const HOW_IT_WORKS_STEPS = [
-  {
-    step: 1,
-    title: "Tell Us About Your Needs",
-    description: "Complete a brief intake form about your situation, preferences, and treatment goals.",
-  },
-  {
-    step: 2,
-    title: "Our Specialists Review Your Case",
-    description: "A dedicated placement advisor reviews your information and identifies the best matches.",
-  },
-  {
-    step: 3,
-    title: "We Connect You With Facilities",
-    description: "We introduce you to matched treatment centers that fit your specific needs.",
-  },
-  {
-    step: 4,
-    title: "Coordinate Tours and Calls",
-    description: "Schedule tours, ask questions, and communicate directly with facilities.",
-  },
-  {
-    step: 5,
-    title: "Get Admitted With Support",
-    description: "We help coordinate your admission and ensure a smooth transition to treatment.",
-  },
-];
-
 export default function SeekerConcierge() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { toast: toastHook } = useToast();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [tourModalFacility, setTourModalFacility] = useState<Facility | null>(null);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
-  const previousStatusRef = useRef<Record<string, string>>({});
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -149,7 +94,6 @@ export default function SeekerConcierge() {
     },
   });
 
-  // Get user display name from metadata or email
   const userName = currentUser?.user_metadata?.full_name || 
                    currentUser?.user_metadata?.name || 
                    currentUser?.email?.split("@")[0] || 
@@ -183,24 +127,17 @@ export default function SeekerConcierge() {
     },
   });
 
-  // Note: Real-time subscription removed - users are notified via email/SMS instead
-
-  // Handle payment verification from Stripe redirect
+  // Payment verification
   const verifyPaymentAndSubmit = useCallback(async (sessionId: string) => {
     setIsVerifyingPayment(true);
     
-    // Helper to store failed submission for retry
     const storeFailedSubmission = (data: any, error: string) => {
       localStorage.setItem("concierge_failed_submission", JSON.stringify({
-        sessionId,
-        data,
-        error,
-        timestamp: Date.now(),
+        sessionId, data, error, timestamp: Date.now(),
       }));
     };
 
     try {
-      // Verify payment
       const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-concierge-payment", {
         body: { sessionId }
       });
@@ -216,7 +153,6 @@ export default function SeekerConcierge() {
       }
 
       if (verifyData?.paid) {
-        // Get pending intake data from localStorage
         const pendingIntake = localStorage.getItem("concierge_pending_intake");
         if (pendingIntake) {
           const { formData, userName, userEmail, userPhone } = JSON.parse(pendingIntake);
@@ -229,33 +165,28 @@ export default function SeekerConcierge() {
               email: userEmail,
               phone: userPhone || "",
             },
-            userId: currentUser?.id, // Pass user ID for linking
+            userId: currentUser?.id,
           };
 
-          // Submit the intake with retry logic
-          const { data: submitData, error: submitError } = await supabase.functions.invoke("submit-concierge-intake", {
+          const { error: submitError } = await supabase.functions.invoke("submit-concierge-intake", {
             body: intakePayload,
           });
 
           if (submitError) {
-            // Store for potential retry
             storeFailedSubmission(intakePayload, submitError.message);
             throw submitError;
           }
 
-          // Clear pending data on success
           localStorage.removeItem("concierge_pending_intake");
           localStorage.removeItem("concierge_failed_submission");
           
           toast.success("Your intake has been submitted! We'll be in touch soon.");
           refetch();
         } else {
-          // Check for failed submission to retry
           const failedSubmission = localStorage.getItem("concierge_failed_submission");
           if (failedSubmission) {
             const { data: failedData } = JSON.parse(failedSubmission);
             if (failedData?.sessionId === sessionId) {
-              // Retry failed submission
               const { error: retryError } = await supabase.functions.invoke("submit-concierge-intake", {
                 body: failedData,
               });
@@ -274,14 +205,13 @@ export default function SeekerConcierge() {
         }
       }
 
-      // Clear URL params
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("session_id");
       newParams.delete("payment");
       setSearchParams(newParams, { replace: true });
     } catch (err) {
       console.error("Payment verification error:", err);
-      toast.error("Failed to submit intake. Your payment was successful - please email placement@rehablookup.com for assistance.");
+      toast.error("Failed to submit intake. Please email placement@rehablookup.com for assistance.");
     } finally {
       setIsVerifyingPayment(false);
     }
@@ -321,7 +251,7 @@ export default function SeekerConcierge() {
     enabled: !!selectedCase?.matched_facility_ids?.length,
   });
 
-  // Fetch placed facility details
+  // Fetch placed facility
   const { data: placedFacility } = useQuery({
     queryKey: ["placed-facility", selectedCase?.placed_facility_id],
     queryFn: async () => {
@@ -339,31 +269,23 @@ export default function SeekerConcierge() {
     enabled: !!selectedCase?.placed_facility_id,
   });
 
-  // Submit feedback mutation
-  // Track if feedback was just submitted (idempotency guard)
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-
+  // Feedback mutation
   const feedbackMutation = useMutation({
     mutationFn: async ({ rating, feedback }: { rating: number; feedback: string }) => {
-      // Idempotency check - prevent duplicate submissions
       if (selectedCase?.seeker_feedback || feedbackSubmitted) {
         throw new Error("Feedback already submitted");
       }
 
-      // Use update with additional check to ensure we don't overwrite
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .update({
-          seeker_rating: rating,
-          seeker_feedback: feedback,
-        })
+        .update({ seeker_rating: rating, seeker_feedback: feedback })
         .eq("id", selectedCase!.id)
-        .is("seeker_feedback", null) // Only update if not already set
+        .is("seeker_feedback", null)
         .select("id")
         .single();
       
       if (error) throw error;
-      if (!data) throw new Error("Feedback already submitted by another session");
+      if (!data) throw new Error("Feedback already submitted");
       
       return data;
     },
@@ -387,18 +309,13 @@ export default function SeekerConcierge() {
     mutationFn: async () => {
       if (!selectedCase) throw new Error("No case selected");
       
-      // Update case status to closed
       const { error } = await supabase
         .from("concierge_inquiries")
-        .update({
-          status: "closed",
-          closed_at: new Date().toISOString(),
-        })
+        .update({ status: "closed", closed_at: new Date().toISOString() })
         .eq("id", selectedCase.id);
       
       if (error) throw error;
 
-      // Log the cancellation event
       await supabase.from("concierge_case_events").insert({
         inquiry_id: selectedCase.id,
         event_type: "seeker_cancelled",
@@ -415,19 +332,19 @@ export default function SeekerConcierge() {
     },
   });
 
+  // Loading state
   if (casesLoading) {
     return (
       <div className="container max-w-4xl py-8 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
 
-  // ========== STATE A: No concierge case yet ==========
+  // ========== STATE A: No case yet ==========
   if (!cases?.length) {
-    // Show loading if verifying payment
     if (isVerifyingPayment) {
       return (
         <div className="container max-w-4xl py-8 flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -437,158 +354,80 @@ export default function SeekerConcierge() {
       );
     }
 
-    // Logged-in user: show landing page OR intake flow based on state
     if (currentUser) {
       return (
         <>
-        <Helmet>
-          <title>Concierge Placement Service | RehabLookup</title>
-          <meta name="description" content="Get personalized treatment center matching with our concierge service. We handle the research and introductions so you can focus on recovery." />
-        </Helmet>
-        <div className="container max-w-4xl py-8 space-y-8">
-          {/* Payment Recovery Component - shows only if there's a failed submission */}
-          <ConciergePaymentRecovery 
-            userId={currentUser.id} 
-            onRecoveryComplete={() => refetch()} 
-          />
-          
-          {showIntakeFlow ? (
-            <>
-              {/* Back button */}
-              <Button 
-                variant="ghost" 
-                onClick={() => setShowIntakeFlow(false)}
-                className="gap-2"
-              >
-                <ArrowRight className="h-4 w-4 rotate-180" />
-                Back to Overview
-              </Button>
-              
-              {/* Inline Intake Form */}
-              <ConciergeInlineIntake 
-                userEmail={userEmail} 
-                userName={userName}
-                userPhone={userPhone}
-                userId={currentUser?.id}
-              />
-            </>
-          ) : (
-            <>
-              {/* Landing Page Content */}
-              <ConciergeLandingContent onStartFlow={() => setShowIntakeFlow(true)} />
-              
-              {/* Email Support Card */}
-              <Card className="bg-muted/30">
-                <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Questions about concierge?</p>
-                      <p className="text-sm text-muted-foreground">Our team is here to help.</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" asChild>
-                    <a href="mailto:placement@rehablookup.com">Email Support</a>
+          <Helmet>
+            <title>Placement Network | RehabLookup</title>
+            <meta name="description" content="Get personalized treatment center matching with our placement service." />
+          </Helmet>
+          <div className="container max-w-4xl py-6 space-y-6">
+            <ConciergePaymentRecovery userId={currentUser.id} onRecoveryComplete={() => refetch()} />
+            
+            <AnimatePresence mode="wait">
+              {showIntakeFlow ? (
+                <motion.div
+                  key="intake"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-6"
+                >
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowIntakeFlow(false)}
+                    className="gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
                   </Button>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
+                  <ConciergeInlineIntake 
+                    userEmail={userEmail} 
+                    userName={userName}
+                    userPhone={userPhone}
+                    userId={currentUser?.id}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="hero"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <PlacementHero onGetStarted={() => setShowIntakeFlow(true)} />
+                  <PlacementSupportCard />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </>
       );
     }
 
-    // Non-logged in user: redirect to public concierge page
+    // Not logged in
     return (
       <>
-      <Helmet>
-        <title>Concierge Placement Service | RehabLookup</title>
-        <meta name="description" content="Get personalized treatment center matching with our concierge service. We handle the research and introductions so you can focus on recovery." />
-      </Helmet>
-      <div className="container max-w-4xl py-8 space-y-8">
-        {/* Hero Section */}
-        <div className="text-center space-y-4">
+        <Helmet>
+          <title>Placement Network | RehabLookup</title>
+        </Helmet>
+        <div className="container max-w-4xl py-8 text-center space-y-6">
           <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
             <HeartHandshake className="h-10 w-10 text-primary" />
           </div>
           <h1 className="text-3xl font-bold">Personalized Placement Assistance</h1>
-          <p className="text-muted-foreground max-w-xl mx-auto text-lg">
-            Let our specialists guide you to the right treatment center. We handle the research, 
-            introductions, and coordination so you can focus on recovery.
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Get matched with treatment centers that fit your needs. Sign in to get started.
           </p>
+          <Button size="lg" onClick={() => navigate("/concierge")} className="gap-2">
+            Get Started
+          </Button>
         </div>
-
-        {/* How It Works */}
-        <Card>
-          <CardHeader>
-            <CardTitle>How It Works</CardTitle>
-            <CardDescription>
-              Our concierge service simplifies your treatment search in 5 simple steps
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {HOW_IT_WORKS_STEPS.map((step, index) => (
-                <div key={step.step} className="flex gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-bold text-sm">
-                      {step.step}
-                    </div>
-                    {index < HOW_IT_WORKS_STEPS.length - 1 && (
-                      <div className="w-0.5 h-full bg-border mt-2" />
-                    )}
-                  </div>
-                  <div className="pb-6">
-                    <h3 className="font-semibold">{step.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* CTA */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="py-8 text-center space-y-4">
-            <h2 className="text-xl font-semibold">Ready to Get Started?</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Complete our intake form and a placement specialist will be assigned to your case.
-            </p>
-            <Button size="lg" onClick={() => navigate("/concierge")} className="gap-2">
-              Start Placement Request
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Email Support Card */}
-        <Card className="bg-muted/30">
-          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Mail className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Questions about concierge?</p>
-                <p className="text-sm text-muted-foreground">Our team is here to help.</p>
-              </div>
-            </div>
-            <Button variant="outline" asChild>
-              <a href="mailto:placement@rehablookup.com">Email Support</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
       </>
     );
   }
 
   // ========== STATE B & C: Case exists ==========
-  const currentStatusConfig = STATUS_CONFIG[selectedCase?.status || "new"];
   const showMatchedFacilities = selectedCase && 
     ["matching", "introductions_sent", "in_contact", "confirming", "placed"].includes(selectedCase.status);
   const showConfirmation = selectedCase?.status === "in_contact" && !selectedCase.seeker_confirmed;
@@ -598,298 +437,187 @@ export default function SeekerConcierge() {
 
   return (
     <>
-    <Helmet>
-      <title>Concierge Hub | RehabLookup</title>
-      <meta name="description" content="Track your placement progress and communicate with matched treatment facilities through your personal concierge hub." />
-    </Helmet>
-    <div className="container max-w-4xl py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Concierge Hub</h1>
-          <p className="text-muted-foreground">Track your placement progress and communicate with facilities</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Case Selector (if multiple) */}
-      {cases.length > 1 && (
-        <div className="flex gap-2 flex-wrap">
-          {cases.map((c) => (
-            <Button
-              key={c.id}
-              variant={selectedCaseId === c.id || (!selectedCaseId && c.id === cases[0].id) ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCaseId(c.id)}
-            >
-              Case #{c.id.slice(0, 8).toUpperCase()}
-            </Button>
-          ))}
-        </div>
-      )}
-
-      {/* Main Case Card */}
-      {selectedCase && (
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-3">
-                  Case #{selectedCase.id.slice(0, 8).toUpperCase()}
-                  <Badge className={`${currentStatusConfig.color} text-white`}>
-                    {currentStatusConfig.label}
-                  </Badge>
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  Submitted {format(new Date(selectedCase.created_at), "MMMM d, yyyy")}
-                </CardDescription>
-              </div>
-              {/* Cancel Request Button - only show for active cases */}
-              {selectedCase.status !== "closed" && selectedCase.status !== "placed" && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      disabled={cancelCaseMutation.isPending}
-                    >
-                      {cancelCaseMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      ) : (
-                        <XCircle className="h-4 w-4 mr-1" />
-                      )}
-                      Cancel Request
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Cancel your concierge request?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will close your case and stop the matching process. You won't receive any more facility introductions for this request. This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Keep My Request</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={() => cancelCaseMutation.mutate()}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Yes, Cancel Request
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Status Timeline */}
-            <CaseStatusTimeline 
-              currentStatus={selectedCase.status} 
-              steps={TIMELINE_STEPS}
-              statusConfig={STATUS_CONFIG}
-            />
-
-            {/* Case Details Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
-              {selectedCase.level_of_care && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Care Type</p>
-                  <p className="text-sm font-medium capitalize">{selectedCase.level_of_care.replace(/_/g, ' ')}</p>
-                </div>
-              )}
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                  <CreditCard className="h-3 w-3" /> Payment
-                </p>
-                <p className="text-sm font-medium capitalize">
-                  {selectedCase.payment_type === "insurance" 
-                    ? selectedCase.insurance_carrier || "Insurance"
-                    : selectedCase.payment_type?.replace(/_/g, ' ') || "Not specified"}
-                </p>
-              </div>
-              {selectedCase.timeline_urgency && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                    <Calendar className="h-3 w-3" /> Urgency
-                  </p>
-                  <p className="text-sm font-medium capitalize">{selectedCase.timeline_urgency.replace(/_/g, ' ')}</p>
-                </div>
-              )}
-              {(selectedCase.preferred_city || selectedCase.preferred_state) && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> Location
-                  </p>
-                  <p className="text-sm font-medium">
-                    {[selectedCase.preferred_city, selectedCase.preferred_state].filter(Boolean).join(", ")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Placed Facility */}
-      {selectedCase?.status === "placed" && placedFacility && (
-        <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
-              <CheckCircle className="h-5 w-5" />
-              Successfully Placed
-            </CardTitle>
-            <CardDescription>
-              Congratulations! You've been placed at the following facility.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MatchedFacilityCard facility={placedFacility} isPlaced />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Tabs for Matches, Tours, Messages - STATE C */}
-      {showMatchedFacilities && selectedCase?.status !== "placed" && (
-        <TourTabsSection 
-          selectedCase={selectedCase}
-          matchedFacilities={matchedFacilities}
-          hasMatches={hasMatches}
-          setTourModalFacility={setTourModalFacility}
-        />
-      )}
-
-      {/* Awaiting Provider Confirmation */}
-      {showAwaitingProvider && (
-        <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20">
-          <CardContent className="flex items-center gap-4 py-6">
-            <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-              <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-amber-700 dark:text-amber-400">
-                Awaiting Facility Confirmation
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                You've confirmed your admission. We're waiting for the facility to confirm as well.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Confirmation Section */}
-      {showConfirmation && hasMatches && (
-        <Card className="border-primary/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-primary" />
-              Ready to Confirm?
-            </CardTitle>
-            <CardDescription>
-              Have you been admitted to one of the matched facilities? Let us know!
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => setShowConfirmModal(true)} className="gap-2">
-              Confirm My Admission
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Feedback Section */}
-      {showFeedback && (
-        <Card>
-          <CardHeader>
-            <CardTitle>How was your experience?</CardTitle>
-            <CardDescription>
-              Your feedback helps us improve our concierge service for others.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FeedbackForm 
-              onSubmit={(rating, feedback) => feedbackMutation.mutate({ rating, feedback })}
-              isSubmitting={feedbackMutation.isPending}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Already gave feedback */}
-      {selectedCase?.seeker_feedback && (
-        <Card className="bg-muted/30">
-          <CardContent className="py-6">
-            <p className="text-sm text-muted-foreground">
-              Thank you for your feedback! You rated your experience {selectedCase.seeker_rating}/5 stars.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Email Support Card - No Phone */}
-      <Card className="bg-muted/30">
-        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Mail className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="font-medium">Questions about your case?</p>
-              <p className="text-sm text-muted-foreground">Our specialists are here to help.</p>
-            </div>
+      <Helmet>
+        <title>Placement Network | RehabLookup</title>
+        <meta name="description" content="Track your placement progress and communicate with matched treatment facilities." />
+      </Helmet>
+      
+      <div className="container max-w-4xl py-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Placement Network</h1>
+            <p className="text-muted-foreground text-sm">Track your placement progress</p>
           </div>
-          <Button variant="outline" asChild>
-            <a href="mailto:placement@rehablookup.com">Email Support</a>
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Tour Request Modal */}
-      {tourModalFacility && selectedCase && (
-        <TourRequestModal
-          open={!!tourModalFacility}
-          onClose={() => setTourModalFacility(null)}
-          inquiryId={selectedCase.id}
-          facilityId={tourModalFacility.id}
-          facilityName={tourModalFacility.name}
-        />
-      )}
-
-      {/* Confirmation Modal */}
-      {showConfirmModal && selectedCase && matchedFacilities && (
-        <ConfirmAdmissionModal
-          open={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
-          inquiryId={selectedCase.id}
-          facilities={matchedFacilities}
-          onConfirmed={() => {
-            setShowConfirmModal(false);
-            queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
-          }}
-        />
-      )}
-
-      {/* Mobile Sticky CTA */}
-      {showConfirmation && hasMatches && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t md:hidden z-50">
-          <Button onClick={() => setShowConfirmModal(true)} className="w-full gap-2">
-            <CheckCircle className="h-4 w-4" />
-            Confirm My Admission
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
+            
+            {selectedCase && selectedCase.status !== "closed" && selectedCase.status !== "placed" && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={cancelCaseMutation.isPending}
+                  >
+                    {cancelCaseMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <XCircle className="h-4 w-4" />
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel your placement request?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will close your case and stop the matching process. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Request</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => cancelCaseMutation.mutate()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Cancel Request
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </div>
-      )}
 
-      {/* Spacer for mobile sticky CTA */}
-      {showConfirmation && hasMatches && (
-        <div className="h-20 md:hidden" />
-      )}
-    </div>
+        {/* Case Selector (if multiple) */}
+        {cases.length > 1 && (
+          <div className="flex gap-2 flex-wrap">
+            {cases.map((c) => (
+              <Button
+                key={c.id}
+                variant={selectedCaseId === c.id || (!selectedCaseId && c.id === cases[0].id) ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCaseId(c.id)}
+              >
+                Case #{c.id.slice(0, 8).toUpperCase()}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {/* Status Card */}
+        {selectedCase && (
+          <PlacementStatusCard caseData={selectedCase} />
+        )}
+
+        {/* Placed Facility */}
+        {selectedCase?.status === "placed" && placedFacility && (
+          <div className="space-y-4">
+            <PlacementConfirmationCard type="confirmed" facilityName={placedFacility.name} />
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Your Treatment Center</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PlacementMatchCard facility={placedFacility} isPlaced />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Tabs for active cases */}
+        {showMatchedFacilities && selectedCase?.status !== "placed" && (
+          <PlacementTabs 
+            inquiryId={selectedCase.id}
+            matchedFacilityIds={selectedCase.matched_facility_ids}
+            matchedFacilities={matchedFacilities}
+            onRequestTour={setTourModalFacility}
+          />
+        )}
+
+        {/* Awaiting Provider */}
+        {showAwaitingProvider && (
+          <PlacementConfirmationCard type="awaiting_provider" />
+        )}
+
+        {/* Ready to Confirm */}
+        {showConfirmation && hasMatches && (
+          <PlacementConfirmationCard 
+            type="ready" 
+            onConfirm={() => setShowConfirmModal(true)} 
+          />
+        )}
+
+        {/* Feedback */}
+        {showFeedback && (
+          <Card>
+            <CardHeader>
+              <CardTitle>How was your experience?</CardTitle>
+              <CardDescription>Your feedback helps us improve.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FeedbackForm 
+                onSubmit={(rating, feedback) => feedbackMutation.mutate({ rating, feedback })}
+                isSubmitting={feedbackMutation.isPending}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Already gave feedback */}
+        {selectedCase?.seeker_feedback && (
+          <Card className="bg-muted/30">
+            <CardContent className="py-6">
+              <p className="text-sm text-muted-foreground">
+                Thank you for your feedback! You rated your experience {selectedCase.seeker_rating}/5 stars.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Support Card */}
+        <PlacementSupportCard />
+
+        {/* Modals */}
+        {tourModalFacility && selectedCase && (
+          <TourRequestModal
+            open={!!tourModalFacility}
+            onClose={() => setTourModalFacility(null)}
+            inquiryId={selectedCase.id}
+            facilityId={tourModalFacility.id}
+            facilityName={tourModalFacility.name}
+          />
+        )}
+
+        {showConfirmModal && selectedCase && matchedFacilities && (
+          <ConfirmAdmissionModal
+            open={showConfirmModal}
+            onClose={() => setShowConfirmModal(false)}
+            inquiryId={selectedCase.id}
+            facilities={matchedFacilities}
+            onConfirmed={() => {
+              setShowConfirmModal(false);
+              queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
+            }}
+          />
+        )}
+
+        {/* Mobile Sticky CTA */}
+        {showConfirmation && hasMatches && (
+          <>
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t md:hidden z-50 safe-area-bottom">
+              <Button onClick={() => setShowConfirmModal(true)} className="w-full gap-2">
+                Confirm My Admission
+              </Button>
+            </div>
+            <div className="h-20 md:hidden" />
+          </>
+        )}
+      </div>
     </>
   );
 }
