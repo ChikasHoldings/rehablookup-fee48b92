@@ -134,7 +134,7 @@ serve(async (req) => {
     }
 
     // Create SetupIntent with Financial Connections for ACH
-    // Only requesting payment_method permission (balances requires separate activation)
+    // Using instant verification with Financial Connections
     const setupIntent = await stripe.setupIntents.create({
       customer: customerId,
       payment_method_types: ['us_bank_account', 'card'],
@@ -148,6 +148,7 @@ serve(async (req) => {
       },
       metadata: {
         facility_id: facilityId,
+        facility_name: facility.name,
         purpose: 'placement_billing',
       },
       usage: 'off_session',
@@ -169,6 +170,7 @@ serve(async (req) => {
         customerId,
         setupIntentId: setupIntent.id,
         publishableKey,
+        facilityName: facility.name, // Include for pre-filling account holder name
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -12,6 +12,30 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[SAVE-PROVIDER-PAYMENT] ${step}${detailsStr}`);
 };
 
+// Determine verification status from ACH account status
+function getVerificationStatus(achStatus: string | undefined): { isVerified: boolean; verificationStatus: string } {
+  // ACH account status values from Stripe:
+  // - new: Account was just added, verification not started
+  // - validated: Account ownership validated but not verified for payments
+  // - verified: Account is verified and can be charged
+  // - verification_failed: Verification failed
+  // - errored: An error occurred during verification
+  switch (achStatus) {
+    case 'verified':
+    case 'validated':
+      return { isVerified: true, verificationStatus: 'verified' };
+    case 'new':
+      return { isVerified: false, verificationStatus: 'pending' };
+    case 'verification_failed':
+      return { isVerified: false, verificationStatus: 'failed' };
+    case 'errored':
+      return { isVerified: false, verificationStatus: 'errored' };
+    default:
+      // Default to verified for unknown states (cards, etc.)
+      return { isVerified: true, verificationStatus: 'verified' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -87,6 +111,7 @@ serve(async (req) => {
     let expMonth: number | null = null;
     let expYear: number | null = null;
     let isVerified = true;
+    let verificationStatus = 'verified';
 
     if (paymentMethod.type === 'card' && paymentMethod.card) {
       lastFour = paymentMethod.card.last4;
@@ -94,23 +119,29 @@ serve(async (req) => {
       cardBrand = paymentMethod.card.brand;
       expMonth = paymentMethod.card.exp_month;
       expYear = paymentMethod.card.exp_year;
+      isVerified = true; // Cards are always verified via 3DS or CVV
+      verificationStatus = 'verified';
       logStep("Processing card payment method", { brand: cardBrand, lastFour });
     } else if (paymentMethod.type === 'us_bank_account' && paymentMethod.us_bank_account) {
       lastFour = paymentMethod.us_bank_account.last4 || '';
       type = 'ach';
       bankName = paymentMethod.us_bank_account.bank_name || null;
       
-      // Check verification status for ACH
-      const accountStatus = paymentMethod.us_bank_account.status_details;
-      if (accountStatus && accountStatus.blocked) {
-        isVerified = false;
-      }
+      // Check the actual verification status from Stripe
+      // The status field indicates the verification state of the bank account
+      const achStatus = (paymentMethod.us_bank_account as any).status;
+      const statusResult = getVerificationStatus(achStatus);
+      isVerified = statusResult.isVerified;
+      verificationStatus = statusResult.verificationStatus;
       
       logStep("Processing ACH payment method", { 
         bankName, 
         lastFour,
         accountType: paymentMethod.us_bank_account.account_type,
-        accountHolderType: paymentMethod.us_bank_account.account_holder_type
+        accountHolderType: paymentMethod.us_bank_account.account_holder_type,
+        stripeAchStatus: achStatus,
+        isVerified,
+        verificationStatus
       });
     } else {
       logStep("Unknown payment method type", { type: paymentMethod.type });
@@ -203,7 +234,14 @@ serve(async (req) => {
       }
     }
 
-    logStep("Payment method saved successfully", { type, lastFour, bankName, isVerified });
+    logStep("Payment method saved successfully", { 
+      type, 
+      lastFour, 
+      bankName, 
+      cardBrand,
+      isVerified, 
+      verificationStatus 
+    });
 
     return new Response(
       JSON.stringify({ 
@@ -213,6 +251,7 @@ serve(async (req) => {
         bankName,
         cardBrand,
         isVerified,
+        verificationStatus,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
