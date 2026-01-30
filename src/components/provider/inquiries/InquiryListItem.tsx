@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { MapPin, Lock, Unlock, Phone, Mail, MessageSquare } from "lucide-react";
+import { MapPin, Lock, Unlock, Phone, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
