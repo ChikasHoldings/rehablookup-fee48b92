@@ -134,9 +134,9 @@ const CityDrugAddiction = () => {
 
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" variant="secondary">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Phone className="mr-2 h-4 w-4" />
-                Get Free Help Now
+                Get Matched
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
@@ -286,9 +286,9 @@ const CityDrugAddiction = () => {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button asChild size="lg" variant="secondary">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Phone className="mr-2 h-4 w-4" />
-                Get Help Now
+                Get Matched
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">

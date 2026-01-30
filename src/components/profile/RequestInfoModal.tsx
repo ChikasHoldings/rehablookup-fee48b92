@@ -60,20 +60,10 @@ interface RequestInfoModalProps {
   };
 }
 
-// Track capacity warning analytics
+// Track capacity warning analytics (legacy - now silent)
 async function trackCapacityEvent(eventType: string, facilityId: string, metadata?: Record<string, unknown>) {
-  try {
-    await supabase.functions.invoke("track-request-help", {
-      body: {
-        eventType,
-        source: "capacity_warning",
-        facilityId,
-        metadata,
-      },
-    });
-  } catch (error) {
-    console.error("Failed to track capacity event:", error);
-  }
+  // Analytics function removed - was using deleted track-request-help edge function
+  console.debug("Capacity event:", eventType, facilityId);
 }
 
 // Capacity Warning Component with analytics
@@ -167,23 +157,14 @@ function getInitials(name: string): string {
 }
 
 // Analytics tracking helper
+// Analytics tracking (legacy - now silent)
 const trackAnalyticsEvent = async (
   eventType: string,
   facilityId: string,
   metadata?: Record<string, unknown>
 ) => {
-  try {
-    await supabase.functions.invoke("track-request-help", {
-      body: {
-        eventType,
-        source: "request_info_modal",
-        facilityId,
-        metadata,
-      },
-    });
-  } catch (err) {
-    console.error("Analytics tracking error:", err);
-  }
+  // Analytics function removed - was using deleted track-request-help edge function
+  console.debug("Lead form event:", eventType, facilityId);
 };
 
 // Custom success component for modal context

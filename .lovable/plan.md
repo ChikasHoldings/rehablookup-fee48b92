@@ -1,23 +1,27 @@
 
-# Seeker Panel Audit - Findings & Remediation Plan
+# Seeker Panel Audit - COMPLETED ✅
 
-## Executive Summary
-The Seeker panel has a solid foundation but requires several fixes before production deployment. The most critical issue is **275 broken `/request-help` links** across 27 files that need to be updated to point to the new `/account/concierge` route.
+## Status: All Critical Issues Fixed (2026-01-30)
 
 ---
 
-## Critical Issues (Must Fix Before Launch)
+## Completed Fixes
 
-### 1. Broken `/request-help` Links (275 instances in 27 files)
-**Problem:** The `/request-help` page was deleted and redirected to `/account/concierge`, but many files still link directly to it.
+### 1. ✅ Fixed All `/request-help` Links (275 instances → 0 remaining)
+All links updated to `/account/concierge` with new "Get Matched" terminology across 27+ files including:
+- All treatment-type pages (State/City variants)
+- SeekerHome.tsx, SearchResults.tsx, NotFound.tsx
+- FAQ.tsx, Locations.tsx, CostEstimator.tsx
 
-**Affected Files:**
-- `src/pages/seeker/SeekerHome.tsx` (line 257) - Empty state CTA
-- `src/pages/SearchResults.tsx`
-- `src/pages/treatment-types/StateOutpatientPrograms.tsx`
-- `src/pages/treatment-types/CityAlcoholRehab.tsx`
-- `src/pages/treatment-types/StateInpatientRehab.tsx`
-- `src/pages/treatment-types/CityInpatientRehab.tsx`
+### 2. ✅ Removed Orphaned Edge Function References  
+- Deleted `supabase/functions/track-request-help/index.ts`
+- Updated `RequestInfoModal.tsx` to remove calls to deleted function
+
+### 3. ✅ Updated Support Email
+- Changed `support@recoverydirectory.com` → `help@rehablookup.com` in SeekerHelp.tsx
+
+### 4. ✅ Deprecated useSeekerShellContext Hook
+- Added deprecation warning directing to `useOutletContext()`
 - `src/pages/treatment-types/DualDiagnosisTreatment.tsx`
 - `src/pages/treatment-types/StateAlcoholRehab.tsx`
 - `src/pages/treatment-types/CityDetoxPrograms.tsx`

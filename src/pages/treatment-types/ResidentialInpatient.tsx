@@ -190,10 +190,10 @@ const ResidentialInpatient = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
-                  Get Help Now
+                  Get Matched
                 </Button>
               </Link>
               <Link to="/rehab-centers">
@@ -463,10 +463,10 @@ const ResidentialInpatient = () => {
               Our specialists can help you find the right residential program for your recovery needs.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Personalized Help
+                  Get Matched
                 </Button>
               </Link>
             </div>

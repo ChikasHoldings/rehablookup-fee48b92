@@ -198,10 +198,10 @@ const DualDiagnosisTreatment = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
-                  Get Help Now
+                  Get Matched
                 </Button>
               </Link>
               <Link to="/rehab-centers">
@@ -336,7 +336,7 @@ const DualDiagnosisTreatment = () => {
                     ))}
                   </ul>
                   <div className="mt-6">
-                    <Link to="/request-help">
+                    <Link to="/account/concierge">
                       <Button className="gap-2">
                         <Phone className="h-4 w-4" />
                         Get a Free Assessment
@@ -483,10 +483,10 @@ const DualDiagnosisTreatment = () => {
               Our specialists can help you find dual diagnosis treatment that addresses both your mental health and addiction.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Personalized Help
+                  Get Matched
                 </Button>
               </Link>
             </div>

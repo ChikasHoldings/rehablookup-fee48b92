@@ -111,10 +111,10 @@ const NotFound = () => {
                   Go Home
                 </Button>
               </Link>
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto border-primary/30 hover:bg-primary/5">
                   <Phone className="h-4 w-4" />
-                  Get Help Now
+                  Get Matched
                 </Button>
               </Link>
             </div>
@@ -186,10 +186,10 @@ const NotFound = () => {
             <p className="font-display font-semibold text-foreground mb-3">
               Our support team is available 24/7 to connect you with treatment
             </p>
-            <Link to="/request-help">
+            <Link to="/account/concierge">
               <Button variant="default" className="gap-2">
                 <Phone className="h-4 w-4" />
-                Request a Call Back
+                Get Matched
               </Button>
             </Link>
           </div>

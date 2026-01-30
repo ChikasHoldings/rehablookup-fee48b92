@@ -977,10 +977,10 @@ const SearchResults = () => {
                   Our recovery specialists are available 24/7 to help you find the perfect treatment program for your needs.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                  <Link to="/request-help?source=search_bottom">
+                  <Link to="/account/concierge">
                     <Button size="lg" className="gap-2 shadow-md hover:shadow-lg transition-shadow">
                       <Heart className="h-5 w-5" />
-                      Get Free Consultation
+                      Get Matched
                     </Button>
                   </Link>
                   <Link to="/contact">
