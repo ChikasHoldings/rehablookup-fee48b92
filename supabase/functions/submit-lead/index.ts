@@ -169,7 +169,7 @@ function getFreePlanUpgradeEmail(
     
     <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin-top: 24px; text-align: center;">
       <p style="margin: 0; color: #4b5563; font-size: 13px;">
-        <strong>Pro subscription:</strong> $99/month · 20% off all lead unlocks · Featured placement
+        <strong>Pro subscription:</strong> $399/month · 20% off all lead unlocks · Featured placement
       </p>
     </div>
     

@@ -1,14 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Pro subscription price - $99/month
-const PRO_PRICE_CENTS = 9900;
+// Pro subscription price - $399/month
+const PRO_PRICE_CENTS = 39900;
+const PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -85,7 +86,7 @@ serve(async (req) => {
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
-      apiVersion: "2023-10-16",
+      apiVersion: "2025-08-27.basil",
     });
 
     // Find or create Stripe customer
@@ -102,39 +103,14 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    // Create or get a Pro Visibility price
-    // In production, you'd create this in the Stripe dashboard
-    let proPrice: Stripe.Price;
-    const prices = await stripe.prices.list({
-      lookup_keys: ["pro_visibility_monthly"],
-      limit: 1,
-    });
-
-    if (prices.data.length > 0) {
-      proPrice = prices.data[0];
-    } else {
-      // Create the product and price if they don't exist
-      const product = await stripe.products.create({
-        name: "Pro Visibility Upgrade",
-        description: "20% off lead unlocks + featured placement",
-      });
-
-      proPrice = await stripe.prices.create({
-        product: product.id,
-        unit_amount: PRO_PRICE_CENTS,
-        currency: "usd",
-        recurring: { interval: "month" },
-        lookup_key: "pro_visibility_monthly",
-      });
-    }
-
+    // Use hardcoded Pro price ID - $399/mo RehabLookup Pro
     // Create Stripe checkout session for subscription
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{
-        price: proPrice.id,
+        price: PRO_PRICE_ID,
         quantity: 1,
       }],
       success_url: `${req.headers.get("origin")}/provider/billing?pro_success=true`,
