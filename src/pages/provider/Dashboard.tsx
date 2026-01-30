@@ -381,7 +381,7 @@ export default function ProviderDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Metrics Row - 2x2 Grid */}
+            {/* Metrics Row */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <MetricCard
                 title="Views"
@@ -400,25 +400,6 @@ export default function ProviderDashboardPage() {
                 iconBg="bg-emerald-500/10"
                 iconColor="text-emerald-600"
                 isLoading={leadsLoading}
-              />
-              <MetricCard
-                title="Locations"
-                value={`${usedLocations}/${locationLimit}`}
-                subtitle={!proLoading && usedLocations >= locationLimit && !proStatus?.isPro ? "Limit reached" : "Active"}
-                icon={Building2}
-                iconBg="bg-violet-500/10"
-                iconColor="text-violet-600"
-                isLoading={proLoading}
-              />
-              <MetricCard
-                title="Credits"
-                value={creditsLoading ? "" : `$${((creditsData?.balance_cents || 0) / 100).toFixed(0)}`}
-                subtitle={proStatus?.isPro ? "Pro Member" : "Free Listing"}
-                icon={CreditCard}
-                iconBg="bg-primary/10"
-                iconColor="text-primary"
-                action={{ label: "Add", href: "/provider/credits" }}
-                isLoading={creditsLoading}
               />
             </div>
 
