@@ -390,15 +390,17 @@ export default function ProviderPlacementNetworkPage() {
         {/* Header */}
         <PlacementLandingHeader />
 
-        {/* Network Toggle */}
-        <PlacementNetworkToggle
-          optedIn={optedIn}
-          optedInAt={facilityData?.concierge_opted_in_at || null}
-          pendingCount={pendingIntroductions.length}
-          isEligible={isEligibleForNetwork}
-          isPending={optInMutation.isPending}
-          onToggle={handleToggle}
-        />
+        {/* Network Toggle - Only show when opted in */}
+        {optedIn && (
+          <PlacementNetworkToggle
+            optedIn={optedIn}
+            optedInAt={facilityData?.concierge_opted_in_at || null}
+            pendingCount={pendingIntroductions.length}
+            isEligible={isEligibleForNetwork}
+            isPending={optInMutation.isPending}
+            onToggle={handleToggle}
+          />
+        )}
 
         {/* Modals */}
         <PlacementTermsModal
