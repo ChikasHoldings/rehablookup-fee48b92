@@ -215,9 +215,9 @@ export default function AddLocationPage() {
         description: "Your new facility has been submitted for review.",
       });
 
-      // Navigate to dashboard after short delay
+      // Navigate to listings page after short delay
       setTimeout(() => {
-        navigate("/provider/dashboard");
+        navigate("/provider/listing");
       }, 2000);
 
     } catch (err) {
@@ -285,8 +285,8 @@ export default function AddLocationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
-              <Button onClick={() => navigate("/provider/dashboard")}>
-                Return to Dashboard
+              <Button onClick={() => navigate("/provider/listing")}>
+                Return to Listings
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </CardContent>
