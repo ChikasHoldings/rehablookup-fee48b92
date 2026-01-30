@@ -289,48 +289,29 @@ export function Header({
           {/* Menu Content with refined spacing */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {/* Primary Navigation */}
-            <nav className="px-4 pt-6 pb-4">
-              <p className={cn(
-                "px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60 transition-all duration-500 delay-150",
-                mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
-              )}>
-                Navigation
-              </p>
-              <div className="space-y-1.5">
+            <nav className="px-5 pt-6 pb-4">
+              <div className="space-y-1">
                 {navLinks.map((link, index) => {
                   const isActive = location.pathname === link.href;
                   const isForProviders = link.href === "/for-providers" && variant === "default";
                   const Icon = navIcons[link.href] || ChevronRight;
-                  const delay = 200 + index * 50;
+                  const delay = 150 + index * 40;
                   
                   const linkClasses = cn(
-                    "group flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-medium transition-all duration-300",
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200",
                     isActive
-                      ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary shadow-sm"
-                      : "text-foreground/80 hover:text-foreground hover:bg-muted/70 active:scale-[0.98]",
-                    mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8"
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted active:scale-[0.98]",
+                    mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
                   );
 
                   const content = (
                     <>
-                      <div className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300",
-                        isActive 
-                          ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30" 
-                          : "bg-muted/60 text-muted-foreground group-hover:bg-muted group-hover:text-foreground group-hover:scale-105"
-                      )}>
-                        <Icon className="h-[18px] w-[18px]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="block truncate">{link.label}</span>
-                        {isActive && (
-                          <span className="text-[10px] text-primary/70 font-normal">Current page</span>
-                        )}
-                      </div>
-                      <ChevronRight className={cn(
-                        "h-4 w-4 text-muted-foreground/40 transition-all duration-300",
-                        "group-hover:text-foreground/60 group-hover:translate-x-1"
+                      <Icon className={cn(
+                        "h-5 w-5 shrink-0",
+                        isActive ? "text-primary" : "text-muted-foreground"
                       )} />
+                      <span>{link.label}</span>
                     </>
                   );
                   
@@ -364,8 +345,6 @@ export function Header({
                 })}
               </div>
             </nav>
-
-
           </div>
 
           {/* Premium CTA Footer */}
