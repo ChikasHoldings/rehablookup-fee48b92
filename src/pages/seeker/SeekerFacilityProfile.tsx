@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -285,9 +286,14 @@ export default function SeekerFacilityProfile() {
   const displayedInsurance = showAllInsurance ? insuranceList : insuranceList.slice(0, 10);
 
   return (
-    <div className="flex-1 pb-6 bg-gradient-to-b from-background to-muted/20">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        {/* Back button */}
+    <>
+      <Helmet>
+        <title>{facility.name} - Treatment Center | RehabLookup</title>
+        <meta name="description" content={`${facility.name} in ${facility.city}, ${facility.state}. ${facility.facility_type} treatment center. ${facility.description?.slice(0, 120) || 'Find treatment options and request information.'}`} />
+      </Helmet>
+      <div className="flex-1 pb-6 bg-gradient-to-b from-background to-muted/20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          {/* Back button */}
         <Button
           variant="ghost"
           size="sm"
@@ -702,6 +708,7 @@ export default function SeekerFacilityProfile() {
         facilityName={facility.name}
         prefillData={prefillData}
       />
-    </div>
+      </div>
+    </>
   );
 }
