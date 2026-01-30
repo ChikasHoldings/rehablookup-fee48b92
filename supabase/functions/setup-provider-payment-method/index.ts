@@ -160,11 +160,15 @@ serve(async (req) => {
       hasClientSecret: !!setupIntent.client_secret
     });
 
+    // Return publishable key for frontend Stripe initialization
+    const publishableKey = Deno.env.get("VITE_STRIPE_PUBLISHABLE_KEY") || "";
+
     return new Response(
       JSON.stringify({
         clientSecret: setupIntent.client_secret,
         customerId,
         setupIntentId: setupIntent.id,
+        publishableKey,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
