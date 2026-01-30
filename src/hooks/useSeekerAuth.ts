@@ -73,8 +73,11 @@ export function useSeekerAuth() {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  const signUp = async (email: string, password: string, displayName?: string) => {
+  const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
+    const displayName = firstName && lastName 
+      ? `${firstName} ${lastName}`.trim() 
+      : firstName || email.split('@')[0];
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -82,7 +85,9 @@ export function useSeekerAuth() {
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          display_name: displayName || email.split('@')[0]
+          display_name: displayName,
+          first_name: firstName || null,
+          last_name: lastName || null
         }
       }
     });
