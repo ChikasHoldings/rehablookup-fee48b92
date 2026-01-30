@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useOutletContext, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { 
   Send, 
   Clock, 
@@ -376,6 +377,11 @@ export default function SeekerRequests() {
   }
 
   return (
+    <>
+    <Helmet>
+      <title>My Requests | RehabLookup</title>
+      <meta name="description" content="Track and manage your treatment center inquiries. View request status, facility responses, and send new requests." />
+    </Helmet>
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
@@ -468,5 +474,6 @@ export default function SeekerRequests() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 }
