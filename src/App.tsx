@@ -115,8 +115,6 @@ import ProviderAddLocation from "./pages/provider/AddLocation";
 
 import ProviderProUpgradePage from "./pages/provider/ProUpgrade";
 import ProviderPlacementNetworkPage from "./pages/provider/PlacementNetwork";
-import ProviderConciergeDashboard from "./pages/provider/ConciergeDashboard";
-import ProviderBillingHistory from "./pages/provider/BillingHistory";
 
 // Admin Panel - eagerly load shell, lazy load pages (shell handles its own Suspense)
 import { AdminShell } from "./components/admin/AdminShell";
@@ -257,9 +255,9 @@ const App = () => (
               <Route path="unlock-history" element={<Navigate to="/provider/settings?tab=unlock-history" replace />} />
               <Route path="pro-upgrade" element={<ProviderProUpgradePage />} />
               <Route path="placement-network" element={<ProviderPlacementNetworkPage />} />
-              <Route path="placement" element={<Navigate to="/provider/concierge" replace />} />
-              <Route path="concierge" element={<ProviderConciergeDashboard />} />
-              <Route path="billing-history" element={<ProviderBillingHistory />} />
+              <Route path="placement" element={<Navigate to="/provider/placement-network" replace />} />
+              <Route path="concierge" element={<Navigate to="/provider/placement-network" replace />} />
+              <Route path="billing-history" element={<Navigate to="/provider/placement-network?tab=billing" replace />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
               <Route path="settings" element={<ProviderSettingsPage />} />

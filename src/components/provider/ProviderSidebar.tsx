@@ -9,8 +9,6 @@ import {
   Sparkles,
   Star,
   Network,
-  Receipt,
-  Headset,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -31,9 +29,7 @@ const navItems = [
   { href: "/provider/inquiries", label: "Inquiries", icon: Users },
   { href: "/provider/credits", label: "Credits & Payments", icon: Wallet },
   { href: "/provider/pro-upgrade", label: "Pro Visibility", icon: Sparkles },
-  { href: "/provider/concierge", label: "Concierge", icon: Headset },
   { href: "/provider/placement-network", label: "Placement Network", icon: Network },
-  { href: "/provider/billing-history", label: "Billing History", icon: Receipt },
   { href: "/provider/reviews", label: "Reviews", icon: Star },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/provider/listing", label: "My Listing", icon: Building2 },
@@ -89,10 +85,10 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;
             const isInquiriesItem = item.href === "/provider/inquiries";
-            const isConciergeItem = item.href === "/provider/concierge";
+            const isPlacementItem = item.href === "/provider/placement-network";
             const showInquiriesBadge = isInquiriesItem && newInquiriesCount > 0;
-            const showConciergeBadge = isConciergeItem && pendingConciergeCount > 0;
-            const showBadge = showInquiriesBadge || showConciergeBadge;
+            const showPlacementBadge = isPlacementItem && pendingConciergeCount > 0;
+            const showBadge = showInquiriesBadge || showPlacementBadge;
             const badgeCount = isInquiriesItem ? newInquiriesCount : pendingConciergeCount;
             const badgeLabel = isInquiriesItem ? "new" : "pending";
             
