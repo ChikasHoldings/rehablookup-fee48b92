@@ -10,10 +10,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, CreditCard, Landmark, AlertCircle, CheckCircle2, Shield, Building2 } from "lucide-react";
+import { Loader2, CreditCard, Landmark, AlertCircle, CheckCircle2, Shield, Building2, Clock, Info } from "lucide-react";
 import { loadStripe, Stripe as StripeType, StripeElements } from "@stripe/stripe-js";
 import {
   Elements,
@@ -39,7 +40,13 @@ interface PaymentFormProps {
 interface SetupData {
   clientSecret: string;
   customerId: string;
+  facilityName?: string;
 }
+
+type VerificationResult = {
+  status: 'verified' | 'pending_microdeposits' | 'processing' | 'failed' | 'cancelled';
+  message?: string;
+};
 
 function PaymentFormContent({
   facilityId,
@@ -55,7 +62,10 @@ function PaymentFormContent({
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [facilityName, setFacilityName] = useState<string>("");
+  const [accountHolderName, setAccountHolderName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [verificationStatus, setVerificationStatus] = useState<VerificationResult | null>(null);
 
   // Get SetupIntent on mount
   useEffect(() => {
@@ -87,10 +97,16 @@ function PaymentFormContent({
         if (data?.clientSecret) {
           console.log("[PaymentForm] SetupIntent received:", { 
             hasSecret: !!data.clientSecret, 
-            customerId: data.customerId 
+            customerId: data.customerId,
+            facilityName: data.facilityName 
           });
           setClientSecret(data.clientSecret);
           setCustomerId(data.customerId);
+          // Pre-populate account holder name from facility name
+          if (data.facilityName) {
+            setFacilityName(data.facilityName);
+            setAccountHolderName(data.facilityName);
+          }
         } else {
           throw new Error("No client secret received from server");
         }
@@ -113,8 +129,8 @@ function PaymentFormContent({
     };
   }, [facilityId]);
 
-  const savePaymentMethod = useCallback(async (paymentMethodId: string) => {
-    console.log("[PaymentForm] Saving payment method:", paymentMethodId);
+  const savePaymentMethod = useCallback(async (paymentMethodId: string, isPendingVerification: boolean = false) => {
+    console.log("[PaymentForm] Saving payment method:", paymentMethodId, { isPendingVerification });
     
     const { data, error: saveError } = await supabase.functions.invoke("save-provider-payment-method", {
       body: {
@@ -138,9 +154,75 @@ function PaymentFormContent({
     
     queryClient.invalidateQueries({ queryKey: ["provider-payment-methods"] });
     queryClient.invalidateQueries({ queryKey: ["facility-concierge"] });
-    toast.success(`${data?.type === 'ach' ? 'Bank account' : 'Card'} added successfully!`);
-    onSuccess?.();
-  }, [facilityId, queryClient, onSuccess]);
+    
+    return data;
+  }, [facilityId, queryClient]);
+
+  // Handle SetupIntent status after Financial Connections
+  const handleSetupIntentStatus = useCallback(async (
+    setupIntent: any, 
+    stage: 'collect' | 'confirm'
+  ): Promise<VerificationResult> => {
+    const status = setupIntent?.status;
+    const nextAction = setupIntent?.next_action;
+    
+    console.log(`[PaymentForm] ${stage} - SetupIntent status:`, status, 'next_action:', nextAction?.type);
+
+    switch (status) {
+      case 'requires_payment_method':
+        // User cancelled or didn't complete bank selection
+        return { status: 'cancelled', message: 'Bank connection was cancelled.' };
+
+      case 'requires_confirmation':
+        // Need to call confirmUsBankAccountSetup - this is expected after collectBankAccountForSetup
+        if (stage === 'collect') {
+          return { status: 'processing', message: 'Confirming bank account...' };
+        }
+        // Shouldn't happen after confirm
+        return { status: 'failed', message: 'Unexpected confirmation required.' };
+
+      case 'succeeded':
+        if (setupIntent?.payment_method) {
+          const saveResult = await savePaymentMethod(setupIntent.payment_method as string, false);
+          return { 
+            status: 'verified', 
+            message: `${saveResult?.type === 'ach' ? 'Bank account' : 'Card'} connected and verified!` 
+          };
+        }
+        return { status: 'failed', message: 'Payment method not found.' };
+
+      case 'requires_action':
+        if (nextAction?.type === 'verify_with_microdeposits') {
+          // Micro-deposit verification fallback
+          if (setupIntent?.payment_method) {
+            await savePaymentMethod(setupIntent.payment_method as string, true);
+          }
+          return { 
+            status: 'pending_microdeposits', 
+            message: 'Your bank requires micro-deposit verification. Two small deposits will appear in your account within 1-2 business days. Check your email for verification instructions.' 
+          };
+        }
+        if (nextAction?.type === 'redirect_to_url') {
+          // Rare: some banks require redirect
+          return { status: 'processing', message: 'Redirecting to complete verification...' };
+        }
+        return { status: 'processing', message: 'Additional verification required.' };
+
+      case 'processing':
+        // Still processing
+        if (setupIntent?.payment_method) {
+          await savePaymentMethod(setupIntent.payment_method as string, true);
+        }
+        return { 
+          status: 'processing', 
+          message: 'Your bank account is being verified. This may take a few moments.' 
+        };
+
+      default:
+        console.warn("[PaymentForm] Unknown SetupIntent status:", status);
+        return { status: 'failed', message: `Unexpected status: ${status}` };
+    }
+  }, [savePaymentMethod]);
 
   // Handle ACH with Financial Connections
   const handleACHSubmit = async () => {
@@ -149,11 +231,17 @@ function PaymentFormContent({
       return;
     }
 
+    if (!accountHolderName.trim()) {
+      setError("Please enter the account holder name.");
+      return;
+    }
+
     setIsConnectingBank(true);
     setError(null);
+    setVerificationStatus(null);
 
     try {
-      console.log("[PaymentForm] Starting Financial Connections flow");
+      console.log("[PaymentForm] Starting Financial Connections flow with name:", accountHolderName);
       
       // Use Financial Connections to collect bank account
       const { error: collectError, setupIntent } = await stripe.collectBankAccountForSetup({
@@ -162,7 +250,7 @@ function PaymentFormContent({
           payment_method_type: 'us_bank_account',
           payment_method_data: {
             billing_details: {
-              name: '', // Will be collected by Financial Connections
+              name: accountHolderName.trim(),
             },
           },
         },
@@ -173,20 +261,13 @@ function PaymentFormContent({
         throw new Error(collectError.message);
       }
 
-      console.log("[PaymentForm] SetupIntent status after collect:", setupIntent?.status);
+      // Handle the result from collect step
+      let result = await handleSetupIntentStatus(setupIntent, 'collect');
 
-      // Check if setup intent status requires verification
-      if (setupIntent?.status === 'requires_payment_method') {
-        // User cancelled or didn't complete
-        console.log("[PaymentForm] User cancelled bank connection");
-        setIsConnectingBank(false);
-        return;
-      }
-
-      if (setupIntent?.status === 'requires_confirmation') {
+      // If we need confirmation, proceed with confirmUsBankAccountSetup
+      if (result.status === 'processing' && setupIntent?.status === 'requires_confirmation') {
         console.log("[PaymentForm] Confirming US bank account setup");
         
-        // Confirm the setup intent
         const { error: confirmError, setupIntent: confirmedIntent } = await stripe.confirmUsBankAccountSetup(clientSecret);
         
         if (confirmError) {
@@ -194,23 +275,28 @@ function PaymentFormContent({
           throw new Error(confirmError.message);
         }
 
-        console.log("[PaymentForm] Confirmed SetupIntent status:", confirmedIntent?.status);
-
-        if (confirmedIntent?.status === 'succeeded' && confirmedIntent?.payment_method) {
-          await savePaymentMethod(confirmedIntent.payment_method as string);
-        } else if (confirmedIntent?.status === 'requires_action' && confirmedIntent?.next_action?.type === 'verify_with_microdeposits') {
-          // Micro-deposits verification required
-          toast.info("Bank verification required. Check your account for micro-deposits (1-2 business days).");
-          onSuccess?.();
-        } else {
-          console.log("[PaymentForm] Unexpected confirmed status:", confirmedIntent?.status);
-        }
-      } else if (setupIntent?.status === 'succeeded' && setupIntent?.payment_method) {
-        console.log("[PaymentForm] SetupIntent succeeded directly");
-        await savePaymentMethod(setupIntent.payment_method as string);
-      } else {
-        console.log("[PaymentForm] Unexpected setup status:", setupIntent?.status);
+        result = await handleSetupIntentStatus(confirmedIntent, 'confirm');
       }
+
+      // Handle final result
+      setVerificationStatus(result);
+
+      if (result.status === 'verified') {
+        toast.success(result.message || "Bank account connected successfully!");
+        onSuccess?.();
+      } else if (result.status === 'pending_microdeposits') {
+        toast.info("Bank added! Check your email for micro-deposit verification instructions.", { duration: 6000 });
+        onSuccess?.();
+      } else if (result.status === 'processing') {
+        toast.info(result.message || "Verification in progress...");
+        onSuccess?.();
+      } else if (result.status === 'cancelled') {
+        // User cancelled - no error, just reset state
+        console.log("[PaymentForm] User cancelled bank connection");
+      } else if (result.status === 'failed') {
+        throw new Error(result.message || "Failed to connect bank account");
+      }
+
     } catch (err: any) {
       console.error("[PaymentForm] ACH error:", err);
       setError(err.message || "Failed to connect bank account");
@@ -229,6 +315,7 @@ function PaymentFormContent({
 
     setIsSubmitting(true);
     setError(null);
+    setVerificationStatus(null);
 
     try {
       const cardElement = elements.getElement(CardElement);
@@ -246,13 +333,31 @@ function PaymentFormContent({
 
       if (stripeError) {
         console.error("[PaymentForm] Card setup error:", stripeError);
-        throw new Error(stripeError.message);
+        
+        // Provide more user-friendly error messages
+        let errorMessage = stripeError.message;
+        if (stripeError.code === 'card_declined') {
+          errorMessage = "Your card was declined. Please try a different card.";
+        } else if (stripeError.code === 'expired_card') {
+          errorMessage = "Your card has expired. Please use a different card.";
+        } else if (stripeError.code === 'incorrect_cvc') {
+          errorMessage = "The security code is incorrect. Please check and try again.";
+        }
+        
+        throw new Error(errorMessage);
       }
 
       console.log("[PaymentForm] Card SetupIntent status:", setupIntent?.status);
 
-      if (setupIntent?.payment_method) {
-        await savePaymentMethod(setupIntent.payment_method as string);
+      if (setupIntent?.status === 'succeeded' && setupIntent?.payment_method) {
+        const saveResult = await savePaymentMethod(setupIntent.payment_method as string);
+        toast.success(`${saveResult?.cardBrand || 'Card'} saved successfully!`);
+        onSuccess?.();
+      } else if (setupIntent?.status === 'requires_action') {
+        // 3D Secure or other action required
+        toast.info("Additional verification may be required. Please follow the prompts.");
+      } else {
+        throw new Error("Failed to save card. Please try again.");
       }
     } catch (err: any) {
       console.error("[PaymentForm] Card error:", err);
@@ -332,6 +437,22 @@ function PaymentFormContent({
               </div>
             </div>
 
+            {/* Account Holder Name Input */}
+            <div className="space-y-2">
+              <Label htmlFor="accountHolderName">Account Holder Name</Label>
+              <Input
+                id="accountHolderName"
+                type="text"
+                placeholder="Business or account holder name"
+                value={accountHolderName}
+                onChange={(e) => setAccountHolderName(e.target.value)}
+                disabled={isConnectingBank}
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the name as it appears on your bank account.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="h-4 w-4 text-emerald-600" />
@@ -345,7 +466,7 @@ function PaymentFormContent({
 
             <Button
               onClick={handleACHSubmit}
-              disabled={!stripe || !clientSecret || isConnectingBank}
+              disabled={!stripe || !clientSecret || isConnectingBank || !accountHolderName.trim()}
               className="w-full"
               size="lg"
             >
@@ -362,6 +483,25 @@ function PaymentFormContent({
               )}
             </Button>
           </div>
+
+          {/* Verification Status Feedback */}
+          {verificationStatus?.status === 'pending_microdeposits' && (
+            <Alert className="bg-amber-500/10 border-amber-500/20">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-sm">
+                <strong>Micro-deposit verification required.</strong> Two small deposits (under $1) will appear in your bank account within 1-2 business days. You'll receive an email with instructions to verify the amounts.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {verificationStatus?.status === 'processing' && (
+            <Alert className="bg-blue-500/10 border-blue-500/20">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-sm">
+                {verificationStatus.message}
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Alert className="bg-emerald-500/10 border-emerald-500/20">
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
