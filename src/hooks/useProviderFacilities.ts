@@ -11,6 +11,7 @@ export interface ProviderFacility {
   state: string;
   facility_type: string;
   logo_url: string | null;
+  gallery_urls: string[] | null;
   created_at: string;
 }
 
@@ -48,7 +49,7 @@ export function useProviderFacilities() {
 
       const { data, error } = await supabase
         .from("facilities")
-        .select("id, name, slug, status, city, state, facility_type, logo_url, created_at")
+        .select("id, name, slug, status, city, state, facility_type, logo_url, gallery_urls, created_at")
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
