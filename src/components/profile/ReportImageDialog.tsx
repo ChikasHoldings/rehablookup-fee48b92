@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Flag, AlertTriangle, X } from "lucide-react";
+import { useState, forwardRef } from "react";
+import { Flag, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,13 +30,8 @@ const REPORT_REASONS = [
   { value: "other", label: "Other", description: "Another issue not listed above" },
 ];
 
-export function ReportImageDialog({
-  open,
-  onOpenChange,
-  facilityId,
-  imageUrl,
-  imageType,
-}: ReportImageDialogProps) {
+export const ReportImageDialog = forwardRef<HTMLDivElement, ReportImageDialogProps>(
+  function ReportImageDialog({ open, onOpenChange, facilityId, imageUrl, imageType }, ref) {
   const [reason, setReason] = useState<string>("");
   const [details, setDetails] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +74,7 @@ export function ReportImageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent ref={ref} className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Flag className="h-5 w-5 text-destructive" />
@@ -173,4 +168,6 @@ export function ReportImageDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+ReportImageDialog.displayName = "ReportImageDialog";

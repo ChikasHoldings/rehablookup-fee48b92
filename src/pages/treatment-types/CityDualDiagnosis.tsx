@@ -142,10 +142,10 @@ const CityDualDiagnosis = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
                   <Phone className="h-4 w-4" />
-                  Get Help in {cityName}
+                  Get Matched in {cityName}
                 </Button>
               </Link>
               <Link to={`/rehab-centers/${stateSlug}/${citySlug}`}>
@@ -230,7 +230,7 @@ const CityDualDiagnosis = () => {
                 ))}
               </div>
               <div className="mt-6 text-center">
-                <Link to="/request-help">
+                <Link to="/account/concierge">
                   <Button className="gap-2">
                     <Phone className="h-4 w-4" />
                     Get a Free Assessment
@@ -362,10 +362,10 @@ const CityDualDiagnosis = () => {
               Get help finding integrated mental health and addiction treatment in {cityName} that accepts your insurance.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Help Today
+                  Get Matched Today
                 </Button>
               </Link>
             </div>
