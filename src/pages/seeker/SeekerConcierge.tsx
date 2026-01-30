@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -439,6 +440,11 @@ export default function SeekerConcierge() {
     // Logged-in user: show landing page OR intake flow based on state
     if (currentUser) {
       return (
+        <>
+        <Helmet>
+          <title>Concierge Placement Service | RehabLookup</title>
+          <meta name="description" content="Get personalized treatment center matching with our concierge service. We handle the research and introductions so you can focus on recovery." />
+        </Helmet>
         <div className="container max-w-4xl py-8 space-y-8">
           {/* Payment Recovery Component - shows only if there's a failed submission */}
           <ConciergePaymentRecovery 
@@ -491,11 +497,17 @@ export default function SeekerConcierge() {
             </>
           )}
         </div>
+        </>
       );
     }
 
     // Non-logged in user: redirect to public concierge page
     return (
+      <>
+      <Helmet>
+        <title>Concierge Placement Service | RehabLookup</title>
+        <meta name="description" content="Get personalized treatment center matching with our concierge service. We handle the research and introductions so you can focus on recovery." />
+      </Helmet>
       <div className="container max-w-4xl py-8 space-y-8">
         {/* Hero Section */}
         <div className="text-center space-y-4">
@@ -571,6 +583,7 @@ export default function SeekerConcierge() {
           </CardContent>
         </Card>
       </div>
+      </>
     );
   }
 
@@ -584,6 +597,11 @@ export default function SeekerConcierge() {
   const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
   return (
+    <>
+    <Helmet>
+      <title>Concierge Hub | RehabLookup</title>
+      <meta name="description" content="Track your placement progress and communicate with matched treatment facilities through your personal concierge hub." />
+    </Helmet>
     <div className="container max-w-4xl py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -872,5 +890,6 @@ export default function SeekerConcierge() {
         <div className="h-20 md:hidden" />
       )}
     </div>
+    </>
   );
 }
