@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Phone, Shield } from "lucide-react";
+import { ArrowRight, Heart, Shield } from "lucide-react";
 import { analytics } from "@/lib/analytics";
 
 interface ContactRequestFormProps {
@@ -8,33 +8,27 @@ interface ContactRequestFormProps {
 }
 
 /**
- * ContactRequestForm - Redirects to unified lead intake form
+ * ContactRequestForm - Redirects to Concierge service
  * 
- * This component has been deprecated in favor of the unified Lead Intake Engine.
- * It now displays a CTA that redirects users to /request-help.
+ * For general help requests, users are directed to the Concierge placement service.
+ * Facility-specific inquiries should use the LeadSubmissionForm on facility pages.
  */
 export function ContactRequestForm({ centerName }: ContactRequestFormProps) {
   const navigate = useNavigate();
 
   const handleGetHelp = () => {
-    analytics.ctaClick("Request Help Now", "contact_form");
-    const params = new URLSearchParams({
-      source: "contact_form",
-    });
-    if (centerName) {
-      params.set("facilityName", encodeURIComponent(centerName));
-    }
-    navigate(`/request-help?${params.toString()}`);
+    analytics.ctaClick("Get Matched", "contact_form");
+    navigate("/account/concierge");
   };
 
   return (
     <div className="space-y-4">
       <div className="text-center">
         <h3 className="font-semibold text-lg text-foreground mb-2">
-          Get Help Finding Treatment
+          Get Matched With Treatment
         </h3>
         <p className="text-sm text-muted-foreground">
-          Complete our brief form and a treatment specialist will reach out to help.
+          Our concierge service will match you with verified treatment centers based on your needs.
         </p>
       </div>
 
@@ -44,8 +38,8 @@ export function ContactRequestForm({ centerName }: ContactRequestFormProps) {
         size="lg"
         className="w-full gap-2"
       >
-        <Phone className="h-4 w-4" />
-        Request Help Now
+        <Heart className="h-4 w-4" />
+        Get Matched
         <ArrowRight className="h-4 w-4" />
       </Button>
 

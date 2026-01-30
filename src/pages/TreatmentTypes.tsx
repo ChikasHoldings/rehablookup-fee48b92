@@ -588,10 +588,10 @@ const TreatmentTypes = () => {
               Our specialists can help you find the right treatment program. Free and confidential.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/request-help?source=treatment_types">
+              <Link to="/account/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 font-semibold">
                   <Heart className="h-4 w-4" />
-                  Get Free Help
+                  Get Matched
                 </Button>
               </Link>
               <Link to="/rehab-centers">

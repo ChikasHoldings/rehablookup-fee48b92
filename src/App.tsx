@@ -47,8 +47,6 @@ import ProviderResetPassword from "./pages/ProviderResetPassword";
 import ProviderSupport from "./pages/ProviderSupport";
 import ProviderFAQ from "./pages/ProviderFAQ";
 import ProviderSignup from "./pages/ProviderSignup";
-import RequestHelp from "./pages/RequestHelp";
-import PlacementHelp from "./pages/PlacementHelp";
 
 // Concierge Placement (Paid Service)
 import ConciergeLanding from "./pages/concierge/ConciergeLanding";
@@ -208,8 +206,8 @@ const App = () => (
             <Route path="/outpatient-near-me/:stateSlug" element={<OutpatientNearMe />} />
             
             <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/request-help" element={<RequestHelp />} />
-            <Route path="/placement-help" element={<PlacementHelp />} />
+            <Route path="/request-help" element={<Navigate to="/account/concierge" replace />} />
+            <Route path="/placement-help" element={<Navigate to="/account/concierge" replace />} />
             
             {/* Concierge Placement Routes (Paid Service) */}
             <Route path="/concierge" element={<ConciergeLanding />} />

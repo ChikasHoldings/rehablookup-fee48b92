@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Clock, Shield, Phone, Building2, ArrowRight } from "lucide-react";
+import { MapPin, Clock, Shield, Heart, Building2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LocalSignalsSectionProps {
@@ -74,10 +74,10 @@ export function LocalSignalsSection({
             )}
 
             <div className="mt-6">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button className="gap-2">
-                  <Phone className="h-4 w-4" />
-                  Check Availability Now
+                  <Heart className="h-4 w-4" />
+                  Get Matched
                 </Button>
               </Link>
             </div>

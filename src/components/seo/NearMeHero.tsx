@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MapPin, Building2, CheckCircle, Phone, Search, Navigation } from "lucide-react";
+import { MapPin, Building2, CheckCircle, Heart, Search, Navigation } from "lucide-react";
 
 interface NearMeHeroProps {
   title: string;
@@ -97,10 +97,10 @@ export function NearMeHero({
 
           {/* CTAs */}
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <Link to="/request-help">
+            <Link to="/account/concierge">
               <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
-                <Phone className="h-4 w-4" />
-                Get Help Now
+                <Heart className="h-4 w-4" />
+                Get Matched
               </Button>
             </Link>
             

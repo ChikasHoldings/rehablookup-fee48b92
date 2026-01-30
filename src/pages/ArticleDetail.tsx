@@ -1285,7 +1285,7 @@ const ArticleDetail = () => {
                     if (paragraph.startsWith("## ")) {
                       return (
                         <div key={index}>
-                          {showMidCTA && <MidArticleCTA source={`article_${article.id}`} />}
+                          {showMidCTA && <MidArticleCTA />}
                           <h2 className="font-display text-xl font-bold text-foreground mt-10 mb-4 first:mt-0 flex items-center gap-3">
                             <span className="h-8 w-1 rounded-full bg-primary" />
                             {paragraph.replace("## ", "")}
@@ -1295,7 +1295,7 @@ const ArticleDetail = () => {
                     }
                     return (
                       <div key={index}>
-                        {showMidCTA && <MidArticleCTA source={`article_${article.id}`} />}
+                        {showMidCTA && <MidArticleCTA />}
                         <p className="text-foreground/80 leading-relaxed mb-5 text-base">
                           {parseContentWithLinks(paragraph)}
                         </p>
@@ -1413,9 +1413,9 @@ const ArticleDetail = () => {
                 <p className="text-sm text-white/80 mb-5 leading-relaxed">
                   Our specialists are available 24/7 to help you find the right treatment center.
                 </p>
-                <Link to="/request-help?source=article_sidebar">
+                <Link to="/account/concierge">
                   <Button variant="secondary" className="w-full gap-2 bg-white text-primary hover:bg-white/90">
-                    Request Help
+                    Get Matched
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -1504,9 +1504,9 @@ const ArticleDetail = () => {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/request-help?source=article_cta">
+                <Link to="/account/concierge">
                   <Button size="lg" variant="outline" className="gap-2 border-white/30 text-white hover:bg-white/10">
-                    Request Help
+                    Get Matched
                   </Button>
                 </Link>
               </div>
