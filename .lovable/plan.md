@@ -1,171 +1,176 @@
 
-# Seeker Panel Audit - COMPLETED ✅
+# Stripe Payment System Remediation Plan
 
-## Status: All Critical Issues Fixed (2026-01-30)
+## Summary
 
----
-
-## Completed Fixes
-
-### 1. ✅ Fixed All `/request-help` Links (275 instances → 0 remaining)
-All links updated to `/account/concierge` with new "Get Matched" terminology across 27+ files including:
-- All treatment-type pages (State/City variants)
-- SeekerHome.tsx, SearchResults.tsx, NotFound.tsx
-- FAQ.tsx, Locations.tsx, CostEstimator.tsx
-
-### 2. ✅ Removed Orphaned Edge Function References  
-- Deleted `supabase/functions/track-request-help/index.ts`
-- Updated `RequestInfoModal.tsx` to remove calls to deleted function
-
-### 3. ✅ Updated Support Email
-- Changed `support@recoverydirectory.com` → `help@rehablookup.com` in SeekerHelp.tsx
-
-### 4. ✅ Deprecated useSeekerShellContext Hook
-- Added deprecation warning directing to `useOutletContext()`
-- `src/pages/treatment-types/DualDiagnosisTreatment.tsx`
-- `src/pages/treatment-types/StateAlcoholRehab.tsx`
-- `src/pages/treatment-types/CityDetoxPrograms.tsx`
-- Plus 18+ more files
-
-**Fix:** Search and replace all `/request-help` links with `/account/concierge` and update button labels from "Request Call Back" to "Get Matched" or "Start Concierge".
+Update the platform's payment system to correctly use the **$399/mo RehabLookup Pro** subscription with the existing Stripe price, fix all pricing references from $99 to $399, and standardize the Stripe SDK across all edge functions.
 
 ---
 
-### 2. React forwardRef Console Error
-**Problem:** Console shows `Warning: Function components cannot be given refs` in `ReportImageDialog.tsx`.
+## Key Discovery
 
-**File:** `src/components/profile/ReportImageDialog.tsx`
+**Existing Stripe Price Found**: `price_1Sel1C9fxdThyiakWLfgbl9K` 
+- Amount: $399/mo (39900 cents)
+- Product: `prod_Tbyz1bf6iYyzYd` (RehabLookup Professional)
+- Status: Active and ready to use
 
-**Fix:** Wrap the component with `React.forwardRef` since it's being passed a ref from `CenterProfile.tsx`.
-
----
-
-### 3. Missing DialogDescription Accessibility Warning
-**Problem:** Console warns `Missing Description or aria-describedby={undefined} for {DialogContent}`.
-
-**Fix:** Audit all Dialog usages and ensure they include `DialogDescription` or add `aria-describedby={undefined}` to suppress when description isn't needed.
+This eliminates the need to create a new product/price in Stripe.
 
 ---
 
-## Medium Priority Issues
+## Changes Overview
 
-### 4. Incorrect Support Email in SeekerHelp.tsx
-**Problem:** Line 316 shows `support@recoverydirectory.com` instead of the correct `help@rehablookup.com`.
+### Phase 1: Update Price ID & Pricing References
 
-**File:** `src/pages/seeker/SeekerHelp.tsx`
+| File | Current | New |
+|------|---------|-----|
+| `create-checkout/index.ts` | `price_pro_monthly` placeholder | `price_1Sel1C9fxdThyiakWLfgbl9K` |
+| `subscribe-pro/index.ts` | Dynamic price creation ($99) | Remove/deprecate - use create-checkout |
+| `stripe-webhook/index.ts` | `price_cents: 9900` | `price_cents: 39900` |
+| `useSubscription.ts` | `$99/month` in PLAN_DETAILS | `$399/month` |
+| `submit-lead/index.ts` | Email mentions $99/month | `$399/month` |
+| `check-subscription/index.ts` | Comments mention $99 | `$399` |
+| `_shared/email-templates.ts` | Comments mention $99 | `$399` |
 
-**Fix:** Update email to `help@rehablookup.com`.
+### Phase 2: SDK Standardization
 
----
+Update 10 edge functions from `stripe@14.21.0` to `stripe@18.5.0` and API version `2025-08-27.basil`:
 
-### 5. Static useSeekerShellContext Hook
-**Problem:** The `useSeekerShellContext` hook (line 171-172) returns hardcoded `{ isAuthenticated: false, userName: undefined }` instead of actual values.
+1. `subscribe-pro/index.ts`
+2. `purchase-credits/index.ts`
+3. `unlock-lead/index.ts`
+4. `check-provider-health-alerts/index.ts`
+5. `check-churn-alerts/index.ts`
+6. `send-retention-outreach/index.ts`
+7. `send-payment-reminder/index.ts`
+8. `send-followup-reminders/index.ts`
+9. `send-approval-email/index.ts`
+10. `send-profile-reminders/index.ts`
 
-**File:** `src/components/seeker/SeekerShell.tsx`
+### Phase 3: Cleanup & URL Fixes
 
-**Fix:** Either remove this unused hook or implement it properly using `useOutletContext`.
-
----
-
-### 6. Orphaned Edge Function
-**Problem:** `supabase/functions/track-request-help/index.ts` exists but the `/request-help` page was deleted.
-
-**Fix:** Either delete this edge function if no longer needed, or repurpose it for concierge tracking.
-
----
-
-## Completed/Working Features
-
-The following features are fully implemented and functional:
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| SeekerHome | Working | Filters, sorting, facility cards all functional |
-| SeekerSearch | Working | Location suggestions, filters, search all working |
-| SeekerSaved | Working | Favorites sync with DB, auth-gated |
-| SeekerRequests | Working | Lead tracking, prefill from facility pages |
-| SeekerReviews | Working | Edit pending reviews, delete, view responses |
-| SeekerSettings | Working | Profile, avatar upload, password change, delete account |
-| SeekerConcierge | Working | Full intake flow, Stripe checkout, case tracking |
-| SeekerNotifications | Working | Real-time updates, mark read, delete |
-| SeekerNotificationPreferences | Working | Toggle email/in-app preferences |
-| SeekerHelp | Working | FAQ, contact form, crisis resources |
-| SeekerMobileNav | Working | Bottom navigation with More drawer |
-| AuthPrompt | Working | Auth-gate for protected features |
-| ConciergeInlineIntake | Working | Multi-step form with validation |
-| ConciergeMessaging | Working | Real-time messaging threads |
-| ConciergeToursList | Working | Tour scheduling and tracking |
+- Update `customer-portal/index.ts` return URL from `/provider/billing` to `/provider/credits`
+- Update email template URLs in `stripe-webhook/index.ts`
+- Add `prod_Tbyz1bf6iYyzYd` to PRO_PRODUCT_IDS arrays for consistency
 
 ---
 
-## Edge Functions Verification
+## Detailed Changes
 
-All seeker-related edge functions are deployed:
+### 1. create-checkout/index.ts (Critical)
 
-| Function | Purpose | Status |
-|----------|---------|--------|
-| `create-concierge-checkout` | Stripe checkout for $29 fee | Deployed |
-| `verify-concierge-payment` | Payment verification | Deployed |
-| `submit-concierge-intake` | Intake submission | Deployed |
-| `send-seeker-emails` | Welcome, confirmation emails | Deployed |
-| `send-tour-notifications` | Tour scheduling alerts | Deployed |
-| `send-message-notifications` | Messaging alerts | Deployed |
-| `auto-status-transition` | Case status automation | Deployed |
-| `delete-seeker-account` | Account deletion | Deployed |
-| `track-request-help` | Analytics (orphaned - review) | Deployed |
+```typescript
+// Line 11 - Change from:
+const PRO_PRICE_ID = "price_pro_monthly"; // $99/mo Pro subscription
+
+// To:
+const PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K"; // $399/mo RehabLookup Pro
+```
+
+### 2. useSubscription.ts (Frontend)
+
+```typescript
+// Lines 128-132 - Update PLAN_DETAILS.pro:
+pro: {
+  name: "Pro",
+  price: "$399",  // Was $99
+  period: "/month",
+  description: "Enhanced visibility + discounts",
+  location_limit: 5,
+  unlock_discount: 20,
+  features: [
+    "Up to 5 facility listings",
+    "20% off lead unlocks",
+    "20% off Concierge placement fees",
+    "Featured homepage placement",
+    "Priority search ranking",
+    "Pro badge on profile",
+  ],
+  price_id: "price_1Sel1C9fxdThyiakWLfgbl9K",
+  product_id: "prod_Tbyz1bf6iYyzYd",
+}
+```
+
+### 3. stripe-webhook/index.ts
+
+```typescript
+// Line 160 - Change from:
+price_cents: 9900,
+
+// To:
+price_cents: 39900,
+```
+
+### 4. subscribe-pro/index.ts
+
+This function will be deprecated in favor of `create-checkout`. Update to redirect or mark as deprecated:
+
+```typescript
+// Line 11 - Update price constant:
+const PRO_PRICE_CENTS = 39900; // $399/month
+
+// Lines 105-129 - Replace dynamic price creation with hardcoded price ID:
+const PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K";
+```
+
+### 5. Email Templates & Comments
+
+Update all instances of "$99" to "$399" in:
+- `supabase/functions/submit-lead/index.ts` (line 172)
+- `supabase/functions/check-subscription/index.ts` (line 11)
+- `supabase/functions/_shared/email-templates.ts` (line 7)
 
 ---
 
-## Implementation Tasks
+## Pro Feature Summary (for reference)
 
-### Phase 1: Critical Fixes (Day 1)
-1. Update all 275 `/request-help` links to `/account/concierge`
-2. Update button labels from "Request Call Back" to "Get Matched" or "Start Concierge"
-3. Fix `ReportImageDialog.tsx` forwardRef issue
-4. Add DialogDescription to dialogs missing accessibility attributes
-
-### Phase 2: Cleanup (Day 2)
-5. Update support email in SeekerHelp.tsx to `help@rehablookup.com`
-6. Remove or fix `useSeekerShellContext` hook
-7. Review `track-request-help` edge function - repurpose or delete
-8. End-to-end testing of all seeker flows
+The $399/mo RehabLookup Pro subscription includes:
+- **Up to 5 facility listings** (vs 1 for Free)
+- **20% off credits** (lead unlock costs)
+- **20% off placement fees** (Concierge network)
+- **Featured homepage placement**
+- **Top of search results** (priority ranking)
+- **Pro badge** on facility profile
 
 ---
 
 ## Files to Modify
 
 ```text
-# Critical link updates (27 files with /request-help)
-src/pages/seeker/SeekerHome.tsx
-src/pages/SearchResults.tsx
-src/pages/treatment-types/*.tsx (multiple files)
+# Phase 1: Critical Price Updates
+supabase/functions/create-checkout/index.ts
+src/hooks/useSubscription.ts
+supabase/functions/stripe-webhook/index.ts
+supabase/functions/subscribe-pro/index.ts
+supabase/functions/submit-lead/index.ts
+supabase/functions/check-subscription/index.ts
+supabase/functions/_shared/email-templates.ts
 
-# forwardRef fix
-src/components/profile/ReportImageDialog.tsx
+# Phase 2: SDK Standardization (10 files)
+supabase/functions/purchase-credits/index.ts
+supabase/functions/unlock-lead/index.ts
+supabase/functions/check-provider-health-alerts/index.ts
+supabase/functions/check-churn-alerts/index.ts
+supabase/functions/send-retention-outreach/index.ts
+supabase/functions/send-payment-reminder/index.ts
+supabase/functions/send-followup-reminders/index.ts
+supabase/functions/send-approval-email/index.ts
+supabase/functions/send-profile-reminders/index.ts
 
-# Support email fix
-src/pages/seeker/SeekerHelp.tsx
-
-# Hook cleanup
-src/components/seeker/SeekerShell.tsx
-
-# Edge function review
-supabase/functions/track-request-help/index.ts
+# Phase 3: URL Cleanup
+supabase/functions/customer-portal/index.ts
 ```
 
 ---
 
 ## Testing Checklist
 
-After fixes, verify:
-- [ ] SeekerHome displays facilities and all CTAs work
-- [ ] SeekerSearch filters and location suggestions work
-- [ ] SeekerSaved requires auth and syncs favorites
-- [ ] SeekerRequests shows submitted leads
-- [ ] SeekerReviews edit/delete flows work
-- [ ] SeekerSettings profile save and avatar upload work
-- [ ] SeekerConcierge intake → payment → case tracking flow
-- [ ] All CTAs redirect to `/account/concierge` correctly
-- [ ] No console errors related to refs or accessibility
-- [ ] Mobile navigation works smoothly
-- [ ] More drawer shows correct items and styling
+After implementation:
+- [ ] Pro subscription checkout creates session with $399 price
+- [ ] Webhook processes subscription and stores correct price_cents (39900)
+- [ ] check-subscription returns isPro: true for subscribers
+- [ ] Frontend displays "$399/month" in plan details
+- [ ] Credit purchases work correctly
+- [ ] Lead unlocks apply 20% Pro discount
+- [ ] Customer portal opens and returns to correct URL
+- [ ] No console errors or failed API calls
