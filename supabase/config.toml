@@ -93,8 +93,6 @@ verify_jwt = false
 [functions.send-admin-weekly-report]
 verify_jwt = false
 
-[functions.track-request-help]
-verify_jwt = false
 
 [functions.send-reply-email-verification]
 verify_jwt = true
