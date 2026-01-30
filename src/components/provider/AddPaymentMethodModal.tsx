@@ -23,9 +23,6 @@ import {
 } from "@stripe/react-stripe-js";
 import { cn } from "@/lib/utils";
 
-// Stripe publishable key from env
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
-
 interface AddPaymentMethodModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -37,6 +34,11 @@ interface PaymentFormProps {
   facilityId: string;
   onSuccess?: () => void;
   onCancel: () => void;
+}
+
+interface SetupData {
+  clientSecret: string;
+  customerId: string;
 }
 
 function PaymentFormContent({
@@ -459,6 +461,52 @@ export function AddPaymentMethodModal({
   facilityId,
   onSuccess,
 }: AddPaymentMethodModalProps) {
+  const [stripePromise, setStripePromise] = useState<Promise<StripeType | null> | null>(null);
+  const [isLoadingStripe, setIsLoadingStripe] = useState(true);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+
+  // Fetch Stripe publishable key from edge function when modal opens
+  useEffect(() => {
+    if (!open) return;
+
+    async function initStripe() {
+      setIsLoadingStripe(true);
+      setStripeError(null);
+
+      try {
+        console.log("[AddPaymentMethodModal] Fetching Stripe config...");
+        const { data, error } = await supabase.functions.invoke("setup-provider-payment-method", {
+          body: { facilityId },
+        });
+
+        if (error) {
+          console.error("[AddPaymentMethodModal] Setup error:", error);
+          throw new Error(error.message || "Failed to initialize payment setup");
+        }
+
+        if (data?.error) {
+          console.error("[AddPaymentMethodModal] API error:", data.error);
+          throw new Error(data.error);
+        }
+
+        if (!data?.publishableKey) {
+          throw new Error("Stripe is not configured. Please contact support.");
+        }
+
+        console.log("[AddPaymentMethodModal] Stripe key received, initializing...");
+        const stripe = loadStripe(data.publishableKey);
+        setStripePromise(stripe);
+      } catch (err: any) {
+        console.error("[AddPaymentMethodModal] Init error:", err);
+        setStripeError(err.message || "Failed to initialize payment system");
+      } finally {
+        setIsLoadingStripe(false);
+      }
+    }
+
+    initStripe();
+  }, [open, facilityId]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -472,16 +520,33 @@ export function AddPaymentMethodModal({
           </DialogDescription>
         </DialogHeader>
 
-        <Elements stripe={stripePromise}>
-          <PaymentFormWrapper
-            facilityId={facilityId}
-            onSuccess={() => {
-              onOpenChange(false);
-              onSuccess?.();
-            }}
-            onCancel={() => onOpenChange(false)}
-          />
-        </Elements>
+        {isLoadingStripe ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Initializing payment system...</p>
+          </div>
+        ) : stripeError ? (
+          <div className="space-y-4">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{stripeError}</AlertDescription>
+            </Alert>
+            <div className="flex justify-end">
+              <Button variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
+            </div>
+          </div>
+        ) : stripePromise ? (
+          <Elements stripe={stripePromise}>
+            <PaymentFormWrapper
+              facilityId={facilityId}
+              onSuccess={() => {
+                onOpenChange(false);
+                onSuccess?.();
+              }}
+              onCancel={() => onOpenChange(false)}
+            />
+          </Elements>
+        ) : null}
       </DialogContent>
     </Dialog>
   );
