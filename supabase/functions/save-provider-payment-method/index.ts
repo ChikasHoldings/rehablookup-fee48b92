@@ -21,7 +21,10 @@ serve(async (req) => {
     logStep("Function started");
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    if (!stripeKey) {
+      logStep("ERROR", { message: "STRIPE_SECRET_KEY not configured" });
+      throw new Error("STRIPE_SECRET_KEY is not set");
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -47,7 +50,7 @@ serve(async (req) => {
       throw new Error("Facility ID and payment method ID are required");
     }
 
-    logStep("Saving payment method", { facilityId, paymentMethodId });
+    logStep("Saving payment method", { facilityId, paymentMethodId, setAsDefault });
 
     const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -60,14 +63,23 @@ serve(async (req) => {
       .single();
 
     if (facilityError || !facility) {
+      logStep("ERROR", { message: "Facility not found", facilityError });
       throw new Error("Facility not found or access denied");
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Retrieve payment method details from Stripe
+    logStep("Retrieving payment method from Stripe", { paymentMethodId });
     const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
     
+    logStep("Payment method retrieved", { 
+      type: paymentMethod.type, 
+      hasCard: !!paymentMethod.card,
+      hasBankAccount: !!paymentMethod.us_bank_account,
+      customer: paymentMethod.customer
+    });
+
     let lastFour = '';
     let type = 'card';
     let bankName: string | null = null;
@@ -84,13 +96,11 @@ serve(async (req) => {
       expYear = paymentMethod.card.exp_year;
       logStep("Processing card payment method", { brand: cardBrand, lastFour });
     } else if (paymentMethod.type === 'us_bank_account' && paymentMethod.us_bank_account) {
-      lastFour = paymentMethod.us_bank_account.last4;
+      lastFour = paymentMethod.us_bank_account.last4 || '';
       type = 'ach';
-      bankName = paymentMethod.us_bank_account.bank_name;
+      bankName = paymentMethod.us_bank_account.bank_name || null;
       
       // Check verification status for ACH
-      // Financial Connections provides instant verification
-      // Micro-deposits may still be pending
       const accountStatus = paymentMethod.us_bank_account.status_details;
       if (accountStatus && accountStatus.blocked) {
         isVerified = false;
@@ -102,6 +112,9 @@ serve(async (req) => {
         accountType: paymentMethod.us_bank_account.account_type,
         accountHolderType: paymentMethod.us_bank_account.account_holder_type
       });
+    } else {
+      logStep("Unknown payment method type", { type: paymentMethod.type });
+      throw new Error(`Unsupported payment method type: ${paymentMethod.type}`);
     }
 
     // Get customer ID from payment method
@@ -109,12 +122,16 @@ serve(async (req) => {
 
     // If setting as default, unset other defaults first
     if (setAsDefault) {
-      await supabaseService
+      const { error: unsetError } = await supabaseService
         .from('provider_payment_methods')
         .update({ is_default: false })
         .eq('facility_id', facilityId);
       
-      logStep("Unset previous default payment methods");
+      if (unsetError) {
+        logStep("Warning: Failed to unset previous defaults", { error: unsetError });
+      } else {
+        logStep("Unset previous default payment methods");
+      }
     }
 
     // Check if this payment method already exists
@@ -147,6 +164,7 @@ serve(async (req) => {
         .eq('id', existing.id);
       
       if (updateError) {
+        logStep("ERROR", { message: "Failed to update payment method", updateError });
         throw new Error(`Failed to update payment method: ${updateError.message}`);
       }
       
@@ -161,6 +179,7 @@ serve(async (req) => {
         });
 
       if (insertError) {
+        logStep("ERROR", { message: "Failed to save payment method", insertError });
         throw new Error(`Failed to save payment method: ${insertError.message}`);
       }
 
@@ -184,12 +203,15 @@ serve(async (req) => {
       }
     }
 
+    logStep("Payment method saved successfully", { type, lastFour, bankName, isVerified });
+
     return new Response(
       JSON.stringify({ 
         success: true,
         type,
         lastFour,
         bankName,
+        cardBrand,
         isVerified,
       }),
       {
