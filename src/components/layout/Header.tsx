@@ -23,8 +23,6 @@ export interface HeaderProps {
 
 const defaultNavLinks: NavLink[] = [
   { href: "/rehab-centers", label: "Find Rehab" },
-  { href: "/treatment-types", label: "Treatment" },
-  { href: "/insurance", label: "Insurance" },
   { href: "/resources", label: "Resources" },
   { href: "/for-providers", label: "For Providers" },
 ];
@@ -206,14 +204,14 @@ export function Header({
                 ) : (
                   <>
                     <PrefetchLink to="/auth">
-                      <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5">
-                        <User className="h-4 w-4" />
-                        Sign In
+                      <Button size="sm" className="h-8 text-sm">
+                        Sign Up
                       </Button>
                     </PrefetchLink>
                     <PrefetchLink to="/auth">
-                      <Button size="sm" className="h-8 text-sm">
-                        Sign Up
+                      <Button size="sm" variant="ghost" className="h-8 text-sm gap-1.5">
+                        <User className="h-4 w-4" />
+                        Sign In
                       </Button>
                     </PrefetchLink>
                   </>
@@ -428,14 +426,14 @@ export function Header({
                 ) : (
                   <div className="space-y-2.5">
                     <PrefetchLink to="/auth" onClick={() => setMobileMenuOpen(false)} className="block">
-                      <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30">
-                        Sign Up
-                      </Button>
-                    </PrefetchLink>
-                    <PrefetchLink to="/auth" onClick={() => setMobileMenuOpen(false)} className="block">
                       <Button variant="ghost" className="w-full h-11 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted/50 gap-2">
                         <User className="h-4 w-4" />
                         Sign In
+                      </Button>
+                    </PrefetchLink>
+                    <PrefetchLink to="/auth" onClick={() => setMobileMenuOpen(false)} className="block">
+                      <Button className="w-full h-12 text-sm font-medium rounded-xl bg-gradient-to-r from-primary via-primary to-primary/90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30">
+                        Sign Up
                       </Button>
                     </PrefetchLink>
                   </div>
