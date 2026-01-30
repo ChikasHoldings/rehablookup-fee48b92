@@ -97,19 +97,19 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                   to={item.href}
                   onClick={onNavigate}
                   className={cn(
-                    "group flex items-center gap-2 px-2.5 py-1.5 sm:py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                    "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive 
                       ? "bg-primary text-white shadow-sm" 
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <div className={cn(
-                    "flex items-center justify-center h-6 w-6 rounded-md transition-colors relative",
+                    "flex items-center justify-center h-8 w-8 rounded-md transition-colors relative",
                     isActive 
                       ? "bg-white/20" 
                       : "bg-muted group-hover:bg-background"
                   )}>
-                    <Icon className="h-3.5 w-3.5" />
+                    <Icon className="h-4 w-4" />
                     {showBadge && (
                       <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 flex items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
                         {badgeCount > 99 ? "99+" : badgeCount}
