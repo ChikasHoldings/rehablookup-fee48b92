@@ -118,7 +118,7 @@ serve(async (req) => {
     // Get provider's default payment method
     const { data: paymentMethod, error: pmError } = await supabase
       .from('provider_payment_methods')
-      .select('stripe_payment_method_id')
+      .select('stripe_payment_method_id, stripe_customer_id, is_verified')
       .eq('facility_id', facilityId)
       .eq('is_default', true)
       .maybeSingle();
@@ -202,19 +202,25 @@ serve(async (req) => {
     // Charge the payment method
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Get customer ID from payment method
-    const pm = await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id);
-    const customerId = pm.customer as string;
+    // Use stored customer ID for efficiency
+    const customerId = paymentMethod.stripe_customer_id;
 
     if (!customerId) {
-      throw new Error("Payment method not attached to customer");
+      // Fallback to retrieving from Stripe if not stored
+      logStep("Customer ID not stored, retrieving from Stripe");
+      const pm = await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id);
+      if (!pm.customer) {
+        throw new Error("Payment method not attached to customer");
+      }
     }
+
+    const finalCustomerId = customerId || (await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id)).customer as string;
 
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: feeCents,
       currency: 'usd',
-      customer: customerId,
+      customer: finalCustomerId,
       payment_method: paymentMethod.stripe_payment_method_id,
       off_session: true,
       confirm: true,
