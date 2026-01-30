@@ -135,7 +135,7 @@ export default function SeekerAuth() {
         <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Link to="/" className="flex items-center gap-2">
             <img 
-              src="/lovable-uploads/6f3f5614-d48c-4f25-9cba-803771fa49d3.png" 
+              src="/logo.png" 
               alt="RehabLookup" 
               className="h-8 w-auto"
             />
