@@ -8,82 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, FileSignature } from "lucide-react";
+import { Loader2, FileSignature, Shield, AlertCircle } from "lucide-react";
 
 const TERMS_VERSION = "1.0";
-
-const PLACEMENT_TERMS = `
-PLACEMENT NETWORK AGREEMENT
-
-This Placement Network Agreement ("Agreement") is entered into between the Treatment Facility ("Provider") and the Placement Network operated by this platform ("Network").
-
-1. PLACEMENT FEE STRUCTURE
-
-Provider agrees to pay the following fees upon confirmed placement:
-
-a) Flat Fee Option: $1,200 per placement
-   - Pro Subscribers: $960 per placement (20% discount)
-
-b) Commission Option: 8% of first month's treatment cost
-   - Pro Subscribers: 6.4% of first month's treatment cost
-   - Commission Cap: Maximum of $1,500 per placement
-
-2. PAYMENT TERMS
-
-a) Fees are due upon placement confirmation by both parties
-b) Payment will be automatically charged to Provider's saved payment method
-c) If no payment method is available, an invoice will be issued with Net 14 terms
-d) Late payments may incur additional fees and suspension from the network
-
-3. PLACEMENT CONFIRMATION
-
-a) A placement is considered confirmed when:
-   - The patient is admitted to the facility
-   - Both the family and Provider confirm the admission
-   - The admission date is documented
-
-b) Provider must report placements within 48 hours of admission
-
-4. REFUND POLICY
-
-a) If a patient leaves within 72 hours of admission, Provider may request a fee waiver
-b) Fee waivers are subject to review and approval
-c) Disputes must be submitted within 7 days of placement
-
-5. NETWORK PARTICIPATION
-
-a) Provider agrees to:
-   - Respond to introductions within 24 hours
-   - Maintain accurate availability status
-   - Provide honest assessments of patient fit
-   - Uphold ethical treatment practices
-
-b) Network reserves the right to:
-   - Remove Providers who violate terms
-   - Adjust matching algorithms based on performance
-   - Modify fee structures with 30 days notice
-
-6. CONFIDENTIALITY
-
-Provider agrees to maintain confidentiality of all patient information shared through the network in accordance with HIPAA regulations.
-
-7. TERM AND TERMINATION
-
-This Agreement remains in effect while Provider participates in the network. Either party may terminate with 30 days written notice.
-
-8. LIMITATION OF LIABILITY
-
-Network provides matching services only. Provider maintains full responsibility for clinical decisions, treatment quality, and patient outcomes.
-
-By signing below, Provider acknowledges reading, understanding, and agreeing to these terms.
-`;
 
 interface PlacementTermsModalProps {
   open: boolean;
@@ -137,73 +69,245 @@ export function PlacementTermsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileSignature className="h-5 w-5" />
-            Placement Network Agreement
-          </DialogTitle>
-          <DialogDescription>
-            Please review and accept the terms to participate in the placement network
-          </DialogDescription>
+      <DialogContent className="max-w-3xl h-[90vh] flex flex-col p-0 gap-0">
+        {/* Header */}
+        <DialogHeader className="px-6 py-4 border-b bg-muted/30 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Shield className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl">Placement Network Agreement</DialogTitle>
+              <DialogDescription className="mt-0.5">
+                Version {TERMS_VERSION} • Please review carefully before accepting
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <ScrollArea className="h-[400px] border rounded-lg bg-muted/30">
-          <div className="p-4">
-            <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed text-foreground">
-              {PLACEMENT_TERMS}
-            </pre>
+        {/* Agreement Content - Main Focus */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="px-6 py-5">
+            <div className="prose prose-sm max-w-none text-foreground">
+              {/* Introduction */}
+              <div className="mb-6 p-4 bg-muted/50 rounded-lg border">
+                <p className="text-sm text-muted-foreground m-0">
+                  This Placement Network Agreement ("Agreement") is entered into between the Treatment Facility ("Provider") and the Placement Network operated by this platform ("Network"). By accepting this agreement, you agree to participate in the Network and comply with all terms outlined below.
+                </p>
+              </div>
+
+              {/* Section 1 */}
+              <section className="mb-6">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">1</span>
+                  Placement Fee Structure
+                </h3>
+                <div className="pl-8 space-y-3">
+                  <p className="text-sm text-muted-foreground">Provider agrees to pay the following fees upon confirmed placement:</p>
+                  
+                  <div className="grid gap-3">
+                    <div className="p-3 bg-muted/30 rounded-lg border">
+                      <h4 className="font-medium text-sm mb-1">Flat Fee Option</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0">
+                        <li>• Standard Rate: <strong className="text-foreground">$1,200</strong> per placement</li>
+                        <li>• Pro Subscribers: <strong className="text-foreground">$960</strong> per placement (20% discount)</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="p-3 bg-muted/30 rounded-lg border">
+                      <h4 className="font-medium text-sm mb-1">Commission Option</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0">
+                        <li>• Standard Rate: <strong className="text-foreground">8%</strong> of first month's treatment cost</li>
+                        <li>• Pro Subscribers: <strong className="text-foreground">6.4%</strong> of first month's treatment cost</li>
+                        <li>• Commission Cap: Maximum of <strong className="text-foreground">$1,500</strong> per placement</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Section 2 */}
+              <section className="mb-6">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">2</span>
+                  Payment Terms
+                </h3>
+                <div className="pl-8">
+                  <ul className="text-sm text-muted-foreground space-y-2 list-none pl-0 m-0">
+                    <li className="flex gap-2">
+                      <span className="text-primary">a.</span>
+                      Fees are due upon placement confirmation by both parties
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary">b.</span>
+                      Payment will be automatically charged to Provider's saved payment method
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary">c.</span>
+                      If no payment method is available, an invoice will be issued with Net 14 terms
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary">d.</span>
+                      Late payments may incur additional fees and suspension from the network
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+              {/* Section 3 */}
+              <section className="mb-6">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">3</span>
+                  Placement Confirmation
+                </h3>
+                <div className="pl-8 space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">A placement is considered confirmed when:</p>
+                    <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0">
+                      <li>• The patient is admitted to the facility</li>
+                      <li>• Both the family and Provider confirm the admission</li>
+                      <li>• The admission date is documented</li>
+                    </ul>
+                  </div>
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                    <p className="text-sm text-amber-700 dark:text-amber-400 m-0 flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      Provider must report placements within 48 hours of admission
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Section 4 */}
+              <section className="mb-6">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">4</span>
+                  Refund Policy
+                </h3>
+                <div className="pl-8">
+                  <ul className="text-sm text-muted-foreground space-y-2 list-none pl-0 m-0">
+                    <li className="flex gap-2">
+                      <span className="text-primary">a.</span>
+                      If a patient leaves within 72 hours of admission, Provider may request a fee waiver
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary">b.</span>
+                      Fee waivers are subject to review and approval
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary">c.</span>
+                      Disputes must be submitted within 7 days of placement
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+              {/* Section 5 */}
+              <section className="mb-6">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">5</span>
+                  Network Participation
+                </h3>
+                <div className="pl-8 space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">Provider agrees to:</p>
+                    <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0">
+                      <li>• Respond to introductions within 24 hours</li>
+                      <li>• Maintain accurate availability status</li>
+                      <li>• Provide honest assessments of patient fit</li>
+                      <li>• Uphold ethical treatment practices</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">Network reserves the right to:</p>
+                    <ul className="text-sm text-muted-foreground space-y-1 list-none pl-0 m-0">
+                      <li>• Remove Providers who violate terms</li>
+                      <li>• Adjust matching algorithms based on performance</li>
+                      <li>• Modify fee structures with 30 days notice</li>
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
+              {/* Section 6 */}
+              <section className="mb-6">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">6</span>
+                  Confidentiality
+                </h3>
+                <div className="pl-8">
+                  <p className="text-sm text-muted-foreground m-0">
+                    Provider agrees to maintain confidentiality of all patient information shared through the network in accordance with HIPAA regulations. Any breach of patient confidentiality may result in immediate termination from the network and potential legal action.
+                  </p>
+                </div>
+              </section>
+
+              {/* Section 7 */}
+              <section className="mb-6">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">7</span>
+                  Term and Termination
+                </h3>
+                <div className="pl-8">
+                  <p className="text-sm text-muted-foreground m-0">
+                    This Agreement remains in effect while Provider participates in the network. Either party may terminate with 30 days written notice. Outstanding fees remain due upon termination.
+                  </p>
+                </div>
+              </section>
+
+              {/* Section 8 */}
+              <section className="mb-4">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-bold">8</span>
+                  Limitation of Liability
+                </h3>
+                <div className="pl-8">
+                  <p className="text-sm text-muted-foreground m-0">
+                    Network provides matching services only. Provider maintains full responsibility for clinical decisions, treatment quality, and patient outcomes. Network shall not be liable for any claims arising from treatment provided by Provider.
+                  </p>
+                </div>
+              </section>
+            </div>
           </div>
         </ScrollArea>
 
-        <div className="space-y-4 pt-4">
-          <Label
-            htmlFor="agree-checkbox"
-            className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border bg-card hover:bg-muted/50"
-          >
-            <Checkbox
-              id="agree-checkbox"
-              checked={agreed}
-              onCheckedChange={(checked) => setAgreed(checked === true)}
-              className="mt-0.5"
-            />
-            <span className="text-sm">
-              I have read and agree to the Placement Network Agreement on behalf of{" "}
-              <strong>{facilityName}</strong>
-            </span>
-          </Label>
-
-          <div className="space-y-2">
-            <Label htmlFor="signature">Digital Signature (Type your full name)</Label>
-            <Input
-              id="signature"
-              placeholder="Your full name"
-              value={signatureName}
-              onChange={(e) => setSignatureName(e.target.value)}
-              className="font-medium"
-            />
-            <p className="text-xs text-muted-foreground">
-              By typing your name, you acknowledge this constitutes a legal electronic signature
-            </p>
+        {/* Compact Acceptance Section */}
+        <div className="border-t bg-muted/20 px-6 py-4 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+              <Checkbox
+                checked={agreed}
+                onCheckedChange={(checked) => setAgreed(checked === true)}
+                className="flex-shrink-0"
+              />
+              <span className="text-sm text-muted-foreground">
+                I agree on behalf of <strong className="text-foreground">{facilityName}</strong>
+              </span>
+            </label>
+            
+            <div className="flex items-center gap-3 sm:flex-shrink-0">
+              <Input
+                placeholder="Type your full name"
+                value={signatureName}
+                onChange={(e) => setSignatureName(e.target.value)}
+                className="w-48 h-9 text-sm"
+              />
+              <Button
+                size="sm"
+                onClick={() => acceptTermsMutation.mutate()}
+                disabled={!canSubmit || acceptTermsMutation.isPending}
+                className="h-9"
+              >
+                {acceptTermsMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileSignature className="h-4 w-4 mr-1.5" />
+                )}
+                Sign
+              </Button>
+            </div>
           </div>
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => acceptTermsMutation.mutate()}
-            disabled={!canSubmit || acceptTermsMutation.isPending}
-          >
-            {acceptTermsMutation.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <FileSignature className="h-4 w-4 mr-2" />
-            )}
-            Accept & Sign
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
