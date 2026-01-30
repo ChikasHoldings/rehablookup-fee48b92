@@ -151,13 +151,6 @@ export default function SeekerAuth() {
           {/* Left Panel - Branding */}
           <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 via-primary/5 to-background items-center justify-center p-12">
             <div className="max-w-md space-y-6 text-center">
-              <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto">
-                <img 
-                  src="/lovable-uploads/6f3f5614-d48c-4f25-9cba-803771fa49d3.png" 
-                  alt="RehabLookup" 
-                  className="h-12 w-auto"
-                />
-              </div>
               <h2 className="text-3xl font-bold text-foreground">
                 Find Your Path to Recovery
               </h2>
