@@ -47,6 +47,7 @@ import { cn } from "@/lib/utils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
+import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 
 interface FacilityData {
   id: string;
@@ -1092,6 +1093,9 @@ const CenterProfile = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Concierge CTA Card */}
+                <ConciergeCTACard />
               </div>
             </div>
           </div>
@@ -1172,6 +1176,9 @@ const CenterProfile = () => {
                 </div>
               </div>
             </div>
+
+            {/* Concierge CTA Card - Mobile */}
+            <ConciergeCTACard compact />
           </div>
         </div>
       </div>
