@@ -7,6 +7,7 @@ import {
   HelpCircle, 
   Shield, 
   Phone,
+  Heart,
   Building2,
   Star,
   TrendingUp,
@@ -542,14 +543,14 @@ export default function SeekerHome() {
             <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
               <CardContent className="p-4 text-center">
                 <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-3">
-                  <Phone className="h-5 w-5 text-primary" />
+                  <Heart className="h-5 w-5 text-primary" />
                 </div>
                 <h4 className="font-semibold text-foreground mb-1">Need Help?</h4>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Our team is available 24/7
+                  Get matched with treatment
                 </p>
                 <Button asChild size="sm" className="w-full">
-                  <Link to="/request-help">Request Call Back</Link>
+                  <Link to="/account/concierge">Start Concierge</Link>
                 </Button>
               </CardContent>
             </Card>
