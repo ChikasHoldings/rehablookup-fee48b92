@@ -1,180 +1,205 @@
 
-# Seeker Panel Audit - Production Readiness ✅ COMPLETE
+
+# Plan: Fix and Complete ACH Instant Verification with Stripe Financial Connections
 
 ## Summary
 
-Comprehensive audit of the Seeker panel has been completed. All identified issues have been remediated and the system is fully production-ready.
+The current payment method implementation already has the foundation for **Instant Verification** via Stripe Financial Connections, but there are critical issues preventing it from working properly. This plan addresses those issues and ensures both ACH (via bank login) and Card payments are fully functional.
 
 ---
 
-## Audit Scope
+## What's Already in Place
 
-### Pages Verified ✅
-
-| Page | Route | Status | SEO |
-|------|-------|--------|-----|
-| **Home** | `/account` | ✅ Complete | ✅ Helmet |
-| **Search** | `/account/search` | ✅ Complete | ✅ Helmet |
-| **Concierge** | `/account/concierge` | ✅ Complete | ✅ Helmet (3 states) |
-| **My Requests** | `/account/requests` | ✅ Complete | ✅ Helmet |
-| **My Reviews** | `/account/reviews` | ✅ Complete | ✅ Helmet |
-| **Saved Facilities** | `/account/saved` | ✅ Complete | N/A (auth-gated) |
-| **Settings** | `/account/settings` | ✅ Complete | ✅ Helmet |
-| **Notification Preferences** | `/account/settings/notifications` | ✅ Complete | ✅ Helmet |
-| **Notifications** | `/account/notifications` | ✅ Complete | ✅ Helmet |
-| **Help & Support** | `/account/help` | ✅ Complete | ✅ Helmet |
-| **Facility Profile** | `/account/facility/:slug` | ✅ Complete | ✅ Helmet (dynamic) |
-
-### Components Verified ✅
-
-| Component | Purpose | Status |
-|-----------|---------|--------|
-| `SeekerShell.tsx` | Layout wrapper with header/nav | ✅ Working |
-| `SeekerHeader.tsx` | Header with search, notifications, profile | ✅ Working |
-| `SeekerMobileNav.tsx` | Bottom navigation for mobile | ✅ Working |
-| `EmailVerificationBanner.tsx` | Email verification prompt | ✅ Working |
-| `AuthPrompt.tsx` | Authentication prompts for gated features | ✅ Working |
-| `FacilityCard.tsx` | Facility display card | ✅ Working |
-| `MatchedFacilityCard.tsx` | Concierge matched facility card | ✅ Working |
-| `ConciergeInlineIntake.tsx` | Multi-step intake form | ✅ Working |
-| `ConciergeLandingContent.tsx` | Landing state content | ✅ Working |
-| `ConciergeMessaging.tsx` | Messaging threads | ✅ Working |
-| `ConciergeToursList.tsx` | Tour requests list | ✅ Working |
-| `TourRequestModal.tsx` | Tour request form | ✅ Working |
-| `TourTabsSection.tsx` | Tours tab organization | ✅ Working |
-| `CaseStatusTimeline.tsx` | Case status display | ✅ Working |
-| `ConfirmAdmissionModal.tsx` | Admission confirmation | ✅ Working |
-| `FeedbackForm.tsx` | Post-placement feedback | ✅ Working |
-| `SeekerRequestForm.tsx` | Lead request form | ✅ Working |
-| `CameraCaptureDialog.tsx` | Avatar camera capture | ✅ Working |
-| `ActivityLog.tsx` | Account activity display | ✅ Working |
-| `ConciergePaymentRecovery.tsx` | Payment recovery flow | ✅ Working |
-
-### Hooks Verified ✅
-
-| Hook | Purpose | Status |
-|------|---------|--------|
-| `useSeekerAuth.ts` | Authentication state management | ✅ Working |
-| `useFavorites.ts` | Favorites management (localStorage + DB sync) | ✅ Working |
-| `useFacilityReviews.ts` | Review CRUD operations | ✅ Working |
-| `useFacilityRating.ts` | Rating calculations | ✅ Working |
-| `useStaticFacilities.ts` | Static facility data fetching | ✅ Working |
-| `useFeaturedFacilityIds.ts` | Featured facility identification | ✅ Working |
-
-### Edge Functions Verified ✅
-
-| Function | Purpose | Status |
-|----------|---------|--------|
-| `get-public-facilities` | Public facility data snapshot | ✅ Deployed |
-| `get-featured-facilities` | Featured facilities rotation | ✅ Deployed |
-| `submit-qualified-lead` | Lead submission | ✅ Deployed |
-| `send-seeker-emails` | Email notifications (8 types) | ✅ Deployed |
-| `send-review-notification` | Review status notifications | ✅ Deployed |
-| `send-tour-notifications` | Tour lifecycle notifications | ✅ Deployed |
-| `send-concierge-notifications` | Concierge flow notifications | ✅ Deployed |
-| `create-concierge-checkout` | Concierge payment checkout | ✅ Deployed |
-| `verify-concierge-payment` | Payment verification | ✅ Deployed |
-| `submit-concierge-intake` | Intake data submission | ✅ Deployed |
-| `confirm-placement` | Placement confirmation | ✅ Deployed |
-| `match-concierge-intake` | AI matching | ✅ Deployed |
-| `send-support-request` | Help desk messages | ✅ Deployed |
-| `track-view` | View analytics | ✅ Deployed |
-| `get-facility-plan` | Subscription checking | ✅ Deployed |
-| `send-verification-code` | Email verification | ✅ Deployed |
-| `verify-code` | Code validation | ✅ Deployed |
-| `check-email-verified` | Email status check | ✅ Deployed |
-| `delete-seeker-account` | Account deletion | ✅ Deployed |
+- SetupIntent creation with `us_bank_account` and `card` payment method types
+- Financial Connections with `payment_method` permission
+- `verification_method: 'instant'` configured on the backend
+- Frontend flow using `collectBankAccountForSetup()` and `confirmUsBankAccountSetup()`
+- Database table `provider_payment_methods` with verification tracking
 
 ---
 
-## Notification System ✅ COMPLETE
+## Issues to Fix
 
-### Notification Types Supported (20+)
+### Issue 1: Missing Account Holder Name in ACH Flow
 
-| Type | Icon | Description |
-|------|------|-------------|
-| `welcome` | 👋 | New user welcome |
-| `request_confirmation` | 📝 | Lead request sent |
-| `facility_contacted_you` | 📞 | Facility responded |
-| `review_approved` | ✅ | Review published |
-| `review_rejected` | ❌ | Review not approved |
-| `review_response` | 💬 | Facility responded to review |
-| `concierge_intake_received` | 💙 | Concierge intake submitted |
-| `concierge_matches_found` | 📍 | Matches identified |
-| `concierge_provider_interested` | 👤 | Provider expressed interest |
-| `concierge_provider_confirmed` | 🏥 | Provider confirmed |
-| `concierge_placement_complete` | 🎉 | Placement successful |
-| `tour_proposed` / `concierge_tour_proposed` | 📅 | Tour scheduled |
-| `tour_confirmed` / `concierge_tour_confirmed` | ✅ | Tour confirmed |
-| `tour_cancelled` / `concierge_tour_cancelled` | ❌ | Tour cancelled |
+The `collectBankAccountForSetup()` call passes an empty `billing_details.name`, which can cause issues with some banks during instant verification.
 
-### Email Preference Mapping
+**Fix**: Collect the account holder's name from the user or fetch it from the facility data before initiating the Financial Connections flow.
 
-| Email Type | Preference Toggle |
-|------------|------------------|
-| `welcome` | Always sent (critical) |
-| `request_confirmation` | `email_lead_alerts` |
-| `facility_contacted_you` | `email_lead_alerts` |
-| `welcome_followup`, `tips_finding_treatment`, `account_reminder` | `email_product_updates` |
-| `weekly_digest` | `email_weekly_digest` |
-| `request_followup` | `followup_reminders_enabled` |
+### Issue 2: Incomplete Error Handling for Edge Cases
+
+The current implementation doesn't properly handle all SetupIntent states, particularly when verification fails or when the user's bank doesn't support instant verification.
+
+**Fix**: Add comprehensive status handling for all possible `setupIntent.status` values and `next_action` types.
+
+### Issue 3: Verification Status Not Properly Tracked
+
+The `save-provider-payment-method` function checks for `status_details.blocked` but doesn't properly read the ACH account's verification status from Stripe.
+
+**Fix**: Update the edge function to properly check and store the verification status from the payment method.
+
+### Issue 4: No Visual Feedback for Pending Verification
+
+If instant verification fails and falls back to micro-deposits, users aren't given clear instructions or status updates.
+
+**Fix**: Add UI components to display verification status and next steps.
 
 ---
 
-## Fixes Applied
+## Implementation Steps
 
-### ✅ Issue 1: SeekerFacilityProfile Missing SEO (FIXED)
-- Added `<Helmet>` with dynamic title and meta description based on facility data
+### Step 1: Update Frontend Payment Form
 
-### ✅ Issue 2: Notification Icon Synchronization (FIXED)
-- Synced icons between `SeekerNotifications.tsx` and `SeekerHeader.tsx`
+**File**: `src/components/provider/AddPaymentMethodModal.tsx`
 
-### ✅ Issue 3: Email Preference Checking (FIXED)
-- Updated `send-seeker-emails` to check `notification_preferences` before sending
+- Add account holder name input field for ACH
+- Pre-populate name from facility data where available
+- Pass the name to `collectBankAccountForSetup()` billing details
+- Add comprehensive status handling for all SetupIntent states
+- Display clear messaging for:
+  - Instant verification success
+  - Micro-deposit fallback (with timeline explanation)
+  - Verification failure scenarios
 
-### ✅ Issue 4: Branding Consistency (VERIFIED)
-- All pages use "RehabLookup" branding
-- Support email: `help@rehablookup.com`
+### Step 2: Enhance Setup Edge Function
 
-### ✅ Issue 5: Dead Code Removal (COMPLETED)
-- Removed unused `useSeekerShellContext` function
+**File**: `supabase/functions/setup-provider-payment-method/index.ts`
 
----
+- Ensure `verification_method: 'instant'` is enforced (already configured)
+- Add the facility name to the SetupIntent metadata for tracking
+- Return additional context for the frontend (customer name for pre-fill)
 
-## Code Quality Verification
+### Step 3: Improve Save Payment Method Function
 
-- ✅ No TODO comments found
-- ✅ No FIXME comments found
-- ✅ No PLACEHOLDER code (only valid HTML placeholder attributes)
-- ✅ Console.error statements are for proper error handling
-- ✅ All edge functions have proper logging with component prefixes
-- ✅ All pages have loading states and error handling
-- ✅ Authentication is optional (per design spec)
-- ✅ Protected features properly gated with AuthPrompt
+**File**: `supabase/functions/save-provider-payment-method/index.ts`
 
----
+- Properly check `us_bank_account.status` field (values: `new`, `validated`, `verified`, `verification_failed`, `errored`)
+- Store verification status in database
+- Handle both instantly verified and pending verification states
 
-## Database Tables Used
+### Step 4: Add Verification Status Display
 
-| Table | Purpose | RLS |
-|-------|---------|-----|
-| `seeker_profiles` | User profile data | ✅ Enabled |
-| `user_favorites` | Saved facilities | ✅ Enabled |
-| `facility_reviews` | User reviews | ✅ Enabled |
-| `review_helpful_votes` | Helpful vote tracking | ✅ Enabled |
-| `seeker_notifications` | In-app notifications | ✅ Enabled |
-| `notification_preferences` | Email/notification settings | ✅ Enabled |
-| `leads` | Contact requests | ✅ Enabled |
-| `concierge_inquiries` | Concierge cases | ✅ Enabled |
-| `concierge_threads` | Messaging threads | ✅ Enabled |
-| `concierge_messages` | Thread messages | ✅ Enabled |
-| `concierge_tour_requests` | Tour scheduling | ✅ Enabled |
-| `account_activity_log` | Activity logging | ✅ Enabled |
+**File**: `src/components/provider/AddPaymentMethodModal.tsx` (or new component)
+
+- Show verification badge/status on saved payment methods
+- Display "Pending Verification" for micro-deposit fallback cases
+- Add inline instructions for completing micro-deposit verification
 
 ---
 
-## Status: PRODUCTION READY ✅
+## Technical Details
 
-All seeker panel features are fully implemented, tested, and ready for production deployment.
+### SetupIntent Status Flow
 
-**Last Updated**: 2026-01-30
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                     SetupIntent Flow                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  collectBankAccountForSetup()                                   │
+│           │                                                     │
+│           ▼                                                     │
+│  ┌─────────────────┐                                            │
+│  │ User Selects    │                                            │
+│  │ Bank & Logs In  │                                            │
+│  └────────┬────────┘                                            │
+│           │                                                     │
+│           ▼                                                     │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ SetupIntent Status                                      │    │
+│  ├─────────────────────────────────────────────────────────┤    │
+│  │ requires_payment_method → User cancelled                │    │
+│  │ requires_confirmation   → Call confirmUsBankAccountSetup│    │
+│  │ succeeded               → Instantly verified, save PM   │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│           │                                                     │
+│           ▼                                                     │
+│  confirmUsBankAccountSetup()                                    │
+│           │                                                     │
+│           ▼                                                     │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ Confirmed Status                                        │    │
+│  ├─────────────────────────────────────────────────────────┤    │
+│  │ succeeded              → Verified! Save payment method  │    │
+│  │ requires_action        → Check next_action.type         │    │
+│  │   ├─ verify_with_microdeposits → Fallback, notify user  │    │
+│  │   └─ redirect_to_url          → 3DS/Bank redirect       │    │
+│  │ processing             → Pending verification           │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Database Updates
+
+The `provider_payment_methods.is_verified` field will be set based on:
+
+| Stripe Status | `is_verified` Value |
+|---------------|---------------------|
+| `verified` | `true` |
+| `validated` | `true` |
+| `new` | `false` (pending) |
+| `verification_failed` | `false` |
+| `errored` | `false` |
+
+### Card Verification
+
+For cards, verification is automatic via 3D Secure when required. The current `confirmCardSetup()` implementation handles this correctly. We'll add:
+
+- Better error messaging for declined cards
+- Support for 3DS redirect flows if triggered
+
+---
+
+## User Experience Flow
+
+### ACH Instant Verification (Happy Path)
+
+1. User clicks "Connect Bank Account"
+2. Stripe Financial Connections modal opens
+3. User searches for their bank
+4. User logs into their bank (OAuth flow)
+5. User selects checking/savings account
+6. User authorizes connection
+7. Bank is instantly verified and saved
+8. Success message displayed
+
+### ACH with Micro-deposit Fallback
+
+1. User clicks "Connect Bank Account"
+2. User's bank doesn't support instant verification
+3. User enters bank details manually
+4. System initiates micro-deposits ($0.01 x 2)
+5. User sees "Pending Verification" status
+6. In 1-2 business days, user receives email from Stripe
+7. User verifies amounts via Stripe-hosted page
+8. Payment method becomes verified
+
+### Card Payment (Happy Path)
+
+1. User switches to "Credit/Debit Card" tab
+2. User enters card number, expiry, CVC
+3. User clicks "Save Card"
+4. Card is verified and saved immediately
+5. Success message displayed
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/provider/AddPaymentMethodModal.tsx` | Add name input, improve status handling, better UX messaging |
+| `supabase/functions/setup-provider-payment-method/index.ts` | Include facility name in response for pre-fill |
+| `supabase/functions/save-provider-payment-method/index.ts` | Properly check verification status from Stripe API |
+
+---
+
+## Testing Approach
+
+After implementation, test using Stripe's test bank credentials:
+
+- **Test Institution**: Use "Test Institution" in Financial Connections sandbox
+- **Success Flow**: Login credentials trigger instant verification
+- **Manual Entry Test**: Account `000123456789`, Routing `110000000` → triggers micro-deposits
+
