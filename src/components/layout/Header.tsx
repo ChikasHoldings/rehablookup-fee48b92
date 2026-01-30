@@ -367,47 +367,7 @@ export function Header({
               </div>
             </nav>
 
-            {/* Elegant divider with shimmer */}
-            <div className={cn(
-              "mx-6 h-px bg-gradient-to-r from-transparent via-border to-transparent transition-all duration-500 delay-400",
-              mobileMenuOpen ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
-            )} />
 
-            {/* Secondary Links */}
-            <nav className="px-4 py-4">
-              <p className={cn(
-                "px-3 mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60 transition-all duration-500 delay-450",
-                mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
-              )}>
-                More
-              </p>
-              <div className="space-y-0.5">
-                {[
-                  { href: "/about", label: "About Us" },
-                  { href: "/contact", label: "Contact" },
-                  { href: "/faq", label: "FAQ" },
-                ].map((link, index) => {
-                  const Icon = navIcons[link.href] || ChevronRight;
-                  const delay = 500 + index * 40;
-                  return (
-                    <PrefetchLink
-                      key={link.href}
-                      to={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 active:scale-[0.98] transition-all duration-300",
-                        mobileMenuOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-6"
-                      )}
-                      style={{ transitionDelay: mobileMenuOpen ? `${delay}ms` : '0ms' }}
-                    >
-                      <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-                      <span className="flex-1">{link.label}</span>
-                      <ChevronRight className="h-3.5 w-3.5 opacity-0 -translate-x-2 group-hover:opacity-60 group-hover:translate-x-0 transition-all duration-200" />
-                    </PrefetchLink>
-                  );
-                })}
-              </div>
-            </nav>
           </div>
 
           {/* Premium CTA Footer */}
