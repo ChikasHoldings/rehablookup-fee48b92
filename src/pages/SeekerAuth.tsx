@@ -25,7 +25,8 @@ export default function SeekerAuth() {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
@@ -77,7 +78,7 @@ export default function SeekerAuth() {
     }
     
     setIsSubmitting(true);
-    const { error } = await signUp(signupEmail, signupPassword, displayName);
+    const { error } = await signUp(signupEmail, signupPassword, firstName, lastName);
     setIsSubmitting(false);
     
     if (error) {
@@ -260,21 +261,41 @@ export default function SeekerAuth() {
                 {/* Signup Form */}
                 <TabsContent value="signup" className="mt-4">
                   <form onSubmit={handleSignup} className="space-y-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="display-name" className="text-sm">
-                        Name <span className="text-muted-foreground">(optional)</span>
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="display-name"
-                          type="text"
-                          placeholder="Your name"
-                          value={displayName}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          className="h-10 pl-10"
-                          autoComplete="name"
-                        />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="first-name" className="text-sm">
+                          First Name
+                        </Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="first-name"
+                            type="text"
+                            placeholder="First"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            className="h-10 pl-10"
+                            autoComplete="given-name"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1.5">
+                        <Label htmlFor="last-name" className="text-sm">
+                          Last Name
+                        </Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="last-name"
+                            type="text"
+                            placeholder="Last"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            className="h-10 pl-10"
+                            autoComplete="family-name"
+                          />
+                        </div>
                       </div>
                     </div>
                     
