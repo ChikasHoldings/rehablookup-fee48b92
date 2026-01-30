@@ -18,6 +18,8 @@ import {
   AlertCircle,
   FileSignature,
   UserCheck,
+  Trash2,
+  ExternalLink,
   Settings,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -294,6 +296,25 @@ export default function ProviderPlacementNetworkPage() {
     },
     onError: () => {
       toast.error("Failed to submit response");
+    },
+  });
+
+  // Delete payment method mutation
+  const deletePaymentMethodMutation = useMutation({
+    mutationFn: async (paymentMethodId: string) => {
+      const { error } = await (supabase as any)
+        .from("provider_payment_methods")
+        .delete()
+        .eq("id", paymentMethodId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["provider-payment-methods"] });
+      toast.success("Payment method removed");
+    },
+    onError: () => {
+      toast.error("Failed to remove payment method");
     },
   });
 
@@ -792,7 +813,22 @@ export default function ProviderPlacementNetworkPage() {
                             <p className="text-xs text-muted-foreground">Added {format(new Date(pm.created_at), "MMM d, yyyy")}</p>
                           </div>
                         </div>
-                        {pm.is_default && <Badge variant="secondary">Default</Badge>}
+                        <div className="flex items-center gap-2">
+                          {pm.is_default && <Badge variant="secondary">Default</Badge>}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              if (confirm("Remove this payment method?")) {
+                                deletePaymentMethodMutation.mutate(pm.id);
+                              }
+                            }}
+                            disabled={deletePaymentMethodMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -827,9 +863,23 @@ export default function ProviderPlacementNetworkPage() {
                             <p className="font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
                             <p className="text-xs text-muted-foreground">{format(new Date(inv.created_at), "MMM d, yyyy")}</p>
                           </div>
-                          <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize">
-                            {inv.status}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize">
+                              {inv.status}
+                            </Badge>
+                            {inv.status === "paid" && inv.receipt_url && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                asChild
+                              >
+                                <a href={inv.receipt_url} target="_blank" rel="noopener noreferrer" title="View Receipt">
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
