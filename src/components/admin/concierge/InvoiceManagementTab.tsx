@@ -39,6 +39,17 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   DollarSign,
   MoreHorizontal,
   XCircle,
@@ -49,6 +60,8 @@ import {
   Loader2,
   FileText,
   AlertTriangle,
+  CreditCard,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
@@ -83,6 +96,23 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
   const [waiveReason, setWaiveReason] = useState("");
   const [overrideAmount, setOverrideAmount] = useState("");
   const [overrideReason, setOverrideReason] = useState("");
+  const [selectedFacilityForCharge, setSelectedFacilityForCharge] = useState<string>("");
+  const [isCharging, setIsCharging] = useState(false);
+
+  // Fetch matched facilities for this case (for manual charge)
+  const { data: matchedFacilities } = useQuery({
+    queryKey: ["matched-facilities", caseData?.matched_facility_ids],
+    queryFn: async () => {
+      if (!caseData?.matched_facility_ids?.length) return [];
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("id, name")
+        .in("id", caseData.matched_facility_ids);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!caseData?.matched_facility_ids?.length,
+  });
 
   // Fetch invoices - scoped to case if provided
   const { data: invoices, isLoading } = useQuery({
@@ -171,6 +201,39 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
       reason: overrideReason,
       newAmount: amountCents,
     });
+  };
+
+  // Manual charge initiation
+  const handleInitiateCharge = async () => {
+    if (!caseData || !selectedFacilityForCharge) return;
+    
+    setIsCharging(true);
+    try {
+      const response = await supabase.functions.invoke("charge-placement-fee", {
+        body: {
+          inquiryId: caseData.id,
+          facilityId: selectedFacilityForCharge,
+          feeType: "flat_fee",
+          adminInitiated: true,
+        },
+      });
+
+      if (response.error) throw response.error;
+
+      toast.success("Charge initiated successfully", {
+        description: response.data?.charged 
+          ? `Payment of ${formatCurrency(response.data.amountCents)} processed`
+          : "Invoice created for manual payment",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["admin-placement-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["concierge-inquiries"] });
+      setSelectedFacilityForCharge("");
+    } catch (error: any) {
+      toast.error("Charge failed", { description: error.message });
+    } finally {
+      setIsCharging(false);
+    }
   };
 
   if (isLoading) {
@@ -347,20 +410,95 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
               </div>
             </ScrollArea>
           ) : (
-            <div className="text-center py-12">
-              <DollarSign className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">
-                {caseData ? "No invoices for this case" : "No invoices found"}
+            <div className="text-center py-8">
+              <DollarSign className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">
+                {caseData ? "No invoices for this case yet" : "No invoices found"}
               </p>
-              {caseData && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Invoices are generated when placements are confirmed
-                </p>
-              )}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Admin Manual Charge Section - Only show for case view with matched facilities */}
+      {caseData && matchedFacilities && matchedFacilities.length > 0 && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Initiate Charge
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Manually charge provider after confirming placement via phone/email
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <Label className="text-xs">Select Facility to Charge</Label>
+              <Select value={selectedFacilityForCharge} onValueChange={setSelectedFacilityForCharge}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select facility..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {matchedFacilities.map((facility: any) => (
+                    <SelectItem key={facility.id} value={facility.id}>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-3 w-3" />
+                        {facility.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  size="sm" 
+                  className="w-full"
+                  disabled={!selectedFacilityForCharge || isCharging}
+                >
+                  {isCharging ? (
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  ) : (
+                    <CreditCard className="mr-2 h-3 w-3" />
+                  )}
+                  Charge Provider
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirm Placement & Charge</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will mark the placement as confirmed and charge the provider's saved payment method.
+                    Use this when you've confirmed placement via phone or email.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="py-3 px-1 text-sm">
+                  <p className="text-muted-foreground">
+                    <strong>Facility:</strong>{" "}
+                    {matchedFacilities.find((f: any) => f.id === selectedFacilityForCharge)?.name}
+                  </p>
+                  <p className="text-muted-foreground mt-1">
+                    <strong>Fee:</strong> $1,200 (or $960 with Pro discount)
+                  </p>
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleInitiateCharge}>
+                    Confirm & Charge
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <p className="text-[10px] text-muted-foreground">
+              If provider has no payment method, an invoice will be created for manual collection.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Waive Modal */}
       <Dialog open={actionModal === "waive"} onOpenChange={() => setActionModal(null)}>
