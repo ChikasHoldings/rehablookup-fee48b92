@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, FileSignature, Shield, AlertCircle } from "lucide-react";
+import { Loader2, FileSignature, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
+import { format } from "date-fns";
 
 const TERMS_VERSION = "1.0";
 
@@ -36,6 +37,25 @@ export function PlacementTermsModal({
   const [agreed, setAgreed] = useState(false);
   const [signatureName, setSignatureName] = useState("");
 
+  // Fetch current agreement status
+  const { data: agreementData, isLoading: isLoadingAgreement } = useQuery({
+    queryKey: ["facility-agreement", facilityId],
+    queryFn: async () => {
+      if (!facilityId) return null;
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("concierge_terms_accepted_at, concierge_terms_version, concierge_terms_accepted_by")
+        .eq("id", facilityId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!facilityId && open,
+  });
+
+  const isAlreadySigned = !!agreementData?.concierge_terms_accepted_at;
+
   const acceptTermsMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -54,6 +74,7 @@ export function PlacementTermsModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["facility-concierge"] });
+      queryClient.invalidateQueries({ queryKey: ["facility-agreement", facilityId] });
       toast.success("Placement terms accepted");
       onOpenChange(false);
       setAgreed(false);
@@ -79,7 +100,7 @@ export function PlacementTermsModal({
             <div>
               <DialogTitle className="text-xl">Placement Network Agreement</DialogTitle>
               <DialogDescription className="mt-0.5">
-                Version {TERMS_VERSION} • Please review carefully before accepting
+                Version {TERMS_VERSION} • {isAlreadySigned ? "Signed" : "Please review carefully before accepting"}
               </DialogDescription>
             </div>
           </div>
@@ -271,42 +292,70 @@ export function PlacementTermsModal({
           </div>
         </ScrollArea>
 
-        {/* Compact Acceptance Section */}
+        {/* Footer - Show signed status OR acceptance form */}
         <div className="border-t bg-muted/20 px-6 py-4 flex-shrink-0">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
-              <Checkbox
-                checked={agreed}
-                onCheckedChange={(checked) => setAgreed(checked === true)}
-                className="flex-shrink-0"
-              />
-              <span className="text-sm text-muted-foreground">
-                I agree on behalf of <strong className="text-foreground">{facilityName}</strong>
-              </span>
-            </label>
-            
-            <div className="flex items-center gap-3 sm:flex-shrink-0">
-              <Input
-                placeholder="Type your full name"
-                value={signatureName}
-                onChange={(e) => setSignatureName(e.target.value)}
-                className="w-48 h-9 text-sm"
-              />
-              <Button
-                size="sm"
-                onClick={() => acceptTermsMutation.mutate()}
-                disabled={!canSubmit || acceptTermsMutation.isPending}
-                className="h-9"
-              >
-                {acceptTermsMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <FileSignature className="h-4 w-4 mr-1.5" />
-                )}
-                Sign
+          {isLoadingAgreement ? (
+            <div className="flex items-center justify-center py-2">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : isAlreadySigned ? (
+            // Already Signed View
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                    Agreement Signed
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Signed on {format(new Date(agreementData.concierge_terms_accepted_at), "MMM d, yyyy 'at' h:mm a")}
+                    {agreementData.concierge_terms_version && ` • Version ${agreementData.concierge_terms_version}`}
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+                Close
               </Button>
             </div>
-          </div>
+          ) : (
+            // Acceptance Form
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                <Checkbox
+                  checked={agreed}
+                  onCheckedChange={(checked) => setAgreed(checked === true)}
+                  className="flex-shrink-0"
+                />
+                <span className="text-sm text-muted-foreground">
+                  I agree on behalf of <strong className="text-foreground">{facilityName}</strong>
+                </span>
+              </label>
+              
+              <div className="flex items-center gap-3 sm:flex-shrink-0">
+                <Input
+                  placeholder="Type your full name"
+                  value={signatureName}
+                  onChange={(e) => setSignatureName(e.target.value)}
+                  className="w-48 h-9 text-sm"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => acceptTermsMutation.mutate()}
+                  disabled={!canSubmit || acceptTermsMutation.isPending}
+                  className="h-9"
+                >
+                  {acceptTermsMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileSignature className="h-4 w-4 mr-1.5" />
+                  )}
+                  Sign
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
