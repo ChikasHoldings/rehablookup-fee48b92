@@ -1,22 +1,42 @@
 import { formatDistanceToNow } from "date-fns";
-import { Bell, BellOff, Check, CheckCheck, Trash2, ExternalLink } from "lucide-react";
+import { Helmet } from "react-helmet-async";
+import { Bell, BellOff, Check, CheckCheck, Trash2, ExternalLink, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useSeekerNotifications, SeekerNotification } from "@/hooks/useSeekerNotifications";
 import { cn } from "@/lib/utils";
 
 const notificationTypeIcons: Record<string, string> = {
+  // System & Welcome
   system: "🔔",
   welcome: "👋",
+  // Facility Related
   facility_update: "🏥",
+  saved_facility: "❤️",
+  facility_contacted: "📞",
+  facility_contacted_you: "📞",
+  // Request Related
+  request_update: "📋",
+  request_confirmation: "📝",
+  // Review Related
   review_response: "💬",
   review_approved: "✅",
   review_rejected: "❌",
-  saved_facility: "❤️",
-  request_update: "📋",
-  request_confirmation: "📝",
-  facility_contacted: "📞",
+  // Tour Related
+  tour_proposed: "📅",
+  tour_confirmed: "✅",
+  tour_cancelled: "❌",
+  concierge_tour_proposed: "📅",
+  concierge_tour_confirmed: "✅",
+  concierge_tour_cancelled: "❌",
+  // Concierge Related
+  concierge_intake_received: "💙",
+  concierge_matches_found: "📍",
+  concierge_provider_interested: "👤",
+  concierge_provider_confirmed: "🏥",
+  concierge_placement_complete: "🎉",
+  concierge_message_received: "💬",
 };
 
 function NotificationItem({
@@ -107,26 +127,38 @@ export default function SeekerNotifications() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Bell className="h-5 w-5 text-primary" />
+    <>
+      <Helmet>
+        <title>Notifications | RehabLookup</title>
+        <meta name="description" content="View your notifications about facility updates, request responses, reviews, and concierge service updates." />
+      </Helmet>
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Bell className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-display font-bold">Notifications</h1>
+              <p className="text-sm text-muted-foreground">
+                {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-display font-bold">Notifications</h1>
-            <p className="text-sm text-muted-foreground">
-              {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
-            </p>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button variant="outline" size="sm" onClick={markAllAsRead}>
+                <CheckCheck className="h-4 w-4 mr-2" />
+                Mark All Read
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/account/notification-preferences">
+                <Settings className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
-        {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={markAllAsRead}>
-            <CheckCheck className="h-4 w-4 mr-2" />
-            Mark All Read
-          </Button>
-        )}
-      </div>
 
       {notifications.length === 0 ? (
         <Card>
@@ -153,5 +185,6 @@ export default function SeekerNotifications() {
         </Card>
       )}
     </div>
+    </>
   );
 }

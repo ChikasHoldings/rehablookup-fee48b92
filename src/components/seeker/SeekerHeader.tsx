@@ -44,11 +44,24 @@ const navItems = [
 ];
 
 const notificationTypeIcons: Record<string, React.ReactNode> = {
+  // System & Welcome
   system: <Bell className="h-4 w-4 text-primary" />,
+  welcome: <Bell className="h-4 w-4 text-green-500" />,
+  // Facility Related
   facility_update: <Building2 className="h-4 w-4 text-blue-500" />,
-  review_response: <Star className="h-4 w-4 text-amber-500" />,
   saved_facility: <Heart className="h-4 w-4 text-pink-500" />,
+  facility_contacted_you: <Send className="h-4 w-4 text-purple-500" />,
+  // Request Related
   request_update: <Send className="h-4 w-4 text-green-500" />,
+  request_confirmation: <Send className="h-4 w-4 text-green-500" />,
+  // Review Related
+  review_response: <Star className="h-4 w-4 text-amber-500" />,
+  review_approved: <Star className="h-4 w-4 text-green-500" />,
+  review_rejected: <Star className="h-4 w-4 text-destructive" />,
+  // Tour Related
+  tour_proposed: <Calendar className="h-4 w-4 text-purple-500" />,
+  tour_confirmed: <Calendar className="h-4 w-4 text-green-500" />,
+  tour_cancelled: <Calendar className="h-4 w-4 text-destructive" />,
   // Concierge-specific notification types with distinct icons
   concierge_intake_received: <HeartHandshake className="h-4 w-4 text-primary" />,
   concierge_matches_found: <MapPin className="h-4 w-4 text-emerald-500" />,
