@@ -274,6 +274,22 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
           </div>
         </div>
 
+        {/* Message - only visible when unlocked */}
+        {isUnlocked && inquiry.message && (
+          <>
+            <Separator />
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Message
+              </h3>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                  {inquiry.message}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Facility Info */}
         {inquiry.facility_name && (
