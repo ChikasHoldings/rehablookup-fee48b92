@@ -43,13 +43,13 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { inquiryId, facilityId, feeType, firstMonthCost } = await req.json();
+    const { inquiryId, facilityId, feeType, firstMonthCost, adminInitiated } = await req.json();
     
     if (!inquiryId || !facilityId) {
       throw new Error("Inquiry ID and Facility ID are required");
     }
 
-    logStep("Processing placement fee", { inquiryId, facilityId, feeType });
+    logStep("Processing placement fee", { inquiryId, facilityId, feeType, adminInitiated });
 
     // Verify the inquiry and placement
     const { data: inquiry, error: inquiryError } = await supabase
@@ -62,7 +62,32 @@ serve(async (req) => {
       throw new Error("Inquiry not found");
     }
 
-    if (!inquiry.placement_confirmed) {
+    // For admin-initiated charges, update the inquiry to mark placement
+    if (adminInitiated) {
+      logStep("Admin-initiated charge, updating placement status");
+      const { error: updateError } = await supabase
+        .from('concierge_inquiries')
+        .update({
+          status: 'placed',
+          placed_facility_id: facilityId,
+          placement_confirmed: true,
+          placement_confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', inquiryId);
+
+      if (updateError) {
+        logStep("Warning: Failed to update inquiry status", { error: updateError.message });
+      }
+
+      // Log the event
+      await supabase.from('concierge_case_events').insert({
+        inquiry_id: inquiryId,
+        event_type: 'admin_confirmed_placement',
+        event_data: { facility_id: facilityId },
+        actor_type: 'admin',
+      });
+    } else if (!inquiry.placement_confirmed) {
       throw new Error("Placement not confirmed yet");
     }
 
