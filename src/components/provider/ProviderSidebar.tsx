@@ -78,8 +78,8 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <nav className="p-2 sm:p-3 flex-1">
-        <ul className="space-y-0.5 sm:space-y-1">
+      <nav className="p-2 flex-1">
+        <ul className="space-y-0.5">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href;
             const Icon = item.icon;
@@ -97,31 +97,31 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
                   to={item.href}
                   onClick={onNavigate}
                   className={cn(
-                    "group flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-base font-medium transition-all duration-200",
+                    "group flex items-center gap-2 px-2.5 py-1.5 sm:py-2 rounded-lg text-sm font-medium transition-all duration-200",
                     isActive 
                       ? "bg-primary text-white shadow-sm" 
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <div className={cn(
-                    "flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 rounded-md sm:rounded-lg transition-colors relative",
+                    "flex items-center justify-center h-6 w-6 rounded-md transition-colors relative",
                     isActive 
                       ? "bg-white/20" 
                       : "bg-muted group-hover:bg-background"
                   )}>
-                    <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <Icon className="h-3.5 w-3.5" />
                     {showBadge && (
-                      <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 sm:h-4 sm:min-w-4 px-0.5 sm:px-1 flex items-center justify-center rounded-full bg-destructive text-[9px] sm:text-[10px] font-bold text-white">
+                      <span className="absolute -top-1 -right-1 h-3.5 min-w-3.5 px-0.5 flex items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
                         {badgeCount > 99 ? "99+" : badgeCount}
                       </span>
                     )}
                   </div>
-                  <span className="truncate flex-1 text-sm sm:text-base">{item.label}</span>
+                  <span className="truncate flex-1">{item.label}</span>
                   {showBadge && (
                     <Badge 
                       variant="secondary" 
                       className={cn(
-                        "h-4 sm:h-5 px-1 sm:px-1.5 text-[9px] sm:text-[10px] font-semibold",
+                        "h-4 px-1 text-[9px] font-semibold",
                         isActive 
                           ? "bg-white/20 text-white" 
                           : "bg-primary/10 text-primary"
@@ -138,25 +138,25 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
       </nav>
 
       {/* Credit Balance & Pro Status Card */}
-      <div className="p-2 sm:p-3 border-t border-border">
+      <div className="p-2 border-t border-border">
         <div className={cn(
-          "rounded-lg sm:rounded-xl p-3 sm:p-4 transition-all",
+          "rounded-lg p-2.5 transition-all",
           proStatus?.isPro 
             ? "bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20" 
             : "bg-gradient-to-br from-primary/5 to-primary/10"
         )}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5">
+              <Wallet className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs font-semibold text-foreground">Credits</span>
             </div>
             <span className="text-sm font-bold text-foreground">{balanceFormatted}</span>
           </div>
           
           {proStatus?.isPro ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Sparkles className="h-3 w-3 text-amber-500" />
-              <span className="text-[11px] sm:text-xs text-amber-600 font-medium">
+              <span className="text-[11px] text-amber-600 font-medium">
                 Pro Active • {proStatus.unlockDiscountPercent}% off unlocks
               </span>
             </div>
@@ -164,7 +164,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             <Link 
               to="/provider/billing?tab=pro"
               onClick={onNavigate}
-              className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground hover:text-primary transition-colors"
+              className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
             >
               <Sparkles className="h-3 w-3" />
               <span>Upgrade to Pro for 20% off</span>
