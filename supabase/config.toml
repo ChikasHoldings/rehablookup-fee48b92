@@ -279,3 +279,6 @@ verify_jwt = false
 
 [functions.submit-indexnow]
 verify_jwt = false
+
+[functions.track-request-help]
+verify_jwt = false
