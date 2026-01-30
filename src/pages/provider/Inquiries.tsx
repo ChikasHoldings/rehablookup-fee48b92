@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Users, Search, X, ChevronLeft, SlidersHorizontal } from "lucide-react";
+import { Users, Search, X, ChevronLeft } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,7 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
-import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
@@ -67,8 +66,34 @@ export default function ProviderInquiriesPage() {
   
   const queryClient = useQueryClient();
   const { facilities } = useProviderFacilities();
-  const { isLeadUnlocked, refetch: refetchUnlocks } = useLeadUnlocks(facilities?.[0]?.id);
   const isMobile = useIsMobile();
+
+  // Get all facility IDs for unlock checking
+  const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
+
+  // Fetch all unlocks for ALL provider facilities (not just one)
+  const { data: allUnlocks = [], refetch: refetchUnlocks } = useQuery({
+    queryKey: ["provider-lead-unlocks", facilityIds],
+    queryFn: async () => {
+      if (facilityIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("lead_unlocks")
+        .select("lead_id, facility_id")
+        .in("facility_id", facilityIds);
+      if (error) {
+        console.error("[Inquiries] Error fetching unlocks:", error);
+        return [];
+      }
+      return data || [];
+    },
+    enabled: facilityIds.length > 0,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  // Helper to check if a lead is unlocked
+  const isLeadUnlocked = (leadId: string): boolean => {
+    return allUnlocks.some(u => u.lead_id === leadId);
+  };
 
   // Create facility lookup map
   const facilityMap = useMemo(() => {
@@ -79,10 +104,9 @@ export default function ProviderInquiriesPage() {
     return map;
   }, [facilities]);
 
-  const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
 
   // Fetch all inquiries
-  const { data: inquiries = [], isLoading } = useQuery({
+  const { data: inquiries = [], isLoading, error: inquiriesError } = useQuery({
     queryKey: ["provider-inquiries", facilityIds],
     queryFn: async (): Promise<LeadWithFacility[]> => {
       if (facilityIds.length === 0) return [];
@@ -106,6 +130,14 @@ export default function ProviderInquiriesPage() {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
+
+  // Show error toast if query fails
+  useEffect(() => {
+    if (inquiriesError) {
+      toast.error("Failed to load inquiries. Please try again.");
+      console.error("[Inquiries] Query error:", inquiriesError);
+    }
+  }, [inquiriesError]);
 
   // Realtime subscription
   useEffect(() => {
@@ -179,6 +211,8 @@ export default function ProviderInquiriesPage() {
   const handleUnlockSuccess = () => {
     refetchUnlocks();
     queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+    queryClient.invalidateQueries({ queryKey: ["provider-lead-unlocks"] });
+    queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
   };
 
   // Auto-select first inquiry on desktop

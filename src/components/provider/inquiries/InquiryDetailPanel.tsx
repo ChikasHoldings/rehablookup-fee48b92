@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, format } from "date-fns";
 import {
-  MapPin, Phone, Mail, MessageSquare, Clock, User, Building2, Shield,
+  MapPin, Phone, Mail, MessageSquare, User, Building2,
   PhoneCall, CheckCircle, XCircle, Copy, ExternalLink, Calendar, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
