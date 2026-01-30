@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { 
   Search, 
   MapPin, 
@@ -144,6 +145,11 @@ export default function SeekerHome() {
   // Show discovery layout when no nearby facilities
   if (!isLoading && nearbyFacilities.length === 0) {
     return (
+      <>
+      <Helmet>
+        <title>Find Treatment Centers | RehabLookup</title>
+        <meta name="description" content="Discover addiction treatment centers near you. Search, compare, and connect with verified rehab facilities." />
+      </Helmet>
       <div className="min-h-full">
         {/* Hero Search Section */}
         <div className="bg-gradient-to-b from-primary/5 via-primary/3 to-background py-12 px-4">
@@ -263,11 +269,17 @@ export default function SeekerHome() {
           </Card>
         </div>
       </div>
+      </>
     );
   }
 
   // Main layout with sidebar
   return (
+    <>
+    <Helmet>
+      <title>Find Treatment Centers | RehabLookup</title>
+      <meta name="description" content="Discover addiction treatment centers near you. Search, compare, and connect with verified rehab facilities." />
+    </Helmet>
     <div className="min-h-full">
       {/* Search Header */}
       <div className="bg-gradient-to-b from-primary/5 to-background border-b border-border/50">
@@ -558,5 +570,6 @@ export default function SeekerHome() {
         </div>
       </div>
     </div>
+    </>
   );
 }
