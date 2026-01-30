@@ -7,8 +7,6 @@ import {
   AlertCircle, 
   Users, 
   CreditCard,
-  ArrowRight,
-  ArrowUpRight,
   Building2,
   Eye,
   FileEdit,
@@ -20,6 +18,7 @@ import {
   Sparkles,
   ChevronRight,
   X,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -130,10 +129,9 @@ export default function ProviderDashboardPage() {
   }, [facilityId]);
 
   // Fetch recent leads
-  const { data: recentLeads = [], isLoading: leadsLoading, error: recentLeadsError } = useQuery({
+  const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ["recent-leads", facilityId],
     queryFn: async (): Promise<Lead[]> => {
-      console.log("[Dashboard] Fetching recent leads for facility:", facilityId);
       if (!facilityId) return [];
       const { data, error } = await supabase
         .from("leads")
@@ -141,7 +139,6 @@ export default function ProviderDashboardPage() {
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(4);
-      console.log("[Dashboard] Recent leads result:", { count: data?.length, error });
       if (error) throw error;
       return (data || []) as Lead[];
     },
@@ -151,10 +148,6 @@ export default function ProviderDashboardPage() {
     refetchOnWindowFocus: true,
     retry: 2,
   });
-  
-  if (recentLeadsError) {
-    console.error("[Dashboard] Error fetching recent leads:", recentLeadsError);
-  }
 
   // Fetch unlocked lead IDs for the current facility
   const { data: unlockedLeadIds = new Set<string>() } = useQuery({
@@ -634,9 +627,9 @@ export default function ProviderDashboardPage() {
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" className="justify-start h-8 text-xs px-2.5" asChild>
-                    <Link to="/provider/credits">
+                    <Link to="/provider/billing">
                       <CreditCard className="h-3.5 w-3.5 mr-2" />
-                      Credits
+                      Billing
                     </Link>
                   </Button>
                 </div>
@@ -659,7 +652,7 @@ export default function ProviderDashboardPage() {
                       )}
                     </span>
                     <Button size="sm" className="h-7 text-xs" asChild>
-                      <Link to="/provider/credits">
+                      <Link to="/provider/billing">
                         <Sparkles className="h-3.5 w-3.5 mr-1" />
                         Add Credits
                       </Link>
@@ -688,7 +681,7 @@ export default function ProviderDashboardPage() {
                       <p className="text-xs text-muted-foreground">20% off unlocks + featured placement</p>
                     </div>
                     <Button size="sm" className="h-7 text-xs bg-accent hover:bg-accent/90" asChild>
-                      <Link to="/provider/pro-upgrade">
+                      <Link to="/provider/billing?tab=pro">
                         Upgrade
                       </Link>
                     </Button>

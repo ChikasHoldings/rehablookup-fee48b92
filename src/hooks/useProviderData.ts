@@ -123,12 +123,9 @@ export function useProviderData(facilityId?: string) {
   return useQuery({
     queryKey: ["provider-data", facilityId],
     queryFn: async (): Promise<ProviderData> => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      console.log("[useProviderData] Session check:", { hasSession: !!session, sessionError, userId: session?.user?.id });
+      const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        console.error("[useProviderData] Not authenticated - no session");
         throw new Error("Not authenticated");
       }
 
@@ -155,9 +152,6 @@ export function useProviderData(facilityId?: string) {
               .limit(1)
               .maybeSingle(),
       ]);
-      
-      console.log("[useProviderData] Profile result:", { data: profileResult.data, error: profileResult.error });
-      console.log("[useProviderData] Facility result:", { data: facilityResult.data, error: facilityResult.error });
 
       const profileData = profileResult.data;
       const facilityData = facilityResult.data as Facility | null;
@@ -174,8 +168,6 @@ export function useProviderData(facilityId?: string) {
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
-
-        console.log("[useProviderData] Fetching stats for facility:", facilityData.id);
 
         const [viewsResult, totalLeadsResult, monthlyLeadsResult] = await Promise.all([
           // Views count for last 30 days
@@ -197,10 +189,6 @@ export function useProviderData(facilityId?: string) {
             .eq("qualified", true)
             .gte("created_at", startOfMonth.toISOString()),
         ]);
-
-        console.log("[useProviderData] Views result:", { data: viewsResult.data, error: viewsResult.error });
-        console.log("[useProviderData] Total leads result:", { count: totalLeadsResult.count, error: totalLeadsResult.error });
-        console.log("[useProviderData] Monthly leads result:", { count: monthlyLeadsResult.count, error: monthlyLeadsResult.error });
 
         if (viewsResult.data) {
           viewsCount = viewsResult.data.reduce((sum, row) => sum + row.view_count, 0);
