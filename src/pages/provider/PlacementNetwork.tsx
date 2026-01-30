@@ -404,7 +404,7 @@ export default function ProviderPlacementNetworkPage() {
   if (isLoading) {
     return (
       <div className="min-h-full bg-background p-6">
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-5xl mx-auto space-y-6">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-64 w-full" />
         </div>
@@ -414,7 +414,7 @@ export default function ProviderPlacementNetworkPage() {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <PlacementLandingHeader />
 
