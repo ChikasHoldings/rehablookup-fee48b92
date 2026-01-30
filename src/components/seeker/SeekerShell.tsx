@@ -167,7 +167,3 @@ export function SeekerShell() {
   );
 }
 
-// Hook to get auth context in child routes
-export function useSeekerShellContext() {
-  return { isAuthenticated: false, userName: undefined };
-}

@@ -122,7 +122,7 @@ export default function SeekerHelp() {
   return (
     <>
       <Helmet>
-        <title>Help & Support | Recovery Directory</title>
+        <title>Help & Support | RehabLookup</title>
         <meta name="description" content="Get help finding treatment centers and managing your account." />
       </Helmet>
 
@@ -311,10 +311,10 @@ export default function SeekerHelp() {
                   <div>
                     <h3 className="font-medium text-foreground">Email Support</h3>
                     <a 
-                      href="mailto:support@recoverydirectory.com"
+                      href="mailto:help@rehablookup.com"
                       className="text-sm text-primary hover:underline"
                     >
-                      support@recoverydirectory.com
+                      help@rehablookup.com
                     </a>
                     <p className="text-xs text-muted-foreground mt-0.5">We typically respond within 24 hours</p>
                   </div>

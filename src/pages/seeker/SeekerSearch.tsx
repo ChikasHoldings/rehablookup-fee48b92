@@ -237,7 +237,7 @@ export default function SeekerSearch() {
   return (
     <>
       <Helmet>
-        <title>Search Treatment Centers | Recovery Directory</title>
+        <title>Search Treatment Centers | RehabLookup</title>
         <meta name="description" content="Search and find treatment centers near you. Filter by location, treatment type, and facility type." />
       </Helmet>
 
