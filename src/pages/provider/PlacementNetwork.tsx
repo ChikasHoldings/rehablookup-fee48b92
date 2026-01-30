@@ -415,20 +415,21 @@ export default function ProviderPlacementNetworkPage() {
   return (
     <div className="min-h-full bg-background">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <PlacementLandingHeader />
-
-        {/* Network Toggle - Only show when opted in */}
-        {optedIn && (
-          <PlacementNetworkToggle
-            optedIn={optedIn}
-            optedInAt={facilityData?.concierge_opted_in_at || null}
-            pendingCount={pendingIntroductions.length}
-            isEligible={isEligibleForNetwork}
-            isPending={optInMutation.isPending}
-            onToggle={handleToggle}
-          />
-        )}
+        {/* Header with Network Toggle */}
+        <PlacementLandingHeader
+          statusSlot={
+            optedIn ? (
+              <PlacementNetworkToggle
+                optedIn={optedIn}
+                optedInAt={facilityData?.concierge_opted_in_at || null}
+                pendingCount={pendingIntroductions.length}
+                isEligible={isEligibleForNetwork}
+                isPending={optInMutation.isPending}
+                onToggle={handleToggle}
+              />
+            ) : undefined
+          }
+        />
 
         {/* Modals */}
         <PlacementTermsModal
