@@ -19,17 +19,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
   const handleSelectFacility = (facilityId: string) => {
     const facility = facilities.find(f => f.id === facilityId);
     if (facility) {
-      setSelectedFacility({
-        id: facility.id,
-        name: facility.name,
-        slug: facility.slug || null,
-        status: facility.status,
-        city: facility.city,
-        state: facility.state,
-        facility_type: facility.facility_type,
-        logo_url: facility.logo_url,
-        created_at: facility.created_at,
-      });
+      setSelectedFacility(facility);
       onEditListing(facilityId);
     }
   };
@@ -43,7 +33,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
   if (isLoading || limitsLoading) {
     return (
       <div className="min-h-full bg-background">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -54,7 +44,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
 
   return (
     <div className="min-h-full bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center gap-3 mb-2">
