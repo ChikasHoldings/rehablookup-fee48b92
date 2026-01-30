@@ -86,9 +86,9 @@ export function ProviderConfirmPlacementModal({
           description: "Waiting for seeker to confirm admission.",
         });
       }
-      queryClient.invalidateQueries({ queryKey: ["provider-introductions"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-placements"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["placement-introductions"] });
+      queryClient.invalidateQueries({ queryKey: ["facility-placements"] });
+      queryClient.invalidateQueries({ queryKey: ["placement-invoices"] });
       onOpenChange(false);
     },
     onError: (error) => {

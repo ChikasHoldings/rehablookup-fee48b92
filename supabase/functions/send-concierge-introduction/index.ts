@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const contactName = facility.concierge_admissions_contact || "Admissions Team";
-    const responseUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/concierge/respond/${introductionId}`;
+    const responseUrl = `https://rehablookup.lovable.app/provider/placement-network`;
 
     // Format case details for email
     const levelOfCare = inquiry.level_of_care || "Not specified";
