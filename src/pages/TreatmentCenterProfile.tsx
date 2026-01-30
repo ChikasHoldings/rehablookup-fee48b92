@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Image as ImageIcon,
 } from "lucide-react";
+import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 
 // Generate initials from facility name
 function getInitials(name: string): string {
@@ -388,6 +389,11 @@ const TreatmentCenterProfile = () => {
 
                 <ContactRequestForm centerName={center.name} />
               </div>
+
+              {/* Concierge CTA Card - Mobile */}
+              <div className="lg:hidden">
+                <ConciergeCTACard compact />
+              </div>
             </div>
 
             {/* Right Column - Contact Form (Hidden on mobile, shown inline above) */}
@@ -417,6 +423,9 @@ const TreatmentCenterProfile = () => {
 
                 <ContactRequestForm centerName={center.name} />
               </div>
+
+              {/* Concierge CTA Card */}
+              <ConciergeCTACard className="mt-4" />
             </div>
           </div>
         </div>
