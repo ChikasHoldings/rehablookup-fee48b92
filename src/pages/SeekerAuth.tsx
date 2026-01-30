@@ -130,26 +130,27 @@ export default function SeekerAuth() {
         description="Sign in or create an account to save your favorite treatment centers and manage your recovery journey."
       />
       
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background to-muted/20">
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <Link to="/" className="flex items-center gap-2">
             <img 
               src="/logo.png" 
               alt="RehabLookup" 
-              className="h-8 w-auto"
+              className="h-7 sm:h-8 w-auto"
             />
           </Link>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" className="text-xs sm:text-sm" asChild>
             <Link to="/provider-login">
-              {activeTab === 'login' ? 'Login for Facility Owners' : 'List Your Facility'}
+              <span className="hidden sm:inline">{activeTab === 'login' ? 'Login for Facility Owners' : 'List Your Facility'}</span>
+              <span className="sm:hidden">{activeTab === 'login' ? 'For Facilities' : 'List Facility'}</span>
             </Link>
           </Button>
         </header>
 
         {/* Main Content - Split Screen */}
         <div className="flex-1 flex">
-          {/* Left Panel - Branding */}
+          {/* Left Panel - Branding (Desktop only) */}
           <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 via-primary/5 to-background items-center justify-center p-12">
             <div className="max-w-md space-y-6 text-center">
               <h2 className="text-3xl font-bold text-foreground">
@@ -176,17 +177,19 @@ export default function SeekerAuth() {
           </div>
 
           {/* Right Panel - Form */}
-          <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-            <div className="w-full max-w-sm space-y-6">
-              {/* Header */}
-              <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-foreground">
-                  Welcome
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Sign in to save facilities and track your search
-                </p>
-              </div>
+          <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
+            {/* Mobile Container Card */}
+            <div className="w-full max-w-sm">
+              <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-border/60 shadow-lg p-6 sm:p-8 space-y-6 lg:bg-transparent lg:border-0 lg:shadow-none lg:p-0">
+                {/* Header */}
+                <div className="text-center space-y-2">
+                  <h1 className="text-2xl sm:text-2xl font-bold text-foreground">
+                    Welcome
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Sign in to save facilities and track your search
+                  </p>
+                </div>
 
               {/* Auth Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -379,6 +382,7 @@ export default function SeekerAuth() {
                 {' '}and{' '}
                 <Link to="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
               </p>
+              </div>
             </div>
           </div>
         </div>
