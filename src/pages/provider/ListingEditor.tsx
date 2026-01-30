@@ -228,7 +228,11 @@ const TagChip = ListingTagChip;
 const EmptyTagsState = ListingEmptyTagsState;
 const FormField = ListingFormField;
 
-export default function ProviderListingPage() {
+interface ListingEditorProps {
+  facilityId?: string;
+}
+
+export default function ListingEditor({ facilityId: propFacilityId }: ListingEditorProps = {}) {
   const queryClient = useQueryClient();
   const [facility, setFacility] = useState<Facility | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -250,14 +254,17 @@ export default function ProviderListingPage() {
   const prevFacilityIdRef = useRef<string | null>(null);
   const { toast } = useToast();
   const { selectedFacility, setHasUnsavedChanges } = useSelectedFacility();
-  const { data: proStatus } = useProStatus(selectedFacility?.id);
+  
+  // Use prop facilityId if provided, otherwise use selectedFacility
+  const currentFacilityId = propFacilityId || selectedFacility?.id;
+  const { data: proStatus } = useProStatus(currentFacilityId);
   
   // Get gallery limit based on Pro status (Pro gets 10, Basic gets 5)
   const galleryLimit = proStatus?.isPro ? 10 : 5;
 
   // Reset state when facility changes
   useEffect(() => {
-    if (selectedFacility?.id && prevFacilityIdRef.current !== selectedFacility.id) {
+    if (currentFacilityId && prevFacilityIdRef.current !== currentFacilityId) {
       // Clear any pending auto-save
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
@@ -275,9 +282,9 @@ export default function ProviderListingPage() {
       setVerificationError(null);
       setHasUnsavedChanges(false);
       
-      prevFacilityIdRef.current = selectedFacility.id;
+      prevFacilityIdRef.current = currentFacilityId;
     }
-  }, [selectedFacility?.id, setHasUnsavedChanges]);
+  }, [currentFacilityId, setHasUnsavedChanges]);
 
   // Sync hasChanges to context
   useEffect(() => {
@@ -293,64 +300,64 @@ export default function ProviderListingPage() {
 
   // Fetch facility data with React Query
   const { data: facilityData, isLoading } = useQuery({
-    queryKey: ["facility-listing", selectedFacility?.id],
+    queryKey: ["facility-listing", currentFacilityId],
     queryFn: async () => {
-      if (!selectedFacility?.id) return null;
+      if (!currentFacilityId) return null;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return null;
 
       const { data } = await supabase
         .from("facilities")
         .select("*")
-        .eq("id", selectedFacility.id)
+        .eq("id", currentFacilityId)
         .eq("user_id", session.user.id)
         .maybeSingle();
 
       return data;
     },
-    enabled: !!selectedFacility?.id,
+    enabled: !!currentFacilityId,
   });
 
   // Fetch services
   const { data: services = [], refetch: refetchServices } = useQuery({
-    queryKey: ["facility-services", selectedFacility?.id],
+    queryKey: ["facility-services", currentFacilityId],
     queryFn: async () => {
-      if (!selectedFacility?.id) return [];
+      if (!currentFacilityId) return [];
       const { data } = await supabase
         .from("facility_services")
         .select("id, service_name")
-        .eq("facility_id", selectedFacility.id);
+        .eq("facility_id", currentFacilityId);
       return data || [];
     },
-    enabled: !!selectedFacility?.id,
+    enabled: !!currentFacilityId,
   });
 
   // Fetch insurance
   const { data: insurance = [], refetch: refetchInsurance } = useQuery({
-    queryKey: ["facility-insurance", selectedFacility?.id],
+    queryKey: ["facility-insurance", currentFacilityId],
     queryFn: async () => {
-      if (!selectedFacility?.id) return [];
+      if (!currentFacilityId) return [];
       const { data } = await supabase
         .from("facility_insurance")
         .select("id, insurance_name")
-        .eq("facility_id", selectedFacility.id);
+        .eq("facility_id", currentFacilityId);
       return data || [];
     },
-    enabled: !!selectedFacility?.id,
+    enabled: !!currentFacilityId,
   });
 
   // Fetch age groups
   const { data: ageGroups = [], refetch: refetchAgeGroups } = useQuery({
-    queryKey: ["facility-age-groups", selectedFacility?.id],
+    queryKey: ["facility-age-groups", currentFacilityId],
     queryFn: async () => {
-      if (!selectedFacility?.id) return [];
+      if (!currentFacilityId) return [];
       const { data } = await supabase
         .from("facility_age_groups")
         .select("id, age_group")
-        .eq("facility_id", selectedFacility.id);
+        .eq("facility_id", currentFacilityId);
       return data || [];
     },
-    enabled: !!selectedFacility?.id,
+    enabled: !!currentFacilityId,
   });
 
   // Fetch provider profile email (for reply email default)
@@ -412,33 +419,33 @@ export default function ProviderListingPage() {
 
   // Real-time subscriptions
   useEffect(() => {
-    if (!selectedFacility?.id) return;
+    if (!currentFacilityId) return;
 
     const facilityChannel = supabase
-      .channel(`facility-${selectedFacility.id}`)
+      .channel(`facility-${currentFacilityId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "facilities",
-          filter: `id=eq.${selectedFacility.id}`,
+          filter: `id=eq.${currentFacilityId}`,
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ["facility-listing", selectedFacility.id] });
+          queryClient.invalidateQueries({ queryKey: ["facility-listing", currentFacilityId] });
         }
       )
       .subscribe();
 
     const servicesChannel = supabase
-      .channel(`services-${selectedFacility.id}`)
+      .channel(`services-${currentFacilityId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "facility_services",
-          filter: `facility_id=eq.${selectedFacility.id}`,
+          filter: `facility_id=eq.${currentFacilityId}`,
         },
         () => {
           refetchServices();
@@ -447,14 +454,14 @@ export default function ProviderListingPage() {
       .subscribe();
 
     const insuranceChannel = supabase
-      .channel(`insurance-${selectedFacility.id}`)
+      .channel(`insurance-${currentFacilityId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "facility_insurance",
-          filter: `facility_id=eq.${selectedFacility.id}`,
+          filter: `facility_id=eq.${currentFacilityId}`,
         },
         () => {
           refetchInsurance();
@@ -463,14 +470,14 @@ export default function ProviderListingPage() {
       .subscribe();
 
     const ageGroupsChannel = supabase
-      .channel(`age-groups-${selectedFacility.id}`)
+      .channel(`age-groups-${currentFacilityId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "facility_age_groups",
-          filter: `facility_id=eq.${selectedFacility.id}`,
+          filter: `facility_id=eq.${currentFacilityId}`,
         },
         () => {
           refetchAgeGroups();
@@ -484,7 +491,7 @@ export default function ProviderListingPage() {
       supabase.removeChannel(insuranceChannel);
       supabase.removeChannel(ageGroupsChannel);
     };
-  }, [selectedFacility?.id, queryClient, refetchServices, refetchInsurance, refetchAgeGroups]);
+  }, [currentFacilityId, queryClient, refetchServices, refetchInsurance, refetchAgeGroups]);
 
   // Auto-save function (silent, no toast)
   const performAutoSave = useCallback(async () => {
@@ -523,7 +530,7 @@ export default function ProviderListingPage() {
     setIsAutoSaving(false);
 
     if (!error) {
-      queryClient.setQueryData(["facility-listing", selectedFacility?.id], facility);
+      queryClient.setQueryData(["facility-listing", currentFacilityId], facility);
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
       queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
@@ -544,7 +551,7 @@ export default function ProviderListingPage() {
         ) : undefined,
       });
     }
-  }, [facility, isSaving, selectedFacility?.id, queryClient, toast]);
+  }, [facility, isSaving, currentFacilityId, queryClient, toast]);
 
   // Auto-save effect
   useEffect(() => {
@@ -596,8 +603,8 @@ export default function ProviderListingPage() {
       return;
     }
     
-    const previousData = queryClient.getQueryData(["facility-listing", selectedFacility?.id]);
-    queryClient.setQueryData(["facility-listing", selectedFacility?.id], facility);
+    const previousData = queryClient.getQueryData(["facility-listing", currentFacilityId]);
+    queryClient.setQueryData(["facility-listing", currentFacilityId], facility);
     
     setHasChanges(false);
     setShowSaved(true);
@@ -628,7 +635,7 @@ export default function ProviderListingPage() {
     setIsSaving(false);
 
     if (error) {
-      queryClient.setQueryData(["facility-listing", selectedFacility?.id], previousData);
+      queryClient.setQueryData(["facility-listing", currentFacilityId], previousData);
       setFacility(previousData as Facility | null);
       setHasChanges(true);
       setShowSaved(false);
@@ -640,8 +647,8 @@ export default function ProviderListingPage() {
     } else {
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
       queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["facility-services-count", selectedFacility?.id] });
-      queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", selectedFacility?.id] });
+      queryClient.invalidateQueries({ queryKey: ["facility-services-count", currentFacilityId] });
+      queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", currentFacilityId] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       setTimeout(() => setShowSaved(false), 2000);
@@ -952,7 +959,7 @@ export default function ProviderListingPage() {
       setCodeSent(false);
       setVerificationCode("");
 
-      queryClient.invalidateQueries({ queryKey: ["facility-listing", selectedFacility?.id] });
+      queryClient.invalidateQueries({ queryKey: ["facility-listing", currentFacilityId] });
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
 
       toast({

@@ -101,7 +101,7 @@ import OutpatientNearMe from "./pages/near-me/OutpatientNearMe";
 // Provider Panel - eagerly load for instant navigation
 import { ProviderShell } from "./components/provider/ProviderShell";
 import ProviderDashboardPage from "./pages/provider/Dashboard";
-import ProviderListingPage from "./pages/provider/Listing";
+import ProviderListingPage from "./pages/provider/MyListings";
 import ProviderInquiriesPage from "./pages/provider/Inquiries";
 import ProviderReviewsPage from "./pages/provider/Reviews";
 import ProviderAnalyticsPage from "./pages/provider/Analytics";

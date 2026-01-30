@@ -5,7 +5,7 @@ import { forwardRef, useCallback } from "react";
 const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   // Provider panel routes (lazy loaded)
   "/provider/dashboard": () => import("@/pages/provider/Dashboard"),
-  "/provider/listing": () => import("@/pages/provider/Listing"),
+  "/provider/listing": () => import("@/pages/provider/MyListings"),
   "/provider/inquiries": () => import("@/pages/provider/Inquiries"),
   "/provider/analytics": () => import("@/pages/provider/Analytics"),
   "/provider/credits": () => import("@/pages/provider/Credits"),
