@@ -190,11 +190,17 @@ export default function SeekerAuth() {
 
               {/* Auth Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 h-10 bg-muted/50">
-                  <TabsTrigger value="login" className="text-sm data-[state=active]:bg-background">
+                <TabsList className="grid w-full grid-cols-2 h-11 p-1 bg-muted/40 rounded-lg">
+                  <TabsTrigger 
+                    value="login" 
+                    className="text-sm font-medium rounded-md transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground/80"
+                  >
                     Sign In
                   </TabsTrigger>
-                  <TabsTrigger value="signup" className="text-sm data-[state=active]:bg-background">
+                  <TabsTrigger 
+                    value="signup" 
+                    className="text-sm font-medium rounded-md transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground/80"
+                  >
                     Create Account
                   </TabsTrigger>
                 </TabsList>
