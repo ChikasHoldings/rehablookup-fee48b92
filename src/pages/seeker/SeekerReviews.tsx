@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2, Search, Reply } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
@@ -482,20 +483,25 @@ export default function SeekerReviews() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-amber-100">
-            <Star className="h-5 w-5 text-amber-600" />
+    <>
+      <Helmet>
+        <title>My Reviews | RehabLookup</title>
+        <meta name="description" content="View and manage your treatment center reviews. Edit pending reviews, see approval status, and read facility responses." />
+      </Helmet>
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-100">
+              <Star className="h-5 w-5 text-amber-600" />
+            </div>
+            <h1 className="text-2xl font-display font-bold">My Reviews</h1>
           </div>
-          <h1 className="text-2xl font-display font-bold">My Reviews</h1>
+          {reviews.length > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+            </Badge>
+          )}
         </div>
-        {reviews.length > 0 && (
-          <Badge variant="secondary" className="text-xs">
-            {reviews.length} review{reviews.length !== 1 ? 's' : ''}
-          </Badge>
-        )}
-      </div>
 
       {error && (
         <Card className="border-destructive/50 bg-destructive/5 mb-4">
@@ -619,5 +625,6 @@ export default function SeekerReviews() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </>
   );
 }
