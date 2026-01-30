@@ -7,8 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Pro subscription price ID
-const PRO_PRICE_ID = "price_pro_monthly"; // $99/mo Pro subscription
+// Pro subscription price ID - $399/mo RehabLookup Pro
+const PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K";
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";

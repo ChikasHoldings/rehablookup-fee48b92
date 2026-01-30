@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // PRO SUBSCRIPTION CONFIGURATION
-// Pro subscription = $99/mo for enhanced features (20% off unlocks, 5 facilities, etc.)
+// Pro subscription = $399/mo for enhanced features (20% off unlocks, 5 facilities, etc.)
 const PRO_PRODUCT_IDS = [
   "prod_pro_monthly", // New Pro product ID
   // Legacy product IDs for backward compatibility with existing subscriptions

@@ -103,7 +103,7 @@ export function useSubscription() {
 
 // NEW MONETIZATION MODEL: Plan definitions
 // - Free: List 1 facility, receive locked leads, pay per unlock
-// - Pro ($99/mo): Up to 5 facilities, 20% off unlocks, 20% off placement fees, featured placement
+// - Pro ($399/mo): Up to 5 facilities, 20% off unlocks, 20% off placement fees, featured placement
 export const PLAN_DETAILS = {
   free: {
     name: "Free Listing",
@@ -127,7 +127,7 @@ export const PLAN_DETAILS = {
   },
   pro: {
     name: "Pro",
-    price: "$99",
+    price: "$399",
     period: "/month",
     description: "Enhanced visibility + discounts",
     location_limit: 5,
@@ -140,8 +140,8 @@ export const PLAN_DETAILS = {
       "Priority search ranking",
       "Pro badge on profile",
     ],
-    price_id: "price_pro_monthly",
-    product_id: "prod_pro_monthly",
+    price_id: "price_1Sel1C9fxdThyiakWLfgbl9K",
+    product_id: "prod_Tbyz1bf6iYyzYd",
   },
 };
 

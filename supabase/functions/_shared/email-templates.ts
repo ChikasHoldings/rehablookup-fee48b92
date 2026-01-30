@@ -4,10 +4,10 @@
  * This module provides reusable email template components with plan-aware styling.
  * All provider-facing emails should use these components for consistency.
  * 
- * NEW MODEL: Free (no subscription) vs Pro ($99/mo)
+ * NEW MODEL: Free (no subscription) vs Pro ($399/mo)
  */
 
-import Stripe from "https://esm.sh/stripe@14.21.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 // ============================================================================
 // LEAD MASKING UTILITIES

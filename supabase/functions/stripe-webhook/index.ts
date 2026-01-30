@@ -157,7 +157,7 @@ serve(async (req) => {
               stripe_customer_id: customerId,
               status: "active",
               unlock_discount_percent: 20,
-              price_cents: 9900,
+              price_cents: 39900,
               started_at: new Date().toISOString(),
               current_period_end: currentPeriodEnd,
               updated_at: new Date().toISOString(),
