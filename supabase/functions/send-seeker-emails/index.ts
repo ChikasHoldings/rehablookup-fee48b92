@@ -54,6 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get seeker email if not provided
     let seekerEmail = email;
     let seekerProfile: any = null;
+    let notificationPrefs: any = null;
 
     if (!seekerEmail && seekerId) {
       const { data: authUser } = await supabase.auth.admin.getUserById(seekerId);
@@ -61,12 +62,21 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (seekerId) {
-      const { data: profile } = await supabase
-        .from("seeker_profiles")
-        .select("*")
-        .eq("user_id", seekerId)
-        .single();
-      seekerProfile = profile;
+      // Fetch profile and notification preferences in parallel
+      const [profileResult, prefsResult] = await Promise.all([
+        supabase
+          .from("seeker_profiles")
+          .select("*")
+          .eq("user_id", seekerId)
+          .single(),
+        supabase
+          .from("notification_preferences")
+          .select("*")
+          .eq("user_id", seekerId)
+          .maybeSingle()
+      ]);
+      seekerProfile = profileResult.data;
+      notificationPrefs = prefsResult.data;
     }
 
     if (!seekerEmail) {
@@ -77,8 +87,40 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Check notification preferences - map email types to preference keys
+    const emailTypePreferenceMap: Record<string, keyof typeof defaultPrefs> = {
+      "welcome": "email_lead_alerts", // Always send welcome
+      "welcome_followup": "email_product_updates",
+      "request_confirmation": "email_lead_alerts",
+      "request_followup": "followup_reminders_enabled",
+      "facility_contacted_you": "email_lead_alerts",
+      "tips_finding_treatment": "email_product_updates",
+      "weekly_digest": "email_weekly_digest",
+      "account_reminder": "email_product_updates",
+    };
+
+    const defaultPrefs = {
+      email_lead_alerts: true,
+      email_weekly_digest: true,
+      email_product_updates: false,
+      browser_notifications: true,
+      followup_reminders_enabled: true,
+    };
+
+    const prefs = { ...defaultPrefs, ...notificationPrefs };
+    const prefKey = emailTypePreferenceMap[type];
+    
+    // Skip email if preference is disabled (except for critical welcome email)
+    if (type !== "welcome" && prefKey && !prefs[prefKey]) {
+      logStep("Email skipped due to user preferences", { type, prefKey, enabled: prefs[prefKey] });
+      return new Response(
+        JSON.stringify({ success: true, skipped: true, reason: "User preference disabled" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const displayName = seekerProfile?.display_name || seekerProfile?.first_name || "there";
-    logStep("Seeker info", { email: seekerEmail, displayName });
+    logStep("Seeker info", { email: seekerEmail, displayName, prefsEnabled: prefs[prefKey] ?? true });
 
     let subject = "";
     let html = "";
@@ -149,21 +191,28 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create in-app notification for certain email types
-    if (seekerId && ["facility_contacted_you", "request_confirmation", "welcome"].includes(type)) {
+    // Create in-app notification for certain email types (respect browser_notifications preference)
+    const shouldCreateInAppNotification = prefs.browser_notifications !== false;
+    if (seekerId && shouldCreateInAppNotification && ["facility_contacted_you", "request_confirmation", "welcome"].includes(type)) {
       let notificationTitle = subject;
       let notificationMessage = "";
+      let notificationLink: string | null = null;
       
       switch (type) {
         case "welcome":
           notificationTitle = "Welcome to RehabLookup! 💙";
           notificationMessage = "We're here to help you find the right treatment center. Start by browsing facilities or saving your favorites.";
+          notificationLink = "/account";
           break;
         case "facility_contacted_you":
-          notificationMessage = `${metadata?.facilityName || "A facility"} has responded to your request.`;
+          notificationTitle = `${metadata?.facilityName || "A facility"} responded`;
+          notificationMessage = `${metadata?.facilityName || "A facility"} has responded to your request. Check your phone and email for their message.`;
+          notificationLink = "/account/requests";
           break;
         case "request_confirmation":
-          notificationMessage = "Your request has been sent successfully.";
+          notificationTitle = "Request Sent Successfully";
+          notificationMessage = `Your request to ${metadata?.facilityName || "the facility"} has been sent. They typically respond within 24-48 hours.`;
+          notificationLink = "/account/requests";
           break;
       }
 
@@ -172,7 +221,7 @@ const handler = async (req: Request): Promise<Response> => {
         type: type,
         title: notificationTitle,
         message: notificationMessage,
-        link: type === "welcome" ? "/account" : null,
+        link: notificationLink,
         metadata: metadata || {},
       });
       logStep("In-app notification created", { type, seekerId });
