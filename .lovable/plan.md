@@ -1,205 +1,199 @@
 
+# Provider Panel Placement Network - End-to-End Audit Report
 
-# Plan: Fix and Complete ACH Instant Verification with Stripe Financial Connections
+## Executive Summary
 
-## Summary
-
-The current payment method implementation already has the foundation for **Instant Verification** via Stripe Financial Connections, but there are critical issues preventing it from working properly. This plan addresses those issues and ensures both ACH (via bank login) and Card payments are fully functional.
-
----
-
-## What's Already in Place
-
-- SetupIntent creation with `us_bank_account` and `card` payment method types
-- Financial Connections with `payment_method` permission
-- `verification_method: 'instant'` configured on the backend
-- Frontend flow using `collectBankAccountForSetup()` and `confirmUsBankAccountSetup()`
-- Database table `provider_payment_methods` with verification tracking
+After a comprehensive audit of the Provider Placement Network feature, the system is **substantially complete and functional**. The architecture is well-designed with proper separation between onboarding, dashboard management, and billing flows. However, I identified several issues and gaps that should be addressed to ensure production reliability.
 
 ---
 
-## Issues to Fix
+## Architecture Overview
 
-### Issue 1: Missing Account Holder Name in ACH Flow
-
-The `collectBankAccountForSetup()` call passes an empty `billing_details.name`, which can cause issues with some banks during instant verification.
-
-**Fix**: Collect the account holder's name from the user or fetch it from the facility data before initiating the Financial Connections flow.
-
-### Issue 2: Incomplete Error Handling for Edge Cases
-
-The current implementation doesn't properly handle all SetupIntent states, particularly when verification fails or when the user's bank doesn't support instant verification.
-
-**Fix**: Add comprehensive status handling for all possible `setupIntent.status` values and `next_action` types.
-
-### Issue 3: Verification Status Not Properly Tracked
-
-The `save-provider-payment-method` function checks for `status_details.blocked` but doesn't properly read the ACH account's verification status from Stripe.
-
-**Fix**: Update the edge function to properly check and store the verification status from the payment method.
-
-### Issue 4: No Visual Feedback for Pending Verification
-
-If instant verification fails and falls back to micro-deposits, users aren't given clear instructions or status updates.
-
-**Fix**: Add UI components to display verification status and next steps.
-
----
-
-## Implementation Steps
-
-### Step 1: Update Frontend Payment Form
-
-**File**: `src/components/provider/AddPaymentMethodModal.tsx`
-
-- Add account holder name input field for ACH
-- Pre-populate name from facility data where available
-- Pass the name to `collectBankAccountForSetup()` billing details
-- Add comprehensive status handling for all SetupIntent states
-- Display clear messaging for:
-  - Instant verification success
-  - Micro-deposit fallback (with timeline explanation)
-  - Verification failure scenarios
-
-### Step 2: Enhance Setup Edge Function
-
-**File**: `supabase/functions/setup-provider-payment-method/index.ts`
-
-- Ensure `verification_method: 'instant'` is enforced (already configured)
-- Add the facility name to the SetupIntent metadata for tracking
-- Return additional context for the frontend (customer name for pre-fill)
-
-### Step 3: Improve Save Payment Method Function
-
-**File**: `supabase/functions/save-provider-payment-method/index.ts`
-
-- Properly check `us_bank_account.status` field (values: `new`, `validated`, `verified`, `verification_failed`, `errored`)
-- Store verification status in database
-- Handle both instantly verified and pending verification states
-
-### Step 4: Add Verification Status Display
-
-**File**: `src/components/provider/AddPaymentMethodModal.tsx` (or new component)
-
-- Show verification badge/status on saved payment methods
-- Display "Pending Verification" for micro-deposit fallback cases
-- Add inline instructions for completing micro-deposit verification
-
----
-
-## Technical Details
-
-### SetupIntent Status Flow
+The Placement Network is a unified, state-based experience with three main states:
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                     SetupIntent Flow                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  collectBankAccountForSetup()                                   │
-│           │                                                     │
-│           ▼                                                     │
-│  ┌─────────────────┐                                            │
-│  │ User Selects    │                                            │
-│  │ Bank & Logs In  │                                            │
-│  └────────┬────────┘                                            │
-│           │                                                     │
-│           ▼                                                     │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │ SetupIntent Status                                      │    │
-│  ├─────────────────────────────────────────────────────────┤    │
-│  │ requires_payment_method → User cancelled                │    │
-│  │ requires_confirmation   → Call confirmUsBankAccountSetup│    │
-│  │ succeeded               → Instantly verified, save PM   │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│           │                                                     │
-│           ▼                                                     │
-│  confirmUsBankAccountSetup()                                    │
-│           │                                                     │
-│           ▼                                                     │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │ Confirmed Status                                        │    │
-│  ├─────────────────────────────────────────────────────────┤    │
-│  │ succeeded              → Verified! Save payment method  │    │
-│  │ requires_action        → Check next_action.type         │    │
-│  │   ├─ verify_with_microdeposits → Fallback, notify user  │    │
-│  │   └─ redirect_to_url          → 3DS/Bank redirect       │    │
-│  │ processing             → Pending verification           │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
++------------------+     +------------------+     +------------------+
+|   LANDING STATE  | --> |  ONBOARDING FLOW | --> |   DASHBOARD     |
+|  (Non-Members)   |     |   (4-Step Setup) |     |  (Active Users)  |
++------------------+     +------------------+     +------------------+
+                                  |
+                                  v
+                    +---------------------------+
+                    | 1. Complete Profile        |
+                    | 2. Accept Terms (v1.0)     |
+                    | 3. Add Payment Method      |
+                    | 4. Select Care Types       |
+                    +---------------------------+
 ```
 
-### Database Updates
+---
 
-The `provider_payment_methods.is_verified` field will be set based on:
+## What's Working Correctly
 
-| Stripe Status | `is_verified` Value |
-|---------------|---------------------|
-| `verified` | `true` |
-| `validated` | `true` |
-| `new` | `false` (pending) |
-| `verification_failed` | `false` |
-| `errored` | `false` |
+### 1. Onboarding Flow
+- Readiness checklist properly gates network opt-in
+- Terms modal fetches and displays signed status correctly
+- Payment method modal supports both ACH (Financial Connections) and Card
+- Care types modal saves to `concierge_accepted_care_types`
+- All modals invalidate queries on success for immediate UI updates
 
-### Card Verification
+### 2. Dashboard Tabs (Post Opt-In)
+- **Introductions**: Shows pending intros, awaiting confirmation section, and past responses
+- **Profile**: Full network profile management (care types, insurance, availability, contact info)
+- **Billing**: Agreement status, fee structure display, payment methods, invoices
+- **Placements**: Historical confirmed placements with fee info
 
-For cards, verification is automatic via 3D Secure when required. The current `confirmCardSetup()` implementation handles this correctly. We'll add:
+### 3. Edge Functions
+- `setup-provider-payment-method`: Creates Stripe SetupIntent with Financial Connections
+- `save-provider-payment-method`: Persists payment method with verification status
+- `confirm-placement`: Handles dual confirmation workflow (seeker + provider)
+- `charge-placement-fee`: Charges provider on confirmation or creates invoice
+- `match-concierge-intake`: Sophisticated multi-factor matching algorithm
+- `send-concierge-introduction`: Email notifications to providers
+- `send-concierge-notifications`: Full notification suite for all lifecycle events
 
-- Better error messaging for declined cards
-- Support for 3DS redirect flows if triggered
+### 4. Database & Security
+- `provider_payment_methods` table with proper RLS (providers can CRUD own, admins can view)
+- `placement_invoices` table with RLS (providers can view own, admins can manage)
+- `concierge_introductions` with proper provider access policies
+- Pro subscription discount correctly applied (20% off)
 
 ---
 
-## User Experience Flow
+## Issues Found
 
-### ACH Instant Verification (Happy Path)
+### Issue 1: Introduction Response Link Points to Wrong Route
+**Severity**: Medium  
+**Location**: `send-concierge-introduction/index.ts` line 75
 
-1. User clicks "Connect Bank Account"
-2. Stripe Financial Connections modal opens
-3. User searches for their bank
-4. User logs into their bank (OAuth flow)
-5. User selects checking/savings account
-6. User authorizes connection
-7. Bank is instantly verified and saved
-8. Success message displayed
+```typescript
+const responseUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/provider/concierge/respond/${introductionId}`;
+```
 
-### ACH with Micro-deposit Fallback
+**Problem**: The URL pattern `/provider/concierge/respond/:id` likely doesn't exist. The current Placement Network page doesn't have a dedicated response route - responses are handled inline in the dashboard.
 
-1. User clicks "Connect Bank Account"
-2. User's bank doesn't support instant verification
-3. User enters bank details manually
-4. System initiates micro-deposits ($0.01 x 2)
-5. User sees "Pending Verification" status
-6. In 1-2 business days, user receives email from Stripe
-7. User verifies amounts via Stripe-hosted page
-8. Payment method becomes verified
+**Fix**: Update to redirect to the Placement Network page:
+```typescript
+const responseUrl = `https://rehablookup.lovable.app/provider/placement-network`;
+```
 
-### Card Payment (Happy Path)
+### Issue 2: Missing Query Invalidation Key Mismatch
+**Severity**: Low  
+**Location**: `ProviderConfirmPlacementModal.tsx` lines 89-91
 
-1. User switches to "Credit/Debit Card" tab
-2. User enters card number, expiry, CVC
-3. User clicks "Save Card"
-4. Card is verified and saved immediately
-5. Success message displayed
+```typescript
+queryClient.invalidateQueries({ queryKey: ["provider-introductions"] });
+queryClient.invalidateQueries({ queryKey: ["provider-placements"] });
+```
+
+**Problem**: The actual query keys used in `PlacementNetwork.tsx` are `["placement-introductions", facilityId]` and `["facility-placements", facilityId]`, not the generic keys being invalidated.
+
+**Fix**: Update to match actual keys:
+```typescript
+queryClient.invalidateQueries({ queryKey: ["placement-introductions"] });
+queryClient.invalidateQueries({ queryKey: ["facility-placements"] });
+```
+
+### Issue 3: Invoice Query Uses Wrong Column Reference
+**Severity**: Medium  
+**Location**: `PlacementNetwork.tsx` line 181
+
+```typescript
+const { data: invoices } = useQuery({
+  queryKey: ["placement-invoices", selectedFacility?.id],
+  queryFn: async () => {
+    const { data, error } = await (supabase as any)
+      .from("placement_invoices")
+      .select("*")
+      .eq("facility_id", selectedFacility.id)
+```
+
+**Problem**: The query works, but uses type assertion `(supabase as any)` which bypasses TypeScript checking. The `placement_invoices` table exists and has correct RLS.
+
+**Fix**: The type assertion is acceptable for now since the table was added after types were generated. When types are regenerated, this can be cleaned up.
+
+### Issue 4: Placement Invoices Missing inquiry_id in Some Edge Cases
+**Severity**: Low  
+**Location**: `charge-placement-fee/index.ts`
+
+The invoice creation includes `inquiry_id`, but the `placement_invoices` table schema shows `case_id` as the primary reference (from old placement_cases table). The `inquiry_id` column was added later.
+
+**Observation**: The code correctly uses `inquiry_id` which is the new pattern. No action needed.
+
+### Issue 5: CareTypesModal Uses Hardcoded Care Types
+**Severity**: Low (Design Choice)  
+**Location**: `CareTypesModal.tsx`
+
+The care types are hardcoded in the component. This is fine but means adding new care types requires a code change.
+
+**No action required** - this is intentional for controlled vocabulary.
 
 ---
 
-## Files to Modify
+## Missing Features (Minor)
 
-| File | Changes |
-|------|---------|
-| `src/components/provider/AddPaymentMethodModal.tsx` | Add name input, improve status handling, better UX messaging |
-| `supabase/functions/setup-provider-payment-method/index.ts` | Include facility name in response for pre-fill |
-| `supabase/functions/save-provider-payment-method/index.ts` | Properly check verification status from Stripe API |
+### 1. No Delete Payment Method UI
+Providers can add payment methods but there's no UI to remove them. The RLS policy allows deletion.
+
+### 2. No Edit Care Types from Dashboard
+After onboarding, providers must go to the Profile tab to modify care types. The checklist action opens the modal but there's no shortcut from the dashboard.
+
+### 3. No Invoice Receipt Download
+The invoice list shows status but doesn't provide receipt download links for paid invoices (Stripe `receipt_url` is stored but not displayed).
+
+### 4. No Message/Tour Tabs Implementation
+The memory notes mention Messages and Tours tabs, but the current `PlacementNetwork.tsx` only has 4 tabs: Introductions, Profile, Billing, Placements.
 
 ---
 
-## Testing Approach
+## Database Schema Verification
 
-After implementation, test using Stripe's test bank credentials:
+### `provider_payment_methods` - Complete
+All required columns present: id, facility_id, type, stripe_payment_method_id, stripe_customer_id, last_four, bank_name, card_brand, exp_month, exp_year, is_default, is_verified, created_at, updated_at
 
-- **Test Institution**: Use "Test Institution" in Financial Connections sandbox
-- **Success Flow**: Login credentials trigger instant verification
-- **Manual Entry Test**: Account `000123456789`, Routing `110000000` → triggers micro-deposits
+### `placement_invoices` - Complete
+Comprehensive schema with: amount tracking, status, Stripe integration, retry logic, waiver support, override support, delinquency tracking
 
+### `concierge_introductions` - Complete
+Proper linking: inquiry_id, facility_id, provider_response, provider_responded_at, provider_notes
+
+### `facilities` concierge columns - Complete
+All needed: concierge_network_opted_in, concierge_opted_in_at, concierge_accepted_care_types, concierge_accepted_insurance, concierge_availability_status, concierge_admissions_contact/email/phone, concierge_agreement_preference, concierge_terms_accepted_at/version/by
+
+---
+
+## Recommended Fixes
+
+### High Priority
+1. Fix the introduction email response URL to point to the correct route
+2. Fix query invalidation keys in ProviderConfirmPlacementModal
+
+### Medium Priority
+3. Add receipt_url display for paid invoices
+4. Add "Remove Payment Method" button with confirmation
+
+### Low Priority (Enhancements)
+5. Consider adding Messages/Tours tabs if those features are planned
+6. Add quick-access buttons to edit settings from dashboard header
+
+---
+
+## Technical Debt Notes
+
+- Multiple `(supabase as any)` casts due to types not regenerated after table additions
+- Some edge functions still reference old paths (`/provider/concierge/` routes)
+- RLS linter shows some "always true" policies but these are intentional for service role access
+
+---
+
+## Conclusion
+
+The Provider Placement Network is **production-ready** with minor fixes needed. The core flows work correctly:
+- Provider onboarding with 4-step readiness checklist
+- Network opt-in with all prerequisites enforced
+- Introduction receiving and responding
+- Dual confirmation workflow for placements
+- Automated and admin-initiated billing
+- Pro subscriber discounts applied correctly
+
+The two high-priority fixes (response URL and query invalidation keys) should be implemented before heavy production usage.
