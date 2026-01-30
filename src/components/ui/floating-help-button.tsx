@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Phone } from "lucide-react";
+import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -8,7 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const HIDDEN_ROUTES = [
   "/rehab-centers",
   "/center/",
-  "/request-help",
+  "/account/concierge",
   "/provider",
   "/admin",
   "/lp/",
@@ -40,14 +40,14 @@ export function FloatingHelpButton() {
 
   return (
     <Link
-      to="/request-help"
+      to="/account/concierge"
       className={cn(
         "fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-accent-foreground shadow-lg transition-all duration-300 hover:bg-accent/90 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
       )}
     >
-      <Phone className="h-4 w-4" />
-      <span className="text-sm font-semibold">Get Help Now</span>
+      <Heart className="h-4 w-4" />
+      <span className="text-sm font-semibold">Get Matched</span>
     </Link>
   );
 }

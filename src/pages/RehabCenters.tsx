@@ -342,10 +342,10 @@ const RehabCenters = () => {
             </div>
             
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Link to="/request-help?source=rehab_cta">
+              <Link to="/account/concierge">
                 <Button size="sm" className="w-full gap-2 sm:w-auto">
                   <Heart className="h-4 w-4" />
-                  Get Help Now
+                  Get Matched
                 </Button>
               </Link>
               <Link to="/contact">

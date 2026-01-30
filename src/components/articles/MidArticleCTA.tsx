@@ -1,14 +1,10 @@
 import { Link } from "react-router-dom";
 import { Heart, ArrowRight } from "lucide-react";
 
-interface MidArticleCTAProps {
-  source?: string;
-}
-
-export function MidArticleCTA({ source = "article_mid" }: MidArticleCTAProps) {
+export function MidArticleCTA() {
   return (
     <Link 
-      to={`/request-help?source=${source}`}
+      to="/account/concierge"
       className="my-6 flex items-center gap-3 rounded-lg bg-primary/5 border border-primary/15 px-4 py-3 group hover:bg-primary/10 hover:border-primary/25 transition-all"
     >
       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">

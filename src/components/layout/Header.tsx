@@ -42,8 +42,8 @@ const navIcons: Record<string, React.ElementType> = {
 
 export function Header({ 
   navLinks = defaultNavLinks, 
-  ctaLink = "/request-help?source=header",
-  ctaLabel = "Get Help",
+  ctaLink = "/account/concierge",
+  ctaLabel = "Get Matched",
   variant = "default"
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

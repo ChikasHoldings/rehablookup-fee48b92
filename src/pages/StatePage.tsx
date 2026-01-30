@@ -285,10 +285,10 @@ const StatePage = () => {
             </div>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
-                  <Phone className="h-4 w-4" />
-                  Get Help Now
+                  <Heart className="h-4 w-4" />
+                  Get Matched
                 </Button>
               </Link>
               <Link to={`/search-results?location=${encodeURIComponent(stateData.name)}`}>
@@ -427,8 +427,8 @@ const StatePage = () => {
               <p className="mt-2 text-muted-foreground">
                 We're actively adding verified treatment centers in {stateData.name}.
               </p>
-              <Link to="/request-help" className="mt-6 inline-block">
-                <Button>Get Personalized Help</Button>
+              <Link to="/account/concierge" className="mt-6 inline-block">
+                <Button>Get Matched</Button>
               </Link>
             </div>
           )}
@@ -743,10 +743,10 @@ const StatePage = () => {
               Get personalized recommendations based on your needs.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link to="/request-help">
+              <Link to="/account/concierge">
                 <Button size="lg" className="gap-2">
                   <Heart className="h-4 w-4" />
-                  Get Help Today
+                  Get Matched
                 </Button>
               </Link>
               <Link to="/rehab-centers">
