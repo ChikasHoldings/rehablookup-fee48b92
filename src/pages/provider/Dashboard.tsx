@@ -20,10 +20,6 @@ import {
   Sparkles,
   ChevronRight,
   X,
-  Newspaper,
-  Megaphone,
-  Star,
-  Zap
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,53 +89,15 @@ function MetricCard({
   );
 }
 
-// Platform News Data
-const platformNews = [
-  {
-    id: 1,
-    type: "feature",
-    icon: Zap,
-    title: "New Lead Analytics Dashboard",
-    description: "Track your conversion rates and lead quality with enhanced analytics.",
-    date: "Dec 20",
-    isNew: true,
-    link: "/provider/analytics",
-    linkType: "internal" as const
-  },
-  {
-    id: 2,
-    type: "announcement",
-    icon: Megaphone,
-    title: "Holiday Support Hours",
-    description: "Support available Dec 24-25 with limited hours. Happy Holidays!",
-    date: "Dec 18",
-    isNew: true,
-    link: "/provider/settings",
-    linkType: "internal" as const
-  },
-  {
-    id: 3,
-    type: "tip",
-    icon: Star,
-    title: "Complete Your Profile",
-    description: "Facilities with complete profiles receive 40% more inquiries.",
-    date: "Dec 15",
-    isNew: false,
-    link: "/provider/listing",
-    linkType: "internal" as const
-  },
-  {
-    id: 4,
-    type: "feature",
-    icon: Star,
-    title: "Review Management",
-    description: "Respond to client reviews and manage your reputation directly.",
-    date: "Dec 12",
-    isNew: false,
-    link: "/provider/reviews",
-    linkType: "internal" as const
-  }
-];
+// Mask name helper (e.g., "John Smith" -> "John S.")
+const maskName = (name: string): string => {
+  if (!name) return "Anonymous";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return `${parts[0].charAt(0).toUpperCase()}.`;
+  const firstName = parts[0];
+  const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+  return `${firstName} ${lastInitial}.`;
+};
 
 export default function ProviderDashboardPage() {
   const queryClient = useQueryClient();
@@ -197,6 +155,22 @@ export default function ProviderDashboardPage() {
   if (recentLeadsError) {
     console.error("[Dashboard] Error fetching recent leads:", recentLeadsError);
   }
+
+  // Fetch unlocked lead IDs for the current facility
+  const { data: unlockedLeadIds = new Set<string>() } = useQuery({
+    queryKey: ["unlocked-lead-ids", facilityId],
+    queryFn: async (): Promise<Set<string>> => {
+      if (!facilityId) return new Set();
+      const { data, error } = await supabase
+        .from("lead_unlocks")
+        .select("lead_id")
+        .eq("facility_id", facilityId);
+      if (error) throw error;
+      return new Set((data || []).map(u => u.lead_id));
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 2,
+  });
 
   // Fetch total leads count for facility
   const { data: totalLeadsCount = 0 } = useQuery({
@@ -486,38 +460,56 @@ export default function ProviderDashboardPage() {
                   </div>
                 ) : (
                   <div className="divide-y">
-                    {recentLeads.slice(0, 4).map((lead, index) => (
-                      <button
-                        key={lead.id}
-                        onClick={() => handleLeadClick(lead)}
-                        className={cn(
-                          "w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left",
-                          index === 0 && lead.status === 'new' && "bg-primary/[0.02]"
-                        )}
-                      >
-                        <div className="relative">
-                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-bold text-primary">
-                              {lead.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          {index === 0 && lead.status === 'new' && (
-                            <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background" />
+                    {recentLeads.slice(0, 4).map((lead, index) => {
+                      const isUnlocked = unlockedLeadIds.has(lead.id);
+                      const displayName = isUnlocked ? lead.name : maskName(lead.name);
+                      const displayContact = isUnlocked 
+                        ? (lead.preferred_contact === "call" ? lead.phone : lead.email)
+                        : "••••••••••";
+                      
+                      return (
+                        <button
+                          key={lead.id}
+                          onClick={() => handleLeadClick(lead)}
+                          className={cn(
+                            "w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left",
+                            index === 0 && lead.status === 'new' && "bg-primary/[0.02]"
                           )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-foreground truncate">{lead.name}</p>
-                            <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                        >
+                          <div className="relative">
+                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                              {isUnlocked ? (
+                                <span className="text-xs font-bold text-primary">
+                                  {lead.name.charAt(0).toUpperCase()}
+                                </span>
+                              ) : (
+                                <Lock className="h-3.5 w-3.5 text-primary" />
+                              )}
+                            </div>
+                            {index === 0 && lead.status === 'new' && (
+                              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-background" />
+                            )}
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                            {lead.preferred_contact === "call" ? <Phone className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
-                            <span className="truncate">{lead.preferred_contact === "call" ? lead.phone : lead.email}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                              <LeadStatusBadge status={lead.status as LeadStatus} size="sm" />
+                              {!isUnlocked && (
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                                  <Lock className="h-2.5 w-2.5" />
+                                  Locked
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                              {lead.preferred_contact === "call" ? <Phone className="h-3 w-3" /> : <Mail className="h-3 w-3" />}
+                              <span className="truncate">{displayContact}</span>
+                            </div>
                           </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-                      </button>
-                    ))}
+                          <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -634,65 +626,6 @@ export default function ProviderDashboardPage() {
 
             {/* Pro Benefits Widget */}
             <ProBenefitsWidget />
-
-            {/* Platform News */}
-            <Card>
-              <CardHeader className="p-3.5 pb-2.5 border-b">
-                <div className="flex items-center gap-2">
-                  <Newspaper className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-sm font-semibold">Platform News</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {platformNews.map((news) => {
-                    const NewsIcon = news.icon;
-                    const content = (
-                      <div className="flex items-start gap-2.5">
-                        <div className={cn(
-                          "h-7 w-7 rounded flex items-center justify-center shrink-0",
-                          news.type === 'feature' ? 'bg-blue-500/10 text-blue-600' :
-                          news.type === 'announcement' ? 'bg-amber-500/10 text-amber-600' :
-                          'bg-violet-500/10 text-violet-600'
-                        )}>
-                          <NewsIcon className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-xs font-semibold text-foreground leading-tight truncate">{news.title}</p>
-                            {news.isNew && (
-                              <span className="px-1.5 py-0.5 text-[9px] font-medium bg-primary text-primary-foreground rounded shrink-0">NEW</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{news.description}</p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0 mt-0.5" />
-                      </div>
-                    );
-                    
-                    return news.linkType === 'internal' ? (
-                      <Link
-                        key={news.id}
-                        to={news.link}
-                        className="block p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                      >
-                        {content}
-                      </Link>
-                    ) : (
-                      <a
-                        key={news.id}
-                        href={news.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                      >
-                        {content}
-                      </a>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Quick Actions */}
             <Card>
