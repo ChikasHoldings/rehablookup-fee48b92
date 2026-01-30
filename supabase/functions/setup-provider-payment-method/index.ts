@@ -20,8 +20,36 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Validate Stripe key
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    if (!stripeKey) {
+      logStep("ERROR", { message: "STRIPE_SECRET_KEY not configured" });
+      return new Response(
+        JSON.stringify({
+          error: "Payment system not configured",
+          instructions: "STRIPE_SECRET_KEY must be set in Supabase secrets",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        }
+      );
+    }
+
+    // Validate key type
+    if (stripeKey.startsWith("pk_")) {
+      logStep("ERROR", { message: "Invalid key type - publishable key used" });
+      return new Response(
+        JSON.stringify({
+          error: "Invalid Stripe key configuration",
+          message: "Secret key required, not publishable key",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        }
+      );
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -62,6 +90,7 @@ serve(async (req) => {
       .single();
 
     if (facilityError || !facility) {
+      logStep("ERROR", { message: "Facility not found", facilityError });
       throw new Error("Facility not found or access denied");
     }
 
@@ -79,11 +108,6 @@ serve(async (req) => {
     if (existingMethods && existingMethods.length > 0 && existingMethods[0].stripe_customer_id) {
       customerId = existingMethods[0].stripe_customer_id;
       logStep("Found existing customer from database", { customerId });
-    } else if (existingMethods && existingMethods.length > 0) {
-      // Get customer from existing payment method
-      const pm = await stripe.paymentMethods.retrieve(existingMethods[0].stripe_payment_method_id);
-      customerId = pm.customer as string;
-      logStep("Found existing customer from payment method", { customerId });
     } else {
       // Create new customer or find existing by email
       const email = facility.email || userData.user.email;
@@ -110,7 +134,7 @@ serve(async (req) => {
     }
 
     // Create SetupIntent with Financial Connections for ACH
-    // This enables instant bank account verification through Stripe
+    // Using specific configuration for instant bank verification
     const setupIntent = await stripe.setupIntents.create({
       customer: customerId,
       payment_method_types: ['us_bank_account', 'card'],
@@ -130,15 +154,18 @@ serve(async (req) => {
       usage: 'off_session',
     });
 
-    logStep("SetupIntent created with Financial Connections", { 
+    logStep("SetupIntent created", { 
       setupIntentId: setupIntent.id,
-      paymentMethodTypes: setupIntent.payment_method_types 
+      status: setupIntent.status,
+      paymentMethodTypes: setupIntent.payment_method_types,
+      hasClientSecret: !!setupIntent.client_secret
     });
 
     return new Response(
       JSON.stringify({
         clientSecret: setupIntent.client_secret,
         customerId,
+        setupIntentId: setupIntent.id,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
