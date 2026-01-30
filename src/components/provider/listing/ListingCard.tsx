@@ -24,8 +24,10 @@ interface ListingCardProps {
     name: string;
     slug: string | null;
     status: string;
+    address: string;
     city: string;
     state: string;
+    zip_code: string;
     facility_type?: string;
     logo_url: string | null;
     gallery_urls?: string[] | null;
@@ -41,17 +43,15 @@ const getStatusConfig = (status: string) => {
         label: "Live",
         description: "Visible to families",
         icon: CheckCircle,
-        bgColor: "bg-emerald-500/10",
-        textColor: "text-emerald-600 dark:text-emerald-400",
+        dotColor: "bg-emerald-500",
         badgeClass: "bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800"
       };
     case "pending":
       return {
-        label: "Under Review",
+        label: "Pending Review",
         description: "Usually 24-48 hours",
         icon: Clock,
-        bgColor: "bg-amber-500/10",
-        textColor: "text-amber-600 dark:text-amber-400",
+        dotColor: "bg-amber-500",
         badgeClass: "bg-amber-500/10 text-amber-700 border-amber-200 dark:text-amber-400 dark:border-amber-800"
       };
     default:
@@ -59,8 +59,7 @@ const getStatusConfig = (status: string) => {
         label: "Draft",
         description: "Not published yet",
         icon: AlertCircle,
-        bgColor: "bg-muted",
-        textColor: "text-muted-foreground",
+        dotColor: "bg-muted-foreground",
         badgeClass: "bg-muted text-muted-foreground border-border"
       };
   }
@@ -73,6 +72,9 @@ export function ListingCard({ facility, onSelect }: ListingCardProps) {
   
   // Get the main image (first gallery image or logo as fallback)
   const mainImage = facility.gallery_urls?.[0] || facility.logo_url;
+  
+  // Build full address string
+  const fullAddress = `${facility.address}, ${facility.city}, ${facility.state} ${facility.zip_code}`;
 
   // Fetch views count
   const { data: viewsData } = useQuery({
@@ -103,68 +105,79 @@ export function ListingCard({ facility, onSelect }: ListingCardProps) {
   });
 
   return (
-    <Card className="group border-border/60 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 overflow-hidden">
+    <Card className="group border-border/60 shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 overflow-hidden">
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row">
           {/* Image Section */}
-          <div className="relative w-full sm:w-48 lg:w-56 h-40 sm:h-auto sm:min-h-[180px] bg-muted/30 shrink-0">
+          <div className="relative w-full sm:w-52 lg:w-64 h-44 sm:h-auto sm:min-h-[200px] bg-muted/30 shrink-0 overflow-hidden">
             {mainImage ? (
               <img
                 src={mainImage}
                 alt={facility.name}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
                 <Building2 className="h-16 w-16 text-primary/30" />
               </div>
             )}
-            {/* Status Overlay on Image */}
+            {/* Gradient overlay for better badge visibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+            {/* Status Badge */}
             <div className="absolute top-3 left-3">
-              <Badge variant="outline" className={cn("gap-1 text-xs backdrop-blur-sm bg-background/80", statusConfig.badgeClass)}>
-                <StatusIcon className="h-3 w-3" />
+              <Badge variant="outline" className={cn("gap-1.5 text-xs font-medium backdrop-blur-md bg-background/90 shadow-sm", statusConfig.badgeClass)}>
+                <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse", statusConfig.dotColor)} />
                 {statusConfig.label}
               </Badge>
             </div>
           </div>
 
           {/* Content Section */}
-          <div className="flex-1 p-5 flex flex-col justify-between min-h-[180px]">
-            <div>
-              {/* Name & Type */}
-              <h3 className="font-semibold text-foreground text-lg mb-1 truncate group-hover:text-primary transition-colors">
-                {facility.name}
-              </h3>
+          <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between min-h-[200px]">
+            <div className="space-y-3">
+              {/* Header: Name & Type Badge */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-foreground text-lg leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                    {facility.name}
+                  </h3>
+                  <Badge variant="secondary" className="text-xs font-normal">
+                    {facility.facility_type || "Treatment Center"}
+                  </Badge>
+                </div>
+              </div>
               
-              {/* Location */}
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-3">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span>{facility.city}, {facility.state}</span>
-                <span className="text-muted-foreground/40 mx-1">•</span>
-                <span className="text-xs">{facility.facility_type || "Treatment Center"}</span>
+              {/* Full Address */}
+              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary/60" />
+                <span className="line-clamp-2">{fullAddress}</span>
               </div>
 
               {/* KPI Stats */}
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
-                  <Eye className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-3 pt-1">
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/60 border border-border/40">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Eye className="h-4 w-4 text-primary" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold">{viewsData ?? 0}</p>
-                    <p className="text-xs text-muted-foreground">Views</p>
+                    <p className="text-base font-semibold leading-none">{viewsData ?? 0}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Views</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
-                  <Users className="h-4 w-4 text-primary" />
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/60 border border-border/40">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Users className="h-4 w-4 text-primary" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold">{leadsData ?? 0}</p>
-                    <p className="text-xs text-muted-foreground">Leads</p>
+                    <p className="text-base font-semibold leading-none">{leadsData ?? 0}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Leads</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Footer: Date & Actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-border/50">
+            <div className="flex items-center justify-between pt-4 mt-4 border-t border-border/50">
               <span className="text-xs text-muted-foreground">
                 Added {createdDate}
               </span>
@@ -174,7 +187,7 @@ export function ListingCard({ facility, onSelect }: ListingCardProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1.5 h-8"
+                    className="gap-1.5 h-9 px-3"
                     asChild
                   >
                     <a
@@ -189,11 +202,11 @@ export function ListingCard({ facility, onSelect }: ListingCardProps) {
                 )}
                 <Button
                   size="sm"
-                  className="gap-1.5 h-8"
+                  className="gap-1.5 h-9 px-4"
                   onClick={() => onSelect(facility.id)}
                 >
                   <Edit3 className="h-3.5 w-3.5" />
-                  <span>Edit</span>
+                  <span>Edit Listing</span>
                 </Button>
               </div>
             </div>
