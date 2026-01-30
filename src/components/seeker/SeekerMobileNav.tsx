@@ -113,9 +113,9 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
               </span>
             </button>
           </DrawerTrigger>
-          <DrawerContent className="bg-slate-900 border-slate-800">
-            <DrawerHeader className="border-b border-slate-800 pb-4">
-              <DrawerTitle className="text-white text-lg">
+          <DrawerContent className="bg-background border-border">
+            <DrawerHeader className="border-b border-border pb-4">
+              <DrawerTitle className="text-foreground text-lg">
                 {isAuthenticated ? "Account & Settings" : "Get Started"}
               </DrawerTitle>
             </DrawerHeader>
@@ -131,15 +131,15 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 active:scale-[0.98]",
                       isActive 
-                        ? "bg-primary/20 text-white" 
-                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                        ? "bg-primary/10 text-foreground" 
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
                     <div className={cn(
                       "flex items-center justify-center h-10 w-10 rounded-lg",
-                      isActive ? "bg-primary/30" : "bg-slate-800"
+                      isActive ? "bg-primary/20" : "bg-muted"
                     )}>
-                      <Icon className="h-5 w-5" />
+                      <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
                     </div>
                     <span className="font-medium">{item.label}</span>
                   </Link>
@@ -147,8 +147,8 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
               })}
             </div>
             {isAuthenticated && (
-              <div className="p-4 pt-0 border-t border-slate-800 mt-2">
-                <p className="text-xs text-slate-500 text-center py-3">
+              <div className="p-4 pt-0 border-t border-border mt-2">
+                <p className="text-xs text-muted-foreground text-center py-3">
                   Account
                 </p>
               </div>
