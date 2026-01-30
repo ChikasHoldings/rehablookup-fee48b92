@@ -27,8 +27,7 @@ interface ProviderSidebarProps {
 const navItems = [
   { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/provider/inquiries", label: "Inquiries", icon: Users },
-  { href: "/provider/credits", label: "Credits & Payments", icon: Wallet },
-  { href: "/provider/pro-upgrade", label: "Pro Visibility", icon: Sparkles },
+  { href: "/provider/billing", label: "Billing", icon: Wallet },
   { href: "/provider/placement-network", label: "Placement Network", icon: Network },
   { href: "/provider/reviews", label: "Reviews", icon: Star },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
@@ -163,7 +162,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             </div>
           ) : (
             <Link 
-              to="/provider/pro-upgrade"
+              to="/provider/billing?tab=pro"
               onClick={onNavigate}
               className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground hover:text-primary transition-colors"
             >
