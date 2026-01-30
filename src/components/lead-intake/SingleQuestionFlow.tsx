@@ -144,15 +144,6 @@ const QUESTIONS: Question[] = [
     options: BEST_TIME_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
-    id: "bestTime",
-    type: "choice",
-    title: "When's the best time to reach you?",
-    subtitle: "We'll call at a convenient time",
-    icon: <Clock className="h-6 w-6" />,
-    field: "bestTimeToCall",
-    options: BEST_TIME_OPTIONS.map(o => ({ value: o.value, label: o.label })),
-  },
-  {
     id: "contact",
     type: "contact",
     title: "How can we reach you?",
