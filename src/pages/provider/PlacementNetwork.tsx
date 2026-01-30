@@ -328,7 +328,10 @@ export default function ProviderPlacementNetworkPage() {
   const hasCompleteProfile = !!(facilityData?.name && facilityData?.address && facilityData?.phone);
   const hasTermsAccepted = !!facilityData?.concierge_terms_accepted_at;
   const hasPaymentMethod = paymentMethods && paymentMethods.length > 0;
-  const hasCareTypes = profileForm.acceptedCareTypes.length > 0;
+  // Use facilityData directly to check care types (not the form state which initializes empty)
+  const hasCareTypes = Array.isArray(facilityData?.concierge_accepted_care_types) && 
+    (facilityData.concierge_accepted_care_types as string[]).length > 0;
+  
 
   const readinessChecks = [
     {
