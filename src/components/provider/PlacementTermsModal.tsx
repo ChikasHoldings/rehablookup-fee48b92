@@ -148,10 +148,12 @@ export function PlacementTermsModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[400px] border rounded-lg p-4 bg-muted/30">
-          <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">
-            {PLACEMENT_TERMS}
-          </pre>
+        <ScrollArea className="h-[400px] border rounded-lg bg-muted/30">
+          <div className="p-4">
+            <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed text-foreground">
+              {PLACEMENT_TERMS}
+            </pre>
+          </div>
         </ScrollArea>
 
         <div className="space-y-4 pt-4">
