@@ -9,12 +9,9 @@ import {
   ClipboardList,
   Settings,
   ShieldCheck,
-  Image,
   BarChart3,
-  
   ShieldAlert,
   FileCheck,
-  GitCompare,
   ChevronDown,
   UserPlus,
   MessageSquare,
@@ -58,7 +55,6 @@ const navEntries: NavEntry[] = [
     items: [
       { to: "/admin/providers", icon: Building2, label: "All Providers", permission: "providers" },
       { to: "/admin/credentials", icon: FileCheck, label: "Credentials", permission: "credentials" },
-      { to: "/admin/location-changes", icon: GitCompare, label: "Location Changes", permission: "location_changes" },
     ],
   },
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
@@ -72,7 +68,6 @@ const navEntries: NavEntry[] = [
     ],
   },
   { to: "/admin/concierge", icon: UserPlus, label: "Concierge", permission: "placements" },
-  { to: "/admin/flagged-images", icon: Image, label: "Flagged Images", permission: "flagged_images" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews" },
   {
     icon: Settings,

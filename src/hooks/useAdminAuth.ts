@@ -19,14 +19,12 @@ const routePermissionMap: Record<string, string> = {
   "/admin/audit-log": "audit_log",
   "/admin/settings": "settings",
   "/admin/notifications": "notifications",
-  "/admin/flagged-images": "providers",
   "/admin/profile": "dashboard",
   "/admin/reviews": "reviews",
   "/admin/concierge": "placements",
   "/admin/placement-revenue": "placements",
   "/admin/credentials": "credentials",
   "/admin/security-logs": "security_logs",
-  "/admin/location-changes": "location_changes",
 };
 
 interface AdminProfile {
