@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Camera, Loader2, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +35,14 @@ export function ProfileInformationCard({
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [avatarKey, setAvatarKey] = useState(Date.now());
+
+  // Sync state when profile loads/changes
+  useEffect(() => {
+    if (profile) {
+      setFirstName(profile.first_name || "");
+      setLastName(profile.last_name || "");
+    }
+  }, [profile?.first_name, profile?.last_name]);
 
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Admin User";
   const initials = profile?.first_name && profile?.last_name
