@@ -13,7 +13,6 @@ const routePermissionMap: Record<string, string> = {
   "/admin/analytics": "analytics",
   "/admin/providers": "providers",
   "/admin/leads": "leads",
-  
   "/admin/subscriptions": "subscriptions",
   "/admin/featured": "featured",
   "/admin/users": "users",
@@ -22,6 +21,12 @@ const routePermissionMap: Record<string, string> = {
   "/admin/notifications": "notifications",
   "/admin/flagged-images": "providers",
   "/admin/profile": "dashboard",
+  "/admin/reviews": "reviews",
+  "/admin/concierge": "placements",
+  "/admin/placement-revenue": "placements",
+  "/admin/credentials": "credentials",
+  "/admin/security-logs": "security_logs",
+  "/admin/location-changes": "location_changes",
 };
 
 interface AdminProfile {
