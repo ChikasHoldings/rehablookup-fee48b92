@@ -73,6 +73,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 
 interface RateLimitLog {
   id: string;
@@ -302,6 +303,18 @@ export default function AdminSecurityLogs() {
           blocked_by_name: adminProfile?.display_name || user.email || "Admin",
         },
       }).catch(err => console.error("Failed to send block notification:", err));
+
+      // Audit log the block action
+      await logAdminAction({
+        actionType: AdminAuditActions.SECURITY_BLOCK_ADDED,
+        targetType: "blocked_identifier",
+        details: {
+          identifier: params.identifier,
+          identifier_type: params.type,
+          reason: params.reason || null,
+          expires_at: params.expiresAt,
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Identifier blocked successfully");
@@ -343,6 +356,17 @@ export default function AdminSecurityLogs() {
           unblocked_by_name: adminProfile?.display_name || user.email || "Admin",
         },
       }).catch(err => console.error("Failed to send unblock notification:", err));
+
+      // Audit log the unblock action
+      await logAdminAction({
+        actionType: AdminAuditActions.SECURITY_BLOCK_REMOVED,
+        targetType: "blocked_identifier",
+        targetId: item.id,
+        details: {
+          identifier: item.identifier,
+          identifier_type: item.identifier_type,
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Identifier unblocked successfully");
