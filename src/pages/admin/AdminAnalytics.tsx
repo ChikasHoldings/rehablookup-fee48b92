@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie, Sector } from "recharts";
 import { CalendarIcon, TrendingUp, TrendingDown, Users, MousePointerClick, FileText, CheckCircle, CreditCard, DollarSign, UserMinus, RefreshCw, RotateCcw, Info, ArrowUpDown, Building2, Activity, Target, Zap, Award, MapPin, Route, ShieldCheck, Gauge, AlertTriangle, GitCompare, Minus, Clock, UserPlus, Mail, Phone, Sparkles, ChevronRight, Filter } from "lucide-react";
 import { LeadFormAnalytics } from "@/components/admin/LeadFormAnalytics";
 import { cn } from "@/lib/utils";
@@ -1153,14 +1153,33 @@ export default function AdminAnalytics() {
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height={80}>
-                  <AreaChart data={timeSeriesData.slice(-14)}>
+                  <AreaChart data={timeSeriesData.slice(-14)} style={{ cursor: 'pointer' }}>
                     <defs>
                       <linearGradient id="colorVisitorsMini" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3}/>
                         <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <Area type="monotone" dataKey="visitors" stroke={CHART_COLORS.primary} strokeWidth={2} fillOpacity={1} fill="url(#colorVisitorsMini)" />
+                    <RechartsTooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        fontSize: '12px'
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                      formatter={(value: number) => [value.toLocaleString(), 'Visitors']}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="visitors" 
+                      stroke={CHART_COLORS.primary} 
+                      strokeWidth={2} 
+                      fillOpacity={1} 
+                      fill="url(#colorVisitorsMini)"
+                      activeDot={{ r: 4, strokeWidth: 2, stroke: CHART_COLORS.primary, fill: '#fff' }}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </>
@@ -1192,7 +1211,17 @@ export default function AdminAnalytics() {
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <ResponsiveContainer width="100%" height={120}>
-                    <PieChart>
+                    <PieChart style={{ cursor: 'pointer' }}>
+                      <RechartsTooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                          fontSize: '12px'
+                        }}
+                        formatter={(value: number, name: string) => [value.toLocaleString(), name]}
+                      />
                       <Pie
                         data={[
                           { name: "Qualified", value: kpis.qualifiedLeads, color: CHART_COLORS.success },
@@ -1205,8 +1234,8 @@ export default function AdminAnalytics() {
                         paddingAngle={2}
                         dataKey="value"
                       >
-                        <Cell fill={CHART_COLORS.success} />
-                        <Cell fill={CHART_COLORS.warning} />
+                        <Cell fill={CHART_COLORS.success} style={{ cursor: 'pointer', transition: 'all 0.2s ease' }} />
+                        <Cell fill={CHART_COLORS.warning} style={{ cursor: 'pointer', transition: 'all 0.2s ease' }} />
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
@@ -1277,7 +1306,17 @@ export default function AdminAnalytics() {
                 <div className="w-[100px]">
                   {planDistributionData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={100}>
-                      <PieChart>
+                      <PieChart style={{ cursor: 'pointer' }}>
+                        <RechartsTooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            fontSize: '12px'
+                          }}
+                          formatter={(value: number, name: string) => [value.toLocaleString(), name]}
+                        />
                         <Pie
                           data={planDistributionData}
                           cx="50%"
@@ -1288,7 +1327,11 @@ export default function AdminAnalytics() {
                           dataKey="value"
                         >
                           {planDistributionData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={entry.color}
+                              style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
+                            />
                           ))}
                         </Pie>
                       </PieChart>
