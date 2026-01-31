@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck, ShieldAlert, Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import { LogOut, Settings, Shield, Search, Bell, Building2, Users, AlertCircle, CheckCircle, CreditCard, User, CheckCheck, ShieldAlert, Mail, Phone, MapPin, Loader2, BarChart3, UserSearch, UserPlus, MessageSquare, ClipboardList } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -781,31 +781,59 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
                 <CommandItem onSelect={() => { navigate("/admin"); setSearchOpen(false); }}>
                   Dashboard
                 </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/profile"); setSearchOpen(false); }}>
-                  <User className="h-4 w-4 mr-2" />
-                  My Profile
+                <CommandItem onSelect={() => { navigate("/admin/analytics"); setSearchOpen(false); }}>
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
                 </CommandItem>
                 <CommandItem onSelect={() => { navigate("/admin/providers"); setSearchOpen(false); }}>
+                  <Building2 className="h-4 w-4 mr-2" />
                   Providers
                 </CommandItem>
                 <CommandItem onSelect={() => { navigate("/admin/leads"); setSearchOpen(false); }}>
+                  <Users className="h-4 w-4 mr-2" />
                   Leads
                 </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/seekers"); setSearchOpen(false); }}>
+                  <UserSearch className="h-4 w-4 mr-2" />
+                  Users (Seekers)
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/concierge"); setSearchOpen(false); }}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Concierge
+                </CommandItem>
                 <CommandItem onSelect={() => { navigate("/admin/subscriptions"); setSearchOpen(false); }}>
+                  <CreditCard className="h-4 w-4 mr-2" />
                   Subscriptions
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/reviews"); setSearchOpen(false); }}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Review Moderation
                 </CommandItem>
                 <CommandItem onSelect={() => { navigate("/admin/notifications"); setSearchOpen(false); }}>
                   <Bell className="h-4 w-4 mr-2" />
                   Notifications
                 </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/profile"); setSearchOpen(false); }}>
+                  <User className="h-4 w-4 mr-2" />
+                  My Profile
+                </CommandItem>
+              </CommandGroup>
+              <CommandGroup heading="Settings & Security">
+                <CommandItem onSelect={() => { navigate("/admin/settings"); setSearchOpen(false); }}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  General Settings
+                </CommandItem>
+                <CommandItem onSelect={() => { navigate("/admin/users"); setSearchOpen(false); }}>
+                  <Shield className="h-4 w-4 mr-2" />
+                  Admin Staff Management
+                </CommandItem>
                 <CommandItem onSelect={() => { navigate("/admin/security-logs"); setSearchOpen(false); }}>
+                  <ShieldAlert className="h-4 w-4 mr-2" />
                   Security Logs
                 </CommandItem>
                 <CommandItem onSelect={() => { navigate("/admin/audit-log"); setSearchOpen(false); }}>
+                  <ClipboardList className="h-4 w-4 mr-2" />
                   Audit Log
-                </CommandItem>
-                <CommandItem onSelect={() => { navigate("/admin/settings"); setSearchOpen(false); }}>
-                  Settings
                 </CommandItem>
               </CommandGroup>
             </>
