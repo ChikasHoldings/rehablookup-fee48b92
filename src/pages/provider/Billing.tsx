@@ -15,7 +15,6 @@ import {
   TrendingUp,
   Award,
   ExternalLink,
-  Landmark,
   Trash2,
   AlertCircle
 } from "lucide-react";
@@ -81,13 +80,17 @@ export default function ProviderBillingPage() {
   const { balance, balanceFormatted, transactions, isLoading, refetch } = useProviderCredits(facilityId);
   const { data: proStatus, isLoading: proLoading } = useProStatus();
   const { 
-    paymentMethods, 
-    defaultPaymentMethod,
+    paymentMethods: allPaymentMethods, 
+    defaultPaymentMethod: defaultPaymentMethodAll,
     hasPaymentMethod,
     isLoading: paymentMethodsLoading,
     deletePaymentMethod,
     setDefaultPaymentMethod,
   } = useProviderPaymentMethods(facilityId);
+  
+  // Filter to cards only - ACH is exclusive to Placement Network
+  const paymentMethods = allPaymentMethods.filter(pm => pm.type === "card");
+  const defaultPaymentMethod = paymentMethods.find(pm => pm.is_default) || paymentMethods[0] || null;
   
   const [purchaseLoading, setPurchaseLoading] = useState<number | null>(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -224,35 +227,26 @@ export default function ProviderBillingPage() {
 
           {/* Payment Methods Tab */}
           <TabsContent value="payment-methods" className="space-y-6">
-            {/* Default Payment Method Card */}
+            {/* Default Card */}
             {defaultPaymentMethod ? (
               <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-600/10 border-emerald-500/20">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                        {defaultPaymentMethod.type === "ach" ? (
-                          <Landmark className="h-6 w-6 text-emerald-600" />
-                        ) : (
-                          <CreditCard className="h-6 w-6 text-emerald-600" />
-                        )}
+                        <CreditCard className="h-6 w-6 text-emerald-600" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-lg">
-                            {defaultPaymentMethod.type === "ach" 
-                              ? defaultPaymentMethod.bank_name || "Bank Account"
-                              : defaultPaymentMethod.card_brand || "Card"
-                            } •••• {defaultPaymentMethod.last_four}
+                            {defaultPaymentMethod.card_brand || "Card"} •••• {defaultPaymentMethod.last_four}
                           </p>
                           <Badge className="bg-emerald-500 text-white">Default</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {defaultPaymentMethod.type === "ach" 
-                            ? "Used for automated billing"
-                            : defaultPaymentMethod.exp_month && defaultPaymentMethod.exp_year
-                              ? `Expires ${defaultPaymentMethod.exp_month}/${defaultPaymentMethod.exp_year}`
-                              : "Used for automated billing"
+                          {defaultPaymentMethod.exp_month && defaultPaymentMethod.exp_year
+                            ? `Expires ${defaultPaymentMethod.exp_month}/${defaultPaymentMethod.exp_year}`
+                            : "Used for automated billing"
                           }
                         </p>
                       </div>
@@ -265,7 +259,7 @@ export default function ProviderBillingPage() {
               <Alert className="border-amber-500/30 bg-amber-500/5">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <AlertDescription>
-                  Add a payment method to enable automated billing for Pro subscription and easy credit purchases.
+                  Add a card to enable automated billing for Pro subscription and easy credit purchases.
                 </AlertDescription>
               </Alert>
             )}
@@ -308,26 +302,19 @@ export default function ProviderBillingPage() {
                           "h-10 w-10 rounded-full flex items-center justify-center",
                           pm.is_default ? "bg-primary/20" : "bg-muted"
                         )}>
-                          {pm.type === "ach" ? (
-                            <Landmark className={cn("h-5 w-5", pm.is_default ? "text-primary" : "text-muted-foreground")} />
-                          ) : (
-                            <CreditCard className={cn("h-5 w-5", pm.is_default ? "text-primary" : "text-muted-foreground")} />
-                          )}
+                          <CreditCard className={cn("h-5 w-5", pm.is_default ? "text-primary" : "text-muted-foreground")} />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-medium">
-                              {pm.type === "ach" ? pm.bank_name || "Bank" : pm.card_brand || "Card"} •••• {pm.last_four}
+                              {pm.card_brand || "Card"} •••• {pm.last_four}
                             </p>
                             {pm.is_default && (
                               <Badge variant="secondary" className="text-xs">Default</Badge>
                             )}
-                            {!pm.is_verified && (
-                              <Badge variant="outline" className="text-xs text-amber-600 border-amber-600">Pending</Badge>
-                            )}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {pm.type === "card" && pm.exp_month && pm.exp_year
+                            {pm.exp_month && pm.exp_year
                               ? `Expires ${pm.exp_month}/${pm.exp_year}`
                               : `Added ${format(new Date(pm.created_at), "MMM d, yyyy")}`
                             }
