@@ -114,7 +114,34 @@ export function useUserRole(): UserRoleResult {
       }
     };
 
-    const checkSession = async () => {
+    // Listener for ONGOING auth changes - does NOT control isLoading
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+
+        if (!session?.user) {
+          setIsAuthenticated(false);
+          setUserId(null);
+          setRole(null);
+          // Don't set isLoading here - let initial load control it
+          return;
+        }
+
+        setIsAuthenticated(true);
+        setUserId(session.user.id);
+        
+        // Fire and forget role check - don't await, don't set loading
+        // This prevents race conditions with the initial load
+        determineRole(session.user.id).then((userRole) => {
+          if (mounted) {
+            setRole(userRole);
+          }
+        });
+      }
+    );
+
+    // INITIAL load - this controls isLoading
+    const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -124,55 +151,28 @@ export function useUserRole(): UserRoleResult {
           setIsAuthenticated(false);
           setUserId(null);
           setRole(null);
-          setIsLoading(false);
           return;
         }
 
         setIsAuthenticated(true);
         setUserId(session.user.id);
         
+        // Fetch role BEFORE setting loading false
         const userRole = await determineRole(session.user.id);
         if (mounted) {
           setRole(userRole);
-          setIsLoading(false);
         }
       } catch (error) {
-        console.error("[useUserRole] Error checking session:", error);
+        console.error("[useUserRole] Error initializing auth:", error);
+      } finally {
+        // Always set loading to false after initial load completes
         if (mounted) {
           setIsLoading(false);
         }
       }
     };
 
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        if (!session?.user) {
-          setIsAuthenticated(false);
-          setUserId(null);
-          setRole(null);
-          setIsLoading(false);
-          return;
-        }
-
-        setIsAuthenticated(true);
-        setUserId(session.user.id);
-        
-        // Defer role check to avoid deadlock
-        setTimeout(async () => {
-          if (!mounted) return;
-          const userRole = await determineRole(session.user.id);
-          if (mounted) {
-            setRole(userRole);
-            setIsLoading(false);
-          }
-        }, 0);
-      }
-    );
-
-    checkSession();
+    initializeAuth();
 
     return () => {
       mounted = false;
