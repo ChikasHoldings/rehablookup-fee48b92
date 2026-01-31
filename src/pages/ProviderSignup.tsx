@@ -231,6 +231,18 @@ export default function ProviderSignup() {
     setIsSubmitting(true);
 
     try {
+      // Check if email is already registered as a seeker
+      const { data: isSeeker } = await supabase.rpc('is_email_seeker', { p_email: formData.email });
+      if (isSeeker) {
+        toast({
+          title: "Account Exists",
+          description: "This email is registered as a personal account. Please use the seeker login or use a different email for your facility.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // 1. Create the user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,

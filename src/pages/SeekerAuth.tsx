@@ -45,6 +45,15 @@ export default function SeekerAuth() {
     }
     
     setIsSubmitting(true);
+    
+    // Check if email is registered as a provider (not a seeker)
+    const { data: isProvider } = await supabase.rpc('is_email_provider', { p_email: loginEmail.trim().toLowerCase() });
+    if (isProvider) {
+      toast.error('This email is registered as a facility provider. Please use the provider login.');
+      setIsSubmitting(false);
+      return;
+    }
+    
     const { error } = await signIn(loginEmail, loginPassword);
     setIsSubmitting(false);
     
