@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   BarChart3,
   ShieldAlert,
-  FileCheck,
   ChevronDown,
   UserPlus,
   MessageSquare,
@@ -55,7 +54,7 @@ const navEntries: NavEntry[] = [
     permission: "providers",
     items: [
       { to: "/admin/providers", icon: Building2, label: "All Providers", permission: "providers" },
-      { to: "/admin/credentials", icon: FileCheck, label: "Credentials", permission: "credentials" },
+      
     ],
   },
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
