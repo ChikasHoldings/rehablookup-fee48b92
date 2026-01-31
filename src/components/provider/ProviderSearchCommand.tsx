@@ -16,6 +16,8 @@ import {
   ArrowRight,
   Clock,
   Trash2,
+  Sparkles,
+  History,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,9 +37,11 @@ const MAX_RECENT_SEARCHES = 5;
 const pageIcons: Record<string, React.ReactNode> = {
   dashboard: <LayoutDashboard className="h-4 w-4" />,
   listing: <Building2 className="h-4 w-4" />,
-  leads: <Users className="h-4 w-4" />,
+  inquiries: <Users className="h-4 w-4" />,
+  credits: <CreditCard className="h-4 w-4" />,
+  "unlock-history": <History className="h-4 w-4" />,
+  "pro-upgrade": <Sparkles className="h-4 w-4" />,
   analytics: <BarChart3 className="h-4 w-4" />,
-  billing: <CreditCard className="h-4 w-4" />,
   settings: <Settings className="h-4 w-4" />,
   notifications: <Bell className="h-4 w-4" />,
 };
