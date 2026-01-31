@@ -124,7 +124,6 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProviders = lazy(() => import("./pages/admin/AdminProviders"));
 const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
 const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
-const AdminFeatured = lazy(() => import("./pages/admin/AdminFeatured"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
@@ -280,8 +279,6 @@ const App = () => (
               <Route path="providers" element={<AdminProviders />} />
               <Route path="leads" element={<AdminLeads />} />
               <Route path="subscriptions" element={<AdminSubscriptions />} />
-              <Route path="featured" element={<AdminFeatured />} />
-              
               <Route path="users" element={<AdminUsers />} />
               <Route path="seekers" element={<AdminSeekers />} />
               <Route path="audit-log" element={<AdminAuditLog />} />

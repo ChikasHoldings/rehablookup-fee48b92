@@ -6,8 +6,6 @@ const prefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/providers": () => import("@/pages/admin/AdminProviders"),
   "/admin/leads": () => import("@/pages/admin/AdminLeads"),
   "/admin/subscriptions": () => import("@/pages/admin/AdminSubscriptions"),
-  "/admin/featured": () => import("@/pages/admin/AdminFeatured"),
-  
   "/admin/users": () => import("@/pages/admin/AdminUsers"),
   "/admin/seekers": () => import("@/pages/admin/AdminSeekers"),
   "/admin/audit-log": () => import("@/pages/admin/AdminAuditLog"),
@@ -28,9 +26,7 @@ const adjacentPagesMap: Record<string, string[]> = {
   "/admin/providers": ["/admin", "/admin/leads", "/admin/subscriptions"],
   "/admin/leads": ["/admin/providers", "/admin/seekers", "/admin"],
   "/admin/seekers": ["/admin/leads", "/admin"],
-  "/admin/subscriptions": ["/admin/providers", "/admin/featured", "/admin"],
-  "/admin/featured": ["/admin/subscriptions", "/admin/providers"],
-  
+  "/admin/subscriptions": ["/admin/providers", "/admin"],
   "/admin/users": ["/admin/audit-log", "/admin/security-logs", "/admin"],
   "/admin/audit-log": ["/admin/users", "/admin/security-logs"],
   "/admin/security-logs": ["/admin/users", "/admin/audit-log"],

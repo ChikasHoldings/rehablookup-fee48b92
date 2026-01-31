@@ -6,7 +6,6 @@ import {
   Users,
   UserSearch,
   CreditCard,
-  Star,
   ClipboardList,
   Settings,
   ShieldCheck,
@@ -51,15 +50,7 @@ const navEntries: NavEntry[] = [
   { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
   { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
-  {
-    icon: CreditCard,
-    label: "Subscriptions",
-    permission: "subscriptions",
-    items: [
-      { to: "/admin/subscriptions", icon: CreditCard, label: "All Subscriptions", permission: "subscriptions" },
-      { to: "/admin/featured", icon: Star, label: "Featured Placement", permission: "featured" },
-    ],
-  },
+  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
   { to: "/admin/concierge", icon: UserPlus, label: "Concierge", permission: "placements" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews" },
   {
