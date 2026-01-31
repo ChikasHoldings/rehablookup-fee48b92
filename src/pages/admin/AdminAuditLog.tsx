@@ -24,7 +24,9 @@ import {
   ChevronLeft,
   ChevronRight,
   RefreshCw,
+  Download,
 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,10 +75,13 @@ const actionConfig: Record<string, { icon: React.ReactNode; label: string; color
   status_changed_to_pending: { icon: <CheckCircle className="h-4 w-4" />, label: "Set to Pending", color: "text-amber-500 bg-amber-50" },
   status_changed_to_rejected: { icon: <Ban className="h-4 w-4" />, label: "Rejected Provider", color: "text-red-500 bg-red-50" },
   notes_updated: { icon: <FileText className="h-4 w-4" />, label: "Updated Admin Notes", color: "text-slate-500 bg-slate-50" },
+  provider_deleted: { icon: <Ban className="h-4 w-4" />, label: "Deleted Provider", color: "text-red-500 bg-red-50" },
   
   // Lead actions
   lead_assigned: { icon: <ArrowRight className="h-4 w-4" />, label: "Assigned Lead to Provider", color: "text-blue-500 bg-blue-50" },
   lead_status_changed: { icon: <ArrowRight className="h-4 w-4" />, label: "Changed Lead Status", color: "text-blue-500 bg-blue-50" },
+  lead_qualified: { icon: <CheckCircle className="h-4 w-4" />, label: "Qualified Lead", color: "text-green-500 bg-green-50" },
+  lead_override: { icon: <ArrowRight className="h-4 w-4" />, label: "Override Lead Assignment", color: "text-purple-500 bg-purple-50" },
   
   // Admin user management
   admin_user_created: { icon: <User className="h-4 w-4" />, label: "Created Admin User", color: "text-green-500 bg-green-50" },
@@ -104,6 +109,12 @@ const actionConfig: Record<string, { icon: React.ReactNode; label: string; color
   // Session actions
   session_revoked: { icon: <Shield className="h-4 w-4" />, label: "Revoked Session", color: "text-red-500 bg-red-50" },
   login: { icon: <Key className="h-4 w-4" />, label: "Signed In", color: "text-green-500 bg-green-50" },
+  logout: { icon: <Key className="h-4 w-4" />, label: "Signed Out", color: "text-slate-500 bg-slate-50" },
+  
+  // MFA actions
+  mfa_enabled: { icon: <Shield className="h-4 w-4" />, label: "Enabled MFA", color: "text-green-500 bg-green-50" },
+  mfa_disabled: { icon: <Shield className="h-4 w-4" />, label: "Disabled MFA", color: "text-red-500 bg-red-50" },
+  mfa_recovery_codes_regenerated: { icon: <Key className="h-4 w-4" />, label: "Regenerated Recovery Codes", color: "text-orange-500 bg-orange-50" },
   
   // Subscription actions
   subscription_override: { icon: <CreditCard className="h-4 w-4" />, label: "Override Subscription", color: "text-purple-500 bg-purple-50" },
@@ -128,10 +139,21 @@ const actionConfig: Record<string, { icon: React.ReactNode; label: string; color
   security_block_added: { icon: <Shield className="h-4 w-4" />, label: "Added Security Block", color: "text-red-500 bg-red-50" },
   security_block_removed: { icon: <Shield className="h-4 w-4" />, label: "Removed Security Block", color: "text-green-500 bg-green-50" },
   
+  // Location change actions
+  location_change_approved: { icon: <CheckCircle className="h-4 w-4" />, label: "Approved Location Change", color: "text-green-500 bg-green-50" },
+  location_change_rejected: { icon: <Ban className="h-4 w-4" />, label: "Rejected Location Change", color: "text-red-500 bg-red-50" },
+  
   // Settings actions
   platform_settings_updated: { icon: <Settings className="h-4 w-4" />, label: "Updated Platform Settings", color: "text-blue-500 bg-blue-50" },
   audit_logs_cleaned: { icon: <ClipboardList className="h-4 w-4" />, label: "Cleaned Audit Logs", color: "text-amber-500 bg-amber-50" },
   clear_cache: { icon: <Settings className="h-4 w-4" />, label: "Cleared Platform Cache", color: "text-slate-500 bg-slate-50" },
+  
+  // Additional actions from DB
+  admin_login: { icon: <Key className="h-4 w-4" />, label: "Admin Login", color: "text-green-500 bg-green-50" },
+  verify_accreditation: { icon: <Shield className="h-4 w-4" />, label: "Verified Accreditation", color: "text-blue-500 bg-blue-50" },
+  subscription_get_promo_analytics: { icon: <CreditCard className="h-4 w-4" />, label: "Viewed Promo Analytics", color: "text-slate-500 bg-slate-50" },
+  subscription_create_coupon: { icon: <CreditCard className="h-4 w-4" />, label: "Created Coupon", color: "text-green-500 bg-green-50" },
+  storage_cleanup: { icon: <Settings className="h-4 w-4" />, label: "Cleaned Storage", color: "text-amber-500 bg-amber-50" },
 };
 
 const targetTypeConfig: Record<string, { icon: React.ReactNode; label: string }> = {
@@ -145,6 +167,18 @@ const targetTypeConfig: Record<string, { icon: React.ReactNode; label: string }>
   settings: { icon: <Settings className="h-3.5 w-3.5" />, label: "Settings" },
   security: { icon: <Shield className="h-3.5 w-3.5" />, label: "Security" },
   platform: { icon: <Settings className="h-3.5 w-3.5" />, label: "Platform" },
+  blocked_identifier: { icon: <Ban className="h-3.5 w-3.5" />, label: "Blocked Identifier" },
+  session: { icon: <Key className="h-3.5 w-3.5" />, label: "Session" },
+  mfa: { icon: <Shield className="h-3.5 w-3.5" />, label: "MFA" },
+  location_change: { icon: <Building2 className="h-3.5 w-3.5" />, label: "Location Change" },
+  // Additional target types from DB
+  promo_code: { icon: <CreditCard className="h-3.5 w-3.5" />, label: "Promo Code" },
+  facility_accreditation: { icon: <Shield className="h-3.5 w-3.5" />, label: "Accreditation" },
+  admin_profile: { icon: <User className="h-3.5 w-3.5" />, label: "Admin Profile" },
+  storage: { icon: <Settings className="h-3.5 w-3.5" />, label: "Storage" },
+  admin_notifications: { icon: <Bell className="h-3.5 w-3.5" />, label: "Admin Notifications" },
+  platform_settings: { icon: <Settings className="h-3.5 w-3.5" />, label: "Platform Settings" },
+  notifications: { icon: <Bell className="h-3.5 w-3.5" />, label: "Notifications" },
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -326,6 +360,65 @@ export default function AdminAuditLog() {
     ));
   };
 
+  // CSV Export handler
+  const handleExportCSV = useCallback(() => {
+    if (filteredLogs.length === 0) {
+      toast.error("No logs to export");
+      return;
+    }
+
+    try {
+      // Build CSV content
+      const headers = ["Timestamp", "Admin", "Action", "Target Type", "Target ID", "Details"];
+      const escapeCSV = (value: string | null | undefined): string => {
+        if (value === null || value === undefined) return "";
+        const stringValue = String(value);
+        if (stringValue.includes(",") || stringValue.includes("\n") || stringValue.includes('"')) {
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
+      };
+
+      const rows = filteredLogs.map((log) => {
+        const adminName = adminProfileMap.get(log.admin_user_id) || "Unknown Admin";
+        const actionLabel = getActionConfig(log.action_type).label;
+        const targetLabel = getTargetConfig(log.target_type).label;
+        const details = log.details ? JSON.stringify(log.details) : "";
+        
+        return [
+          format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss"),
+          escapeCSV(adminName),
+          escapeCSV(actionLabel),
+          escapeCSV(targetLabel),
+          escapeCSV(log.target_id || ""),
+          escapeCSV(details),
+        ].join(",");
+      });
+
+      const csvContent = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      
+      const dateStr = dateRange.from && dateRange.to 
+        ? `${format(dateRange.from, "yyyy-MM-dd")}_to_${format(dateRange.to, "yyyy-MM-dd")}`
+        : format(new Date(), "yyyy-MM-dd");
+      
+      link.setAttribute("href", url);
+      link.setAttribute("download", `audit-log-${dateStr}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Exported ${filteredLogs.length} audit log entries`);
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export audit logs");
+    }
+  }, [filteredLogs, adminProfileMap, dateRange]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -335,6 +428,16 @@ export default function AdminAuditLog() {
           <p className="text-muted-foreground">Track all administrative actions across the platform</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={filteredLogs.length === 0}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
           <Button
             variant="outline"
             size="sm"
