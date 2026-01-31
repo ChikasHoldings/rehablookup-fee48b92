@@ -113,7 +113,6 @@ import ProviderHelpPage from "./pages/provider/Help";
 import ProviderKnowledgeBasePage from "./pages/provider/KnowledgeBase";
 import ProviderImageGuidelines from "./pages/provider/ImageGuidelines";
 import ProviderAddLocation from "./pages/provider/AddLocation";
-import ProviderListingPreview from "./pages/provider/ListingPreview";
 
 import ProviderBillingPage from "./pages/provider/Billing";
 import ProviderPlacementNetworkPage from "./pages/provider/PlacementNetwork";
@@ -248,7 +247,7 @@ const App = () => (
             
             {/* Provider Panel Routes - Nested under persistent shell */}
             <Route path="/provider-dashboard" element={<Navigate to="/provider/dashboard" replace />} />
-            <Route path="/provider/listing/preview/:slug" element={<ProviderListingPreview />} />
+            <Route path="/provider/listing/preview/:slug" element={<Navigate to="/provider/listing" replace />} />
             <Route path="/provider" element={<ProviderShell />}>
               <Route path="dashboard" element={<ProviderDashboardPage />} />
               <Route path="listing" element={<ProviderListingPage />} />

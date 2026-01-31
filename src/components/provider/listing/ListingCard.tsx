@@ -8,7 +8,6 @@ import {
   Eye,
   Users,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +32,7 @@ interface ListingCardProps {
     created_at: string;
   };
   onSelect: (facilityId: string) => void;
+  onPreview?: (facility: { name: string; slug: string }) => void;
 }
 
 const getStatusConfig = (status: string) => {
@@ -64,8 +64,7 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-export function ListingCard({ facility, onSelect }: ListingCardProps) {
-  const navigate = useNavigate();
+export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps) {
   const statusConfig = getStatusConfig(facility.status);
   const StatusIcon = statusConfig.icon;
   const createdDate = format(new Date(facility.created_at), "MMM d, yyyy");
@@ -180,12 +179,12 @@ export function ListingCard({ facility, onSelect }: ListingCardProps) {
               </span>
               
               <div className="flex items-center gap-2">
-                {facility.slug && (
+                {facility.slug && onPreview && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-1.5 h-8 px-2.5"
-                    onClick={() => navigate(`/provider/listing/preview/${facility.slug}`)}
+                    onClick={() => onPreview({ name: facility.name, slug: facility.slug! })}
                   >
                     <Eye className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Preview</span>
