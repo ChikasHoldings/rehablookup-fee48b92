@@ -428,13 +428,18 @@ const SearchResults = () => {
     setSearchParams(newParams);
   };
 
+  // Determine if this is a search with query params (should be noindexed)
+  const hasSearchParams = !!(location || treatment || insurance || type || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
+  const shouldNoindex = hasSearchParams || filteredCenters.length === 0;
+
   return (
     <Layout>
       <SEO
         title={location ? `Rehab Centers Near ${location}` : "Find Treatment Centers"}
         description={`Browse ${filteredCenters.length} verified addiction treatment centers${location ? ` near ${location}` : ""}. Compare rehab programs, check insurance, and start recovery.`}
         canonical="/search-results"
-        structuredData={generateSearchResultsSchema({
+        noindex={shouldNoindex}
+        structuredData={!shouldNoindex ? generateSearchResultsSchema({
           location: location || undefined,
           resultCount: filteredCenters.length,
           facilities: paginatedCenters.slice(0, 10).map(c => ({
@@ -443,7 +448,7 @@ const SearchResults = () => {
             state: c.state,
             slug: 'slug' in c ? (c as any).slug : undefined,
           })),
-        })}
+        }) : undefined}
       />
       
       {/* Sticky Filter Header */}

@@ -266,6 +266,17 @@ Disallow: /*?*&mc_cid=*
 Disallow: /*?mc_eid=*
 Disallow: /*?*&mc_eid=*
 
+# Search results pages - block dynamic location queries to prevent soft 404s
+# These pages should not be indexed as they're user-generated searches
+Disallow: /search-results?location=*
+Disallow: /search-results?*location=*
+Disallow: /search-results?
+Disallow: /search
+
+# Non-existent treatment routes (soft 404s)
+Disallow: /treatment/
+Disallow: /treatment/*
+
 # Block trailing slash duplicates (canonical is without trailing slash)
 # Crawlers should follow canonical tags, but this helps prevent crawling
 
@@ -273,9 +284,11 @@ Disallow: /*?*&mc_eid=*
 # EXPLICITLY ALLOWED PATHS
 # -----------------------------------------------------------------------------
 
-# Search results with valid location queries
-Allow: /search-results?location=
-Allow: /rehab-centers?location=
+# Search results base page (without query params)
+Allow: /search-results$
+
+# State/City rehab center pages
+Allow: /rehab-centers$
 
 # Facility profile pages (dynamic content)
 Allow: /center/
