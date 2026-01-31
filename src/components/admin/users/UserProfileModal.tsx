@@ -343,8 +343,8 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="pb-4">
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 flex-shrink-0 border-b">
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
               User Profile
@@ -357,8 +357,8 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
             </DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 pr-4">
-            <div className="space-y-6">
+          <ScrollArea className="flex-1 overflow-auto">
+            <div className="space-y-6 p-6">
               {/* Profile Header */}
               <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/50">
                 <Avatar className="h-20 w-20 border-2 border-background shadow-md">
