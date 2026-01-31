@@ -111,6 +111,10 @@ import VeteransRehabNearMe from "./pages/near-me/VeteransRehabNearMe";
 import MedicaidRehabNearMe from "./pages/near-me/MedicaidRehabNearMe";
 import CourtOrderedRehabNearMe from "./pages/near-me/CourtOrderedRehabNearMe";
 import SuboxoneClinicNearMe from "./pages/near-me/SuboxoneClinicNearMe";
+import MethadoneClinicNearMe from "./pages/near-me/MethadoneClinicNearMe";
+import OutpatientRehabNearMe from "./pages/near-me/OutpatientRehabNearMe";
+import DualDiagnosisRehabNearMe from "./pages/near-me/DualDiagnosisRehabNearMe";
+import FaithBasedRehabNearMe from "./pages/near-me/FaithBasedRehabNearMe";
 // Provider Panel - eagerly load for instant navigation
 import { ProviderShell } from "./components/provider/ProviderShell";
 import ProviderDashboardPage from "./pages/provider/Dashboard";
@@ -236,6 +240,14 @@ const App = () => (
             <Route path="/court-ordered-rehab-near-me/:stateSlug" element={<PublicRouteGuard><CourtOrderedRehabNearMe /></PublicRouteGuard>} />
             <Route path="/suboxone-clinic-near-me" element={<PublicRouteGuard><SuboxoneClinicNearMe /></PublicRouteGuard>} />
             <Route path="/suboxone-clinic-near-me/:stateSlug" element={<PublicRouteGuard><SuboxoneClinicNearMe /></PublicRouteGuard>} />
+            <Route path="/methadone-clinic-near-me" element={<PublicRouteGuard><MethadoneClinicNearMe /></PublicRouteGuard>} />
+            <Route path="/methadone-clinic-near-me/:stateSlug" element={<PublicRouteGuard><MethadoneClinicNearMe /></PublicRouteGuard>} />
+            <Route path="/outpatient-rehab-near-me" element={<PublicRouteGuard><OutpatientRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/outpatient-rehab-near-me/:stateSlug" element={<PublicRouteGuard><OutpatientRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/dual-diagnosis-rehab-near-me" element={<PublicRouteGuard><DualDiagnosisRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/dual-diagnosis-rehab-near-me/:stateSlug" element={<PublicRouteGuard><DualDiagnosisRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/faith-based-rehab-near-me" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
+            <Route path="/faith-based-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             
             <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
             <Route path="/request-help" element={<Navigate to="/account/concierge" replace />} />
