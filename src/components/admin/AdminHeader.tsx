@@ -41,6 +41,7 @@ type Notification = {
   time: string;
   type: "provider" | "lead" | "success" | "warning" | "security";
   link?: string;
+  isUnread?: boolean;
 };
 
 function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps) {
@@ -361,6 +362,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
       time: formatDistanceToNow(new Date(notif.created_at), { addSuffix: true }),
       type: notifType,
       link: notif.link || "/admin/notifications",
+      isUnread: !notif.read,
     });
   });
 
@@ -394,6 +396,12 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
   };
 
   const handleNotificationClick = (notification: Notification) => {
+    // Mark user-specific notifications as read when clicked
+    if (notification.id.startsWith("user-")) {
+      const actualId = notification.id.replace("user-", "");
+      markAsRead(actualId);
+    }
+    
     if (notification.link) {
       navigate(notification.link);
     }
@@ -510,7 +518,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
                         className={`flex items-start gap-3 px-4 py-3 hover:bg-muted cursor-pointer transition-colors ${
-                          notification.type === "provider" || notification.type === "lead"
+                          notification.type === "provider" || notification.type === "lead" || notification.isUnread
                             ? "bg-muted/50"
                             : ""
                         }`}
@@ -520,7 +528,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm ${
-                            notification.type === "provider" || notification.type === "lead"
+                            notification.type === "provider" || notification.type === "lead" || notification.isUnread
                               ? "font-medium"
                               : ""
                           }`}>
@@ -533,7 +541,7 @@ function AdminHeaderComponent({ userEmail, userId, onLogout }: AdminHeaderProps)
                             {notification.time}
                           </p>
                         </div>
-                        {(notification.type === "provider" || notification.type === "lead") && (
+                        {(notification.type === "provider" || notification.type === "lead" || notification.isUnread) && (
                           <div className="h-2 w-2 rounded-full bg-blue-500 mt-2" />
                         )}
                       </div>
