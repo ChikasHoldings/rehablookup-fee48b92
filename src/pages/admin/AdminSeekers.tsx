@@ -61,7 +61,6 @@ interface UserProfile {
   aggregated_state?: string;
   aggregated_zipcode?: string;
   has_concierge?: boolean;
-  has_leads?: boolean;
 }
 
 export default function AdminSeekers() {
@@ -87,23 +86,26 @@ export default function AdminSeekers() {
         throw error;
       }
 
-      // Fetch emails and additional details from concierge_inquiries
+      // Fetch user emails from auth.users via secure function
+      const { data: emailsData } = await supabase.rpc("get_seeker_emails_for_admin");
+      
+      // Fetch additional details from concierge_inquiries
       const { data: conciergeData } = await supabase
         .from("concierge_inquiries")
         .select("user_id, user_email, user_phone, preferred_city, preferred_state")
         .not("user_id", "is", null);
 
-      // Fetch emails and additional details from leads
-      const { data: leadsData } = await supabase
-        .from("leads")
-        .select("seeker_user_id, email, phone, location_city_state, location_zip")
-        .not("seeker_user_id", "is", null);
-
       // Create lookup maps for aggregated data
+      const emailMap = new Map<string, string>();
       const conciergeMap = new Map<string, { email?: string; phone?: string; city?: string; state?: string }>();
-      const leadsMap = new Map<string, { email?: string; phone?: string; cityState?: string; zip?: string }>();
       const hasConciergeSet = new Set<string>();
-      const hasLeadsSet = new Set<string>();
+
+      // Map emails from auth.users
+      emailsData?.forEach((item: any) => {
+        if (item.user_id && item.email) {
+          emailMap.set(item.user_id, item.email);
+        }
+      });
 
       conciergeData?.forEach((item: any) => {
         if (item.user_id) {
@@ -119,46 +121,20 @@ export default function AdminSeekers() {
         }
       });
 
-      leadsData?.forEach((item: any) => {
-        if (item.seeker_user_id) {
-          hasLeadsSet.add(item.seeker_user_id);
-          if (!leadsMap.has(item.seeker_user_id)) {
-            leadsMap.set(item.seeker_user_id, {
-              email: item.email,
-              phone: item.phone,
-              cityState: item.location_city_state,
-              zip: item.location_zip,
-            });
-          }
-        }
-      });
-
       // Merge data into profiles
       const enrichedProfiles = profiles?.map((profile: any) => {
+        const authEmail = emailMap.get(profile.user_id);
         const concierge = conciergeMap.get(profile.user_id);
-        const lead = leadsMap.get(profile.user_id);
-        
-        // Parse city/state from leads location_city_state if available
-        let leadCity: string | undefined;
-        let leadState: string | undefined;
-        if (lead?.cityState) {
-          const parts = lead.cityState.split(',').map((s: string) => s.trim());
-          if (parts.length >= 2) {
-            leadCity = parts[0];
-            leadState = parts[1];
-          }
-        }
 
         return {
           ...profile,
-          // Priority: profile > concierge > leads
-          email: concierge?.email || lead?.email,
-          aggregated_phone: profile.phone || concierge?.phone || lead?.phone,
-          aggregated_city: profile.city || concierge?.city || leadCity,
-          aggregated_state: profile.state || concierge?.state || leadState,
-          aggregated_zipcode: profile.zipcode || lead?.zip,
+          // Priority: auth email > concierge email
+          email: authEmail || concierge?.email,
+          aggregated_phone: profile.phone || concierge?.phone,
+          aggregated_city: profile.city || concierge?.city,
+          aggregated_state: profile.state || concierge?.state,
+          aggregated_zipcode: profile.zipcode,
           has_concierge: hasConciergeSet.has(profile.user_id),
-          has_leads: hasLeadsSet.has(profile.user_id),
         };
       });
 

@@ -73,7 +73,6 @@ interface UserProfile {
   aggregated_state?: string;
   aggregated_zipcode?: string;
   has_concierge?: boolean;
-  has_leads?: boolean;
 }
 
 interface AggregatedUserData {
@@ -134,6 +133,14 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
       let state: string | null = null;
       let zipcode: string | null = null;
 
+      // Get email from auth.users via secure RPC function
+      const { data: emailsData } = await supabase.rpc("get_seeker_emails_for_admin");
+      const authEmail = emailsData?.find((e: any) => e.user_id === user.user_id)?.email;
+      if (authEmail) {
+        email = authEmail;
+        sources.push("Account Signup");
+      }
+
       // Get from concierge inquiries
       const conciergeResult = await supabase
         .from("concierge_inquiries")
@@ -144,40 +151,16 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
       const concierge = conciergeResult.data?.[0] || null;
 
       if (concierge) {
-        if (concierge.user_email) { email = concierge.user_email; sources.push("Concierge Form"); }
         if (concierge.user_phone && !phone) phone = concierge.user_phone;
         if (concierge.user_name && !fullName) fullName = concierge.user_name;
         if (concierge.preferred_city && !city) city = concierge.preferred_city;
         if (concierge.preferred_state && !state) state = concierge.preferred_state;
       }
 
-      // Get from leads (direct inquiries)
-      const leadResult: any = await supabase
-        .from("leads" as any)
-        .select("email, phone, name, location_city_state, location_zip")
-        .eq("seeker_user_id", user.user_id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      const lead = leadResult.data?.[0] || null;
-
-      if (lead) {
-        if (lead.email && !email) { email = lead.email; sources.push("Inquiry Form"); }
-        if (lead.phone && !phone) phone = lead.phone;
-        if (lead.name && !fullName) fullName = lead.name;
-        if (lead.location_city_state) {
-          const parts = lead.location_city_state.split(',').map((s: string) => s.trim());
-          if (parts.length >= 2) {
-            if (!city) city = parts[0];
-            if (!state) state = parts[1];
-          }
-        }
-        if (lead.location_zip && !zipcode) zipcode = lead.location_zip;
-      }
-
       // Use profile data as fallback
       if (user.first_name || user.last_name) {
         const profileName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-        if (!fullName && profileName) { fullName = profileName; sources.push("Account Signup"); }
+        if (!fullName && profileName) fullName = profileName;
       }
       if (user.phone && !phone) phone = user.phone;
       if (user.city && !city) city = user.city;
