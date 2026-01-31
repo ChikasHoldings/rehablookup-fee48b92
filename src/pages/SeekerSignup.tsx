@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Heart, Mail, Lock, User, ArrowLeft, Phone, MapPin, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { EmailInput } from '@/components/ui/email-input';
@@ -171,17 +171,18 @@ export default function SeekerSignup() {
       
       <div className="min-h-screen flex flex-col bg-background">
         {/* Header */}
-        <header className="flex items-center justify-between p-4 sm:p-6">
-          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm">Back</span>
-          </Link>
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Heart className="h-4 w-4 text-primary" />
+        <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container h-14 flex items-center justify-between">
+            <Link to="/" className="flex items-center">
+              <img src="/logo.png" alt="RehabLookup" className="h-7 md:h-8 w-auto" />
+            </Link>
+            <div className="text-sm text-muted-foreground">
+              <span className="hidden sm:inline">Already have an account?{" "}</span>
+              <Link to="/login" className="text-primary font-medium hover:underline">
+                Sign in
+              </Link>
             </div>
-            <span className="font-semibold text-foreground">RehabLookup</span>
-          </Link>
+          </div>
         </header>
 
         {/* Main Content */}
