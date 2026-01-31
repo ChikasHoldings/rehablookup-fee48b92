@@ -58,10 +58,10 @@ const navEntries: NavEntry[] = [
     label: "Settings",
     permission: "settings",
     items: [
-      { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
-      { to: "/admin/users", icon: ShieldCheck, label: "User Management", permission: "users" },
-      { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
       { to: "/admin/settings", icon: Settings, label: "General Settings", permission: "settings" },
+      { to: "/admin/users", icon: ShieldCheck, label: "Admin Staff", permission: "users" },
+      { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
+      { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
     ],
   },
 ];
