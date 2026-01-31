@@ -46,12 +46,12 @@ const isNavGroup = (entry: NavEntry): entry is NavGroup => {
 
 const navEntries: NavEntry[] = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true, permission: "dashboard" },
-  { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
-  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
   { to: "/admin/leads", icon: Users, label: "Leads", permission: "leads" },
-  { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
-  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
+  { to: "/admin/seekers", icon: UserSearch, label: "Users", permission: "seekers" },
+  { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers" },
   { to: "/admin/concierge", icon: UserPlus, label: "Concierge", permission: "placements" },
+  { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
+  { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
   { to: "/admin/reviews", icon: MessageSquare, label: "Review Moderation", permission: "reviews" },
   {
     icon: Settings,
