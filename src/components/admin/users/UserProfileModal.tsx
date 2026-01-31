@@ -46,9 +46,9 @@ import {
   ShieldOff,
   ExternalLink,
   FileText,
-  Building2,
   AlertCircle,
   Info,
+  Building2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -178,13 +178,12 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
     queryFn: async (): Promise<{
       favorites: any[];
       conciergeInquiries: any[];
-      directLeads: any[];
       reviews: any[];
       activityLog: any[];
     } | null> => {
       if (!user?.user_id) return null;
 
-      const [favorites, conciergeInquiries, directLeads, reviews, activityLog] = await Promise.all([
+      const [favorites, conciergeInquiries, reviews, activityLog] = await Promise.all([
         supabase
           .from("user_favorites")
           .select("id, facility_id, created_at, facilities(name, city, state)")
@@ -197,12 +196,6 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
           .eq("user_id", user.user_id)
           .order("created_at", { ascending: false })
           .limit(20) as any,
-        supabase
-          .from("leads" as any)
-          .select("id, name, email, phone, status, created_at, urgency, level_of_care, location_city_state, insurance_type, facility_id")
-          .eq("seeker_user_id", user.user_id)
-          .order("created_at", { ascending: false })
-          .limit(20),
         supabase
           .from("facility_reviews")
           .select("id, rating, review_text, status, created_at, facility_id")
@@ -217,26 +210,19 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
           .limit(20) as any,
       ]);
 
-      // Fetch facility names separately for leads and reviews
-      const leadFacilityIds = directLeads.data?.map((l: any) => l.facility_id).filter(Boolean) || [];
+      // Fetch facility names for reviews
       const reviewFacilityIds = reviews.data?.map((r: any) => r.facility_id).filter(Boolean) || [];
-      const allFacilityIds = [...new Set([...leadFacilityIds, ...reviewFacilityIds])];
       
       let facilitiesMap: Record<string, any> = {};
-      if (allFacilityIds.length > 0) {
+      if (reviewFacilityIds.length > 0) {
         const { data: facilities } = await supabase
           .from("facilities")
           .select("id, name, city, state")
-          .in("id", allFacilityIds);
+          .in("id", reviewFacilityIds);
         facilities?.forEach((f: any) => { facilitiesMap[f.id] = f; });
       }
 
-      // Attach facility info to leads and reviews
-      const enrichedLeads = directLeads.data?.map((lead: any) => ({
-        ...lead,
-        facilities: facilitiesMap[lead.facility_id] || null,
-      })) || [];
-
+      // Attach facility info to reviews
       const enrichedReviews = reviews.data?.map((review: any) => ({
         ...review,
         facilities: facilitiesMap[review.facility_id] || null,
@@ -245,7 +231,6 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
       return {
         favorites: favorites.data || [],
         conciergeInquiries: conciergeInquiries.data || [],
-        directLeads: enrichedLeads,
         reviews: enrichedReviews,
         activityLog: activityLog.data || [],
       };
@@ -320,8 +305,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
   if (!user) return null;
 
   const hasConcierge = (userActivity?.conciergeInquiries?.length || 0) > 0;
-  const hasDirectLeads = (userActivity?.directLeads?.length || 0) > 0;
-  const totalInquiries = (userActivity?.conciergeInquiries?.length || 0) + (userActivity?.directLeads?.length || 0);
+  const totalInquiries = userActivity?.conciergeInquiries?.length || 0;
 
   return (
     <>
@@ -608,10 +592,6 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                       </h4>
                       <div className="space-y-3 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Direct Inquiries</span>
-                          <span className="font-medium">{userActivity?.directLeads?.length || 0}</span>
-                        </div>
-                        <div className="flex justify-between">
                           <span className="text-muted-foreground">Concierge Requests</span>
                           <span className="font-medium">{userActivity?.conciergeInquiries?.length || 0}</span>
                         </div>
@@ -630,40 +610,6 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
 
                 {/* Inquiries Tab */}
                 <TabsContent value="inquiries" className="mt-4 space-y-4">
-                  {/* Direct Inquiries */}
-                  {hasDirectLeads && (
-                    <div className="space-y-3">
-                      <h4 className="font-semibold flex items-center gap-2 text-sm">
-                        <Building2 className="h-4 w-4 text-blue-600" />
-                        Direct Facility Inquiries ({userActivity?.directLeads?.length || 0})
-                      </h4>
-                      <div className="space-y-2">
-                        {userActivity?.directLeads?.map((lead: any) => (
-                          <div key={lead.id} className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{lead.facilities?.name || 'Unknown Facility'}</p>
-                                <div className="flex flex-wrap gap-2 mt-1">
-                                  <Badge variant="outline" className="text-xs">{lead.status}</Badge>
-                                  {lead.urgency && <Badge variant="secondary" className="text-xs">{lead.urgency}</Badge>}
-                                  {lead.level_of_care && <Badge variant="secondary" className="text-xs">{lead.level_of_care}</Badge>}
-                                </div>
-                                <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                                  {lead.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{lead.email}</span>}
-                                  {lead.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{lead.phone}</span>}
-                                  {lead.location_city_state && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{lead.location_city_state}</span>}
-                                </div>
-                              </div>
-                              <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Concierge Inquiries */}
                   {hasConcierge && (
                     <div className="space-y-3">
@@ -723,7 +669,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                     </div>
                   )}
 
-                  {!hasDirectLeads && !hasConcierge && (
+                  {!hasConcierge && (
                     <div className="text-center py-8 text-muted-foreground">
                       <MessageSquare className="h-10 w-10 mx-auto mb-2 opacity-50" />
                       <p>No inquiries found</p>
