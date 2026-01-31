@@ -2,20 +2,26 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+const VERSION = "1.0.1";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // Pro subscription price ID - $399/mo RehabLookup Pro
 const PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K";
 
-const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
-  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
+const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[CREATE-CHECKOUT] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
+const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
 serve(async (req) => {
+  const requestId = generateRequestId();
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -26,10 +32,10 @@ serve(async (req) => {
   );
 
   try {
-    logStep("Function started");
+    logStep(requestId, "Function started");
 
     const { promoCode, action } = await req.json();
-    logStep("Request received", { action, promoCode: promoCode ? "provided" : "none" });
+    logStep(requestId, "Request received", { action, promoCode: promoCode ? "provided" : "none" });
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
@@ -41,7 +47,7 @@ serve(async (req) => {
     
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    logStep(requestId, "User authenticated", { userId: user.id, email: user.email });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -55,7 +61,7 @@ serve(async (req) => {
 
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
+      logStep(requestId, "Found existing customer", { customerId });
 
       // Check for existing active subscription
       const subscriptions = await stripe.subscriptions.list({
@@ -66,7 +72,7 @@ serve(async (req) => {
 
       if (subscriptions.data.length > 0) {
         existingSubscription = subscriptions.data[0];
-        logStep("Found existing subscription", { 
+        logStep(requestId, "Found existing subscription", { 
           subscriptionId: existingSubscription.id,
           currentPriceId: existingSubscription.items.data[0]?.price.id
         });
@@ -89,7 +95,7 @@ serve(async (req) => {
 
       // Upgrading from legacy plan to Pro
       if (action === "upgrade") {
-        logStep("Updating existing subscription to Pro", { 
+        logStep(requestId, "Updating existing subscription to Pro", { 
           subscriptionId: existingSubscription.id,
           fromPrice: currentPriceId,
           toPrice: PRO_PRICE_ID
@@ -108,13 +114,14 @@ serve(async (req) => {
           },
         });
 
-        logStep("Subscription upgraded to Pro successfully");
+        logStep(requestId, "Subscription upgraded to Pro successfully");
 
         return new Response(
           JSON.stringify({ 
             success: true, 
             message: "Upgraded to Pro successfully",
-            upgraded: true 
+            upgraded: true,
+            requestId,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
         );
@@ -133,12 +140,12 @@ serve(async (req) => {
         if (promoCodes.data.length > 0) {
           const promoCodeObj = promoCodes.data[0];
           discounts = [{ promotion_code: promoCodeObj.id }];
-          logStep("Promo code applied", { promoCodeId: promoCodeObj.id });
+          logStep(requestId, "Promo code applied", { promoCodeId: promoCodeObj.id });
         } else {
-          logStep("Promo code not found or inactive", { promoCode });
+          logStep(requestId, "Promo code not found or inactive", { promoCode });
         }
       } catch (promoErr) {
-        logStep("Error looking up promo code", { error: promoErr });
+        logStep(requestId, "Error looking up promo code", { error: String(promoErr) });
       }
     }
 
@@ -200,19 +207,19 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
-    logStep("Checkout session created", { 
+    logStep(requestId, "Checkout session created", { 
       sessionId: session.id, 
       hasDiscount: !!discounts,
     });
 
-    return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
+    return new Response(JSON.stringify({ url: session.url, sessionId: session.id, requestId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in create-checkout", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    logStep(requestId, "ERROR in create-checkout", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage, requestId, _version: VERSION }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
