@@ -111,10 +111,17 @@ serve(async (req) => {
       throw new Error("Failed to assign role");
     }
 
+    // Split display name into first and last name
+    const nameParts = displayName.trim().split(/\s+/);
+    const firstName = nameParts[0] || displayName;
+    const lastName = nameParts.slice(1).join(" ") || null;
+
     // Create admin profile with specific admin_role and temp password info
     const { error: adminProfileError } = await supabase.from("admin_user_profiles").insert({
       user_id: userId,
       display_name: displayName,
+      first_name: firstName,
+      last_name: lastName,
       admin_role: adminRole,
       status: "pending_password_reset",
       force_password_change: true,
