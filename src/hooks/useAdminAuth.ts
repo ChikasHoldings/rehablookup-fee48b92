@@ -28,6 +28,9 @@ const routePermissionMap: Record<string, string> = {
   "/admin/security-logs": "security_logs",
 };
 
+// Admin role type matching database enum
+export type AdminRoleType = "super_admin" | "manager" | "customer_rep" | "advisor";
+
 interface AdminProfile {
   force_password_change: boolean | null;
   status: string;
@@ -35,6 +38,7 @@ interface AdminProfile {
   avatar_url: string | null;
   mfa_enabled: boolean | null;
   mfa_skip: boolean | null;
+  admin_role: AdminRoleType | null;
 }
 
 export function useAdminAuth() {
@@ -118,7 +122,7 @@ export function useAdminAuth() {
     try {
       const { data, error } = await supabase
         .from("admin_user_profiles")
-        .select("force_password_change, status, display_name, avatar_url, mfa_enabled, mfa_skip")
+        .select("force_password_change, status, display_name, avatar_url, mfa_enabled, mfa_skip, admin_role")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -127,7 +131,7 @@ export function useAdminAuth() {
         return null;
       }
 
-      return data;
+      return data as AdminProfile | null;
     } catch (err) {
       console.error("Exception fetching admin profile:", err);
       return null;
@@ -352,10 +356,16 @@ export function useAdminAuth() {
     }
   }, [user, isLoggingOut, queryClient, navigate]);
 
+  // Derive admin role - super_admin if isSuperAdmin, otherwise from profile
+  const adminRole: AdminRoleType = isSuperAdmin 
+    ? "super_admin" 
+    : (adminProfile?.admin_role || "customer_rep");
+
   return { 
     user, 
     isAdmin: isAdmin === true, // Convert null to false for backwards compat
     isSuperAdmin, 
+    adminRole,
     permissions, 
     adminProfile,
     forcePasswordChange,

@@ -4,3 +4,9 @@ export { LeadRedistributionCard } from "./LeadRedistributionCard";
 export { QuickActionsCard } from "./QuickActionsCard";
 export { TopCitiesCard } from "./TopCitiesCard";
 export { RecentLeadsCard } from "./RecentLeadsCard";
+
+// Role-specific dashboards
+export { SuperAdminDashboard } from "./SuperAdminDashboard";
+export { ManagerDashboard } from "./ManagerDashboard";
+export { CustomerRepDashboard } from "./CustomerRepDashboard";
+export { AdvisorDashboard } from "./AdvisorDashboard";
