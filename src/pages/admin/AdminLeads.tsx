@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users,
   Search,
@@ -16,6 +16,9 @@ import {
   Building2,
   Share2,
   Timer,
+  Download,
+  AlertCircle,
+  TrendingUp,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,8 +63,10 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { LeadProfileModal, Lead } from "@/components/leads/LeadProfileModal";
 import { cn } from "@/lib/utils";
-import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis } from "recharts";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
+import { exportLeadsToCSV } from "@/lib/csvExport";
+import { Separator } from "@/components/ui/separator";
 
 // Source label mapping
 const SOURCE_LABELS: Record<string, string> = {
@@ -428,6 +433,57 @@ export default function AdminLeads() {
     setShowProfileModal(true);
   };
 
+  // Lead assignment mutation
+  const assignLead = useMutation({
+    mutationFn: async ({ leadId, facilityId }: { leadId: string; facilityId: string }) => {
+      const { error } = await supabase
+        .from("leads")
+        .update({ facility_id: facilityId })
+        .eq("id", leadId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateLeadsQueries();
+      toast.success("Lead assigned to facility");
+    },
+    onError: (error) => {
+      logError("assign_lead", error);
+      toast.error("Failed to assign lead");
+    },
+  });
+
+  // CSV Export handler
+  const handleExportCSV = useCallback(() => {
+    if (!leads || leads.length === 0) {
+      toast.error("No leads to export");
+      return;
+    }
+    
+    const exportData = leads.map((lead) => ({
+      id: lead.id,
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      created_at: lead.created_at,
+      status: lead.status,
+      exclusivity: (lead as any).redistribution_status || null,
+      qualified: lead.email_verified || null,
+      urgency: lead.urgency || null,
+      primary_substance: lead.primary_substance || null,
+      insurance_type: lead.insurance_type || null,
+      insurance_provider: lead.insurance_provider || null,
+      level_of_care: lead.level_of_care || null,
+      location_city_state: lead.location_city_state || null,
+      location_zip: lead.location_zip || null,
+      who_seeking_help: lead.who_seeking_help || null,
+      message: lead.message || null,
+      facility_name: facilitiesMap.get(lead.facility_id || "")?.name || undefined,
+    }));
+    
+    exportLeadsToCSV(exportData);
+    toast.success(`Exported ${leads.length} leads to CSV`);
+  }, [leads, facilitiesMap]);
+
   // Fetch redistribution stats
   const { data: redistStats } = useQuery({
     queryKey: ["admin-leads-redistribution-stats"],
@@ -469,119 +525,137 @@ export default function AdminLeads() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Inquiries</h1>
-        <p className="text-muted-foreground">
-          Direct facility inquiries from seekers
-        </p>
+      {/* Header with Export */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Inquiries</h1>
+          <p className="text-muted-foreground">
+            Direct facility inquiries from seekers
+          </p>
+        </div>
+        <Button 
+          variant="outline" 
+          className="gap-2 w-fit"
+          onClick={handleExportCSV}
+          disabled={!leads || leads.length === 0}
+        >
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalCount || 0}</p>
-                <p className="text-xs text-muted-foreground">Total Inquiries</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-50">
-                <Mail className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.newCount}</p>
-                <p className="text-xs text-muted-foreground">New</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-50">
-                <Zap className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.highPriority}</p>
-                <p className="text-xs text-muted-foreground">High Priority</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-50">
-                <Phone className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.contacted}</p>
-                <p className="text-xs text-muted-foreground">Contacted</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Enterprise KPI Summary Bar */}
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <div className="flex flex-wrap items-stretch divide-y sm:divide-y-0 sm:divide-x divide-border">
+            {/* Total */}
+            <button
+              onClick={() => handleFilterChange(setStatusFilter)("all")}
+              className={cn(
+                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
+                statusFilter === "all" && "bg-accent/10 ring-1 ring-inset ring-accent"
+              )}
+            >
+              <Users className="h-4 w-4 text-primary mb-1" />
+              <span className="text-xl font-bold tabular-nums">{totalCount || 0}</span>
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</span>
+            </button>
 
-      {/* Redistribution Stats */}
-      {redistStats && (redistStats.exclusive > 0 || redistStats.extended > 0 || redistStats.expired > 0) && (
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-lg">Lead Distribution Status</CardTitle>
-            </div>
-            <CardDescription>
-              Current status of lead exclusivity and redistribution
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
-                <div className="flex items-center gap-2 text-amber-700">
-                  <Timer className="h-4 w-4" />
-                  <span className="text-sm font-medium">Exclusive</span>
-                </div>
-                <p className="text-2xl font-bold text-amber-700 mt-1">{redistStats.exclusive}</p>
-                <p className="text-xs text-amber-600">Waiting for original facility</p>
+            {/* New */}
+            <button
+              onClick={() => handleFilterChange(setStatusFilter)("new")}
+              className={cn(
+                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
+                statusFilter === "new" && "bg-accent/10 ring-1 ring-inset ring-accent"
+              )}
+            >
+              <Mail className="h-4 w-4 text-info mb-1" />
+              <span className="text-xl font-bold tabular-nums">{stats.newCount}</span>
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">New</span>
+            </button>
+
+            {/* High Priority */}
+            <button
+              onClick={() => handleFilterChange(setUrgencyFilter)("immediate")}
+              className={cn(
+                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
+                urgencyFilter === "immediate" && "bg-accent/10 ring-1 ring-inset ring-accent"
+              )}
+            >
+              <Zap className="h-4 w-4 text-destructive mb-1" />
+              <span className="text-xl font-bold tabular-nums">{stats.highPriority}</span>
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Urgent</span>
+            </button>
+
+            {/* Contacted */}
+            <button
+              onClick={() => handleFilterChange(setStatusFilter)("contacted")}
+              className={cn(
+                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
+                statusFilter === "contacted" && "bg-accent/10 ring-1 ring-inset ring-accent"
+              )}
+            >
+              <Phone className="h-4 w-4 text-chart-3 mb-1" />
+              <span className="text-xl font-bold tabular-nums">{stats.contacted}</span>
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Contacted</span>
+            </button>
+
+            {/* Converted */}
+            <button
+              onClick={() => handleFilterChange(setStatusFilter)("converted")}
+              className={cn(
+                "flex-1 min-w-[100px] flex flex-col items-center justify-center p-4 transition-colors hover:bg-muted/50",
+                statusFilter === "converted" && "bg-accent/10 ring-1 ring-inset ring-accent"
+              )}
+            >
+              <TrendingUp className="h-4 w-4 text-success mb-1" />
+              <span className="text-xl font-bold tabular-nums">
+                {leads?.filter((l) => l.status === "converted").length || 0}
+              </span>
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Converted</span>
+            </button>
+
+            {/* Redistribution Stats (compact) */}
+            {redistStats && (redistStats.exclusive > 0 || redistStats.extended > 0) && (
+              <div className="hidden lg:flex flex-1 min-w-[200px] items-center justify-center gap-3 p-3 bg-muted/30">
+                <button
+                  onClick={() => handleFilterChange(setRedistributionFilter)("exclusive")}
+                  className={cn(
+                    "flex flex-col items-center p-2 rounded-lg transition-colors hover:bg-background/50",
+                    redistributionFilter === "exclusive" && "bg-background ring-1 ring-accent"
+                  )}
+                >
+                  <Timer className="h-3.5 w-3.5 text-warning mb-0.5" />
+                  <span className="text-lg font-bold tabular-nums">{redistStats.exclusive}</span>
+                  <span className="text-[9px] uppercase text-muted-foreground">Exclusive</span>
+                </button>
+                <button
+                  onClick={() => handleFilterChange(setRedistributionFilter)("extended")}
+                  className={cn(
+                    "flex flex-col items-center p-2 rounded-lg transition-colors hover:bg-background/50",
+                    redistributionFilter === "extended" && "bg-background ring-1 ring-accent"
+                  )}
+                >
+                  <Share2 className="h-3.5 w-3.5 text-info mb-0.5" />
+                  <span className="text-lg font-bold tabular-nums">{redistStats.extended}</span>
+                  <span className="text-[9px] uppercase text-muted-foreground">Redistributed</span>
+                </button>
+                <button
+                  onClick={() => handleFilterChange(setRedistributionFilter)("expired")}
+                  className={cn(
+                    "flex flex-col items-center p-2 rounded-lg transition-colors hover:bg-background/50",
+                    redistributionFilter === "expired" && "bg-background ring-1 ring-accent"
+                  )}
+                >
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground mb-0.5" />
+                  <span className="text-lg font-bold tabular-nums">{redistStats.expired}</span>
+                  <span className="text-[9px] uppercase text-muted-foreground">Expired</span>
+                </button>
               </div>
-              <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-                <div className="flex items-center gap-2 text-blue-700">
-                  <Share2 className="h-4 w-4" />
-                  <span className="text-sm font-medium">Redistributed</span>
-                </div>
-                <p className="text-2xl font-bold text-blue-700 mt-1">{redistStats.extended}</p>
-                <p className="text-xs text-blue-600">Available to nearby facilities</p>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Clock className="h-4 w-4" />
-                  <span className="text-sm font-medium">Expired</span>
-                </div>
-                <p className="text-2xl font-bold text-slate-600 mt-1">{redistStats.expired}</p>
-                <p className="text-xs text-slate-500">Window closed</p>
-              </div>
-              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                <div className="flex items-center gap-2 text-emerald-700">
-                  <Users className="h-4 w-4" />
-                  <span className="text-sm font-medium">Legacy/Unlocked</span>
-                </div>
-                <p className="text-2xl font-bold text-emerald-700 mt-1">{redistStats.none}</p>
-                <p className="text-xs text-emerald-600">Pre-system or unlocked</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Lead Sources Chart */}
       <Card>
@@ -991,6 +1065,8 @@ export default function AdminLeads() {
         onOpenChange={setShowProfileModal}
         isAdmin
         facilities={facilities || []}
+        onAssign={(leadId, facilityId) => assignLead.mutate({ leadId, facilityId })}
+        isAssigning={assignLead.isPending}
       />
     </div>
   );
