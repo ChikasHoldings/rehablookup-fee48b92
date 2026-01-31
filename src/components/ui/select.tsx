@@ -4,7 +4,20 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const Select = SelectPrimitive.Root;
+// Wrap Select.Root to forward refs properly and avoid React warnings
+const Select = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
+>(({ children, ...props }, ref) => (
+  <SelectPrimitive.Root {...props}>
+    {children}
+  </SelectPrimitive.Root>
+)) as React.ForwardRefExoticComponent<
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root> & React.RefAttributes<HTMLElement>
+> & {
+  displayName?: string;
+};
+Select.displayName = "Select";
 
 const SelectGroup = SelectPrimitive.Group;
 

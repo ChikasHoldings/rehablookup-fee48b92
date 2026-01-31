@@ -21,9 +21,23 @@ interface AtRiskProvider {
   daysInactive: number;
 }
 
-const PLAN_CONFIG: Record<string, { lead_limit: number; name: string }> = {
-  prod_TbyzJVNOQL71NN: { lead_limit: 75, name: "Featured" },
-  prod_Tbyz1bf6iYyzYd: { lead_limit: 25, name: "Professional" },
+// Pro product IDs - includes legacy IDs for backward compatibility
+const PRO_PRODUCT_IDS = [
+  "prod_pro_monthly",
+  "prod_TbalLOPujTIoUe", 
+  "prod_Tbyz1bf6iYyzYd",
+  "prod_TbalOeJZA2ZoJl", 
+  "prod_TbyzJVNOQL71NN",
+];
+
+// Plan configuration for the new monetization model
+// Free: 1 facility, pay-per-unlock
+// Pro ($399/mo): 5 facilities, 20% discount on unlocks
+const getPlanConfig = (productId: string | null): { facility_limit: number; name: string; unlock_discount: number } => {
+  if (productId && PRO_PRODUCT_IDS.includes(productId)) {
+    return { facility_limit: 5, name: "Pro", unlock_discount: 20 };
+  }
+  return { facility_limit: 1, name: "Free", unlock_discount: 0 };
 };
 
 const logStep = (step: string, details?: unknown) => {
@@ -105,9 +119,9 @@ serve(async (req) => {
 
       if (!facility) continue;
 
-      // Determine plan
+      // Determine plan using the new monetization model
       const productId = subscription.items.data[0]?.price?.product as string;
-      const planConfig = PLAN_CONFIG[productId] || { lead_limit: 25, name: "Professional" };
+      const planConfig = getPlanConfig(productId);
 
       // Get lead count this month
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -172,14 +186,27 @@ serve(async (req) => {
         riskFactors.push(`${unrespondedLeads} unresponded leads older than 7 days`);
       }
 
-      // Factor 3: Low lead utilization
-      const leadUsagePercent = planConfig.lead_limit > 0 
-        ? ((leadsThisMonth || 0) / planConfig.lead_limit) * 100 
+      // Factor 3: Low lead unlock activity (new pay-per-unlock model)
+      // Check if provider has received leads but hasn't unlocked many
+      const { count: totalLeadsReceived } = await supabaseClient
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", facility.id)
+        .gte("created_at", startOfMonth.toISOString());
+      
+      const { count: unlockedLeads } = await supabaseClient
+        .from("lead_unlocks")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", facility.id)
+        .gte("created_at", startOfMonth.toISOString());
+      
+      const unlockRate = (totalLeadsReceived || 0) > 0 
+        ? ((unlockedLeads || 0) / (totalLeadsReceived || 1)) * 100 
         : 0;
       
-      if (leadUsagePercent < 10 && (leadsThisMonth || 0) < 3) {
+      if ((totalLeadsReceived || 0) >= 3 && unlockRate < 20) {
         riskScore += 20;
-        riskFactors.push(`Low lead utilization (${leadUsagePercent.toFixed(0)}%)`);
+        riskFactors.push(`Low lead unlock rate (${unlockRate.toFixed(0)}% of ${totalLeadsReceived} leads)`);
       }
 
       // Factor 4: Subscription nearing end without renewal signals
@@ -212,7 +239,7 @@ serve(async (req) => {
           riskFactors,
           lastActivity: lastActivity?.created_at || null,
           leadsUsed: leadsThisMonth || 0,
-          leadLimit: planConfig.lead_limit,
+          leadLimit: planConfig.facility_limit,
           daysInactive,
         });
       }
